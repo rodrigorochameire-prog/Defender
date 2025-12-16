@@ -1,86 +1,93 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import DashboardLayoutSkeleton from "./components/DashboardLayoutSkeleton";
+
+// Eager load critical pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import UserProfile from "./pages/UserProfile";
-import VerifyEmail from "./pages/VerifyEmail";
+import NotFound from "./pages/NotFound";
+
+// Lazy load all other pages
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 
 // Admin Pages
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminPets from "./pages/AdminPets";
-import AdminTutors from "./pages/AdminTutors";
-import TutorsByPet from "./pages/TutorsByPet";
-import AdminVaccines from "./pages/AdminVaccines";
-import AdminMedications from "./pages/AdminMedications";
-import AdminLogs from "./pages/AdminLogs";
-import AdminCalendar from "./pages/AdminCalendar";
-import AdminOccupancyReport from "./pages/AdminOccupancyReport";
-import AdminFinances from "./pages/AdminFinances";
-import AdminCredits from "./pages/AdminCredits";
-import AdminCreditPackages from "./pages/AdminCreditPackages";
-import AdminFood from "./pages/AdminFood";
-import AdminPlans from "./pages/AdminPlans";
-import AdminUsers from "./pages/AdminUsers";
-import AdminAuditLogs from "./pages/AdminAuditLogs";
-import AdminCoManagement from "./pages/AdminCoManagement";
-import AdminMedicationsAll from "./pages/AdminMedicationsAll";
-import AdminVaccinesAll from "./pages/AdminVaccinesAll";
-import AdminPreventivesAll from "./pages/AdminPreventivesAll";
-import AdminPreventives from "./pages/AdminPreventives";
-import AdminDocuments from "./pages/AdminDocuments";
-import AdminMedicationsUnified from "./pages/AdminMedicationsUnified";
-import AdminVaccinesUnified from "./pages/AdminVaccinesUnified";
-import AdminPreventivesUnified from "./pages/AdminPreventivesUnified";
-import AdminHealthNotifications from "./pages/AdminHealthNotifications";
-import AdminHealthCalendar from "./pages/AdminHealthCalendar";
-import AdminWhatsApp from "./pages/AdminWhatsApp";
-import AdminPetDetail from "./pages/AdminPetDetail";
-import AdminBehavior from "./pages/AdminBehavior";
-import AdminPetApproval from "./pages/AdminPetApproval";
-import AdminNotificationTemplates from "./pages/AdminNotificationTemplates";
-import AdminTutorNotificationPreferences from "./pages/AdminTutorNotificationPreferences";
-import AdminWall from "./pages/AdminWall";
-import AdminChat from "./pages/AdminChat";
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminPets = lazy(() => import("./pages/AdminPets"));
+const AdminTutors = lazy(() => import("./pages/AdminTutors"));
+const TutorsByPet = lazy(() => import("./pages/TutorsByPet"));
+const AdminVaccines = lazy(() => import("./pages/AdminVaccines"));
+const AdminMedications = lazy(() => import("./pages/AdminMedications"));
+const AdminLogs = lazy(() => import("./pages/AdminLogs"));
+const AdminCalendar = lazy(() => import("./pages/AdminCalendar"));
+const AdminOccupancyReport = lazy(() => import("./pages/AdminOccupancyReport"));
+const AdminFinances = lazy(() => import("./pages/AdminFinances"));
+const AdminCredits = lazy(() => import("./pages/AdminCredits"));
+const AdminCreditPackages = lazy(() => import("./pages/AdminCreditPackages"));
+const AdminFood = lazy(() => import("./pages/AdminFood"));
+const AdminPlans = lazy(() => import("./pages/AdminPlans"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
+const AdminAuditLogs = lazy(() => import("./pages/AdminAuditLogs"));
+const AdminCoManagement = lazy(() => import("./pages/AdminCoManagement"));
+const AdminMedicationsAll = lazy(() => import("./pages/AdminMedicationsAll"));
+const AdminVaccinesAll = lazy(() => import("./pages/AdminVaccinesAll"));
+const AdminPreventivesAll = lazy(() => import("./pages/AdminPreventivesAll"));
+const AdminPreventives = lazy(() => import("./pages/AdminPreventives"));
+const AdminDocuments = lazy(() => import("./pages/AdminDocuments"));
+const AdminMedicationsUnified = lazy(() => import("./pages/AdminMedicationsUnified"));
+const AdminVaccinesUnified = lazy(() => import("./pages/AdminVaccinesUnified"));
+const AdminPreventivesUnified = lazy(() => import("./pages/AdminPreventivesUnified"));
+const AdminHealthNotifications = lazy(() => import("./pages/AdminHealthNotifications"));
+const AdminHealthCalendar = lazy(() => import("./pages/AdminHealthCalendar"));
+const AdminWhatsApp = lazy(() => import("./pages/AdminWhatsApp"));
+const AdminPetDetail = lazy(() => import("./pages/AdminPetDetail"));
+const AdminBehavior = lazy(() => import("./pages/AdminBehavior"));
+const AdminPetApproval = lazy(() => import("./pages/AdminPetApproval"));
+const AdminNotificationTemplates = lazy(() => import("./pages/AdminNotificationTemplates"));
+const AdminTutorNotificationPreferences = lazy(() => import("./pages/AdminTutorNotificationPreferences"));
+const AdminWall = lazy(() => import("./pages/AdminWall"));
+const AdminChat = lazy(() => import("./pages/AdminChat"));
 
 // Tutor Pages
-import TutorDashboard from "./pages/TutorDashboard";
-import TutorPets from "./pages/TutorPets";
-import TutorPetDetail from "./pages/TutorPetDetail";
-import TutorAddLog from "./pages/TutorAddLog";
-import TutorMedications from "./pages/TutorMedications";
-import TutorVaccines from "./pages/TutorVaccines";
-import TutorVaccinesOverview from "./pages/TutorVaccinesOverview";
-import TutorMedicationsOverview from "./pages/TutorMedicationsOverview";
-import TutorCredits from "./pages/TutorCredits";
-import TutorFood from "./pages/TutorFood";
-import TutorCalendar from "./pages/TutorCalendar";
-import TutorNotifications from "./pages/TutorNotifications";
-import TutorReports from "./pages/TutorReports";
-import TutorDocuments from "./pages/TutorDocuments";
-import TutorSubscriptions from "./pages/TutorSubscriptions";
-import TutorPreventive from "./pages/TutorPreventive";
-import TutorBehavior from "./pages/TutorBehavior";
-import TutorAI from "./pages/TutorAI";
-import TutorBooking from "./pages/TutorBooking";
-import TutorAnalytics from "./pages/TutorAnalytics";
-import TutorReviews from "./pages/TutorReviews";
-import TutorNotificationSettings from "./pages/TutorNotificationSettings";
-import TutorWall from "./pages/TutorWall";
-import TutorChat from "./pages/TutorChat";
-import AcceptInvite from "./pages/AcceptInvite";
-import TutorCheckout from "./pages/TutorCheckout";
-import PaymentSuccess from "./pages/PaymentSuccess";
+const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
+const TutorPets = lazy(() => import("./pages/TutorPets"));
+const TutorPetDetail = lazy(() => import("./pages/TutorPetDetail"));
+const TutorAddLog = lazy(() => import("./pages/TutorAddLog"));
+const TutorMedications = lazy(() => import("./pages/TutorMedications"));
+const TutorVaccines = lazy(() => import("./pages/TutorVaccines"));
+const TutorVaccinesOverview = lazy(() => import("./pages/TutorVaccinesOverview"));
+const TutorMedicationsOverview = lazy(() => import("./pages/TutorMedicationsOverview"));
+const TutorCredits = lazy(() => import("./pages/TutorCredits"));
+const TutorFood = lazy(() => import("./pages/TutorFood"));
+const TutorCalendar = lazy(() => import("./pages/TutorCalendar"));
+const TutorNotifications = lazy(() => import("./pages/TutorNotifications"));
+const TutorReports = lazy(() => import("./pages/TutorReports"));
+const TutorDocuments = lazy(() => import("./pages/TutorDocuments"));
+const TutorSubscriptions = lazy(() => import("./pages/TutorSubscriptions"));
+const TutorPreventive = lazy(() => import("./pages/TutorPreventive"));
+const TutorBehavior = lazy(() => import("./pages/TutorBehavior"));
+const TutorAI = lazy(() => import("./pages/TutorAI"));
+const TutorBooking = lazy(() => import("./pages/TutorBooking"));
+const TutorAnalytics = lazy(() => import("./pages/TutorAnalytics"));
+const TutorReviews = lazy(() => import("./pages/TutorReviews"));
+const TutorNotificationSettings = lazy(() => import("./pages/TutorNotificationSettings"));
+const TutorWall = lazy(() => import("./pages/TutorWall"));
+const TutorChat = lazy(() => import("./pages/TutorChat"));
+const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
+const TutorCheckout = lazy(() => import("./pages/TutorCheckout"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 
 function Router() {
   return (
-    <Switch>
+    <Suspense fallback={<DashboardLayoutSkeleton />}>
+      <Switch>
       {/* Home */}
       <Route path="/" component={Home} />
       
@@ -161,7 +168,8 @@ function Router() {
       {/* 404 */}
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
-    </Switch>
+      </Switch>
+    </Suspense>
   );
 }
 

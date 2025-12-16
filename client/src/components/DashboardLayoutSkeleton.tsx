@@ -1,6 +1,6 @@
 import { Skeleton } from './ui/skeleton';
 
-export function DashboardLayoutSkeleton() {
+export default function DashboardLayoutSkeleton() {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Sidebar skeleton */}
@@ -44,3 +44,5 @@ export function DashboardLayoutSkeleton() {
     </div>
   );
 }
+
+export { DashboardLayoutSkeleton };

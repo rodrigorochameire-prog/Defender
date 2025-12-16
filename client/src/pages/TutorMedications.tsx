@@ -35,6 +35,7 @@ export default function TutorMedications() {
   const petId = params?.id ? parseInt(params.id) : 0;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMedicationId, setSelectedMedicationId] = useState<number | null>(null);
+  const [customMedication, setCustomMedication] = useState<boolean>(false);
   const [periodicityConfig, setPeriodicityConfig] = useState<PeriodicityConfig>({
     periodicity: "daily",
     customInterval: undefined,
@@ -94,7 +95,10 @@ export default function TutorMedications() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    const medicationId = parseInt(formData.get("medicationId") as string);
+    const medicationId = formData.get("medicationId") ? parseInt(formData.get("medicationId") as string) : undefined;
+    const customMedName = formData.get("customMedName") as string;
+    const customMedType = formData.get("customMedType") as string;
+    const customMedDescription = formData.get("customMedDescription") as string;
     const startDate = formData.get("startDate") as string;
     const endDate = formData.get("endDate") as string;
     const dosage = formData.get("dosage") as string;
@@ -107,7 +111,10 @@ export default function TutorMedications() {
 
     addMedication.mutate({
       petId,
-      medicationId,
+      medicationId: customMedication ? undefined : medicationId,
+      customMedName: customMedication ? customMedName : undefined,
+      customMedType: customMedication ? customMedType : undefined,
+      customMedDescription: customMedication ? customMedDescription : undefined,
       startDate: new Date(startDate),
       endDate: endDate ? new Date(endDate) : undefined,
       dosage,
@@ -151,37 +158,84 @@ export default function TutorMedications() {
               Adicionar Medicamento
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Adicionar Medicamento</DialogTitle>
               <DialogDescription>
                 Registre um novo medicamento ou tratamento para o pet
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="medicationId">Medicamento *</Label>
-                <Select
-                  name="medicationId"
-                  value={selectedMedicationId?.toString() || ""}
-                  onValueChange={(value) => setSelectedMedicationId(parseInt(value))}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o medicamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {library?.map((med) => (
-                      <SelectItem key={med.id} value={med.id.toString()}>
-                        {med.name} - {med.type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedMedicationId && (
-                  <p className="text-xs text-muted-foreground">
-                    {library?.find(m => m.id === selectedMedicationId)?.description}
-                  </p>
+            <form onSubmit={handleSubmit} className="space-y-4 px-1">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="customMed"
+                    checked={customMedication}
+                    onChange={(e) => setCustomMedication(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="customMed" className="cursor-pointer">
+                    Medicamento personalizado (não está na lista)
+                  </Label>
+                </div>
+
+                {!customMedication ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="medicationId">Medicamento *</Label>
+                    <Select
+                      name="medicationId"
+                      value={selectedMedicationId?.toString() || ""}
+                      onValueChange={(value) => setSelectedMedicationId(parseInt(value))}
+                      required={!customMedication}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o medicamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {library?.map((med) => (
+                          <SelectItem key={med.id} value={med.id.toString()}>
+                            {med.name} - {med.type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedMedicationId && (
+                      <p className="text-xs text-muted-foreground">
+                        {library?.find(m => m.id === selectedMedicationId)?.description}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+                    <div className="space-y-2">
+                      <Label htmlFor="customMedName">Nome do Medicamento *</Label>
+                      <Input
+                        id="customMedName"
+                        name="customMedName"
+                        placeholder="Ex: Antibiótico XYZ"
+                        required={customMedication}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="customMedType">Tipo *</Label>
+                      <Input
+                        id="customMedType"
+                        name="customMedType"
+                        placeholder="Ex: Antibiótico, Anti-inflamatório, Suplemento"
+                        required={customMedication}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="customMedDescription">Descrição</Label>
+                      <Textarea
+                        id="customMedDescription"
+                        name="customMedDescription"
+                        rows={2}
+                        placeholder="Informações adicionais sobre o medicamento"
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
 

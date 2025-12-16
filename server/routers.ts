@@ -14,6 +14,7 @@ import * as notificationService from "./notificationService";
 import { triggerVaccineNotificationsManually } from "./jobs/vaccineNotifications";
 import Stripe from "stripe";
 import { PRODUCTS } from "./products";
+import { searchRouter } from "./searchRouter";
 
 // Admin-only procedure with audit logging
 const adminProcedure = protectedProcedure.use(async ({ ctx, next, path }) => {
@@ -1008,7 +1009,11 @@ export const appRouter = router({
     add: protectedProcedure
       .input(z.object({
         petId: z.number(),
-        medicationId: z.number(),
+        medicationId: z.number().optional(),
+        // Custom medication fields (when tutor creates new medication)
+        customMedName: z.string().optional(),
+        customMedType: z.string().optional(),
+        customMedDescription: z.string().optional(),
         startDate: z.date(),
         endDate: z.date().optional(),
         dosage: z.string(),
@@ -1027,9 +1032,25 @@ export const appRouter = router({
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        let medicationId = input.medicationId;
+
+        // If tutor is creating a custom medication, add it to the library first
+        if (input.customMedName && input.customMedType) {
+          medicationId = await db.addMedicationToLibrary({
+            name: input.customMedName,
+            type: input.customMedType as any,
+            description: input.customMedDescription,
+          });
+        }
+
+        if (!medicationId) {
+          throw new Error("Medicamento não especificado");
+        }
+
         // Convert arrays to JSON strings for database storage
         const medicationData = {
           ...input,
+          medicationId,
           weekDays: input.weekDays ? JSON.stringify(input.weekDays) : undefined,
           monthDays: input.monthDays ? JSON.stringify(input.monthDays) : undefined,
           isActive: true,
@@ -4801,6 +4822,9 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         return { success: true, conversationId };
       }),
   }),
+
+  // Search
+  search: searchRouter,
 });
 
 export type AppRouter = typeof appRouter;
