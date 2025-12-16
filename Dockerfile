@@ -6,20 +6,30 @@ RUN npm install -g pnpm@9.15.4
 
 WORKDIR /app
 
-# Copia arquivos de dependencias e patches
+# Copia arquivos
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-# Instala dependencias
+# Instala tudo
 RUN pnpm install
 
-# Copia todo o codigo fonte
+# Copia codigo
 COPY . .
 
-# Constroi o site
+# --- AQUI ESTA A MAGICA: IMPORTAR VARIAVEIS PARA O BUILD ---
+ARG VITE_STRIPE_PUBLISHABLE_KEY
+ARG VITE_ANALYTICS_ENDPOINT
+ARG VITE_ANALYTICS_WEBSITE_ID
+
+ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
+ENV VITE_ANALYTICS_ENDPOINT=$VITE_ANALYTICS_ENDPOINT
+ENV VITE_ANALYTICS_WEBSITE_ID=$VITE_ANALYTICS_WEBSITE_ID
+# -----------------------------------------------------------
+
+# Constroi o site (agora com as variaveis visiveis)
 RUN pnpm build
 
-# Production stage (Fase final)
+# Production stage
 FROM node:22-alpine
 
 # Install pnpm
@@ -27,29 +37,20 @@ RUN npm install -g pnpm@9.15.4
 
 WORKDIR /app
 
-# Copia arquivos essenciais
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-# --- MUDANÇA AQUI: Removemos o "--prod" para instalar o Vite também ---
-RUN pnpm install
+RUN pnpm install --prod
 
-# Copia a pasta dist
+# Copia arquivos finais
 COPY --from=builder /app/dist ./dist
-
-# Copia pastas do backend
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
 
-# Cria a pasta storage vazia
 RUN mkdir -p storage
 
-# Expose port
 EXPOSE 3000
-
-# Set environment
 ENV NODE_ENV=production
 
-# Start application
 CMD ["pnpm", "start"]
