@@ -4096,7 +4096,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         petId: z.number(),
         mood: z.enum(["feliz", "ansioso", "calmo", "agitado", "letargico", "agressivo"]).optional(),
         stool: z.enum(["normal", "diarreia", "constipacao", "com_sangue", "muco"]).optional(),
-        behavior: z.enum(["ativo", "letargico", "agressivo", "sociavel", "assustado", "brincalhao"]).optional(),
+        behavior: z.enum(["ativo", "brincalhao", "sociavel", "calmo", "relaxado", "curioso", "timido", "protetor", "destrutivo", "letargico", "agressivo", "assustado"]).optional(),
         appetite: z.enum(["normal", "aumentado", "diminuido", "recusou"]).optional(),
         waterIntake: z.enum(["normal", "aumentado", "diminuido", "recusou"]).optional(),
         notes: z.string().optional(),
