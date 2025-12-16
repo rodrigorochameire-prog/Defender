@@ -14,6 +14,7 @@ import type {
   GetUserInfoWithJwtRequest,
   GetUserInfoWithJwtResponse,
 } from "./types/manusTypes";
+
 // Utility function
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
@@ -273,15 +274,32 @@ class SDKServer {
     // If user not in DB, sync from OAuth server automatically
     if (!user) {
       try {
-        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
+        // FIX: Tenta obter info remota, mas usa dados da sessão como fallback seguro
+        // Isso previne o erro "Either openId or email is required" se a API remota falhar ou vier vazia
+        let userInfo: Partial<GetUserInfoWithJwtResponse> = {};
+        try {
+          userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
+        } catch (remoteError) {
+          console.warn("[Auth] Warning: Could not fetch detailed user info from remote:", remoteError);
+        }
+
+        // Usa os dados do cookie (confiáveis pois o JWT foi verificado) se os remotos falharem
+        const finalOpenId = userInfo.openId || sessionUserId;
+        const finalName = userInfo.name || session.name || "Unknown User";
+
+        if (!finalOpenId) {
+             throw new Error("Critical: No openId available even from session.");
+        }
+
         await db.upsertUser({
-          openId: userInfo.openId,
-          name: userInfo.name || null,
+          openId: finalOpenId,
+          name: finalName,
           email: userInfo.email ?? null,
           loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
           lastSignedIn: signedInAt,
         });
-        user = await db.getUserByOpenId(userInfo.openId);
+        
+        user = await db.getUserByOpenId(finalOpenId);
       } catch (error) {
         console.error("[Auth] Failed to sync user from OAuth:", error);
         throw ForbiddenError("Failed to sync user info");
@@ -289,7 +307,7 @@ class SDKServer {
     }
 
     if (!user) {
-      throw ForbiddenError("User not found");
+      throw ForbiddenError("User not found after sync attempt");
     }
 
     await db.upsertUser({
