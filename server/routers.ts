@@ -875,7 +875,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.addPetVaccination(input);
-        
+
         // Track change
         const { logChange } = await import("./changeTracker");
         await logChange({
@@ -889,7 +889,38 @@ export const appRouter = router({
           changedByRole: ctx.user.role as any,
           changeType: "create",
         });
-        
+
+        // Get vaccine name from library
+        const vaccines = await db.getVaccineLibrary();
+        const vaccine = vaccines.find(v => v.id === input.vaccineId);
+        const vaccineName = vaccine?.name || "Vacina";
+
+        // Auto-create calendar event for application date
+        await db.autoCreateVaccineEvent(
+          input.petId,
+          id,
+          vaccineName,
+          input.applicationDate,
+          input.doseNumber,
+          input.veterinarian,
+          input.clinic,
+          ctx.user.id
+        );
+
+        // If there's a next due date, create event for it too
+        if (input.nextDueDate) {
+          await db.autoCreateVaccineEvent(
+            input.petId,
+            id,
+            vaccineName,
+            input.nextDueDate,
+            input.doseNumber + 1,
+            input.veterinarian,
+            input.clinic,
+            ctx.user.id
+          );
+        }
+
         return { id };
       }),
 
@@ -1056,7 +1087,7 @@ export const appRouter = router({
           isActive: true,
         };
         const id = await db.addPetMedication(medicationData as any);
-        
+
         // Track change
         const { logChange } = await import("./changeTracker");
         await logChange({
@@ -1070,7 +1101,19 @@ export const appRouter = router({
           changedByRole: ctx.user.role as any,
           changeType: "create",
         });
-        
+
+        // Auto-create calendar event for the start date
+        const medName = input.customMedName || (await db.getMedicationLibrary()).find(m => m.id === medicationId)?.name || "Medicamento";
+        await db.autoCreateMedicationEvent(
+          input.petId,
+          id,
+          medName,
+          input.startDate,
+          input.dosage,
+          input.frequency,
+          ctx.user.id
+        );
+
         return { id };
       }),
 
@@ -1187,23 +1230,23 @@ export const appRouter = router({
         const library = await db.getMedicationLibrary();
         const medInfo = library.find(m => m.id === med.medicationId);
         const medName = medInfo?.name || "Medicamento";
-        
-        // Create calendar event
-        const eventId = await db.addCalendarEvent({
-          title: `${medName} - ${currentDosage}`,
-          description: `Aplicar ${currentDosage}${med.frequency ? ' - ' + med.frequency : ''}`,
-          eventDate: nextDate,
-          eventType: "medication",
-          petId: input.petId,
-          isAllDay: false,
-          createdById: ctx.user.id,
-        });
-        
+
+        // Create calendar event using auto-integration helper
+        const eventId = await db.autoCreateMedicationEvent(
+          input.petId,
+          med.id,
+          medName,
+          nextDate,
+          currentDosage,
+          med.frequency || undefined,
+          ctx.user.id
+        );
+
         // Increment dose count
         await db.updatePetMedication(med.id, {
           currentDoseCount: (med.currentDoseCount || 0) + 1,
         });
-        
+
         return {
           eventId,
           nextDate,
@@ -2079,7 +2122,7 @@ export const appRouter = router({
           ...input,
           createdById: ctx.user.id,
         });
-        
+
         // Track change
         const { logChange } = await import("./changeTracker");
         await logChange({
@@ -2093,7 +2136,27 @@ export const appRouter = router({
           changedByRole: ctx.user.role as any,
           changeType: "create",
         });
-        
+
+        // Auto-create calendar events for flea treatment
+        await db.autoCreateFleaEvent(
+          input.petId,
+          result.insertId,
+          input.productName,
+          input.applicationDate,
+          input.nextDueDate,
+          ctx.user.id
+        );
+
+        // Create event for next due date too
+        await db.autoCreateFleaEvent(
+          input.petId,
+          result.insertId,
+          input.productName,
+          input.nextDueDate,
+          undefined,
+          ctx.user.id
+        );
+
         return result;
       }),
 
@@ -2146,7 +2209,7 @@ export const appRouter = router({
           ...input,
           createdById: ctx.user.id,
         });
-        
+
         // Track change
         const { logChange } = await import("./changeTracker");
         await logChange({
@@ -2160,7 +2223,27 @@ export const appRouter = router({
           changedByRole: ctx.user.role as any,
           changeType: "create",
         });
-        
+
+        // Auto-create calendar events for deworming treatment
+        await db.autoCreateDewormingEvent(
+          input.petId,
+          result.insertId,
+          input.productName,
+          input.applicationDate,
+          input.nextDueDate,
+          ctx.user.id
+        );
+
+        // Create event for next due date too
+        await db.autoCreateDewormingEvent(
+          input.petId,
+          result.insertId,
+          input.productName,
+          input.nextDueDate,
+          undefined,
+          ctx.user.id
+        );
+
         return result;
       }),
 
@@ -4117,6 +4200,21 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           recordedBy: ctx.user.id,
           recordedAt: input.recordedAt || new Date(),
         });
+
+        // Auto-create calendar event for health/behavior log
+        await db.autoCreateHealthLogEvent(
+          input.petId,
+          result.insertId,
+          input.recordedAt || new Date(),
+          input.mood,
+          input.behavior,
+          input.stool,
+          input.appetite,
+          input.waterIntake,
+          input.notes,
+          ctx.user.id
+        );
+
         return result;
       }),
 

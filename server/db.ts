@@ -3887,3 +3887,175 @@ export async function getPetsWithTutors() {
   
   return petsWithTutors;
 }
+
+// ============================================
+// AUTO CALENDAR INTEGRATION HELPERS
+// ============================================
+
+/**
+ * Automatically create calendar event from medication
+ */
+export async function autoCreateMedicationEvent(
+  petId: number,
+  medicationId: number,
+  medicationName: string,
+  eventDate: Date,
+  dosage: string,
+  frequency: string | undefined,
+  createdById: number
+): Promise<number> {
+  const description = `Medicamento: ${medicationName}\nDosagem: ${dosage}${frequency ? `\nFrequência: ${frequency}` : ''}`;
+
+  const eventId = await addCalendarEvent({
+    title: `💊 ${medicationName}`,
+    description,
+    eventDate,
+    eventType: "medication",
+    petId,
+    isAllDay: false,
+    linkedResourceType: "medication",
+    linkedResourceId: medicationId,
+    autoCreated: true,
+    createdById,
+  });
+
+  return eventId;
+}
+
+/**
+ * Automatically create calendar event from vaccination
+ */
+export async function autoCreateVaccineEvent(
+  petId: number,
+  vaccineId: number,
+  vaccineName: string,
+  eventDate: Date,
+  doseNumber: number,
+  veterinarian: string | undefined,
+  clinic: string | undefined,
+  createdById: number
+): Promise<number> {
+  let description = `Vacina: ${vaccineName}\nDose: ${doseNumber}ª`;
+  if (veterinarian) description += `\nVeterinário: ${veterinarian}`;
+  if (clinic) description += `\nClínica: ${clinic}`;
+
+  const eventId = await addCalendarEvent({
+    title: `💉 ${vaccineName} (${doseNumber}ª dose)`,
+    description,
+    eventDate,
+    eventType: "vaccination",
+    petId,
+    isAllDay: true,
+    linkedResourceType: "vaccine",
+    linkedResourceId: vaccineId,
+    autoCreated: true,
+    createdById,
+  });
+
+  return eventId;
+}
+
+/**
+ * Automatically create calendar event from flea treatment
+ */
+export async function autoCreateFleaEvent(
+  petId: number,
+  treatmentId: number,
+  productName: string,
+  applicationDate: Date,
+  nextDueDate: Date | undefined,
+  createdById: number
+): Promise<number> {
+  let description = `Antipulgas: ${productName}\nAplicação: ${applicationDate.toLocaleDateString('pt-BR')}`;
+  if (nextDueDate) description += `\nPróxima aplicação: ${nextDueDate.toLocaleDateString('pt-BR')}`;
+
+  const eventId = await addCalendarEvent({
+    title: `🐛 Antipulgas: ${productName}`,
+    description,
+    eventDate: applicationDate,
+    eventType: "preventive",
+    petId,
+    isAllDay: true,
+    linkedResourceType: "preventive_flea",
+    linkedResourceId: treatmentId,
+    autoCreated: true,
+    createdById,
+  });
+
+  return eventId;
+}
+
+/**
+ * Automatically create calendar event from deworming treatment
+ */
+export async function autoCreateDewormingEvent(
+  petId: number,
+  treatmentId: number,
+  productName: string,
+  applicationDate: Date,
+  nextDueDate: Date | undefined,
+  createdById: number
+): Promise<number> {
+  let description = `Vermífugo: ${productName}\nAplicação: ${applicationDate.toLocaleDateString('pt-BR')}`;
+  if (nextDueDate) description += `\nPróxima aplicação: ${nextDueDate.toLocaleDateString('pt-BR')}`;
+
+  const eventId = await addCalendarEvent({
+    title: `🪱 Vermífugo: ${productName}`,
+    description,
+    eventDate: applicationDate,
+    eventType: "preventive",
+    petId,
+    isAllDay: true,
+    linkedResourceType: "preventive_deworming",
+    linkedResourceId: treatmentId,
+    autoCreated: true,
+    createdById,
+  });
+
+  return eventId;
+}
+
+/**
+ * Automatically create calendar event from health/behavior log
+ */
+export async function autoCreateHealthLogEvent(
+  petId: number,
+  logId: number,
+  recordedAt: Date,
+  mood: string | undefined,
+  behavior: string | undefined,
+  stool: string | undefined,
+  appetite: string | undefined,
+  waterIntake: string | undefined,
+  notes: string | undefined,
+  createdById: number
+): Promise<number> {
+  // Build title based on most relevant info
+  let title = '📋 Registro de Saúde';
+  if (behavior) title = `📋 Comportamento: ${behavior}`;
+  else if (mood) title = `📋 Humor: ${mood}`;
+
+  // Build description
+  let description = '';
+  if (mood) description += `Humor: ${mood}\n`;
+  if (behavior) description += `Comportamento: ${behavior}\n`;
+  if (stool) description += `Fezes: ${stool}\n`;
+  if (appetite) description += `Apetite: ${appetite}\n`;
+  if (waterIntake) description += `Água: ${waterIntake}\n`;
+  if (notes) description += `\nObservações: ${notes}`;
+
+  const eventId = await addCalendarEvent({
+    title,
+    description: description.trim(),
+    eventDate: recordedAt,
+    eventType: "medical",
+    petId,
+    isAllDay: false,
+    linkedResourceType: "health_log",
+    linkedResourceId: logId,
+    autoCreated: true,
+    createdById,
+  });
+
+  return eventId;
+}

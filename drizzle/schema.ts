@@ -301,6 +301,10 @@ export const calendarEvents = mysqlTable("calendar_events", {
   photoUrls: json("photoUrls").$type<string[]>(), // Array of photo URLs
   photoKeys: json("photoKeys").$type<string[]>(), // Array of S3 keys
   logIds: json("logIds").$type<number[]>(), // Array of dailyLogs IDs
+  // Resource linking for automatic integration
+  linkedResourceType: mysqlEnum("linkedResourceType", ["medication", "vaccine", "preventive_flea", "preventive_deworming", "health_log"]),
+  linkedResourceId: int("linkedResourceId"), // ID of the linked resource
+  autoCreated: boolean("autoCreated").default(false).notNull(), // Indica se foi criado automaticamente
   reminderSent: boolean("reminderSent").default(false).notNull(),
   createdById: int("createdById").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
