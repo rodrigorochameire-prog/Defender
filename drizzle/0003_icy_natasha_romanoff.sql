@@ -1,0 +1,1 @@
+ALTER TABLE `pets` ADD `credits` int DEFAULT 0 NOT NULL;
