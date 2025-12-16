@@ -10,13 +10,13 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-# Instala tudo
+# Instala tudo para o build
 RUN pnpm install
 
 # Copia codigo
 COPY . .
 
-# --- AQUI ESTA A MAGICA: IMPORTAR VARIAVEIS PARA O BUILD ---
+# Importa variaveis para o build
 ARG VITE_STRIPE_PUBLISHABLE_KEY
 ARG VITE_ANALYTICS_ENDPOINT
 ARG VITE_ANALYTICS_WEBSITE_ID
@@ -24,9 +24,8 @@ ARG VITE_ANALYTICS_WEBSITE_ID
 ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
 ENV VITE_ANALYTICS_ENDPOINT=$VITE_ANALYTICS_ENDPOINT
 ENV VITE_ANALYTICS_WEBSITE_ID=$VITE_ANALYTICS_WEBSITE_ID
-# -----------------------------------------------------------
 
-# Constroi o site (agora com as variaveis visiveis)
+# Constroi o site
 RUN pnpm build
 
 # Production stage
@@ -40,7 +39,10 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-RUN pnpm install --prod
+# --- MUDANÇA CRUCIAL AQUI ---
+# Forçamos o modo desenvolvimento temporariamente para instalar o Vite
+RUN NODE_ENV=development pnpm install
+# ----------------------------
 
 # Copia arquivos finais
 COPY --from=builder /app/dist ./dist
@@ -51,6 +53,7 @@ COPY --from=builder /app/shared ./shared
 RUN mkdir -p storage
 
 EXPOSE 3000
+# Define produção novamente para o site rodar otimizado
 ENV NODE_ENV=production
 
 CMD ["pnpm", "start"]
