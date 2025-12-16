@@ -222,9 +222,12 @@ export default function TutorMedications() {
                       <Input
                         id="customMedType"
                         name="customMedType"
-                        placeholder="Ex: Antibiótico, Anti-inflamatório, Suplemento"
+                        placeholder="Ex: Antibiótico, Anti-inflamatório, Suplemento, Especial"
                         required={customMedication}
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Digite qualquer tipo que desejar
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="customMedDescription">Descrição</Label>

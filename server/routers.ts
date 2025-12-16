@@ -981,7 +981,7 @@ export const appRouter = router({
     addToLibrary: adminProcedure
       .input(z.object({
         name: z.string(),
-        type: z.enum(["preventive", "treatment", "supplement"]),
+        type: z.string(), // Changed from enum to string to allow custom medication types
         description: z.string().optional(),
         commonDosage: z.string().optional(),
       }))

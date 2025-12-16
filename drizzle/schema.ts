@@ -194,7 +194,7 @@ export type InsertPetVaccination = typeof petVaccinations.$inferInsert;
 export const medicationLibrary = mysqlTable("medication_library", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
-  type: mysqlEnum("type", ["preventive", "treatment", "supplement"]).notNull(),
+  type: varchar("type", { length: 100 }).notNull(), // Changed from enum to varchar to allow custom types
   description: text("description"),
   commonDosage: varchar("commonDosage", { length: 200 }),
   isCommon: boolean("isCommon").default(true).notNull(),
