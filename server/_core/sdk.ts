@@ -274,16 +274,16 @@ class SDKServer {
     // If user not in DB, sync from OAuth server automatically
     if (!user) {
       try {
-        // FIX: Tenta obter info remota, mas usa dados da sessão como fallback seguro
-        // Isso previne o erro "Either openId or email is required" se a API remota falhar ou vier vazia
         let userInfo: Partial<GetUserInfoWithJwtResponse> = {};
         try {
+          // Try to fetch latest info from remote auth server
           userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
         } catch (remoteError) {
           console.warn("[Auth] Warning: Could not fetch detailed user info from remote:", remoteError);
         }
 
-        // Usa os dados do cookie (confiáveis pois o JWT foi verificado) se os remotos falharem
+        // FALLBACK LOGIC:
+        // If remote fetch fails, rely on session data (verified via JWT)
         const finalOpenId = userInfo.openId || sessionUserId;
         const finalName = userInfo.name || session.name || "Unknown User";
 
@@ -291,11 +291,13 @@ class SDKServer {
              throw new Error("Critical: No openId available even from session.");
         }
 
+        // DATABASE SYNC:
         await db.upsertUser({
           openId: finalOpenId,
           name: finalName,
           email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          // FIX: Default to "email" if loginMethod is missing/null to prevent DB error
+          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? "email",
           lastSignedIn: signedInAt,
         });
         
