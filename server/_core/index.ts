@@ -46,7 +46,7 @@ async function startServer() {
   app.use("/api", uploadRouter);
   
   // WhatsApp webhook
-  const { whatsappWebhookRouter } = await import("../webhooks/whatsapp");
+  const { whatsappWebhookRouter } = await import("../webhooks/Whatsapp");
   app.use("/api", whatsappWebhookRouter);
   // tRPC API
   app.use(
