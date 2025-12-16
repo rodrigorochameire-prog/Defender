@@ -28,16 +28,21 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      // FIX: Adicionado valores padrão para evitar erro "Column cannot be null"
+      // Se a API não retornar loginMethod, assumimos "email" ou "oauth" para não quebrar o banco
+      const loginMethod = userInfo.loginMethod ?? userInfo.platform ?? "email";
+      const userName = userInfo.name || "Usuário sem nome";
+
       await db.upsertUser({
         openId: userInfo.openId,
-        name: userInfo.name || null,
-        email: userInfo.email ?? null,
-        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+        name: userName,
+        email: userInfo.email ?? null, // O banco permite email null, então isso não trava
+        loginMethod: loginMethod,      // O banco NÃO permite null, agora tem fallback
         lastSignedIn: new Date(),
       });
 
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {
-        name: userInfo.name || "",
+        name: userName,
         expiresInMs: ONE_YEAR_MS,
       });
 
@@ -47,7 +52,8 @@ export function registerOAuthRoutes(app: Express) {
       res.redirect(302, "/");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
-      res.status(500).json({ error: "OAuth callback failed" });
+      // Redireciona para login com erro em vez de mostrar JSON puro
+      res.redirect(302, "/login?error=oauth_failed");
     }
   });
 }
