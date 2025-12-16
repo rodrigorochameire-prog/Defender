@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 
-# Instala dependencias sem travar versao (evita erros de lockfile)
+# Instala dependencias
 RUN pnpm install
 
 # Copia todo o codigo fonte
@@ -34,16 +34,18 @@ COPY patches ./patches
 # Instala apenas dependencias de producao
 RUN pnpm install --prod
 
-# --- AQUI ESTAVA O ERRO, REMOVEMOS A LINHA DO CLIENT/DIST ---
+# --- COPIA ARQUIVOS FINAIS ---
 
-# Copia a pasta dist (onde o site realmente foi criado)
+# Copia a pasta dist
 COPY --from=builder /app/dist ./dist
 
-# Copia outras pastas necessarias
+# Copia pastas do backend
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
-COPY --from=builder /app/storage ./storage
+
+# EM VEZ DE COPIAR, CRIA A PASTA STORAGE VAZIA
+RUN mkdir -p storage
 
 # Expose port
 EXPOSE 3000
