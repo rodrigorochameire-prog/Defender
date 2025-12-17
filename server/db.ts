@@ -3893,7 +3893,7 @@ export async function getPetsWithTutors() {
 // ============================================
 
 /**
- * Automatically create calendar event from medication
+ * Automatically create calendar event from medication (single dose)
  */
 export async function autoCreateMedicationEvent(
   petId: number,
@@ -3920,6 +3920,63 @@ export async function autoCreateMedicationEvent(
   });
 
   return eventId;
+}
+
+/**
+ * Create daily medication events for entire treatment period
+ */
+export async function autoCreateMedicationPeriod(
+  petId: number,
+  medicationId: number,
+  medicationName: string,
+  startDate: Date,
+  endDate: Date | undefined,
+  dosage: string,
+  frequency: string | undefined,
+  createdById: number
+): Promise<number[]> {
+  const eventIds: number[] = [];
+
+  // If no end date, create only one event
+  if (!endDate) {
+    const eventId = await autoCreateMedicationEvent(
+      petId,
+      medicationId,
+      medicationName,
+      startDate,
+      dosage,
+      frequency,
+      createdById
+    );
+    return [eventId];
+  }
+
+  // Create events for each day in the period
+  const currentDate = new Date(startDate);
+  const finalDate = new Date(endDate);
+
+  // Limit to avoid creating too many events (max 180 days)
+  const maxDays = 180;
+  let dayCount = 0;
+
+  while (currentDate <= finalDate && dayCount < maxDays) {
+    const eventId = await autoCreateMedicationEvent(
+      petId,
+      medicationId,
+      medicationName,
+      new Date(currentDate),
+      dosage,
+      frequency,
+      createdById
+    );
+    eventIds.push(eventId);
+
+    // Move to next day
+    currentDate.setDate(currentDate.getDate() + 1);
+    dayCount++;
+  }
+
+  return eventIds;
 }
 
 /**

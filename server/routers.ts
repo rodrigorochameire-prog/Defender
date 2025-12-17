@@ -1102,13 +1102,14 @@ export const appRouter = router({
           changeType: "create",
         });
 
-        // Auto-create calendar event for the start date
+        // Auto-create calendar events for entire treatment period
         const medName = input.customMedName || (await db.getMedicationLibrary()).find(m => m.id === medicationId)?.name || "Medicamento";
-        await db.autoCreateMedicationEvent(
+        await db.autoCreateMedicationPeriod(
           input.petId,
           id,
           medName,
           input.startDate,
+          input.endDate,
           input.dosage,
           input.frequency,
           ctx.user.id
