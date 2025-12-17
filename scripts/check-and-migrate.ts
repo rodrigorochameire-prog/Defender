@@ -1,4 +1,4 @@
-import { db } from "../server/db";
+import { getDb } from "../server/db";
 import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/mysql2/migrator";
 
@@ -14,6 +14,12 @@ import { migrate } from "drizzle-orm/mysql2/migrator";
 async function checkAndMigrate() {
   try {
     console.log("🔍 Verificando estado do banco de dados...");
+
+    const db = await getDb();
+    if (!db) {
+      console.error("❌ Não foi possível conectar ao banco de dados");
+      process.exit(1);
+    }
 
     // Verificar se as colunas já existem
     const columns = await db.execute<any>(sql`
