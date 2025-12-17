@@ -30,9 +30,13 @@ export default function AdminCredits() {
   const [isAddCreditDialogOpen, setIsAddCreditDialogOpen] = useState(false);
   const [selectedPetId, setSelectedPetId] = useState<number | null>(null);
 
-  const { data: pets } = trpc.pets.list.useQuery();
-  const { data: stats } = trpc.credits.getStats.useQuery();
+  const { data: pets, isLoading: petsLoading, error: petsError } = trpc.pets.list.useQuery();
+  const { data: stats, isLoading: statsLoading, error: statsError } = trpc.credits.getStats.useQuery();
   const utils = trpc.useUtils();
+
+  if (petsError || statsError) {
+    console.error("Error loading credits page:", petsError || statsError);
+  }
 
   const addPackage = trpc.credits.addPackage.useMutation({
     onSuccess: () => {
@@ -71,6 +75,38 @@ export default function AdminCredits() {
   // Calcular estatísticas
   const totalCredits = pets?.reduce((sum, pet) => sum + (pet.credits || 0), 0) || 0;
   const petsWithLowCredits = pets?.filter(pet => (pet.credits || 0) < 5).length || 0;
+
+  if (petsError || statsError) {
+    return (
+      <AdminLayout>
+        <div className="container py-8">
+          <Card className="border-red-200 bg-red-50/50">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-red-600 font-medium mb-2">Erro ao carregar créditos</p>
+                <p className="text-sm text-muted-foreground">
+                  {(petsError || statsError)?.message}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (petsLoading || statsLoading) {
+    return (
+      <AdminLayout>
+        <div className="container py-8 flex justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>

@@ -259,7 +259,8 @@ export function WallFeed({ petId }: WallFeedProps) {
               </div>
             )}
             
-            <div className="flex items-center justify-between gap-2">             <div>
+            <div className="flex items-center justify-between gap-2">
+              <div>
                 <Input
                   type="file"
                   accept="image/*,video/*"
@@ -268,14 +269,15 @@ export function WallFeed({ petId }: WallFeedProps) {
                   id="post-media"
                   onChange={handleFileSelect}
                 />
-                <label htmlFor="post-media">
-                  <Button variant="outline" size="sm" asChild>
-                    <span className="cursor-pointer">
-                      <ImageIcon className="h-4 w-4 mr-2" />
-                      Adicionar Fotos/Vídeos
-                    </span>
-                  </Button>
-                </label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => document.getElementById('post-media')?.click()}
+                >
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Adicionar Fotos/Vídeos
+                </Button>
               </div>
               
               <Button

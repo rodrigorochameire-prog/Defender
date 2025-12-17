@@ -106,11 +106,16 @@ export default function AdminMedicationsUnified() {
   const handleUpdateMedication = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
+    const startDateStr = formData.get("startDate") as string;
     const endDateStr = formData.get("endDate") as string;
+
     updateMedication.mutate({
       id: editingMed.id,
       petId: editingMed.petId,
+      dosage: formData.get("dosage") as string,
+      frequency: formData.get("frequency") as string,
+      startDate: startDateStr ? new Date(startDateStr) : undefined,
       endDate: endDateStr ? new Date(endDateStr) : undefined,
       notes: formData.get("notes") as string || undefined,
     });
