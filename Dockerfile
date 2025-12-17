@@ -61,6 +61,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
+COPY --from=builder /app/scripts ./scripts
 
 # --- AQUI ESTAVA FALTANDO: Copia a configuração do banco ---
 # Sem isso, o db:push não sabe como criar as tabelas
@@ -76,6 +77,6 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # --- COMANDO FINAL ---
-# 1. Empurra as tabelas para o banco (db:push)
+# 1. Aplica migrações com verificações de segurança (db:migrate)
 # 2. Inicia o servidor (start)
-CMD ["sh", "-c", "pnpm db:push && pnpm start"]
+CMD ["sh", "-c", "pnpm db:migrate && pnpm start"]

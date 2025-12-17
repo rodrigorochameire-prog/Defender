@@ -1,4 +1,21 @@
-# 🚀 Quick Start - Deploy TucoCare Pro
+# Início Rápido - TucoCare Pro
+
+## Importante: Erro de Coluna Duplicada
+
+Se você está vendo o erro `Duplicate column name 'linkedResourceType'`, siga este guia.
+
+## Solução Rápida
+
+O Dockerfile foi atualizado para usar migrações seguras. Basta rebuild o contêiner:
+
+```bash
+# Para ambientes Docker/containerizados
+docker-compose down
+docker-compose build --no-cache
+docker-compose up
+```
+
+## 🚀 Quick Start - Deploy TucoCare Pro
 
 ## 📦 O que você tem aqui
 
@@ -87,8 +104,8 @@ Leia `DEPLOY_GUIDE.md` para:
 # Instalar dependências
 pnpm install
 
-# Rodar migrations
-pnpm db:push
+# Rodar migrations (USE ESTE, NÃO db:push!)
+pnpm db:migrate
 
 # Desenvolvimento
 pnpm dev
@@ -129,7 +146,7 @@ pnpm test
 - [ ] Todas as env vars configuradas
 - [ ] S3 bucket criado
 - [ ] Stripe configurado
-- [ ] `pnpm db:push` executado
+- [ ] `pnpm db:migrate` executado
 - [ ] `pnpm build` rodando sem erros
 - [ ] Testes passando (`pnpm test`)
 - [ ] SSL/HTTPS configurado

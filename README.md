@@ -2,6 +2,23 @@
 
 Sistema completo de gerenciamento de creche para pets com calendário avançado.
 
+## Erro de Migração? Leia Isto Primeiro
+
+Se você está vendo o erro `Duplicate column name 'linkedResourceType'`:
+
+```bash
+# Para Docker
+docker-compose build --no-cache
+docker-compose up
+
+# Para desenvolvimento local
+npm run db:migrate
+npm run build
+npm start
+```
+
+Veja [QUICK_FIX.md](./QUICK_FIX.md) para mais detalhes.
+
 ## Novidades
 
 ### Calendário com Eventos Multi-Dias

@@ -211,7 +211,7 @@ VITE_ANALYTICS_ENDPOINT="https://analytics.seudominio.com"
 6. Instale e build:
    ```bash
    pnpm install
-   pnpm db:push  # Cria tabelas no banco
+   pnpm db:migrate  # Cria tabelas no banco (USE ESTE, NÃO db:push!)
    pnpm build
    ```
 
@@ -269,7 +269,7 @@ VITE_ANALYTICS_ENDPOINT="https://analytics.seudominio.com"
 3. Copie a connection string
 4. No projeto, rode:
    ```bash
-   pnpm db:push
+   pnpm db:migrate
    ```
 
 ### Opção 2: Railway MySQL
