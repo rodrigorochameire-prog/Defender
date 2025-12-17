@@ -1,6 +1,13 @@
 import { Server as HTTPServer } from "http";
 import { Server, Socket } from "socket.io";
-import jwt from "jsonwebtoken";
+import { sdk } from "./sdk";
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
+import { users } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
+
+const connection = mysql.createPool(process.env.DATABASE_URL!);
+const db = drizzle(connection);
 
 let io: Server | null = null;
 
@@ -21,7 +28,7 @@ export function initializeWebSocket(httpServer: HTTPServer) {
   });
 
   // Authentication middleware
-  io.use((socket: AuthenticatedSocket, next) => {
+  io.use(async (socket: AuthenticatedSocket, next) => {
     const token = socket.handshake.auth.token;
 
     if (!token) {
@@ -29,26 +36,34 @@ export function initializeWebSocket(httpServer: HTTPServer) {
     }
 
     try {
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        return next(new Error("JWT_SECRET not configured"));
+      // Verify session token using SDK
+      const session = await sdk.verifySession(token);
+
+      if (!session) {
+        return next(new Error("Authentication error: Invalid session token"));
       }
 
-      const decoded = jwt.verify(token, jwtSecret) as {
-        openId: string;
-        role: "admin" | "user";
-      };
+      // Get user from database to get role
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.openId, session.openId))
+        .limit(1);
 
-      socket.userId = decoded.openId;
-      socket.userRole = decoded.role;
+      if (!user) {
+        return next(new Error("Authentication error: User not found"));
+      }
+
+      socket.userId = user.openId || String(user.id);
+      socket.userRole = user.role;
 
       // Join user-specific room
-      socket.join(`user:${decoded.openId}`);
+      socket.join(`user:${socket.userId}`);
 
       // Join role-specific room
-      socket.join(`role:${decoded.role}`);
+      socket.join(`role:${user.role}`);
 
-      console.log(`[WebSocket] User ${decoded.openId} (${decoded.role}) connected`);
+      console.log(`[WebSocket] User ${socket.userId} (${user.role}) connected`);
 
       next();
     } catch (error) {

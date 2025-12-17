@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import Cookies from "js-cookie";
+import { COOKIE_NAME } from "../../../shared/const";
 
 export interface Notification {
   type: string;
@@ -17,8 +18,8 @@ export function useWebSocket() {
 
   const connect = useCallback(() => {
     // Get auth token from cookie
-    const token = Cookies.get("session");
-    
+    const token = Cookies.get(COOKIE_NAME);
+
     if (!token) {
       console.warn("[WebSocket] No auth token found");
       return;
