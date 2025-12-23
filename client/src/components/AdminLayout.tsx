@@ -36,6 +36,10 @@ import {
   User as UserIcon,
   Brain,
   UtensilsCrossed,
+  MessageCircle,
+  Wallet,
+  Settings,
+  CheckCircle2,
 } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -48,29 +52,26 @@ interface AdminLayoutProps {
 
 const navigationSections = [
   {
-    title: "Operacional da Creche",
+    title: "Operacional",
     icon: Dog,
     items: [
       { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
       { name: "Pets", href: "/admin/pets", icon: Dog },
-      { name: "Aprovações", href: "/admin/pet-approval", icon: Shield },
-      { name: "Logs Diários", href: "/admin/logs", icon: FileText },
-      { name: "Calendário Geral", href: "/admin/health-calendar", icon: Calendar },
-      { name: "Mural", href: "/admin/wall", icon: MessageSquare },
-      { name: "Chat", href: "/admin/chat", icon: MessageSquare },
+      { name: "Aprovações", href: "/admin/pet-approval", icon: CheckCircle2 },
     ],
   },
   {
-    title: "Gestão de Diárias",
-    icon: CreditCard,
+    title: "Comunicação",
+    icon: MessageCircle,
     items: [
-      { name: "Planos de Assinatura", href: "/admin/plans", icon: Package },
-      { name: "Pacotes & Créditos", href: "/admin/credits", icon: CreditCard },
-      { name: "Finanças", href: "/admin/finances", icon: TrendingUp },
+      { name: "Logs Diários", href: "/admin/logs", icon: FileText },
+      { name: "Mural", href: "/admin/wall", icon: MessageSquare },
+      { name: "Chat", href: "/admin/chat", icon: MessageCircle },
+      { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare },
     ],
   },
   {
-    title: "Saúde & Cuidados",
+    title: "Saúde",
     icon: Heart,
     items: [
       { name: "Vacinas", href: "/admin/vaccines-unified", icon: Syringe },
@@ -78,19 +79,28 @@ const navigationSections = [
       { name: "Preventivos", href: "/admin/preventives-unified", icon: Shield },
       { name: "Comportamento", href: "/admin/behavior", icon: Brain },
       { name: "Ração", href: "/admin/food", icon: UtensilsCrossed },
-      { name: "Documentos", href: "/admin/documents", icon: FileText },
       { name: "Notificações", href: "/admin/health-notifications", icon: Bell },
     ],
   },
   {
-    title: "Administrativo",
-    icon: Briefcase,
+    title: "Pacotes & Financeiro",
+    icon: Wallet,
+    items: [
+      { name: "Planos", href: "/admin/plans", icon: Package },
+      { name: "Créditos", href: "/admin/credits", icon: CreditCard },
+      { name: "Finanças", href: "/admin/finances", icon: TrendingUp },
+    ],
+  },
+  {
+    title: "Gestão",
+    icon: Settings,
     items: [
       { name: "Tutores", href: "/admin/tutors", icon: Users },
       { name: "Usuários", href: "/admin/users", icon: UserCog },
-      { name: "Logs de Auditoria", href: "/admin/audit-logs", icon: ScrollText },
+      { name: "Calendário", href: "/admin/health-calendar", icon: Calendar },
+      { name: "Documentos", href: "/admin/documents", icon: FileText },
+      { name: "Auditoria", href: "/admin/audit-logs", icon: ScrollText },
       { name: "Cogestão", href: "/admin/comanagement", icon: GitMerge },
-      { name: "WhatsApp Business", href: "/admin/whatsapp", icon: MessageSquare },
     ],
   },
 ];
