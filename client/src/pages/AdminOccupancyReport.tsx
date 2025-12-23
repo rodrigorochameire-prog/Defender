@@ -1,5 +1,5 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, TrendingUp, Users, DollarSign } from "lucide-react";
@@ -37,11 +37,11 @@ export default function AdminOccupancyReport() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center h-96">
           <div className="text-muted-foreground">Carregando relatório...</div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
@@ -54,7 +54,7 @@ export default function AdminOccupancyReport() {
   };
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -251,6 +251,6 @@ export default function AdminOccupancyReport() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

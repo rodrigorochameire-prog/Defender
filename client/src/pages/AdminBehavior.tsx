@@ -1,5 +1,5 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -163,19 +163,19 @@ export default function AdminBehavior() {
 
   if (loadingPets) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="container max-w-7xl py-8 animate-fade-in">
           <div className="flex items-center justify-center h-64">
             <div className="text-muted-foreground">Carregando...</div>
           </div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   if (pets.length === 0) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="container max-w-7xl py-8 animate-fade-in">
           <div className="text-center py-12">
             <Brain className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
@@ -183,12 +183,12 @@ export default function AdminBehavior() {
             <p className="text-muted-foreground">Cadastre um pet para começar a registrar comportamentos.</p>
           </div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
     <div className="container max-w-7xl py-8 animate-fade-in">
       <div className="mb-8 flex items-start justify-between">
         <div>
@@ -572,6 +572,6 @@ export default function AdminBehavior() {
         </DialogContent>
       </Dialog>
     </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

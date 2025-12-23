@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -157,7 +157,7 @@ export default function AdminDocuments() {
   };
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
@@ -390,6 +390,6 @@ export default function AdminDocuments() {
         </DialogContent>
       </Dialog>
     </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

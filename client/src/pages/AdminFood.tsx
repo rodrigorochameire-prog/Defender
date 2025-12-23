@@ -1,5 +1,5 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,16 +63,16 @@ export default function AdminFood() {
 
   if (petsLoading || statsLoading) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center h-96">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="container py-8 space-y-8 animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -286,6 +286,6 @@ export default function AdminFood() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

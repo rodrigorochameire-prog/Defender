@@ -43,7 +43,6 @@ import {
   History,
   Bug,
   Worm,
-  Brain,
   AlertCircle,
   Calendar,
   FileText
@@ -74,7 +73,6 @@ export default function AdminHealth() {
   const { data: preventiveLibrary, refetch: refetchPreventiveLibrary } = trpc.preventives.library.useQuery();
   const { data: pets, refetch: refetchPets } = trpc.pets.list.useQuery();
   const { data: allChanges } = trpc.changeHistory.getRecentChanges.useQuery({ limit: 200 });
-  const { data: behaviors } = trpc.behavior.list.useQuery();
 
   // Vaccines Mutations
   const addVaccineToLibrary = trpc.vaccines.addToLibrary.useMutation({
@@ -322,7 +320,7 @@ export default function AdminHealth() {
     if (mainTab === "vaccines") return Syringe;
     if (mainTab === "medications") return Pill;
     if (mainTab === "preventives") return Shield;
-    return Brain;
+    return Syringe;
   };
 
   const MainIcon = getMainIcon();
@@ -337,13 +335,13 @@ export default function AdminHealth() {
               Central de Saúde
             </h1>
             <p className="text-muted-foreground mt-1">
-              Gerencie vacinas, medicamentos, preventivos e comportamento dos pets
+              Gerencie vacinas, medicamentos e preventivos dos pets
             </p>
           </div>
         </div>
 
         <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-3 lg:w-auto">
             <TabsTrigger value="vaccines" className="flex items-center gap-2">
               <Syringe className="h-4 w-4" />
               Vacinas
@@ -356,13 +354,9 @@ export default function AdminHealth() {
               <Shield className="h-4 w-4" />
               Preventivos
             </TabsTrigger>
-            <TabsTrigger value="behavior" className="flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              Comportamento
-            </TabsTrigger>
           </TabsList>
 
-          {/* Vaccines, Medications, Preventives - Similar Structure */}
+          {/* Vaccines, Medications, Preventives */}
           {(mainTab === "vaccines" || mainTab === "medications" || mainTab === "preventives") && (
             <Tabs value={subTab} onValueChange={setSubTab} className="space-y-4">
               <TabsList>
@@ -549,49 +543,6 @@ export default function AdminHealth() {
                 </Card>
               </TabsContent>
             </Tabs>
-          )}
-
-          {/* Behavior Tab */}
-          {mainTab === "behavior" && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5" />
-                  Comportamento dos Pets
-                </CardTitle>
-                <CardDescription>
-                  Registre e acompanhe padrões comportamentais
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {behaviors && behaviors.length > 0 ? (
-                  <div className="grid gap-4">
-                    {behaviors.map((behavior: any) => {
-                      const pet = pets?.find(p => p.id === behavior.petId);
-                      return (
-                        <div key={behavior.id} className="p-4 border rounded-lg space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="font-medium">{pet?.name}</div>
-                            <Badge variant={behavior.type === "positive" ? "default" : "destructive"}>
-                              {behavior.type}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{behavior.description}</p>
-                          <div className="text-xs text-muted-foreground">
-                            {format(new Date(behavior.observedAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Brain className="h-12 w-12 mx-auto opacity-50 mb-4" />
-                    <p>Nenhum registro de comportamento ainda</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           )}
         </Tabs>
 

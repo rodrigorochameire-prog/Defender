@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dog, Users, Calendar, TrendingUp, AlertCircle, CheckCircle2, Clock, Activity, Pill, Syringe, Shield, Brain, Plus } from "lucide-react";
 import { Link } from "wouter";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { HealthBehaviorModal } from "@/components/HealthBehaviorModal";
 import { useState } from "react";
 
@@ -20,16 +20,16 @@ export default function AdminDashboard() {
 
   if (statsLoading || petsLoading) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div className="space-y-2">
@@ -442,6 +442,6 @@ export default function AdminDashboard() {
           // Optionally refresh data
         }}
       />
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

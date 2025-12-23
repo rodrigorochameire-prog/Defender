@@ -62,11 +62,12 @@ const navigationSections = [
     ],
   },
   {
-    title: "Saúde",
+    title: "Cuidados",
     icon: Heart,
     items: [
       { name: "Central de Saúde", href: "/admin/health", icon: Heart },
       { name: "Ração", href: "/admin/food", icon: UtensilsCrossed },
+      { name: "Comportamento", href: "/admin/behavior", icon: Brain },
     ],
   },
   {
@@ -100,6 +101,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { user } = useAuth();
   const [location, setLocation] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const logout = trpc.auth.logout.useMutation({
     onSuccess: () => {
       toast.success("Logout realizado com sucesso!");
@@ -123,41 +125,53 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-screen w-64 bg-card border-r transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 h-screen bg-card border-r transition-all duration-300 lg:translate-x-0 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } ${isCollapsed ? "w-20" : "w-64"}`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between p-6 border-b">
-            <div className="flex items-center gap-3">
+            {!isCollapsed ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <img
+                    src="/tetecare-logo.png"
+                    alt="Tetê Care Logo"
+                    className="w-12 h-12 rounded-full object-cover border-2 border-primary"
+                  />
+                  <div>
+                    <h1 className="font-bold text-lg">Tetê Care</h1>
+                    <p className="text-xs text-muted-foreground">Admin</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  onClick={() => setIsSidebarOpen(false)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </>
+            ) : (
               <img
                 src="/tetecare-logo.png"
                 alt="Tetê Care Logo"
-                className="w-12 h-12 rounded-full object-cover border-2 border-primary"
+                className="w-12 h-12 rounded-full object-cover border-2 border-primary mx-auto"
               />
-              <div>
-                <h1 className="font-bold text-lg">Tetê Care</h1>
-                <p className="text-xs text-muted-foreground">Admin</p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
+            )}
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
             {navigationSections.map((section) => (
               <div key={section.title}>
-                <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {section.title}
-                </h3>
+                {!isCollapsed && (
+                  <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {section.title}
+                  </h3>
+                )}
                 <div className="space-y-1">
                   {section.items.map((item) => {
                     const isActive = location === item.href || location.startsWith(item.href + "/");
@@ -168,14 +182,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                           setLocation(item.href);
                           setIsSidebarOpen(false);
                         }}
+                        title={isCollapsed ? item.name : undefined}
                         className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           isActive
                             ? "bg-primary text-primary-foreground"
                             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
+                        } ${isCollapsed ? "justify-center" : ""}`}
                       >
                         <item.icon className="h-4 w-4" />
-                        {item.name}
+                        {!isCollapsed && item.name}
                       </button>
                     );
                   })}
@@ -184,20 +199,37 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             ))}
           </nav>
 
+          {/* Collapse button */}
+          <div className="p-4 border-t hidden lg:block">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="w-full justify-center"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          </div>
+
           {/* User menu */}
           <div className="p-4 border-t">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start gap-3 h-auto py-3">
+                <Button
+                  variant="ghost"
+                  className={`w-full h-auto py-3 ${isCollapsed ? "justify-center px-0" : "justify-start gap-3"}`}
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-gradient-primary text-white">
                       {user?.name?.[0] || "A"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium">{user?.name || "Admin"}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
-                  </div>
+                  {!isCollapsed && (
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-medium">{user?.name || "Admin"}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    </div>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -218,7 +250,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className={`transition-all duration-300 ${isCollapsed ? "lg:pl-20" : "lg:pl-64"}`}>
         {/* Mobile header */}
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b lg:hidden">
           <div className="flex items-center justify-between p-4">

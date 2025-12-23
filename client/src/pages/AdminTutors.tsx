@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,7 +141,7 @@ export default function AdminTutors() {
   ) || [];
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Gestão de Tutores</h1>
@@ -438,6 +438,6 @@ export default function AdminTutors() {
         </DialogContent>
       </Dialog>
     </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

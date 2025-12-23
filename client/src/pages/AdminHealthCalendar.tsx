@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
@@ -477,7 +477,7 @@ export default function AdminHealthCalendar() {
   };
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -1101,6 +1101,6 @@ export default function AdminHealthCalendar() {
       {/* Booking Requests Management */}
       <BookingRequestsManager />
     </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

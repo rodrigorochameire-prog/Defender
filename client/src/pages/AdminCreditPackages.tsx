@@ -1,5 +1,5 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,7 +120,7 @@ export default function AdminCreditPackages() {
   };
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="space-y-8 animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -495,6 +495,6 @@ export default function AdminCreditPackages() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

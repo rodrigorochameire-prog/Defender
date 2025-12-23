@@ -1,4 +1,4 @@
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -98,7 +98,7 @@ export default function AdminUsers() {
   const userCount = users?.filter(u => u.role === "user").length || 0;
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="container max-w-7xl py-8 space-y-8 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
@@ -330,6 +330,6 @@ export default function AdminUsers() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

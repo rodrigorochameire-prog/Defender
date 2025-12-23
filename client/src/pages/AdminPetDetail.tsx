@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,17 +41,17 @@ export default function AdminPetDetail() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   if (!pet) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="container mx-auto py-8">
           <Card>
             <CardContent className="py-8 text-center">
@@ -64,7 +64,7 @@ export default function AdminPetDetail() {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
@@ -99,7 +99,7 @@ export default function AdminPetDetail() {
   };
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="container mx-auto py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -255,6 +255,6 @@ export default function AdminPetDetail() {
           refetch();
         }}
       />
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

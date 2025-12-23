@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +61,7 @@ export default function AdminPetApproval() {
   }
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
     <div className="container py-8 space-y-6">
       {/* Header */}
       <div>
@@ -236,6 +236,6 @@ export default function AdminPetApproval() {
         </DialogContent>
       </Dialog>
     </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

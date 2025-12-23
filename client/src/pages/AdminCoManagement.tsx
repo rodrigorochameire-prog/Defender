@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { trpc } from "../lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -107,7 +107,7 @@ export default function AdminCoManagement() {
   };
   
   return (
-    <DashboardLayout>
+    <AdminLayout>
     <div className="container max-w-7xl py-8 space-y-8 animate-fade-in">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Cogestão Admin-Tutor</h1>
@@ -328,6 +328,6 @@ export default function AdminCoManagement() {
         </CardContent>
       </Card>
     </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

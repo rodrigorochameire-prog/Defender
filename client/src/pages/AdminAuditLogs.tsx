@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -36,7 +36,7 @@ export default function AdminAuditLogs() {
   };
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="container max-w-7xl py-8 space-y-6 animate-fade-in">
         {/* Header */}
         <div>
@@ -145,6 +145,6 @@ export default function AdminAuditLogs() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

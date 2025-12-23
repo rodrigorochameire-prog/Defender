@@ -1,5 +1,5 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { PremiumCalendar, CalendarEvent } from "@/components/PremiumCalendar";
 import {
   Dialog,
@@ -255,7 +255,7 @@ export default function AdminCalendar() {
   };
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="container py-8 space-y-8">
         {/* Header */}
         <div>
@@ -743,6 +743,6 @@ export default function AdminCalendar() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

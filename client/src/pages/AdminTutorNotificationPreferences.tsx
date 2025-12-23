@@ -1,5 +1,5 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,13 +43,13 @@ export default function AdminTutorNotificationPreferences() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="container max-w-7xl py-8 animate-fade-in">
           <div className="flex items-center justify-center h-64">
             <p className="text-muted-foreground">Carregando preferências...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
@@ -84,7 +84,7 @@ export default function AdminTutorNotificationPreferences() {
   const totalPreferences = allPreferences?.length || 0;
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="container max-w-7xl py-8 animate-fade-in">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Preferências de Notificações por Tutor</h1>
@@ -221,6 +221,6 @@ export default function AdminTutorNotificationPreferences() {
           ))}
         </div>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

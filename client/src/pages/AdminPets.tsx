@@ -19,7 +19,7 @@ import { Link } from "wouter";
 import { downloadCSV, formatPetsForExport } from "@/lib/exportUtils";
 import { SearchAndFilter } from "@/components/SearchAndFilter";
 import { toast } from "sonner";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 
 export default function AdminPets() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,16 +120,16 @@ export default function AdminPets() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -427,6 +427,6 @@ export default function AdminPets() {
         </DialogContent>
       </Dialog>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

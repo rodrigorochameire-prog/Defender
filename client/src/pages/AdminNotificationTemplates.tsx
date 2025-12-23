@@ -1,5 +1,5 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/AdminLayout";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,18 +88,18 @@ export default function AdminNotificationTemplates() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      <AdminLayout>
         <div className="container max-w-7xl py-8 animate-fade-in">
           <div className="flex items-center justify-center h-64">
             <p className="text-muted-foreground">Carregando templates...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="container max-w-7xl py-8 animate-fade-in">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -370,6 +370,6 @@ export default function AdminNotificationTemplates() {
           </Dialog>
         )}
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }
