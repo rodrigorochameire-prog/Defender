@@ -34,6 +34,8 @@ import {
   MessageSquare,
   Bell,
   User as UserIcon,
+  Brain,
+  UtensilsCrossed,
 } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -51,9 +53,11 @@ const navigationSections = [
     items: [
       { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
       { name: "Pets", href: "/admin/pets", icon: Dog },
+      { name: "Aprovações", href: "/admin/pet-approval", icon: Shield },
       { name: "Logs Diários", href: "/admin/logs", icon: FileText },
       { name: "Calendário Geral", href: "/admin/health-calendar", icon: Calendar },
       { name: "Mural", href: "/admin/wall", icon: MessageSquare },
+      { name: "Chat", href: "/admin/chat", icon: MessageSquare },
     ],
   },
   {
@@ -72,6 +76,9 @@ const navigationSections = [
       { name: "Vacinas", href: "/admin/vaccines-unified", icon: Syringe },
       { name: "Medicamentos", href: "/admin/medications-unified", icon: Pill },
       { name: "Preventivos", href: "/admin/preventives-unified", icon: Shield },
+      { name: "Comportamento", href: "/admin/behavior", icon: Brain },
+      { name: "Ração", href: "/admin/food", icon: UtensilsCrossed },
+      { name: "Documentos", href: "/admin/documents", icon: FileText },
       { name: "Notificações", href: "/admin/health-notifications", icon: Bell },
     ],
   },
