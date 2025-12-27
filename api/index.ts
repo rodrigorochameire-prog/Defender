@@ -25,6 +25,19 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 // Upload routes
 app.use("/api", uploadRouter);
 
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "ok", 
+    timestamp: new Date().toISOString(),
+    env: {
+      hasDbUrl: !!(process.env.DATABASE_URL || process.env.POSTGRES_URL),
+      hasSupabaseUrl: !!(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL),
+      hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    }
+  });
+});
+
 // tRPC API
 app.use(
   "/api/trpc",
@@ -33,6 +46,15 @@ app.use(
     createContext,
   })
 );
+
+// Error handler
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error("API Error:", err);
+  res.status(500).json({ 
+    error: "Internal Server Error", 
+    message: err.message || "Unknown error"
+  });
+});
 
 // Export the Express app as a serverless function handler
 export default app;
