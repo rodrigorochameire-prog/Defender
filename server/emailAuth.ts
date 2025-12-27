@@ -3,7 +3,8 @@
  * Handles user registration and login with bcrypt password hashing
  */
 
-import bcrypt from "bcrypt";
+// Use bcryptjs instead of bcrypt for serverless compatibility
+import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { getDb, getUserByEmail } from "./db";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
