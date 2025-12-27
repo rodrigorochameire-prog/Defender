@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "npm run build && npm run build:server",
+  "buildCommand": "pnpm run build && pnpm run build:server",
   "outputDirectory": "dist/public",
   "framework": null,
-  "installCommand": "bash scripts/pre-build.sh && npm install",
-  "devCommand": "npm run dev",
+  "installCommand": "bash scripts/pre-build.sh && pnpm install",
+  "devCommand": "pnpm run dev",
   "functions": {
     "api/index.js": {
       "maxDuration": 30,

@@ -1,0 +1,21 @@
+# Ignore Vercel build artifacts
+.vercel/output
+.vercel/cache
+
+# Ignore local development files
+.env.local
+.env.local.backup
+*.backup
+
+# Ignore build outputs that shouldn't be committed
+dist/
+api/index.js
+
+# Ignore pnpm store
+.pnpm-store/
+
+# Ignore system files
+.DS_Store
+
+# Ignore source files that are built
+api/index.ts

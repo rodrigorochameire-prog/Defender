@@ -1,8 +1,16 @@
 #!/bin/bash
 # Script pré-build para Vercel
-# Remove lockfiles de outros gerenciadores para forçar uso de npm
+# Prepara o ambiente para o build
 
-echo "🔧 Removendo lockfiles de outros gerenciadores..."
-rm -f pnpm-lock.yaml
-rm -f yarn.lock
-echo "✅ Lockfiles removidos. Usando npm..."
+echo "🔧 Preparando ambiente de build..."
+
+# Garante que o diretório api existe
+mkdir -p api
+
+# Remove qualquer diretório .vercel/output que possa existir (para evitar conflitos)
+if [ -d ".vercel/output" ]; then
+  echo "⚠️  Removendo .vercel/output existente..."
+  rm -rf .vercel/output
+fi
+
+echo "✅ Ambiente preparado."
