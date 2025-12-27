@@ -1873,7 +1873,7 @@ export const appRouter = router({
             photo_url: url,
             photo_key: fileKey,
             caption: photo.caption || null,
-            takenAt: photo.taken_at,
+            takenAt: photo.takenAt,
             uploaded_by_id: ctx.user.id,
           });
           

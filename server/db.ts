@@ -1204,7 +1204,7 @@ export async function getSubscriptionMetrics() {
 // Flea Treatments helpers
 export async function createFleaTreatment(data: InsertFleaTreatment) {
   const db = (await getDb())!;
-  const [result] = await db.insert(fleaTreatments).values(data);
+  const [result] = await db.insert(fleaTreatments).values(data).returning();
   return result;
 }
 
@@ -1233,7 +1233,7 @@ export async function deleteFleaTreatment(id: number) {
 // Deworming Treatments helpers
 export async function createDewormingTreatment(data: InsertDewormingTreatment) {
   const db = (await getDb())!;
-  const [result] = await db.insert(dewormingTreatments).values(data);
+  const [result] = await db.insert(dewormingTreatments).values(data).returning();
   return result;
 }
 
