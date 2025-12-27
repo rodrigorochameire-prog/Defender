@@ -1,16 +1,15 @@
-import { Router } from "express";
-import type { Request, Response } from "express";
+import { Router, Request, Response } from "express";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 
 export const uploadRouter = Router();
 
-uploadRouter.post("/upload-photo", async (req, res) => {
+uploadRouter.post("/upload-photo", async (req: Request, res: Response) => {
   try {
-    const { fileName, fileType, fileData } = (req as any).body;
+    const { fileName, fileType, fileData } = req.body;
 
     if (!fileName || !fileType || !fileData) {
-      return (res as any).status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
     // Extract base64 data
@@ -25,9 +24,9 @@ uploadRouter.post("/upload-photo", async (req, res) => {
     // Upload to S3
     const { url } = await storagePut(fileKey, buffer, fileType);
 
-    (res as any).json({ url, key: fileKey });
+    res.json({ url, key: fileKey });
   } catch (error) {
     console.error("Upload error:", error);
-    (res as any).status(500).json({ error: "Failed to upload photo" });
+    res.status(500).json({ error: "Failed to upload photo" });
   }
 });

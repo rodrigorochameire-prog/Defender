@@ -334,7 +334,7 @@ export const appRouter = router({
           await logChange({
             resourceType: "pet_data",
             resourceId: id,
-            petId: id,
+            pet_id: id,
             fieldName: "pet_info_updated",
             oldValue: null,
             newValue: changes.join(", "),
@@ -461,8 +461,8 @@ export const appRouter = router({
 
         // Update pet with new photo URL
         await db.updatePet(input.petId, {
-          photo_url: url,
-          photo_key: fileKey,
+          photoUrl: url,
+          photoKey: fileKey,
         });
 
         return { photo_url: url };
@@ -535,10 +535,10 @@ export const appRouter = router({
         
         // Record usage
         await db.addDaycareUsage({
-          pet_id: input.petId,
-          usage_date: now,
+          petId: input.petId,
+          usageDate: now,
           check_in_time: now,
-          credit_id: creditId,
+          creditId,
         });
         
         // Update pet status
@@ -754,18 +754,18 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const creditId = await db.addDaycareCredit({
           ...input,
-          remaining_days: input.packageDays,
+          remainingDays: input.packageDays,
         });
         
         // Add transaction record
         await db.addTransaction({
-          pet_id: input.petId,
+          petId: input.petId,
           type: "credit",
           category: "daycare_package",
           description: `Pacote de ${input.packageDays} dias`,
           amount: input.packagePrice,
-          transaction_date: new Date(),
-          created_by_id: ctx.user.id,
+          transactionDate: new Date(),
+          createdById: ctx.user.id,
         });
         
         return { id: creditId };
@@ -816,13 +816,13 @@ export const appRouter = router({
         
         // Add transaction record
         await db.addTransaction({
-          pet_id: input.petId,
+          petId: input.petId,
           type: "credit",
           category: "daycare_credits",
           description: input.description || `Adição de ${input.amount} créditos`,
           amount: input.amount * 50, // Assuming R$50 per credit
-          transaction_date: new Date(),
-          created_by_id: ctx.user.id,
+          transactionDate: new Date(),
+          createdById: ctx.user.id,
         });
         
         return { success: true };
@@ -839,8 +839,8 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const id = await db.addTransaction({
           ...input,
-          transaction_date: new Date(),
-          created_by_id: ctx.user.id,
+          transactionDate: new Date(),
+          createdById: ctx.user.id,
         });
         return { id };
       }),
@@ -1227,7 +1227,7 @@ export const appRouter = router({
         // Calculate next dose date
         const { calculateNextDose } = await import("./medicationScheduler");
         const nextDate = calculateNextDose(new Date(), {
-          periodicity: (med.periodicity || "daily") as any,
+          periodicity: med.periodicity || "daily",
           customInterval: med.custom_interval || undefined,
           weekDays: med.week_days ? JSON.parse(med.week_days) : undefined,
           monthDays: med.month_days ? JSON.parse(med.month_days) : undefined,
@@ -1243,7 +1243,7 @@ export const appRouter = router({
         
         if (med.dosage_progression && med.dosage_progression !== "stable") {
           currentDosage = calculateProgressiveDosage(med.dosage, {
-            dosageProgression: med.dosage_progression as any,
+            dosageProgression: med.dosage_progression,
             progressionRate: med.progression_rate || "0",
             progressionInterval: med.progression_interval || 1,
             targetDosage: med.target_dosage || undefined,
@@ -1740,8 +1740,8 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const id = await db.addTransaction({
           ...input,
-          transaction_date: new Date(),
-          created_by_id: ctx.user.id,
+          transactionDate: new Date(),
+          createdById: ctx.user.id,
         });
         return { id };
       }),
@@ -1873,7 +1873,7 @@ export const appRouter = router({
             photo_url: url,
             photo_key: fileKey,
             caption: photo.caption || null,
-            takenAt: photo.takenAt,
+            taken_at: photo.taken_at,
             uploaded_by_id: ctx.user.id,
           });
           
@@ -2167,11 +2167,12 @@ export const appRouter = router({
         }
 
         const result = await db.createFleaTreatment({
-          petId: input.petId,
-          productName: input.productName,
-          applicationDate: input.applicationDate,
-          nextDueDate: input.nextDueDate,
+          pet_id: input.petId,
+          product_name: input.productName,
+          application_date: input.applicationDate,
+          next_due_date: input.nextDueDate,
           notes: input.notes,
+          created_by_id: ctx.user.id,
         });
 
         // Track change
@@ -2179,7 +2180,7 @@ export const appRouter = router({
         await logChange({
           resourceType: "preventive",
           resourceId: result.id,
-          petId: input.petId,
+          pet_id: input.petId,
           fieldName: "flea_treatment_added",
           oldValue: null,
           newValue: `${input.productName} - Próxima aplicação: ${input.nextDueDate.toLocaleDateString('pt-BR')}`,
@@ -2257,11 +2258,12 @@ export const appRouter = router({
         }
 
         const result = await db.createDewormingTreatment({
-          petId: input.petId,
-          productName: input.productName,
-          applicationDate: input.applicationDate,
-          nextDueDate: input.nextDueDate,
+          pet_id: input.petId,
+          product_name: input.productName,
+          application_date: input.applicationDate,
+          next_due_date: input.nextDueDate,
           notes: input.notes,
+          created_by_id: ctx.user.id,
         });
 
         // Track change
@@ -2269,7 +2271,7 @@ export const appRouter = router({
         await logChange({
           resourceType: "preventive",
           resourceId: result.id,
-          petId: input.petId,
+          pet_id: input.petId,
           fieldName: "deworming_treatment_added",
           oldValue: null,
           newValue: `${input.productName} - Próxima aplicação: ${input.nextDueDate.toLocaleDateString('pt-BR')}`,
@@ -3024,10 +3026,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         groupName: z.string(),
       }))
       .mutation(async ({ input }) => {
-        const id = await db.createWhatsAppGroup({
-          pet_id: input.petId,
-          groupName: input.groupName,
-        });
+        const id = await db.createWhatsAppGroup(input);
         return { success: true, groupId: id };
       }),
 
@@ -3401,6 +3400,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           veterinarian: input.veterinarian,
           clinic: input.clinic,
           notes: input.notes,
+          created_by_id: ctx.user.id,
         });
       }),
 
@@ -3426,6 +3426,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           dosage: input.dosage,
           frequency: input.frequency,
           notes: input.notes,
+          created_by_id: ctx.user.id,
         });
       }),
 
@@ -3468,13 +3469,8 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
       }))
       .mutation(async ({ input, ctx }) => {
         const data = {
-          pet_id: input.petId,
-          type: input.type,
-          category: input.category,
-          description: input.description,
-          amount: input.amount,
-          transaction_date: input.transactionDate,
-          created_by_id: ctx.user.id,
+          ...input,
+          createdById: ctx.user.id,
         };
         return await db.addTransaction(data);
       }),
@@ -3568,7 +3564,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
             amount: Math.round(input.amount * 100), // Convert to cents
             category: input.category,
             description: input.description,
-            transaction_date: new Date(input.transactionDate),
+            transactionDate: new Date(input.transactionDate),
           })
           .where(eq(transactions.id, input.id));
         return true;
@@ -4207,7 +4203,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           return { success: true, id: existing.id };
         } else {
           const id = await db.createTutorNotificationPreference({
-            tutor_id: input.tutorId,
+            tutorId: input.tutorId,
             notificationType: input.notificationType,
             enabled: !input.adminOverride,
             adminOverride: input.adminOverride,
@@ -4264,20 +4260,16 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         }
         
         const result = await db.createHealthBehaviorLog({
-          petId: input.petId,
+          pet_id: input.petId,
           mood: input.mood,
           behavior: input.behavior,
           stool: input.stool,
           appetite: input.appetite,
-          waterIntake: input.waterIntake,
+          water_intake: input.waterIntake,
           notes: input.notes,
-          recordedBy: ctx.user.id,
-          recordedAt: input.recordedAt || new Date(),
+          recorded_by: ctx.user.id,
+          recorded_at: input.recordedAt || new Date(),
         });
-
-        if (!result || !result.id) {
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erro ao criar registro" });
-        }
 
         // Auto-create calendar event for health/behavior log
         await db.autoCreateHealthLogEvent(
@@ -4361,7 +4353,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           throw new TRPCError({ code: "NOT_FOUND" });
         }
         
-        if (ctx.user.role !== "admin" && log.recordedBy !== ctx.user.id) {
+        if (ctx.user.role !== "admin" && log.recorded_by !== ctx.user.id) {
           throw new TRPCError({ code: "FORBIDDEN" });
         }
         
@@ -4795,24 +4787,24 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         if (input.targetType === "tutor" && input.targetId) {
           // Notify specific tutor
           await db.createNotification({
-            user_id: input.targetId,
+            userId: input.targetId,
             type: "system",
             title: "Nova mensagem no mural",
             message: `${ctx.user.name || "Administrador"} publicou uma mensagem direcionada para você no mural da creche`,
-            is_read: false,
+            isRead: false,
           });
         } else if (input.targetType === "pet" && input.targetId) {
           // Notify all tutors of the pet
           const tutors = await db.getTutorsByPet(input.targetId);
           for (const tutor of tutors) {
-            if (tutor.tutor_id) {
+            if (tutor.tutorId) {
               const pet = await db.getPetById(input.targetId);
               await db.createNotification({
-                user_id: tutor.tutor_id,
+                userId: tutor.tutorId,
                 type: "system",
                 title: "Nova atualização sobre seu pet",
                 message: `${ctx.user.name || "Administrador"} publicou uma atualização sobre ${pet?.name || "seu pet"} no mural da creche`,
-                is_read: false,
+                isRead: false,
               });
             }
           }

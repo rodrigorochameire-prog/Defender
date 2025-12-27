@@ -9,9 +9,9 @@ function isIpAddress(host: string) {
 }
 
 function isSecureRequest(req: Request) {
-  if ((req as any).protocol === "https") return true;
+  if (req.protocol === "https") return true;
 
-  const forwardedProto = (req as any).headers?.["x-forwarded-proto"];
+  const forwardedProto = req.headers["x-forwarded-proto"];
   if (!forwardedProto) return false;
 
   const protoList = Array.isArray(forwardedProto)
@@ -24,7 +24,7 @@ function isSecureRequest(req: Request) {
 export function getSessionCookieOptions(
   req: Request
 ): Partial<CookieOptions> {
-  const hostname = (req as any).hostname;
+  const hostname = req.hostname;
   const shouldSetDomain =
     hostname &&
     !LOCAL_HOSTS.has(hostname) &&

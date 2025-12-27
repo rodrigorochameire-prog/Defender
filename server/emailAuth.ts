@@ -43,14 +43,13 @@ export async function registerUser(input: RegisterInput) {
 
   // Create user and return the inserted user
   // Note: passwordHash is not stored in database (uses Supabase Auth)
-  // Note: For new users, we let the database generate the ID via sequence
   const [newUser] = await db.insert(users).values({
     name: input.name,
     email: input.email.toLowerCase(),
     login_method: "email",
     role: input.role || "user",
     last_signed_in: new Date(),
-  } as any).returning();
+  }).returning();
 
   return {
     id: newUser.id,
@@ -174,12 +173,13 @@ export async function resetPassword(token: string, newPassword: string) {
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
   // Note: Password reset should be done via Supabase Auth
+  // This is a placeholder - actual implementation should use Supabase Auth
+  throw new Error("Password reset should be done via Supabase Auth");
+
   // Mark token as used
-  if (resetToken) {
-    await db.update(passwordResetTokens)
-      .set({ used: true })
-      .where(eq(passwordResetTokens.id, resetToken.id));
-  }
+  await db.update(passwordResetTokens)
+    .set({ used: true })
+    .where(eq(passwordResetTokens.id, resetToken.id));
 
   return { success: true };
 }

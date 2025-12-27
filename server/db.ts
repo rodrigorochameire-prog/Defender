@@ -1204,7 +1204,7 @@ export async function getSubscriptionMetrics() {
 // Flea Treatments helpers
 export async function createFleaTreatment(data: InsertFleaTreatment) {
   const db = (await getDb())!;
-  const [result] = await db.insert(fleaTreatments).values(data).returning();
+  const [result] = await db.insert(fleaTreatments).values(data);
   return result;
 }
 
@@ -1233,7 +1233,7 @@ export async function deleteFleaTreatment(id: number) {
 // Deworming Treatments helpers
 export async function createDewormingTreatment(data: InsertDewormingTreatment) {
   const db = (await getDb())!;
-  const [result] = await db.insert(dewormingTreatments).values(data).returning();
+  const [result] = await db.insert(dewormingTreatments).values(data);
   return result;
 }
 
@@ -1292,7 +1292,7 @@ export async function createTrainingProgress(data: InsertTrainingProgress) {
 export async function listTrainingProgress(petId?: number) {
   const db = await getDb();
   if (petId) {
-    return db!.select().from(trainingProgress).where(eq(trainingProgress.petId, petId)).orderBy(desc(trainingProgress.updatedAt));
+    return db!.select().from(trainingProgress).where(eq(trainingProgress.petId, pet_id)).orderBy(desc(trainingProgress.updatedAt));
   }
   return db!.select().from(trainingProgress).orderBy(desc(trainingProgress.updatedAt));
 }
@@ -1301,7 +1301,7 @@ export async function updateTrainingProgress(id: number, currentLevel: number, n
   const db = await getDb();
   const updated = await db!
     .update(trainingProgress)
-    .set({ currentLevel, notes, updatedAt: new Date() })
+    .set({ currentLevel, notes, updated_at: new Date() })
     .where(eq(trainingProgress.id, id));
   return updated;
 }
@@ -1314,7 +1314,7 @@ export async function deleteTrainingProgress(id: number) {
 // Photo Comments
 export async function addPhotoComment(photoId: number, user_id: number, comment: string) {
   const db = await getDb();
-  await db!.insert(photoComments).values({ photoId, userId: user_id, comment });
+  await db!.insert(photoComments).values({ photoId, user_id, comment });
   const [newComment] = await db!.select().from(photoComments).where(eq(photoComments.id, sql`LAST_INSERT_ID()`)).limit(1);
   return newComment;
 }
@@ -1365,7 +1365,7 @@ export async function addPhotoReaction(photoId: number, user_id: number, reactio
     return existing[0];
   } else {
     // Create new reaction
-    await db!.insert(photoReactions).values({ photoId, userId: user_id, reactionType });
+    await db!.insert(photoReactions).values({ photoId, user_id, reactionType });
     const [newReaction] = await db!.select().from(photoReactions).where(eq(photoReactions.id, sql`LAST_INSERT_ID()`)).limit(1);
     return newReaction;
   }
@@ -1373,7 +1373,7 @@ export async function addPhotoReaction(photoId: number, user_id: number, reactio
 
 export async function removePhotoReaction(photoId: number, user_id: number) {
   const db = await getDb();
-  await db!.delete(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.userId, user_id)));
+  await db!.delete(photoReactions).where(and(eq(photoReactions.photoId, photoId), eq(photoReactions.userId, userId)));
 }
 
 export async function getPhotoReactions(photoId: number) {
@@ -1434,7 +1434,7 @@ export async function updateBookingStatus(id: number, status: "pending" | "confi
   const db = await getDb();
   await db!
     .update(bookings)
-    .set({ status, updatedAt: new Date() })
+    .set({ status, updated_at: new Date() })
     .where(eq(bookings.id, id));
 }
 
@@ -3081,7 +3081,7 @@ export async function getTutorNotificationPreferences(tutor_id: number) {
   return await db
     .select()
     .from(tutorNotificationPreferences)
-    .where(eq(tutorNotificationPreferences.tutorId, tutor_id));
+    .where(eq(tutorNotificationPreferences.tutor_id, tutor_id));
 }
 
 export async function getTutorPreferenceByType(tutor_id: number, type: string) {
@@ -3092,7 +3092,7 @@ export async function getTutorPreferenceByType(tutor_id: number, type: string) {
     .from(tutorNotificationPreferences)
     .where(
       and(
-        eq(tutorNotificationPreferences.tutorId, tutor_id),
+        eq(tutorNotificationPreferences.tutor_id, tutor_id),
         eq(tutorNotificationPreferences.notificationType, type as any)
       )
     )
@@ -3138,7 +3138,7 @@ export async function getAllTutorPreferences() {
   return await db
     .select({
       id: tutorNotificationPreferences.id,
-      tutor_id: tutorNotificationPreferences.tutorId,
+      tutor_id: tutorNotificationPreferences.tutor_id,
       tutorName: users.name,
       tutorEmail: users.email,
       notificationType: tutorNotificationPreferences.notificationType,
@@ -3146,7 +3146,7 @@ export async function getAllTutorPreferences() {
       adminOverride: tutorNotificationPreferences.adminOverride,
     })
     .from(tutorNotificationPreferences)
-    .leftJoin(users, eq(tutorNotificationPreferences.tutorId, users.id))
+    .leftJoin(users, eq(tutorNotificationPreferences.tutor_id, users.id))
     .orderBy(users.name, tutorNotificationPreferences.notificationType);
 }
 
@@ -3366,7 +3366,7 @@ export async function deleteCreditPackage(id: number) {
 export async function getAllEventTypes() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(eventTypes).where(eq(eventTypes.isActive, true)).orderBy(eventTypes.name);
+  return await db.select().from(eventTypes).where(eq(eventTypes.is_active, true)).orderBy(eventTypes.name);
 }
 
 export async function getAllEventTypesIncludingInactive() {
@@ -3416,7 +3416,7 @@ export async function deleteEventType(id: number) {
 export async function getAllAutoScheduleRules() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(medicationAutoScheduleRules).where(eq(medicationAutoScheduleRules.isActive, true));
+  return await db.select().from(medicationAutoScheduleRules).where(eq(medicationAutoScheduleRules.is_active, true));
 }
 
 export async function getAllAutoScheduleRulesIncludingInactive() {
@@ -3440,8 +3440,8 @@ export async function getAutoScheduleRuleByMedicationId(medicationId: number) {
     .from(medicationAutoScheduleRules)
     .where(
       and(
-        eq(medicationAutoScheduleRules.medicationId, medicationId),
-        eq(medicationAutoScheduleRules.isActive, true)
+        eq(medicationAutoScheduleRules.medication_id, medicationId),
+        eq(medicationAutoScheduleRules.is_active, true)
       )
     )
     .limit(1);
@@ -3482,7 +3482,7 @@ export async function deleteAutoScheduleRule(id: number) {
 export async function getPetFoodStock(pet_id: number) {
   const db = await getDb();
   if (!db) return null;
-  const [result] = await db.select().from(petFoodStock).where(eq(petFoodStock.petId, pet_id)).limit(1);
+  const [result] = await db.select().from(petFoodStock).where(eq(petFoodStock.pet_id, pet_id)).limit(1);
   return result || null;
 }
 
@@ -3500,7 +3500,7 @@ export async function createPetFoodStock(data: InsertPetFoodStock) {
 export async function updatePetFoodStock(pet_id: number, data: Partial<InsertPetFoodStock>) {
   const db = await getDb();
   if (!db) return false;
-  await db.update(petFoodStock).set(data).where(eq(petFoodStock.petId, pet_id));
+  await db.update(petFoodStock).set(data).where(eq(petFoodStock.pet_id, pet_id));
   return true;
 }
 
@@ -3563,7 +3563,7 @@ export async function getWallPosts(limit: number = 20, offset: number = 0, petId
   let query = db
     .select({
       id: wallPosts.id,
-      pet_id: wallPosts.petId,
+      pet_id: wallPosts.pet_id,
       authorId: wallPosts.authorId,
       content: wallPosts.content,
       mediaUrls: wallPosts.mediaUrls,
@@ -3571,22 +3571,22 @@ export async function getWallPosts(limit: number = 20, offset: number = 0, petId
       postType: wallPosts.postType,
       targetType: wallPosts.targetType,
       targetId: wallPosts.targetId,
-      createdAt: wallPosts.createdAt,
-      updated_at: wallPosts.updatedAt,
+      createdAt: wallPosts.created_at,
+      updated_at: wallPosts.updated_at,
       authorName: users.name,
       authorRole: users.role,
       petName: pets.name,
     })
     .from(wallPosts)
     .leftJoin(users, eq(wallPosts.authorId, users.id))
-    .leftJoin(pets, eq(wallPosts.petId, pets.id))
+    .leftJoin(pets, eq(wallPosts.pet_id, pets.id))
     .orderBy(desc(wallPosts.createdAt))
     .limit(limit)
     .offset(offset);
   
   // Filter by petId if provided
   if (petId !== undefined) {
-    query = query.where(eq(wallPosts.petId, pet_id)) as any;
+    query = query.where(eq(wallPosts.pet_id, pet_id)) as any;
   }
   
   // Filter by targetType if provided
@@ -3623,21 +3623,21 @@ export async function getWallPostById(id: number) {
   const [post] = await db
     .select({
       id: wallPosts.id,
-      pet_id: wallPosts.petId,
+      pet_id: wallPosts.pet_id,
       authorId: wallPosts.authorId,
       content: wallPosts.content,
       mediaUrls: wallPosts.mediaUrls,
       mediaKeys: wallPosts.mediaKeys,
       postType: wallPosts.postType,
-      createdAt: wallPosts.createdAt,
-      updated_at: wallPosts.updatedAt,
+      createdAt: wallPosts.created_at,
+      updated_at: wallPosts.updated_at,
       authorName: users.name,
       authorRole: users.role,
       petName: pets.name,
     })
     .from(wallPosts)
     .leftJoin(users, eq(wallPosts.authorId, users.id))
-    .leftJoin(pets, eq(wallPosts.petId, pets.id))
+    .leftJoin(pets, eq(wallPosts.pet_id, pets.id))
     .where(eq(wallPosts.id, id));
   
   return post || null;
@@ -3694,14 +3694,14 @@ export async function addWallReaction(postId: number, user_id: number, reactionT
   const existing = await db
     .select()
     .from(wallReactions)
-    .where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, userId)));
+    .where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
   
   if (existing.length > 0) {
     // Update existing reaction
     await db
       .update(wallReactions)
       .set({ reactionType })
-      .where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, userId)));
+      .where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
   } else {
     // Insert new reaction
     await db.insert(wallReactions).values({ postId, userId, reactionType });
@@ -3711,7 +3711,7 @@ export async function addWallReaction(postId: number, user_id: number, reactionT
 export async function removeWallReaction(postId: number, user_id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, userId)));
+  await db.delete(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
 }
 
 export async function getWallReactions(postId: number) {
@@ -3951,7 +3951,7 @@ export async function autoCreateMedicationEvent(
     linked_resource_type: "medication",
     linked_resource_id: medicationId,
     auto_created: true,
-    created_by_id: created_by_id: createdById,
+    created_by_id: createdById,
   });
 
   return eventId;
@@ -4041,7 +4041,7 @@ export async function autoCreateVaccineEvent(
     linked_resource_type: "vaccine",
     linked_resource_id: vaccineId,
     auto_created: true,
-    created_by_id: created_by_id: createdById,
+    created_by_id: createdById,
   });
 
   return eventId;
@@ -4071,7 +4071,7 @@ export async function autoCreateFleaEvent(
     linked_resource_type: "preventive_flea",
     linked_resource_id: treatmentId,
     auto_created: true,
-    created_by_id: created_by_id: createdById,
+    created_by_id: createdById,
   });
 
   return eventId;
@@ -4098,10 +4098,10 @@ export async function autoCreateDewormingEvent(
     event_type: "preventive",
     pet_id: pet_id,
     is_all_day: true,
-    linked_resource_type: "preventive_deworming",
-    linked_resource_id: treatmentId,
-    auto_created: true,
-    created_by_id: createdById,
+    linkedResourceType: "preventive_deworming",
+    linkedResourceId: treatmentId,
+    autoCreated: true,
+    createdById,
   });
 
   return eventId;
@@ -4146,7 +4146,7 @@ export async function autoCreateHealthLogEvent(
     linked_resource_type: "health_log",
     linked_resource_id: logId,
     auto_created: true,
-    created_by_id: created_by_id: createdById,
+    created_by_id: createdById,
   });
 
   return eventId;
