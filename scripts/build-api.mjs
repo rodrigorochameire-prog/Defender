@@ -10,19 +10,27 @@ await esbuild.build({
   bundle: true,
   platform: 'node',
   target: 'node18',
+  // Use CommonJS format for Vercel serverless
   format: 'cjs',
   outfile: path.join(rootDir, 'api/index.js'),
-  external: ['pg-native'],
-  // Ensure all local modules are bundled
+  // External native modules that can't be bundled
+  external: ['pg-native', 'bufferutil', 'utf-8-validate'],
+  // Bundle all packages (don't treat node_modules as external)
   packages: 'bundle',
-  // Resolve paths from root
+  // Resolve paths from project root
   absWorkingDir: rootDir,
-  // Source map for debugging
+  // Define process.env for Node.js
+  define: {
+    'process.env.NODE_ENV': '"production"',
+  },
+  // Don't use sourcemaps in production
   sourcemap: false,
-  // Minify for smaller bundle
+  // Don't minify for easier debugging
   minify: false,
-  // Keep names for debugging
+  // Keep function/class names for debugging
   keepNames: true,
+  // Log level
+  logLevel: 'info',
 });
 
 console.log('✅ API build complete: api/index.js');
