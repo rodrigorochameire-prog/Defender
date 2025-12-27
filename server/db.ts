@@ -3108,7 +3108,7 @@ export async function getTutorPreferenceByType(tutor_id: number, type: string) {
 }
 
 export async function createTutorNotificationPreference(data: {
-  tutor_id: number;
+  tutorId: number;
   notificationType: string;
   enabled?: boolean;
   adminOverride?: boolean;

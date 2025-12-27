@@ -3411,7 +3411,6 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           veterinarian: input.veterinarian,
           clinic: input.clinic,
           notes: input.notes,
-          created_by_id: ctx.user.id,
         });
       }),
 
@@ -3437,7 +3436,6 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           dosage: input.dosage,
           frequency: input.frequency,
           notes: input.notes,
-          created_by_id: ctx.user.id,
         });
       }),
 
@@ -4283,8 +4281,8 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           appetite: input.appetite,
           waterIntake: input.waterIntake,
           notes: input.notes,
-          recorded_by: ctx.user.id,
-          recorded_at: input.recordedAt || new Date(),
+          recordedBy: ctx.user.id,
+          recordedAt: input.recordedAt || new Date(),
         });
 
         // Auto-create calendar event for health/behavior log
@@ -4369,7 +4367,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           throw new TRPCError({ code: "NOT_FOUND" });
         }
         
-        if (ctx.user.role !== "admin" && log.recorded_by !== ctx.user.id) {
+        if (ctx.user.role !== "admin" && log.recordedBy !== ctx.user.id) {
           throw new TRPCError({ code: "FORBIDDEN" });
         }
         
@@ -4803,24 +4801,24 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         if (input.targetType === "tutor" && input.targetId) {
           // Notify specific tutor
           await db.createNotification({
-            userId: input.targetId,
+            user_id: input.targetId,
             type: "system",
             title: "Nova mensagem no mural",
             message: `${ctx.user.name || "Administrador"} publicou uma mensagem direcionada para você no mural da creche`,
-            isRead: false,
+            is_read: false,
           });
         } else if (input.targetType === "pet" && input.targetId) {
           // Notify all tutors of the pet
           const tutors = await db.getTutorsByPet(input.targetId);
           for (const tutor of tutors) {
-            if (tutor.tutorId) {
+            if (tutor.tutor_id) {
               const pet = await db.getPetById(input.targetId);
               await db.createNotification({
-                userId: tutor.tutorId,
+                user_id: tutor.tutor_id,
                 type: "system",
                 title: "Nova atualização sobre seu pet",
                 message: `${ctx.user.name || "Administrador"} publicou uma atualização sobre ${pet?.name || "seu pet"} no mural da creche`,
-                isRead: false,
+                is_read: false,
               });
             }
           }
