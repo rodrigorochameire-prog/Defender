@@ -896,8 +896,8 @@ export async function getUserNotifications(user_id: number) {
   return await db
     .select()
     .from(notifications)
-    .where(eq(notifications.userId, user_id))
-    .orderBy(desc(notifications.createdAt));
+    .where(eq(notifications.user_id, user_id))
+    .orderBy(desc(notifications.created_at));
 }
 
 export async function markNotificationAsRead(id: number) {
@@ -912,7 +912,7 @@ export async function markAllNotificationsAsRead(user_id: number) {
   await db
     .update(notifications)
     .set({ is_read: true })
-    .where(and(eq(notifications.userId, user_id), eq(notifications.isRead, false)));
+    .where(and(eq(notifications.user_id, user_id), eq(notifications.is_read, false)));
 }
 
 export async function getUnreadNotificationCount(user_id: number): Promise<number> {
@@ -922,7 +922,7 @@ export async function getUnreadNotificationCount(user_id: number): Promise<numbe
   const result = await db
     .select()
     .from(notifications)
-    .where(and(eq(notifications.userId, user_id), eq(notifications.isRead, false)));
+    .where(and(eq(notifications.user_id, user_id), eq(notifications.is_read, false)));
   
   return result.length;
 }
@@ -935,7 +935,7 @@ export async function getPendingNotifications() {
     .select()
     .from(notifications)
     .where(eq(notifications.is_sent, false))
-    .orderBy(notifications.createdAt);
+    .orderBy(notifications.created_at);
 }
 
 // ==================== TRANSACTIONS ====================
@@ -1121,7 +1121,7 @@ export async function getUserActiveSubscription(user_id: number) {
     .from(subscriptions)
     .where(
       and(
-        eq(subscriptions.userId, userId),
+        eq(subscriptions.user_id, user_id),
         eq(subscriptions.status, "active")
       )
     )
@@ -1385,7 +1385,7 @@ export async function getPhotoReactionCounts(photoId: number) {
   const db = await getDb();
   const reactions = await db!.select().from(photoReactions).where(eq(photoReactions.photoId, photoId));
   
-  const counts = {
+  const counts: { [key: string]: number; like: number; love: number; laugh: number; total: number } = {
     like: 0,
     love: 0,
     laugh: 0,
@@ -1393,7 +1393,9 @@ export async function getPhotoReactionCounts(photoId: number) {
   };
   
   reactions.forEach((reaction) => {
-    counts[reaction.reactionType]++;
+    if (reaction.reactionType in counts) {
+      counts[reaction.reactionType]++;
+    }
   });
   
   return counts;
@@ -2349,7 +2351,7 @@ export async function getPetFleaTreatmentHistory(pet_id: number) {
   
   const history = await db.select()
     .from(fleaTreatments)
-    .where(eq(fleaTreatments.petId, petId))
+    .where(eq(fleaTreatments.petId, pet_id))
     .orderBy(desc(fleaTreatments.applicationDate));
   
   return history;
@@ -2364,7 +2366,7 @@ export async function getPetDewormingHistory(pet_id: number) {
   
   const history = await db.select()
     .from(dewormingTreatments)
-    .where(eq(dewormingTreatments.petId, petId))
+    .where(eq(dewormingTreatments.petId, pet_id))
     .orderBy(desc(dewormingTreatments.applicationDate));
   
   return history;
@@ -2374,12 +2376,12 @@ export async function getPetDewormingHistory(pet_id: number) {
  * Get complete health history for a pet (all records combined)
  */
 export async function getPetCompleteHealthHistory(pet_id: number) {
-  const [pet, vaccinations, medications, fleaTreatments, dewormingTreatments] = await Promise.all([
-    getPetById(petId),
-    getPetVaccinationHistory(petId),
-    getPetMedicationHistory(petId),
-    getPetFleaTreatmentHistory(petId),
-    getPetDewormingHistory(petId),
+  const [pet, vaccinations, medications, fleaTreatmentsData, dewormingTreatmentsData] = await Promise.all([
+    getPetById(pet_id),
+    getPetVaccinationHistory(pet_id),
+    getPetMedicationHistory(pet_id),
+    getPetFleaTreatmentHistory(pet_id),
+    getPetDewormingHistory(pet_id),
   ]);
   
   if (!pet) {
@@ -2391,8 +2393,8 @@ export async function getPetCompleteHealthHistory(pet_id: number) {
     vaccinations,
     medications,
     preventives: {
-      flea: fleaTreatments,
-      deworming: dewormingTreatments,
+      flea: fleaTreatmentsData,
+      deworming: dewormingTreatmentsData,
     },
   };
 }
@@ -2474,12 +2476,12 @@ export async function getHealthCalendarEvents(startDate?: Date, endDate?: Date) 
     .orderBy(petMedications.end_date);
 
   for (const m of medications) {
-    if (m.end_date) {
+    if (m.endDate) {
       events.push({
         id: `medication-${m.id}`,
         title: `💊 ${m.medicationName} - ${m.petName}`,
-        start: m.end_date,
-        end: m.end_date,
+        start: m.endDate,
+        end: m.endDate,
         type: "medication",
         pet_id: m.pet_id,
         petName: m.petName || "Pet",
@@ -2621,7 +2623,7 @@ export async function getTutorById(tutor_id: number) {
     })
     .from(petTutors)
     .leftJoin(pets, eq(petTutors.pet_id, pets.id))
-    .where(eq(petTutors.tutor_id, tutorId))
+    .where(eq(petTutors.tutor_id, tutor_id))
     .orderBy(desc(petTutors.is_primary), pets.name);
 
   return {
@@ -2649,7 +2651,7 @@ export async function updateTutor(tutor_id: number, data: {
     })
     .where(eq(users.id, tutor_id));
 
-  return await getTutorById(tutorId);
+  return await getTutorById(tutor_id);
 }
 
 /**
@@ -2667,8 +2669,8 @@ export async function linkPetToTutor(pet_id: number, tutor_id: number, is_primar
     .limit(1);
 
   if (existing.length > 0) {
-    // Update isPrimary if needed
-    if (isPrimary) {
+    // Update is_primary if needed
+    if (is_primary) {
       await db
         .update(petTutors)
         .set({ is_primary: true })
@@ -3563,7 +3565,7 @@ export async function getWallPosts(limit: number = 20, offset: number = 0, petId
   let query = db
     .select({
       id: wallPosts.id,
-      pet_id: wallPosts.pet_id,
+      pet_id: wallPosts.petId,
       authorId: wallPosts.authorId,
       content: wallPosts.content,
       mediaUrls: wallPosts.mediaUrls,
@@ -3571,22 +3573,22 @@ export async function getWallPosts(limit: number = 20, offset: number = 0, petId
       postType: wallPosts.postType,
       targetType: wallPosts.targetType,
       targetId: wallPosts.targetId,
-      createdAt: wallPosts.created_at,
-      updated_at: wallPosts.updated_at,
+      createdAt: wallPosts.createdAt,
+      updated_at: wallPosts.updatedAt,
       authorName: users.name,
       authorRole: users.role,
       petName: pets.name,
     })
     .from(wallPosts)
     .leftJoin(users, eq(wallPosts.authorId, users.id))
-    .leftJoin(pets, eq(wallPosts.pet_id, pets.id))
+    .leftJoin(pets, eq(wallPosts.petId, pets.id))
     .orderBy(desc(wallPosts.createdAt))
     .limit(limit)
     .offset(offset);
   
   // Filter by petId if provided
   if (petId !== undefined) {
-    query = query.where(eq(wallPosts.pet_id, pet_id)) as any;
+    query = query.where(eq(wallPosts.petId, pet_id)) as any;
   }
   
   // Filter by targetType if provided
@@ -3623,21 +3625,21 @@ export async function getWallPostById(id: number) {
   const [post] = await db
     .select({
       id: wallPosts.id,
-      pet_id: wallPosts.pet_id,
+      pet_id: wallPosts.petId,
       authorId: wallPosts.authorId,
       content: wallPosts.content,
       mediaUrls: wallPosts.mediaUrls,
       mediaKeys: wallPosts.mediaKeys,
       postType: wallPosts.postType,
-      createdAt: wallPosts.created_at,
-      updated_at: wallPosts.updated_at,
+      createdAt: wallPosts.createdAt,
+      updated_at: wallPosts.updatedAt,
       authorName: users.name,
       authorRole: users.role,
       petName: pets.name,
     })
     .from(wallPosts)
     .leftJoin(users, eq(wallPosts.authorId, users.id))
-    .leftJoin(pets, eq(wallPosts.pet_id, pets.id))
+    .leftJoin(pets, eq(wallPosts.petId, pets.id))
     .where(eq(wallPosts.id, id));
   
   return post || null;
@@ -3694,24 +3696,24 @@ export async function addWallReaction(postId: number, user_id: number, reactionT
   const existing = await db
     .select()
     .from(wallReactions)
-    .where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
+    .where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, user_id)));
   
   if (existing.length > 0) {
     // Update existing reaction
     await db
       .update(wallReactions)
       .set({ reactionType })
-      .where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
+      .where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, user_id)));
   } else {
     // Insert new reaction
-    await db.insert(wallReactions).values({ postId, userId, reactionType });
+    await db.insert(wallReactions).values({ postId, userId: user_id, reactionType });
   }
 }
 
 export async function removeWallReaction(postId: number, user_id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.user_id, userId)));
+  await db.delete(wallReactions).where(and(eq(wallReactions.postId, postId), eq(wallReactions.userId, user_id)));
 }
 
 export async function getWallReactions(postId: number) {
@@ -3752,7 +3754,7 @@ export async function getConversations(user_id: number) {
   
   return allConversations.filter((conv: any) => {
     const participants = conv.participants as number[];
-    return participants.includes(userId);
+    return participants.includes(user_id);
   });
 }
 
@@ -3791,7 +3793,7 @@ export async function getChatMessages(conversationId: number, limit: number = 50
       mediaKey: chatMessages.mediaKey,
       messageType: chatMessages.messageType,
       whatsappMessageId: chatMessages.whatsappMessageId,
-      isRead: chatMessages.is_read,
+      isRead: chatMessages.isRead,
       createdAt: chatMessages.createdAt,
       senderName: users.name,
       senderRole: users.role,
@@ -3813,7 +3815,7 @@ export async function markMessagesAsRead(conversationId: number, user_id: number
     .set({ isRead: true })
     .where(and(
       eq(chatMessages.conversationId, conversationId),
-      not(eq(chatMessages.senderId, userId))
+      not(eq(chatMessages.senderId, user_id))
     ));
 }
 
@@ -3863,7 +3865,7 @@ export async function getPetsByTutor(tutor_id: number) {
     })
     .from(petTutors)
     .leftJoin(pets, eq(petTutors.pet_id, pets.id))
-    .where(eq(petTutors.tutor_id, tutorId));
+    .where(eq(petTutors.tutor_id, tutor_id));
   
   return petsList;
 }
@@ -3975,7 +3977,7 @@ export async function autoCreateMedicationPeriod(
   // If no end date, create only one event
   if (!endDate) {
     const eventId = await autoCreateMedicationEvent(
-      petId,
+      pet_id,
       medicationId,
       medicationName,
       startDate,
@@ -3996,7 +3998,7 @@ export async function autoCreateMedicationPeriod(
 
   while (currentDate <= finalDate && dayCount < maxDays) {
     const eventId = await autoCreateMedicationEvent(
-      petId,
+      pet_id,
       medicationId,
       medicationName,
       new Date(currentDate),
