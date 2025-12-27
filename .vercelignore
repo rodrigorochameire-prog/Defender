@@ -13,8 +13,5 @@
 # Ignore system files
 .DS_Store
 
-# Ignore source .ts file - we use the compiled .js for serverless functions
-api/index.ts
-
 # Ignore compiled dist folder
 dist/
