@@ -6,8 +6,10 @@ import postgres from "postgres";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 
-const client = postgres(process.env.DATABASE_URL!);
-const db = drizzle(client);
+// Support multiple environment variable names (Vercel Supabase integration)
+const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING;
+const client = databaseUrl ? postgres(databaseUrl) : null;
+const db = client ? drizzle(client) : null;
 
 let io: Server | null = null;
 

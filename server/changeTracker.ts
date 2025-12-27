@@ -8,8 +8,10 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { changeHistory } from "../drizzle/schema";
 import postgres from "postgres";
 
-const client = postgres(process.env.DATABASE_URL!);
-const database = drizzle(client);
+// Support multiple environment variable names (Vercel Supabase integration)
+const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING;
+const client = databaseUrl ? postgres(databaseUrl) : null;
+const database = client ? drizzle(client) : null;
 
 export type ResourceType = "medication" | "food" | "preventive" | "pet_data" | "calendar";
 export type ChangeType = "create" | "update" | "delete";

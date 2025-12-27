@@ -9,12 +9,13 @@ let supabaseAdmin: ReturnType<typeof createClient> | null = null;
 function getSupabaseAdmin() {
   if (!supabaseAdmin) {
     // Load environment variables lazily (after dotenv has loaded)
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    // Support multiple variable names (Vercel Supabase integration uses different names)
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.warn(
-        `[Supabase] Missing environment variables. VITE_SUPABASE_URL: ${supabaseUrl ? "OK" : "MISSING"}, SUPABASE_SERVICE_ROLE_KEY: ${supabaseServiceKey ? "OK" : "MISSING"}`
+        `[Supabase] Missing environment variables. URL: ${supabaseUrl ? "OK" : "MISSING"}, SERVICE_ROLE_KEY: ${supabaseServiceKey ? "OK" : "MISSING"}`
       );
       return null;
     }
