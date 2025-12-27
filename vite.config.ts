@@ -1,12 +1,14 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import fs from "node:fs";
 import path from "path";
 import { defineConfig } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
 
-const plugins = [react(), tailwindcss(), vitePluginManusRuntime()];
+// Only include manus runtime plugin in development, not for Vercel builds
+const plugins = process.env.VERCEL 
+  ? [react(), tailwindcss()] 
+  : [react(), tailwindcss(), vitePluginManusRuntime()];
 
 export default defineConfig({
   plugins,
