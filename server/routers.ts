@@ -15,6 +15,7 @@ import { triggerVaccineNotificationsManually } from "./jobs/vaccineNotifications
 import Stripe from "stripe";
 import { PRODUCTS } from "./products";
 import { searchRouter } from "./searchRouter";
+import { getStripe } from "./stripeWebhook";
 
 // Admin-only procedure with audit logging
 const adminProcedure = protectedProcedure.use(async ({ ctx, next, path }) => {
@@ -23,7 +24,7 @@ const adminProcedure = protectedProcedure.use(async ({ ctx, next, path }) => {
   // Log access attempt
   try {
     await db.createAuditLog({
-      userId: ctx.user.id,
+      user_id: ctx.user.id,
       action: path,
       success: isAdmin,
       errorCode: isAdmin ? null : "FORBIDDEN",
@@ -244,19 +245,19 @@ export const appRouter = router({
         breed: z.string().optional(),
         age: z.string().optional(),
         weight: z.number().optional(),
-        birthDate: z.string().optional(),
-        foodBrand: z.string().optional(),
-        foodAmount: z.number().optional(),
+        birth_date: z.string().optional(),
+        food_brand: z.string().optional(),
+        food_amount: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        // Convert birthDate string to Date if provided
-        const birthDate = input.birthDate ? new Date(input.birthDate) : undefined;
+        // Convert birth_date string to Date if provided
+        const birth_date = input.birth_date ? new Date(input.birth_date) : undefined;
         
         const petId = await db.createPet({
           ...input,
-          birthDate,
-          approvalStatus: ctx.user.role === "admin" ? "approved" : "pending",
+          birth_date,
+          approval_status: ctx.user.role === "admin" ? "approved" : "pending",
         });
         
         // Link pet to tutor
@@ -272,9 +273,9 @@ export const appRouter = router({
         breed: z.string().optional(),
         age: z.string().optional(),
         weight: z.number().optional(),
-        birthDate: z.string().optional(),
-        foodBrand: z.string().optional(),
-        foodAmount: z.number().optional(),
+        birth_date: z.string().optional(),
+        food_brand: z.string().optional(),
+        food_amount: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -289,17 +290,17 @@ export const appRouter = router({
         }
         
         // Only allow editing pending or rejected pets
-        if (pet.approvalStatus === "approved") {
+        if (pet.approval_status === "approved") {
           throw new TRPCError({ code: "FORBIDDEN", message: "Pets aprovados n\u00e3o podem ser editados. Entre em contato com a creche." });
         }
         
-        // Convert birthDate string to Date if provided
-        const birthDate = data.birthDate ? new Date(data.birthDate) : undefined;
+        // Convert birth_date string to Date if provided
+        const birth_date = data.birth_date ? new Date(data.birth_date) : undefined;
         
         await db.updatePet(id, {
           ...data,
-          birthDate,
-          approvalStatus: "pending", // Reset to pending after edit
+          birth_date,
+          approval_status: "pending", // Reset to pending after edit
         });
         
         return { success: true };
@@ -312,11 +313,11 @@ export const appRouter = router({
         breed: z.string().optional(),
         age: z.string().optional(),
         weight: z.number().optional(),
-        birthDate: z.date().optional(),
-        photoUrl: z.string().optional(),
-        photoKey: z.string().optional(),
-        foodBrand: z.string().optional(),
-        foodAmount: z.number().optional(),
+        birth_date: z.date().optional(),
+        photo_url: z.string().optional(),
+        photo_key: z.string().optional(),
+        food_brand: z.string().optional(),
+        food_amount: z.number().optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -324,16 +325,16 @@ export const appRouter = router({
         await db.updatePet(id, data);
         
         // Track change for important fields
-        if (data.weight || data.foodBrand || data.foodAmount) {
+        if (data.weight || data.food_brand || data.food_amount) {
           const changes = [];
           if (data.weight) changes.push(`Peso: ${data.weight}kg`);
-          if (data.foodBrand) changes.push(`Ração: ${data.foodBrand}`);
-          if (data.foodAmount) changes.push(`Quantidade: ${data.foodAmount}g`);
+          if (data.food_brand) changes.push(`Ração: ${data.food_brand}`);
+          if (data.food_amount) changes.push(`Quantidade: ${data.food_amount}g`);
           
           await logChange({
             resourceType: "pet_data",
             resourceId: id,
-            petId: id,
+            pet_id: id,
             fieldName: "pet_info_updated",
             oldValue: null,
             newValue: changes.join(", "),
@@ -358,7 +359,7 @@ export const appRouter = router({
         const now = new Date();
         await db.updatePet(input.petId, {
           status: "checked-in",
-          checkInTime: now,
+          check_in_time: now,
         });
         
         // Send notification to tutors
@@ -373,7 +374,7 @@ export const appRouter = router({
         const now = new Date();
         await db.updatePet(input.petId, {
           status: "checked-out",
-          checkOutTime: now,
+          check_out_time: now,
         });
         
         // Send notification to tutors
@@ -390,7 +391,7 @@ export const appRouter = router({
         return logs
           .filter((log: any) => log.weight)
           .map((log: any) => ({
-            date: log.logDate,
+            date: log.log_date,
             weight: log.weight,
           }));
       }),
@@ -402,7 +403,7 @@ export const appRouter = router({
         return logs
           .filter((log: any) => log.mood)
           .map((log: any) => ({
-            date: log.logDate,
+            date: log.log_date,
             mood: log.mood,
           }));
       }),
@@ -416,7 +417,7 @@ export const appRouter = router({
         // Group by month
         const monthlyFrequency: Record<string, number> = {};
         daycareLog.forEach((log: any) => {
-          const date = new Date(log.logDate);
+          const date = new Date(log.log_date);
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
           monthlyFrequency[monthKey] = (monthlyFrequency[monthKey] || 0) + 1;
         });
@@ -464,7 +465,7 @@ export const appRouter = router({
           photoKey: fileKey,
         });
 
-        return { photoUrl: url };
+        return { photo_url: url };
       }),
 
     listPending: adminProcedure.query(async () => {
@@ -473,7 +474,7 @@ export const appRouter = router({
       const enrichedPets = await Promise.all(
         pets.map(async (pet: any) => {
           const tutors = await db.getPetTutors(pet.id);
-          const primaryTutor = tutors.find((t: any) => t.isPrimary) || tutors[0];
+          const primaryTutor = tutors.find((t: any) => t.is_primary) || tutors[0];
           return {
             ...pet,
             tutorName: primaryTutor?.tutor?.name || "Desconhecido",
@@ -488,7 +489,7 @@ export const appRouter = router({
       .input(z.object({ petId: z.number() }))
       .mutation(async ({ input }) => {
         await db.updatePet(input.petId, {
-          approvalStatus: "approved",
+          approval_status: "approved",
         });
         
         // TODO: Send notification to tutor
@@ -502,7 +503,7 @@ export const appRouter = router({
       .input(z.object({ petId: z.number() }))
       .mutation(async ({ input }) => {
         await db.updatePet(input.petId, {
-          approvalStatus: "rejected",
+          approval_status: "rejected",
         });
         
         // TODO: Send notification to tutor
@@ -536,14 +537,14 @@ export const appRouter = router({
         await db.addDaycareUsage({
           petId: input.petId,
           usageDate: now,
-          checkInTime: now,
+          check_in_time: now,
           creditId,
         });
         
         // Update pet status
         await db.updatePet(input.petId, {
           status: "checked-in",
-          checkInTime: now,
+          check_in_time: now,
         });
         
         // Send notification to tutors
@@ -564,7 +565,7 @@ export const appRouter = router({
         const now = new Date();
         await db.updatePet(input.petId, {
           status: "checked-out",
-          checkOutTime: now,
+          check_out_time: now,
         });
         
         // Send notification to tutors
@@ -620,7 +621,11 @@ export const appRouter = router({
         isPrimary: z.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
-        await db.addPetTutor(input);
+        await db.addPetTutor({
+          pet_id: input.petId,
+          tutor_id: input.tutorId,
+          is_primary: input.isPrimary,
+        });
         return { success: true };
       }),
 
@@ -651,7 +656,11 @@ export const appRouter = router({
         isPrimary: z.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
-        await db.addPetTutor(input);
+        await db.addPetTutor({
+          pet_id: input.petId,
+          tutor_id: input.tutorId,
+          is_primary: input.isPrimary,
+        });
         return { success: true };
       }),
 
@@ -697,21 +706,21 @@ export const appRouter = router({
 
         // Add credits to pet
         const creditId = await db.addDaycareCredit({
-          petId: input.petId,
-          packageDays: pkg.credits,
-          packagePrice: pkg.priceInCents,
-          remainingDays: pkg.credits,
+          pet_id: input.petId,
+          package_days: pkg.credits,
+          package_price: pkg.priceInCents,
+          remaining_days: pkg.credits,
         });
 
         // Add transaction record
         await db.addTransaction({
-          petId: input.petId,
+          pet_id: input.petId,
           type: "credit",
           category: "daycare_package",
           description: `${pkg.name} - ${pkg.credits} créditos`,
           amount: pkg.priceInCents,
-          transactionDate: new Date(),
-          createdById: ctx.user.id,
+          transaction_date: new Date(),
+          created_by_id: ctx.user.id,
         });
 
         return { success: true, creditId, credits: pkg.credits };
@@ -874,7 +883,17 @@ export const appRouter = router({
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const id = await db.addPetVaccination(input);
+        const id = await db.addPetVaccination({
+          pet_id: input.petId,
+          vaccine_id: input.vaccineId,
+          application_date: input.applicationDate,
+          next_due_date: input.nextDueDate,
+          dose_number: input.doseNumber,
+          veterinarian: input.veterinarian,
+          clinic: input.clinic,
+          batch_number: input.batchNumber,
+          notes: input.notes,
+        });
 
         // Track change
         const { logChange } = await import("./changeTracker");
@@ -1209,9 +1228,9 @@ export const appRouter = router({
         const { calculateNextDose } = await import("./medicationScheduler");
         const nextDate = calculateNextDose(new Date(), {
           periodicity: med.periodicity || "daily",
-          customInterval: med.customInterval || undefined,
-          weekDays: med.weekDays ? JSON.parse(med.weekDays) : undefined,
-          monthDays: med.monthDays ? JSON.parse(med.monthDays) : undefined,
+          customInterval: med.custom_interval || undefined,
+          weekDays: med.week_days ? JSON.parse(med.week_days) : undefined,
+          monthDays: med.month_days ? JSON.parse(med.month_days) : undefined,
         });
         
         if (!nextDate) {
@@ -1222,19 +1241,19 @@ export const appRouter = router({
         const { calculateProgressiveDosage } = await import("./dosageProgression");
         let currentDosage = med.dosage;
         
-        if (med.dosageProgression && med.dosageProgression !== "stable") {
+        if (med.dosage_progression && med.dosage_progression !== "stable") {
           currentDosage = calculateProgressiveDosage(med.dosage, {
-            dosageProgression: med.dosageProgression,
-            progressionRate: med.progressionRate || "0",
-            progressionInterval: med.progressionInterval || 1,
-            targetDosage: med.targetDosage || undefined,
-            currentDoseCount: med.currentDoseCount || 0,
+            dosageProgression: med.dosage_progression,
+            progressionRate: med.progression_rate || "0",
+            progressionInterval: med.progression_interval || 1,
+            targetDosage: med.target_dosage || undefined,
+            currentDoseCount: med.current_dose_count || 0,
           });
         }
         
         // Get medication name from library
         const library = await db.getMedicationLibrary();
-        const medInfo = library.find(m => m.id === med.medicationId);
+        const medInfo = library.find(m => m.id === med.medication_id);
         const medName = medInfo?.name || "Medicamento";
 
         // Create calendar event using auto-integration helper
@@ -1250,7 +1269,7 @@ export const appRouter = router({
 
         // Increment dose count
         await db.updatePetMedication(med.id, {
-          currentDoseCount: (med.currentDoseCount || 0) + 1,
+          current_dose_count: (med.current_dose_count || 0) + 1,
         });
 
         return {
@@ -1308,8 +1327,22 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.addDailyLog({
-          ...input,
-          createdById: ctx.user.id,
+          pet_id: input.petId,
+          log_date: input.logDate,
+          source: input.source,
+          mood: input.mood,
+          stool: input.stool,
+          appetite: input.appetite,
+          behavior: input.behavior,
+          behavior_notes: input.behaviorNotes,
+          activities: input.activities,
+          food_consumed: input.foodConsumed,
+          feeding_time: input.feedingTime,
+          feeding_amount: input.feedingAmount,
+          feeding_acceptance: input.feedingAcceptance,
+          weight: input.weight,
+          notes: input.notes,
+          created_by_id: ctx.user.id,
         });
         return { id };
       }),
@@ -1386,7 +1419,7 @@ export const appRouter = router({
         
         // Sort by date descending
         return allLogs.sort((a, b) => 
-          new Date(b.logDate).getTime() - new Date(a.logDate).getTime()
+          new Date(b.log_date).getTime() - new Date(a.log_date).getTime()
         );
       }),
   }),
@@ -1438,9 +1471,18 @@ export const appRouter = router({
         }
         
         const id = await db.addCalendarEvent({
-          ...input,
-          dailyCount,
-          createdById: ctx.user.id,
+          title: input.title,
+          description: input.description,
+          event_date: input.eventDate,
+          end_date: input.endDate,
+          event_type: input.eventType,
+          pet_id: input.petId,
+          location: input.location,
+          is_all_day: input.isAllDay,
+          check_in_date: input.checkInDate,
+          check_out_date: input.checkOutDate,
+          daily_count: dailyCount,
+          created_by_id: ctx.user.id,
         });
         
         // Track change
@@ -1578,16 +1620,16 @@ export const appRouter = router({
         const { url } = await storagePut(fileKey, buffer, input.mimeType);
         
         const id = await db.addDocument({
-          petId: input.petId,
+          pet_id: input.petId,
           title: input.title,
           description: input.description,
           category: input.category,
-          fileUrl: url,
-          fileKey,
-          fileName: input.fileName,
-          mimeType: input.mimeType,
-          fileSize: buffer.length,
-          uploadedById: ctx.user.id,
+          file_url: url,
+          file_key: fileKey,
+          file_name: input.fileName,
+          mime_type: input.mimeType,
+          file_size: buffer.length,
+          uploaded_by_id: ctx.user.id,
         });
         
         return { id, url };
@@ -1782,12 +1824,12 @@ export const appRouter = router({
         const { url } = await storagePut(fileKey, buffer, 'image/jpeg');
         
         const photoId = await db.addPetPhoto({
-          petId: input.petId,
-          photoUrl: url,
-          photoKey: fileKey,
+          pet_id: input.petId,
+          photo_url: url,
+          photo_key: fileKey,
           caption: input.caption || null,
-          takenAt: input.takenAt,
-          uploadedById: ctx.user.id,
+          taken_at: input.takenAt,
+          uploaded_by_id: ctx.user.id,
         });
         
         return { id: photoId, url };
@@ -1802,7 +1844,7 @@ export const appRouter = router({
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Photo not found' });
         }
         
-        if (ctx.user.role !== 'admin' && photo.uploadedById !== ctx.user.id) {
+        if (ctx.user.role !== 'admin' && photo.uploaded_by_id !== ctx.user.id) {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Cannot delete this photo' });
         }
         
@@ -1827,12 +1869,12 @@ export const appRouter = router({
           const { url } = await storagePut(fileKey, buffer, 'image/jpeg');
           
           const photoId = await db.addPetPhoto({
-            petId: input.petId,
-            photoUrl: url,
-            photoKey: fileKey,
+            pet_id: input.petId,
+            photo_url: url,
+            photo_key: fileKey,
             caption: photo.caption || null,
-            takenAt: photo.takenAt,
-            uploadedById: ctx.user.id,
+            taken_at: photo.taken_at,
+            uploaded_by_id: ctx.user.id,
           });
           
           results.push({ id: photoId, url });
@@ -1887,7 +1929,7 @@ export const appRouter = router({
         // Group by date
         const timeline: Record<string, typeof photos> = {};
         photos.forEach((photo: any) => {
-          const dateKey = new Date(photo.takenAt).toISOString().split('T')[0];
+          const dateKey = new Date(photo.taken_at).toISOString().split('T')[0];
           if (!timeline[dateKey]) {
             timeline[dateKey] = [];
           }
@@ -1923,7 +1965,7 @@ export const appRouter = router({
         
         if (vaccinesDue.length > 0) {
           const vaccineList = vaccinesDue.map(v => 
-            `${v.pet.name} - ${v.vaccine.name} (${new Date(v.vaccination.nextDueDate!).toLocaleDateString("pt-BR")})`
+            `${v.pet.name} - ${v.vaccine.name} (${new Date(v.vaccination.next_due_date!).toLocaleDateString("pt-BR")})`
           ).join(", ");
           
           await notifyOwner({
@@ -1953,7 +1995,7 @@ export const appRouter = router({
         
         if (vaccinesDue.length > 0) {
           const vaccineList = vaccinesDue.map(v => 
-            `${v.pet.name} - ${v.vaccine.name} (${new Date(v.vaccination.nextDueDate!).toLocaleDateString("pt-BR")})`
+            `${v.pet.name} - ${v.vaccine.name} (${new Date(v.vaccination.next_due_date!).toLocaleDateString("pt-BR")})`
           ).join(", ");
           
           await notifyOwner({
@@ -2125,16 +2167,20 @@ export const appRouter = router({
         }
 
         const result = await db.createFleaTreatment({
-          ...input,
-          createdById: ctx.user.id,
+          pet_id: input.petId,
+          product_name: input.productName,
+          application_date: input.applicationDate,
+          next_due_date: input.nextDueDate,
+          notes: input.notes,
+          created_by_id: ctx.user.id,
         });
 
         // Track change
         const { logChange } = await import("./changeTracker");
         await logChange({
           resourceType: "preventive",
-          resourceId: result.insertId,
-          petId: input.petId,
+          resourceId: result.id,
+          pet_id: input.petId,
           fieldName: "flea_treatment_added",
           oldValue: null,
           newValue: `${input.productName} - Próxima aplicação: ${input.nextDueDate.toLocaleDateString('pt-BR')}`,
@@ -2146,7 +2192,7 @@ export const appRouter = router({
         // Auto-create calendar events for flea treatment
         await db.autoCreateFleaEvent(
           input.petId,
-          result.insertId,
+          result.id,
           input.productName,
           input.applicationDate,
           input.nextDueDate,
@@ -2156,7 +2202,7 @@ export const appRouter = router({
         // Create event for next due date too
         await db.autoCreateFleaEvent(
           input.petId,
-          result.insertId,
+          result.id,
           input.productName,
           input.nextDueDate,
           undefined,
@@ -2212,16 +2258,20 @@ export const appRouter = router({
         }
 
         const result = await db.createDewormingTreatment({
-          ...input,
-          createdById: ctx.user.id,
+          pet_id: input.petId,
+          product_name: input.productName,
+          application_date: input.applicationDate,
+          next_due_date: input.nextDueDate,
+          notes: input.notes,
+          created_by_id: ctx.user.id,
         });
 
         // Track change
         const { logChange } = await import("./changeTracker");
         await logChange({
           resourceType: "preventive",
-          resourceId: result.insertId,
-          petId: input.petId,
+          resourceId: result.id,
+          pet_id: input.petId,
           fieldName: "deworming_treatment_added",
           oldValue: null,
           newValue: `${input.productName} - Próxima aplicação: ${input.nextDueDate.toLocaleDateString('pt-BR')}`,
@@ -2233,7 +2283,7 @@ export const appRouter = router({
         // Auto-create calendar events for deworming treatment
         await db.autoCreateDewormingEvent(
           input.petId,
-          result.insertId,
+          result.id,
           input.productName,
           input.applicationDate,
           input.nextDueDate,
@@ -2681,9 +2731,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         productKey: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-          apiVersion: "2025-12-15.clover",
-        });
+        const stripe = getStripe();
 
         const product = PRODUCTS[input.productKey as keyof typeof PRODUCTS];
         if (!product) {
@@ -3344,11 +3392,16 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const data = {
-          ...input,
-          createdById: ctx.user.id,
-        };
-        return await db.addPetVaccination(data);
+        return await db.addPetVaccination({
+          pet_id: input.petId,
+          vaccine_id: input.vaccineId,
+          application_date: input.applicationDate,
+          next_due_date: input.nextDueDate,
+          veterinarian: input.veterinarian,
+          clinic: input.clinic,
+          notes: input.notes,
+          created_by_id: ctx.user.id,
+        });
       }),
 
     /**
@@ -3365,11 +3418,16 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         notes: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const data = {
-          ...input,
-          createdById: ctx.user.id,
-        };
-        return await db.addPetMedication(data);
+        return await db.addPetMedication({
+          pet_id: input.petId,
+          medication_id: input.medicationId,
+          start_date: input.startDate,
+          end_date: input.endDate,
+          dosage: input.dosage,
+          frequency: input.frequency,
+          notes: input.notes,
+          created_by_id: ctx.user.id,
+        });
       }),
 
     /**
@@ -3608,13 +3666,13 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         
         // Send notification to each tutor
         for (const tutor of tutors) {
-          if (tutor.tutorId) {
+          if (tutor.tutor_id) {
             await db.createNotification({
-              userId: tutor.tutorId,
+              user_id: tutor.tutor_id,
               type: "system",
               title: input.title,
               message: input.message,
-              isRead: false,
+              is_read: false,
             });
           }
         }
@@ -3648,7 +3706,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         const { createBookingRequest } = await import("./bookingRequests.db");
         const result = await createBookingRequest({
           petId: input.petId,
-          tutorId: ctx.user.openId || ctx.user.email || "",
+          tutorId: ctx.user.open_id || ctx.user.email || "",
           requestedDates: input.requestedDates,
           notes: input.notes,
         });
@@ -3672,7 +3730,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
     myRequests: protectedProcedure
       .query(async ({ ctx }) => {
         const { getTutorBookingRequests } = await import("./bookingRequests.db");
-        return await getTutorBookingRequests(ctx.user.openId || ctx.user.email || "");
+        return await getTutorBookingRequests(ctx.user.open_id || ctx.user.email || "");
       }),
 
     /**
@@ -3682,7 +3740,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         const { cancelBookingRequest } = await import("./bookingRequests.db");
-        return await cancelBookingRequest(input.id, ctx.user.openId || ctx.user.email || "");
+        return await cancelBookingRequest(input.id, ctx.user.open_id || ctx.user.email || "");
       }),
 
     /**
@@ -3725,7 +3783,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           .from(bookingRequests)
           .where(eq(bookingRequests.id, input.id));
 
-        const result = await approveBookingRequest(input.id, ctx.user.openId || ctx.user.email || "", input.adminNotes);
+        const result = await approveBookingRequest(input.id, ctx.user.open_id || ctx.user.email || "", input.adminNotes);
 
         // Notify tutor about approval
         if (request) {
@@ -3763,7 +3821,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           .from(bookingRequests)
           .where(eq(bookingRequests.id, input.id));
 
-        const result = await rejectBookingRequest(input.id, ctx.user.openId || ctx.user.email || "", input.adminNotes);
+        const result = await rejectBookingRequest(input.id, ctx.user.open_id || ctx.user.email || "", input.adminNotes);
 
         // Notify tutor about rejection
         if (request) {
@@ -4108,7 +4166,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           return { success: true, id: existing.id };
         } else {
           const id = await db.createTutorNotificationPreference({
-            tutorId: ctx.user.id,
+            tutor_id: ctx.user.id,
             notificationType: input.notificationType,
             enabled: input.enabled,
           });
@@ -4202,15 +4260,21 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
         }
         
         const result = await db.createHealthBehaviorLog({
-          ...input,
-          recordedBy: ctx.user.id,
-          recordedAt: input.recordedAt || new Date(),
+          pet_id: input.petId,
+          mood: input.mood,
+          behavior: input.behavior,
+          stool: input.stool,
+          appetite: input.appetite,
+          water_intake: input.waterIntake,
+          notes: input.notes,
+          recorded_by: ctx.user.id,
+          recorded_at: input.recordedAt || new Date(),
         });
 
         // Auto-create calendar event for health/behavior log
         await db.autoCreateHealthLogEvent(
           input.petId,
-          result.insertId,
+          result.id,
           input.recordedAt || new Date(),
           input.mood,
           input.behavior,
@@ -4289,7 +4353,7 @@ Mantenha as respostas concisas (máximo 3 parágrafos) e práticas.`;
           throw new TRPCError({ code: "NOT_FOUND" });
         }
         
-        if (ctx.user.role !== "admin" && log.recordedBy !== ctx.user.id) {
+        if (ctx.user.role !== "admin" && log.recorded_by !== ctx.user.id) {
           throw new TRPCError({ code: "FORBIDDEN" });
         }
         

@@ -3,8 +3,8 @@
  * Removes all data except admin user
  */
 
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import * as schema from "../drizzle/schema";
 import { sql } from "drizzle-orm";
 
@@ -12,12 +12,12 @@ async function cleanDatabase() {
   console.log("🧹 Starting database cleanup...");
 
   // Create connection
-  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
-  const db = drizzle(connection, { schema, mode: "default" });
+  const client = postgres(process.env.DATABASE_URL!);
+  const db = drizzle(client, { schema, mode: "default" });
 
   try {
-    // Disable foreign key checks temporarily
-    await db.execute(sql`SET FOREIGN_KEY_CHECKS = 0`);
+    // PostgreSQL doesn't need to disable foreign key checks
+    // We'll delete in the correct order to respect foreign keys
 
     console.log("📋 Deleting data from tables...");
 
@@ -98,9 +98,6 @@ async function cleanDatabase() {
     await db.execute(sql`DELETE FROM users WHERE role != 'admin'`);
     console.log("  ✓ non-admin users cleared");
 
-    // Re-enable foreign key checks
-    await db.execute(sql`SET FOREIGN_KEY_CHECKS = 1`);
-
     console.log("\n✅ Database cleanup completed successfully!");
     console.log("📊 Admin user preserved, all other data removed.");
 
@@ -108,7 +105,7 @@ async function cleanDatabase() {
     console.error("❌ Error during cleanup:", error);
     throw error;
   } finally {
-    await connection.end();
+    await client.end();
   }
 }
 

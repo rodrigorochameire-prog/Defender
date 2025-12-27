@@ -84,7 +84,7 @@ export async function getTutorBookingRequests(tutorId: string) {
       id: bookingRequests.id,
       petId: bookingRequests.petId,
       petName: pets.name,
-      petPhoto: pets.photoUrl,
+      petPhoto: pets.photo_url,
       requestedDates: bookingRequests.requestedDates,
       status: bookingRequests.status,
       notes: bookingRequests.notes,
@@ -111,7 +111,7 @@ export async function getPendingBookingRequests() {
       id: bookingRequests.id,
       petId: bookingRequests.petId,
       petName: pets.name,
-      petPhoto: pets.photoUrl,
+      petPhoto: pets.photo_url,
       tutorId: bookingRequests.tutorId,
       tutorName: users.name,
       tutorEmail: users.email,
@@ -122,7 +122,7 @@ export async function getPendingBookingRequests() {
     })
     .from(bookingRequests)
     .leftJoin(pets, eq(bookingRequests.petId, pets.id))
-    .leftJoin(users, eq(bookingRequests.tutorId, users.openId))
+    .leftJoin(users, eq(bookingRequests.tutorId, users.open_id))
     .where(eq(bookingRequests.status, "pending"))
     .orderBy(sql`${bookingRequests.createdAt} ASC`);
 
@@ -139,7 +139,7 @@ export async function getAllBookingRequests(status?: string) {
       id: bookingRequests.id,
       petId: bookingRequests.petId,
       petName: pets.name,
-      petPhoto: pets.photoUrl,
+      petPhoto: pets.photo_url,
       tutorId: bookingRequests.tutorId,
       tutorName: users.name,
       tutorEmail: users.email,
@@ -153,7 +153,7 @@ export async function getAllBookingRequests(status?: string) {
     })
     .from(bookingRequests)
     .leftJoin(pets, eq(bookingRequests.petId, pets.id))
-    .leftJoin(users, eq(bookingRequests.tutorId, users.openId));
+    .leftJoin(users, eq(bookingRequests.tutorId, users.open_id));
 
   if (status) {
     const requests = await query
@@ -223,7 +223,7 @@ export async function approveBookingRequest(
   const [tutor] = await db
     .select({ id: users.id })
     .from(users)
-    .where(eq(users.openId, request.tutorId));
+    .where(eq(users.open_id, request.tutorId));
 
   if (!tutor) {
     throw new Error("Tutor not found");

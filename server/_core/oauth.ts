@@ -34,11 +34,11 @@ export function registerOAuthRoutes(app: Express) {
       const userName = userInfo.name || "Usuário sem nome";
 
       await db.upsertUser({
-        openId: userInfo.openId,
+        open_id: userInfo.openId,
         name: userName,
         email: userInfo.email ?? null, // O banco permite email null, então isso não trava
-        loginMethod: loginMethod,      // O banco NÃO permite null, agora tem fallback
-        lastSignedIn: new Date(),
+        login_method: loginMethod,      // O banco NÃO permite null, agora tem fallback
+        last_signed_in: new Date(),
       });
 
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {

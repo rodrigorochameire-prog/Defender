@@ -14,7 +14,7 @@ interface BackupResult {
 }
 
 /**
- * Creates a MySQL database backup and uploads it to S3
+ * Creates a PostgreSQL database backup and uploads it to S3
  * @returns Promise with backup result
  */
 export async function createDatabaseBackup(): Promise<BackupResult> {
@@ -29,16 +29,17 @@ export async function createDatabaseBackup(): Promise<BackupResult> {
       throw new Error("DATABASE_URL not configured");
     }
 
-    // Parse DATABASE_URL: mysql://user:password@host:port/database
-    const urlMatch = dbUrl.match(/mysql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
+    // Parse DATABASE_URL: postgresql://user:password@host:port/database
+    const urlMatch = dbUrl.match(/postgres(ql)?:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
     if (!urlMatch) {
-      throw new Error("Invalid DATABASE_URL format");
+      throw new Error("Invalid DATABASE_URL format. Expected PostgreSQL connection string.");
     }
 
-    const [, user, password, host, port, database] = urlMatch;
+    const [, , user, password, host, port, database] = urlMatch;
 
-    // Create mysqldump command
-    const dumpCommand = `mysqldump -h ${host} -P ${port} -u ${user} -p'${password}' ${database} > ${tempPath}`;
+    // Create pg_dump command
+    // Set PGPASSWORD environment variable to avoid password prompt
+    const dumpCommand = `PGPASSWORD='${password.replace(/'/g, "\\'")}' pg_dump -h ${host} -p ${port} -U ${user} -d ${database} -F c -f ${tempPath}`;
 
     console.log(`[Backup] Starting database backup: ${filename}`);
 

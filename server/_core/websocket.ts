@@ -1,13 +1,13 @@
 import { Server as HTTPServer } from "http";
 import { Server, Socket } from "socket.io";
 import { sdk } from "./sdk";
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 
-const connection = mysql.createPool(process.env.DATABASE_URL!);
-const db = drizzle(connection);
+const client = postgres(process.env.DATABASE_URL!);
+const db = drizzle(client);
 
 let io: Server | null = null;
 
@@ -47,15 +47,15 @@ export function initializeWebSocket(httpServer: HTTPServer) {
       const [user] = await db
         .select()
         .from(users)
-        .where(eq(users.openId, session.openId))
+        .where(eq(users.open_id, session.openId))
         .limit(1);
 
       if (!user) {
         return next(new Error("Authentication error: User not found"));
       }
 
-      socket.userId = user.openId || String(user.id);
-      socket.userRole = user.role;
+      socket.userId = user.open_id || String(user.id);
+      socket.userRole = user.role as "user" | "admin";
 
       // Join user-specific room
       socket.join(`user:${socket.userId}`);

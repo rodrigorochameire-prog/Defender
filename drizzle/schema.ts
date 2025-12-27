@@ -1,39 +1,43 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, decimal, date, json } from "drizzle-orm/mysql-core";
+import { integer, pgEnum, pgTable, text, timestamp, varchar, boolean, numeric, date, jsonb, serial, bigint, bigserial, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 /**
  * Core user table backing auth flow.
  * Extended with role field for admin/user distinction.
+ * 
+ * NOTE: Column names match the actual PostgreSQL database (snake_case).
  */
-export const users = mysqlTable("users", {
-  id: int("id").autoincrement().primaryKey(),
-  openId: varchar("openId", { length: 64 }).unique(), // Optional for email/password users
+export const users = pgTable("users", {
+  id: bigint("id", { mode: "number" }).primaryKey(),
+  open_id: varchar("open_id", { length: 64 }),
+  auth_id: uuid("auth_id"),
   name: text("name"),
-  email: varchar("email", { length: 320 }).unique(),
-  passwordHash: varchar("passwordHash", { length: 255 }), // For email/password auth
-  loginMethod: varchar("loginMethod", { length: 64 }).default("email").notNull(), // "oauth" or "email"
-  emailVerified: boolean("emailVerified").default(false).notNull(),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
-  phone: varchar("phone", { length: 20 }),
-  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  email: text("email"),
+  login_method: varchar("login_method", { length: 64 }).default("email").notNull(),
+  email_verified: boolean("email_verified").default(false).notNull(),
+  role: text("role").default("user").notNull(),
+  phone: text("phone"),
+  stripe_customer_id: text("stripe_customer_id"),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  last_signed_in: timestamp("last_signed_in", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export type User = typeof users.$inferSelect;
+export type User = typeof users.$inferSelect & {
+  auth_id?: string | null;
+};
 export type InsertUser = typeof users.$inferInsert;
 
 /**
  * Password reset tokens table
  */
-export const passwordResetTokens = mysqlTable("password_reset_tokens", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  user_id: bigint("user_id", { mode: "number" }).notNull(),
   token: varchar("token", { length: 255 }).unique().notNull(),
-  expiresAt: timestamp("expiresAt").notNull(),
+  expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
   used: boolean("used").default(false).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
@@ -42,13 +46,13 @@ export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 /**
  * Email verification tokens table
  */
-export const emailVerificationTokens = mysqlTable("email_verification_tokens", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
+  id: serial("id").primaryKey(),
+  user_id: bigint("user_id", { mode: "number" }).notNull(),
   token: varchar("token", { length: 255 }).unique().notNull(),
-  expiresAt: timestamp("expiresAt").notNull(),
+  expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
   used: boolean("used").default(false).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type EmailVerificationToken = typeof emailVerificationTokens.$inferSelect;
@@ -57,25 +61,25 @@ export type InsertEmailVerificationToken = typeof emailVerificationTokens.$infer
 /**
  * Pets table - stores all pet information
  */
-export const pets = mysqlTable("pets", {
-  id: int("id").autoincrement().primaryKey(),
+export const pets = pgTable("pets", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   breed: varchar("breed", { length: 100 }),
   age: varchar("age", { length: 50 }), // e.g., "2a 3m"
-  weight: int("weight"), // weight in grams (e.g., 32500 for 32.5kg)
-  birthDate: timestamp("birthDate"),
-  photoUrl: text("photoUrl"),
-  photoKey: text("photoKey"), // S3 key for photo
-  status: mysqlEnum("status", ["checked-in", "checked-out"]).default("checked-out").notNull(),
-  approvalStatus: mysqlEnum("approvalStatus", ["pending", "approved", "rejected"]).default("pending").notNull(),
-  checkInTime: timestamp("checkInTime"),
-  checkOutTime: timestamp("checkOutTime"),
-  foodBrand: varchar("foodBrand", { length: 200 }),
-  foodAmount: int("foodAmount"), // daily food amount in grams
-  credits: int("credits").default(0).notNull(), // daycare credits
+  weight: integer("weight"), // weight in grams (e.g., 32500 for 32.5kg)
+  birth_date: timestamp("birth_date", { withTimezone: true }),
+  photo_url: text("photo_url"),
+  photo_key: text("photo_key"), // S3 key for photo
+  status: varchar("status", { length: 100 }).default("checked-out").notNull(),
+  approval_status: varchar("approval_status", { length: 100 }).default("pending").notNull(),
+  check_in_time: timestamp("check_in_time", { withTimezone: true }),
+  check_out_time: timestamp("check_out_time", { withTimezone: true }),
+  food_brand: varchar("food_brand", { length: 200 }),
+  food_amount: integer("food_amount"), // daily food amount in grams
+  credits: integer("credits").default(0).notNull(), // daycare credits
   notes: text("notes"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type Pet = typeof pets.$inferSelect;
@@ -84,12 +88,12 @@ export type InsertPet = typeof pets.$inferInsert;
 /**
  * Pet-Tutor relationship table (N:N)
  */
-export const petTutors = mysqlTable("pet_tutors", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
-  tutorId: int("tutorId").notNull(),
-  isPrimary: boolean("isPrimary").default(false).notNull(), // primary contact
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+export const petTutors = pgTable("pet_tutors", {
+  id: serial("id").primaryKey(),
+  pet_id: integer("pet_id").notNull(),
+  tutor_id: bigint("tutor_id", { mode: "number" }).notNull(),
+  is_primary: boolean("is_primary").default(false).notNull(), // primary contact
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type PetTutor = typeof petTutors.$inferSelect;
@@ -98,15 +102,15 @@ export type InsertPetTutor = typeof petTutors.$inferInsert;
 /**
  * Credit packages available for purchase
  */
-export const creditPackages = mysqlTable("credit_packages", {
-  id: int("id").autoincrement().primaryKey(),
+export const creditPackages = pgTable("credit_packages", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
-  credits: int("credits").notNull(), // number of credits
-  priceInCents: int("priceInCents").notNull(),
-  discountPercent: int("discountPercent").default(0).notNull(),
+  credits: integer("credits").notNull(), // number of credits
+  priceInCents: integer("priceInCents").notNull(),
+  discountPercent: integer("discountPercent").default(0).notNull(),
   isActive: boolean("isActive").default(true).notNull(),
-  displayOrder: int("displayOrder").default(0).notNull(),
+  displayOrder: integer("displayOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -116,15 +120,15 @@ export type InsertCreditPackage = typeof creditPackages.$inferInsert;
 /**
  * Daycare credits system
  */
-export const daycareCredits = mysqlTable("daycare_credits", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
-  packageDays: int("packageDays").notNull(), // number of days purchased
-  packagePrice: int("packagePrice").notNull(), // price in cents
-  remainingDays: int("remainingDays").notNull(),
-  purchaseDate: timestamp("purchaseDate").defaultNow().notNull(),
-  expiryDate: timestamp("expiryDate"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+export const daycareCredits = pgTable("daycare_credits", {
+  id: serial("id").primaryKey(),
+  pet_id: integer("pet_id").notNull(),
+  package_days: integer("package_days").notNull(), // number of days purchased
+  package_price: integer("package_price").notNull(), // price in cents
+  remaining_days: integer("remaining_days").notNull(),
+  purchase_date: timestamp("purchase_date", { withTimezone: true }).defaultNow().notNull(),
+  expiry_date: timestamp("expiry_date", { withTimezone: true }),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type DaycareCredit = typeof daycareCredits.$inferSelect;
@@ -133,18 +137,18 @@ export type InsertDaycareCredit = typeof daycareCredits.$inferInsert;
 /**
  * Daycare usage history
  */
-export const daycareUsage = mysqlTable("daycare_usage", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
-  usageDate: timestamp("usageDate").notNull(),
-  checkInTime: timestamp("checkInTime"),
-  checkOutTime: timestamp("checkOutTime"),
-  creditId: int("creditId"), // which credit package was used
-  amountCents: int("amountCents"), // valor da estadia em centavos
-  paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "cancelled"]).default("pending").notNull(),
-  paidAt: timestamp("paidAt"),
+export const daycareUsage = pgTable("daycare_usage", {
+  id: serial("id").primaryKey(),
+  pet_id: integer("pet_id").notNull(),
+  usage_date: timestamp("usage_date", { withTimezone: true }).notNull(),
+  check_in_time: timestamp("check_in_time", { withTimezone: true }),
+  check_out_time: timestamp("check_out_time", { withTimezone: true }),
+  credit_id: integer("credit_id"), // which credit package was used
+  amount_cents: integer("amount_cents"), // valor da estadia em centavos
+  payment_status: varchar("payment_status", { length: 100 }).default("pending").notNull(),
+  paid_at: timestamp("paid_at", { withTimezone: true }),
   notes: text("notes"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type DaycareUsage = typeof daycareUsage.$inferSelect;
@@ -153,12 +157,12 @@ export type InsertDaycareUsage = typeof daycareUsage.$inferInsert;
 /**
  * Vaccine library - pre-defined common vaccines
  */
-export const vaccineLibrary = mysqlTable("vaccine_library", {
-  id: int("id").autoincrement().primaryKey(),
+export const vaccineLibrary = pgTable("vaccine_library", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
-  intervalDays: int("intervalDays"), // recommended interval between doses
-  dosesRequired: int("dosesRequired").default(1), // number of doses needed
+  intervalDays: integer("intervalDays"), // recommended interval between doses
+  dosesRequired: integer("dosesRequired").default(1), // number of doses needed
   isCommon: boolean("isCommon").default(true).notNull(), // pre-defined vs custom
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -169,20 +173,20 @@ export type InsertVaccineLibrary = typeof vaccineLibrary.$inferInsert;
 /**
  * Pet vaccination records
  */
-export const petVaccinations = mysqlTable("pet_vaccinations", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
-  vaccineId: int("vaccineId").notNull(), // reference to vaccine_library
-  applicationDate: timestamp("applicationDate").notNull(),
-  nextDueDate: timestamp("nextDueDate"),
-  doseNumber: int("doseNumber").default(1), // which dose (1, 2, 3...)
+export const petVaccinations = pgTable("pet_vaccinations", {
+  id: serial("id").primaryKey(),
+  pet_id: integer("pet_id").notNull(),
+  vaccine_id: integer("vaccine_id").notNull(), // reference to vaccine_library
+  application_date: timestamp("application_date", { withTimezone: true }).notNull(),
+  next_due_date: timestamp("next_due_date", { withTimezone: true }),
+  dose_number: integer("dose_number").default(1), // which dose (1, 2, 3...)
   veterinarian: varchar("veterinarian", { length: 200 }),
   clinic: varchar("clinic", { length: 200 }),
-  batchNumber: varchar("batchNumber", { length: 100 }),
+  batch_number: varchar("batch_number", { length: 100 }),
   notes: text("notes"),
-  documentUrl: text("documentUrl"), // S3 url for vaccine certificate
-  documentKey: text("documentKey"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  document_url: text("document_url"), // S3 url for vaccine certificate
+  document_key: text("document_key"),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type PetVaccination = typeof petVaccinations.$inferSelect;
@@ -191,8 +195,8 @@ export type InsertPetVaccination = typeof petVaccinations.$inferInsert;
 /**
  * Medication library - pre-defined common medications
  */
-export const medicationLibrary = mysqlTable("medication_library", {
-  id: int("id").autoincrement().primaryKey(),
+export const medicationLibrary = pgTable("medication_library", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
   type: varchar("type", { length: 100 }).notNull(), // Changed from enum to varchar to allow custom types
   description: text("description"),
@@ -207,12 +211,12 @@ export type InsertMedicationLibrary = typeof medicationLibrary.$inferInsert;
 /**
  * Preventive products library (flea treatment, deworming)
  */
-export const preventiveLibrary = mysqlTable("preventive_library", {
-  id: int("id").autoincrement().primaryKey(),
+export const preventiveLibrary = pgTable("preventive_library", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
-  type: mysqlEnum("type", ["flea", "deworming"]).notNull(),
+  type: varchar("type", { length: 100 }).notNull(),
   manufacturer: varchar("manufacturer", { length: 200 }),
-  intervalDays: int("intervalDays"), // recommended interval in days
+  intervalDays: integer("intervalDays"), // recommended interval in days
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -223,30 +227,30 @@ export type InsertPreventiveLibrary = typeof preventiveLibrary.$inferInsert;
 /**
  * Pet medication/treatment records
  */
-export const petMedications = mysqlTable("pet_medications", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
-  medicationId: int("medicationId").notNull(),
-  startDate: timestamp("startDate").notNull(),
-  endDate: timestamp("endDate"),
+export const petMedications = pgTable("pet_medications", {
+  id: serial("id").primaryKey(),
+  pet_id: integer("pet_id").notNull(),
+  medication_id: integer("medication_id").notNull(),
+  start_date: timestamp("start_date", { withTimezone: true }).notNull(),
+  end_date: timestamp("end_date", { withTimezone: true }),
   dosage: varchar("dosage", { length: 200 }).notNull(),
   frequency: varchar("frequency", { length: 100 }), // e.g., "12h", "8h", "daily"
   // Advanced periodicity fields
-  periodicity: mysqlEnum("periodicity", ["daily", "weekly", "monthly", "custom"]).default("daily"),
-  customInterval: int("customInterval"), // interval in days for custom periodicity
-  weekDays: text("weekDays"), // JSON array of week days [0-6] for weekly periodicity
-  monthDays: text("monthDays"), // JSON array of month days [1-31] for monthly periodicity
-  autoSchedule: boolean("autoSchedule").default(false).notNull(), // enable auto-scheduling
+  periodicity: varchar("periodicity", { length: 100 }).default("daily"),
+  custom_interval: integer("custom_interval"), // interval in days for custom periodicity
+  week_days: text("week_days"), // JSON array of week days [0-6] for weekly periodicity
+  month_days: text("month_days"), // JSON array of month days [1-31] for monthly periodicity
+  auto_schedule: boolean("auto_schedule").default(false).notNull(), // enable auto-scheduling
   // Dosage progression fields
-  dosageProgression: mysqlEnum("dosageProgression", ["stable", "increase", "decrease"]).default("stable"),
-  progressionRate: varchar("progressionRate", { length: 50 }), // e.g., "10%", "5mg"
-  progressionInterval: int("progressionInterval"), // adjust every X doses
-  targetDosage: varchar("targetDosage", { length: 200 }), // target dosage to reach
-  currentDoseCount: int("currentDoseCount").default(0).notNull(), // track dose number for progression
-  administrationTimes: text("administrationTimes"), // JSON array of times in HH:MM format
-  isActive: boolean("isActive").default(true).notNull(),
+  dosage_progression: varchar("dosage_progression", { length: 100 }).default("stable"),
+  progression_rate: varchar("progression_rate", { length: 50 }), // e.g., "10%", "5mg"
+  progression_interval: integer("progression_interval"), // adjust every X doses
+  target_dosage: varchar("target_dosage", { length: 200 }), // target dosage to reach
+  current_dose_count: integer("current_dose_count").default(0).notNull(), // track dose number for progression
+  administration_times: text("administration_times"), // JSON array of times in HH:MM format
+  is_active: boolean("is_active").default(true).notNull(),
   notes: text("notes"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type PetMedication = typeof petMedications.$inferSelect;
@@ -255,25 +259,25 @@ export type InsertPetMedication = typeof petMedications.$inferInsert;
 /**
  * Daily logs - segregated by source (home vs daycare)
  */
-export const dailyLogs = mysqlTable("daily_logs", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
-  logDate: timestamp("logDate").notNull(),
-  source: mysqlEnum("source", ["home", "daycare"]).notNull(),
-  mood: mysqlEnum("mood", ["feliz", "calmo", "ansioso", "triste", "agitado"]),
-  stool: mysqlEnum("stool", ["normal", "diarreia", "constipado", "nao_fez"]),
-  appetite: mysqlEnum("appetite", ["normal", "aumentado", "diminuido", "nao_comeu"]),
+export const dailyLogs = pgTable("daily_logs", {
+  id: serial("id").primaryKey(),
+  pet_id: integer("pet_id").notNull(),
+  log_date: timestamp("log_date", { withTimezone: true }).notNull(),
+  source: varchar("source", { length: 100 }).notNull(),
+  mood: varchar("mood", { length: 100 }),
+  stool: varchar("stool", { length: 100 }),
+  appetite: varchar("appetite", { length: 100 }),
   behavior: text("behavior"),
-  behaviorNotes: text("behaviorNotes"),
+  behavior_notes: text("behavior_notes"),
   activities: text("activities"), // JSON array of activities
-  foodConsumed: varchar("foodConsumed", { length: 50 }), // "all", "half", "little", "none"
-  feedingTime: varchar("feedingTime", { length: 10 }), // HH:MM format
-  feedingAmount: varchar("feedingAmount", { length: 100 }), // e.g., "200g", "1 xícara"
-  feedingAcceptance: mysqlEnum("feedingAcceptance", ["excelente", "boa", "regular", "ruim", "recusou"]),
-  weight: int("weight"), // weight in grams at time of log
+  food_consumed: varchar("food_consumed", { length: 50 }), // "all", "half", "little", "none"
+  feeding_time: varchar("feeding_time", { length: 10 }), // HH:MM format
+  feeding_amount: varchar("feeding_amount", { length: 100 }), // e.g., "200g", "1 xícara"
+  feeding_acceptance: varchar("feeding_acceptance", { length: 100 }),
+  weight: integer("weight"), // weight in grams at time of log
   notes: text("notes"),
-  createdById: int("createdById").notNull(), // user who created the log
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  created_by_id: bigint("created_by_id", { mode: "number" }).notNull(), // user who created the log
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type DailyLog = typeof dailyLogs.$inferSelect;
@@ -282,33 +286,33 @@ export type InsertDailyLog = typeof dailyLogs.$inferInsert;
 /**
  * Calendar events
  */
-export const calendarEvents = mysqlTable("calendar_events", {
-  id: int("id").autoincrement().primaryKey(),
+export const calendarEvents = pgTable("calendar_events", {
+  id: serial("id").primaryKey(),
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
-  eventDate: timestamp("eventDate").notNull(),
-  endDate: timestamp("endDate"), // For events with duration
-  eventType: mysqlEnum("eventType", ["holiday", "medical", "general", "vaccination", "medication", "closure", "checkin", "checkout", "preventive", "custom"]).notNull(),
-  customEventTypeId: int("customEventTypeId"), // Reference to eventTypes table for custom types
-  customColor: varchar("customColor", { length: 20 }), // Hex color for custom events
-  petId: int("petId"), // null for general events
+  event_date: timestamp("event_date", { withTimezone: true }).notNull(),
+  end_date: timestamp("end_date", { withTimezone: true }), // For events with duration
+  event_type: varchar("event_type", { length: 100 }).notNull(),
+  custom_event_type_id: integer("custom_event_type_id"), // Reference to eventTypes table for custom types
+  custom_color: varchar("custom_color", { length: 20 }), // Hex color for custom events
+  pet_id: integer("pet_id"), // null for general events
   location: varchar("location", { length: 200 }),
-  isAllDay: boolean("isAllDay").default(true).notNull(),
+  is_all_day: boolean("is_all_day").default(true).notNull(),
   // Multi-day stay period fields (for checkin events)
-  checkInDate: timestamp("checkInDate"), // Start date of stay
-  checkOutDate: timestamp("checkOutDate"), // End date of stay
-  dailyCount: int("dailyCount"), // Number of days (calculated)
+  check_in_date: timestamp("check_in_date", { withTimezone: true }), // Start date of stay
+  check_out_date: timestamp("check_out_date", { withTimezone: true }), // End date of stay
+  daily_count: integer("daily_count"), // Number of days (calculated)
   // Attached media and logs
-  photoUrls: json("photoUrls").$type<string[]>(), // Array of photo URLs
-  photoKeys: json("photoKeys").$type<string[]>(), // Array of S3 keys
-  logIds: json("logIds").$type<number[]>(), // Array of dailyLogs IDs
+  photo_urls: jsonb("photo_urls").$type<string[]>(), // Array of photo URLs
+  photo_keys: jsonb("photo_keys").$type<string[]>(), // Array of S3 keys
+  log_ids: jsonb("log_ids").$type<number[]>(), // Array of dailyLogs IDs
   // Resource linking for automatic integration
-  linkedResourceType: mysqlEnum("linkedResourceType", ["medication", "vaccine", "preventive_flea", "preventive_deworming", "health_log"]),
-  linkedResourceId: int("linkedResourceId"), // ID of the linked resource
-  autoCreated: boolean("autoCreated").default(false).notNull(), // Indica se foi criado automaticamente
-  reminderSent: boolean("reminderSent").default(false).notNull(),
-  createdById: int("createdById").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  linked_resource_type: varchar("linked_resource_type", { length: 100 }),
+  linked_resource_id: integer("linked_resource_id"), // ID of the linked resource
+  auto_created: boolean("auto_created").default(false).notNull(), // Indica se foi criado automaticamente
+  reminder_sent: boolean("reminder_sent").default(false).notNull(),
+  created_by_id: bigint("created_by_id", { mode: "number" }).notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
@@ -317,19 +321,19 @@ export type InsertCalendarEvent = typeof calendarEvents.$inferInsert;
 /**
  * Documents storage
  */
-export const documents = mysqlTable("documents", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
+export const documents = pgTable("documents", {
+  id: serial("id").primaryKey(),
+  pet_id: integer("pet_id").notNull(),
   title: varchar("title", { length: 200 }).notNull(),
-  category: mysqlEnum("category", ["vaccination_card", "veterinary_document", "exam", "certificate", "prescription", "other"]).notNull(),
-  fileUrl: text("fileUrl").notNull(),
-  fileKey: text("fileKey").notNull(),
-  fileName: varchar("fileName", { length: 255 }),
-  mimeType: varchar("mimeType", { length: 100 }),
-  fileSize: int("fileSize"), // in bytes
+  category: varchar("category", { length: 100 }).notNull(),
+  file_url: text("file_url").notNull(),
+  file_key: text("file_key").notNull(),
+  file_name: varchar("file_name", { length: 255 }),
+  mime_type: varchar("mime_type", { length: 100 }),
+  file_size: integer("file_size"), // in bytes
   description: text("description"),
-  uploadedById: int("uploadedById").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  uploaded_by_id: bigint("uploaded_by_id", { mode: "number" }).notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type Document = typeof documents.$inferSelect;
@@ -338,15 +342,15 @@ export type InsertDocument = typeof documents.$inferInsert;
 /**
  * Pet photos gallery
  */
-export const petPhotos = mysqlTable("pet_photos", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
-  photoUrl: text("photoUrl").notNull(),
-  photoKey: text("photoKey").notNull(), // S3 key
+export const petPhotos = pgTable("pet_photos", {
+  id: serial("id").primaryKey(),
+  pet_id: integer("pet_id").notNull(),
+  photo_url: text("photo_url").notNull(),
+  photo_key: text("photo_key").notNull(), // S3 key
   caption: text("caption"),
-  takenAt: timestamp("takenAt").notNull(),
-  uploadedById: int("uploadedById").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  taken_at: timestamp("taken_at", { withTimezone: true }).notNull(),
+  uploaded_by_id: bigint("uploaded_by_id", { mode: "number" }).notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type PetPhoto = typeof petPhotos.$inferSelect;
@@ -355,10 +359,10 @@ export type InsertPetPhoto = typeof petPhotos.$inferInsert;
 /**
  * Photo comments
  */
-export const photoComments = mysqlTable("photo_comments", {
-  id: int("id").autoincrement().primaryKey(),
-  photoId: int("photoId").notNull(),
-  userId: int("userId").notNull(),
+export const photoComments = pgTable("photo_comments", {
+  id: serial("id").primaryKey(),
+  photoId: integer("photoId").notNull(),
+  userId: integer("userId").notNull(),
   comment: text("comment").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -369,11 +373,11 @@ export type InsertPhotoComment = typeof photoComments.$inferInsert;
 /**
  * Photo reactions (likes)
  */
-export const photoReactions = mysqlTable("photo_reactions", {
-  id: int("id").autoincrement().primaryKey(),
-  photoId: int("photoId").notNull(),
-  userId: int("userId").notNull(),
-  reactionType: mysqlEnum("reactionType", ["like", "love", "laugh"]).notNull().default("like"),
+export const photoReactions = pgTable("photo_reactions", {
+  id: serial("id").primaryKey(),
+  photoId: integer("photoId").notNull(),
+  userId: integer("userId").notNull(),
+  reactionType: varchar("reactionType", { length: 100 }).notNull().default("like"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -383,19 +387,19 @@ export type InsertPhotoReaction = typeof photoReactions.$inferInsert;
 /**
  * Notification queue
  */
-export const notifications = mysqlTable("notifications", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  petId: int("petId"),
-  type: mysqlEnum("type", ["vaccine_reminder", "medication_reminder", "credit_low", "daily_update", "check_in", "check_out", "daily_report", "calendar_event", "system", "change_alert"]).notNull(),
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  user_id: bigint("user_id", { mode: "number" }).notNull(),
+  pet_id: integer("pet_id"),
+  type: varchar("type", { length: 100 }).notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   message: text("message").notNull(),
-  resourceType: mysqlEnum("resource_type", ["medication", "vaccine", "preventive", "pet_data", "calendar"]),
-  resourceId: int("resourceId"),
-  isRead: boolean("isRead").default(false).notNull(),
-  isSent: boolean("isSent").default(false).notNull(),
-  sentAt: timestamp("sentAt"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  resource_type: varchar("resource_type", { length: 100 }),
+  resource_id: integer("resource_id"),
+  is_read: boolean("is_read").default(false).notNull(),
+  is_sent: boolean("is_sent").default(false).notNull(),
+  sent_at: timestamp("sent_at", { withTimezone: true }),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type Notification = typeof notifications.$inferSelect;
@@ -404,16 +408,16 @@ export type InsertNotification = typeof notifications.$inferInsert;
 /**
  * Financial transactions
  */
-export const transactions = mysqlTable("transactions", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId"),
-  type: mysqlEnum("type", ["credit", "debit", "income", "expense"]).notNull(),
+export const transactions = pgTable("transactions", {
+  id: serial("id").primaryKey(),
+  pet_id: integer("pet_id"),
+  type: varchar("type", { length: 100 }).notNull(),
   category: varchar("category", { length: 100 }).notNull(),
   description: varchar("description", { length: 500 }).notNull(),
-  amount: int("amount").notNull(), // in cents
-  transactionDate: timestamp("transactionDate").defaultNow().notNull(),
-  createdById: int("createdById").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  amount: integer("amount").notNull(), // in cents
+  transaction_date: timestamp("transaction_date", { withTimezone: true }).defaultNow().notNull(),
+  created_by_id: bigint("created_by_id", { mode: "number" }).notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type Transaction = typeof transactions.$inferSelect;
@@ -422,17 +426,17 @@ export type InsertTransaction = typeof transactions.$inferInsert;
 /**
  * Subscription plans - configurable by admin
  */
-export const subscriptionPlans = mysqlTable("subscriptionPlans", {
-  id: int("id").autoincrement().primaryKey(),
+export const subscriptionPlans = pgTable("subscriptionPlans", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
-  price: int("price").notNull(), // in cents
-  credits: int("credits").notNull(), // number of daycare credits included
-  validityDays: int("validityDays").notNull(), // plan duration in days (e.g., 30 for monthly)
+  price: integer("price").notNull(), // in cents
+  credits: integer("credits").notNull(), // number of daycare credits included
+  validityDays: integer("validityDays").notNull(), // plan duration in days (e.g., 30 for monthly)
   benefits: text("benefits"), // JSON string of benefits
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
@@ -441,17 +445,17 @@ export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
 /**
  * User subscriptions
  */
-export const subscriptions = mysqlTable("subscriptions", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  planId: int("planId").notNull(),
-  status: mysqlEnum("status", ["active", "cancelled", "expired"]).default("active").notNull(),
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  planId: integer("planId").notNull(),
+  status: varchar("status", { length: 100 }).default("active").notNull(),
   startDate: timestamp("startDate").defaultNow().notNull(),
   endDate: timestamp("endDate").notNull(),
   autoRenew: boolean("autoRenew").default(true).notNull(),
   lastRenewalDate: timestamp("lastRenewalDate"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Subscription = typeof subscriptions.$inferSelect;
@@ -460,16 +464,16 @@ export type InsertSubscription = typeof subscriptions.$inferInsert;
 /**
  * Flea treatments (antipulgas)
  */
-export const fleaTreatments = mysqlTable("fleaTreatments", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
+export const fleaTreatments = pgTable("fleaTreatments", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId").notNull(),
   productName: varchar("productName", { length: 200 }).notNull(),
   applicationDate: timestamp("applicationDate").notNull(),
   nextDueDate: timestamp("nextDueDate").notNull(),
   notes: text("notes"),
-  createdById: int("createdById").notNull(),
+  createdById: integer("createdById").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type FleaTreatment = typeof fleaTreatments.$inferSelect;
@@ -478,16 +482,16 @@ export type InsertFleaTreatment = typeof fleaTreatments.$inferInsert;
 /**
  * Deworming treatments (vermífugos)
  */
-export const dewormingTreatments = mysqlTable("dewormingTreatments", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
+export const dewormingTreatments = pgTable("dewormingTreatments", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId").notNull(),
   productName: varchar("productName", { length: 200 }).notNull(),
   applicationDate: timestamp("applicationDate").notNull(),
   nextDueDate: timestamp("nextDueDate").notNull(),
   notes: text("notes"),
-  createdById: int("createdById").notNull(),
+  createdById: integer("createdById").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type DewormingTreatment = typeof dewormingTreatments.$inferSelect;
@@ -496,18 +500,18 @@ export type InsertDewormingTreatment = typeof dewormingTreatments.$inferInsert;
 /**
  * Behavior records (registros de comportamento)
  */
-export const behaviorRecords = mysqlTable("behaviorRecords", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
+export const behaviorRecords = pgTable("behaviorRecords", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId").notNull(),
   date: timestamp("date").notNull(),
   location: varchar("location", { length: 50 }).notNull(), // creche, casa, passeio, veterinario
   behaviorType: varchar("behaviorType", { length: 100 }).notNull(),
   description: text("description").notNull(),
   tags: text("tags"), // JSON array: ["agressividade", "ansiedade", "socializacao"]
   severity: varchar("severity", { length: 20 }), // leve, moderado, grave
-  createdById: int("createdById").notNull(),
+  createdById: integer("createdById").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type BehaviorRecord = typeof behaviorRecords.$inferSelect;
@@ -516,16 +520,16 @@ export type InsertBehaviorRecord = typeof behaviorRecords.$inferInsert;
 /**
  * Training progress (progresso de adestramento)
  */
-export const trainingProgress = mysqlTable("trainingProgress", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
+export const trainingProgress = pgTable("trainingProgress", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId").notNull(),
   skill: varchar("skill", { length: 100 }).notNull(), // sentar, deitar, vir, ficar, etc
   startDate: timestamp("startDate").notNull(),
-  currentLevel: int("currentLevel").notNull().default(0), // 0-100
+  currentLevel: integer("currentLevel").notNull().default(0), // 0-100
   notes: text("notes"),
-  createdById: int("createdById").notNull(),
+  createdById: integer("createdById").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type TrainingProgress = typeof trainingProgress.$inferSelect;
@@ -534,14 +538,14 @@ export type InsertTrainingProgress = typeof trainingProgress.$inferInsert;
 /**
  * Daycare bookings/reservations
  */
-export const bookings = mysqlTable("bookings", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
-  tutorId: int("tutorId").notNull(),
+export const bookings = pgTable("bookings", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId").notNull(),
+  tutorId: integer("tutorId").notNull(),
   bookingDate: timestamp("bookingDate").notNull(),
-  serviceType: mysqlEnum("serviceType", ["creche", "diaria"]).notNull().default("creche"), // creche = day care, diaria = overnight
-  status: mysqlEnum("status", ["pending", "confirmed", "cancelled", "completed"]).notNull().default("pending"),
-  numberOfDays: int("numberOfDays").notNull().default(1),
+  serviceType: varchar("serviceType", { length: 100 }).notNull().default("creche"), // creche = day care, diaria = overnight
+  status: varchar("status", { length: 100 }).notNull().default("pending"),
+  numberOfDays: integer("numberOfDays").notNull().default(1),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
@@ -553,12 +557,12 @@ export type InsertBooking = typeof bookings.$inferInsert;
 /**
  * Admin invites - email invitations to become admin
  */
-export const adminInvites = mysqlTable("admin_invites", {
-  id: int("id").autoincrement().primaryKey(),
+export const adminInvites = pgTable("admin_invites", {
+  id: serial("id").primaryKey(),
   email: varchar("email", { length: 320 }).notNull(),
   token: varchar("token", { length: 64 }).notNull().unique(),
-  invitedBy: int("invited_by").notNull(), // admin user ID who sent the invite
-  status: mysqlEnum("status", ["pending", "accepted", "expired"]).default("pending").notNull(),
+  invitedBy: integer("invited_by").notNull(), // admin user ID who sent the invite
+  status: varchar("status", { length: 100 }).default("pending").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   acceptedAt: timestamp("accepted_at"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -573,17 +577,17 @@ export type InsertAdminInvite = typeof adminInvites.$inferInsert;
 /**
  * Change History - tracks all modifications to shared resources
  */
-export const changeHistory = mysqlTable("change_history", {
-  id: int("id").autoincrement().primaryKey(),
-  resourceType: mysqlEnum("resource_type", ["medication", "food", "preventive", "pet_data", "calendar"]).notNull(),
-  resourceId: int("resource_id").notNull(),
-  petId: int("pet_id").notNull(),
+export const changeHistory = pgTable("change_history", {
+  id: serial("id").primaryKey(),
+  resourceType: varchar("resource_type", { length: 100 }).notNull(),
+  resourceId: integer("resource_id").notNull(),
+  petId: integer("pet_id").notNull(),
   fieldName: varchar("field_name", { length: 100 }).notNull(),
   oldValue: text("old_value"),
   newValue: text("new_value"),
-  changedBy: int("changed_by").notNull(), // user ID
-  changedByRole: mysqlEnum("changed_by_role", ["admin", "tutor", "user"]).notNull(),
-  changeType: mysqlEnum("change_type", ["create", "update", "delete"]).notNull(),
+  changedBy: integer("changed_by").notNull(), // user ID
+  changedByRole: varchar("changed_by_role", { length: 100 }).notNull(),
+  changeType: varchar("change_type", { length: 100 }).notNull(),
   ipAddress: varchar("ip_address", { length: 45 }),
   userAgent: text("user_agent"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -592,12 +596,12 @@ export const changeHistory = mysqlTable("change_history", {
 export type ChangeHistory = typeof changeHistory.$inferSelect;
 export type InsertChangeHistory = typeof changeHistory.$inferInsert;
 
-export const adminLogs = mysqlTable("admin_logs", {
-  id: int("id").autoincrement().primaryKey(),
-  adminId: int("admin_id").notNull(), // admin who performed the action
+export const adminLogs = pgTable("admin_logs", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").notNull(), // admin who performed the action
   action: varchar("action", { length: 100 }).notNull(), // e.g., "promote_admin", "delete_user"
   targetType: varchar("target_type", { length: 50 }), // e.g., "user", "pet", "booking"
-  targetId: int("target_id"), // ID of the affected entity
+  targetId: integer("target_id"), // ID of the affected entity
   details: text("details"), // JSON string with additional details
   ipAddress: varchar("ip_address", { length: 45 }),
   userAgent: text("user_agent"),
@@ -610,17 +614,17 @@ export type InsertAdminLog = typeof adminLogs.$inferInsert;
 /**
  * Payment transactions (stores only Stripe IDs)
  */
-export const payments = mysqlTable("payments", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
   stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }).notNull(),
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
-  amount: int("amount").notNull(), // amount in cents
+  amount: integer("amount").notNull(), // amount in cents
   currency: varchar("currency", { length: 3 }).default("brl").notNull(),
   status: varchar("status", { length: 50 }).notNull(), // succeeded, failed, pending
   productType: varchar("product_type", { length: 50 }).notNull(), // plan, credits
   productKey: varchar("product_key", { length: 100 }), // PLAN_BASIC, CREDITS_10, etc
-  creditsAdded: int("credits_added"), // credits added to user account
+  creditsAdded: integer("credits_added"), // credits added to user account
   metadata: text("metadata"), // JSON string for additional data
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -631,11 +635,11 @@ export type InsertPayment = typeof payments.$inferInsert;
 /**
  * Reviews and ratings
  */
-export const reviews = mysqlTable("reviews", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
-  tutorId: int("tutorId").notNull(),
-  rating: int("rating").notNull(), // 1-5 stars
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId").notNull(),
+  tutorId: integer("tutorId").notNull(),
+  rating: integer("rating").notNull(), // 1-5 stars
   comment: text("comment"),
   visitDate: timestamp("visitDate").notNull(),
   response: text("response"), // Admin response
@@ -651,73 +655,62 @@ export type InsertReview = typeof reviews.$inferInsert;
  */
 
 // WhatsApp Configuration
-export const whatsappConfig = mysqlTable("whatsappConfig", {
-  id: int("id").autoincrement().primaryKey(),
+export const whatsappConfig = pgTable("whatsappConfig", {
+  id: serial("id").primaryKey(),
   apiKey: text("apiKey"),
   phoneNumberId: varchar("phoneNumberId", { length: 100 }),
   businessAccountId: varchar("businessAccountId", { length: 100 }),
   webhookSecret: text("webhookSecret"),
   isActive: boolean("isActive").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type WhatsAppConfig = typeof whatsappConfig.$inferSelect;
 export type InsertWhatsAppConfig = typeof whatsappConfig.$inferInsert;
 
 // WhatsApp Message Templates
-export const whatsappTemplates = mysqlTable("whatsappTemplates", {
-  id: int("id").autoincrement().primaryKey(),
+export const whatsappTemplates = pgTable("whatsappTemplates", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull().unique(),
-  category: mysqlEnum("category", [
-    "welcome",
-    "booking_confirmation",
-    "vaccine_reminder",
-    "checkin",
-    "checkout",
-    "daily_report",
-    "new_photo",
-    "medication_applied",
-    "preventive_reminder",
-    "custom",
-  ]).notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
   content: text("content").notNull(),
-  variables: json("variables"), // Array of variable names like ["petName", "date"]
-  status: mysqlEnum("status", ["active", "inactive"]).default("active").notNull(),
+  variables: jsonb("variables"), // Array of variable names like ["petName", "date"]
+  status: varchar("status", { length: 100 }).default("active").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type WhatsAppTemplate = typeof whatsappTemplates.$inferSelect;
 export type InsertWhatsAppTemplate = typeof whatsappTemplates.$inferInsert;
 
 // WhatsApp Conversations
-export const whatsappConversations = mysqlTable("whatsappConversations", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(), // tutor who initiated conversation
-  petId: int("petId"), // optional: conversation about specific pet
+export const whatsappConversations = pgTable("whatsappConversations", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(), // tutor who initiated conversation
+  petId: integer("petId"), // optional: conversation about specific pet
   phoneNumber: varchar("phoneNumber", { length: 20 }).notNull(),
-  status: mysqlEnum("status", ["active", "resolved", "pending"]).default("active").notNull(),
+  status: varchar("status", { length: 100 }).default("active").notNull(),
   lastMessageAt: timestamp("lastMessageAt"),
   lastMessageContent: text("lastMessageContent"),
-  unreadCount: int("unreadCount").default(0).notNull(), // unread messages for admin
+  unreadCount: integer("unreadCount").default(0).notNull(), // unread messages for admin
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type WhatsAppConversation = typeof whatsappConversations.$inferSelect;
 export type InsertWhatsAppConversation = typeof whatsappConversations.$inferInsert;
 
 // WhatsApp Messages History
-export const whatsappMessages = mysqlTable("whatsappMessages", {
-  conversationId: int("conversationId"), // link to conversation
-  id: int("id").autoincrement().primaryKey(),
-  templateId: int("templateId"),
+export const whatsappMessages = pgTable("whatsappMessages", {
+  conversationId: integer("conversationId"), // link to conversation
+  id: serial("id").primaryKey(),
+  templateId: integer("templateId"),
   recipientPhone: varchar("recipientPhone", { length: 20 }).notNull(),
   recipientName: varchar("recipientName", { length: 200 }),
   messageContent: text("messageContent").notNull(),
   mediaUrl: text("mediaUrl"), // For photos/documents
-  status: mysqlEnum("status", ["queued", "sent", "delivered", "read", "failed"]).default("queued").notNull(),
+  status: varchar("status", { length: 100 }).default("queued").notNull(),
   whatsappMessageId: varchar("whatsappMessageId", { length: 100 }),
   sentAt: timestamp("sentAt"),
   deliveredAt: timestamp("deliveredAt"),
@@ -730,25 +723,25 @@ export type WhatsAppMessage = typeof whatsappMessages.$inferSelect;
 export type InsertWhatsAppMessage = typeof whatsappMessages.$inferInsert;
 
 // WhatsApp Groups (one per pet)
-export const whatsappGroups = mysqlTable("whatsappGroups", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
+export const whatsappGroups = pgTable("whatsappGroups", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId").notNull(),
   groupName: varchar("groupName", { length: 200 }).notNull(),
   whatsappGroupId: varchar("whatsappGroupId", { length: 100 }),
   inviteLink: text("inviteLink"),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type WhatsAppGroup = typeof whatsappGroups.$inferSelect;
 export type InsertWhatsAppGroup = typeof whatsappGroups.$inferInsert;
 
 // WhatsApp Group Members
-export const whatsappGroupMembers = mysqlTable("whatsappGroupMembers", {
-  id: int("id").autoincrement().primaryKey(),
-  groupId: int("groupId").notNull(),
-  userId: int("userId"),
+export const whatsappGroupMembers = pgTable("whatsappGroupMembers", {
+  id: serial("id").primaryKey(),
+  groupId: integer("groupId").notNull(),
+  userId: integer("userId"),
   phone: varchar("phone", { length: 20 }).notNull(),
   name: varchar("name", { length: 200 }),
   addedAt: timestamp("addedAt").defaultNow().notNull(),
@@ -759,24 +752,15 @@ export type WhatsAppGroupMember = typeof whatsappGroupMembers.$inferSelect;
 export type InsertWhatsAppGroupMember = typeof whatsappGroupMembers.$inferInsert;
 
 // WhatsApp Automations
-export const whatsappAutomations = mysqlTable("whatsappAutomations", {
-  id: int("id").autoincrement().primaryKey(),
+export const whatsappAutomations = pgTable("whatsappAutomations", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
-  triggerType: mysqlEnum("triggerType", [
-    "photo_added",
-    "vaccine_reminder_7d",
-    "vaccine_reminder_1d",
-    "checkin",
-    "checkout",
-    "daily_report",
-    "medication_applied",
-    "preventive_reminder",
-  ]).notNull(),
-  templateId: int("templateId").notNull(),
+  triggerType: varchar("triggerType", { length: 100 }).notNull(),
+  templateId: integer("templateId").notNull(),
   enabled: boolean("enabled").default(true).notNull(),
-  config: json("config"), // Additional configuration like time of day, filters
+  config: jsonb("config"), // Additional configuration like time of day, filters
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type WhatsAppAutomation = typeof whatsappAutomations.$inferSelect;
@@ -785,18 +769,18 @@ export type InsertWhatsAppAutomation = typeof whatsappAutomations.$inferInsert;
 /**
  * Booking requests from tutors for online scheduling
  */
-export const bookingRequests = mysqlTable("booking_requests", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
+export const bookingRequests = pgTable("booking_requests", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId").notNull(),
   tutorId: varchar("tutorId", { length: 64 }).notNull(), // openId from users
-  requestedDates: json("requestedDates").$type<string[]>().notNull(), // Array of dates in YYYY-MM-DD format
-  status: mysqlEnum("status", ["pending", "approved", "rejected", "cancelled"]).default("pending").notNull(),
+  requestedDates: jsonb("requestedDates").$type<string[]>().notNull(), // Array of dates in YYYY-MM-DD format
+  status: varchar("status", { length: 100 }).default("pending").notNull(),
   notes: text("notes"),
   adminNotes: text("adminNotes"), // Admin notes when approving/rejecting
   approvedBy: varchar("approvedBy", { length: 64 }), // openId of admin who approved/rejected
   approvedAt: timestamp("approvedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type BookingRequest = typeof bookingRequests.$inferSelect;
@@ -805,14 +789,14 @@ export type InsertBookingRequest = typeof bookingRequests.$inferInsert;
 /**
  * Service prices - standard pricing for creche and diaria
  */
-export const servicePrices = mysqlTable("service_prices", {
-  id: int("id").autoincrement().primaryKey(),
-  serviceType: mysqlEnum("serviceType", ["creche", "diaria"]).notNull().unique(),
-  priceInCents: int("priceInCents").notNull(), // creche: 6000 (R$ 60), diaria: 8000 (R$ 80)
+export const servicePrices = pgTable("service_prices", {
+  id: serial("id").primaryKey(),
+  serviceType: varchar("serviceType", { length: 100 }).notNull().unique(),
+  priceInCents: integer("priceInCents").notNull(), // creche: 6000 (R$ 60), diaria: 8000 (R$ 80)
   description: text("description"),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type ServicePrice = typeof servicePrices.$inferSelect;
@@ -821,20 +805,20 @@ export type InsertServicePrice = typeof servicePrices.$inferInsert;
 /**
  * Custom pricing plans - personalized packages for specific tutors
  */
-export const customPricingPlans = mysqlTable("custom_pricing_plans", {
-  id: int("id").autoincrement().primaryKey(),
-  tutorId: int("tutorId").notNull(), // user id
+export const customPricingPlans = pgTable("custom_pricing_plans", {
+  id: serial("id").primaryKey(),
+  tutorId: integer("tutorId").notNull(), // user id
   planName: varchar("planName", { length: 200 }).notNull(),
   description: text("description"),
-  crechePrice: int("crechePrice"), // custom price for creche in cents (null = use standard)
-  diariaPrice: int("diariaPrice"), // custom price for diaria in cents (null = use standard)
-  discountPercent: int("discountPercent").default(0).notNull(),
+  crechePrice: integer("crechePrice"), // custom price for creche in cents (null = use standard)
+  diariaPrice: integer("diariaPrice"), // custom price for diaria in cents (null = use standard)
+  discountPercent: integer("discountPercent").default(0).notNull(),
   isActive: boolean("isActive").default(true).notNull(),
   validFrom: timestamp("validFrom"),
   validUntil: timestamp("validUntil"),
-  createdBy: int("createdBy").notNull(), // admin who created
+  createdBy: integer("createdBy").notNull(), // admin who created
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type CustomPricingPlan = typeof customPricingPlans.$inferSelect;
@@ -843,9 +827,9 @@ export type InsertCustomPricingPlan = typeof customPricingPlans.$inferInsert;
 /**
  * Food stock - current stock of food in the daycare
  */
-export const foodStock = mysqlTable("food_stock", {
-  id: int("id").autoincrement().primaryKey(),
-  currentStockKg: int("currentStockKg").default(0).notNull(), // in grams (e.g., 20000 for 20kg)
+export const foodStock = pgTable("food_stock", {
+  id: serial("id").primaryKey(),
+  currentStockKg: integer("currentStockKg").default(0).notNull(), // in grams (e.g., 20000 for 20kg)
   lastUpdated: timestamp("lastUpdated").defaultNow().notNull(),
 });
 
@@ -855,12 +839,12 @@ export type InsertFoodStock = typeof foodStock.$inferInsert;
 /**
  * Food movements - track purchases and consumption
  */
-export const foodMovements = mysqlTable("food_movements", {
-  id: int("id").autoincrement().primaryKey(),
-  type: mysqlEnum("type", ["purchase", "consumption"]).notNull(),
-  amountKg: int("amountKg").notNull(), // in grams (positive for purchase, negative for consumption)
+export const foodMovements = pgTable("food_movements", {
+  id: serial("id").primaryKey(),
+  type: varchar("type", { length: 100 }).notNull(),
+  amountKg: integer("amountKg").notNull(), // in grams (positive for purchase, negative for consumption)
   notes: text("notes"),
-  createdBy: int("createdBy"), // admin who recorded (null for automatic consumption)
+  createdBy: integer("createdBy"), // admin who recorded (null for automatic consumption)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -870,9 +854,9 @@ export type InsertFoodMovement = typeof foodMovements.$inferInsert;
 /**
  * Audit logs - track security events and access attempts
  */
-export const auditLogs = mysqlTable("audit_logs", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId"), // null for unauthenticated attempts
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId"), // null for unauthenticated attempts
   action: varchar("action", { length: 255 }).notNull(), // e.g., "pets.approve", "pets.updateMine"
   resource: varchar("resource", { length: 255 }), // e.g., "pet:123"
   success: boolean("success").notNull(),
@@ -888,24 +872,15 @@ export type InsertAuditLog = typeof auditLogs.$inferInsert;
 /**
  * Notification templates - customizable message templates for automatic notifications
  */
-export const notificationTemplates = mysqlTable("notification_templates", {
-  id: int("id").autoincrement().primaryKey(),
-  type: mysqlEnum("type", [
-    "vaccine_reminder_7d",
-    "vaccine_reminder_1d",
-    "medication_reminder",
-    "checkin_notification",
-    "checkout_notification",
-    "daily_report",
-    "credits_low",
-    "event_reminder"
-  ]).notNull().unique(),
+export const notificationTemplates = pgTable("notification_templates", {
+  id: serial("id").primaryKey(),
+  type: varchar("type", { length: 100 }).notNull().unique(),
   title: varchar("title", { length: 255 }).notNull(),
   message: text("message").notNull(),
   availableVariables: text("availableVariables"), // JSON array of available variables like {{petName}}, {{date}}
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type NotificationTemplate = typeof notificationTemplates.$inferSelect;
@@ -914,23 +889,14 @@ export type InsertNotificationTemplate = typeof notificationTemplates.$inferInse
 /**
  * Tutor notification preferences - individual settings for each tutor
  */
-export const tutorNotificationPreferences = mysqlTable("tutor_notification_preferences", {
-  id: int("id").autoincrement().primaryKey(),
-  tutorId: int("tutorId").notNull(),
-  notificationType: mysqlEnum("notificationType", [
-    "vaccine_reminder_7d",
-    "vaccine_reminder_1d",
-    "medication_reminder",
-    "checkin_notification",
-    "checkout_notification",
-    "daily_report",
-    "credits_low",
-    "event_reminder"
-  ]).notNull(),
+export const tutorNotificationPreferences = pgTable("tutor_notification_preferences", {
+  id: serial("id").primaryKey(),
+  tutorId: integer("tutorId").notNull(),
+  notificationType: varchar("notificationType", { length: 100 }).notNull(),
   enabled: boolean("enabled").default(true).notNull(),
   adminOverride: boolean("adminOverride").default(false).notNull(), // if true, admin has disabled for this tutor
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type TutorNotificationPreference = typeof tutorNotificationPreferences.$inferSelect;
@@ -939,32 +905,32 @@ export type InsertTutorNotificationPreference = typeof tutorNotificationPreferen
 /**
  * Health and Behavior Logs - Quick daily records of pet health and behavior
  */
-export const healthBehaviorLogs = mysqlTable("health_behavior_logs", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
-  recordedBy: int("recordedBy").notNull(), // user ID who made the record
+export const healthBehaviorLogs = pgTable("health_behavior_logs", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId").notNull(),
+  recordedBy: integer("recordedBy").notNull(), // user ID who made the record
   recordedAt: timestamp("recordedAt").defaultNow().notNull(),
   
   // Mood/Humor
-  mood: mysqlEnum("mood", ["feliz", "ansioso", "calmo", "agitado", "letargico", "agressivo"]),
+  mood: varchar("mood", { length: 100 }),
   
   // Fezes/Stool
-  stool: mysqlEnum("stool", ["perfeitas", "normal", "levemente_moles", "moles", "pastosas", "diarreia", "ressecadas", "constipacao", "com_sangue", "muco"]),
+  stool: varchar("stool", { length: 100 }),
   
   // Comportamento/Behavior
-  behavior: mysqlEnum("behavior", ["ativo", "brincalhao", "sociavel", "calmo", "relaxado", "curioso", "timido", "protetor", "destrutivo", "letargico", "agressivo", "assustado"]),
+  behavior: varchar("behavior", { length: 100 }),
   
   // Apetite
-  appetite: mysqlEnum("appetite", ["normal", "aumentado", "diminuido", "recusou"]),
+  appetite: varchar("appetite", { length: 100 }),
   
   // Água
-  waterIntake: mysqlEnum("waterIntake", ["normal", "aumentado", "diminuido", "recusou"]),
+  waterIntake: varchar("waterIntake", { length: 100 }),
   
   // Observações gerais
   notes: text("notes"),
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type HealthBehaviorLog = typeof healthBehaviorLogs.$inferSelect;
@@ -973,13 +939,13 @@ export type InsertHealthBehaviorLog = typeof healthBehaviorLogs.$inferInsert;
 /**
  * Custom event types for calendar
  */
-export const eventTypes = mysqlTable("event_types", {
-  id: int("id").autoincrement().primaryKey(),
+export const eventTypes = pgTable("event_types", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   color: varchar("color", { length: 20 }).notNull(), // Hex color code
   icon: varchar("icon", { length: 50 }), // Icon name from lucide-react
   isActive: boolean("isActive").default(true).notNull(),
-  createdById: int("createdById").notNull(),
+  createdById: integer("createdById").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -990,18 +956,18 @@ export type InsertEventType = typeof eventTypes.$inferInsert;
  * Pet food stock management
  * Tracks individual pet food inventory and consumption for restock alerts
  */
-export const petFoodStock = mysqlTable("pet_food_stock", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId").notNull(),
+export const petFoodStock = pgTable("pet_food_stock", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId").notNull(),
   brandName: varchar("brandName", { length: 200 }).notNull(),
-  currentStock: int("currentStock").notNull(), // current stock in grams
-  dailyConsumption: int("dailyConsumption").notNull(), // average daily consumption in grams
-  alertThresholdDays: int("alertThresholdDays").default(15).notNull(), // alert X days before running out
+  currentStock: integer("currentStock").notNull(), // current stock in grams
+  dailyConsumption: integer("dailyConsumption").notNull(), // average daily consumption in grams
+  alertThresholdDays: integer("alertThresholdDays").default(15).notNull(), // alert X days before running out
   lastPurchaseDate: timestamp("lastPurchaseDate"),
-  lastPurchaseAmount: int("lastPurchaseAmount"), // amount purchased in grams
+  lastPurchaseAmount: integer("lastPurchaseAmount"), // amount purchased in grams
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type PetFoodStock = typeof petFoodStock.$inferSelect;
@@ -1012,16 +978,16 @@ export type InsertPetFoodStock = typeof petFoodStock.$inferInsert;
  * Defines automatic scheduling rules for specific medications
  * e.g., Simparic: +35 days, V10: +365 days
  */
-export const medicationAutoScheduleRules = mysqlTable("medication_auto_schedule_rules", {
-  id: int("id").autoincrement().primaryKey(),
-  medicationId: int("medicationId").notNull(), // references medications.id
-  intervalDays: int("intervalDays").notNull(), // days to add for next dose
-  intervalType: mysqlEnum("intervalType", ["days", "weeks", "months", "years"]).default("days").notNull(),
-  intervalValue: int("intervalValue").notNull(), // numeric value (e.g., 35 for days, 1 for year)
+export const medicationAutoScheduleRules = pgTable("medication_auto_schedule_rules", {
+  id: serial("id").primaryKey(),
+  medicationId: integer("medicationId").notNull(), // references medications.id
+  intervalDays: integer("intervalDays").notNull(), // days to add for next dose
+  intervalType: varchar("intervalType", { length: 100 }).default("days").notNull(),
+  intervalValue: integer("intervalValue").notNull(), // numeric value (e.g., 35 for days, 1 for year)
   isActive: boolean("isActive").default(true).notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type MedicationAutoScheduleRule = typeof medicationAutoScheduleRules.$inferSelect;
@@ -1031,18 +997,18 @@ export type InsertMedicationAutoScheduleRule = typeof medicationAutoScheduleRule
  * Wall posts for interactive feed
  * Social-media style posts with photos, videos, and text
  */
-export const wallPosts = mysqlTable("wall_posts", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId"), // optional: post can be about a specific pet or general
-  authorId: int("authorId").notNull(),
+export const wallPosts = pgTable("wall_posts", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId"), // optional: post can be about a specific pet or general
+  authorId: integer("authorId").notNull(),
   content: text("content"),
-  mediaUrls: json("mediaUrls").$type<string[]>(), // array of photo/video URLs
-  mediaKeys: json("mediaKeys").$type<string[]>(), // array of S3 keys
-  postType: mysqlEnum("postType", ["photo", "video", "text", "mixed"]).default("text").notNull(),
-  targetType: mysqlEnum("targetType", ["general", "tutor", "pet"]).default("general").notNull(), // post visibility
-  targetId: int("targetId"), // ID of tutor or pet if targeted
+  mediaUrls: jsonb("mediaUrls").$type<string[]>(), // array of photo/video URLs
+  mediaKeys: jsonb("mediaKeys").$type<string[]>(), // array of S3 keys
+  postType: varchar("postType", { length: 100 }).default("text").notNull(),
+  targetType: varchar("targetType", { length: 100 }).default("general").notNull(), // post visibility
+  targetId: integer("targetId"), // ID of tutor or pet if targeted
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type WallPost = typeof wallPosts.$inferSelect;
@@ -1051,10 +1017,10 @@ export type InsertWallPost = typeof wallPosts.$inferInsert;
 /**
  * Comments on wall posts
  */
-export const wallComments = mysqlTable("wall_comments", {
-  id: int("id").autoincrement().primaryKey(),
-  postId: int("postId").notNull(),
-  authorId: int("authorId").notNull(),
+export const wallComments = pgTable("wall_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("postId").notNull(),
+  authorId: integer("authorId").notNull(),
   comment: text("comment").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -1065,11 +1031,11 @@ export type InsertWallComment = typeof wallComments.$inferInsert;
 /**
  * Reactions to wall posts
  */
-export const wallReactions = mysqlTable("wall_reactions", {
-  id: int("id").autoincrement().primaryKey(),
-  postId: int("postId").notNull(),
-  userId: int("userId").notNull(),
-  reactionType: mysqlEnum("reactionType", ["like", "love", "laugh", "wow", "sad"]).notNull(),
+export const wallReactions = pgTable("wall_reactions", {
+  id: serial("id").primaryKey(),
+  postId: integer("postId").notNull(),
+  userId: integer("userId").notNull(),
+  reactionType: varchar("reactionType", { length: 100 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -1079,12 +1045,12 @@ export type InsertWallReaction = typeof wallReactions.$inferInsert;
 /**
  * Chat conversations between tutors and daycare
  */
-export const conversations = mysqlTable("conversations", {
-  id: int("id").autoincrement().primaryKey(),
-  petId: int("petId"), // optional: conversation can be about a specific pet
-  participants: json("participants").$type<number[]>().notNull(), // array of user IDs
+export const conversations = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  petId: integer("petId"), // optional: conversation can be about a specific pet
+  participants: jsonb("participants").$type<number[]>().notNull(), // array of user IDs
   lastMessageAt: timestamp("lastMessageAt"),
-  unreadCount: int("unreadCount").default(0).notNull(),
+  unreadCount: integer("unreadCount").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -1094,15 +1060,15 @@ export type InsertConversation = typeof conversations.$inferInsert;
 /**
  * Chat messages with WhatsApp integration
  */
-export const chatMessages = mysqlTable("chat_messages", {
-  id: int("id").autoincrement().primaryKey(),
-  conversationId: int("conversationId").notNull(),
-  senderId: int("senderId").notNull(),
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversationId").notNull(),
+  senderId: integer("senderId").notNull(),
   content: text("content"),
   mediaUrl: varchar("mediaUrl", { length: 500 }),
   mediaKey: varchar("mediaKey", { length: 500 }),
-  messageType: mysqlEnum("messageType", ["text", "image", "video", "audio", "document"]).default("text").notNull(),
-  source: mysqlEnum("source", ["platform", "whatsapp"]).default("platform").notNull(), // message origin
+  messageType: varchar("messageType", { length: 100 }).default("text").notNull(),
+  source: varchar("source", { length: 100 }).default("platform").notNull(), // message origin
   whatsappMessageId: varchar("whatsappMessageId", { length: 200 }), // for sync with WhatsApp
   isRead: boolean("isRead").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -1114,8 +1080,8 @@ export type InsertChatMessage = typeof chatMessages.$inferInsert;
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   pets: many(petTutors),
-  logsCreated: many(dailyLogs),
-  documentsUploaded: many(documents),
+  logsCreated: many(dailyLogs, { relationName: "logsCreated" }),
+  documentsUploaded: many(documents, { relationName: "documentsUploaded" }),
   notifications: many(notifications),
 }));
 
@@ -1132,6 +1098,6 @@ export const petsRelations = relations(pets, ({ many }) => ({
 }));
 
 export const petTutorsRelations = relations(petTutors, ({ one }) => ({
-  pet: one(pets, { fields: [petTutors.petId], references: [pets.id] }),
-  tutor: one(users, { fields: [petTutors.tutorId], references: [users.id] }),
+  pet: one(pets, { fields: [petTutors.pet_id], references: [pets.id] }),
+  tutor: one(users, { fields: [petTutors.tutor_id], references: [users.id] }),
 }));

@@ -27,13 +27,13 @@ export async function checkUpcomingVaccines() {
         vaccine: vaccineLibrary,
       })
       .from(petVaccinations)
-      .innerJoin(pets, eq(petVaccinations.petId, pets.id))
-      .innerJoin(vaccineLibrary, eq(petVaccinations.vaccineId, vaccineLibrary.id))
+      .innerJoin(pets, eq(petVaccinations.pet_id, pets.id))
+      .innerJoin(vaccineLibrary, eq(petVaccinations.vaccine_id, vaccineLibrary.id))
       .where(
         and(
-          isNotNull(petVaccinations.nextDueDate),
-          gte(petVaccinations.nextDueDate, today),
-          lte(petVaccinations.nextDueDate, sevenDaysFromNow)
+          isNotNull(petVaccinations.next_due_date),
+          gte(petVaccinations.next_due_date, today),
+          lte(petVaccinations.next_due_date, sevenDaysFromNow)
         )
       );
 
@@ -48,12 +48,12 @@ export async function checkUpcomingVaccines() {
         const tutorRelations = await db
           .select({
             tutor: users,
-            isPrimary: petTutors.isPrimary,
+            isPrimary: petTutors.is_primary,
           })
           .from(petTutors)
-          .innerJoin(users, eq(petTutors.tutorId, users.id))
-          .where(eq(petTutors.petId, pet.id))
-          .orderBy(petTutors.isPrimary); // Primary tutors first
+          .innerJoin(users, eq(petTutors.tutor_id, users.id))
+          .where(eq(petTutors.pet_id, pet.id))
+          .orderBy(petTutors.is_primary); // Primary tutors first
 
         if (tutorRelations.length === 0) {
           console.warn(`[VaccineNotifications] No tutors found for pet ${pet.name}`);
@@ -68,7 +68,7 @@ export async function checkUpcomingVaccines() {
         }
 
         // Format date
-        const dueDate = new Date(vaccination.nextDueDate!);
+        const dueDate = new Date(vaccination.next_due_date!);
         const formattedDate = dueDate.toLocaleDateString("pt-BR", {
           day: "2-digit",
           month: "2-digit",

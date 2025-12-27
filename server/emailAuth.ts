@@ -5,10 +5,10 @@
 
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import { getDb } from "./db";
-import type { MySql2Database } from "drizzle-orm/mysql2";
+import { getDb, getUserByEmail } from "./db";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { users, passwordResetTokens, emailVerificationTokens } from "../drizzle/schema";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, sql } from "drizzle-orm";
 
 const SALT_ROUNDS = 10;
 
@@ -31,9 +31,8 @@ export async function registerUser(input: RegisterInput) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Check if email already exists
-  const existingUsers = await db.select().from(users).where(eq(users.email, input.email.toLowerCase())).limit(1);
-  const existingUser = existingUsers.length > 0 ? existingUsers[0] : null;
+  // Check if email already exists (using getUserByEmail which has fallback logic)
+  const existingUser = await getUserByEmail(input.email.toLowerCase());
 
   if (existingUser) {
     throw new Error("Email already registered");
@@ -42,18 +41,18 @@ export async function registerUser(input: RegisterInput) {
   // Hash password
   const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
 
-  // Create user
+  // Create user and return the inserted user
+  // Note: passwordHash is not stored in database (uses Supabase Auth)
   const [newUser] = await db.insert(users).values({
     name: input.name,
     email: input.email.toLowerCase(),
-    passwordHash,
-    loginMethod: "email",
+    login_method: "email",
     role: input.role || "user",
-    lastSignedIn: new Date(),
-  });
+    last_signed_in: new Date(),
+  }).returning();
 
   return {
-    id: newUser.insertId,
+    id: newUser.id,
     email: input.email.toLowerCase(),
     name: input.name,
     role: input.role || "user",
@@ -67,21 +66,22 @@ export async function loginUser(input: LoginInput) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Find user by email
-  const userResults = await db.select().from(users).where(eq(users.email, input.email.toLowerCase())).limit(1);
-  const user = userResults.length > 0 ? userResults[0] : null;
+  // Find user by email (using getUserByEmail which has fallback logic)
+  const user = await getUserByEmail(input.email.toLowerCase());
 
   if (!user) {
     throw new Error("Invalid email or password");
   }
 
   // Check if user uses email/password auth
-  if (user.loginMethod !== "email" || !user.passwordHash) {
+  // Note: passwordHash is not stored in database (uses Supabase Auth)
+  if (user.login_method !== "email") {
     throw new Error("This account uses a different login method");
   }
 
-  // Verify password
-  const isValidPassword = await bcrypt.compare(input.password, user.passwordHash);
+  // Note: Password verification should be done via Supabase Auth
+  // This is a placeholder - actual implementation should use Supabase Auth
+  throw new Error("Email/password authentication should use Supabase Auth");
 
   if (!isValidPassword) {
     throw new Error("Invalid email or password");
@@ -89,7 +89,7 @@ export async function loginUser(input: LoginInput) {
 
   // Update last signed in
   await db.update(users)
-    .set({ lastSignedIn: new Date() })
+    .set({ last_signed_in: new Date() })
     .where(eq(users.id, user.id));
 
   return {
@@ -107,27 +107,17 @@ export async function changePassword(userId: number, oldPassword: string, newPas
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Get user
   const userResults = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   const user = userResults.length > 0 ? userResults[0] : null;
 
-  if (!user || !user.passwordHash) {
-    throw new Error("User not found or invalid auth method");
+  if (!user) {
+    throw new Error("User not found");
   }
 
-  // Verify old password
-  const isValidPassword = await bcrypt.compare(oldPassword, user.passwordHash);
-
-  if (!isValidPassword) {
-    throw new Error("Current password is incorrect");
-  }
-
-  // Hash new password
-  const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-
-  // Update password
-  await db.update(users)
-    .set({ passwordHash: newPasswordHash })
-    .where(eq(users.id, userId));
+  // Note: Password management should be done via Supabase Auth
+  // This is a placeholder - actual implementation should use Supabase Auth
+  throw new Error("Password changes should be done via Supabase Auth");
 
   return { success: true };
 }
@@ -139,9 +129,8 @@ export async function generateResetToken(email: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Find user by email
-  const userResults = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
-  const user = userResults.length > 0 ? userResults[0] : null;
+  // Find user by email (using getUserByEmail which has fallback logic)
+  const user = await getUserByEmail(email.toLowerCase());
 
   if (!user) {
     // Don't reveal if email exists or not for security
@@ -154,9 +143,9 @@ export async function generateResetToken(email: string) {
 
   // Save token to database
   await db.insert(passwordResetTokens).values({
-    userId: user.id,
+    user_id: user.id,
     token,
-    expiresAt,
+    expires_at: expiresAt,
   });
 
   return { success: true, token, userId: user.id, email: user.email, name: user.name };
@@ -176,7 +165,7 @@ export async function resetPassword(token: string, newPassword: string) {
       and(
         eq(passwordResetTokens.token, token),
         eq(passwordResetTokens.used, false),
-        gt(passwordResetTokens.expiresAt, new Date())
+        gt(passwordResetTokens.expires_at, new Date())
       )
     )
     .limit(1);
@@ -190,10 +179,9 @@ export async function resetPassword(token: string, newPassword: string) {
   // Hash new password
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
-  // Update user password
-  await db.update(users)
-    .set({ passwordHash })
-    .where(eq(users.id, resetToken.userId));
+  // Note: Password reset should be done via Supabase Auth
+  // This is a placeholder - actual implementation should use Supabase Auth
+  throw new Error("Password reset should be done via Supabase Auth");
 
   // Mark token as used
   await db.update(passwordResetTokens)
@@ -216,9 +204,9 @@ export async function generateVerificationToken(userId: number) {
 
   // Save token to database
   await db.insert(emailVerificationTokens).values({
-    userId,
+    user_id: userId,
     token,
-    expiresAt,
+    expires_at: expiresAt,
   });
 
   return { token };
@@ -238,7 +226,7 @@ export async function verifyEmail(token: string) {
       and(
         eq(emailVerificationTokens.token, token),
         eq(emailVerificationTokens.used, false),
-        gt(emailVerificationTokens.expiresAt, new Date())
+        gt(emailVerificationTokens.expires_at, new Date())
       )
     )
     .limit(1);
@@ -251,8 +239,8 @@ export async function verifyEmail(token: string) {
 
   // Update user email verified status
   await db.update(users)
-    .set({ emailVerified: true })
-    .where(eq(users.id, verificationToken.userId));
+    .set({ email_verified: true })
+    .where(eq(users.id, verificationToken.user_id));
 
   // Mark token as used
   await db.update(emailVerificationTokens)

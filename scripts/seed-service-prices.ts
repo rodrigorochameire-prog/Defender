@@ -1,10 +1,10 @@
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import * as schema from "../drizzle/schema";
 
 async function main() {
-  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
-  const db = drizzle(connection, { schema, mode: "default" });
+  const client = postgres(process.env.DATABASE_URL!);
+  const db = drizzle(client, { schema, mode: "default" });
 
   console.log("🌱 Seeding service prices...");
 
@@ -31,7 +31,7 @@ async function main() {
     console.log("ℹ️  Service prices already exist, skipping...");
   }
 
-  await connection.end();
+  await client.end();
 }
 
 main().catch(console.error);

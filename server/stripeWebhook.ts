@@ -4,11 +4,30 @@ import { getDb } from "./db";
 import { users, payments, pets } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-12-15.clover",
-});
+// Lazy initialization - only create Stripe client if key is configured
+let stripeInstance: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      throw new Error("STRIPE_SECRET_KEY is not configured. Stripe features are disabled.");
+    }
+    stripeInstance = new Stripe(stripeKey, {
+      apiVersion: "2025-12-15.clover",
+    });
+  }
+  return stripeInstance;
+}
 
 export async function handleStripeWebhook(req: Request, res: Response) {
+  try {
+    const stripe = getStripe();
+  } catch (error: any) {
+    console.warn("[Webhook] Stripe not configured:", error.message);
+    return res.status(503).json({ error: "Stripe is not configured" });
+  }
+
   const sig = req.headers["stripe-signature"];
 
   if (!sig) {
@@ -19,10 +38,15 @@ export async function handleStripeWebhook(req: Request, res: Response) {
   let event: Stripe.Event;
 
   try {
+    const stripe = getStripe();
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
+    }
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     );
   } catch (err: any) {
     console.error("[Webhook] Signature verification failed:", err.message);
@@ -90,7 +114,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (session.customer) {
     await db
       .update(users)
-      .set({ stripeCustomerId: session.customer as string })
+      .set({ stripe_customer_id: session.customer as string })
       .where(eq(users.id, parseInt(userId)));
   }
 

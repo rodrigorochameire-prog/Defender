@@ -108,7 +108,7 @@ export async function generateHealthReport(petId: number): Promise<any> {
       active: activeMedications,
     },
     weightHistory,
-    lastCheckup: logs.length > 0 ? logs[0].logDate : null,
+    lastCheckup: logs.length > 0 ? logs[0].log_date : null,
   };
 }
 

@@ -1,10 +1,12 @@
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { vaccineLibrary, medicationLibrary } from "../drizzle/schema.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const db = drizzle(process.env.DATABASE_URL);
+const client = postgres(process.env.DATABASE_URL);
+const db = drizzle(client);
 
 const commonVaccines = [
   { name: "V10 (Déctupla)", description: "Protege contra cinomose, parvovirose, hepatite, leptospirose, parainfluenza, coronavírus e adenovírus", intervalDays: 365, dosesRequired: 3, isCommon: true },
@@ -40,23 +42,25 @@ async function seed() {
     // Seed vaccines
     console.log("📋 Inserindo vacinas comuns...");
     for (const vaccine of commonVaccines) {
-      await db.insert(vaccineLibrary).values(vaccine).onDuplicateKeyUpdate({ set: { name: vaccine.name } });
+      await db.insert(vaccineLibrary).values(vaccine).onConflictDoUpdate({ target: vaccineLibrary.name, set: { name: vaccine.name } });
     }
     console.log(`✅ ${commonVaccines.length} vacinas inseridas`);
 
     // Seed medications
     console.log("💊 Inserindo medicamentos comuns...");
     for (const medication of commonMedications) {
-      await db.insert(medicationLibrary).values(medication).onDuplicateKeyUpdate({ set: { name: medication.name } });
+      await db.insert(medicationLibrary).values(medication).onConflictDoUpdate({ target: medicationLibrary.name, set: { name: medication.name } });
     }
     console.log(`✅ ${commonMedications.length} medicamentos inseridos`);
 
     console.log("🎉 Seed concluído com sucesso!");
   } catch (error) {
     console.error("❌ Erro ao executar seed:", error);
+    await client.end();
     process.exit(1);
   }
 
+  await client.end();
   process.exit(0);
 }
 

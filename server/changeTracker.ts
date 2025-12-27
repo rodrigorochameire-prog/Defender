@@ -4,12 +4,12 @@
  * Tracks all modifications to shared resources between admins and tutors
  */
 
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { changeHistory } from "../drizzle/schema";
-import mysql from "mysql2/promise";
+import postgres from "postgres";
 
-const connection = mysql.createPool(process.env.DATABASE_URL!);
-const database = drizzle(connection);
+const client = postgres(process.env.DATABASE_URL!);
+const database = drizzle(client);
 
 export type ResourceType = "medication" | "food" | "preventive" | "pet_data" | "calendar";
 export type ChangeType = "create" | "update" | "delete";

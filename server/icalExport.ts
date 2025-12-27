@@ -103,7 +103,18 @@ export async function exportEventsToICal(startDate: Date, endDate: Date): Promis
   const { getCalendarEvents } = await import("./db");
   const events = await getCalendarEvents(startDate, endDate);
 
-  return generateICalFile(events);
+  // Map database events to ICalEvent format
+  const mappedEvents: ICalEvent[] = events.map((event: any) => ({
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    eventDate: event.event_date,
+    endDate: event.end_date,
+    location: event.location,
+    isAllDay: event.is_all_day,
+  }));
+
+  return generateICalFile(mappedEvents);
 }
 
 /**

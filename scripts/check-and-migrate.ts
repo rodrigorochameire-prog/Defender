@@ -1,6 +1,6 @@
 import { getDb } from "../server/db";
 import { sql } from "drizzle-orm";
-import { migrate } from "drizzle-orm/mysql2/migrator";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 
 /**
  * Script para verificar e aplicar migrações com segurança
@@ -21,16 +21,18 @@ async function checkAndMigrate() {
       process.exit(1);
     }
 
-    // Verificar se as colunas já existem
+    // Verificar se as colunas já existem (PostgreSQL)
     const columns = await db.execute<any>(sql`
-      SELECT COLUMN_NAME
-      FROM INFORMATION_SCHEMA.COLUMNS
-      WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = 'calendar_events'
-        AND COLUMN_NAME IN ('linkedResourceType', 'linkedResourceId', 'autoCreated')
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'calendar_events'
+        AND column_name IN ('linkedResourceType', 'linkedResourceId', 'autoCreated')
     `);
 
-    const existingColumns = columns.rows?.map((row: any) => row.COLUMN_NAME) || [];
+    const existingColumns = Array.isArray(columns) 
+      ? columns.map((row: any) => row.column_name) 
+      : (columns.rows?.map((row: any) => row.column_name) || []);
     console.log(`📊 Colunas encontradas: ${existingColumns.join(", ")}`);
 
     if (existingColumns.length === 3) {
@@ -42,13 +44,15 @@ async function checkAndMigrate() {
         WHERE hash LIKE '0050%' OR hash LIKE '%calendar_auto_integration%'
       `);
 
-      if (!migrations.rows || migrations.rows.length === 0) {
+      const migrationRows = Array.isArray(migrations) ? migrations : (migrations.rows || []);
+
+      if (migrationRows.length === 0) {
         console.log("⚠️  Migração 0050 não está registrada. Registrando...");
 
         await db.execute(sql`
           INSERT INTO __drizzle_migrations (hash, created_at)
           VALUES ('0050_calendar_auto_integration', NOW())
-          ON DUPLICATE KEY UPDATE hash = hash
+          ON CONFLICT (hash) DO UPDATE SET hash = EXCLUDED.hash
         `);
 
         console.log("✅ Migração 0050 registrada!");
@@ -68,7 +72,7 @@ async function checkAndMigrate() {
     console.log("\n🚀 Aplicando migrações...");
 
     await migrate(db, {
-      migrationsFolder: "./drizzle",
+      migrationsFolder: "./drizzle/migrations",
     });
 
     console.log("✅ Migrações aplicadas com sucesso!");

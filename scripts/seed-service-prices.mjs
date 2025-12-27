@@ -1,9 +1,12 @@
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import * as schema from "../drizzle/schema.js";
+import dotenv from "dotenv";
 
-const connection = await mysql.createConnection(process.env.DATABASE_URL);
-const db = drizzle(connection, { schema, mode: "default" });
+dotenv.config();
+
+const client = postgres(process.env.DATABASE_URL);
+const db = drizzle(client, { schema, mode: "default" });
 
 console.log("🌱 Seeding service prices...");
 
@@ -30,4 +33,4 @@ if (existing.length === 0) {
   console.log("ℹ️  Service prices already exist, skipping...");
 }
 
-await connection.end();
+await client.end();

@@ -31,11 +31,9 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
-    console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
-    if (!ENV.oAuthServerUrl) {
-      console.error(
-        "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
-      );
+    // OAuth is optional - only log if configured
+    if (ENV.oAuthServerUrl) {
+      console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
     }
   }
 
@@ -77,11 +75,23 @@ class OAuthService {
   }
 }
 
-const createOAuthHttpClient = (): AxiosInstance =>
-  axios.create({
+const createOAuthHttpClient = (): AxiosInstance => {
+  if (!ENV.oAuthServerUrl) {
+    // Return a mock client that throws helpful errors
+    return {
+      post: async () => {
+        throw new Error("OAuth is not configured. This feature requires OAUTH_SERVER_URL to be set.");
+      },
+      get: async () => {
+        throw new Error("OAuth is not configured. This feature requires OAUTH_SERVER_URL to be set.");
+      },
+    } as any;
+  }
+  return axios.create({
     baseURL: ENV.oAuthServerUrl,
     timeout: AXIOS_TIMEOUT_MS,
   });
+};
 
 class SDKServer {
   private readonly client: AxiosInstance;
@@ -293,12 +303,12 @@ class SDKServer {
 
         // DATABASE SYNC:
         await db.upsertUser({
-          openId: finalOpenId,
+          open_id: finalOpenId,
           name: finalName,
           email: userInfo.email ?? null,
           // FIX: Default to "email" if loginMethod is missing/null to prevent DB error
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? "email",
-          lastSignedIn: signedInAt,
+          login_method: userInfo.loginMethod ?? userInfo.platform ?? "email",
+          last_signed_in: signedInAt,
         });
         
         user = await db.getUserByOpenId(finalOpenId);
@@ -313,12 +323,13 @@ class SDKServer {
     }
 
     await db.upsertUser({
-      openId: user.openId,
-      lastSignedIn: signedInAt,
+      open_id: user.open_id,
+      last_signed_in: signedInAt,
     });
 
     return user;
   }
 }
 
+// Initialize SDK - OAuth is optional, methods will fail gracefully if not configured
 export const sdk = new SDKServer();

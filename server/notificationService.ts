@@ -96,8 +96,8 @@ export async function createNotification(data: NotificationData) {
     
     // Create notification in database
     await db.createNotification({
-      userId: data.userId,
-      petId: data.petId,
+      user_id: data.userId,
+      pet_id: data.petId,
       type: data.type,
       title: data.title,
       message: data.message,

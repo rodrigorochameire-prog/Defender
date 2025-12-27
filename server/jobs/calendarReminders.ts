@@ -32,10 +32,10 @@ export async function sendCalendarReminders() {
     for (const event of upcomingEvents) {
       try {
         // Get event details
-        const eventDateStr = event.eventDate.toLocaleDateString("pt-BR");
-        const eventTimeStr = event.isAllDay
+        const eventDateStr = event.event_date.toLocaleDateString("pt-BR");
+        const eventTimeStr = event.is_all_day
           ? "Dia inteiro"
-          : event.eventDate.toLocaleTimeString("pt-BR", {
+          : event.event_date.toLocaleTimeString("pt-BR", {
               hour: "2-digit",
               minute: "2-digit",
             });
@@ -49,7 +49,7 @@ export async function sendCalendarReminders() {
           medication: "Medicação",
         };
 
-        const eventTypeLabel = eventTypeLabels[event.eventType] || "Evento";
+        const eventTypeLabel = eventTypeLabels[event.event_type] || "Evento";
 
         // Build message
         let message = `🔔 *Lembrete de ${eventTypeLabel}*\n\n`;
@@ -66,7 +66,7 @@ export async function sendCalendarReminders() {
         }
 
         // For closure events, send to all active tutors
-        if (event.eventType === "closure" || event.eventType === "holiday") {
+        if (event.event_type === "closure" || event.event_type === "holiday") {
           // TODO: Get all active tutors and send notification
           console.log(`[CalendarReminders] Closure/Holiday event: ${event.title}`);
           // This would require getting tutor phone numbers from the database
@@ -74,9 +74,9 @@ export async function sendCalendarReminders() {
         }
 
         // For pet-specific events, send to pet's tutors
-        if (event.petId) {
+        if (event.pet_id) {
           // Get pet tutors
-          const petTutors = await db.getPetTutorsWithDetails(event.petId);
+          const petTutors = await db.getPetTutorsWithDetails(event.pet_id);
 
           for (const pt of petTutors) {
             // Note: phone number would need to be added to the select in getPetTutorsWithDetails
@@ -88,7 +88,7 @@ export async function sendCalendarReminders() {
         }
 
         // Mark reminder as sent
-        await db.updateCalendarEvent(event.id, { reminderSent: true });
+        await db.updateCalendarEvent(event.id, { reminder_sent: true });
 
         sentCount++;
       } catch (error) {

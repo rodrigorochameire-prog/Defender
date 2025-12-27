@@ -35,23 +35,23 @@ export async function getUpcomingEventsForReminders(): Promise<EventReminder[]> 
     .select({
       eventId: calendarEvents.id,
       eventTitle: calendarEvents.title,
-      eventType: calendarEvents.eventType,
-      eventDate: calendarEvents.eventDate,
-      petId: calendarEvents.petId,
+      eventType: calendarEvents.event_type,
+      eventDate: calendarEvents.event_date,
+      petId: calendarEvents.pet_id,
       petName: pets.name,
       tutorId: users.id,
       tutorName: users.name,
       tutorPhone: users.phone,
-      reminderSent: calendarEvents.reminderSent,
+      reminderSent: calendarEvents.reminder_sent,
     })
     .from(calendarEvents)
-    .leftJoin(pets, eq(calendarEvents.petId, pets.id))
-    .leftJoin(petTutors, eq(pets.id, petTutors.petId))
-    .leftJoin(users, eq(petTutors.tutorId, users.id))
+    .leftJoin(pets, eq(calendarEvents.pet_id, pets.id))
+    .leftJoin(petTutors, eq(pets.id, petTutors.pet_id))
+    .leftJoin(users, eq(petTutors.tutor_id, users.id))
     .where(
       and(
-        between(calendarEvents.eventDate, tomorrow, dayAfterTomorrow),
-        eq(calendarEvents.reminderSent, false)
+        between(calendarEvents.event_date, tomorrow, dayAfterTomorrow),
+        eq(calendarEvents.reminder_sent, false)
       )
     );
 
@@ -119,7 +119,7 @@ _Esta é uma mensagem automática. Não é necessário responder._`;
     const { eq } = await import("drizzle-orm");
     await dbInstance
       .update(calendarEvents)
-      .set({ reminderSent: true })
+      .set({ reminder_sent: true })
       .where(eq(calendarEvents.id, reminder.eventId));
 
     console.log(`✅ Reminder sent for event ${reminder.eventId} to ${reminder.tutorName}`);

@@ -25,7 +25,7 @@ export const searchRouter = router({
           or(
             like(pets.name, searchTerm),
             like(pets.breed, searchTerm),
-            like(pets.species, searchTerm)
+            // species field doesn't exist in schema
           )
         )
         .limit(5);
@@ -49,7 +49,7 @@ export const searchRouter = router({
         .where(
           or(
             like(calendarEvents.title, searchTerm),
-            like(calendarEvents.notes, searchTerm)
+            // notes field doesn't exist in schema
           )
         )
         .limit(5);
@@ -61,7 +61,8 @@ export const searchRouter = router({
         .where(
           or(
             like(documents.title, searchTerm),
-            like(documents.type, searchTerm)
+            // type field doesn't exist in schema, use category instead
+            like(documents.category, searchTerm)
           )
         )
         .limit(5);

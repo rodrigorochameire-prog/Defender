@@ -1,7 +1,12 @@
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { creditPackages } from "../drizzle/schema.js";
+import dotenv from "dotenv";
 
-const db = drizzle(process.env.DATABASE_URL);
+dotenv.config();
+
+const client = postgres(process.env.DATABASE_URL);
+const db = drizzle(client);
 
 const packages = [
   {
@@ -63,9 +68,11 @@ async function seed() {
     console.log("✅ All packages created successfully!");
   } catch (error) {
     console.error("❌ Error seeding packages:", error);
+    await client.end();
     process.exit(1);
   }
 
+  await client.end();
   process.exit(0);
 }
 

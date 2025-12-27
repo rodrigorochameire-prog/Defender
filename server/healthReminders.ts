@@ -19,11 +19,11 @@ async function getPrimaryTutorForPet(petId: number): Promise<TutorInfo | null> {
   // Get primary tutor relationship
   const tutorRelations = await database
     .select({
-      tutorId: petTutors.tutorId,
-      isPrimary: petTutors.isPrimary,
+      tutorId: petTutors.tutor_id,
+      isPrimary: petTutors.is_primary,
     })
     .from(petTutors)
-    .where(eq(petTutors.petId, petId));
+    .where(eq(petTutors.pet_id, petId));
 
   if (tutorRelations.length === 0) return null;
 
@@ -147,13 +147,13 @@ export async function sendAllHealthReminders(
 
     // Process vaccines
     for (const vaccine of vaccines) {
-      const pet = await db.getPetById(vaccine.petId);
+      const pet = await db.getPetById(vaccine.pet_id);
       if (!pet) continue;
 
-      const tutor = await getPrimaryTutorForPet(vaccine.petId);
+      const tutor = await getPrimaryTutorForPet(vaccine.pet_id);
       if (!tutor) continue;
 
-      if (!vaccine.nextDueDate) continue;
+      if (!vaccine.next_due_date) continue;
 
       if (!remindersByOwner.has(tutor.phone)) {
         remindersByOwner.set(tutor.phone, {
@@ -162,23 +162,23 @@ export async function sendAllHealthReminders(
         });
       }
 
-      const daysUntilDue = Math.ceil((vaccine.nextDueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const daysUntilDue = Math.ceil((vaccine.next_due_date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
       
       remindersByOwner.get(tutor.phone)!.reminders.push({
         type: "vaccine",
         petName: pet.name,
         itemName: vaccine.vaccineName,
-        dueDate: vaccine.nextDueDate,
+        dueDate: vaccine.next_due_date,
         daysUntilDue,
       });
     }
 
     // Process medications
     for (const medication of medications) {
-      const pet = await db.getPetById(medication.petId);
+      const pet = await db.getPetById(medication.pet_id);
       if (!pet) continue;
 
-      const tutor = await getPrimaryTutorForPet(medication.petId);
+      const tutor = await getPrimaryTutorForPet(medication.pet_id);
       if (!tutor) continue;
 
       if (!medication.endDate) continue;
@@ -203,10 +203,10 @@ export async function sendAllHealthReminders(
 
     // Process flea treatments
     for (const treatment of flea) {
-      const pet = await db.getPetById(treatment.petId);
+      const pet = await db.getPetById(treatment.pet_id);
       if (!pet) continue;
 
-      const tutor = await getPrimaryTutorForPet(treatment.petId);
+      const tutor = await getPrimaryTutorForPet(treatment.pet_id);
       if (!tutor) continue;
 
       if (!remindersByOwner.has(tutor.phone)) {
@@ -216,23 +216,23 @@ export async function sendAllHealthReminders(
         });
       }
 
-      const daysUntilDue = Math.ceil((treatment.nextDueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const daysUntilDue = Math.ceil((treatment.next_due_date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
       
       remindersByOwner.get(tutor.phone)!.reminders.push({
         type: "flea",
         petName: pet.name,
         itemName: treatment.productName,
-        dueDate: treatment.nextDueDate,
+        dueDate: treatment.next_due_date,
         daysUntilDue,
       });
     }
 
     // Process deworming
     for (const treatment of deworming) {
-      const pet = await db.getPetById(treatment.petId);
+      const pet = await db.getPetById(treatment.pet_id);
       if (!pet) continue;
 
-      const tutor = await getPrimaryTutorForPet(treatment.petId);
+      const tutor = await getPrimaryTutorForPet(treatment.pet_id);
       if (!tutor) continue;
 
       if (!remindersByOwner.has(tutor.phone)) {
@@ -242,13 +242,13 @@ export async function sendAllHealthReminders(
         });
       }
 
-      const daysUntilDue = Math.ceil((treatment.nextDueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const daysUntilDue = Math.ceil((treatment.next_due_date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
       
       remindersByOwner.get(tutor.phone)!.reminders.push({
         type: "deworming",
         petName: pet.name,
         itemName: treatment.productName,
-        dueDate: treatment.nextDueDate,
+        dueDate: treatment.next_due_date,
         daysUntilDue,
       });
     }

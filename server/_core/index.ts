@@ -1,4 +1,7 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+// Load .env.local first (development), then .env (production)
+dotenv.config({ path: ".env.local" });
+dotenv.config(); // This will load .env and won't override .env.local values
 import express from "express";
 import { createServer } from "http";
 import net from "net";
@@ -46,7 +49,8 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
-  registerOAuthRoutes(app);
+  // DISABLED: Using Supabase Auth instead
+  // registerOAuthRoutes(app);
   // Upload routes
   app.use("/api", uploadRouter);
   
