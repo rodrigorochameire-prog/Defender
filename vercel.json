@@ -6,7 +6,7 @@
   "installCommand": "pnpm install",
   "devCommand": "pnpm run dev",
   "functions": {
-    "api/**/*.ts": {
+    "api/**/*.js": {
       "maxDuration": 30
     }
   },
