@@ -2,7 +2,7 @@
   "version": 2,
   "buildCommand": "pnpm run build && pnpm run build:server",
   "outputDirectory": "dist/public",
-  "framework": null,
+  "framework": "vite",
   "installCommand": "bash scripts/pre-build.sh && pnpm install",
   "devCommand": "pnpm run dev",
   "functions": {
