@@ -12,7 +12,7 @@ await esbuild.build({
   target: 'node18',
   // Use CommonJS format for Vercel serverless
   format: 'cjs',
-  outfile: path.join(rootDir, 'api/index.js'),
+  outfile: path.join(rootDir, 'api/index.cjs'),
   // External native modules that can't be bundled
   external: ['pg-native', 'bufferutil', 'utf-8-validate'],
   // Bundle all packages (don't treat node_modules as external)
@@ -33,5 +33,5 @@ await esbuild.build({
   logLevel: 'info',
 });
 
-console.log('✅ API build complete: api/index.js');
+console.log('✅ API build complete: api/index.cjs');
 
