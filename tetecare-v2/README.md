@@ -93,8 +93,15 @@ AUTH_SECRET="sua-chave-secreta-de-32-caracteres-ou-mais"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-### 3. Criar Tabelas no Banco
+### 3. Criar/Atualizar Tabelas no Banco
 
+**Opção A - Via SQL Editor do Supabase (Recomendado para banco existente):**
+1. Acesse o Dashboard do Supabase
+2. Vá em SQL Editor > New Query
+3. Cole o conteúdo do arquivo `EXECUTAR_NO_SUPABASE.sql`
+4. Execute o script
+
+**Opção B - Via Drizzle (Para banco novo):**
 ```bash
 npm run db:push
 ```
