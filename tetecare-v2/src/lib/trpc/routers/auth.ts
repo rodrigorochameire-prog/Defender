@@ -25,6 +25,7 @@ export const authRouter = router({
       email: ctx.user.email,
       role: ctx.user.role,
       phone: ctx.user.phone,
+      emailVerified: ctx.user.emailVerified,
       createdAt: ctx.user.createdAt,
     };
   }),

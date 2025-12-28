@@ -169,9 +169,12 @@ export const bookingRequests = pgTable("booking_requests", {
   tutorId: integer("tutor_id")
     .notNull()
     .references(() => users.id),
-  requestedDates: jsonb("requested_dates").$type<string[]>().notNull(), // Array de datas YYYY-MM-DD
-  status: varchar("status", { length: 50 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  requestType: varchar("request_type", { length: 50 }).default("daycare").notNull(), // 'daycare' | 'hotel' | 'grooming' | 'vet'
+  status: varchar("status", { length: 50 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected' | 'cancelled' | 'completed'
   notes: text("notes"),
+  rejectionReason: text("rejection_reason"),
   adminNotes: text("admin_notes"),
   approvedById: integer("approved_by_id").references(() => users.id),
   approvedAt: timestamp("approved_at"),
@@ -192,9 +195,10 @@ export const notifications = pgTable("notifications", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   petId: integer("pet_id").references(() => pets.id, { onDelete: "cascade" }),
-  type: varchar("type", { length: 100 }).notNull(),
+  type: varchar("type", { length: 100 }).notNull(), // 'info' | 'warning' | 'success' | 'error'
   title: varchar("title", { length: 200 }).notNull(),
   message: text("message").notNull(),
+  actionUrl: text("action_url"),
   isRead: boolean("is_read").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

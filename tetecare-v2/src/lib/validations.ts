@@ -109,10 +109,9 @@ export const calendarEventSchema = z.object({
 // Solicitação de reserva
 export const bookingRequestSchema = z.object({
   petId: idSchema,
-  requestedDates: z
-    .array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
-    .min(1, "Selecione pelo menos uma data")
-    .max(30, "Máximo de 30 dias por solicitação"),
+  startDate: z.string().datetime(),
+  endDate: z.string().datetime(),
+  requestType: z.enum(["daycare", "hotel", "grooming", "vet"]).default("daycare"),
   notes: z.string().max(500).optional(),
 });
 
@@ -120,9 +119,10 @@ export const bookingRequestSchema = z.object({
 export const notificationSchema = z.object({
   userId: idSchema,
   petId: idSchema.optional(),
-  type: z.string().min(1).max(100),
+  type: z.enum(["info", "warning", "success", "error"]).default("info"),
   title: z.string().min(1).max(200),
   message: z.string().min(1).max(2000),
+  actionUrl: z.string().max(500).optional(),
 });
 
 /**
