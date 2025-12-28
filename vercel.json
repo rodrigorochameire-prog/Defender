@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm run build && pnpm run build:server && mkdir -p dist/public/api && cp api/index.cjs dist/public/api/",
+  "buildCommand": "pnpm run build && pnpm run build:server",
   "outputDirectory": "dist/public",
   "framework": null,
   "installCommand": "pnpm install --no-frozen-lockfile",
