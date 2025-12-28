@@ -7,7 +7,6 @@
   "devCommand": "pnpm run dev",
   "functions": {
     "api/index.cjs": {
-      "runtime": "@vercel/node@3",
       "maxDuration": 30
     }
   },
