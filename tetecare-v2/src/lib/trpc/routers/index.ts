@@ -19,6 +19,11 @@ import { behaviorRouter } from "./behavior";
 import { preventivesRouter } from "./preventives";
 import { wallRouter } from "./wall";
 import { reportsRouter } from "./reports";
+import { foodRouter } from "./food";
+import { auditLogsRouter } from "./auditLogs";
+import { packagesRouter } from "./packages";
+import { reviewsRouter } from "./reviews";
+import { notificationTemplatesRouter } from "./notificationTemplates";
 
 export const appRouter = router({
   // Autenticação
@@ -38,9 +43,13 @@ export const appRouter = router({
   preventives: preventivesRouter,
   behavior: behaviorRouter,
   
+  // Alimentação
+  food: foodRouter,
+  
   // Logs e relatórios
   logs: logsRouter,
   reports: reportsRouter,
+  auditLogs: auditLogsRouter,
   
   // Calendário e reservas
   calendar: calendarRouter,
@@ -49,13 +58,16 @@ export const appRouter = router({
   // Financeiro
   credits: creditsRouter,
   finances: financesRouter,
+  packages: packagesRouter,
   
   // Documentos
   documents: documentsRouter,
   
   // Comunicação
   notifications: notificationsRouter,
+  notificationTemplates: notificationTemplatesRouter,
   wall: wallRouter,
+  reviews: reviewsRouter,
   
   // Dashboard e estatísticas
   dashboard: dashboardRouter,
