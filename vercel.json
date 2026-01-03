@@ -2,7 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "framework": "nextjs",
-  "rootDirectory": "tetecare-v2",
   "regions": ["gru1"],
   "functions": {
     "src/app/api/**/*": {
