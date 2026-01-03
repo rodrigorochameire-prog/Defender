@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
-import LandingPage from "./(public)/page";
+import { LandingPage } from "@/components/landing-page";
 
 export default async function HomePage() {
   const session = await getSession();

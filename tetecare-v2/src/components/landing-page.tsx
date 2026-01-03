@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-export default function LandingPage() {
+export function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-accent/5">
       {/* Header */}
