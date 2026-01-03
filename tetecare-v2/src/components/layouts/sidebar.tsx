@@ -57,6 +57,7 @@ const adminNavItems: NavItem[] = [
   { href: "/admin/packages", label: "Pacotes", icon: Wallet },
   { href: "/admin/finances", label: "Finanças", icon: TrendingUp },
   { href: "/admin/audit-logs", label: "Auditoria", icon: Shield },
+  { href: "/admin/notification-templates", label: "Templates", icon: Bell },
   { href: "/admin/notifications", label: "Notificações", icon: Bell },
 ];
 
