@@ -15,6 +15,12 @@ import {
   Syringe,
   FileText,
   LogOut,
+  Pill,
+  ClipboardList,
+  TrendingUp,
+  MessageSquare,
+  Shield,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -34,14 +40,15 @@ interface SidebarProps {
 
 const adminNavItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/dashboard", label: "Visão Geral", icon: BarChart3 },
   { href: "/admin/pets", label: "Pets", icon: Dog },
   { href: "/admin/tutors", label: "Tutores", icon: Users },
   { href: "/admin/calendar", label: "Calendário", icon: Calendar },
   { href: "/admin/vaccines", label: "Vacinas", icon: Syringe },
-  { href: "/admin/bookings", label: "Reservas", icon: FileText },
-  { href: "/admin/credits", label: "Créditos", icon: CreditCard },
+  { href: "/admin/medications", label: "Medicamentos", icon: Pill },
+  { href: "/admin/logs", label: "Logs Diários", icon: ClipboardList },
+  { href: "/admin/finances", label: "Finanças", icon: TrendingUp },
   { href: "/admin/notifications", label: "Notificações", icon: Bell },
-  { href: "/admin/settings", label: "Configurações", icon: Settings },
 ];
 
 const tutorNavItems: NavItem[] = [
@@ -49,6 +56,9 @@ const tutorNavItems: NavItem[] = [
   { href: "/tutor/pets", label: "Meus Pets", icon: Dog },
   { href: "/tutor/calendar", label: "Calendário", icon: Calendar },
   { href: "/tutor/bookings", label: "Reservas", icon: FileText },
+  { href: "/tutor/vaccines", label: "Vacinas", icon: Syringe },
+  { href: "/tutor/medications", label: "Medicamentos", icon: Pill },
+  { href: "/tutor/logs", label: "Logs Diários", icon: ClipboardList },
   { href: "/tutor/credits", label: "Créditos", icon: CreditCard },
   { href: "/tutor/notifications", label: "Notificações", icon: Bell },
 ];

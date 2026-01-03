@@ -253,3 +253,196 @@ export const petTutorsRelations = relations(petTutors, ({ one }) => ({
   pet: one(pets, { fields: [petTutors.petId], references: [pets.id] }),
   tutor: one(users, { fields: [petTutors.tutorId], references: [users.id] }),
 }));
+
+// ==========================================
+// BIBLIOTECA DE MEDICAMENTOS
+// ==========================================
+
+export const medicationLibrary = pgTable("medication_library", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  type: varchar("type", { length: 100 }).notNull(), // 'flea' | 'deworming' | 'antibiotic' | 'other'
+  description: text("description"),
+  commonDosage: varchar("common_dosage", { length: 200 }),
+  isCommon: boolean("is_common").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type MedicationLibrary = typeof medicationLibrary.$inferSelect;
+export type InsertMedicationLibrary = typeof medicationLibrary.$inferInsert;
+
+// ==========================================
+// MEDICAMENTOS DO PET
+// ==========================================
+
+export const petMedications = pgTable("pet_medications", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  medicationId: integer("medication_id")
+    .notNull()
+    .references(() => medicationLibrary.id),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  dosage: varchar("dosage", { length: 200 }).notNull(),
+  frequency: varchar("frequency", { length: 100 }),
+  administrationTimes: text("administration_times"), // JSON array
+  notes: text("notes"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type PetMedication = typeof petMedications.$inferSelect;
+export type InsertPetMedication = typeof petMedications.$inferInsert;
+
+// ==========================================
+// TRATAMENTOS PREVENTIVOS
+// ==========================================
+
+export const preventiveTreatments = pgTable("preventive_treatments", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  type: varchar("type", { length: 50 }).notNull(), // 'flea' | 'deworming' | 'heartworm'
+  productName: varchar("product_name", { length: 200 }).notNull(),
+  applicationDate: timestamp("application_date").notNull(),
+  nextDueDate: timestamp("next_due_date"),
+  dosage: varchar("dosage", { length: 100 }),
+  notes: text("notes"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type PreventiveTreatment = typeof preventiveTreatments.$inferSelect;
+export type InsertPreventiveTreatment = typeof preventiveTreatments.$inferInsert;
+
+// ==========================================
+// DOCUMENTOS
+// ==========================================
+
+export const documents = pgTable("documents", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  uploadedById: integer("uploaded_by_id")
+    .notNull()
+    .references(() => users.id),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 100 }).notNull(), // 'vaccination' | 'exam' | 'prescription' | 'other'
+  fileUrl: text("file_url").notNull(),
+  fileType: varchar("file_type", { length: 50 }),
+  fileSize: integer("file_size"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Document = typeof documents.$inferSelect;
+export type InsertDocument = typeof documents.$inferInsert;
+
+// ==========================================
+// REGISTROS DE COMPORTAMENTO
+// ==========================================
+
+export const behaviorLogs = pgTable("behavior_logs", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  logDate: timestamp("log_date").notNull(),
+  socialization: varchar("socialization", { length: 50 }), // 'excellent' | 'good' | 'moderate' | 'poor'
+  energy: varchar("energy", { length: 50 }), // 'high' | 'normal' | 'low'
+  obedience: varchar("obedience", { length: 50 }), // 'excellent' | 'good' | 'needs_work'
+  anxiety: varchar("anxiety", { length: 50 }), // 'none' | 'mild' | 'moderate' | 'severe'
+  aggression: varchar("aggression", { length: 50 }), // 'none' | 'mild' | 'moderate' | 'severe'
+  notes: text("notes"),
+  activities: text("activities"), // JSON array
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type BehaviorLog = typeof behaviorLogs.$inferSelect;
+export type InsertBehaviorLog = typeof behaviorLogs.$inferInsert;
+
+// ==========================================
+// MURAL - POSTS
+// ==========================================
+
+export const wallPosts = pgTable("wall_posts", {
+  id: serial("id").primaryKey(),
+  authorId: integer("author_id")
+    .notNull()
+    .references(() => users.id),
+  petId: integer("pet_id").references(() => pets.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  imageUrl: text("image_url"),
+  visibility: varchar("visibility", { length: 50 }).default("all").notNull(), // 'all' | 'tutors' | 'admin'
+  isPinned: boolean("is_pinned").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type WallPost = typeof wallPosts.$inferSelect;
+export type InsertWallPost = typeof wallPosts.$inferInsert;
+
+// ==========================================
+// MURAL - COMENTÁRIOS
+// ==========================================
+
+export const wallComments = pgTable("wall_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id")
+    .notNull()
+    .references(() => wallPosts.id, { onDelete: "cascade" }),
+  authorId: integer("author_id")
+    .notNull()
+    .references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type WallComment = typeof wallComments.$inferSelect;
+export type InsertWallComment = typeof wallComments.$inferInsert;
+
+// ==========================================
+// MURAL - CURTIDAS
+// ==========================================
+
+export const wallLikes = pgTable("wall_likes", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id")
+    .notNull()
+    .references(() => wallPosts.id, { onDelete: "cascade" }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type WallLike = typeof wallLikes.$inferSelect;
+export type InsertWallLike = typeof wallLikes.$inferInsert;
+
+// ==========================================
+// TRANSAÇÕES FINANCEIRAS
+// ==========================================
+
+export const transactions = pgTable("transactions", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id").references(() => pets.id, { onDelete: "set null" }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  type: varchar("type", { length: 50 }).notNull(), // 'credit_purchase' | 'credit_use' | 'refund'
+  amount: integer("amount").notNull(), // em centavos
+  credits: integer("credits"),
+  description: text("description"),
+  stripePaymentId: varchar("stripe_payment_id", { length: 200 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = typeof transactions.$inferInsert;

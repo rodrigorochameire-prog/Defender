@@ -7,16 +7,59 @@ import { statsRouter } from "./stats";
 import { bookingsRouter } from "./bookings";
 import { notificationsRouter } from "./notifications";
 import { creditsRouter } from "./credits";
+import { vaccinesRouter } from "./vaccines";
+import { medicationsRouter } from "./medications";
+import { logsRouter } from "./logs";
+import { dashboardRouter } from "./dashboard";
+import { checkinRouter } from "./checkin";
+import { tutorsRouter } from "./tutors";
+import { financesRouter } from "./finances";
+import { documentsRouter } from "./documents";
+import { behaviorRouter } from "./behavior";
+import { preventivesRouter } from "./preventives";
+import { wallRouter } from "./wall";
+import { reportsRouter } from "./reports";
 
 export const appRouter = router({
+  // Autenticação
   auth: authRouter,
-  pets: petsRouter,
+  
+  // Gestão de usuários e tutores
   users: usersRouter,
+  tutors: tutorsRouter,
+  
+  // Gestão de pets
+  pets: petsRouter,
+  checkin: checkinRouter,
+  
+  // Saúde
+  vaccines: vaccinesRouter,
+  medications: medicationsRouter,
+  preventives: preventivesRouter,
+  behavior: behaviorRouter,
+  
+  // Logs e relatórios
+  logs: logsRouter,
+  reports: reportsRouter,
+  
+  // Calendário e reservas
   calendar: calendarRouter,
-  stats: statsRouter,
   bookings: bookingsRouter,
-  notifications: notificationsRouter,
+  
+  // Financeiro
   credits: creditsRouter,
+  finances: financesRouter,
+  
+  // Documentos
+  documents: documentsRouter,
+  
+  // Comunicação
+  notifications: notificationsRouter,
+  wall: wallRouter,
+  
+  // Dashboard e estatísticas
+  dashboard: dashboardRouter,
+  stats: statsRouter,
 });
 
 export type AppRouter = typeof appRouter;
