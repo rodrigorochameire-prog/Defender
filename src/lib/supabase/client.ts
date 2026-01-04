@@ -20,7 +20,8 @@ export function getSupabaseClient() {
 
 /**
  * Faz upload de um documento via cliente (frontend)
- * Retorna a URL pública do arquivo
+ * Usa o bucket 'pet-photos' que já tem RLS configurado
+ * Documentos são salvos em: docs/{petId}/{category}/{arquivo}
  */
 export async function uploadDocumentClient(
   file: File,
@@ -29,13 +30,13 @@ export async function uploadDocumentClient(
 ): Promise<{ url: string; fileType: string; fileSize: number }> {
   const supabase = getSupabaseClient();
   
-  // Gerar nome único
+  // Gerar nome único - usando pasta 'docs' dentro do bucket pet-photos
   const fileExt = file.name.split(".").pop()?.toLowerCase() || "bin";
-  const fileName = `pet-${petId}/${category}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+  const fileName = `docs/${petId}/${category}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-  // Upload
+  // Upload para o bucket pet-photos (já tem RLS configurado)
   const { data, error } = await supabase.storage
-    .from("documents")
+    .from("pet-photos")
     .upload(fileName, file, {
       cacheControl: "3600",
       upsert: false,
@@ -48,7 +49,7 @@ export async function uploadDocumentClient(
 
   // Obter URL pública
   const { data: urlData } = supabase.storage
-    .from("documents")
+    .from("pet-photos")
     .getPublicUrl(data.path);
 
   return {
