@@ -34,7 +34,7 @@ export const preventivesRouter = router({
     .input(
       z.object({
         petId: z.number(),
-        type: z.enum(["flea", "deworming", "heartworm"]).optional(),
+        type: z.enum(["flea", "deworming", "heartworm", "tick"]).optional(),
       })
     )
     .query(async ({ input }) => {
@@ -62,7 +62,7 @@ export const preventivesRouter = router({
     .input(
       z.object({
         petId: z.number(),
-        type: z.enum(["flea", "deworming", "heartworm"]),
+        type: z.enum(["flea", "deworming", "heartworm", "tick"]),
         productName: z.string().min(1).max(200),
         applicationDate: z.string().or(z.date()),
         nextDueDate: z.string().or(z.date()).optional(),
@@ -215,6 +215,11 @@ export const preventivesRouter = router({
         .from(preventiveTreatments)
         .where(eq(preventiveTreatments.type, "deworming"));
 
+      const [tick] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(preventiveTreatments)
+        .where(eq(preventiveTreatments.type, "tick"));
+
       const [overdue] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(preventiveTreatments)
@@ -234,6 +239,7 @@ export const preventivesRouter = router({
         total: total.count,
         flea: flea.count,
         deworming: deworming.count,
+        tick: tick.count,
         overdue: overdue.count,
         upcoming: upcoming.count,
       };

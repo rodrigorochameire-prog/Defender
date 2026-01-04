@@ -22,358 +22,841 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Syringe,
   Pill,
   Shield,
   Plus,
   Search,
-  Edit,
-  Trash2,
   Calendar,
   Heart,
+  AlertTriangle,
+  Clock,
+  Dog,
+  CheckCircle,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
-import { PageHeader } from "@/components/shared/page-header";
+
+// Tipos de preventivos (separados de medicamentos)
+const PREVENTIVE_TYPES = [
+  { value: "flea", label: "Antipulgas", emoji: "🪲" },
+  { value: "deworming", label: "Vermífugo", emoji: "🪱" },
+  { value: "heartworm", label: "Cardioprotetor", emoji: "❤️" },
+  { value: "tick", label: "Carrapaticida", emoji: "🕷️" },
+];
+
+// Tipos de medicamentos (tratamentos)
+const MEDICATION_TYPES = [
+  { value: "antibiotic", label: "Antibiótico", emoji: "💊" },
+  { value: "antiinflammatory", label: "Anti-inflamatório", emoji: "🔥" },
+  { value: "analgesic", label: "Analgésico", emoji: "💉" },
+  { value: "supplement", label: "Suplemento", emoji: "🌿" },
+  { value: "other", label: "Outro", emoji: "📦" },
+];
 
 export default function AdminHealthPage() {
   const [mainTab, setMainTab] = useState("vaccines");
-  const [subTab, setSubTab] = useState("library");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [selectedType, setSelectedType] = useState<string>("");
+  const [selectedPetId, setSelectedPetId] = useState<string>("");
+  
+  // Dialogs
+  const [isAddVaccineOpen, setIsAddVaccineOpen] = useState(false);
+  const [isAddMedicationOpen, setIsAddMedicationOpen] = useState(false);
+  const [isAddPreventiveOpen, setIsAddPreventiveOpen] = useState(false);
 
   // Queries
-  const { data: vaccineLibrary, refetch: refetchVaccineLibrary } = trpc.vaccines.library.useQuery();
-  const { data: medicationLibrary, refetch: refetchMedicationLibrary } = trpc.medications.library.useQuery();
   const { data: pets } = trpc.pets.list.useQuery();
+  const { data: vaccineLibrary, refetch: refetchVaccines } = trpc.vaccines.library.useQuery();
+  const { data: medicationLibrary, refetch: refetchMedications } = trpc.medications.library.useQuery();
+  const { data: vaccineStats } = trpc.vaccines.stats.useQuery();
+  const { data: preventiveStats } = trpc.preventives.stats.useQuery();
+  const { data: upcomingVaccines } = trpc.vaccines.upcoming.useQuery({ daysAhead: 30 });
+  const { data: upcomingPreventives } = trpc.preventives.upcoming.useQuery({ daysAhead: 30 });
+  const { data: overduePreventives } = trpc.preventives.overdue.useQuery();
 
   // Mutations
   const addVaccineToLibrary = trpc.vaccines.addToLibrary.useMutation({
     onSuccess: () => {
-      toast.success("Vacina adicionada à biblioteca!");
-      setIsAddDialogOpen(false);
-      refetchVaccineLibrary();
+      toast.success("Vacina cadastrada com sucesso!");
+      setIsAddVaccineOpen(false);
+      refetchVaccines();
     },
-    onError: (error) => {
-      toast.error(error.message || "Erro ao adicionar vacina");
-    },
+    onError: (error) => toast.error(error.message),
   });
 
   const addMedicationToLibrary = trpc.medications.addToLibrary.useMutation({
     onSuccess: () => {
-      toast.success("Medicamento adicionado à biblioteca!");
-      setIsAddDialogOpen(false);
-      refetchMedicationLibrary();
+      toast.success("Medicamento cadastrado com sucesso!");
+      setIsAddMedicationOpen(false);
+      refetchMedications();
     },
-    onError: (error) => {
-      toast.error(error.message || "Erro ao adicionar medicamento");
-    },
+    onError: (error) => toast.error(error.message),
   });
 
-  const getLibrary = () => {
-    if (mainTab === "vaccines") return vaccineLibrary || [];
-    if (mainTab === "medications") return medicationLibrary || [];
-    return [];
-  };
+  const addVaccination = trpc.vaccines.addVaccination.useMutation({
+    onSuccess: () => {
+      toast.success("Vacinação registrada!");
+      setIsAddVaccineOpen(false);
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
-  const getMainIcon = () => {
-    if (mainTab === "vaccines") return Syringe;
-    if (mainTab === "medications") return Pill;
-    if (mainTab === "preventives") return Shield;
-    return Heart;
-  };
+  const addPreventive = trpc.preventives.add.useMutation({
+    onSuccess: () => {
+      toast.success("Preventivo registrado!");
+      setIsAddPreventiveOpen(false);
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
-  const handleAddToLibrary = (e: React.FormEvent<HTMLFormElement>) => {
+  const addMedication = trpc.medications.add.useMutation({
+    onSuccess: () => {
+      toast.success("Medicamento registrado!");
+      setIsAddMedicationOpen(false);
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  // Handlers
+  const handleAddVaccine = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-
-    if (mainTab === "vaccines") {
+    const isNewVaccine = formData.get("vaccineType") === "new";
+    
+    if (isNewVaccine) {
+      // Adiciona nova vacina à biblioteca e registra aplicação
       addVaccineToLibrary.mutate({
-        name: formData.get("name") as string,
+        name: formData.get("customName") as string,
         description: formData.get("description") as string || undefined,
         intervalDays: formData.get("intervalDays") ? parseInt(formData.get("intervalDays") as string) : undefined,
         dosesRequired: 1,
       });
-    } else if (mainTab === "medications") {
-      addMedicationToLibrary.mutate({
-        name: formData.get("name") as string,
-        type: selectedType || "treatment",
-        description: formData.get("description") as string || undefined,
-        commonDosage: formData.get("defaultDosage") as string || undefined,
+    } else {
+      // Registra aplicação de vacina existente
+      addVaccination.mutate({
+        petId: parseInt(formData.get("petId") as string),
+        vaccineId: parseInt(formData.get("vaccineId") as string),
+        applicationDate: formData.get("applicationDate") as string,
+        nextDueDate: formData.get("nextDueDate") as string || undefined,
+        veterinarian: formData.get("veterinarian") as string || undefined,
+        clinic: formData.get("clinic") as string || undefined,
+        notes: formData.get("notes") as string || undefined,
       });
     }
   };
 
-  const MainIcon = getMainIcon();
+  const handleAddPreventive = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    addPreventive.mutate({
+      petId: parseInt(formData.get("petId") as string),
+      type: formData.get("type") as "flea" | "deworming" | "heartworm",
+      productName: formData.get("productName") as string,
+      applicationDate: formData.get("applicationDate") as string,
+      nextDueDate: formData.get("nextDueDate") as string || undefined,
+      dosage: formData.get("dosage") as string || undefined,
+      notes: formData.get("notes") as string || undefined,
+    });
+  };
 
-  const filteredLibrary = getLibrary().filter((item: any) =>
-    item.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleAddMedication = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const isCustom = formData.get("medicationType") === "custom";
+    
+    addMedication.mutate({
+      petId: parseInt(formData.get("petId") as string),
+      medicationId: !isCustom ? parseInt(formData.get("medicationId") as string) : undefined,
+      customMedName: isCustom ? formData.get("customName") as string : undefined,
+      customMedType: isCustom ? formData.get("customType") as string : undefined,
+      startDate: formData.get("startDate") as string,
+      endDate: formData.get("endDate") as string || undefined,
+      dosage: formData.get("dosage") as string,
+      frequency: formData.get("frequency") as string || undefined,
+      notes: formData.get("notes") as string || undefined,
+    });
+  };
+
+  // Filter medications library (excluding preventive types)
+  const medicationsOnly = (medicationLibrary || []).filter(
+    (m: any) => !["flea", "deworming", "heartworm", "tick"].includes(m.type)
   );
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Central de Saúde"
-        description="Gerencie vacinas, medicamentos e preventivos dos pets"
-        icon={<Heart className="h-8 w-8 text-red-500" />}
-      />
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <Heart className="h-8 w-8 text-red-500" />
+            Central de Saúde
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie vacinas, medicamentos e preventivos dos pets
+          </p>
+        </div>
+      </div>
 
+      {/* Alertas */}
+      {((overduePreventives?.length || 0) > 0 || (vaccineStats?.overdue || 0) > 0) && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="flex items-center gap-4 py-4">
+            <AlertTriangle className="h-8 w-8 text-destructive" />
+            <div className="flex-1">
+              <p className="font-medium text-destructive">Atenção! Existem tratamentos atrasados</p>
+              <div className="flex gap-4 mt-1 text-sm text-muted-foreground">
+                {(vaccineStats?.overdue || 0) > 0 && (
+                  <span>{vaccineStats?.overdue} vacina(s) vencida(s)</span>
+                )}
+                {(overduePreventives?.length || 0) > 0 && (
+                  <span>{overduePreventives?.length} preventivo(s) vencido(s)</span>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vacinas Próximas</CardTitle>
+            <Syringe className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{vaccineStats?.upcoming || 0}</div>
+            <p className="text-xs text-muted-foreground">nos próximos 30 dias</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Preventivos Próximos</CardTitle>
+            <Shield className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{preventiveStats?.upcoming || 0}</div>
+            <p className="text-xs text-muted-foreground">nos próximos 30 dias</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Antipulgas</CardTitle>
+            <span className="text-lg">🪲</span>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{preventiveStats?.flea || 0}</div>
+            <p className="text-xs text-muted-foreground">registros</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vermífugos</CardTitle>
+            <span className="text-lg">🪱</span>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{preventiveStats?.deworming || 0}</div>
+            <p className="text-xs text-muted-foreground">registros</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Tabs */}
       <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
           <TabsTrigger value="vaccines" className="flex items-center gap-2">
             <Syringe className="h-4 w-4" />
             Vacinas
           </TabsTrigger>
-          <TabsTrigger value="medications" className="flex items-center gap-2">
-            <Pill className="h-4 w-4" />
-            Medicamentos
-          </TabsTrigger>
           <TabsTrigger value="preventives" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
             Preventivos
           </TabsTrigger>
+          <TabsTrigger value="medications" className="flex items-center gap-2">
+            <Pill className="h-4 w-4" />
+            Medicamentos
+          </TabsTrigger>
         </TabsList>
 
-        {/* Vaccines & Medications */}
-        {(mainTab === "vaccines" || mainTab === "medications") && (
-          <Tabs value={subTab} onValueChange={setSubTab} className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="library">Biblioteca</TabsTrigger>
-              <TabsTrigger value="applications">Aplicações</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="library" className="space-y-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <MainIcon className="h-5 w-5" />
-                      Biblioteca de {mainTab === "vaccines" ? "Vacinas" : "Medicamentos"}
-                    </CardTitle>
-                    <CardDescription>
-                      Gerencie os itens disponíveis para aplicação
-                    </CardDescription>
-                  </div>
-                  <Button onClick={() => setIsAddDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-
-                  <div className="grid gap-3">
-                    {filteredLibrary.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <MainIcon className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                        <p>Nenhum item na biblioteca</p>
-                        <Button
-                          variant="link"
-                          onClick={() => setIsAddDialogOpen(true)}
-                        >
-                          Adicionar primeiro item
-                        </Button>
-                      </div>
-                    ) : (
-                      filteredLibrary.map((item: any) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
-                        >
-                          <div className="flex-1">
-                            <div className="font-medium">{item.name}</div>
-                            {item.description && (
-                              <div className="text-sm text-muted-foreground mt-1">
-                                {item.description}
-                              </div>
-                            )}
-                            <div className="flex gap-2 mt-2">
-                              {item.type && (
-                                <Badge variant="outline">{item.type}</Badge>
-                              )}
-                              {item.intervalDays && (
-                                <Badge variant="secondary">
-                                  Reaplicar a cada {item.intervalDays} dias
-                                </Badge>
-                              )}
+        {/* ========== VACINAS ========== */}
+        <TabsContent value="vaccines" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Syringe className="h-5 w-5 text-blue-500" />
+                  Vacinas
+                </CardTitle>
+                <CardDescription>
+                  Gerencie a carteira de vacinação dos pets
+                </CardDescription>
+              </div>
+              <Button onClick={() => setIsAddVaccineOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Vacina
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Próximas vacinas */}
+              {upcomingVaccines && upcomingVaccines.length > 0 && (
+                <div>
+                  <h4 className="font-medium flex items-center gap-2 mb-3">
+                    <Clock className="h-4 w-4 text-yellow-500" />
+                    Próximas Vacinas (30 dias)
+                  </h4>
+                  <div className="grid gap-2">
+                    {upcomingVaccines.map((item: any) => (
+                      <div key={item.vaccination.id} className="flex items-center justify-between p-3 border rounded-lg bg-yellow-50/50">
+                        <div className="flex items-center gap-3">
+                          {item.pet?.photoUrl ? (
+                            <img src={item.pet.photoUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Dog className="h-5 w-5 text-primary" />
                             </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="ghost">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                          )}
+                          <div>
+                            <p className="font-medium">{item.pet?.name}</p>
+                            <p className="text-sm text-muted-foreground">{item.vaccine?.name}</p>
                           </div>
                         </div>
-                      ))
-                    )}
+                        <Badge variant="outline" className="text-yellow-700 border-yellow-500">
+                          {new Date(item.vaccination.nextDueDate).toLocaleDateString("pt-BR")}
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                </div>
+              )}
 
-            <TabsContent value="applications" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Histórico de Aplicações</CardTitle>
-                  <CardDescription>
-                    Visualize todas as aplicações realizadas
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar por pet..."
-                        className="pl-10"
-                      />
-                    </div>
-                    <Select>
-                      <SelectTrigger className="w-full sm:w-[200px]">
-                        <SelectValue placeholder="Filtrar por pet" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos os pets</SelectItem>
-                        {pets?.map((pet: any) => (
-                          <SelectItem key={pet.id} value={pet.id.toString()}>
-                            {pet.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <Separator />
 
-                  <div className="rounded-lg border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Pet</TableHead>
-                          <TableHead>Item</TableHead>
-                          <TableHead>Data</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                            Selecione um pet para ver as aplicações
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        )}
-
-        {/* Preventives - Simplified view */}
-        {mainTab === "preventives" && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Preventivos
-              </CardTitle>
-              <CardDescription>
-                Antipulgas, vermífugos e outros tratamentos preventivos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Shield className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <p>Selecione um pet para gerenciar preventivos</p>
-                <Button variant="link" asChild>
-                  <a href="/admin/pets">Ir para Pets</a>
-                </Button>
+              {/* Biblioteca de Vacinas */}
+              <div>
+                <h4 className="font-medium mb-3">Vacinas Cadastradas</h4>
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar vacina..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                  {(vaccineLibrary || [])
+                    .filter((v: any) => v.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .map((vaccine: any) => (
+                      <div key={vaccine.id} className="p-3 border rounded-lg hover:bg-accent transition-colors">
+                        <div className="font-medium">{vaccine.name}</div>
+                        {vaccine.description && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{vaccine.description}</p>
+                        )}
+                        {vaccine.intervalDays && (
+                          <Badge variant="secondary" className="mt-2">
+                            A cada {vaccine.intervalDays} dias
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                </div>
               </div>
             </CardContent>
           </Card>
-        )}
+        </TabsContent>
+
+        {/* ========== PREVENTIVOS ========== */}
+        <TabsContent value="preventives" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-green-500" />
+                  Preventivos
+                </CardTitle>
+                <CardDescription>
+                  Antipulgas, vermífugos, carrapaticidas e cardioprotetores
+                </CardDescription>
+              </div>
+              <Button onClick={() => setIsAddPreventiveOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Preventivo
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Tipos de Preventivos */}
+              <div className="grid gap-4 md:grid-cols-4">
+                {PREVENTIVE_TYPES.map((type) => (
+                  <Card key={type.value} className="border-dashed hover:border-solid hover:border-primary/50 transition-all cursor-pointer" 
+                    onClick={() => {
+                      setIsAddPreventiveOpen(true);
+                    }}>
+                    <CardContent className="flex flex-col items-center justify-center py-6">
+                      <span className="text-3xl mb-2">{type.emoji}</span>
+                      <p className="font-medium">{type.label}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Clique para registrar</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <Separator />
+
+              {/* Próximos e Atrasados */}
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Atrasados */}
+                <div>
+                  <h4 className="font-medium flex items-center gap-2 mb-3 text-destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    Atrasados
+                  </h4>
+                  {overduePreventives && overduePreventives.length > 0 ? (
+                    <div className="space-y-2">
+                      {overduePreventives.map((item: any) => (
+                        <div key={item.treatment.id} className="flex items-center justify-between p-3 border border-destructive/30 rounded-lg bg-destructive/5">
+                          <div className="flex items-center gap-3">
+                            {item.pet?.photoUrl ? (
+                              <img src={item.pet.photoUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+                            ) : (
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Dog className="h-4 w-4 text-primary" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-sm">{item.pet?.name}</p>
+                              <p className="text-xs text-muted-foreground">{item.treatment.productName}</p>
+                            </div>
+                          </div>
+                          <Badge variant="destructive">
+                            {PREVENTIVE_TYPES.find(t => t.value === item.treatment.type)?.emoji}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground text-sm">
+                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                      Nenhum preventivo atrasado
+                    </div>
+                  )}
+                </div>
+
+                {/* Próximos */}
+                <div>
+                  <h4 className="font-medium flex items-center gap-2 mb-3 text-yellow-600">
+                    <Clock className="h-4 w-4" />
+                    Próximos (30 dias)
+                  </h4>
+                  {upcomingPreventives && upcomingPreventives.length > 0 ? (
+                    <div className="space-y-2">
+                      {upcomingPreventives.map((item: any) => (
+                        <div key={item.treatment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center gap-3">
+                            {item.pet?.photoUrl ? (
+                              <img src={item.pet.photoUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+                            ) : (
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Dog className="h-4 w-4 text-primary" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-sm">{item.pet?.name}</p>
+                              <p className="text-xs text-muted-foreground">{item.treatment.productName}</p>
+                            </div>
+                          </div>
+                          <Badge variant="outline">
+                            {new Date(item.treatment.nextDueDate).toLocaleDateString("pt-BR")}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground text-sm">
+                      Nenhum preventivo agendado
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ========== MEDICAMENTOS ========== */}
+        <TabsContent value="medications" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Pill className="h-5 w-5 text-purple-500" />
+                  Medicamentos
+                </CardTitle>
+                <CardDescription>
+                  Antibióticos, anti-inflamatórios, suplementos e outros tratamentos
+                </CardDescription>
+              </div>
+              <Button onClick={() => setIsAddMedicationOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Medicamento
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Tipos de Medicamentos */}
+              <div className="grid gap-3 md:grid-cols-5">
+                {MEDICATION_TYPES.map((type) => (
+                  <div key={type.value} className="p-3 border rounded-lg text-center hover:bg-accent transition-colors cursor-pointer"
+                    onClick={() => setIsAddMedicationOpen(true)}>
+                    <span className="text-2xl">{type.emoji}</span>
+                    <p className="text-sm font-medium mt-1">{type.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <Separator />
+
+              {/* Medicamentos cadastrados */}
+              <div>
+                <h4 className="font-medium mb-3">Medicamentos Cadastrados</h4>
+                {medicationsOnly.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Pill className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                    <p>Nenhum medicamento cadastrado</p>
+                    <Button variant="link" onClick={() => setIsAddMedicationOpen(true)}>
+                      Adicionar primeiro medicamento
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                    {medicationsOnly.map((med: any) => {
+                      const type = MEDICATION_TYPES.find(t => t.value === med.type);
+                      return (
+                        <div key={med.id} className="p-3 border rounded-lg hover:bg-accent transition-colors">
+                          <div className="flex items-center gap-2">
+                            <span>{type?.emoji || "💊"}</span>
+                            <span className="font-medium">{med.name}</span>
+                          </div>
+                          {med.description && (
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{med.description}</p>
+                          )}
+                          {med.commonDosage && (
+                            <Badge variant="secondary" className="mt-2">{med.commonDosage}</Badge>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
-      {/* Add Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
+      {/* ========== DIALOG: NOVA VACINA ========== */}
+      <Dialog open={isAddVaccineOpen} onOpenChange={setIsAddVaccineOpen}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>
-              Adicionar {mainTab === "vaccines" ? "Vacina" : "Medicamento"}
+            <DialogTitle className="flex items-center gap-2">
+              <Syringe className="h-5 w-5 text-blue-500" />
+              Registrar Vacinação
             </DialogTitle>
             <DialogDescription>
-              Adicione um novo item à biblioteca
+              Registre uma vacinação ou adicione uma nova vacina à biblioteca
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddToLibrary} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
-              <Input id="name" name="name" required />
-            </div>
-
-            {mainTab === "medications" && (
+          <form onSubmit={handleAddVaccine} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="type">Tipo</Label>
-                <Select value={selectedType} onValueChange={setSelectedType}>
+                <Label htmlFor="petId">Pet *</Label>
+                <Select name="petId" required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="flea">Antipulgas</SelectItem>
-                    <SelectItem value="deworming">Vermífugo</SelectItem>
-                    <SelectItem value="antibiotic">Antibiótico</SelectItem>
-                    <SelectItem value="other">Outro</SelectItem>
+                    {pets?.map((pet: any) => (
+                      <SelectItem key={pet.id} value={pet.id.toString()}>
+                        {pet.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Descrição (opcional)</Label>
-              <Textarea id="description" name="description" />
+              <div className="space-y-2">
+                <Label htmlFor="vaccineType">Tipo</Label>
+                <Select name="vaccineType" defaultValue="existing">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="existing">Vacina existente</SelectItem>
+                    <SelectItem value="new">Nova vacina (personalizada)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {mainTab === "vaccines" && (
-              <div className="space-y-2">
-                <Label htmlFor="intervalDays">Intervalo de Reaplicação (dias)</Label>
-                <Input id="intervalDays" name="intervalDays" type="number" />
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="vaccineId">Vacina *</Label>
+              <Select name="vaccineId">
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione ou crie uma nova" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vaccineLibrary?.map((v: any) => (
+                    <SelectItem key={v.id} value={v.id.toString()}>
+                      {v.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            {mainTab === "medications" && (
+            <div className="space-y-2">
+              <Label htmlFor="customName">Ou digite o nome (nova vacina)</Label>
+              <Input id="customName" name="customName" placeholder="Nome da vacina personalizada" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="defaultDosage">Dosagem Padrão (opcional)</Label>
-                <Input id="defaultDosage" name="defaultDosage" />
+                <Label htmlFor="applicationDate">Data da Aplicação *</Label>
+                <Input type="date" id="applicationDate" name="applicationDate" defaultValue={new Date().toISOString().split('T')[0]} required />
               </div>
-            )}
+              <div className="space-y-2">
+                <Label htmlFor="nextDueDate">Próxima Dose</Label>
+                <Input type="date" id="nextDueDate" name="nextDueDate" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="veterinarian">Veterinário</Label>
+                <Input id="veterinarian" name="veterinarian" placeholder="Nome do veterinário" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="clinic">Clínica</Label>
+                <Input id="clinic" name="clinic" placeholder="Nome da clínica" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea id="notes" name="notes" placeholder="Observações adicionais..." rows={2} />
+            </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => setIsAddVaccineOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit">Adicionar</Button>
+              <Button type="submit" disabled={addVaccination.isPending || addVaccineToLibrary.isPending}>
+                Salvar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ========== DIALOG: NOVO PREVENTIVO ========== */}
+      <Dialog open={isAddPreventiveOpen} onOpenChange={setIsAddPreventiveOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-green-500" />
+              Registrar Preventivo
+            </DialogTitle>
+            <DialogDescription>
+              Antipulgas, vermífugos, carrapaticidas ou cardioprotetores
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddPreventive} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="petId">Pet *</Label>
+                <Select name="petId" required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pets?.map((pet: any) => (
+                      <SelectItem key={pet.id} value={pet.id.toString()}>
+                        {pet.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="type">Tipo *</Label>
+                <Select name="type" required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PREVENTIVE_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.emoji} {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="productName">Nome do Produto *</Label>
+              <Input id="productName" name="productName" placeholder="Ex: NexGard, Bravecto, Drontal..." required />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="applicationDate">Data da Aplicação *</Label>
+                <Input type="date" id="applicationDate" name="applicationDate" defaultValue={new Date().toISOString().split('T')[0]} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nextDueDate">Próxima Aplicação</Label>
+                <Input type="date" id="nextDueDate" name="nextDueDate" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dosage">Dosagem</Label>
+              <Input id="dosage" name="dosage" placeholder="Ex: 1 comprimido, 1 pipeta..." />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea id="notes" name="notes" placeholder="Observações adicionais..." rows={2} />
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsAddPreventiveOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={addPreventive.isPending}>
+                Salvar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ========== DIALOG: NOVO MEDICAMENTO ========== */}
+      <Dialog open={isAddMedicationOpen} onOpenChange={setIsAddMedicationOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pill className="h-5 w-5 text-purple-500" />
+              Registrar Medicamento
+            </DialogTitle>
+            <DialogDescription>
+              Antibióticos, anti-inflamatórios, suplementos e outros tratamentos
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddMedication} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="petId">Pet *</Label>
+                <Select name="petId" required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pets?.map((pet: any) => (
+                      <SelectItem key={pet.id} value={pet.id.toString()}>
+                        {pet.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="medicationType">Origem</Label>
+                <Select name="medicationType" defaultValue="custom">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="existing">Medicamento existente</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="medicationId">Medicamento da Biblioteca</Label>
+              <Select name="medicationId">
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {medicationsOnly.map((m: any) => (
+                    <SelectItem key={m.id} value={m.id.toString()}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="customName">Nome do Medicamento</Label>
+                <Input id="customName" name="customName" placeholder="Nome do medicamento" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customType">Tipo</Label>
+                <Select name="customType">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MEDICATION_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.emoji} {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dosage">Dosagem *</Label>
+              <Input id="dosage" name="dosage" placeholder="Ex: 1 comprimido de 500mg" required />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Data de Início *</Label>
+                <Input type="date" id="startDate" name="startDate" defaultValue={new Date().toISOString().split('T')[0]} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endDate">Data de Término</Label>
+                <Input type="date" id="endDate" name="endDate" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="frequency">Frequência</Label>
+              <Input id="frequency" name="frequency" placeholder="Ex: 2x ao dia, a cada 8h..." />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea id="notes" name="notes" placeholder="Observações adicionais..." rows={2} />
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsAddMedicationOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={addMedication.isPending}>
+                Salvar
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

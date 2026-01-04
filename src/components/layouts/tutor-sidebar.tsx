@@ -20,6 +20,7 @@ import {
   BarChart3,
   CalendarCheck,
   GraduationCap,
+  Heart,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -68,8 +69,7 @@ const menuGroups = [
     label: "Saúde",
     color: "red",
     items: [
-      { icon: Syringe, label: "Vacinas", path: "/tutor/vaccines" },
-      { icon: Pill, label: "Medicamentos", path: "/tutor/medications" },
+      { icon: Heart, label: "Central de Saúde", path: "/tutor/health" },
       { icon: GraduationCap, label: "Treinamento", path: "/tutor/training" },
       { icon: ClipboardList, label: "Logs Diários", path: "/tutor/logs" },
     ],
