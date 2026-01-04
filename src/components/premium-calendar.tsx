@@ -66,7 +66,6 @@ const EVENT_TYPES = {
     borderColor: "border-blue-400",
     dotColor: "bg-blue-500",
     icon: Syringe,
-    emoji: "💉",
   },
   medication: {
     label: "Medicamento",
@@ -76,7 +75,6 @@ const EVENT_TYPES = {
     borderColor: "border-purple-400",
     dotColor: "bg-purple-500",
     icon: Pill,
-    emoji: "💊",
   },
   medical: {
     label: "Consulta",
@@ -86,7 +84,6 @@ const EVENT_TYPES = {
     borderColor: "border-rose-400",
     dotColor: "bg-rose-500",
     icon: Heart,
-    emoji: "🏥",
   },
   general: {
     label: "Geral",
@@ -96,7 +93,6 @@ const EVENT_TYPES = {
     borderColor: "border-slate-400",
     dotColor: "bg-slate-500",
     icon: CalendarIcon,
-    emoji: "📅",
   },
   holiday: {
     label: "Feriado",
@@ -106,7 +102,6 @@ const EVENT_TYPES = {
     borderColor: "border-emerald-400",
     dotColor: "bg-emerald-500",
     icon: Sun,
-    emoji: "🎉",
   },
   closure: {
     label: "Fechamento",
@@ -116,7 +111,6 @@ const EVENT_TYPES = {
     borderColor: "border-orange-400",
     dotColor: "bg-orange-500",
     icon: AlertCircle,
-    emoji: "🚫",
   },
   checkin: {
     label: "Check-in",
@@ -126,7 +120,6 @@ const EVENT_TYPES = {
     borderColor: "border-teal-400",
     dotColor: "bg-teal-500",
     icon: LogIn,
-    emoji: "🐕",
   },
   checkout: {
     label: "Check-out",
@@ -136,7 +129,6 @@ const EVENT_TYPES = {
     borderColor: "border-amber-400",
     dotColor: "bg-amber-500",
     icon: LogOut,
-    emoji: "👋",
   },
   preventive: {
     label: "Preventivo",
@@ -146,7 +138,6 @@ const EVENT_TYPES = {
     borderColor: "border-cyan-400",
     dotColor: "bg-cyan-500",
     icon: Shield,
-    emoji: "🛡️",
   },
   training: {
     label: "Treinamento",
@@ -156,7 +147,6 @@ const EVENT_TYPES = {
     borderColor: "border-indigo-400",
     dotColor: "bg-indigo-500",
     icon: Sparkles,
-    emoji: "🎓",
   },
   grooming: {
     label: "Banho/Tosa",
@@ -166,7 +156,6 @@ const EVENT_TYPES = {
     borderColor: "border-pink-400",
     dotColor: "bg-pink-500",
     icon: Sparkles,
-    emoji: "🛁",
   },
 } as const;
 
@@ -441,12 +430,17 @@ export function PremiumCalendar({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  {Object.entries(EVENT_TYPES).map(([key, config]) => (
-                    <SelectItem key={key} value={key}>
-                      <span className="mr-2">{config.emoji}</span>
-                      {config.label}
-                    </SelectItem>
-                  ))}
+                  {Object.entries(EVENT_TYPES).map(([key, config]) => {
+                    const Icon = config.icon;
+                    return (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          {config.label}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
 
@@ -607,7 +601,7 @@ export function PremiumCalendar({
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors"
                       onClick={() => onEventClick?.(event)}
                     >
-                      <span className="text-lg">{config.emoji}</span>
+                      {(() => { const Icon = config.icon; return <Icon className="h-5 w-5" />; })()}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{event.title}</p>
                         <p className="text-xs text-muted-foreground">
@@ -633,7 +627,7 @@ export function PremiumCalendar({
                   className="flex items-center gap-1.5 text-xs p-1 rounded hover:bg-accent cursor-pointer"
                   onClick={() => setSelectedEventType(key as EventType)}
                 >
-                  <span>{config.emoji}</span>
+                  {(() => { const Icon = config.icon; return <Icon className="h-4 w-4" />; })()}
                   <span className="truncate">{config.label}</span>
                 </div>
               ))}
@@ -685,7 +679,7 @@ export function PremiumCalendar({
                     }}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-lg">{config.emoji}</span>
+                      {(() => { const Icon = config.icon; return <Icon className="h-5 w-5" />; })()}
                       <span className="font-medium">{event.title}</span>
                       <Badge variant="outline" className="ml-auto text-xs">
                         {config.label}
@@ -800,7 +794,7 @@ function MonthView({
                         onEventClick?.(event);
                       }}
                     >
-                      <span>{config.emoji}</span>
+                      {(() => { const Icon = config.icon; return <Icon className="h-4 w-4" />; })()}
                       <span className="truncate">{event.title}</span>
                     </div>
                   );
@@ -878,7 +872,7 @@ function WeekView({
                       }}
                     >
                       <div className="flex items-center gap-1">
-                        <span>{config.emoji}</span>
+                        {(() => { const Icon = config.icon; return <Icon className="h-4 w-4" />; })()}
                         <span className="truncate font-medium">{event.title}</span>
                       </div>
                       {!event.isAllDay && (
@@ -951,7 +945,7 @@ function DayView({
                       onClick={() => onEventClick?.(event)}
                     >
                       <div className="flex items-center gap-2">
-                        <span>{config.emoji}</span>
+                        {(() => { const Icon = config.icon; return <Icon className="h-4 w-4" />; })()}
                         <span className="font-medium">{event.title}</span>
                         {event.petName && (
                           <Badge variant="outline" className="ml-auto text-xs bg-white/20">
@@ -1040,7 +1034,7 @@ function ListView({
                         )}
                         onClick={() => onEventClick?.(event)}
                       >
-                        <span className="text-2xl">{config.emoji}</span>
+                        {(() => { const Icon = config.icon; return <Icon className="h-6 w-6" />; })()}
                         <div className="flex-1">
                           <div className="font-medium">{event.title}</div>
                           <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -1159,7 +1153,7 @@ function CreateEventForm({
             <SelectContent>
               {Object.entries(EVENT_TYPES).map(([key, config]) => (
                 <SelectItem key={key} value={key}>
-                  <span className="mr-2">{config.emoji}</span>
+                  {(() => { const Icon = config.icon; return <Icon className="h-4 w-4 mr-2" />; })()}
                   {config.label}
                 </SelectItem>
               ))}

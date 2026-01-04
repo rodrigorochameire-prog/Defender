@@ -51,7 +51,8 @@ import {
   Grid3X3,
   List,
   Filter,
-  SortAsc
+  SortAsc,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -192,29 +193,37 @@ export default function AdminDocuments() {
       <Tabs value={categoryFilter} onValueChange={setCategoryFilter}>
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <TabsList className="flex-wrap h-auto gap-1 p-1">
-            <TabsTrigger value="all" className="text-xs">
-              📁 Todos
+            <TabsTrigger value="all" className="text-xs gap-1">
+              <FolderOpen className="h-3 w-3" />
+              Todos
             </TabsTrigger>
-            <TabsTrigger value="vaccination" className="text-xs">
-              💉 Vacinas
+            <TabsTrigger value="vaccination" className="text-xs gap-1">
+              <Syringe className="h-3 w-3" />
+              Vacinas
             </TabsTrigger>
-            <TabsTrigger value="exam" className="text-xs">
-              🔬 Exames
+            <TabsTrigger value="exam" className="text-xs gap-1">
+              <TestTube className="h-3 w-3" />
+              Exames
             </TabsTrigger>
-            <TabsTrigger value="prescription" className="text-xs">
-              💊 Receitas
+            <TabsTrigger value="prescription" className="text-xs gap-1">
+              <Pill className="h-3 w-3" />
+              Receitas
             </TabsTrigger>
-            <TabsTrigger value="preventive" className="text-xs">
-              🛡️ Preventivos
+            <TabsTrigger value="preventive" className="text-xs gap-1">
+              <Shield className="h-3 w-3" />
+              Preventivos
             </TabsTrigger>
-            <TabsTrigger value="training" className="text-xs">
-              🎓 Adestramento
+            <TabsTrigger value="training" className="text-xs gap-1">
+              <GraduationCap className="h-3 w-3" />
+              Adestramento
             </TabsTrigger>
-            <TabsTrigger value="photo" className="text-xs">
-              📸 Fotos
+            <TabsTrigger value="photo" className="text-xs gap-1">
+              <Camera className="h-3 w-3" />
+              Fotos
             </TabsTrigger>
-            <TabsTrigger value="other" className="text-xs">
-              📎 Outros
+            <TabsTrigger value="other" className="text-xs gap-1">
+              <File className="h-3 w-3" />
+              Outros
             </TabsTrigger>
           </TabsList>
 
