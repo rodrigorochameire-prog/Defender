@@ -37,25 +37,31 @@ import {
   Dog,
   CheckCircle,
   X,
+  Bug,
+  Leaf,
+  Flame,
+  Droplets,
+  Package,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 
 // Tipos de preventivos (separados de medicamentos)
-const PREVENTIVE_TYPES = [
-  { value: "flea", label: "Antipulgas", emoji: "🪲" },
-  { value: "deworming", label: "Vermífugo", emoji: "🪱" },
-  { value: "heartworm", label: "Cardioprotetor", emoji: "❤️" },
-  { value: "tick", label: "Carrapaticida", emoji: "🕷️" },
+const PREVENTIVE_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
+  { value: "flea", label: "Antipulgas", icon: Bug, color: "text-amber-600" },
+  { value: "deworming", label: "Vermífugo", icon: Droplets, color: "text-rose-600" },
+  { value: "heartworm", label: "Cardioprotetor", icon: Heart, color: "text-red-500" },
+  { value: "tick", label: "Carrapaticida", icon: Shield, color: "text-orange-600" },
 ];
 
 // Tipos de medicamentos (tratamentos)
-const MEDICATION_TYPES = [
-  { value: "antibiotic", label: "Antibiótico", emoji: "💊" },
-  { value: "antiinflammatory", label: "Anti-inflamatório", emoji: "🔥" },
-  { value: "analgesic", label: "Analgésico", emoji: "💉" },
-  { value: "supplement", label: "Suplemento", emoji: "🌿" },
-  { value: "other", label: "Outro", emoji: "📦" },
+const MEDICATION_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
+  { value: "antibiotic", label: "Antibiótico", icon: Pill, color: "text-blue-600" },
+  { value: "antiinflammatory", label: "Anti-inflamatório", icon: Flame, color: "text-orange-500" },
+  { value: "analgesic", label: "Analgésico", icon: Syringe, color: "text-purple-600" },
+  { value: "supplement", label: "Suplemento", icon: Leaf, color: "text-green-600" },
+  { value: "other", label: "Outro", icon: Package, color: "text-slate-500" },
 ];
 
 export default function AdminHealthPage() {
@@ -247,7 +253,7 @@ export default function AdminHealthPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Antipulgas</CardTitle>
-            <span className="text-lg">🪲</span>
+            <Bug className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{preventiveStats?.flea || 0}</div>
@@ -257,7 +263,7 @@ export default function AdminHealthPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Vermífugos</CardTitle>
-            <span className="text-lg">🪱</span>
+            <Droplets className="h-4 w-4 text-rose-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{preventiveStats?.deworming || 0}</div>
@@ -397,7 +403,7 @@ export default function AdminHealthPage() {
                       setIsAddPreventiveOpen(true);
                     }}>
                     <CardContent className="flex flex-col items-center justify-center py-6">
-                      <span className="text-3xl mb-2">{type.emoji}</span>
+                      <type.icon className={`h-8 w-8 mb-2 ${type.color}`} />
                       <p className="font-medium">{type.label}</p>
                       <p className="text-xs text-muted-foreground mt-1">Clique para registrar</p>
                     </CardContent>
@@ -432,8 +438,12 @@ export default function AdminHealthPage() {
                               <p className="text-xs text-muted-foreground">{item.treatment.productName}</p>
                             </div>
                           </div>
-                          <Badge variant="destructive">
-                            {PREVENTIVE_TYPES.find(t => t.value === item.treatment.type)?.emoji}
+                          <Badge variant="destructive" className="flex items-center gap-1">
+                            {(() => {
+                              const pType = PREVENTIVE_TYPES.find(t => t.value === item.treatment.type);
+                              const Icon = pType?.icon || Shield;
+                              return <Icon className="h-3 w-3" />;
+                            })()}
                           </Badge>
                         </div>
                       ))}
@@ -510,7 +520,7 @@ export default function AdminHealthPage() {
                 {MEDICATION_TYPES.map((type) => (
                   <div key={type.value} className="p-3 border rounded-lg text-center hover:bg-accent transition-colors cursor-pointer"
                     onClick={() => setIsAddMedicationOpen(true)}>
-                    <span className="text-2xl">{type.emoji}</span>
+                    <type.icon className={`h-6 w-6 mx-auto ${type.color}`} />
                     <p className="text-sm font-medium mt-1">{type.label}</p>
                   </div>
                 ))}
@@ -536,7 +546,10 @@ export default function AdminHealthPage() {
                       return (
                         <div key={med.id} className="p-3 border rounded-lg hover:bg-accent transition-colors">
                           <div className="flex items-center gap-2">
-                            <span>{type?.emoji || "💊"}</span>
+                            {(() => {
+                              const Icon = type?.icon || Pill;
+                              return <Icon className={`h-4 w-4 ${type?.color || 'text-purple-600'}`} />;
+                            })()}
                             <span className="font-medium">{med.name}</span>
                           </div>
                           {med.description && (
@@ -697,7 +710,10 @@ export default function AdminHealthPage() {
                   <SelectContent>
                     {PREVENTIVE_TYPES.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
-                        {type.emoji} {type.label}
+                        <div className="flex items-center gap-2">
+                          <type.icon className={`h-4 w-4 ${type.color}`} />
+                          {type.label}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -816,7 +832,10 @@ export default function AdminHealthPage() {
                   <SelectContent>
                     {MEDICATION_TYPES.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
-                        {type.emoji} {type.label}
+                        <div className="flex items-center gap-2">
+                          <type.icon className={`h-4 w-4 ${type.color}`} />
+                          {type.label}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

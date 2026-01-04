@@ -35,23 +35,29 @@ import {
   Clock,
   Dog,
   CheckCircle,
+  Bug,
+  Leaf,
+  Flame,
+  Droplets,
+  Package,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 
-const PREVENTIVE_TYPES = [
-  { value: "flea", label: "Antipulgas", emoji: "🪲" },
-  { value: "deworming", label: "Vermífugo", emoji: "🪱" },
-  { value: "heartworm", label: "Cardioprotetor", emoji: "❤️" },
-  { value: "tick", label: "Carrapaticida", emoji: "🕷️" },
+const PREVENTIVE_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
+  { value: "flea", label: "Antipulgas", icon: Bug, color: "text-amber-600" },
+  { value: "deworming", label: "Vermífugo", icon: Droplets, color: "text-rose-600" },
+  { value: "heartworm", label: "Cardioprotetor", icon: Heart, color: "text-red-500" },
+  { value: "tick", label: "Carrapaticida", icon: Shield, color: "text-orange-600" },
 ];
 
-const MEDICATION_TYPES = [
-  { value: "antibiotic", label: "Antibiótico", emoji: "💊" },
-  { value: "antiinflammatory", label: "Anti-inflamatório", emoji: "🔥" },
-  { value: "analgesic", label: "Analgésico", emoji: "💉" },
-  { value: "supplement", label: "Suplemento", emoji: "🌿" },
-  { value: "other", label: "Outro", emoji: "📦" },
+const MEDICATION_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
+  { value: "antibiotic", label: "Antibiótico", icon: Pill, color: "text-blue-600" },
+  { value: "antiinflammatory", label: "Anti-inflamatório", icon: Flame, color: "text-orange-500" },
+  { value: "analgesic", label: "Analgésico", icon: Syringe, color: "text-purple-600" },
+  { value: "supplement", label: "Suplemento", icon: Leaf, color: "text-green-600" },
+  { value: "other", label: "Outro", icon: Package, color: "text-slate-500" },
 ];
 
 export default function TutorHealthPage() {
@@ -348,7 +354,7 @@ export default function TutorHealthPage() {
                         className="p-3 border rounded-lg text-center hover:bg-accent transition-colors cursor-pointer border-dashed"
                         onClick={() => setIsAddPreventiveOpen(true)}
                       >
-                        <span className="text-2xl">{type.emoji}</span>
+                        <type.icon className={`h-6 w-6 ${type.color}`} />
                         <p className="text-xs font-medium mt-1">{type.label}</p>
                       </div>
                     ))}
@@ -365,7 +371,10 @@ export default function TutorHealthPage() {
                         return (
                           <div key={item.id} className={`flex items-center justify-between p-4 border rounded-lg ${isOverdue ? 'border-destructive/50 bg-destructive/5' : ''}`}>
                             <div className="flex items-center gap-3">
-                              <span className="text-2xl">{type?.emoji}</span>
+                              {(() => {
+                                const Icon = type?.icon || Shield;
+                                return <Icon className={`h-6 w-6 ${type?.color || 'text-green-600'}`} />;
+                              })()}
                               <div>
                                 <p className="font-medium">{item.productName}</p>
                                 <p className="text-sm text-muted-foreground">
@@ -421,7 +430,10 @@ export default function TutorHealthPage() {
                         return (
                           <div key={item.medication.id} className="flex items-center justify-between p-4 border rounded-lg">
                             <div className="flex items-center gap-3">
-                              <span className="text-2xl">{type?.emoji || "💊"}</span>
+                              {(() => {
+                                const Icon = type?.icon || Pill;
+                                return <Icon className={`h-6 w-6 ${type?.color || 'text-purple-600'}`} />;
+                              })()}
                               <div>
                                 <p className="font-medium">{item.library?.name || "Medicamento"}</p>
                                 <p className="text-sm text-muted-foreground">
@@ -537,7 +549,10 @@ export default function TutorHealthPage() {
                 <SelectContent>
                   {PREVENTIVE_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
-                      {type.emoji} {type.label}
+                      <div className="flex items-center gap-2">
+                        <type.icon className={`h-4 w-4 ${type.color}`} />
+                        {type.label}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -606,7 +621,10 @@ export default function TutorHealthPage() {
                 <SelectContent>
                   {MEDICATION_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
-                      {type.emoji} {type.label}
+                      <div className="flex items-center gap-2">
+                        <type.icon className={`h-4 w-4 ${type.color}`} />
+                        {type.label}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
