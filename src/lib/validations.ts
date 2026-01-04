@@ -33,8 +33,10 @@ export const phoneSchema = z
   .optional()
   .or(z.literal(""));
 
-// ID numérico
-export const idSchema = z.number().int().positive("ID inválido");
+// ID numérico (aceita number ou string convertível para number)
+export const idSchema = z
+  .union([z.number(), z.string().transform((v) => parseInt(v, 10))])
+  .pipe(z.number().int().positive("ID inválido"));
 
 // Data (string ISO)
 export const dateStringSchema = z
