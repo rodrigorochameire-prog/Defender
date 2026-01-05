@@ -124,9 +124,9 @@ export default function AdminDocuments() {
     },
   });
 
-  const uploadFileMutation = trpc.documents.uploadFile.useMutation({
+  const getUploadUrlMutation = trpc.documents.getUploadUrl.useMutation({
     onError: (error) => {
-      toast.error("Erro no upload: " + error.message);
+      toast.error("Erro ao gerar URL de upload: " + error.message);
     },
   });
 
@@ -191,32 +191,39 @@ export default function AdminDocuments() {
 
     setUploading(true);
     try {
-      // Converter arquivo para base64
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-      });
-      reader.readAsDataURL(selectedFile);
-      const fileBase64 = await base64Promise;
-
-      // Upload via servidor (sem RLS)
-      const result = await uploadFileMutation.mutateAsync({
+      // 1. Obter URL assinada do servidor
+      const uploadData = await getUploadUrlMutation.mutateAsync({
         petId: parseInt(selectedPetId),
         category: selectedCategory,
         fileName: selectedFile.name,
-        fileBase64,
         fileType: selectedFile.type,
       });
 
+      // 2. Fazer upload direto para o Supabase Storage
+      const uploadResponse = await fetch(uploadData.signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": selectedFile.type,
+        },
+        body: selectedFile,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Falha no upload do arquivo");
+      }
+
+      // 3. Gerar URL pública do arquivo
+      const publicUrl = `https://siwapjqndevuwsluncnr.supabase.co/storage/v1/object/public/documents/${uploadData.path}`;
+
+      // 4. Salvar documento no banco
       await saveDocumentMutation.mutateAsync({
         petId: parseInt(selectedPetId),
         title,
         description,
         category: selectedCategory as any,
-        fileUrl: result.url,
-        fileType: result.fileType,
-        fileSize: result.fileSize,
+        fileUrl: publicUrl,
+        fileType: selectedFile.name.split(".").pop() || "bin",
+        fileSize: selectedFile.size,
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao fazer upload");
