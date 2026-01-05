@@ -27,7 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Syringe,
   Pill,
-  Shield,
+  ShieldCheck,
   Plus,
   Search,
   Calendar,
@@ -37,31 +37,31 @@ import {
   Dog,
   CheckCircle,
   X,
-  Bug,
+  Sparkles,
   Leaf,
-  Flame,
-  Droplets,
+  Activity,
+  CircleDot,
   Package,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 
-// Tipos de preventivos (separados de medicamentos)
+// Tipos de preventivos - cores suaves e minimalistas
 const PREVENTIVE_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
-  { value: "flea", label: "Antipulgas", icon: Bug, color: "text-amber-600" },
-  { value: "deworming", label: "Vermífugo", icon: Droplets, color: "text-rose-600" },
-  { value: "heartworm", label: "Cardioprotetor", icon: Heart, color: "text-red-500" },
-  { value: "tick", label: "Carrapaticida", icon: Shield, color: "text-orange-600" },
+  { value: "flea", label: "Antipulgas", icon: Sparkles, color: "text-amber-500/80" },
+  { value: "deworming", label: "Vermífugo", icon: CircleDot, color: "text-rose-500/80" },
+  { value: "heartworm", label: "Cardioprotetor", icon: Heart, color: "text-rose-400/80" },
+  { value: "tick", label: "Carrapaticida", icon: ShieldCheck, color: "text-orange-500/80" },
 ];
 
-// Tipos de medicamentos (tratamentos)
+// Tipos de medicamentos - cores suaves e minimalistas
 const MEDICATION_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
-  { value: "antibiotic", label: "Antibiótico", icon: Pill, color: "text-blue-600" },
-  { value: "antiinflammatory", label: "Anti-inflamatório", icon: Flame, color: "text-orange-500" },
-  { value: "analgesic", label: "Analgésico", icon: Syringe, color: "text-purple-600" },
-  { value: "supplement", label: "Suplemento", icon: Leaf, color: "text-green-600" },
-  { value: "other", label: "Outro", icon: Package, color: "text-slate-500" },
+  { value: "antibiotic", label: "Antibiótico", icon: Pill, color: "text-blue-500/80" },
+  { value: "antiinflammatory", label: "Anti-inflamatório", icon: Activity, color: "text-amber-500/80" },
+  { value: "analgesic", label: "Analgésico", icon: Syringe, color: "text-violet-500/80" },
+  { value: "supplement", label: "Suplemento", icon: Leaf, color: "text-emerald-500/80" },
+  { value: "other", label: "Outro", icon: Package, color: "text-slate-400/80" },
 ];
 
 export default function AdminHealthPage() {

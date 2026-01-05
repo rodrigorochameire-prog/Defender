@@ -2,7 +2,7 @@ import { getSession } from "@/lib/auth/session";
 import { db, pets, petTutors, notifications } from "@/lib/db";
 import { eq, and, desc, count } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dog, Cat, Bell, Calendar, CreditCard } from "lucide-react";
+import { Dog, Bell, Calendar, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -129,7 +129,7 @@ export default async function TutorDashboard() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      {pet.species === "cat" ? <Cat className="h-6 w-6 text-violet-500" /> : <Dog className="h-6 w-6 text-primary" />}
+                      <Dog className="h-6 w-6 text-primary" />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{pet.name}</p>

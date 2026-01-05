@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/select";
 import { 
   Dog, 
-  Cat,
   Check, 
   X, 
   Search,
@@ -99,14 +98,13 @@ export default function AdminPetsPage() {
 
   // Stats
   const stats = useMemo(() => {
-    if (!pets) return { total: 0, approved: 0, pending: 0, rejected: 0, dogs: 0, cats: 0 };
+    if (!pets) return { total: 0, approved: 0, pending: 0, rejected: 0, dogs: 0 };
     return {
       total: pets.length,
       approved: pets.filter(p => p.approvalStatus === "approved").length,
       pending: pets.filter(p => p.approvalStatus === "pending").length,
       rejected: pets.filter(p => p.approvalStatus === "rejected").length,
-      dogs: pets.filter(p => p.species === "dog").length,
-      cats: pets.filter(p => p.species === "cat").length,
+      dogs: pets.length, // Todos são cachorros
     };
   }, [pets]);
 
@@ -208,19 +206,6 @@ export default function AdminPetsPage() {
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-md transition-all hover:-translate-y-0.5">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold">{stats.cats}</p>
-                <p className="text-xs text-muted-foreground">Gatos</p>
-              </div>
-              <div className="p-2.5 rounded-xl bg-violet-500/10">
-                <Cat className="h-5 w-5 text-violet-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Pending Approvals - Highlighted */}
@@ -250,7 +235,7 @@ export default function AdminPetsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-full bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      {pet.species === "cat" ? <Cat className="h-6 w-6 text-violet-500" /> : <Dog className="h-6 w-6 text-amber-500" />}
+                      <Dog className="h-6 w-6 text-primary" />
                     </div>
                     <div>
                       <p className="font-medium">{pet.name}</p>
@@ -327,7 +312,6 @@ export default function AdminPetsPage() {
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="dog">Cachorros</SelectItem>
-                  <SelectItem value="cat">Gatos</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -372,7 +356,7 @@ export default function AdminPetsPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/10 to-violet-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          {pet.species === "cat" ? <Cat className="h-7 w-7 text-violet-500" /> : <Dog className="h-7 w-7 text-primary" />}
+                          <Dog className="h-7 w-7 text-primary" />
                         </div>
                         <div>
                           <p className="font-semibold text-lg">{pet.name}</p>
@@ -462,7 +446,7 @@ export default function AdminPetsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/10 to-violet-500/10 flex items-center justify-center">
-                {selectedPet?.species === "cat" ? <Cat className="h-5 w-5 text-violet-500" /> : <Dog className="h-5 w-5 text-primary" />}
+                <Dog className="h-5 w-5 text-primary" />
               </div>
               {selectedPet?.name}
             </DialogTitle>
