@@ -78,8 +78,34 @@ export async function createSession(userId: number, role: string) {
 
 /**
  * Obtém a sessão atual do usuário
+ * Tenta usar Clerk primeiro, depois fallback para JWT local
  */
 export async function getSession(): Promise<User | null> {
+  try {
+    // Tentar usar Clerk primeiro (importação dinâmica para evitar problemas)
+    const { auth, currentUser } = await import("@clerk/nextjs/server");
+    const { userId } = await auth();
+    
+    if (userId) {
+      const clerkUser = await currentUser();
+      if (clerkUser) {
+        const email = clerkUser.emailAddresses[0]?.emailAddress;
+        if (email) {
+          const user = await db.query.users.findFirst({
+            where: eq(users.email, email),
+          });
+          if (user) {
+            return user;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    // Se Clerk falhar, tentar JWT local
+    console.log("[getSession] Clerk auth failed, trying JWT:", error);
+  }
+
+  // Fallback para JWT local
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
