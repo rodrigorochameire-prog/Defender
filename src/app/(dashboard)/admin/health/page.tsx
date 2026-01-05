@@ -28,6 +28,7 @@ import {
   Syringe,
   Pill,
   ShieldCheck,
+  Shield,
   Plus,
   Search,
   Calendar,
@@ -42,6 +43,8 @@ import {
   Activity,
   CircleDot,
   Package,
+  Bug,
+  Droplets,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
