@@ -1170,7 +1170,7 @@ function CreateEventForm({
       eventDate: eventDate.toISOString(),
       endDate: endDate?.toISOString(),
       eventType: formData.eventType,
-      petId: formData.petId ? parseInt(formData.petId) : null,
+      petId: formData.petId && formData.petId !== "none" ? parseInt(formData.petId) : null,
       location: formData.location || undefined,
       isAllDay: formData.isAllDay,
       notes: formData.notes || undefined,
@@ -1244,7 +1244,7 @@ function CreateEventForm({
               <SelectValue placeholder="Opcional" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Nenhum</SelectItem>
+              <SelectItem value="none">Nenhum</SelectItem>
               {pets.map((pet) => (
                 <SelectItem key={pet.id} value={pet.id.toString()}>
                   <div className="flex items-center gap-2">
