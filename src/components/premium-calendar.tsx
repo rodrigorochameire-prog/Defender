@@ -51,6 +51,7 @@ import {
   Sparkles,
   Bell,
   X,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, isToday, isPast, isFuture } from "date-fns";
@@ -607,19 +608,30 @@ export function PremiumCalendar({
               ) : (
                 upcomingEvents.map((event) => {
                   const config = EVENT_TYPES[event.eventType] || EVENT_TYPES.general;
+                  const isCompleted = event.status === "completed";
                   return (
                     <div
                       key={event.id}
-                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                      className={cn(
+                        "flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors",
+                        isCompleted && "bg-green-50 dark:bg-green-950/30"
+                      )}
                       onClick={() => onEventClick?.(event)}
                     >
-                      {(() => { const Icon = config.icon; return <Icon className="h-5 w-5" />; })()}
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      ) : (
+                        (() => { const Icon = config.icon; return <Icon className="h-5 w-5" />; })()
+                      )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{event.title}</p>
+                        <p className={cn("text-sm font-medium truncate", isCompleted && "line-through text-muted-foreground")}>{event.title}</p>
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(event.eventDate), "d MMM, HH:mm", { locale: ptBR })}
                         </p>
                       </div>
+                      {isCompleted && (
+                        <Badge className="text-xs bg-green-500 text-white shrink-0">✓</Badge>
+                      )}
                     </div>
                   );
                 })
@@ -678,12 +690,15 @@ export function PremiumCalendar({
               selectedDate &&
               getEventsForDate(selectedDate).map((event) => {
                 const config = EVENT_TYPES[event.eventType] || EVENT_TYPES.general;
+                const isCompleted = event.status === "completed";
                 return (
                   <div
                     key={event.id}
                     className={cn(
                       "p-3 rounded-lg cursor-pointer transition-all hover:shadow-md",
-                      config.lightColor
+                      isCompleted
+                        ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
+                        : config.lightColor
                     )}
                     onClick={() => {
                       setIsDayDetailOpen(false);
@@ -691,11 +706,19 @@ export function PremiumCalendar({
                     }}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      {(() => { const Icon = config.icon; return <Icon className="h-5 w-5" />; })()}
-                      <span className="font-medium">{event.title}</span>
-                      <Badge variant="outline" className="ml-auto text-xs">
-                        {config.label}
-                      </Badge>
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      ) : (
+                        (() => { const Icon = config.icon; return <Icon className="h-5 w-5" />; })()
+                      )}
+                      <span className={cn("font-medium", isCompleted && "line-through text-muted-foreground")}>{event.title}</span>
+                      {isCompleted ? (
+                        <Badge className="ml-auto text-xs bg-green-500 text-white">Realizado</Badge>
+                      ) : (
+                        <Badge variant="outline" className="ml-auto text-xs">
+                          {config.label}
+                        </Badge>
+                      )}
                     </div>
                     {!event.isAllDay && (
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -793,21 +816,27 @@ function MonthView({
               <div className="space-y-0.5">
                 {dayEvents.slice(0, 2).map((event) => {
                   const config = EVENT_TYPES[event.eventType] || EVENT_TYPES.general;
+                  const isCompleted = event.status === "completed";
                   return (
                     <div
                       key={event.id}
                       className={cn(
                         "flex items-center gap-1 px-1.5 py-0.5 rounded text-xs truncate",
-                        config.color,
-                        config.textColor
+                        isCompleted 
+                          ? "bg-green-500 text-white" 
+                          : cn(config.color, config.textColor)
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
                         onEventClick?.(event);
                       }}
                     >
-                      {(() => { const Icon = config.icon; return <Icon className="h-4 w-4" />; })()}
-                      <span className="truncate">{event.title}</span>
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
+                      ) : (
+                        (() => { const Icon = config.icon; return <Icon className="h-3 w-3 flex-shrink-0" />; })()
+                      )}
+                      <span className={cn("truncate", isCompleted && "line-through")}>{event.title}</span>
                     </div>
                   );
                 })}
@@ -870,13 +899,15 @@ function WeekView({
               <div className="space-y-1">
                 {dayEvents.map((event) => {
                   const config = EVENT_TYPES[event.eventType] || EVENT_TYPES.general;
+                  const isCompleted = event.status === "completed";
                   return (
                     <div
                       key={event.id}
                       className={cn(
                         "p-2 rounded text-xs",
-                        config.color,
-                        config.textColor
+                        isCompleted
+                          ? "bg-green-500 text-white"
+                          : cn(config.color, config.textColor)
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -884,8 +915,12 @@ function WeekView({
                       }}
                     >
                       <div className="flex items-center gap-1">
-                        {(() => { const Icon = config.icon; return <Icon className="h-4 w-4" />; })()}
-                        <span className="truncate font-medium">{event.title}</span>
+                        {isCompleted ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : (
+                          (() => { const Icon = config.icon; return <Icon className="h-4 w-4" />; })()
+                        )}
+                        <span className={cn("truncate font-medium", isCompleted && "line-through")}>{event.title}</span>
                       </div>
                       {!event.isAllDay && (
                         <div className="opacity-80 mt-0.5">
@@ -946,19 +981,25 @@ function DayView({
               <div className="flex-1 min-h-[40px] border-t py-1 space-y-1">
                 {hourEvents.map((event) => {
                   const config = EVENT_TYPES[event.eventType] || EVENT_TYPES.general;
+                  const isCompleted = event.status === "completed";
                   return (
                     <div
                       key={event.id}
                       className={cn(
                         "p-2 rounded text-sm cursor-pointer",
-                        config.color,
-                        config.textColor
+                        isCompleted
+                          ? "bg-green-500 text-white"
+                          : cn(config.color, config.textColor)
                       )}
                       onClick={() => onEventClick?.(event)}
                     >
                       <div className="flex items-center gap-2">
-                        {(() => { const Icon = config.icon; return <Icon className="h-4 w-4" />; })()}
-                        <span className="font-medium">{event.title}</span>
+                        {isCompleted ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : (
+                          (() => { const Icon = config.icon; return <Icon className="h-4 w-4" />; })()
+                        )}
+                        <span className={cn("font-medium", isCompleted && "line-through")}>{event.title}</span>
                         {event.petName && (
                           <Badge variant="outline" className="ml-auto text-xs bg-white/20">
                             {event.petName}
@@ -1037,18 +1078,25 @@ function ListView({
                 <div className="space-y-2 pl-12">
                   {dateEvents.map((event) => {
                     const config = EVENT_TYPES[event.eventType] || EVENT_TYPES.general;
+                    const isCompleted = event.status === "completed";
                     return (
                       <div
                         key={event.id}
                         className={cn(
                           "p-3 rounded-lg cursor-pointer transition-all hover:shadow-md flex items-center gap-3",
-                          config.lightColor
+                          isCompleted
+                            ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
+                            : config.lightColor
                         )}
                         onClick={() => onEventClick?.(event)}
                       >
-                        {(() => { const Icon = config.icon; return <Icon className="h-6 w-6" />; })()}
+                        {isCompleted ? (
+                          <CheckCircle2 className="h-6 w-6 text-green-600" />
+                        ) : (
+                          (() => { const Icon = config.icon; return <Icon className="h-6 w-6" />; })()
+                        )}
                         <div className="flex-1">
-                          <div className="font-medium">{event.title}</div>
+                          <div className={cn("font-medium", isCompleted && "line-through text-muted-foreground")}>{event.title}</div>
                           <div className="flex items-center gap-3 text-sm text-muted-foreground">
                             {!event.isAllDay && (
                               <span className="flex items-center gap-1">
@@ -1070,7 +1118,11 @@ function ListView({
                             )}
                           </div>
                         </div>
-                        <Badge variant="outline">{config.label}</Badge>
+                        {isCompleted ? (
+                          <Badge className="bg-green-500 text-white">Realizado</Badge>
+                        ) : (
+                          <Badge variant="outline">{config.label}</Badge>
+                        )}
                       </div>
                     );
                   })}

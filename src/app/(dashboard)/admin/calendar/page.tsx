@@ -5,6 +5,17 @@ import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Calendar, 
   Download, 
@@ -14,7 +25,15 @@ import {
   Pill,
   Shield,
   Syringe,
-  RefreshCw
+  RefreshCw,
+  Edit,
+  Trash2,
+  Clock,
+  MapPin,
+  Dog,
+  Check,
+  X,
+  Save
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -23,6 +42,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Tabs,
@@ -35,10 +55,38 @@ import { LoadingPage } from "@/components/shared/loading";
 import { PageHeader } from "@/components/shared/page-header";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+
+// Tipos de eventos que podem ser marcados como "realizados"
+const ACTIONABLE_EVENT_TYPES = ["vaccination", "medication", "medical", "preventive", "grooming"];
+
+// Configuração dos tipos de eventos
+const EVENT_TYPE_CONFIG = {
+  vaccination: { label: "Vacinação", icon: Syringe, color: "text-blue-500" },
+  medication: { label: "Medicamento", icon: Pill, color: "text-purple-500" },
+  medical: { label: "Consulta", icon: AlertCircle, color: "text-rose-500" },
+  preventive: { label: "Preventivo", icon: Shield, color: "text-cyan-500" },
+  grooming: { label: "Banho/Tosa", icon: Dog, color: "text-pink-500" },
+  general: { label: "Geral", icon: Calendar, color: "text-slate-500" },
+  holiday: { label: "Feriado", icon: Calendar, color: "text-emerald-500" },
+  closure: { label: "Fechamento", icon: AlertCircle, color: "text-orange-500" },
+  checkin: { label: "Check-in", icon: Clock, color: "text-teal-500" },
+  checkout: { label: "Check-out", icon: Clock, color: "text-amber-500" },
+  training: { label: "Treinamento", icon: Dog, color: "text-indigo-500" },
+};
 
 export default function AdminCalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    title: "",
+    description: "",
+    eventDate: "",
+    eventTime: "",
+    location: "",
+    isAllDay: false,
+  });
 
   const now = new Date();
   const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -58,6 +106,17 @@ export default function AdminCalendarPage() {
     },
     onError: (error) => {
       toast.error(`Erro ao criar evento: ${error.message}`);
+    },
+  });
+
+  const updateEvent = trpc.calendar.update.useMutation({
+    onSuccess: () => {
+      toast.success("Evento atualizado com sucesso!");
+      setIsEditMode(false);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar evento: ${error.message}`);
     },
   });
 
@@ -86,7 +145,71 @@ export default function AdminCalendarPage() {
       petName: event.pet?.name,
       location: event.location,
       isAllDay: event.isAllDay ?? false,
+      status: event.status as CalendarEvent["status"],
+      notes: event.notes,
+      priority: event.priority,
     })) || [];
+
+  // Função para iniciar edição
+  const handleStartEdit = () => {
+    if (!selectedEvent) return;
+    setEditFormData({
+      title: selectedEvent.title,
+      description: selectedEvent.description || "",
+      eventDate: format(new Date(selectedEvent.eventDate), "yyyy-MM-dd"),
+      eventTime: format(new Date(selectedEvent.eventDate), "HH:mm"),
+      location: selectedEvent.location || "",
+      isAllDay: selectedEvent.isAllDay,
+    });
+    setIsEditMode(true);
+  };
+
+  // Função para salvar edição
+  const handleSaveEdit = () => {
+    if (!selectedEvent) return;
+
+    const eventDate = new Date(editFormData.eventDate);
+    if (editFormData.eventTime && !editFormData.isAllDay) {
+      const [hours, minutes] = editFormData.eventTime.split(":");
+      eventDate.setHours(parseInt(hours), parseInt(minutes));
+    }
+
+    updateEvent.mutate({
+      id: selectedEvent.id,
+      title: editFormData.title,
+      description: editFormData.description || undefined,
+      eventDate: eventDate.toISOString(),
+      location: editFormData.location || undefined,
+      isAllDay: editFormData.isAllDay,
+    });
+  };
+
+  // Função para marcar como realizado
+  const handleMarkAsCompleted = () => {
+    if (!selectedEvent) return;
+    updateEvent.mutate({
+      id: selectedEvent.id,
+      status: "completed",
+    });
+    setIsEventDialogOpen(false);
+    setSelectedEvent(null);
+  };
+
+  // Função para desmarcar como realizado
+  const handleMarkAsPending = () => {
+    if (!selectedEvent) return;
+    updateEvent.mutate({
+      id: selectedEvent.id,
+      status: "scheduled",
+    });
+    setIsEventDialogOpen(false);
+    setSelectedEvent(null);
+  };
+
+  // Verifica se o evento é do tipo que pode ser marcado como realizado
+  const isActionableEvent = (eventType: string) => {
+    return ACTIONABLE_EVENT_TYPES.includes(eventType);
+  };
 
   // Transform pets data
   const pets =
@@ -177,6 +300,7 @@ export default function AdminCalendarPage() {
 
   const handleEventClick = (event: CalendarEvent) => {
     setSelectedEvent(event);
+    setIsEditMode(false);
     setIsEventDialogOpen(true);
   };
 
@@ -200,7 +324,7 @@ export default function AdminCalendarPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Eventos Hoje</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -213,7 +337,7 @@ export default function AdminCalendarPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Este Mês</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -224,7 +348,7 @@ export default function AdminCalendarPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Vacinações</CardTitle>
             <Syringe className="h-4 w-4 text-blue-500" />
@@ -235,7 +359,7 @@ export default function AdminCalendarPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Medicamentos</CardTitle>
             <Pill className="h-4 w-4 text-purple-500" />
@@ -246,7 +370,7 @@ export default function AdminCalendarPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Preventivos</CardTitle>
             <Shield className="h-4 w-4 text-green-500" />
@@ -258,45 +382,7 @@ export default function AdminCalendarPage() {
         </Card>
       </div>
 
-      {/* Próximos Eventos */}
-      {upcomingWeekEvents.length > 0 && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Próximos 7 Dias</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => refetch()}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {upcomingWeekEvents.map((event) => (
-                <div 
-                  key={event.id} 
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => handleEventClick(event)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-primary" />
-                    <div>
-                      <p className="font-medium">{event.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {event.petName && `${event.petName} • `}
-                        {format(new Date(event.eventDate), "EEEE, dd/MM", { locale: ptBR })}
-                        {!event.isAllDay && ` às ${format(new Date(event.eventDate), "HH:mm")}`}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="capitalize">
-                    {event.eventType}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Premium Calendar */}
+      {/* Premium Calendar - PRIMEIRO */}
       <PremiumCalendar
         events={events}
         onEventClick={handleEventClick}
@@ -305,22 +391,166 @@ export default function AdminCalendarPage() {
         showCreateButton={true}
       />
 
+      {/* Próximos Eventos - DEPOIS DO CALENDÁRIO */}
+      {upcomingWeekEvents.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              Próximos 7 Dias
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {upcomingWeekEvents.map((event) => {
+                const eventConfig = EVENT_TYPE_CONFIG[event.eventType as keyof typeof EVENT_TYPE_CONFIG] || EVENT_TYPE_CONFIG.general;
+                const EventIcon = eventConfig.icon;
+                const isCompleted = event.status === "completed";
+                const isActionable = isActionableEvent(event.eventType);
+                
+                return (
+                  <div 
+                    key={event.id} 
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-all",
+                      isCompleted && "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+                    )}
+                    onClick={() => handleEventClick(event)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center",
+                        isCompleted ? "bg-green-100 dark:bg-green-900" : "bg-muted"
+                      )}>
+                        {isCompleted ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <EventIcon className={cn("h-5 w-5", eventConfig.color)} />
+                        )}
+                      </div>
+                      <div>
+                        <p className={cn(
+                          "font-medium",
+                          isCompleted && "line-through text-muted-foreground"
+                        )}>
+                          {event.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {event.petName && `${event.petName} • `}
+                          {format(new Date(event.eventDate), "EEEE, dd/MM", { locale: ptBR })}
+                          {!event.isAllDay && ` às ${format(new Date(event.eventDate), "HH:mm")}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isCompleted && (
+                        <Badge className="bg-green-500 hover:bg-green-600 text-white">
+                          <Check className="h-3 w-3 mr-1" />
+                          Realizado
+                        </Badge>
+                      )}
+                      {isActionable && !isCompleted && (
+                        <Badge variant="outline" className="text-orange-600 border-orange-300">
+                          Pendente
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="capitalize">
+                        {eventConfig.label}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Event Detail Dialog */}
-      <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
-        <DialogContent>
+      <Dialog open={isEventDialogOpen} onOpenChange={(open) => {
+        setIsEventDialogOpen(open);
+        if (!open) setIsEditMode(false);
+      }}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{selectedEvent?.title}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedEvent && (() => {
+                const config = EVENT_TYPE_CONFIG[selectedEvent.eventType as keyof typeof EVENT_TYPE_CONFIG] || EVENT_TYPE_CONFIG.general;
+                const Icon = config.icon;
+                return <Icon className={cn("h-5 w-5", config.color)} />;
+              })()}
+              {isEditMode ? "Editar Evento" : selectedEvent?.title}
+              {selectedEvent?.status === "completed" && !isEditMode && (
+                <Badge className="bg-green-500 text-white ml-2">
+                  <Check className="h-3 w-3 mr-1" />
+                  Realizado
+                </Badge>
+              )}
+            </DialogTitle>
             <DialogDescription>
-              Detalhes do evento
+              {isEditMode ? "Edite as informações do evento" : "Detalhes e gerenciamento do evento"}
             </DialogDescription>
           </DialogHeader>
 
-          {selectedEvent && (
+          {selectedEvent && !isEditMode && (
             <div className="space-y-4">
+              {/* Status Banner para eventos acionáveis */}
+              {isActionableEvent(selectedEvent.eventType) && (
+                <div className={cn(
+                  "p-3 rounded-lg flex items-center justify-between",
+                  selectedEvent.status === "completed"
+                    ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
+                    : "bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800"
+                )}>
+                  <div className="flex items-center gap-2">
+                    {selectedEvent.status === "completed" ? (
+                      <>
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <span className="text-green-700 dark:text-green-400 font-medium">
+                          Marcado como realizado
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-5 w-5 text-orange-600" />
+                        <span className="text-orange-700 dark:text-orange-400 font-medium">
+                          Ação pendente
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {selectedEvent.status === "completed" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleMarkAsPending}
+                      disabled={updateEvent.isPending}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Desmarcar
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={handleMarkAsCompleted}
+                      disabled={updateEvent.isPending}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Marcar Realizado
+                    </Button>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="font-medium text-muted-foreground">Data</p>
-                  <p>
+                  <p className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
                     {format(new Date(selectedEvent.eventDate), "PPP", {
                       locale: ptBR,
                     })}
@@ -328,7 +558,8 @@ export default function AdminCalendarPage() {
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground">Horário</p>
-                  <p>
+                  <p className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
                     {selectedEvent.isAllDay
                       ? "Dia inteiro"
                       : format(new Date(selectedEvent.eventDate), "HH:mm")}
@@ -337,13 +568,19 @@ export default function AdminCalendarPage() {
                 {selectedEvent.petName && (
                   <div>
                     <p className="font-medium text-muted-foreground">Pet</p>
-                    <p>{selectedEvent.petName}</p>
+                    <p className="flex items-center gap-1">
+                      <Dog className="h-4 w-4" />
+                      {selectedEvent.petName}
+                    </p>
                   </div>
                 )}
                 {selectedEvent.location && (
                   <div>
                     <p className="font-medium text-muted-foreground">Local</p>
-                    <p>{selectedEvent.location}</p>
+                    <p className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      {selectedEvent.location}
+                    </p>
                   </div>
                 )}
               </div>
@@ -353,24 +590,113 @@ export default function AdminCalendarPage() {
                   <p className="font-medium text-muted-foreground text-sm">
                     Descrição
                   </p>
-                  <p className="text-sm mt-1">{selectedEvent.description}</p>
+                  <p className="text-sm mt-1 p-2 bg-muted rounded">{selectedEvent.description}</p>
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-4">
+              <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={handleStartEdit}
+                  className="flex-1"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
                 <Button
                   variant="destructive"
                   onClick={handleDeleteEvent}
+                  disabled={deleteEvent.isPending}
                 >
+                  <Trash2 className="h-4 w-4 mr-2" />
                   Excluir
                 </Button>
+              </DialogFooter>
+            </div>
+          )}
+
+          {/* Formulário de Edição */}
+          {selectedEvent && isEditMode && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Título</Label>
+                <Input
+                  id="edit-title"
+                  value={editFormData.title}
+                  onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                  placeholder="Nome do evento"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Data</Label>
+                  <Input
+                    type="date"
+                    value={editFormData.eventDate}
+                    onChange={(e) => setEditFormData({ ...editFormData, eventDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora</Label>
+                  <Input
+                    type="time"
+                    value={editFormData.eventTime}
+                    onChange={(e) => setEditFormData({ ...editFormData, eventTime: e.target.value })}
+                    disabled={editFormData.isAllDay}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="edit-allday"
+                  checked={editFormData.isAllDay}
+                  onCheckedChange={(checked) => setEditFormData({ ...editFormData, isAllDay: checked as boolean })}
+                />
+                <Label htmlFor="edit-allday">Dia inteiro</Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Local
+                </Label>
+                <Input
+                  value={editFormData.location}
+                  onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                  placeholder="Local do evento"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Descrição</Label>
+                <Textarea
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  placeholder="Detalhes do evento..."
+                  rows={3}
+                />
+              </div>
+
+              <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 border-t">
                 <Button
                   variant="outline"
-                  onClick={() => setIsEventDialogOpen(false)}
+                  onClick={() => setIsEditMode(false)}
+                  className="flex-1"
                 >
-                  Fechar
+                  <X className="h-4 w-4 mr-2" />
+                  Cancelar
                 </Button>
-              </div>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={updateEvent.isPending || !editFormData.title}
+                  className="flex-1"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar
+                </Button>
+              </DialogFooter>
             </div>
           )}
         </DialogContent>
