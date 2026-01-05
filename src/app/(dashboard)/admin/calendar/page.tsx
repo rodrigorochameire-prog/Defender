@@ -165,7 +165,7 @@ export default function AdminCalendarPage() {
       isAllDay: (eventData.isAllDay as boolean) ?? false,
       // Campos opcionais
       notes: (eventData.notes as string) || undefined,
-      priority: (eventData.priority as string) || undefined,
+      priority: (eventData.priority as "low" | "normal" | "high" | "urgent") || undefined,
       reminderMinutes: (eventData.reminderMinutes as number) || undefined,
       isRecurring: (eventData.isRecurring as boolean) || false,
       recurrenceType: (eventData.recurrenceType as string) || undefined,
