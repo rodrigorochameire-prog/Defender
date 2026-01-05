@@ -8,6 +8,7 @@ export default function AuthRedirectPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [status, setStatus] = useState("Carregando...");
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -25,6 +26,8 @@ export default function AuthRedirectPage() {
     // Verificar/criar usuário no banco de dados
     async function syncUser() {
       try {
+        console.log("[AuthRedirect] Syncing user:", email);
+        
         const response = await fetch("/api/auth/sync-user", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -33,27 +36,32 @@ export default function AuthRedirectPage() {
 
         const data = await response.json();
         
+        console.log("[AuthRedirect] Response:", JSON.stringify(data));
+        setDebugInfo(data);
+        
         if (data.error) {
           console.error("[AuthRedirect] Error:", data.error);
-          setStatus("Erro ao sincronizar conta. Tente novamente.");
+          setStatus(`Erro: ${data.error}`);
           return;
         }
-
-        setStatus("Redirecionando...");
 
         // SEMPRE usar o role do banco de dados (fonte de verdade)
         const role = data.role || "user";
         
-        console.log("[AuthRedirect] User synced:", email, "Role:", role, "ApprovalStatus:", data.approvalStatus);
+        console.log("[AuthRedirect] User synced - Email:", email, "Role:", role);
+        setStatus(`Role: ${role} - Redirecionando para /${role === "admin" ? "admin" : "tutor"}...`);
 
-        if (role === "admin") {
-          router.push("/admin");
-        } else {
-          router.push("/tutor");
-        }
-      } catch (error) {
+        // Delay para ver o status
+        setTimeout(() => {
+          if (role === "admin") {
+            window.location.href = "/admin";
+          } else {
+            window.location.href = "/tutor";
+          }
+        }, 1000);
+      } catch (error: any) {
         console.error("[AuthRedirect] Sync error:", error);
-        setStatus("Erro de conexão. Tente novamente.");
+        setStatus(`Erro de conexão: ${error.message}`);
       }
     }
 
@@ -62,9 +70,16 @@ export default function AuthRedirectPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground">{status}</p>
+      <div className="text-center space-y-4">
+        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
+        <p className="text-foreground font-medium">{status}</p>
+        {debugInfo && (
+          <div className="text-left text-xs bg-muted p-4 rounded-lg max-w-md mx-auto">
+            <p><strong>Email:</strong> {debugInfo.email}</p>
+            <p><strong>Role:</strong> {debugInfo.role}</p>
+            <p><strong>Status:</strong> {debugInfo.approvalStatus}</p>
+          </div>
+        )}
       </div>
     </div>
   );
