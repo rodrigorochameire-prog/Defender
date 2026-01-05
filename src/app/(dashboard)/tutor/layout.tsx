@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/session";
+import { currentUser } from "@clerk/nextjs/server";
+import { db, users } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import { TutorSidebar } from "@/components/layouts/tutor-sidebar";
 import { Clock, AlertCircle, Mail } from "lucide-react";
 
@@ -8,14 +10,24 @@ export default async function TutorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
+  const clerkUser = await currentUser();
 
-  if (!session) {
-    redirect("/login");
+  if (!clerkUser) {
+    redirect("/sign-in");
+  }
+
+  // Buscar usuário no banco de dados pelo email do Clerk
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.email, clerkUser.emailAddresses[0]?.emailAddress || ""),
+  });
+
+  if (!dbUser) {
+    // Usuário existe no Clerk mas não no banco - redirecionar para criar conta
+    redirect("/sign-in");
   }
 
   // Verificar se o tutor está aprovado
-  if (session.approvalStatus === "pending") {
+  if (dbUser.approvalStatus === "pending") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="max-w-md w-full text-center space-y-6">
@@ -32,7 +44,7 @@ export default async function TutorLayout({
           <div className="p-4 rounded-xl bg-muted/50 border text-sm text-muted-foreground">
             <div className="flex items-center justify-center gap-2">
               <Mail className="h-4 w-4" />
-              <span>{session.email}</span>
+              <span>{dbUser.email}</span>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -43,7 +55,7 @@ export default async function TutorLayout({
     );
   }
 
-  if (session.approvalStatus === "rejected") {
+  if (dbUser.approvalStatus === "rejected") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="max-w-md w-full text-center space-y-6">
@@ -60,7 +72,7 @@ export default async function TutorLayout({
           <div className="p-4 rounded-xl bg-muted/50 border text-sm text-muted-foreground">
             <div className="flex items-center justify-center gap-2">
               <Mail className="h-4 w-4" />
-              <span>{session.email}</span>
+              <span>{dbUser.email}</span>
             </div>
           </div>
         </div>
@@ -69,7 +81,7 @@ export default async function TutorLayout({
   }
 
   return (
-    <TutorSidebar userName={session.name} userEmail={session.email}>
+    <TutorSidebar userName={dbUser.name} userEmail={dbUser.email}>
       {children}
     </TutorSidebar>
   );

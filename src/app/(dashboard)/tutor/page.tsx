@@ -1,5 +1,6 @@
-import { getSession } from "@/lib/auth/session";
-import { db, pets, petTutors, notifications, calendarEvents } from "@/lib/db";
+import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { db, pets, petTutors, notifications, calendarEvents, users } from "@/lib/db";
 import { eq, and, desc, count, gte, lte } from "drizzle-orm";
 import { Dog, Bell, Calendar, CreditCard, Home, Plus, ArrowUpRight, Heart, Clock, Syringe, Pill, Shield } from "lucide-react";
 import Link from "next/link";
@@ -63,10 +64,21 @@ const eventTypeConfig: Record<string, { icon: typeof Calendar; color: string; la
 };
 
 export default async function TutorDashboard() {
-  const session = await getSession();
-  if (!session) return null;
+  const clerkUser = await currentUser();
+  if (!clerkUser) {
+    redirect("/sign-in");
+  }
 
-  const data = await getTutorData(session.id);
+  // Buscar usuário no banco de dados
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.email, clerkUser.emailAddresses[0]?.emailAddress || ""),
+  });
+
+  if (!dbUser) {
+    redirect("/sign-in");
+  }
+
+  const data = await getTutorData(dbUser.id);
 
   return (
     <div className="page-container">
@@ -77,7 +89,7 @@ export default async function TutorDashboard() {
             <Home />
           </div>
           <div className="page-header-info">
-            <h1>Olá, {session.name.split(" ")[0]}!</h1>
+            <h1>Olá, {dbUser.name.split(" ")[0]}!</h1>
             <p>Bem-vindo ao seu painel</p>
           </div>
         </div>
