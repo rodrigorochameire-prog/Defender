@@ -50,21 +50,21 @@ import {
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 
-// Tipos de preventivos - cores padronizadas (primary)
-const PREVENTIVE_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
-  { value: "flea", label: "Antipulgas", icon: Sparkles, color: "text-primary" },
-  { value: "deworming", label: "Vermífugo", icon: CircleDot, color: "text-primary" },
-  { value: "heartworm", label: "Cardioprotetor", icon: Heart, color: "text-primary" },
-  { value: "tick", label: "Carrapaticida", icon: ShieldCheck, color: "text-primary" },
+// Tipos de preventivos - ícones minimalistas, cor única
+const PREVENTIVE_TYPES: Array<{ value: string; label: string; icon: LucideIcon }> = [
+  { value: "flea", label: "Antipulgas", icon: Bug },
+  { value: "deworming", label: "Vermífugo", icon: Droplets },
+  { value: "heartworm", label: "Cardioprotetor", icon: Heart },
+  { value: "tick", label: "Carrapaticida", icon: ShieldCheck },
 ];
 
-// Tipos de medicamentos - cores padronizadas (primary e secondary)
-const MEDICATION_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
-  { value: "antibiotic", label: "Antibiótico", icon: Pill, color: "text-sky-600 dark:text-sky-400" },
-  { value: "antiinflammatory", label: "Anti-inflamatório", icon: Activity, color: "text-sky-600 dark:text-sky-400" },
-  { value: "analgesic", label: "Analgésico", icon: Syringe, color: "text-sky-600 dark:text-sky-400" },
-  { value: "supplement", label: "Suplemento", icon: Leaf, color: "text-sky-600 dark:text-sky-400" },
-  { value: "other", label: "Outro", icon: Package, color: "text-muted-foreground" },
+// Tipos de medicamentos - ícones minimalistas
+const MEDICATION_TYPES: Array<{ value: string; label: string; icon: LucideIcon }> = [
+  { value: "antibiotic", label: "Antibiótico", icon: Pill },
+  { value: "antiinflammatory", label: "Anti-inflamatório", icon: Activity },
+  { value: "analgesic", label: "Analgésico", icon: Syringe },
+  { value: "supplement", label: "Suplemento", icon: Leaf },
+  { value: "other", label: "Outro", icon: Package },
 ];
 
 export default function AdminHealthPage() {
@@ -233,339 +233,280 @@ export default function AdminHealthPage() {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Vacinas Próximas</span>
-            <Syringe className="stat-card-icon blue" />
+      {/* Stats - Layout compacto */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Vacinas</span>
+            <Syringe className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="stat-card-value">{vaccineStats?.upcoming || 0}</div>
-          <div className="stat-card-description">próximos 30 dias</div>
+          <div className="text-2xl font-semibold">{vaccineStats?.upcoming || 0}</div>
+          <div className="text-xs text-muted-foreground">próximos 30 dias</div>
         </div>
         
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Preventivos</span>
-            <Shield className="stat-card-icon green" />
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Preventivos</span>
+            <Shield className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="stat-card-value">{preventiveStats?.upcoming || 0}</div>
-          <div className="stat-card-description">próximos 30 dias</div>
+          <div className="text-2xl font-semibold">{preventiveStats?.upcoming || 0}</div>
+          <div className="text-xs text-muted-foreground">próximos 30 dias</div>
         </div>
         
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Antipulgas</span>
-            <Sparkles className="stat-card-icon primary" />
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Antipulgas</span>
+            <Bug className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="stat-card-value">{preventiveStats?.flea || 0}</div>
-          <div className="stat-card-description">registros</div>
+          <div className="text-2xl font-semibold">{preventiveStats?.flea || 0}</div>
+          <div className="text-xs text-muted-foreground">registros</div>
         </div>
         
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Vermífugos</span>
-            <CircleDot className="stat-card-icon primary" />
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Vermífugos</span>
+            <Droplets className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="stat-card-value">{preventiveStats?.deworming || 0}</div>
-          <div className="stat-card-description">registros</div>
+          <div className="text-2xl font-semibold">{preventiveStats?.deworming || 0}</div>
+          <div className="text-xs text-muted-foreground">registros</div>
         </div>
       </div>
 
       {/* Main Tabs */}
-      <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="vaccines" className="flex items-center gap-2">
-            <Syringe className="h-4 w-4" />
+      <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
+        <TabsList className="h-9 p-1 bg-muted/60">
+          <TabsTrigger value="vaccines" className="text-sm gap-1.5 px-3">
+            <Syringe className="h-3.5 w-3.5" />
             Vacinas
           </TabsTrigger>
-          <TabsTrigger value="preventives" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
+          <TabsTrigger value="preventives" className="text-sm gap-1.5 px-3">
+            <Shield className="h-3.5 w-3.5" />
             Preventivos
           </TabsTrigger>
-          <TabsTrigger value="medications" className="flex items-center gap-2">
-            <Pill className="h-4 w-4" />
+          <TabsTrigger value="medications" className="text-sm gap-1.5 px-3">
+            <Pill className="h-3.5 w-3.5" />
             Medicamentos
           </TabsTrigger>
         </TabsList>
 
         {/* ========== VACINAS ========== */}
-        <TabsContent value="vaccines" className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Syringe className="h-5 w-5 text-blue-500" />
-                  Vacinas
-                </CardTitle>
-                <CardDescription>
-                  Gerencie a carteira de vacinação dos pets
-                </CardDescription>
-              </div>
-              <Button onClick={() => setIsAddVaccineOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Vacina
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Próximas vacinas */}
-              {upcomingVaccines && upcomingVaccines.length > 0 && (
-                <div>
-                  <h4 className="font-medium flex items-center gap-2 mb-3">
-                    <Clock className="h-4 w-4 text-yellow-500" />
-                    Próximas Vacinas (30 dias)
-                  </h4>
-                  <div className="grid gap-2">
-                    {upcomingVaccines.map((item: any) => (
-                      <div key={item.vaccination.id} className="flex items-center justify-between p-3 border rounded-lg bg-yellow-50/50">
-                        <div className="flex items-center gap-3">
-                          {item.pet?.photoUrl ? (
-                            <img src={item.pet.photoUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Dog className="h-5 w-5 text-primary" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium">{item.pet?.name}</p>
-                            <p className="text-sm text-muted-foreground">{item.vaccine?.name}</p>
-                          </div>
-                        </div>
-                        <Badge variant="outline" className="text-yellow-700 border-yellow-500">
-                          {new Date(item.vaccination.nextDueDate).toLocaleDateString("pt-BR")}
-                        </Badge>
+        <TabsContent value="vaccines" className="space-y-4">
+          {/* Header com botão */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-medium">Vacinas</h3>
+              <p className="text-sm text-muted-foreground">Carteira de vacinação dos pets</p>
+            </div>
+            <Button size="sm" onClick={() => setIsAddVaccineOpen(true)}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Nova
+            </Button>
+          </div>
+
+          {/* Próximas vacinas */}
+          {upcomingVaccines && upcomingVaccines.length > 0 && (
+            <div className="bg-card border rounded-lg p-4">
+              <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Próximas 30 dias
+              </h4>
+              <div className="space-y-2">
+                {upcomingVaccines.slice(0, 5).map((item: any) => (
+                  <div key={item.vaccination.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div className="flex items-center gap-2">
+                      <Dog className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">{item.pet?.name}</p>
+                        <p className="text-xs text-muted-foreground">{item.vaccine?.name}</p>
                       </div>
-                    ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(item.vaccination.nextDueDate).toLocaleDateString("pt-BR")}
+                    </span>
                   </div>
-                </div>
-              )}
-
-              <Separator />
-
-              {/* Biblioteca de Vacinas */}
-              <div>
-                <h4 className="font-medium mb-3">Vacinas Cadastradas</h4>
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar vacina..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                  {(vaccineLibrary || [])
-                    .filter((v: any) => v.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                    .map((vaccine: any) => (
-                      <div key={vaccine.id} className="p-3 border rounded-lg hover:bg-accent transition-colors">
-                        <div className="font-medium">{vaccine.name}</div>
-                        {vaccine.description && (
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{vaccine.description}</p>
-                        )}
-                        {vaccine.intervalDays && (
-                          <Badge variant="secondary" className="mt-2">
-                            A cada {vaccine.intervalDays} dias
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-                </div>
+                ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          )}
+
+          {/* Biblioteca de Vacinas */}
+          <div className="bg-card border rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium">Vacinas cadastradas</h4>
+              <div className="relative w-48">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 h-8 text-sm"
+                />
+              </div>
+            </div>
+            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+              {(vaccineLibrary || [])
+                .filter((v: any) => v.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                .map((vaccine: any) => (
+                  <div key={vaccine.id} className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <p className="text-sm font-medium">{vaccine.name}</p>
+                    {vaccine.intervalDays && (
+                      <p className="text-xs text-muted-foreground mt-1">A cada {vaccine.intervalDays} dias</p>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </div>
         </TabsContent>
 
         {/* ========== PREVENTIVOS ========== */}
-        <TabsContent value="preventives" className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-green-500" />
-                  Preventivos
-                </CardTitle>
-                <CardDescription>
-                  Antipulgas, vermífugos, carrapaticidas e cardioprotetores
-                </CardDescription>
-              </div>
-              <Button onClick={() => setIsAddPreventiveOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Preventivo
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Tipos de Preventivos */}
-              <div className="grid gap-4 md:grid-cols-4">
-                {PREVENTIVE_TYPES.map((type) => (
-                  <Card key={type.value} className="border-dashed hover:border-solid hover:border-primary/50 transition-all cursor-pointer" 
-                    onClick={() => {
-                      setIsAddPreventiveOpen(true);
-                    }}>
-                    <CardContent className="flex flex-col items-center justify-center py-6">
-                      <type.icon className={`h-8 w-8 mb-2 ${type.color}`} />
-                      <p className="font-medium">{type.label}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Clique para registrar</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+        <TabsContent value="preventives" className="space-y-4">
+          {/* Header com botão */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-medium">Preventivos</h3>
+              <p className="text-sm text-muted-foreground">Antipulgas, vermífugos, carrapaticidas e cardioprotetores</p>
+            </div>
+            <Button size="sm" onClick={() => setIsAddPreventiveOpen(true)}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Novo
+            </Button>
+          </div>
 
-              <Separator />
+          {/* Tipos de Preventivos - Grid limpo */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {PREVENTIVE_TYPES.map((type) => (
+              <button
+                key={type.value}
+                onClick={() => setIsAddPreventiveOpen(true)}
+                className="flex flex-col items-center gap-2 p-4 bg-card border rounded-lg hover:border-primary/50 hover:bg-muted/50 transition-all"
+              >
+                <type.icon className="h-5 w-5 text-muted-foreground" />
+                <span className="text-sm font-medium">{type.label}</span>
+              </button>
+            ))}
+          </div>
 
-              {/* Próximos e Atrasados */}
-              <div className="grid gap-6 md:grid-cols-2">
-                {/* Atrasados */}
-                <div>
-                  <h4 className="font-medium flex items-center gap-2 mb-3 text-destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    Atrasados
-                  </h4>
-                  {overduePreventives && overduePreventives.length > 0 ? (
-                    <div className="space-y-2">
-                      {overduePreventives.map((item: any) => (
-                        <div key={item.treatment.id} className="flex items-center justify-between p-3 border border-destructive/30 rounded-lg bg-destructive/5">
-                          <div className="flex items-center gap-3">
-                            {item.pet?.photoUrl ? (
-                              <img src={item.pet.photoUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
-                            ) : (
-                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Dog className="h-4 w-4 text-primary" />
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-medium text-sm">{item.pet?.name}</p>
-                              <p className="text-xs text-muted-foreground">{item.treatment.productName}</p>
-                            </div>
-                          </div>
-                          <Badge variant="destructive" className="flex items-center gap-1">
-                            {(() => {
-                              const pType = PREVENTIVE_TYPES.find(t => t.value === item.treatment.type);
-                              const Icon = pType?.icon || Shield;
-                              return <Icon className="h-3 w-3" />;
-                            })()}
-                          </Badge>
+          {/* Listas lado a lado */}
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Atrasados */}
+            <div className="bg-card border rounded-lg p-4">
+              <h4 className="text-sm font-medium text-destructive flex items-center gap-2 mb-3">
+                <AlertTriangle className="h-4 w-4" />
+                Atrasados
+              </h4>
+              {overduePreventives && overduePreventives.length > 0 ? (
+                <div className="space-y-2">
+                  {overduePreventives.slice(0, 5).map((item: any) => (
+                    <div key={item.treatment.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                      <div className="flex items-center gap-2">
+                        <Dog className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">{item.pet?.name}</p>
+                          <p className="text-xs text-muted-foreground">{item.treatment.productName}</p>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground text-sm">
-                      <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                      Nenhum preventivo atrasado
-                    </div>
-                  )}
+                  ))}
                 </div>
+              ) : (
+                <div className="flex flex-col items-center py-6 text-muted-foreground">
+                  <CheckCircle className="h-8 w-8 mb-2 text-green-500/50" />
+                  <p className="text-sm">Nenhum atrasado</p>
+                </div>
+              )}
+            </div>
 
-                {/* Próximos */}
-                <div>
-                  <h4 className="font-medium flex items-center gap-2 mb-3 text-yellow-600">
-                    <Clock className="h-4 w-4" />
-                    Próximos (30 dias)
-                  </h4>
-                  {upcomingPreventives && upcomingPreventives.length > 0 ? (
-                    <div className="space-y-2">
-                      {upcomingPreventives.map((item: any) => (
-                        <div key={item.treatment.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex items-center gap-3">
-                            {item.pet?.photoUrl ? (
-                              <img src={item.pet.photoUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
-                            ) : (
-                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Dog className="h-4 w-4 text-primary" />
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-medium text-sm">{item.pet?.name}</p>
-                              <p className="text-xs text-muted-foreground">{item.treatment.productName}</p>
-                            </div>
-                          </div>
-                          <Badge variant="outline">
-                            {new Date(item.treatment.nextDueDate).toLocaleDateString("pt-BR")}
-                          </Badge>
+            {/* Próximos */}
+            <div className="bg-card border rounded-lg p-4">
+              <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Próximos 30 dias
+              </h4>
+              {upcomingPreventives && upcomingPreventives.length > 0 ? (
+                <div className="space-y-2">
+                  {upcomingPreventives.slice(0, 5).map((item: any) => (
+                    <div key={item.treatment.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                      <div className="flex items-center gap-2">
+                        <Dog className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">{item.pet?.name}</p>
+                          <p className="text-xs text-muted-foreground">{item.treatment.productName}</p>
                         </div>
-                      ))}
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(item.treatment.nextDueDate).toLocaleDateString("pt-BR")}
+                      </span>
                     </div>
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground text-sm">
-                      Nenhum preventivo agendado
-                    </div>
-                  )}
+                  ))}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              ) : (
+                <div className="flex flex-col items-center py-6 text-muted-foreground">
+                  <p className="text-sm">Nenhum agendado</p>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
 
         {/* ========== MEDICAMENTOS ========== */}
-        <TabsContent value="medications" className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Pill className="h-5 w-5 text-purple-500" />
-                  Medicamentos
-                </CardTitle>
-                <CardDescription>
-                  Antibióticos, anti-inflamatórios, suplementos e outros tratamentos
-                </CardDescription>
-              </div>
-              <Button onClick={() => setIsAddMedicationOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Medicamento
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Tipos de Medicamentos */}
-              <div className="grid gap-3 md:grid-cols-5">
-                {MEDICATION_TYPES.map((type) => (
-                  <div key={type.value} className="p-3 border rounded-lg text-center hover:bg-accent transition-colors cursor-pointer"
-                    onClick={() => setIsAddMedicationOpen(true)}>
-                    <type.icon className={`h-6 w-6 mx-auto ${type.color}`} />
-                    <p className="text-sm font-medium mt-1">{type.label}</p>
-                  </div>
-                ))}
-              </div>
+        <TabsContent value="medications" className="space-y-4">
+          {/* Header com botão */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-medium">Medicamentos</h3>
+              <p className="text-sm text-muted-foreground">Antibióticos, anti-inflamatórios, suplementos</p>
+            </div>
+            <Button size="sm" onClick={() => setIsAddMedicationOpen(true)}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Novo
+            </Button>
+          </div>
 
-              <Separator />
+          {/* Tipos de Medicamentos - Grid limpo */}
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+            {MEDICATION_TYPES.map((type) => (
+              <button
+                key={type.value}
+                onClick={() => setIsAddMedicationOpen(true)}
+                className="flex flex-col items-center gap-2 p-3 bg-card border rounded-lg hover:border-primary/50 hover:bg-muted/50 transition-all"
+              >
+                <type.icon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-medium">{type.label}</span>
+              </button>
+            ))}
+          </div>
 
-              {/* Medicamentos cadastrados */}
-              <div>
-                <h4 className="font-medium mb-3">Medicamentos Cadastrados</h4>
-                {medicationsOnly.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Pill className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                    <p>Nenhum medicamento cadastrado</p>
-                    <Button variant="link" onClick={() => setIsAddMedicationOpen(true)}>
-                      Adicionar primeiro medicamento
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                    {medicationsOnly.map((med: any) => {
-                      const type = MEDICATION_TYPES.find(t => t.value === med.type);
-                      return (
-                        <div key={med.id} className="p-3 border rounded-lg hover:bg-accent transition-colors">
-                          <div className="flex items-center gap-2">
-                            {(() => {
-                              const Icon = type?.icon || Pill;
-                              return <Icon className={`h-4 w-4 ${type?.color || 'text-purple-600'}`} />;
-                            })()}
-                            <span className="font-medium">{med.name}</span>
-                          </div>
-                          {med.description && (
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{med.description}</p>
-                          )}
-                          {med.commonDosage && (
-                            <Badge variant="secondary" className="mt-2">{med.commonDosage}</Badge>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+          {/* Medicamentos cadastrados */}
+          <div className="bg-card border rounded-lg p-4">
+            <h4 className="text-sm font-medium mb-3">Cadastrados</h4>
+            {medicationsOnly.length === 0 ? (
+              <div className="flex flex-col items-center py-8 text-muted-foreground">
+                <Pill className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Nenhum medicamento</p>
+                <Button variant="link" size="sm" onClick={() => setIsAddMedicationOpen(true)}>
+                  Adicionar
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            ) : (
+              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                {medicationsOnly.map((med: any) => {
+                  const type = MEDICATION_TYPES.find(t => t.value === med.type);
+                  const Icon = type?.icon || Pill;
+                  return (
+                    <div key={med.id} className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">{med.name}</p>
+                        {med.commonDosage && (
+                          <p className="text-xs text-muted-foreground">{med.commonDosage}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
 
