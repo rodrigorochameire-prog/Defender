@@ -42,7 +42,7 @@
     --chart-3: 24 70% 65%;
     --chart-4: 200 60% 60%;
     --chart-5: 220 15% 50%;
-    
+
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 25%;
@@ -79,7 +79,7 @@
     --border: 220 15% 20%;
     --input: 220 15% 20%;
     --ring: 24 85% 55%;
-    
+
     /* Sidebar escuro */
     --sidebar-background: 220 20% 9%;
     --sidebar-foreground: 220 12% 88%;
@@ -163,7 +163,7 @@
 .page-header-icon svg {
   @apply h-5 w-5 text-white;
   stroke-width: 2.25;
-}
+  }
 
 .page-header-info h1 {
   @apply text-xl font-bold tracking-tight;
@@ -183,7 +183,7 @@
 
 .stats-grid {
   @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
-}
+  }
 
 .stats-row {
   @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
@@ -238,7 +238,7 @@
 .dark .stat-card.alert {
   border-color: hsl(45 60% 35% / 0.3);
   background: hsl(45 35% 10%);
-}
+  }
 
 /* Variante com destaque */
 .stat-card.highlight {
@@ -253,7 +253,7 @@
 
 .stat-card.highlight .stat-card-value {
   color: hsl(45 80% 35%);
-}
+  }
 
 .dark .stat-card.highlight .stat-card-value {
   color: hsl(45 85% 55%);
@@ -298,7 +298,7 @@
 
 .section-card-action:hover {
   opacity: 0.8;
-}
+  }
 
 .section-card-action svg {
   @apply h-3 w-3;
@@ -322,7 +322,7 @@
 
 .list-item:hover {
   background: hsl(var(--muted) / 0.4);
-}
+  }
 
 .list-item-icon {
   @apply h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0;
@@ -378,7 +378,7 @@
 .badge-green {
   background: hsl(160 50% 94%);
   color: hsl(160 45% 38%);
-}
+  }
 
 .dark .badge-green {
   background: hsl(160 40% 20% / 0.4);
@@ -443,7 +443,7 @@
 .dark .badge-error {
   background: hsl(0 72% 51% / 0.15);
   color: hsl(0 72% 60%);
-}
+  }
 
 /* ========================================
    EMPTY STATE
@@ -461,7 +461,7 @@
 .empty-state-icon svg {
   @apply h-5 w-5;
   color: hsl(var(--muted-foreground) / 0.4);
-}
+  }
 
 .empty-state-text {
   @apply text-[0.8125rem] text-muted-foreground;
@@ -496,7 +496,7 @@
 .action-card-icon {
   @apply h-8 w-8 rounded-md flex items-center justify-center;
   background: hsl(var(--primary) / 0.1);
-}
+  }
 
 .action-card-icon svg {
   @apply h-4 w-4;
@@ -517,7 +517,7 @@
 
 .toolbar-left {
   @apply flex items-center gap-2 flex-wrap;
-}
+  }
 
 .toolbar-right {
   @apply flex items-center gap-2;
@@ -632,7 +632,7 @@
 
 .alert-box.warning .alert-box-content h4 {
   color: hsl(45 80% 30%);
-}
+  }
 
 .dark .alert-box.warning .alert-box-content h4 {
   color: hsl(45 85% 60%);
@@ -741,7 +741,7 @@ a, button {
   * {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
-  }
+}
 }
 
 /* ========================================
