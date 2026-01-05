@@ -101,19 +101,24 @@ export default function AdminBehavior() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Comportamento</h1>
-          <p className="text-muted-foreground mt-2">
-            Registros de comportamento dos pets na creche
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Brain />
+          </div>
+          <div className="page-header-info">
+            <h1>Comportamento</h1>
+            <p>Registros de comportamento dos pets</p>
+          </div>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Registro
-        </Button>
+        <div className="page-header-actions">
+          <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="btn-sm btn-primary">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Novo Registro
+          </Button>
+        </div>
       </div>
 
       {/* Date Filter */}

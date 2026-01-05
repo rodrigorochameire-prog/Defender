@@ -97,53 +97,53 @@ export default function AdminVaccines() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Vacinas</h1>
-          <p className="text-muted-foreground mt-2">
-            Gerenciamento de vacinações dos pets
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Syringe />
+          </div>
+          <div className="page-header-info">
+            <h1>Vacinas</h1>
+            <p>Gerenciamento de vacinações</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsAddLibraryDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+        <div className="page-header-actions">
+          <Button variant="outline" size="sm" onClick={() => setIsAddLibraryDialogOpen(true)} className="btn-sm btn-outline">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
             Nova Vacina
           </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
-            <Syringe className="mr-2 h-4 w-4" />
-            Registrar Vacinação
+          <Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="btn-sm btn-primary">
+            <Syringe className="h-3.5 w-3.5 mr-1.5" />
+            Registrar
           </Button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total de Vacinações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.total || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Próximas (30 dias)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats?.upcoming || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Atrasadas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats?.overdue || 0}</div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-3 grid-cols-3">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total de Vacinações</span>
+            <Syringe className="stat-card-icon primary" />
+          </div>
+          <div className="stat-card-value">{stats?.total || 0}</div>
+        </div>
+        <div className={`stat-card ${(stats?.upcoming || 0) > 0 ? "highlight" : ""}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Próximas (30 dias)</span>
+            <AlertCircle className={`stat-card-icon ${(stats?.upcoming || 0) > 0 ? "amber" : "muted"}`} />
+          </div>
+          <div className="stat-card-value">{stats?.upcoming || 0}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Atrasadas</span>
+            <AlertCircle className="stat-card-icon muted" />
+          </div>
+          <div className="stat-card-value">{stats?.overdue || 0}</div>
+        </div>
       </div>
 
       <Tabs defaultValue="upcoming" className="space-y-4">

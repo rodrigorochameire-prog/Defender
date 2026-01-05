@@ -117,71 +117,61 @@ export default function TutorCalendarPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Meu Calendário"
-        description="Acompanhe os eventos e agendamentos dos seus pets"
-        icon={Calendar}
-      />
+    <div className="page-container">
+      {/* Header */}
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Calendar />
+          </div>
+          <div className="page-header-info">
+            <h1>Meu Calendário</h1>
+            <p>Eventos e agendamentos dos seus pets</p>
+          </div>
+        </div>
+      </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hoje</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{todayEvents.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {todayEvents.length === 0 ? "Nenhum evento" : "eventos"}
-            </p>
-          </CardContent>
-        </Card>
+      {/* Stats */}
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Eventos Hoje</span>
+            <Calendar className="stat-card-icon primary" />
+          </div>
+          <div className="stat-card-value">{todayEvents.length}</div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vacinações</CardTitle>
-            <Syringe className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{upcomingVaccinations.length}</div>
-            <p className="text-xs text-muted-foreground">próx. 30 dias</p>
-          </CardContent>
-        </Card>
+        <div className={`stat-card ${upcomingVaccinations.length > 0 ? "highlight" : ""}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Vacinas</span>
+            <Syringe className={`stat-card-icon ${upcomingVaccinations.length > 0 ? "amber" : "muted"}`} />
+          </div>
+          <div className="stat-card-value">{upcomingVaccinations.length}</div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Medicamentos</CardTitle>
-            <Pill className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{upcomingMedications.length}</div>
-            <p className="text-xs text-muted-foreground">próx. 7 dias</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Medicamentos</span>
+            <Pill className="stat-card-icon blue" />
+          </div>
+          <div className="stat-card-value">{upcomingMedications.length}</div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Preventivos</CardTitle>
-            <Shield className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{upcomingPreventives.length}</div>
-            <p className="text-xs text-muted-foreground">próx. 30 dias</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Preventivos</span>
+            <Shield className="stat-card-icon green" />
+          </div>
+          <div className="stat-card-value">{upcomingPreventives.length}</div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Meus Pets</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pets.length}</div>
-            <p className="text-xs text-muted-foreground">cadastrados</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Meus Pets</span>
+            <Calendar className="stat-card-icon primary" />
+          </div>
+          <div className="stat-card-value">{pets.length}</div>
+        </div>
       </div>
 
       {/* Próximos Eventos */}

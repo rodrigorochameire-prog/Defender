@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ShoppingBag, Package, TrendingDown, AlertTriangle, Plus, Loader2 } from "lucide-react";
+import { ShoppingBag, Package, TrendingDown, AlertTriangle, Plus, Loader2, Apple } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
@@ -57,14 +57,17 @@ export default function AdminFoodPage() {
   }
 
   return (
-    <div className="container py-8 space-y-8 animate-fade-in">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Gestão de Ração</h1>
-          <p className="text-muted-foreground mt-2">
-            Controle individual de ração por pet - cada tutor fornece a ração do seu pet
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Apple />
+          </div>
+          <div className="page-header-info">
+            <h1>Gestão de Ração</h1>
+            <p>Controle individual de ração por pet</p>
+          </div>
         </div>
         <Dialog open={isAddStockOpen} onOpenChange={setIsAddStockOpen}>
           <DialogTrigger asChild>

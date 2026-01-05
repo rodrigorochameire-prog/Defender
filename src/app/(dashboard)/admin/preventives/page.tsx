@@ -81,55 +81,56 @@ export default function AdminPreventives() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Preventivos</h1>
-          <p className="text-muted-foreground mt-2">
-            Controle de antipulgas, vermífugos e outros
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Shield />
+          </div>
+          <div className="page-header-info">
+            <h1>Preventivos</h1>
+            <p>Antipulgas, vermífugos e outros</p>
+          </div>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Registrar Tratamento
-        </Button>
+        <div className="page-header-actions">
+          <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="btn-sm btn-primary">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Registrar Tratamento
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.total || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Antipulgas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats?.flea || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Vermífugos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats?.deworming || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Atrasados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats?.overdue || 0}</div>
-          </CardContent>
-        </Card>
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total</span>
+            <Shield className="stat-card-icon primary" />
+          </div>
+          <div className="stat-card-value">{stats?.total || 0}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Antipulgas</span>
+            <Shield className="stat-card-icon blue" />
+          </div>
+          <div className="stat-card-value">{stats?.flea || 0}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Vermífugos</span>
+            <Shield className="stat-card-icon green" />
+          </div>
+          <div className="stat-card-value">{stats?.deworming || 0}</div>
+        </div>
+        <div className={`stat-card ${(overdueTreatments?.length || 0) > 0 ? "highlight" : ""}`}>
+          <div className="stat-card-header">
+            <span className="stat-card-title">Atrasados</span>
+            <AlertCircle className={`stat-card-icon ${(overdueTreatments?.length || 0) > 0 ? "amber" : "muted"}`} />
+          </div>
+          <div className="stat-card-value">{overdueTreatments?.length || 0}</div>
+        </div>
       </div>
 
       <Tabs defaultValue="upcoming" className="space-y-4">

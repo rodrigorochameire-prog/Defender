@@ -107,75 +107,59 @@ export default function AdminTraining() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <GraduationCap className="h-8 w-8 text-primary" />
-            Treinamento
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Acompanhe o progresso de adestramento dos pets
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <GraduationCap />
+          </div>
+          <div className="page-header-info">
+            <h1>Treinamento</h1>
+            <p>Acompanhe o progresso de adestramento</p>
+          </div>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Registro
-        </Button>
+        <div className="page-header-actions">
+          <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="btn-sm btn-primary">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Novo Registro
+          </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Sessões</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{logs?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">registros de treinamento</p>
-          </CardContent>
-        </Card>
+      {/* Stats */}
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Total de Sessões</span>
+            <Target className="stat-card-icon primary" />
+          </div>
+          <div className="stat-card-value">{logs?.length || 0}</div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Comandos Dominados</CardTitle>
-            <Trophy className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {logs?.filter(l => l.status === "mastered").length || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">pets dominaram comandos</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Dominados</span>
+            <Trophy className="stat-card-icon green" />
+          </div>
+          <div className="stat-card-value">{logs?.filter(l => l.status === "mastered").length || 0}</div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Em Prática</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {logs?.filter(l => l.status === "practicing").length || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">comandos sendo praticados</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Em Prática</span>
+            <TrendingUp className="stat-card-icon blue" />
+          </div>
+          <div className="stat-card-value">{logs?.filter(l => l.status === "practicing").length || 0}</div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Aprendendo</CardTitle>
-            <BookOpen className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {logs?.filter(l => l.status === "learning").length || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">novos comandos em aprendizado</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-title">Aprendendo</span>
+            <BookOpen className="stat-card-icon primary" />
+          </div>
+          <div className="stat-card-value">{logs?.filter(l => l.status === "learning").length || 0}</div>
+        </div>
       </div>
 
       {/* Filters */}

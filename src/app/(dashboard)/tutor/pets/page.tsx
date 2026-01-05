@@ -19,18 +19,25 @@ export default function TutorPetsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Meus Pets</h1>
-          <p className="text-gray-500">Gerencie seus pets cadastrados</p>
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Dog />
+          </div>
+          <div className="page-header-info">
+            <h1>Meus Pets</h1>
+            <p>Gerencie seus pets cadastrados</p>
+          </div>
         </div>
-        <Button asChild>
-          <Link href="/tutor/pets/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Pet
-          </Link>
-        </Button>
+        <div className="page-header-actions">
+          <Button asChild size="sm" className="btn-sm btn-primary">
+            <Link href="/tutor/pets/new">
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Adicionar Pet
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {!pets || pets.length === 0 ? (

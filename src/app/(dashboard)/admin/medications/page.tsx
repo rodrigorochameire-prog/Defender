@@ -109,24 +109,28 @@ export default function AdminMedications() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Medicamentos</h1>
-          <p className="text-muted-foreground mt-2">
-            Gerenciamento de medicamentos e tratamentos
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Pill />
+          </div>
+          <div className="page-header-info">
+            <h1>Medicamentos</h1>
+            <p>Gerenciamento de tratamentos</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsAddLibraryDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Medicamento
+        <div className="page-header-actions">
+          <Button variant="outline" size="sm" onClick={() => setIsAddLibraryDialogOpen(true)} className="btn-sm btn-outline">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Novo
           </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
-            <Pill className="mr-2 h-4 w-4" />
-            Registrar Tratamento
+          <Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="btn-sm btn-primary">
+            <Pill className="h-3.5 w-3.5 mr-1.5" />
+            Registrar
           </Button>
+        </div>
         </div>
       </div>
 
