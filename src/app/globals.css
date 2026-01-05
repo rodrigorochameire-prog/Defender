@@ -3,82 +3,97 @@
 @tailwind utilities;
 
 /* ========================================
-   TETECARE - DESIGN SYSTEM v3
-   Estrutura Padronizada • Clean • Organizado
+   TETECARE - DESIGN SYSTEM v4
+   Paleta Pastel • Sofisticado • Harmonioso
    ======================================== */
 
 @layer base {
   :root {
-    /* MODO CLARO - Cores suaves e limpas */
-    --background: 0 0% 99%;
-    --foreground: 222 25% 15%;
+    /* MODO CLARO - Tons pastéis sofisticados */
+    --background: 30 25% 98%;
+    --foreground: 220 20% 20%;
     --card: 0 0% 100%;
-    --card-foreground: 222 25% 15%;
+    --card-foreground: 220 20% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 25% 15%;
-    --primary: 24 75% 48%;
+    --popover-foreground: 220 20% 20%;
+    
+    /* Primary - Laranja suave/coral */
+    --primary: 24 65% 55%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 15% 97%;
-    --secondary-foreground: 222 20% 30%;
-    --muted: 220 15% 96%;
-    --muted-foreground: 220 10% 45%;
-    --accent: 220 15% 96%;
-    --accent-foreground: 222 20% 30%;
-    --destructive: 0 70% 50%;
+    
+    /* Tons neutros quentes */
+    --secondary: 30 15% 96%;
+    --secondary-foreground: 220 15% 35%;
+    --muted: 30 12% 95%;
+    --muted-foreground: 220 10% 50%;
+    --accent: 30 15% 94%;
+    --accent-foreground: 220 15% 35%;
+    
+    --destructive: 0 55% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 92%;
-    --input: 220 15% 92%;
-    --ring: 24 75% 48%;
-    --radius: 0.625rem;
-    --chart-1: 24 75% 48%;
-    --chart-2: 215 80% 55%;
-    --chart-3: 150 60% 42%;
-    --chart-4: 45 85% 50%;
-    --chart-5: 0 70% 50%;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 25% 20%;
-    --sidebar-primary: 24 75% 48%;
+    --border: 30 15% 90%;
+    --input: 30 15% 90%;
+    --ring: 24 65% 55%;
+    --radius: 0.75rem;
+    
+    /* Charts - Paleta harmoniosa */
+    --chart-1: 24 65% 55%;
+    --chart-2: 200 45% 55%;
+    --chart-3: 150 40% 50%;
+    --chart-4: 40 55% 55%;
+    --chart-5: 340 45% 55%;
+    
+    /* Sidebar */
+    --sidebar-background: 30 20% 99%;
+    --sidebar-foreground: 220 20% 25%;
+    --sidebar-primary: 24 65% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 97%;
-    --sidebar-accent-foreground: 222 20% 30%;
-    --sidebar-border: 220 15% 92%;
-    --sidebar-ring: 24 75% 48%;
+    --sidebar-accent: 30 15% 95%;
+    --sidebar-accent-foreground: 220 15% 35%;
+    --sidebar-border: 30 15% 92%;
+    --sidebar-ring: 24 65% 55%;
   }
 
   .dark {
-    /* MODO ESCURO - Elegante e confortável */
-    --background: 224 25% 7%;
-    --foreground: 210 15% 94%;
-    --card: 224 22% 10%;
-    --card-foreground: 210 15% 94%;
-    --popover: 224 22% 10%;
-    --popover-foreground: 210 15% 94%;
-    --primary: 24 80% 52%;
+    /* MODO ESCURO - Elegante e aconchegante */
+    --background: 220 20% 8%;
+    --foreground: 30 10% 92%;
+    --card: 220 18% 11%;
+    --card-foreground: 30 10% 92%;
+    --popover: 220 18% 11%;
+    --popover-foreground: 30 10% 92%;
+    
+    /* Primary - Laranja vibrante no escuro */
+    --primary: 24 70% 58%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 224 18% 14%;
-    --secondary-foreground: 210 15% 85%;
-    --muted: 224 18% 14%;
-    --muted-foreground: 215 12% 52%;
-    --accent: 224 18% 14%;
-    --accent-foreground: 210 15% 85%;
-    --destructive: 0 60% 52%;
+    
+    --secondary: 220 15% 15%;
+    --secondary-foreground: 30 10% 85%;
+    --muted: 220 15% 14%;
+    --muted-foreground: 220 10% 55%;
+    --accent: 220 15% 15%;
+    --accent-foreground: 30 10% 85%;
+    
+    --destructive: 0 50% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 224 15% 16%;
-    --input: 224 15% 16%;
-    --ring: 24 80% 52%;
-    --sidebar-background: 224 25% 6%;
-    --sidebar-foreground: 210 15% 90%;
-    --sidebar-primary: 24 80% 52%;
+    --border: 220 15% 18%;
+    --input: 220 15% 18%;
+    --ring: 24 70% 58%;
+    
+    /* Sidebar escuro */
+    --sidebar-background: 220 20% 7%;
+    --sidebar-foreground: 30 10% 88%;
+    --sidebar-primary: 24 70% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 18% 12%;
-    --sidebar-accent-foreground: 210 15% 85%;
-    --sidebar-border: 224 15% 14%;
-    --sidebar-ring: 24 80% 52%;
+    --sidebar-accent: 220 15% 13%;
+    --sidebar-accent-foreground: 30 10% 85%;
+    --sidebar-border: 220 15% 15%;
+    --sidebar-ring: 24 70% 58%;
   }
 }
 
 /* ========================================
-   TIPOGRAFIA
+   TIPOGRAFIA - Fonte Grande Padrão
    ======================================== */
 
 @layer base {
@@ -88,21 +103,22 @@
   
   html {
     scroll-behavior: smooth;
-    font-size: 15px;
+    font-size: 17px;
   }
   
   body {
     @apply bg-background text-foreground antialiased;
-    line-height: 1.55;
-    letter-spacing: -0.008em;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    font-weight: 400;
   }
 
-  h1 { @apply text-2xl font-bold tracking-tight text-foreground; }
+  h1 { @apply text-2xl font-semibold tracking-tight text-foreground; }
   h2 { @apply text-xl font-semibold tracking-tight text-foreground; }
-  h3 { @apply text-lg font-semibold text-foreground; }
-  h4 { @apply text-base font-semibold text-foreground; }
-  p { @apply text-[0.9375rem] leading-relaxed; }
-  span, label { @apply text-[0.875rem]; }
+  h3 { @apply text-lg font-medium text-foreground; }
+  h4 { @apply text-base font-medium text-foreground; }
+  p { @apply text-base leading-relaxed; }
+  span, label { @apply text-sm; }
   small { @apply text-xs; }
 }
 
@@ -195,14 +211,15 @@
 }
 
 .stat-card-icon {
-  @apply h-4 w-4 opacity-70;
+  @apply h-4 w-4;
+  color: hsl(var(--primary) / 0.7);
 }
 
-.stat-card-icon.primary { color: hsl(var(--primary)); }
-.stat-card-icon.blue { color: hsl(215 80% 55%); }
-.stat-card-icon.green { color: hsl(150 60% 42%); }
-.stat-card-icon.amber { color: hsl(45 85% 45%); }
-.stat-card-icon.muted { color: hsl(var(--muted-foreground)); }
+.stat-card-icon.primary { color: hsl(var(--primary) / 0.8); }
+.stat-card-icon.blue { color: hsl(var(--primary) / 0.7); }
+.stat-card-icon.green { color: hsl(var(--primary) / 0.7); }
+.stat-card-icon.amber { color: hsl(var(--primary) / 0.8); }
+.stat-card-icon.muted { color: hsl(var(--muted-foreground) / 0.6); }
 
 .stat-card-value {
   @apply text-2xl font-bold tracking-tight text-foreground;
@@ -317,11 +334,11 @@
   color: hsl(var(--muted-foreground));
 }
 
-.list-item-icon.primary { background: hsl(var(--primary) / 0.08); }
-.list-item-icon.primary svg { color: hsl(var(--primary)); }
+.list-item-icon.primary { background: hsl(var(--primary) / 0.1); }
+.list-item-icon.primary svg { color: hsl(var(--primary) / 0.8); }
 
-.list-item-icon.blue { background: hsl(215 70% 50% / 0.08); }
-.list-item-icon.blue svg { color: hsl(215 70% 50%); }
+.list-item-icon.blue { background: hsl(var(--primary) / 0.08); }
+.list-item-icon.blue svg { color: hsl(var(--primary) / 0.7); }
 
 .list-item-content {
   @apply flex-1 min-w-0;
@@ -359,43 +376,43 @@
 }
 
 .badge-green {
-  background: hsl(150 50% 94%);
-  color: hsl(150 50% 32%);
+  background: hsl(150 35% 94%);
+  color: hsl(150 35% 38%);
 }
 
 .dark .badge-green {
-  background: hsl(150 50% 20% / 0.4);
-  color: hsl(150 45% 58%);
+  background: hsl(150 30% 18% / 0.5);
+  color: hsl(150 35% 60%);
 }
 
 .badge-blue {
-  background: hsl(215 70% 94%);
-  color: hsl(215 70% 40%);
+  background: hsl(200 35% 94%);
+  color: hsl(200 40% 40%);
 }
 
 .dark .badge-blue {
-  background: hsl(215 60% 25% / 0.4);
-  color: hsl(215 55% 62%);
+  background: hsl(200 30% 20% / 0.5);
+  color: hsl(200 35% 62%);
 }
 
 .badge-amber {
-  background: hsl(45 80% 93%);
-  color: hsl(45 70% 30%);
+  background: hsl(35 45% 93%);
+  color: hsl(35 50% 35%);
 }
 
 .dark .badge-amber {
-  background: hsl(45 60% 20% / 0.4);
-  color: hsl(45 65% 58%);
+  background: hsl(35 40% 18% / 0.5);
+  color: hsl(35 45% 60%);
 }
 
 .badge-rose {
-  background: hsl(0 60% 94%);
-  color: hsl(0 60% 40%);
+  background: hsl(350 35% 94%);
+  color: hsl(350 40% 45%);
 }
 
 .dark .badge-rose {
-  background: hsl(0 50% 22% / 0.4);
-  color: hsl(0 55% 62%);
+  background: hsl(350 30% 20% / 0.5);
+  color: hsl(350 35% 62%);
 }
 
 .badge-success {

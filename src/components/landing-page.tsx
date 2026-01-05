@@ -55,16 +55,16 @@ export function LandingPage() {
             </div>
 
             {/* Main Heading */}
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
-                Cuide do seu pet com
+            <div className="space-y-6">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-foreground">
+                Cuidado profissional
                 <br />
-                <span className="bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 bg-clip-text text-transparent">
-                  amor e tecnologia
+                <span className="text-primary">
+                  para seu melhor amigo
                 </span>
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Plataforma completa para gestão de creches de pets com controle de saúde, vacinas, 
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                Plataforma completa para gestão de creches de pets. Controle de saúde, vacinas, 
                 medicamentos e comunicação em tempo real com os tutores.
               </p>
             </div>
@@ -116,70 +116,70 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {/* Feature 1 */}
-            <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center mb-4 shadow-lg">
-                <Dog className="w-6 h-6 text-white" />
+            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <Dog className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Gestão Completa</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Controle de check-in/out, créditos, histórico completo e relatórios detalhados de cada pet.
+              <h3 className="text-lg font-medium mb-2">Gestão Completa</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Controle de check-in/out, créditos, histórico completo e relatórios detalhados.
               </p>
             </Card>
 
             {/* Feature 2 */}
-            <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center mb-4 shadow-lg">
-                <Heart className="w-6 h-6 text-white" />
+            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <Heart className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Saúde em Dia</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Controle de vacinas, medicamentos, preventivos e lembretes automáticos para nunca esquecer.
+              <h3 className="text-lg font-medium mb-2">Saúde em Dia</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Vacinas, medicamentos, preventivos e lembretes automáticos.
               </p>
             </Card>
 
             {/* Feature 3 */}
-            <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4 shadow-lg">
-                <Calendar className="w-6 h-6 text-white" />
+            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <Calendar className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Calendário Inteligente</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Agende eventos, vacinas e compromissos com notificações automáticas para tutores.
+              <h3 className="text-lg font-medium mb-2">Calendário Inteligente</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Agende eventos e compromissos com notificações automáticas.
               </p>
             </Card>
 
             {/* Feature 4 */}
-            <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center mb-4 shadow-lg">
-                <Bell className="w-6 h-6 text-white" />
+            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <Bell className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Notificações Personalizadas</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Sistema de mensagens automáticas editáveis para manter tutores sempre informados.
+              <h3 className="text-lg font-medium mb-2">Notificações</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Mensagens automáticas para manter tutores sempre informados.
               </p>
             </Card>
 
             {/* Feature 5 */}
-            <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg">
-                <Shield className="w-6 h-6 text-white" />
+            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <Shield className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Segurança e Privacidade</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Dados protegidos com criptografia e controle de acesso por perfil (admin/tutor).
+              <h3 className="text-lg font-medium mb-2">Segurança</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Dados protegidos com criptografia e controle de acesso.
               </p>
             </Card>
 
             {/* Feature 6 */}
-            <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center mb-4 shadow-lg">
-                <Sparkles className="w-6 h-6 text-white" />
+            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <Sparkles className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Assistente IA</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Inteligência artificial para responder dúvidas dos tutores e gerar relatórios automaticamente.
+              <h3 className="text-lg font-medium mb-2">Assistente IA</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Inteligência artificial para responder dúvidas e gerar relatórios.
               </p>
             </Card>
           </div>

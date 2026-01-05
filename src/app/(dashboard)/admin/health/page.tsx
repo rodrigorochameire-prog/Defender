@@ -50,21 +50,21 @@ import {
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 
-// Tipos de preventivos - cores suaves e minimalistas
+// Tipos de preventivos - cores harmoniosas (usando primary)
 const PREVENTIVE_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
-  { value: "flea", label: "Antipulgas", icon: Sparkles, color: "text-amber-500/80" },
-  { value: "deworming", label: "Vermífugo", icon: CircleDot, color: "text-rose-500/80" },
-  { value: "heartworm", label: "Cardioprotetor", icon: Heart, color: "text-rose-400/80" },
-  { value: "tick", label: "Carrapaticida", icon: ShieldCheck, color: "text-orange-500/80" },
+  { value: "flea", label: "Antipulgas", icon: Sparkles, color: "text-primary/80" },
+  { value: "deworming", label: "Vermífugo", icon: CircleDot, color: "text-primary/80" },
+  { value: "heartworm", label: "Cardioprotetor", icon: Heart, color: "text-primary/80" },
+  { value: "tick", label: "Carrapaticida", icon: ShieldCheck, color: "text-primary/80" },
 ];
 
-// Tipos de medicamentos - cores suaves e minimalistas
+// Tipos de medicamentos - cores harmoniosas (usando primary)
 const MEDICATION_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
-  { value: "antibiotic", label: "Antibiótico", icon: Pill, color: "text-blue-500/80" },
-  { value: "antiinflammatory", label: "Anti-inflamatório", icon: Activity, color: "text-amber-500/80" },
-  { value: "analgesic", label: "Analgésico", icon: Syringe, color: "text-violet-500/80" },
-  { value: "supplement", label: "Suplemento", icon: Leaf, color: "text-emerald-500/80" },
-  { value: "other", label: "Outro", icon: Package, color: "text-slate-400/80" },
+  { value: "antibiotic", label: "Antibiótico", icon: Pill, color: "text-primary/80" },
+  { value: "antiinflammatory", label: "Anti-inflamatório", icon: Activity, color: "text-primary/80" },
+  { value: "analgesic", label: "Analgésico", icon: Syringe, color: "text-primary/80" },
+  { value: "supplement", label: "Suplemento", icon: Leaf, color: "text-primary/80" },
+  { value: "other", label: "Outro", icon: Package, color: "text-muted-foreground" },
 ];
 
 export default function AdminHealthPage() {
