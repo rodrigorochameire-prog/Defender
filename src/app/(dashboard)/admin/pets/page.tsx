@@ -153,6 +153,7 @@ export default function AdminPetsPage() {
   const handleCreatePet = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const tutorIdValue = formData.get("tutorId") as string;
     createPetMutation.mutate({
       name: formData.get("name") as string,
       species: "dog",
@@ -160,7 +161,7 @@ export default function AdminPetsPage() {
       birthDate: formData.get("birthDate") as string || undefined,
       weight: formData.get("weight") ? parseFloat(formData.get("weight") as string) : undefined,
       notes: formData.get("notes") as string || undefined,
-      tutorId: formData.get("tutorId") ? parseInt(formData.get("tutorId") as string) : undefined,
+      tutorId: tutorIdValue && tutorIdValue !== "none" ? parseInt(tutorIdValue) : undefined,
       credits: formData.get("credits") ? parseInt(formData.get("credits") as string) : 0,
       approvalStatus: "approved",
     });
@@ -437,7 +438,7 @@ export default function AdminPetsPage() {
                     <SelectValue placeholder="Selecionar tutor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem tutor</SelectItem>
+                    <SelectItem value="none">Sem tutor</SelectItem>
                     {tutors?.map((tutor) => (
                       <SelectItem key={tutor.id} value={tutor.id.toString()}>
                         {tutor.name}
