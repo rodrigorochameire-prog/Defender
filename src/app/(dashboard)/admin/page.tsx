@@ -186,7 +186,7 @@ export default function AdminDashboard() {
                         <div className="list-item-title">{event.title}</div>
                         <div className="list-item-subtitle">
                           {format(new Date(event.eventDate), "d MMM, HH:mm", { locale: ptBR })}
-                          {event.petName && ` • ${event.petName}`}
+                          {event.pet?.name && ` • ${event.pet.name}`}
                         </div>
                       </div>
                       <span className="badge-neutral">{config.label}</span>
