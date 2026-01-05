@@ -1,6 +1,6 @@
-import { SignIn, auth } from "@clerk/nextjs";
+import { SignIn } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { Dog, Heart, Shield, Calendar } from "lucide-react";
 import Image from "next/image";
 
