@@ -1,5 +1,7 @@
 "use client";
 
+import { ClerkProvider } from "@clerk/nextjs";
+import { ptBR } from "@clerk/localizations";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { useState, useEffect, Suspense } from "react";
@@ -85,22 +87,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <Suspense fallback={<LoadingSpinner />}>
-            <PageTransition>{children}</PageTransition>
-          </Suspense>
-          <Toaster 
-            richColors 
-            position="top-right" 
-            toastOptions={{
-              className: "glass",
-              duration: 3000,
-            }}
-          />
-        </ThemeProvider>
-      </QueryClientProvider>
-    </trpc.Provider>
+    <ClerkProvider localization={ptBR}>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <Suspense fallback={<LoadingSpinner />}>
+              <PageTransition>{children}</PageTransition>
+            </Suspense>
+            <Toaster 
+              richColors 
+              position="top-right" 
+              toastOptions={{
+                className: "glass",
+                duration: 3000,
+              }}
+            />
+          </ThemeProvider>
+        </QueryClientProvider>
+      </trpc.Provider>
+    </ClerkProvider>
   );
 }
