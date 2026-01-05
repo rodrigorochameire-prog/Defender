@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/session";
+import { auth } from "@clerk/nextjs/server";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -9,10 +9,10 @@ export default async function DashboardRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
+  const { userId } = await auth();
 
-  if (!session) {
-    redirect("/login");
+  if (!userId) {
+    redirect("/sign-in");
   }
 
   // O layout apenas verifica autenticação
