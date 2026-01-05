@@ -551,9 +551,9 @@ export function PremiumCalendar({
           </Card>
         </div>
 
-        {/* Sidebar - Upcoming Events */}
+        {/* Sidebar */}
         <div className="space-y-4">
-          {/* Quick Stats */}
+          {/* Quick Stats - PRIMEIRO */}
           <Card className="shadow-lg">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -592,7 +592,50 @@ export function PremiumCalendar({
             </CardContent>
           </Card>
 
-          {/* Upcoming Events */}
+          {/* Event Type Legend - SEGUNDO */}
+          <Card className="shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center justify-between">
+                <span>Legenda</span>
+                {selectedEventType !== "all" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setSelectedEventType("all")}
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Limpar
+                  </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-1">
+              {Object.entries(EVENT_TYPES).map(([key, config]) => {
+                const isActive = selectedEventType === key;
+                return (
+                  <div
+                    key={key}
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs p-1.5 rounded cursor-pointer transition-all",
+                      isActive 
+                        ? "bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 ring-1 ring-orange-400" 
+                        : "hover:bg-accent"
+                    )}
+                    onClick={() => setSelectedEventType(isActive ? "all" : key as EventType)}
+                  >
+                    {(() => { 
+                      const Icon = config.icon; 
+                      return <Icon className={cn("h-4 w-4", isActive && "text-orange-600 dark:text-orange-400")} />; 
+                    })()}
+                    <span className={cn("truncate", isActive && "font-medium")}>{config.label}</span>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          {/* Upcoming Events - TERCEIRO */}
           <Card className="shadow-lg">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -636,25 +679,6 @@ export function PremiumCalendar({
                   );
                 })
               )}
-            </CardContent>
-          </Card>
-
-          {/* Event Type Legend */}
-          <Card className="shadow-lg">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Legenda</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-1">
-              {Object.entries(EVENT_TYPES).map(([key, config]) => (
-                <div
-                  key={key}
-                  className="flex items-center gap-1.5 text-xs p-1 rounded hover:bg-accent cursor-pointer"
-                  onClick={() => setSelectedEventType(key as EventType)}
-                >
-                  {(() => { const Icon = config.icon; return <Icon className="h-4 w-4" />; })()}
-                  <span className="truncate">{config.label}</span>
-                </div>
-              ))}
             </CardContent>
           </Card>
         </div>
