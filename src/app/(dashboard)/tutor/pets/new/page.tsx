@@ -105,8 +105,7 @@ export default function NewPetPage() {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   disabled={isLoading}
                 >
-                  <option value="dog">🐶 Cachorro</option>
-                  <option value="cat">🐱 Gato</option>
+                  <option value="dog">Cachorro</option>
                 </select>
               </div>
 

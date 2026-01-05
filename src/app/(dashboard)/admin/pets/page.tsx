@@ -464,7 +464,7 @@ export default function AdminPetsPage() {
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">Espécie</p>
-                  <p className="font-medium">{selectedPet.species === "cat" ? "Gato" : "Cachorro"}</p>
+                  <p className="font-medium">Cachorro</p>
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">Créditos</p>

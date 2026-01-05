@@ -68,9 +68,7 @@ export default function TutorPetsPage() {
                       </div>
                     ) : (
                       <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-2xl">
-                          {pet.species === "cat" ? "🐱" : "🐶"}
-                        </span>
+                        <Dog className="h-6 w-6 text-primary" />
                       </div>
                     )}
                     <div>

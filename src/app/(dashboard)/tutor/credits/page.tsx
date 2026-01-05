@@ -126,7 +126,7 @@ export default function TutorCreditsPage() {
                   >
                     <span className="flex items-center gap-2 text-sm">
                       {selectedPetId === pet.id && <CheckCircle className="h-4 w-4 text-primary" />}
-                      {pet.species === "cat" ? "🐱" : "🐶"} {pet.name}
+                      {pet.name}
                     </span>
                     <span className="font-bold text-primary">{pet.credits}</span>
                   </button>

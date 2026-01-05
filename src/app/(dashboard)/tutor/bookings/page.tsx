@@ -163,7 +163,7 @@ export default function TutorBookingsPage() {
                       <SelectContent>
                         {approvedPets.map((pet) => (
                           <SelectItem key={pet.id} value={pet.id.toString()}>
-                            {pet.species === "cat" ? "🐱" : "🐶"} {pet.name}
+                            {pet.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -265,7 +265,7 @@ export default function TutorBookingsPage() {
                   {formatDate(nextBooking.booking.startDate)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {nextBooking.pet.species === "cat" ? "🐱" : "🐶"} {nextBooking.pet.name} - {requestTypeLabels[nextBooking.booking.requestType]}
+                  {nextBooking.pet.name} - {requestTypeLabels[nextBooking.booking.requestType]}
                 </p>
               </>
             ) : (
@@ -334,7 +334,7 @@ export default function TutorBookingsPage() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span>{pet.species === "cat" ? "🐱" : "🐶"}</span>
+                        <Dog className="h-5 w-5 text-primary" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">

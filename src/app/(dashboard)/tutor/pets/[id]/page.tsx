@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Dog,
-  Cat,
   Calendar,
   Weight,
   Utensils,
@@ -80,13 +79,13 @@ export default function TutorPetDetailPage(props: PetPageProps) {
     }
   };
 
-  const PetIcon = pet.species === "cat" ? Cat : Dog;
+  const PetIcon = Dog;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={pet.name}
-        description={pet.breed || pet.species === "cat" ? "Gato" : "Cachorro"}
+        description={pet.breed || "Cachorro"}
         backHref="/tutor/pets"
         actions={
           <Button asChild>
