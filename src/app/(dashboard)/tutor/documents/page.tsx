@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { uploadDocumentClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -111,6 +110,12 @@ export default function TutorDocuments() {
     },
   });
 
+  const uploadFileMutation = trpc.documents.uploadFile.useMutation({
+    onError: (error) => {
+      toast.error("Erro no upload: " + error.message);
+    },
+  });
+
   const resetForm = () => {
     setSelectedFile(null);
     setSelectedPetId("");
@@ -171,11 +176,23 @@ export default function TutorDocuments() {
 
     setUploading(true);
     try {
-      const result = await uploadDocumentClient(
-        selectedFile,
-        parseInt(selectedPetId),
-        selectedCategory
-      );
+      // Converter arquivo para base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(selectedFile);
+      const fileBase64 = await base64Promise;
+
+      // Upload via servidor (sem RLS)
+      const result = await uploadFileMutation.mutateAsync({
+        petId: parseInt(selectedPetId),
+        category: selectedCategory,
+        fileName: selectedFile.name,
+        fileBase64,
+        fileType: selectedFile.type,
+      });
 
       await saveDocumentMutation.mutateAsync({
         petId: parseInt(selectedPetId),
