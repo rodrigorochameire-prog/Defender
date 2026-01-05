@@ -48,13 +48,18 @@ export default function TutorWall() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="page-container">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Mural</h1>
-        <p className="text-muted-foreground mt-2">
-          Novidades e atualizações da creche
-        </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <MessageCircle />
+          </div>
+          <div className="page-header-info">
+            <h1>Mural</h1>
+            <p>Novidades e atualizações da creche</p>
+          </div>
+        </div>
       </div>
 
       {/* Posts */}

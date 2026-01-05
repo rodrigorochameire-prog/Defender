@@ -5,34 +5,91 @@ import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, AlertCircle, CheckCircle2, Pill, Shield, Syringe, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar, AlertCircle, CheckCircle2, Pill, Shield, Syringe, RefreshCw, Edit, Clock, MapPin, Dog, Check, X, Save, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { PremiumCalendar, CalendarEvent } from "@/components/premium-calendar";
 import { LoadingPage } from "@/components/shared/loading";
-import { PageHeader } from "@/components/shared/page-header";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+
+// Tipos de eventos acionáveis
+const ACTIONABLE_EVENT_TYPES = ["vaccination", "medication", "medical", "preventive"];
 
 export default function TutorCalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    title: "",
+    description: "",
+    eventDate: "",
+    eventTime: "",
+    location: "",
+    isAllDay: false,
+  });
 
   const now = new Date();
   const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59);
 
-  const { data: eventsData, isLoading } = trpc.calendar.list.useQuery({
+  const { data: eventsData, isLoading, refetch } = trpc.calendar.list.useQuery({
     start: startDate.toISOString(),
     end: endDate.toISOString(),
   });
 
   const { data: petsData } = trpc.pets.myPets.useQuery();
+
+  // Mutations para cogestão
+  const createEvent = trpc.calendar.create.useMutation({
+    onSuccess: () => {
+      toast.success("Evento criado com sucesso!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar evento: ${error.message}`);
+    },
+  });
+
+  const updateEvent = trpc.calendar.update.useMutation({
+    onSuccess: () => {
+      toast.success("Evento atualizado com sucesso!");
+      setIsEditMode(false);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar evento: ${error.message}`);
+    },
+  });
+
+  const deleteEvent = trpc.calendar.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Evento excluído com sucesso!");
+      setIsEventDialogOpen(false);
+      setSelectedEvent(null);
+      refetch();
+    },
+    onError: (error) => {
+      // Verificar se é erro de permissão (evento criado pelo admin)
+      if (error.message.includes("admin") || error.message.includes("permissão")) {
+        toast.error("Você não pode excluir eventos criados pelo administrador");
+      } else {
+        toast.error(`Erro ao excluir evento: ${error.message}`);
+      }
+    },
+  });
 
   // Transform events data
   const events: CalendarEvent[] =
@@ -107,9 +164,88 @@ export default function TutorCalendarPage() {
     return eventDate >= now && eventDate <= sevenDaysFromNow;
   }).slice(0, 8);
 
+  // Handler para criar eventos
+  const handleCreateEvent = (eventData: Record<string, unknown>) => {
+    createEvent.mutate({
+      title: eventData.title as string,
+      description: (eventData.description as string) || undefined,
+      eventDate: eventData.eventDate as string,
+      endDate: (eventData.endDate as string) || undefined,
+      eventType: eventData.eventType as string,
+      petId: eventData.petId as number | undefined,
+      isAllDay: (eventData.isAllDay as boolean) ?? false,
+      notes: (eventData.notes as string) || undefined,
+    });
+  };
+
   const handleEventClick = (event: CalendarEvent) => {
     setSelectedEvent(event);
+    setIsEditMode(false);
     setIsEventDialogOpen(true);
+  };
+
+  // Funções de edição
+  const handleStartEdit = () => {
+    if (!selectedEvent) return;
+    setEditFormData({
+      title: selectedEvent.title,
+      description: selectedEvent.description || "",
+      eventDate: format(new Date(selectedEvent.eventDate), "yyyy-MM-dd"),
+      eventTime: format(new Date(selectedEvent.eventDate), "HH:mm"),
+      location: selectedEvent.location || "",
+      isAllDay: selectedEvent.isAllDay,
+    });
+    setIsEditMode(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!selectedEvent) return;
+
+    const eventDate = new Date(editFormData.eventDate);
+    if (editFormData.eventTime && !editFormData.isAllDay) {
+      const [hours, minutes] = editFormData.eventTime.split(":");
+      eventDate.setHours(parseInt(hours), parseInt(minutes));
+    }
+
+    updateEvent.mutate({
+      id: selectedEvent.id,
+      title: editFormData.title,
+      description: editFormData.description || undefined,
+      eventDate: eventDate.toISOString(),
+      location: editFormData.location || undefined,
+      isAllDay: editFormData.isAllDay,
+    });
+  };
+
+  // Marcar como realizado
+  const handleMarkAsCompleted = () => {
+    if (!selectedEvent) return;
+    updateEvent.mutate({
+      id: selectedEvent.id,
+      status: "completed",
+    });
+    setIsEventDialogOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleMarkAsPending = () => {
+    if (!selectedEvent) return;
+    updateEvent.mutate({
+      id: selectedEvent.id,
+      status: "scheduled",
+    });
+    setIsEventDialogOpen(false);
+    setSelectedEvent(null);
+  };
+
+  // Excluir evento (apenas se não foi criado pelo admin)
+  const handleDeleteEvent = () => {
+    if (!selectedEvent) return;
+    deleteEvent.mutate({ id: selectedEvent.id });
+  };
+
+  const isActionableEvent = (eventType: string) => {
+    return ACTIONABLE_EVENT_TYPES.includes(eventType);
   };
 
   if (isLoading) {
@@ -209,30 +345,93 @@ export default function TutorCalendarPage() {
         </Card>
       )}
 
-      {/* Premium Calendar - Tutor só visualiza, não cria eventos */}
+      {/* Premium Calendar - Tutor pode criar e editar eventos (cogestão) */}
       <PremiumCalendar
         events={events}
         onEventClick={handleEventClick}
+        onCreateEvent={handleCreateEvent}
         pets={pets}
-        showCreateButton={false}
+        showCreateButton={true}
       />
 
-      {/* Event Detail Dialog */}
-      <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
-        <DialogContent>
+      {/* Event Detail Dialog - Com funcionalidades de edição e exclusão */}
+      <Dialog open={isEventDialogOpen} onOpenChange={(open) => {
+        setIsEventDialogOpen(open);
+        if (!open) setIsEditMode(false);
+      }}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{selectedEvent?.title}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              {isEditMode ? "Editar Evento" : selectedEvent?.title}
+              {selectedEvent?.status === "completed" && !isEditMode && (
+                <Badge className="bg-green-500 text-white ml-2">
+                  <Check className="h-3 w-3 mr-1" />
+                  Realizado
+                </Badge>
+              )}
+            </DialogTitle>
             <DialogDescription>
-              Detalhes do evento
+              {isEditMode ? "Edite as informações do evento" : "Detalhes e gerenciamento do evento"}
             </DialogDescription>
           </DialogHeader>
 
-          {selectedEvent && (
+          {selectedEvent && !isEditMode && (
             <div className="space-y-4">
+              {/* Status Banner para eventos acionáveis */}
+              {isActionableEvent(selectedEvent.eventType) && (
+                <div className={cn(
+                  "p-3 rounded-lg flex items-center justify-between",
+                  selectedEvent.status === "completed"
+                    ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
+                    : "bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800"
+                )}>
+                  <div className="flex items-center gap-2">
+                    {selectedEvent.status === "completed" ? (
+                      <>
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <span className="text-green-700 dark:text-green-400 font-medium">
+                          Marcado como realizado
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-5 w-5 text-orange-600" />
+                        <span className="text-orange-700 dark:text-orange-400 font-medium">
+                          Ação pendente
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {selectedEvent.status === "completed" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleMarkAsPending}
+                      disabled={updateEvent.isPending}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Desmarcar
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={handleMarkAsCompleted}
+                      disabled={updateEvent.isPending}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Marcar Realizado
+                    </Button>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="font-medium text-muted-foreground">Data</p>
-                  <p>
+                  <p className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
                     {format(new Date(selectedEvent.eventDate), "PPP", {
                       locale: ptBR,
                     })}
@@ -240,7 +439,8 @@ export default function TutorCalendarPage() {
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground">Horário</p>
-                  <p>
+                  <p className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
                     {selectedEvent.isAllDay
                       ? "Dia inteiro"
                       : format(new Date(selectedEvent.eventDate), "HH:mm")}
@@ -249,13 +449,19 @@ export default function TutorCalendarPage() {
                 {selectedEvent.petName && (
                   <div>
                     <p className="font-medium text-muted-foreground">Pet</p>
-                    <p>{selectedEvent.petName}</p>
+                    <p className="flex items-center gap-1">
+                      <Dog className="h-4 w-4" />
+                      {selectedEvent.petName}
+                    </p>
                   </div>
                 )}
                 {selectedEvent.location && (
                   <div>
                     <p className="font-medium text-muted-foreground">Local</p>
-                    <p>{selectedEvent.location}</p>
+                    <p className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      {selectedEvent.location}
+                    </p>
                   </div>
                 )}
               </div>
@@ -265,18 +471,113 @@ export default function TutorCalendarPage() {
                   <p className="font-medium text-muted-foreground text-sm">
                     Descrição
                   </p>
-                  <p className="text-sm mt-1">{selectedEvent.description}</p>
+                  <p className="text-sm mt-1 p-2 bg-muted rounded">{selectedEvent.description}</p>
                 </div>
               )}
 
-              <div className="flex justify-end pt-4">
+              <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 border-t">
                 <Button
                   variant="outline"
-                  onClick={() => setIsEventDialogOpen(false)}
+                  onClick={handleStartEdit}
+                  className="flex-1"
                 >
-                  Fechar
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
                 </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteEvent}
+                  disabled={deleteEvent.isPending}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+
+          {/* Formulário de Edição */}
+          {selectedEvent && isEditMode && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Título</Label>
+                <Input
+                  id="edit-title"
+                  value={editFormData.title}
+                  onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                  placeholder="Nome do evento"
+                />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Data</Label>
+                  <Input
+                    type="date"
+                    value={editFormData.eventDate}
+                    onChange={(e) => setEditFormData({ ...editFormData, eventDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora</Label>
+                  <Input
+                    type="time"
+                    value={editFormData.eventTime}
+                    onChange={(e) => setEditFormData({ ...editFormData, eventTime: e.target.value })}
+                    disabled={editFormData.isAllDay}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="edit-allday"
+                  checked={editFormData.isAllDay}
+                  onCheckedChange={(checked) => setEditFormData({ ...editFormData, isAllDay: checked as boolean })}
+                />
+                <Label htmlFor="edit-allday">Dia inteiro</Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Local
+                </Label>
+                <Input
+                  value={editFormData.location}
+                  onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                  placeholder="Local do evento"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Descrição</Label>
+                <Textarea
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  placeholder="Detalhes do evento..."
+                  rows={3}
+                />
+              </div>
+
+              <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditMode(false)}
+                  className="flex-1"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={updateEvent.isPending || !editFormData.title}
+                  className="flex-1"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar
+                </Button>
+              </DialogFooter>
             </div>
           )}
         </DialogContent>

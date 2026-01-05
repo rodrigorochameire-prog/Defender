@@ -45,19 +45,20 @@ import {
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 
+// Cores padronizadas: primary (laranja) para preventivos, sky para medicamentos
 const PREVENTIVE_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
-  { value: "flea", label: "Antipulgas", icon: Bug, color: "text-amber-600" },
-  { value: "deworming", label: "Vermífugo", icon: Droplets, color: "text-rose-600" },
-  { value: "heartworm", label: "Cardioprotetor", icon: Heart, color: "text-red-500" },
-  { value: "tick", label: "Carrapaticida", icon: Shield, color: "text-orange-600" },
+  { value: "flea", label: "Antipulgas", icon: Bug, color: "text-primary" },
+  { value: "deworming", label: "Vermífugo", icon: Droplets, color: "text-primary" },
+  { value: "heartworm", label: "Cardioprotetor", icon: Heart, color: "text-primary" },
+  { value: "tick", label: "Carrapaticida", icon: Shield, color: "text-primary" },
 ];
 
 const MEDICATION_TYPES: Array<{ value: string; label: string; icon: LucideIcon; color: string }> = [
-  { value: "antibiotic", label: "Antibiótico", icon: Pill, color: "text-blue-600" },
-  { value: "antiinflammatory", label: "Anti-inflamatório", icon: Flame, color: "text-orange-500" },
-  { value: "analgesic", label: "Analgésico", icon: Syringe, color: "text-purple-600" },
-  { value: "supplement", label: "Suplemento", icon: Leaf, color: "text-green-600" },
-  { value: "other", label: "Outro", icon: Package, color: "text-slate-500" },
+  { value: "antibiotic", label: "Antibiótico", icon: Pill, color: "text-sky-600 dark:text-sky-400" },
+  { value: "antiinflammatory", label: "Anti-inflamatório", icon: Flame, color: "text-sky-600 dark:text-sky-400" },
+  { value: "analgesic", label: "Analgésico", icon: Syringe, color: "text-sky-600 dark:text-sky-400" },
+  { value: "supplement", label: "Suplemento", icon: Leaf, color: "text-sky-600 dark:text-sky-400" },
+  { value: "other", label: "Outro", icon: Package, color: "text-muted-foreground" },
 ];
 
 export default function TutorHealthPage() {
@@ -175,17 +176,17 @@ export default function TutorHealthPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Heart className="h-8 w-8 text-red-500" />
-            Central de Saúde
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie a saúde dos seus pets
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Heart />
+          </div>
+          <div className="page-header-info">
+            <h1>Central de Saúde</h1>
+            <p>Gerencie a saúde dos seus pets</p>
+          </div>
         </div>
       </div>
 
@@ -220,37 +221,28 @@ export default function TutorHealthPage() {
       ) : (
         <>
           {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Vacinas</CardTitle>
-                <Syringe className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{petVaccinations?.length || 0}</div>
-                <p className="text-xs text-muted-foreground">registradas</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Preventivos</CardTitle>
-                <Shield className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{petPreventives?.length || 0}</div>
-                <p className="text-xs text-muted-foreground">registrados</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Medicamentos</CardTitle>
-                <Pill className="h-4 w-4 text-purple-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-600">{medicationsOnly.length}</div>
-                <p className="text-xs text-muted-foreground">registrados</p>
-              </CardContent>
-            </Card>
+          <div className="stats-row">
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <span className="stat-card-title">Vacinas</span>
+                <Syringe className="stat-card-icon blue" />
+              </div>
+              <div className="stat-card-value">{petVaccinations?.length || 0}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <span className="stat-card-title">Preventivos</span>
+                <Shield className="stat-card-icon primary" />
+              </div>
+              <div className="stat-card-value">{petPreventives?.length || 0}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card-header">
+                <span className="stat-card-title">Medicamentos</span>
+                <Pill className="stat-card-icon blue" />
+              </div>
+              <div className="stat-card-value">{medicationsOnly.length}</div>
+            </div>
           </div>
 
           {/* Main Tabs */}
