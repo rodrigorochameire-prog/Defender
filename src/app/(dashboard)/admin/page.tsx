@@ -1,7 +1,6 @@
 "use client";
 
 import { trpc } from "@/lib/trpc/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Dog, 
@@ -17,11 +16,11 @@ import {
   Pill,
   Shield,
   Sparkles,
-  Activity
+  FileText,
+  MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { LoadingPage } from "@/components/shared/loading";
-import { PageIcon } from "@/components/shared/page-icon";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -68,33 +67,34 @@ export default function AdminDashboard() {
     vaccination: { icon: Syringe, label: "Vacinação" },
     medication: { icon: Pill, label: "Medicamento" },
     preventive: { icon: Shield, label: "Preventivo" },
-    appointment: { icon: Calendar, label: "Consulta" },
     grooming: { icon: Sparkles, label: "Banho/Tosa" },
-    other: { icon: Activity, label: "Outro" },
+    other: { icon: Calendar, label: "Evento" },
   };
 
   return (
     <div className="page-container">
       {/* Header */}
       <div className="page-header">
-        <div className="page-header-left">
-          <PageIcon icon={LayoutDashboard} size="md" />
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <LayoutDashboard />
+          </div>
           <div className="page-header-info">
-            <h1 className="page-header-title">Dashboard</h1>
-            <p className="page-header-subtitle">
-              <Clock />
+            <h1>Dashboard</h1>
+            <p className="flex items-center gap-1.5">
+              <Clock className="h-3 w-3" />
               {format(now, "EEEE, d 'de' MMMM", { locale: ptBR })}
             </p>
           </div>
         </div>
         <div className="page-header-actions">
-          <Button asChild variant="outline" size="sm" className="rounded-lg text-xs">
+          <Button asChild variant="outline" size="sm" className="btn-sm btn-outline rounded-lg">
             <Link href="/admin/calendar" className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Calendário</span>
             </Link>
           </Button>
-          <Button asChild size="sm" className="rounded-lg text-xs">
+          <Button asChild size="sm" className="btn-sm btn-primary rounded-lg">
             <Link href="/admin/pets" className="flex items-center gap-1.5">
               <PawPrint className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Ver Pets</span>
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
 
       {/* Stats */}
       <div className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card orange">
           <div className="stat-icon">
             <Dog />
           </div>
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
           <div className="stat-label">Pets cadastrados</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card blue">
           <div className="stat-icon">
             <Users />
           </div>
@@ -121,7 +121,7 @@ export default function AdminDashboard() {
           <div className="stat-label">Tutores ativos</div>
         </div>
 
-        <div className={`stat-card ${pendingCount > 0 ? 'highlight' : ''}`}>
+        <div className={`stat-card ${pendingCount > 0 ? 'warning alert' : 'neutral'}`}>
           <div className="stat-icon">
             <AlertCircle />
           </div>
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
           <div className="stat-label">Aguardando aprovação</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card blue">
           <div className="stat-icon">
             <CalendarCheck />
           </div>
@@ -139,47 +139,41 @@ export default function AdminDashboard() {
       </div>
 
       {/* Content Grid */}
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Próximos Eventos */}
-        <Card className="border-border/60">
-          <CardHeader className="pb-3">
-            <div className="section-header mb-0">
-              <div>
-                <CardTitle className="section-title">
-                  <Calendar />
-                  Próximos Eventos
-                </CardTitle>
-                <CardDescription className="section-description">
-                  Eventos dos próximos 7 dias
-                </CardDescription>
+        <div className="section-card">
+          <div className="section-card-header">
+            <div>
+              <div className="section-card-title">
+                <Calendar />
+                Próximos Eventos
               </div>
-              <Button variant="ghost" size="sm" asChild className="text-xs h-8">
-                <Link href="/admin/calendar" className="flex items-center gap-1">
-                  Ver todos
-                  <ArrowUpRight className="h-3 w-3" />
-                </Link>
-              </Button>
+              <div className="section-card-subtitle">Eventos dos próximos 7 dias</div>
             </div>
-          </CardHeader>
-          <CardContent className="pt-0">
+            <Link href="/admin/calendar" className="link-primary">
+              Ver todos
+              <ArrowUpRight />
+            </Link>
+          </div>
+          <div className="section-card-content">
             {upcomingEvents.length === 0 ? (
-              <div className="empty-state py-8">
+              <div className="empty-state">
                 <div className="empty-state-icon">
                   <Calendar />
                 </div>
-                <div className="empty-state-title">Nenhum evento programado</div>
+                <div className="empty-state-title">Nenhum evento</div>
                 <div className="empty-state-description">
-                  Crie eventos para organizar as atividades dos pets
+                  Crie eventos para organizar atividades
                 </div>
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="list-container">
                 {upcomingEvents.map((event) => {
                   const config = eventTypeConfig[event.eventType] || eventTypeConfig.other;
                   const Icon = config.icon;
                   return (
                     <div key={event.id} className="list-item">
-                      <div className="list-item-icon">
+                      <div className="list-item-icon orange">
                         <Icon />
                       </div>
                       <div className="list-item-content">
@@ -189,49 +183,43 @@ export default function AdminDashboard() {
                           {event.pet?.name && ` • ${event.pet.name}`}
                         </div>
                       </div>
-                      <span className="badge-neutral">{config.label}</span>
+                      <span className="badge badge-orange">{config.label}</span>
                     </div>
                   );
                 })}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Pets Recentes */}
-        <Card className="border-border/60">
-          <CardHeader className="pb-3">
-            <div className="section-header mb-0">
-              <div>
-                <CardTitle className="section-title">
-                  <PawPrint />
-                  Pets Recentes
-                </CardTitle>
-                <CardDescription className="section-description">
-                  Últimos pets cadastrados
-                </CardDescription>
+        <div className="section-card">
+          <div className="section-card-header">
+            <div>
+              <div className="section-card-title">
+                <PawPrint />
+                Pets Recentes
               </div>
-              <Button variant="ghost" size="sm" asChild className="text-xs h-8">
-                <Link href="/admin/pets" className="flex items-center gap-1">
-                  Ver todos
-                  <ArrowUpRight className="h-3 w-3" />
-                </Link>
-              </Button>
+              <div className="section-card-subtitle">Últimos pets cadastrados</div>
             </div>
-          </CardHeader>
-          <CardContent className="pt-0">
+            <Link href="/admin/pets" className="link-primary">
+              Ver todos
+              <ArrowUpRight />
+            </Link>
+          </div>
+          <div className="section-card-content">
             {recentPets.length === 0 ? (
-              <div className="empty-state py-8">
+              <div className="empty-state">
                 <div className="empty-state-icon">
                   <Dog />
                 </div>
-                <div className="empty-state-title">Nenhum pet cadastrado</div>
+                <div className="empty-state-title">Nenhum pet</div>
                 <div className="empty-state-description">
-                  Aguardando cadastro de novos pets
+                  Aguardando cadastro de pets
                 </div>
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="list-container">
                 {recentPets.map((pet) => (
                   <Link key={pet.id} href={`/admin/pets/${pet.id}`}>
                     <div className="list-item">
@@ -244,13 +232,13 @@ export default function AdminDashboard() {
                           {pet.breed || "Sem raça definida"}
                         </div>
                       </div>
-                      <span className={
+                      <span className={`badge ${
                         pet.approvalStatus === "approved" 
                           ? "badge-success" 
                           : pet.approvalStatus === "pending"
                           ? "badge-warning"
-                          : "badge-neutral"
-                      }>
+                          : "badge-default"
+                      }`}>
                         {pet.approvalStatus === "approved" ? "Aprovado" : 
                          pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
                       </span>
@@ -259,47 +247,47 @@ export default function AdminDashboard() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Ações Rápidas */}
-      <Card className="border-border/60">
-        <CardHeader className="pb-3">
-          <CardTitle className="section-title">
+      <div className="section-card">
+        <div className="section-card-header">
+          <div className="section-card-title">
             <Sparkles />
             Ações Rápidas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Button variant="outline" asChild className="h-auto py-3 rounded-lg justify-start">
-              <Link href="/admin/calendar" className="flex flex-col items-start gap-1">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium">Novo Evento</span>
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="h-auto py-3 rounded-lg justify-start">
-              <Link href="/admin/health" className="flex flex-col items-start gap-1">
-                <Syringe className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium">Registrar Vacina</span>
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="h-auto py-3 rounded-lg justify-start">
-              <Link href="/admin/documents" className="flex flex-col items-start gap-1">
-                <Shield className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium">Documentos</span>
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="h-auto py-3 rounded-lg justify-start">
-              <Link href="/admin/wall" className="flex flex-col items-start gap-1">
-                <Activity className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium">Publicar no Mural</span>
-              </Link>
-            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="section-card-content">
+          <div className="action-grid">
+            <Link href="/admin/calendar" className="action-card">
+              <div className="action-card-icon">
+                <Calendar />
+              </div>
+              <span className="action-card-label">Novo Evento</span>
+            </Link>
+            <Link href="/admin/health" className="action-card">
+              <div className="action-card-icon">
+                <Syringe />
+              </div>
+              <span className="action-card-label">Registrar Vacina</span>
+            </Link>
+            <Link href="/admin/documents" className="action-card">
+              <div className="action-card-icon">
+                <FileText />
+              </div>
+              <span className="action-card-label">Documentos</span>
+            </Link>
+            <Link href="/admin/wall" className="action-card">
+              <div className="action-card-icon">
+                <MessageSquare />
+              </div>
+              <span className="action-card-label">Publicar no Mural</span>
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

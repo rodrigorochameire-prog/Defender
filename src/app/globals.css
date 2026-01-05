@@ -3,123 +3,121 @@
 @tailwind utilities;
 
 /* ========================================
-   TETECARE - DESIGN SYSTEM REFINADO
-   Harmonioso • Delicado • Minimalista
+   TETECARE - DESIGN SYSTEM v2
+   Paleta: Laranja (Primary) + Azul (Accent)
+   Clean • Harmônico • Organizado
    ======================================== */
 
 @layer base {
   :root {
-    /* ===== MODO CLARO - Suave e Acolhedor ===== */
+    /* ===== MODO CLARO ===== */
     
-    /* Backgrounds - Creme muito suave */
-    --background: 40 20% 98%;
-    --foreground: 220 15% 20%;
+    /* Background principal - Creme muito suave */
+    --background: 35 25% 97%;
+    --foreground: 220 20% 18%;
     
-    /* Cards - Branco puro, limpo */
+    /* Cards - Branco */
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 20%;
+    --card-foreground: 220 20% 18%;
     
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 20%;
+    --popover-foreground: 220 20% 18%;
     
-    /* Primary - Laranja TeteCare suavizado */
-    --primary: 24 80% 52%;
+    /* PRIMARY - Laranja TeteCare */
+    --primary: 24 85% 52%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Cinza azulado muito suave */
-    --secondary: 220 20% 96%;
-    --secondary-foreground: 220 15% 35%;
+    /* SECONDARY - Azul suave */
+    --secondary: 210 60% 96%;
+    --secondary-foreground: 210 50% 30%;
     
-    /* Muted - Cinza quente, delicado */
-    --muted: 40 15% 95%;
-    --muted-foreground: 220 10% 55%;
+    /* Muted - Neutro quente */
+    --muted: 35 20% 94%;
+    --muted-foreground: 220 12% 50%;
     
-    /* Accent - Tom neutro */
-    --accent: 220 15% 95%;
-    --accent-foreground: 220 15% 35%;
-    
-    /* Destructive */
-    --destructive: 0 65% 55%;
-    --destructive-foreground: 0 0% 100%;
-    
-    /* Borders - Ultra suave */
-    --border: 220 15% 92%;
-    --input: 220 15% 92%;
-    --ring: 24 80% 52%;
-    
-    /* Radius - Cantos suaves */
-    --radius: 0.75rem;
-    
-    /* Chart colors - Tons pastel harmoniosos */
-    --chart-1: 24 70% 55%;
-    --chart-2: 200 60% 55%;
-    --chart-3: 160 45% 50%;
-    --chart-4: 45 65% 55%;
-    --chart-5: 280 45% 55%;
-
-    /* Sidebar Light */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 15% 25%;
-    --sidebar-primary: 24 80% 52%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 96%;
-    --sidebar-accent-foreground: 220 15% 35%;
-    --sidebar-border: 220 15% 93%;
-    --sidebar-ring: 24 80% 52%;
-  }
-
-  .dark {
-    /* ===== MODO ESCURO - Elegante e Profundo ===== */
-    
-    /* Backgrounds - Azul escuro profundo */
-    --background: 222 30% 9%;
-    --foreground: 220 15% 92%;
-    
-    /* Cards - Azul escuro elevado */
-    --card: 222 25% 12%;
-    --card-foreground: 220 15% 92%;
-    
-    /* Popover */
-    --popover: 222 25% 12%;
-    --popover-foreground: 220 15% 92%;
-    
-    /* Primary - Laranja vibrante mas não agressivo */
-    --primary: 24 85% 55%;
-    --primary-foreground: 0 0% 100%;
-    
-    /* Secondary */
-    --secondary: 222 20% 18%;
-    --secondary-foreground: 220 15% 85%;
-    
-    /* Muted */
-    --muted: 222 18% 16%;
-    --muted-foreground: 220 12% 55%;
-    
-    /* Accent */
-    --accent: 222 20% 18%;
-    --accent-foreground: 220 15% 85%;
+    /* ACCENT - Azul claro */
+    --accent: 210 70% 94%;
+    --accent-foreground: 210 60% 35%;
     
     /* Destructive */
-    --destructive: 0 60% 50%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
     
     /* Borders */
-    --border: 222 18% 20%;
-    --input: 222 18% 20%;
-    --ring: 24 85% 55%;
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 24 85% 52%;
+    
+    /* Radius */
+    --radius: 0.625rem;
+    
+    /* Chart - Laranja e Azul */
+    --chart-1: 24 85% 52%;
+    --chart-2: 210 70% 50%;
+    --chart-3: 24 70% 65%;
+    --chart-4: 210 50% 60%;
+    --chart-5: 24 60% 75%;
 
-    /* Sidebar Dark */
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 22%;
+    --sidebar-primary: 24 85% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 60% 96%;
+    --sidebar-accent-foreground: 210 50% 30%;
+    --sidebar-border: 220 15% 92%;
+    --sidebar-ring: 24 85% 52%;
+  }
+
+  .dark {
+    /* ===== MODO ESCURO ===== */
+    
+    --background: 222 30% 9%;
+    --foreground: 220 15% 92%;
+    
+    --card: 222 25% 12%;
+    --card-foreground: 220 15% 92%;
+    
+    --popover: 222 25% 12%;
+    --popover-foreground: 220 15% 92%;
+    
+    /* PRIMARY - Laranja vibrante */
+    --primary: 24 90% 55%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* SECONDARY - Azul escuro */
+    --secondary: 210 40% 18%;
+    --secondary-foreground: 210 40% 85%;
+    
+    --muted: 222 20% 16%;
+    --muted-foreground: 220 12% 55%;
+    
+    /* ACCENT - Azul profundo */
+    --accent: 210 50% 20%;
+    --accent-foreground: 210 50% 85%;
+    
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 222 20% 20%;
+    --input: 222 20% 20%;
+    --ring: 24 90% 55%;
+
     --sidebar-background: 222 30% 8%;
     --sidebar-foreground: 220 15% 90%;
-    --sidebar-primary: 24 85% 55%;
+    --sidebar-primary: 24 90% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 20% 15%;
-    --sidebar-accent-foreground: 220 15% 85%;
-    --sidebar-border: 222 18% 18%;
-    --sidebar-ring: 24 85% 55%;
+    --sidebar-accent: 210 40% 18%;
+    --sidebar-accent-foreground: 210 40% 85%;
+    --sidebar-border: 222 20% 18%;
+    --sidebar-ring: 24 90% 55%;
   }
 }
+
+/* ========================================
+   TIPOGRAFIA - Maior e Mais Legível
+   ======================================== */
 
 @layer base {
   * {
@@ -128,126 +126,172 @@
   
   html {
     scroll-behavior: smooth;
-    font-size: 16px;
+    font-size: 17px;
   }
   
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    line-height: 1.6;
-    letter-spacing: -0.008em;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
   }
 
-  /* ===== TIPOGRAFIA HARMONIOSA ===== */
-  
+  /* Títulos */
   h1 {
-    @apply text-2xl font-medium tracking-tight;
-    letter-spacing: -0.02em;
+    @apply text-2xl font-semibold tracking-tight;
     color: hsl(var(--foreground));
   }
   
   h2 {
-    @apply text-xl font-medium tracking-tight;
-    letter-spacing: -0.015em;
+    @apply text-xl font-semibold;
+    color: hsl(var(--foreground));
   }
   
   h3 {
     @apply text-lg font-medium;
-    letter-spacing: -0.01em;
+    color: hsl(var(--foreground));
   }
   
   h4 {
     @apply text-base font-medium;
+    color: hsl(var(--foreground));
   }
   
-  p {
-    @apply text-sm leading-relaxed;
-    color: hsl(var(--muted-foreground));
-  }
-
-  /* Texto secundário */
-  .text-secondary {
+  p, span, label {
     @apply text-sm;
-    color: hsl(var(--muted-foreground));
-  }
-
-  /* Labels */
-  label {
-    @apply text-sm font-medium;
-    color: hsl(var(--foreground));
   }
 }
 
 /* ========================================
-   ANIMAÇÕES DELICADAS
+   ANIMAÇÕES
    ======================================== */
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.25s ease-out;
 }
-
-.animate-scale-in {
-  animation: scale-in 0.25s ease-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.35s ease-out;
-}
-
-/* Stagger para listas */
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.1s; }
-.stagger-3 { animation-delay: 0.15s; }
-.stagger-4 { animation-delay: 0.2s; }
 
 /* ========================================
-   COMPONENTES PADRONIZADOS
+   LAYOUT DE PÁGINA - Padronizado
    ======================================== */
 
-/* Cards - Limpos e Elegantes */
-.card-clean {
-  @apply rounded-xl border bg-card;
-  border-color: hsl(var(--border));
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+.page-container {
+  @apply space-y-5 animate-fade-in;
 }
 
-.card-clean:hover {
-  box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.06);
+/* Header de página */
+.page-header {
+  @apply flex items-center justify-between gap-4 pb-1;
 }
 
-/* Stats Card */
+.page-header-content {
+  @apply flex items-center gap-3;
+}
+
+.page-header-icon {
+  @apply flex items-center justify-center h-11 w-11 rounded-xl flex-shrink-0;
+  background: linear-gradient(135deg, hsl(24 85% 52%) 0%, hsl(24 75% 58%) 100%);
+}
+
+.page-header-icon svg {
+  @apply h-5 w-5 text-white;
+  stroke-width: 2;
+}
+
+.page-header-info h1 {
+  @apply text-xl font-semibold tracking-tight leading-tight;
+}
+
+.page-header-info p {
+  @apply text-sm mt-0.5;
+  color: hsl(var(--muted-foreground));
+}
+
+.page-header-actions {
+  @apply flex items-center gap-2;
+}
+
+/* ========================================
+   STAT CARDS - Laranja/Azul
+   ======================================== */
+
+.stats-grid {
+  @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
+}
+
 .stat-card {
-  @apply rounded-xl border bg-card p-5;
-  border-color: hsl(var(--border) / 0.6);
+  @apply rounded-xl p-4 border transition-shadow duration-200;
+  background: hsl(var(--card));
+  border-color: hsl(var(--border) / 0.7);
 }
 
+.stat-card:hover {
+  box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.08);
+}
+
+/* Ícone do stat - cores alternadas */
 .stat-card .stat-icon {
-  @apply p-2.5 rounded-xl mb-4;
-  background: hsl(var(--muted));
+  @apply h-9 w-9 rounded-lg flex items-center justify-center mb-3;
 }
 
 .stat-card .stat-icon svg {
   @apply h-4 w-4;
+  stroke-width: 1.75;
+}
+
+/* Variantes de cor para stats */
+.stat-card.orange .stat-icon {
+  background: hsl(24 90% 95%);
+}
+.stat-card.orange .stat-icon svg {
+  color: hsl(24 85% 50%);
+}
+.dark .stat-card.orange .stat-icon {
+  background: hsl(24 70% 20%);
+}
+.dark .stat-card.orange .stat-icon svg {
+  color: hsl(24 90% 65%);
+}
+
+.stat-card.blue .stat-icon {
+  background: hsl(210 80% 95%);
+}
+.stat-card.blue .stat-icon svg {
+  color: hsl(210 70% 45%);
+}
+.dark .stat-card.blue .stat-icon {
+  background: hsl(210 50% 20%);
+}
+.dark .stat-card.blue .stat-icon svg {
+  color: hsl(210 70% 65%);
+}
+
+.stat-card.warning .stat-icon {
+  background: hsl(45 90% 92%);
+}
+.stat-card.warning .stat-icon svg {
+  color: hsl(40 80% 45%);
+}
+.dark .stat-card.warning .stat-icon {
+  background: hsl(40 60% 18%);
+}
+.dark .stat-card.warning .stat-icon svg {
+  color: hsl(40 80% 60%);
+}
+
+.stat-card.neutral .stat-icon {
+  background: hsl(var(--muted));
+}
+.stat-card.neutral .stat-icon svg {
   color: hsl(var(--muted-foreground));
 }
 
+/* Valor e label */
 .stat-card .stat-value {
-  @apply text-2xl font-semibold tracking-tight;
+  @apply text-2xl font-semibold tracking-tight leading-none;
   color: hsl(var(--foreground));
 }
 
@@ -256,233 +300,107 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* Stat Card com destaque (pendentes, alertas) */
-.stat-card.highlight {
+/* Stat com alerta */
+.stat-card.alert {
   border-color: hsl(40 70% 70% / 0.5);
 }
-
-.stat-card.highlight .stat-icon {
-  background: hsl(40 80% 94%);
+.stat-card.alert .stat-value {
+  color: hsl(40 80% 40%);
 }
-
-.stat-card.highlight .stat-icon svg {
-  color: hsl(40 70% 45%);
-}
-
-.stat-card.highlight .stat-value {
-  color: hsl(40 70% 45%);
-}
-
-.dark .stat-card.highlight {
+.dark .stat-card.alert {
   border-color: hsl(40 60% 35% / 0.4);
 }
-
-.dark .stat-card.highlight .stat-icon {
-  background: hsl(40 50% 20%);
-}
-
-.dark .stat-card.highlight .stat-icon svg {
-  color: hsl(40 70% 60%);
-}
-
-.dark .stat-card.highlight .stat-value {
-  color: hsl(40 70% 60%);
+.dark .stat-card.alert .stat-value {
+  color: hsl(40 80% 60%);
 }
 
 /* ========================================
-   INPUTS & FORMS - Delicados
+   SECTION CARDS - Cards de Conteúdo
    ======================================== */
 
-.input-clean {
-  @apply w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm;
-  border-color: hsl(var(--border));
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+.section-card {
+  @apply rounded-xl border;
+  background: hsl(var(--card));
+  border-color: hsl(var(--border) / 0.7);
 }
 
-.input-clean:focus {
-  outline: none;
-  border-color: hsl(var(--primary) / 0.5);
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.08);
+.section-card-header {
+  @apply flex items-center justify-between p-4 pb-3;
 }
 
-.input-clean::placeholder {
-  color: hsl(var(--muted-foreground) / 0.7);
-}
-
-/* ========================================
-   BOTÕES - Suaves
-   ======================================== */
-
-.btn-primary-soft {
-  @apply rounded-lg px-4 py-2 text-sm font-medium;
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.btn-primary-soft:hover {
-  opacity: 0.9;
-}
-
-.btn-primary-soft:active {
-  transform: scale(0.98);
-}
-
-.btn-secondary-soft {
-  @apply rounded-lg px-4 py-2 text-sm font-medium;
-  background: hsl(var(--secondary));
-  color: hsl(var(--secondary-foreground));
-  transition: background 0.15s ease;
-}
-
-.btn-secondary-soft:hover {
-  background: hsl(var(--accent));
-}
-
-.btn-ghost-soft {
-  @apply rounded-lg px-4 py-2 text-sm font-medium;
-  color: hsl(var(--muted-foreground));
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.btn-ghost-soft:hover {
-  background: hsl(var(--muted));
+.section-card-title {
+  @apply flex items-center gap-2 text-base font-medium;
   color: hsl(var(--foreground));
 }
 
-/* ========================================
-   BADGES - Discretos e Harmoniosos
-   ======================================== */
-
-.badge-neutral {
-  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-}
-
-.badge-success {
-  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
-  background: hsl(150 50% 94%);
-  color: hsl(150 45% 35%);
-}
-
-.dark .badge-success {
-  background: hsl(150 35% 18%);
-  color: hsl(150 50% 60%);
-}
-
-.badge-warning {
-  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
-  background: hsl(40 80% 94%);
-  color: hsl(40 70% 35%);
-}
-
-.dark .badge-warning {
-  background: hsl(40 50% 18%);
-  color: hsl(40 70% 60%);
-}
-
-.badge-info {
-  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
-  background: hsl(200 70% 94%);
-  color: hsl(200 60% 35%);
-}
-
-.dark .badge-info {
-  background: hsl(200 40% 18%);
-  color: hsl(200 60% 60%);
-}
-
-/* ========================================
-   SCROLLBAR - Ultra Discreto
-   ======================================== */
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.12);
-  border-radius: 100px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.2);
-}
-
-/* ========================================
-   FOCUS STATES - Suaves
-   ======================================== */
-
-*:focus-visible {
-  outline: 2px solid hsl(var(--primary) / 0.4);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ========================================
-   DIVISORES & SEPARADORES
-   ======================================== */
-
-.divider {
-  @apply h-px w-full;
-  background: hsl(var(--border));
-}
-
-.divider-vertical {
-  @apply w-px h-full;
-  background: hsl(var(--border));
-}
-
-/* ========================================
-   SECTION HEADERS - Consistentes
-   ======================================== */
-
-.section-header {
-  @apply flex items-center justify-between mb-4;
-}
-
-.section-title {
-  @apply text-base font-medium flex items-center gap-2;
-  color: hsl(var(--foreground));
-}
-
-.section-title svg {
+.section-card-title svg {
   @apply h-4 w-4;
-  color: hsl(var(--muted-foreground));
+  color: hsl(24 80% 50%);
 }
 
-.section-description {
+.dark .section-card-title svg {
+  color: hsl(24 90% 60%);
+}
+
+.section-card-subtitle {
   @apply text-xs mt-0.5;
   color: hsl(var(--muted-foreground));
 }
 
+.section-card-content {
+  @apply px-4 pb-4;
+}
+
 /* ========================================
-   LISTA DE ITENS - Elegante
+   LISTAS - Itens Padronizados
    ======================================== */
 
+.list-container {
+  @apply space-y-1;
+}
+
 .list-item {
-  @apply flex items-center gap-3 p-3 rounded-lg;
+  @apply flex items-center gap-3 p-2.5 rounded-lg cursor-pointer;
   transition: background 0.15s ease;
 }
 
 .list-item:hover {
-  background: hsl(var(--muted) / 0.5);
+  background: hsl(var(--muted) / 0.6);
 }
 
 .list-item-icon {
-  @apply flex-shrink-0 p-2 rounded-lg;
-  background: hsl(var(--muted));
+  @apply h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0;
+  background: hsl(210 70% 95%);
 }
 
 .list-item-icon svg {
   @apply h-4 w-4;
-  color: hsl(var(--muted-foreground));
+  color: hsl(210 60% 45%);
+}
+
+.dark .list-item-icon {
+  background: hsl(210 40% 20%);
+}
+
+.dark .list-item-icon svg {
+  color: hsl(210 60% 65%);
+}
+
+/* Variante laranja */
+.list-item-icon.orange {
+  background: hsl(24 85% 95%);
+}
+
+.list-item-icon.orange svg {
+  color: hsl(24 80% 50%);
+}
+
+.dark .list-item-icon.orange {
+  background: hsl(24 60% 20%);
+}
+
+.dark .list-item-icon.orange svg {
+  color: hsl(24 85% 65%);
 }
 
 .list-item-content {
@@ -499,109 +417,233 @@
   color: hsl(var(--muted-foreground));
 }
 
+.list-item-action {
+  @apply flex-shrink-0;
+}
+
 /* ========================================
-   EMPTY STATE - Delicado
+   BADGES - Harmônicos
+   ======================================== */
+
+.badge {
+  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
+}
+
+.badge-default {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+
+.badge-orange {
+  background: hsl(24 90% 94%);
+  color: hsl(24 80% 40%);
+}
+.dark .badge-orange {
+  background: hsl(24 60% 20%);
+  color: hsl(24 85% 65%);
+}
+
+.badge-blue {
+  background: hsl(210 80% 94%);
+  color: hsl(210 70% 35%);
+}
+.dark .badge-blue {
+  background: hsl(210 50% 20%);
+  color: hsl(210 70% 65%);
+}
+
+.badge-success {
+  background: hsl(150 60% 94%);
+  color: hsl(150 50% 32%);
+}
+.dark .badge-success {
+  background: hsl(150 40% 18%);
+  color: hsl(150 55% 60%);
+}
+
+.badge-warning {
+  background: hsl(45 90% 92%);
+  color: hsl(40 75% 35%);
+}
+.dark .badge-warning {
+  background: hsl(40 55% 18%);
+  color: hsl(40 80% 60%);
+}
+
+.badge-error {
+  background: hsl(0 70% 94%);
+  color: hsl(0 65% 45%);
+}
+.dark .badge-error {
+  background: hsl(0 50% 20%);
+  color: hsl(0 70% 65%);
+}
+
+/* ========================================
+   EMPTY STATE
    ======================================== */
 
 .empty-state {
-  @apply flex flex-col items-center justify-center py-12 text-center;
+  @apply flex flex-col items-center justify-center py-10 text-center;
 }
 
 .empty-state-icon {
-  @apply mb-4;
-  color: hsl(var(--muted-foreground) / 0.4);
+  @apply h-10 w-10 rounded-xl flex items-center justify-center mb-3;
+  background: hsl(var(--muted));
 }
 
 .empty-state-icon svg {
-  @apply h-12 w-12;
+  @apply h-5 w-5;
+  color: hsl(var(--muted-foreground) / 0.6);
 }
 
 .empty-state-title {
-  @apply text-sm font-medium mb-1;
+  @apply text-sm font-medium;
   color: hsl(var(--foreground));
 }
 
 .empty-state-description {
-  @apply text-xs max-w-xs;
+  @apply text-xs mt-1 max-w-[200px];
   color: hsl(var(--muted-foreground));
 }
 
 /* ========================================
-   TABS - Minimalista
+   BOTÕES - Padronizados
    ======================================== */
 
-.tabs-clean {
-  @apply flex gap-1 p-1 rounded-lg;
-  background: hsl(var(--muted));
+.btn-sm {
+  @apply h-8 px-3 text-xs font-medium rounded-lg;
 }
 
-.tab-clean {
-  @apply px-3 py-1.5 rounded-md text-xs font-medium;
+.btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.btn-primary:hover {
+  opacity: 0.92;
+}
+
+.btn-outline {
+  @apply border;
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.btn-outline:hover {
+  background: hsl(var(--muted) / 0.5);
+}
+
+.btn-ghost {
   color: hsl(var(--muted-foreground));
+}
+
+.btn-ghost:hover {
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--foreground));
+}
+
+/* ========================================
+   ACTION CARDS - Ações Rápidas
+   ======================================== */
+
+.action-grid {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-2;
+}
+
+.action-card {
+  @apply flex flex-col items-start gap-2 p-3 rounded-lg border cursor-pointer;
+  border-color: hsl(var(--border) / 0.7);
   transition: all 0.15s ease;
 }
 
-.tab-clean:hover {
-  color: hsl(var(--foreground));
+.action-card:hover {
+  background: hsl(var(--muted) / 0.4);
+  border-color: hsl(var(--border));
 }
 
-.tab-clean.active {
-  background: hsl(var(--background));
+.action-card-icon {
+  @apply h-8 w-8 rounded-lg flex items-center justify-center;
+  background: hsl(24 85% 95%);
+}
+
+.action-card-icon svg {
+  @apply h-4 w-4;
+  color: hsl(24 80% 50%);
+}
+
+.dark .action-card-icon {
+  background: hsl(24 60% 20%);
+}
+
+.dark .action-card-icon svg {
+  color: hsl(24 85% 65%);
+}
+
+.action-card-label {
+  @apply text-xs font-medium;
   color: hsl(var(--foreground));
-  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.05);
 }
 
 /* ========================================
-   TRANSIÇÕES GLOBAIS
+   SCROLLBAR
    ======================================== */
 
-a, button, input, select, textarea {
-  transition-property: color, background-color, border-color, box-shadow, opacity;
-  transition-timing-function: ease;
-  transition-duration: 150ms;
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.15);
+  border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.25);
 }
 
 /* ========================================
-   PAGE LAYOUT
+   FOCUS STATES
    ======================================== */
 
-.page-container {
-  @apply space-y-6 animate-fade-in;
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.5);
+  outline-offset: 2px;
 }
 
-.page-header {
-  @apply flex items-center justify-between gap-4;
+/* ========================================
+   UTILITIES
+   ======================================== */
+
+.divider {
+  @apply h-px w-full;
+  background: hsl(var(--border));
 }
 
-.page-header-left {
-  @apply flex items-center gap-3;
+.link-primary {
+  @apply text-sm font-medium flex items-center gap-1;
+  color: hsl(var(--primary));
 }
 
-.page-header-info {
-  @apply space-y-0.5;
+.link-primary:hover {
+  opacity: 0.85;
 }
 
-.page-header-title {
-  @apply text-xl font-medium tracking-tight;
-  color: hsl(var(--foreground));
-}
-
-.page-header-subtitle {
-  @apply text-sm flex items-center gap-1.5;
-  color: hsl(var(--muted-foreground));
-}
-
-.page-header-subtitle svg {
+.link-primary svg {
   @apply h-3.5 w-3.5;
 }
 
-.page-header-actions {
-  @apply flex items-center gap-2;
-}
+/* ========================================
+   TRANSIÇÕES
+   ======================================== */
 
-/* Grid de estatísticas */
-.stats-grid {
-  @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
+a, button {
+  transition: all 0.15s ease;
 }
 
 /* ========================================
@@ -609,9 +651,8 @@ a, button, input, select, textarea {
    ======================================== */
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  * {
     animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

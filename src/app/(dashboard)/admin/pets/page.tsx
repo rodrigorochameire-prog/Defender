@@ -34,7 +34,6 @@ import {
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { LoadingPage } from "@/components/shared/loading";
-import { PageIcon } from "@/components/shared/page-icon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,20 +115,20 @@ export default function AdminPetsPage() {
     <div className="page-container">
       {/* Header */}
       <div className="page-header">
-        <div className="page-header-left">
-          <PageIcon icon={PawPrint} size="md" />
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <PawPrint />
+          </div>
           <div className="page-header-info">
-            <h1 className="page-header-title">Gestão de Pets</h1>
-            <p className="page-header-subtitle">
-              Gerencie todos os pets cadastrados
-            </p>
+            <h1>Gestão de Pets</h1>
+            <p>Gerencie todos os pets cadastrados</p>
           </div>
         </div>
       </div>
 
       {/* Stats */}
       <div className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card orange">
           <div className="stat-icon">
             <PawPrint />
           </div>
@@ -137,7 +136,7 @@ export default function AdminPetsPage() {
           <div className="stat-label">Total de pets</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card blue">
           <div className="stat-icon">
             <CheckCircle2 />
           </div>
@@ -145,7 +144,7 @@ export default function AdminPetsPage() {
           <div className="stat-label">Aprovados</div>
         </div>
 
-        <div className={`stat-card ${stats.pending > 0 ? 'highlight' : ''}`}>
+        <div className={`stat-card ${stats.pending > 0 ? 'warning alert' : 'neutral'}`}>
           <div className="stat-icon">
             <Clock />
           </div>
@@ -153,7 +152,7 @@ export default function AdminPetsPage() {
           <div className="stat-label">Pendentes</div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card orange">
           <div className="stat-icon">
             <Dog />
           </div>
