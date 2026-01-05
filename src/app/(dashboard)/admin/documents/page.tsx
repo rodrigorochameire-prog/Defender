@@ -235,22 +235,24 @@ export default function AdminDocuments() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <FolderOpen className="h-8 w-8 text-primary" />
-            Central de Documentos
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Todos os documentos e registros dos pets em um só lugar
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <FolderOpen />
+          </div>
+          <div className="page-header-info">
+            <h1>Central de Documentos</h1>
+            <p>Documentos e registros dos pets</p>
+          </div>
         </div>
-        <Button onClick={() => setIsUploadOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Documento
-        </Button>
+        <div className="page-header-actions">
+          <Button onClick={() => setIsUploadOpen(true)} size="sm" className="btn-sm btn-primary rounded-lg">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Novo Documento
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards por Categoria */}

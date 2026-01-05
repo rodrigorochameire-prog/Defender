@@ -195,38 +195,39 @@ export default function AdminWall() {
   const postsWithImages = posts?.filter(p => p.imageUrl) || [];
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <MessageCircle className="h-8 w-8 text-primary" />
-            Mural
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Comunicação com tutores e atualizações
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <MessageCircle />
+          </div>
+          <div className="page-header-info">
+            <h1>Mural</h1>
+            <p>Comunicação com tutores</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* View Toggle */}
-          <div className="flex items-center border rounded-lg p-1">
+        <div className="page-header-actions">
+          <div className="flex items-center border rounded-lg p-0.5 mr-2">
             <Button
               variant={viewMode === "feed" ? "default" : "ghost"}
               size="sm"
+              className="h-7 w-7 p-0"
               onClick={() => setViewMode("feed")}
             >
-              <List className="h-4 w-4" />
+              <List className="h-3.5 w-3.5" />
             </Button>
             <Button
               variant={viewMode === "gallery" ? "default" : "ghost"}
               size="sm"
+              className="h-7 w-7 p-0"
               onClick={() => setViewMode("gallery")}
             >
-              <Grid3X3 className="h-4 w-4" />
+              <Grid3X3 className="h-3.5 w-3.5" />
             </Button>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button onClick={() => setIsCreateDialogOpen(true)} size="sm" className="btn-sm btn-primary rounded-lg">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
             Novo Post
           </Button>
         </div>

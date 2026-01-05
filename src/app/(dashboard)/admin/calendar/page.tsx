@@ -316,73 +316,64 @@ export default function AdminCalendarPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Calendário"
-        description="Gerencie eventos, vacinações e agendamentos"
-      />
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Eventos Hoje</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{todayEvents.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {todayEvents.length === 0 ? "Nenhum evento" : "eventos agendados"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Este Mês</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{thisMonthEvents.length}</div>
-            <p className="text-xs text-muted-foreground">eventos no total</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vacinações</CardTitle>
-            <Syringe className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{upcomingVaccinations.length}</div>
-            <p className="text-xs text-muted-foreground">próximos 30 dias</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Medicamentos</CardTitle>
-            <Pill className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{upcomingMedications.length}</div>
-            <p className="text-xs text-muted-foreground">próximos 7 dias</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Preventivos</CardTitle>
-            <Shield className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{upcomingPreventives.length}</div>
-            <p className="text-xs text-muted-foreground">próximos 30 dias</p>
-          </CardContent>
-        </Card>
+    <div className="page-container">
+      {/* Header */}
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Calendar />
+          </div>
+          <div className="page-header-info">
+            <h1>Calendário</h1>
+            <p>Gerencie eventos, vacinações e agendamentos</p>
+          </div>
+        </div>
       </div>
 
-      {/* Premium Calendar - PRIMEIRO */}
+      {/* Stats */}
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+        <div className="stat-card orange">
+          <div className="stat-icon">
+            <Calendar />
+          </div>
+          <div className="stat-value">{todayEvents.length}</div>
+          <div className="stat-label">Eventos hoje</div>
+        </div>
+
+        <div className="stat-card blue">
+          <div className="stat-icon">
+            <TrendingUp />
+          </div>
+          <div className="stat-value">{thisMonthEvents.length}</div>
+          <div className="stat-label">Este mês</div>
+        </div>
+
+        <div className={`stat-card ${upcomingVaccinations.length > 0 ? "warning" : "neutral"}`}>
+          <div className="stat-icon">
+            <Syringe />
+          </div>
+          <div className="stat-value">{upcomingVaccinations.length}</div>
+          <div className="stat-label">Vacinas (30 dias)</div>
+        </div>
+
+        <div className={`stat-card ${upcomingMedications.length > 0 ? "orange" : "neutral"}`}>
+          <div className="stat-icon">
+            <Pill />
+          </div>
+          <div className="stat-value">{upcomingMedications.length}</div>
+          <div className="stat-label">Medicamentos</div>
+        </div>
+
+        <div className="stat-card blue">
+          <div className="stat-icon">
+            <Shield />
+          </div>
+          <div className="stat-value">{upcomingPreventives.length}</div>
+          <div className="stat-label">Preventivos</div>
+        </div>
+      </div>
+
+      {/* Premium Calendar */}
       <PremiumCalendar
         events={events}
         onEventClick={handleEventClick}

@@ -1,107 +1,85 @@
 import Image from "next/image";
 import Link from "next/link";
 import { LoginForm } from "./login-form";
-import { Dog, ShieldCheck, Calendar, Heart, Sparkles } from "lucide-react";
+import { Dog, ShieldCheck, Calendar, Heart } from "lucide-react";
 
 export default function LoginPage() {
   const features = [
-    { icon: Dog, text: "Gestão completa de pets", color: "text-amber-500" },
-    { icon: ShieldCheck, text: "Controle de vacinas e saúde", color: "text-rose-400" },
-    { icon: Calendar, text: "Calendário inteligente", color: "text-blue-400" },
-    { icon: Heart, text: "Cuidado personalizado", color: "text-rose-400" },
+    { icon: Dog, text: "Gestão completa de pets" },
+    { icon: ShieldCheck, text: "Controle de vacinas e saúde" },
+    { icon: Calendar, text: "Calendário inteligente" },
+    { icon: Heart, text: "Cuidado personalizado" },
   ];
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-orange-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen flex bg-background">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        {/* Soft gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-100/80 via-amber-50/60 to-rose-100/40 dark:from-slate-800/50 dark:via-slate-900/80 dark:to-slate-950" />
-        
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-blue-500/5">
         {/* Subtle decorative elements */}
         <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-orange-200/30 dark:bg-orange-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-80 h-80 bg-rose-200/20 dark:bg-rose-500/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/3 right-1/4 w-40 h-40 bg-amber-200/30 dark:bg-amber-500/10 rounded-full blur-2xl" />
+          <div className="absolute top-20 left-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
         </div>
-
-        {/* Soft pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03]" 
-          style={{ 
-            backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-            backgroundSize: '24px 24px'
-          }} 
-        />
 
         <div className="relative z-10 flex flex-col justify-center items-center w-full px-12">
           {/* Logo */}
-          <div className="mb-8 relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-rose-400/20 blur-2xl rounded-full scale-150" />
+          <div className="mb-6 relative">
             <Image
               src="/tetecare-logo.png"
               alt="Tetê Care"
-              width={100}
-              height={100}
-              className="relative rounded-2xl shadow-lg shadow-orange-200/50 dark:shadow-orange-900/30 ring-1 ring-black/5"
+              width={88}
+              height={88}
+              className="relative rounded-2xl shadow-lg ring-1 ring-border/50"
             />
           </div>
           
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-rose-500 bg-clip-text text-transparent mb-3 text-center">
+          <h1 className="text-2xl font-semibold text-foreground mb-2 text-center">
             Tetê Care
           </h1>
-          <p className="text-muted-foreground text-base text-center mb-10 max-w-sm leading-relaxed">
+          <p className="text-muted-foreground text-sm text-center mb-10 max-w-xs leading-relaxed">
             A plataforma completa para gestão de creches e daycare para pets
           </p>
 
-          {/* Features - Minimal cards */}
-          <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+          {/* Features */}
+          <div className="grid grid-cols-2 gap-2.5 w-full max-w-sm">
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="flex items-center gap-3 bg-white/60 dark:bg-slate-800/40 backdrop-blur-sm rounded-xl p-4 border border-black/5 dark:border-white/5 hover:bg-white/80 dark:hover:bg-slate-800/60 transition-all duration-300 group"
+                className="flex items-center gap-2.5 bg-card/60 backdrop-blur-sm rounded-xl p-3.5 border border-border/50 hover:border-border transition-colors"
               >
-                <div className="p-2 rounded-lg bg-slate-100/80 dark:bg-slate-700/50 group-hover:scale-105 transition-transform">
-                  <feature.icon className={`h-4 w-4 ${feature.color}`} />
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <feature.icon className="h-4 w-4 text-primary" />
                 </div>
-                <span className="text-foreground/80 text-sm font-medium">
+                <span className="text-foreground/80 text-xs font-medium">
                   {feature.text}
                 </span>
               </div>
             ))}
-          </div>
-
-          {/* Decorative footer */}
-          <div className="absolute bottom-8 flex items-center gap-2 text-muted-foreground/50 text-sm">
-            <Sparkles className="h-4 w-4" />
-            <span>Gestão moderna para seu pet</span>
           </div>
         </div>
       </div>
 
       {/* Right side - Login Form */}
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="lg:hidden flex flex-col items-center mb-10">
-            <div className="relative mb-4">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-rose-400/20 blur-xl rounded-full scale-150" />
-              <Image
-                src="/tetecare-logo.png"
-                alt="Tetê Care"
-                width={72}
-                height={72}
-                className="relative rounded-xl shadow-md ring-1 ring-black/5"
-              />
-            </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-orange-600 to-rose-500 bg-clip-text text-transparent">
+            <Image
+              src="/tetecare-logo.png"
+              alt="Tetê Care"
+              width={64}
+              height={64}
+              className="rounded-xl shadow-md ring-1 ring-border/50 mb-3"
+            />
+            <h1 className="text-lg font-semibold text-foreground">
               Tetê Care
             </h1>
           </div>
 
-          <div className="space-y-8">
-            <div className="text-center lg:text-left space-y-2">
-              <h2 className="text-2xl font-semibold text-foreground">
-                Bem-vindo de volta!
+          <div className="space-y-6">
+            <div className="text-center lg:text-left space-y-1">
+              <h2 className="text-xl font-semibold text-foreground">
+                Bem-vindo de volta
               </h2>
               <p className="text-muted-foreground text-sm">
                 Entre com sua conta para continuar

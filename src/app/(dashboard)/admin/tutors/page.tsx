@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,23 +11,16 @@ import {
   Mail, 
   Phone, 
   Dog, 
-  Shield, 
-  ShieldCheck,
-  UserCheck,
+  Crown,
+  CheckCircle2,
   Calendar,
   MoreVertical,
   Eye,
-  ArrowUpRight,
-  Sparkles,
-  Crown,
-  CheckCircle2,
-  Clock,
-  UserPlus
+  Clock
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { LoadingPage } from "@/components/shared/loading";
-import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import {
   DropdownMenu,
@@ -68,7 +60,6 @@ export default function AdminTutorsPage() {
     },
   });
 
-  // Stats summary
   const statsSummary = useMemo(() => {
     if (!tutors) return { total: 0, verified: 0, withPets: 0, totalPets: 0 };
     return {
@@ -84,256 +75,189 @@ export default function AdminTutorsPage() {
   }
 
   const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map(n => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const getAvatarGradient = (name: string) => {
-    const gradients = [
-      "from-blue-500 to-cyan-500",
-      "from-purple-500 to-pink-500",
-      "from-green-500 to-emerald-500",
-      "from-orange-500 to-amber-500",
-      "from-rose-500 to-red-500",
-      "from-indigo-500 to-violet-500",
-    ];
-    const index = name.charCodeAt(0) % gradients.length;
-    return gradients[index];
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
   return (
-    <div className="space-y-6 animate-page-in">
-      {/* Header Premium */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-purple-500/5 to-fuchsia-500/10 rounded-2xl blur-xl" />
-        <div className="relative bg-gradient-to-br from-card via-card to-violet-500/5 rounded-2xl p-6 border shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white">
-                  <Users className="h-6 w-6" />
-                </div>
-                Gestão de Tutores
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Gerencie os tutores cadastrados no sistema
-              </p>
-            </div>
+    <div className="page-container">
+      {/* Header */}
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Users />
+          </div>
+          <div className="page-header-info">
+            <h1>Gestão de Tutores</h1>
+            <p>Gerencie os tutores cadastrados</p>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold">{stats?.tutors || 0}</p>
-                <p className="text-xs text-muted-foreground mt-1">Total de Tutores</p>
-              </div>
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all">
-                <Users className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats */}
+      <div className="stats-grid">
+        <div className="stat-card blue">
+          <div className="stat-icon">
+            <Users />
+          </div>
+          <div className="stat-value">{stats?.tutors || 0}</div>
+          <div className="stat-label">Total de tutores</div>
+        </div>
 
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold text-purple-600">{stats?.admins || 0}</p>
-                <p className="text-xs text-muted-foreground mt-1">Administradores</p>
-              </div>
-              <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-all">
-                <Crown className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="stat-card orange">
+          <div className="stat-icon">
+            <Crown />
+          </div>
+          <div className="stat-value">{stats?.admins || 0}</div>
+          <div className="stat-label">Administradores</div>
+        </div>
 
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold text-green-600">{stats?.verified || 0}</p>
-                <p className="text-xs text-muted-foreground mt-1">Verificados</p>
-              </div>
-              <div className="p-2 rounded-lg bg-green-500/10 text-green-500 group-hover:bg-green-500 group-hover:text-white transition-all">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="stat-card blue">
+          <div className="stat-icon">
+            <CheckCircle2 />
+          </div>
+          <div className="stat-value">{stats?.verified || 0}</div>
+          <div className="stat-label">Verificados</div>
+        </div>
 
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold text-orange-600">{statsSummary.totalPets}</p>
-                <p className="text-xs text-muted-foreground mt-1">Pets Cadastrados</p>
-              </div>
-              <div className="p-2 rounded-lg bg-orange-500/10 text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-all">
-                <Dog className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="stat-card orange">
+          <div className="stat-icon">
+            <Dog />
+          </div>
+          <div className="stat-value">{statsSummary.totalPets}</div>
+          <div className="stat-label">Pets cadastrados</div>
+        </div>
       </div>
 
       {/* Search */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
+      <div className="section-card">
+        <div className="section-card-content pt-4">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome, email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 max-w-md"
+              className="pl-10"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Tutors Grid */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <UserCheck className="h-5 w-5 text-primary" />
+      {/* Tutors List */}
+      <div className="section-card">
+        <div className="section-card-header">
+          <div>
+            <div className="section-card-title">
+              <Users />
+              Tutores
             </div>
-            <div>
-              <CardTitle>Tutores</CardTitle>
-              <CardDescription>
-                {tutors?.length || 0} tutores encontrados
-              </CardDescription>
-            </div>
+            <div className="section-card-subtitle">{tutors?.length || 0} encontrados</div>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="section-card-content">
           {!tutors || tutors.length === 0 ? (
-            <div className="text-center py-12">
-              <Users className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-              <p className="text-lg font-medium text-muted-foreground">
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <Users />
+              </div>
+              <div className="empty-state-title">
                 {search ? "Nenhum tutor encontrado" : "Nenhum tutor cadastrado"}
-              </p>
-              <p className="text-sm text-muted-foreground/70 mt-1">
+              </div>
+              <div className="empty-state-description">
                 {search ? "Tente ajustar sua busca" : "Aguardando novos cadastros"}
-              </p>
+              </div>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {tutors.map((tutor) => (
-                <Card
+                <div
                   key={tutor.id}
-                  className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden cursor-pointer"
+                  className="p-4 rounded-xl border border-border/70 hover:border-border cursor-pointer transition-all hover:shadow-sm"
                   onClick={() => {
                     setSelectedTutor(tutor);
                     setIsDetailOpen(true);
                   }}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className={`h-12 w-12 bg-gradient-to-br ${getAvatarGradient(tutor.name)} group-hover:scale-110 transition-transform`}>
-                          <AvatarFallback className="bg-transparent text-white font-semibold">
-                            {getInitials(tutor.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-semibold">{tutor.name}</p>
-                            {tutor.emailVerified && (
-                              <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground truncate max-w-[180px]">
-                            {tutor.email}
-                          </p>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10 bg-gradient-to-br from-primary/80 to-primary">
+                        <AvatarFallback className="bg-transparent text-white text-xs font-semibold">
+                          {getInitials(tutor.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-sm">{tutor.name}</span>
+                          {tutor.emailVerified && (
+                            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                          )}
                         </div>
+                        <span className="text-xs text-muted-foreground truncate block max-w-[160px]">
+                          {tutor.email}
+                        </span>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTutor(tutor);
-                            setIsDetailOpen(true);
-                          }}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver Detalhes
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedUserId(tutor.id);
-                            setPromoteDialogOpen(true);
-                          }}>
-                            <Crown className="h-4 w-4 mr-2 text-purple-500" />
-                            Promover a Admin
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTutor(tutor);
+                          setIsDetailOpen(true);
+                        }}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          Ver Detalhes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUserId(tutor.id);
+                          setPromoteDialogOpen(true);
+                        }}>
+                          <Crown className="h-4 w-4 mr-2" />
+                          Promover a Admin
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Dog className="h-4 w-4" />
-                        <span className="font-medium">{tutor.petCount}</span> pets
-                      </div>
-                      {tutor.phone && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground truncate">
-                          <Phone className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate">{tutor.phone}</span>
-                        </div>
-                      )}
-                    </div>
+                  <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Dog className="h-3.5 w-3.5" />
+                      {tutor.petCount} pets
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {formatDate(tutor.createdAt)}
+                    </span>
+                  </div>
 
-                    <div className="mt-3 pt-3 border-t flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        Desde {formatDate(tutor.createdAt)}
-                      </div>
-                      {tutor.emailVerified ? (
-                        <Badge className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30">
-                          Verificado
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30">
-                          Pendente
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div className="mt-3 pt-3 border-t border-border/50">
+                    {tutor.emailVerified ? (
+                      <span className="badge badge-success">Verificado</span>
+                    ) : (
+                      <span className="badge badge-warning">Pendente</span>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Tutor Detail Dialog */}
+      {/* Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               {selectedTutor && (
                 <>
-                  <Avatar className={`h-10 w-10 bg-gradient-to-br ${getAvatarGradient(selectedTutor.name)}`}>
-                    <AvatarFallback className="bg-transparent text-white font-semibold">
+                  <Avatar className="h-9 w-9 bg-gradient-to-br from-primary/80 to-primary">
+                    <AvatarFallback className="bg-transparent text-white text-xs font-semibold">
                       {getInitials(selectedTutor.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -341,34 +265,32 @@ export default function AdminTutorsPage() {
                 </>
               )}
             </DialogTitle>
-            <DialogDescription>
-              Detalhes do tutor
-            </DialogDescription>
+            <DialogDescription>Detalhes do tutor</DialogDescription>
           </DialogHeader>
 
           {selectedTutor && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
                     <Mail className="h-3 w-3" /> Email
                   </p>
                   <p className="font-medium text-sm truncate">{selectedTutor.email}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
                     <Phone className="h-3 w-3" /> Telefone
                   </p>
-                  <p className="font-medium text-sm">{selectedTutor.phone || "Não informado"}</p>
+                  <p className="font-medium text-sm">{selectedTutor.phone || "—"}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
                     <Dog className="h-3 w-3" /> Pets
                   </p>
                   <p className="font-medium text-sm">{selectedTutor.petCount} cadastrados</p>
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
                     <Calendar className="h-3 w-3" /> Cadastro
                   </p>
                   <p className="font-medium text-sm">{formatDate(selectedTutor.createdAt)}</p>
@@ -377,34 +299,30 @@ export default function AdminTutorsPage() {
 
               <div className="p-3 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground mb-2">Status</p>
-                <div className="flex items-center gap-2">
-                  {selectedTutor.emailVerified ? (
-                    <Badge className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Email Verificado
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30">
-                      <Clock className="h-3 w-3 mr-1" />
-                      Aguardando Verificação
-                    </Badge>
-                  )}
-                </div>
+                {selectedTutor.emailVerified ? (
+                  <span className="badge badge-success flex items-center gap-1 w-fit">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Email Verificado
+                  </span>
+                ) : (
+                  <span className="badge badge-warning flex items-center gap-1 w-fit">
+                    <Clock className="h-3 w-3" />
+                    Aguardando Verificação
+                  </span>
+                )}
               </div>
 
-              <div className="flex gap-2 pt-2">
-                <Button
-                  className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 hover:opacity-90"
-                  onClick={() => {
-                    setSelectedUserId(selectedTutor.id);
-                    setIsDetailOpen(false);
-                    setPromoteDialogOpen(true);
-                  }}
-                >
-                  <Crown className="h-4 w-4 mr-2" />
-                  Promover a Admin
-                </Button>
-              </div>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setSelectedUserId(selectedTutor.id);
+                  setIsDetailOpen(false);
+                  setPromoteDialogOpen(true);
+                }}
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                Promover a Admin
+              </Button>
             </div>
           )}
         </DialogContent>
@@ -415,7 +333,7 @@ export default function AdminTutorsPage() {
         open={promoteDialogOpen}
         onOpenChange={setPromoteDialogOpen}
         title="Promover a Administrador"
-        description="Tem certeza que deseja promover este usuário a administrador? Ele terá acesso completo ao sistema."
+        description="Tem certeza que deseja promover este usuário a administrador?"
         confirmLabel="Promover"
         onConfirm={() => {
           if (selectedUserId) {

@@ -197,28 +197,30 @@ export default function AdminHealthPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Heart className="h-8 w-8 text-red-500" />
-            Central de Saúde
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie vacinas, medicamentos e preventivos dos pets
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Heart />
+          </div>
+          <div className="page-header-info">
+            <h1>Central de Saúde</h1>
+            <p>Gerencie vacinas, medicamentos e preventivos</p>
+          </div>
         </div>
       </div>
 
       {/* Alertas */}
       {((overduePreventives?.length || 0) > 0 || (vaccineStats?.overdue || 0) > 0) && (
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="flex items-center gap-4 py-4">
-            <AlertTriangle className="h-8 w-8 text-destructive" />
-            <div className="flex-1">
-              <p className="font-medium text-destructive">Atenção! Existem tratamentos atrasados</p>
-              <div className="flex gap-4 mt-1 text-sm text-muted-foreground">
+        <div className="p-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-red-100 dark:bg-red-900/40">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <p className="font-medium text-sm text-red-700 dark:text-red-300">Tratamentos atrasados</p>
+              <div className="flex gap-3 mt-0.5 text-xs text-red-600/80 dark:text-red-400/80">
                 {(vaccineStats?.overdue || 0) > 0 && (
                   <span>{vaccineStats?.overdue} vacina(s) vencida(s)</span>
                 )}
@@ -227,52 +229,43 @@ export default function AdminHealthPage() {
                 )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vacinas Próximas</CardTitle>
-            <Syringe className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{vaccineStats?.upcoming || 0}</div>
-            <p className="text-xs text-muted-foreground">nos próximos 30 dias</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Preventivos Próximos</CardTitle>
-            <Shield className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{preventiveStats?.upcoming || 0}</div>
-            <p className="text-xs text-muted-foreground">nos próximos 30 dias</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Antipulgas</CardTitle>
-            <Bug className="h-4 w-4 text-amber-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{preventiveStats?.flea || 0}</div>
-            <p className="text-xs text-muted-foreground">registros</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vermífugos</CardTitle>
-            <Droplets className="h-4 w-4 text-rose-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{preventiveStats?.deworming || 0}</div>
-            <p className="text-xs text-muted-foreground">registros</p>
-          </CardContent>
-        </Card>
+      <div className="stats-grid">
+        <div className="stat-card blue">
+          <div className="stat-icon">
+            <Syringe />
+          </div>
+          <div className="stat-value">{vaccineStats?.upcoming || 0}</div>
+          <div className="stat-label">Vacinas próximas</div>
+        </div>
+        
+        <div className="stat-card orange">
+          <div className="stat-icon">
+            <Shield />
+          </div>
+          <div className="stat-value">{preventiveStats?.upcoming || 0}</div>
+          <div className="stat-label">Preventivos próximos</div>
+        </div>
+        
+        <div className="stat-card blue">
+          <div className="stat-icon">
+            <Sparkles />
+          </div>
+          <div className="stat-value">{preventiveStats?.flea || 0}</div>
+          <div className="stat-label">Antipulgas</div>
+        </div>
+        
+        <div className="stat-card orange">
+          <div className="stat-icon">
+            <CircleDot />
+          </div>
+          <div className="stat-value">{preventiveStats?.deworming || 0}</div>
+          <div className="stat-label">Vermífugos</div>
+        </div>
       </div>
 
       {/* Main Tabs */}
