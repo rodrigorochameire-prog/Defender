@@ -44,88 +44,78 @@ export default function AdminAuditLogsPage() {
   const logs = logsData?.logs || [];
 
   return (
-    <div className="container max-w-7xl py-8 space-y-6 animate-fade-in">
+    <div className="page-container">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Shield className="h-8 w-8 text-primary" />
-          Logs de Auditoria
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Auditoria de ações críticas realizadas por administradores
-        </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Shield />
+          </div>
+          <div className="page-header-info">
+            <h1>Logs de Auditoria</h1>
+            <p>Ações críticas dos administradores</p>
+          </div>
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Logs</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.total || 0}</div>
-            <p className="text-xs text-muted-foreground">Últimos 30 dias</p>
-          </CardContent>
-        </Card>
+      <div className="stats-grid grid-cols-4">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="title">Total de Logs</span>
+            <FileText className="icon text-primary" />
+          </div>
+          <div className="stat-card-value">{stats?.total || 0}</div>
+          <p className="stat-card-description">Últimos 30 dias</p>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ações Bem-sucedidas</CardTitle>
-            <UserPlus className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats?.successful || 0}</div>
-            <p className="text-xs text-muted-foreground">Concluídas com sucesso</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="title">Bem-sucedidas</span>
+            <UserPlus className="icon text-green-500" />
+          </div>
+          <div className="stat-card-value">{stats?.successful || 0}</div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ações com Erro</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats?.failed || 0}</div>
-            <p className="text-xs text-muted-foreground">Com falha ou negadas</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="title">Com Erro</span>
+            <AlertCircle className="icon text-rose-500" />
+          </div>
+          <div className="stat-card-value">{stats?.failed || 0}</div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Usuários Únicos</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.uniqueUsers || 0}</div>
-            <p className="text-xs text-muted-foreground">Administradores ativos</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="title">Usuários Únicos</span>
+            <User className="icon text-blue-500" />
+          </div>
+          <div className="stat-card-value">{stats?.uniqueUsers || 0}</div>
+        </div>
       </div>
 
       {/* Logs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Histórico de Ações Administrativas
+      <Card className="section-card">
+        <CardHeader className="section-card-header">
+          <CardTitle className="section-card-title">
+            <FileText className="icon" />
+            Histórico de Ações
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="section-card-description">
             {logs.length} ações registradas
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="section-card-content">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : logs.length === 0 ? (
-            <div className="text-center py-12">
-              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Nenhum log registrado ainda</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Os logs de auditoria aparecerão aqui quando ações administrativas forem realizadas
-              </p>
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <AlertCircle />
+              </div>
+              <p className="empty-state-text">Nenhum log registrado</p>
             </div>
           ) : (
             <ScrollArea className="h-[600px]">

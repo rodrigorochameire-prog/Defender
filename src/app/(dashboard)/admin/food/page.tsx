@@ -7,18 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ShoppingBag, Package, TrendingDown, AlertTriangle, Plus, Loader2, Apple } from "lucide-react";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { UtensilsCrossed, Package, TrendingDown, AlertTriangle, Plus, Dog } from "lucide-react";
+import { toast } from "sonner";
+import { LoadingPage } from "@/components/shared/loading";
+import Image from "next/image";
 
 export default function AdminFoodPage() {
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
   const [stockAmount, setStockAmount] = useState("");
   const [purchaseNotes, setPurchaseNotes] = useState("");
 
-  // Queries
-  const { data: pets, isLoading: petsLoading } = trpc.pets.list.useQuery();
+  const { data: pets, isLoading } = trpc.pets.list.useQuery();
 
   // Calculate daily consumption
   const totalDailyConsumption = pets?.reduce((sum, pet) => {
@@ -27,7 +28,7 @@ export default function AdminFoodPage() {
 
   const dailyConsumptionKg = totalDailyConsumption / 1000;
 
-  // Mock stock data (será implementado com o router correto)
+  // Mock stock data
   const currentStockKg = 25;
   const daysRemaining = dailyConsumptionKg > 0 ? Math.floor(currentStockKg / dailyConsumptionKg) : 0;
 
@@ -40,20 +41,14 @@ export default function AdminFoodPage() {
       toast.error("Por favor, insira uma quantidade válida.");
       return;
     }
-
-    // TODO: Implementar mutation
     toast.success("Estoque atualizado com sucesso!");
     setIsAddStockOpen(false);
     setStockAmount("");
     setPurchaseNotes("");
   };
 
-  if (petsLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+  if (isLoading) {
+    return <LoadingPage />;
   }
 
   return (
@@ -62,171 +57,155 @@ export default function AdminFoodPage() {
       <div className="page-header">
         <div className="page-header-content">
           <div className="page-header-icon">
-            <Apple />
+            <UtensilsCrossed />
           </div>
           <div className="page-header-info">
             <h1>Gestão de Ração</h1>
-            <p>Controle individual de ração por pet</p>
+            <p>Controle individual por pet</p>
           </div>
         </div>
-        <Dialog open={isAddStockOpen} onOpenChange={setIsAddStockOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Adicionar Estoque
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Adicionar Estoque de Ração</DialogTitle>
-              <DialogDescription>
-                Registre a compra ou entrada de ração no estoque da creche
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Quantidade (kg)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.1"
-                  placeholder="Ex: 20.0"
-                  value={stockAmount}
-                  onChange={(e) => setStockAmount(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="notes">Observações (opcional)</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Ex: Compra da marca XYZ, nota fiscal 12345"
-                  value={purchaseNotes}
-                  onChange={(e) => setPurchaseNotes(e.target.value)}
-                  rows={3}
-                />
-              </div>
-              <Button onClick={handleAddStock} className="w-full">
-                Adicionar ao Estoque
+        <div className="page-header-actions">
+          <Dialog open={isAddStockOpen} onOpenChange={setIsAddStockOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="btn-primary">
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                Adicionar Estoque
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Adicionar Estoque</DialogTitle>
+                <DialogDescription>
+                  Registre a entrada de ração no estoque
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Quantidade (kg)</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.1"
+                    placeholder="Ex: 20.0"
+                    value={stockAmount}
+                    onChange={(e) => setStockAmount(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Observações (opcional)</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Ex: Compra da marca XYZ"
+                    value={purchaseNotes}
+                    onChange={(e) => setPurchaseNotes(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+                <Button onClick={handleAddStock} className="w-full btn-primary">
+                  Confirmar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className={isCriticalStock ? "border-red-200 bg-red-50/50" : isLowStock ? "border-orange-200 bg-orange-50/50" : ""}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Estoque Atual</CardTitle>
-            <Package className={`w-5 h-5 ${isCriticalStock ? "text-red-600" : isLowStock ? "text-orange-600" : "text-primary"}`} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{currentStockKg.toFixed(1)} kg</div>
-            <div className="flex items-center gap-2 mt-2">
-              {isCriticalStock && (
-                <Badge variant="destructive" className="gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  Estoque crítico
-                </Badge>
-              )}
-              {!isCriticalStock && isLowStock && (
-                <Badge className="gap-1 bg-orange-100 text-orange-800 border-orange-300">
-                  <AlertTriangle className="w-3 h-3" />
-                  Estoque baixo
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats */}
+      <div className="stats-grid grid-cols-3">
+        <div className={`stat-card ${isCriticalStock ? "alert" : ""}`}>
+          <div className="stat-card-header">
+            <span className="title">Estoque Atual</span>
+            <Package className={`icon ${isCriticalStock ? "text-rose-500" : isLowStock ? "text-amber-500" : "text-primary"}`} />
+          </div>
+          <div className="stat-card-value">{currentStockKg.toFixed(1)} kg</div>
+          {isCriticalStock && (
+            <Badge className="badge-rose mt-2">Estoque crítico</Badge>
+          )}
+          {!isCriticalStock && isLowStock && (
+            <Badge className="badge-amber mt-2">Estoque baixo</Badge>
+          )}
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Consumo Diário</CardTitle>
-            <TrendingDown className="w-5 h-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{dailyConsumptionKg.toFixed(1)} kg</div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {totalDailyConsumption}g total dos {pets?.length || 0} pets
-            </p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="title">Consumo Diário</span>
+            <TrendingDown className="icon text-blue-500" />
+          </div>
+          <div className="stat-card-value">{dailyConsumptionKg.toFixed(1)} kg</div>
+          <p className="stat-card-description">{pets?.length || 0} pets cadastrados</p>
+        </div>
 
-        <Card className={isCriticalStock ? "border-red-200 bg-red-50/50" : isLowStock ? "border-orange-200 bg-orange-50/50" : ""}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Dias Restantes</CardTitle>
-            <ShoppingBag className={`w-5 h-5 ${isCriticalStock ? "text-red-600" : isLowStock ? "text-orange-600" : "text-primary"}`} />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-3xl font-bold ${isCriticalStock ? "text-red-600" : isLowStock ? "text-orange-600" : ""}`}>
-              {daysRemaining}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {isCriticalStock
-                ? "Comprar ração urgente!"
-                : isLowStock
-                ? "Programar compra em breve"
-                : "Estoque suficiente"}
-            </p>
-          </CardContent>
-        </Card>
+        <div className={`stat-card ${isCriticalStock ? "alert" : ""}`}>
+          <div className="stat-card-header">
+            <span className="title">Dias Restantes</span>
+            <AlertTriangle className={`icon ${isCriticalStock ? "text-rose-500" : isLowStock ? "text-amber-500" : "text-primary"}`} />
+          </div>
+          <div className="stat-card-value">{daysRemaining}</div>
+          <p className="stat-card-description">
+            {isCriticalStock ? "Comprar urgente!" : isLowStock ? "Programar compra" : "Estoque OK"}
+          </p>
+        </div>
       </div>
 
-      {/* Pets Food Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Ração Individual por Pet</CardTitle>
-          <CardDescription>
-            Cada pet tem sua própria ração (marca e quantidade) fornecida pelo tutor
+      {/* Pets Food List */}
+      <Card className="section-card">
+        <CardHeader className="section-card-header">
+          <CardTitle className="section-card-title">
+            <Dog className="icon" />
+            Ração por Pet
+          </CardTitle>
+          <CardDescription className="section-card-description">
+            Cada pet tem sua própria ração fornecida pelo tutor
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="section-card-content">
           {pets && pets.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {pets.map((pet) => (
                 <div
                   key={pet.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                  className="list-item border rounded-xl p-4"
                 >
                   <div className="flex items-center gap-4">
                     {pet.photoUrl ? (
-                      <img
-                        src={pet.photoUrl}
-                        alt={pet.name}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
-                      />
+                      <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                        <Image
+                          src={pet.photoUrl}
+                          alt={pet.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <ShoppingBag className="w-6 h-6 text-primary" />
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Dog className="h-5 w-5 text-primary" />
                       </div>
                     )}
-                    <div>
-                      <div className="font-semibold">{pet.name}</div>
-                      <div className="text-sm text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold">{pet.name}</p>
+                      <p className="text-sm text-muted-foreground">
                         {pet.breed || "Raça não informada"}
-                      </div>
+                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <div className="font-bold text-lg">
-                        {pet.foodAmount ? `${pet.foodAmount}g` : "Não configurado"}
-                      </div>
-                      <div className="text-xs text-muted-foreground">por dia</div>
+                      <p className="font-bold text-lg">
+                        {pet.foodAmount ? `${pet.foodAmount}g` : "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">por dia</p>
                     </div>
                     {pet.foodBrand && (
-                      <Badge variant="outline" className="ml-2">
-                        {pet.foodBrand}
-                      </Badge>
+                      <Badge className="badge-neutral">{pet.foodBrand}</Badge>
                     )}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhum pet cadastrado ainda</p>
+            <div className="empty-state">
+              <Dog className="empty-state-icon" />
+              <p className="empty-state-text">Nenhum pet cadastrado</p>
             </div>
           )}
         </CardContent>

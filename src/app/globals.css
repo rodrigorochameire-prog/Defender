@@ -87,21 +87,21 @@
   
   html {
     scroll-behavior: smooth;
-    font-size: 15px;
+    font-size: 16px;
   }
   
   body {
     @apply bg-background text-foreground antialiased;
-    line-height: 1.5;
+    line-height: 1.6;
     letter-spacing: -0.01em;
   }
 
-  h1 { @apply text-xl font-semibold tracking-tight text-foreground; }
-  h2 { @apply text-lg font-semibold text-foreground; }
-  h3 { @apply text-base font-medium text-foreground; }
-  h4 { @apply text-sm font-medium text-foreground; }
-  p, span, label { @apply text-sm; }
-  small { @apply text-xs; }
+  h1 { @apply text-2xl font-semibold tracking-tight text-foreground; }
+  h2 { @apply text-xl font-semibold text-foreground; }
+  h3 { @apply text-lg font-medium text-foreground; }
+  h4 { @apply text-base font-medium text-foreground; }
+  p, span, label { @apply text-base; }
+  small { @apply text-sm; }
 }
 
 /* ========================================
@@ -122,7 +122,7 @@
    ======================================== */
 
 .page-container {
-  @apply space-y-6 animate-fade-in p-1;
+  @apply space-y-6 animate-fade-in;
 }
 
 /* ========================================
@@ -130,29 +130,29 @@
    ======================================== */
 
 .page-header {
-  @apply flex items-center justify-between gap-4 pb-2;
+  @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-2;
 }
 
 .page-header-content {
-  @apply flex items-center gap-3;
+  @apply flex items-center gap-4;
 }
 
 .page-header-icon {
-  @apply h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0;
-  background: hsl(var(--primary));
+  @apply h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85));
 }
 
 .page-header-icon svg {
-  @apply h-5 w-5 text-white;
+  @apply h-6 w-6 text-white;
   stroke-width: 2;
 }
 
 .page-header-info h1 {
-  @apply text-lg font-semibold tracking-tight;
+  @apply text-xl font-semibold tracking-tight;
 }
 
 .page-header-info p {
-  @apply text-xs text-muted-foreground mt-0.5;
+  @apply text-sm text-muted-foreground mt-0.5;
 }
 
 .page-header-actions {
@@ -163,25 +163,42 @@
    CARDS DE ESTATÍSTICAS
    ======================================== */
 
+.stats-grid {
+  @apply grid grid-cols-2 lg:grid-cols-4 gap-4;
+}
+
 .stats-row {
-  @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
+  @apply grid grid-cols-2 lg:grid-cols-4 gap-4;
 }
 
 .stat-card {
-  @apply rounded-lg p-4 border bg-card;
+  @apply rounded-xl p-5 border bg-card transition-all;
   border-color: hsl(var(--border));
 }
 
+.stat-card:hover {
+  @apply shadow-sm;
+  transform: translateY(-1px);
+}
+
 .stat-card-header {
-  @apply flex items-center justify-between mb-2;
+  @apply flex items-center justify-between mb-3;
+}
+
+.stat-card-header .title {
+  @apply text-sm font-medium text-muted-foreground;
+}
+
+.stat-card-header .icon {
+  @apply h-5 w-5;
 }
 
 .stat-card-title {
-  @apply text-xs font-medium text-muted-foreground;
+  @apply text-sm font-medium text-muted-foreground;
 }
 
 .stat-card-icon {
-  @apply h-4 w-4;
+  @apply h-5 w-5;
 }
 
 .stat-card-icon.primary { color: hsl(var(--primary)); }
@@ -191,11 +208,22 @@
 .stat-card-icon.muted { color: hsl(var(--muted-foreground)); }
 
 .stat-card-value {
-  @apply text-2xl font-bold tracking-tight text-foreground;
+  @apply text-3xl font-bold tracking-tight text-foreground;
 }
 
 .stat-card-description {
-  @apply text-xs text-muted-foreground mt-0.5;
+  @apply text-sm text-muted-foreground mt-1;
+}
+
+/* Variante Alert */
+.stat-card.alert {
+  border-color: hsl(45 93% 75% / 0.6);
+  background: hsl(45 100% 98%);
+}
+
+.dark .stat-card.alert {
+  border-color: hsl(45 70% 40% / 0.4);
+  background: hsl(45 40% 10%);
 }
 
 /* Variante com destaque */
@@ -222,30 +250,35 @@
    ======================================== */
 
 .section-card {
-  @apply rounded-lg border bg-card overflow-hidden;
+  @apply rounded-xl border bg-card overflow-hidden;
   border-color: hsl(var(--border));
 }
 
 .section-card-header {
-  @apply flex items-center justify-between px-4 py-3 border-b;
+  @apply flex items-center justify-between px-5 py-4 border-b;
   border-color: hsl(var(--border));
 }
 
 .section-card-title {
-  @apply flex items-center gap-2 text-sm font-medium text-foreground;
+  @apply flex items-center gap-2.5 text-base font-semibold text-foreground;
 }
 
+.section-card-title .icon,
 .section-card-title svg {
-  @apply h-4 w-4;
+  @apply h-5 w-5;
   color: hsl(var(--primary));
 }
 
+.section-card-description {
+  @apply text-sm text-muted-foreground mt-0.5;
+}
+
 .section-card-subtitle {
-  @apply text-xs text-muted-foreground;
+  @apply text-sm text-muted-foreground;
 }
 
 .section-card-action {
-  @apply text-xs font-medium flex items-center gap-1 transition-colors;
+  @apply text-sm font-medium flex items-center gap-1.5 transition-colors;
   color: hsl(var(--primary));
 }
 
@@ -254,11 +287,11 @@
 }
 
 .section-card-action svg {
-  @apply h-3 w-3;
+  @apply h-3.5 w-3.5;
 }
 
 .section-card-content {
-  @apply p-4;
+  @apply p-5;
 }
 
 /* ========================================
@@ -310,7 +343,12 @@
    ======================================== */
 
 .badge {
-  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
+  @apply inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium;
+}
+
+.badge-neutral {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
 }
 
 .badge-default {
@@ -323,8 +361,48 @@
   color: hsl(var(--primary));
 }
 
+.badge-green {
+  background: hsl(142 76% 95%);
+  color: hsl(142 71% 35%);
+}
+
+.dark .badge-green {
+  background: hsl(142 71% 45% / 0.15);
+  color: hsl(142 71% 55%);
+}
+
+.badge-blue {
+  background: hsl(217 91% 95%);
+  color: hsl(217 91% 45%);
+}
+
+.dark .badge-blue {
+  background: hsl(217 91% 60% / 0.15);
+  color: hsl(217 91% 65%);
+}
+
+.badge-amber {
+  background: hsl(45 100% 94%);
+  color: hsl(45 80% 30%);
+}
+
+.dark .badge-amber {
+  background: hsl(45 93% 47% / 0.15);
+  color: hsl(45 85% 55%);
+}
+
+.badge-rose {
+  background: hsl(0 85% 95%);
+  color: hsl(0 72% 45%);
+}
+
+.dark .badge-rose {
+  background: hsl(0 72% 51% / 0.15);
+  color: hsl(0 72% 60%);
+}
+
 .badge-success {
-  background: hsl(142 71% 45% / 0.1);
+  background: hsl(142 76% 95%);
   color: hsl(142 71% 35%);
 }
 
@@ -334,7 +412,7 @@
 }
 
 .badge-warning {
-  background: hsl(45 93% 47% / 0.1);
+  background: hsl(45 100% 94%);
   color: hsl(45 80% 30%);
 }
 
@@ -344,7 +422,7 @@
 }
 
 .badge-error {
-  background: hsl(0 72% 51% / 0.1);
+  background: hsl(0 85% 95%);
   color: hsl(0 72% 45%);
 }
 

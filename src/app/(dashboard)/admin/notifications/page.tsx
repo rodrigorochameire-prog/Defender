@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +14,7 @@ import {
   FileText,
   MessageSquare,
   AlertCircle,
-  Info,
-  Sparkles
 } from "lucide-react";
-import { useState } from "react";
 
 const mockNotifications = [
   {
@@ -27,7 +25,6 @@ const mockNotifications = [
     time: "Há 5 minutos",
     read: false,
     icon: Dog,
-    color: "text-orange-500 bg-orange-500/10",
   },
   {
     id: 2,
@@ -37,7 +34,6 @@ const mockNotifications = [
     time: "Há 1 hora",
     read: false,
     icon: Calendar,
-    color: "text-blue-500 bg-blue-500/10",
   },
   {
     id: 3,
@@ -47,7 +43,6 @@ const mockNotifications = [
     time: "Há 3 horas",
     read: true,
     icon: FileText,
-    color: "text-green-500 bg-green-500/10",
   },
   {
     id: 4,
@@ -57,7 +52,6 @@ const mockNotifications = [
     time: "Ontem",
     read: true,
     icon: MessageSquare,
-    color: "text-purple-500 bg-purple-500/10",
   },
 ];
 
@@ -77,141 +71,112 @@ export default function AdminNotificationsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Bell className="h-8 w-8 text-primary" />
-            Notificações
-            {unreadCount > 0 && (
-              <Badge className="bg-red-500 text-white">
-                {unreadCount} novas
-              </Badge>
-            )}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Acompanhe todas as atualizações do sistema
-          </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Bell />
+          </div>
+          <div className="page-header-info">
+            <h1 className="flex items-center gap-2">
+              Notificações
+              {unreadCount > 0 && (
+                <Badge className="badge-rose">{unreadCount} novas</Badge>
+              )}
+            </h1>
+            <p>Acompanhe as atualizações do sistema</p>
+          </div>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" onClick={markAllAsRead} className="gap-2">
-            <CheckCheck className="h-4 w-4" />
-            Marcar todas como lidas
-          </Button>
+          <div className="page-header-actions">
+            <Button variant="outline" size="sm" onClick={markAllAsRead}>
+              <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
+              Marcar todas como lidas
+            </Button>
+          </div>
         )}
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold">{notifications.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">Total</p>
-              </div>
-              <div className="p-2 rounded-lg bg-muted text-muted-foreground">
-                <Bell className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="stats-grid grid-cols-4">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="title">Total</span>
+            <Bell className="icon text-primary" />
+          </div>
+          <div className="stat-card-value">{notifications.length}</div>
+        </div>
 
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold text-red-500">{unreadCount}</p>
-                <p className="text-xs text-muted-foreground mt-1">Não lidas</p>
-              </div>
-              <div className="p-2 rounded-lg bg-red-500/10 text-red-500">
-                <AlertCircle className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className={`stat-card ${unreadCount > 0 ? "alert" : ""}`}>
+          <div className="stat-card-header">
+            <span className="title">Não lidas</span>
+            <AlertCircle className={`icon ${unreadCount > 0 ? "text-rose-500" : "text-muted-foreground"}`} />
+          </div>
+          <div className="stat-card-value">{unreadCount}</div>
+        </div>
 
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold text-green-500">
-                  {notifications.filter(n => n.read).length}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">Lidas</p>
-              </div>
-              <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
-                <Check className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="title">Lidas</span>
+            <Check className="icon text-green-500" />
+          </div>
+          <div className="stat-card-value">{notifications.filter(n => n.read).length}</div>
+        </div>
 
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold text-blue-500">Hoje</p>
-                <p className="text-xs text-muted-foreground mt-1">Última atividade</p>
-              </div>
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
-                <Info className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="title">Última</span>
+            <Calendar className="icon text-blue-500" />
+          </div>
+          <div className="stat-card-value text-xl">Hoje</div>
+        </div>
       </div>
 
       {/* Notifications List */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Sparkles className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle>Atividades Recentes</CardTitle>
-              <CardDescription>
-                Suas notificações dos últimos dias
-              </CardDescription>
-            </div>
-          </div>
+      <Card className="section-card">
+        <CardHeader className="section-card-header">
+          <CardTitle className="section-card-title">
+            <Bell className="icon" />
+            Atividades Recentes
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="section-card-content">
           {notifications.length === 0 ? (
-            <div className="text-center py-12">
-              <BellOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhuma notificação</p>
+            <div className="empty-state">
+              <BellOff className="empty-state-icon" />
+              <p className="empty-state-text">Nenhuma notificação</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {notifications.map((notification) => {
                 const Icon = notification.icon;
                 return (
                   <div
                     key={notification.id}
-                    className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
+                    className={`list-item border rounded-xl p-4 cursor-pointer transition-all ${
                       !notification.read 
-                        ? "bg-primary/5 border-primary/20" 
-                        : "bg-muted/30 border-transparent hover:border-border"
+                        ? "bg-primary/5 border-primary/20 hover:border-primary/40" 
+                        : "hover:bg-muted/50"
                     }`}
                     onClick={() => markAsRead(notification.id)}
                   >
-                    <div className={`p-2 rounded-lg ${notification.color}`}>
-                      <Icon className="h-5 w-5" />
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="p-2 rounded-lg bg-muted">
+                        <Icon className="h-5 w-5 text-muted-foreground" />
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold">{notification.title}</p>
                         {!notification.read && (
-                          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                          <span className="w-2 h-2 rounded-full bg-primary" />
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-muted-foreground mt-0.5">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-muted-foreground/70 mt-2">
+                      <p className="text-xs text-muted-foreground/70 mt-1.5">
                         {notification.time}
                       </p>
                     </div>
@@ -219,6 +184,7 @@ export default function AdminNotificationsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="flex-shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           markAsRead(notification.id);

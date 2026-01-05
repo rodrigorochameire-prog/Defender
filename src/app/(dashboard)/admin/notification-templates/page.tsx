@@ -103,24 +103,26 @@ export default function AdminNotificationTemplatesPage() {
   }
 
   return (
-    <div className="container max-w-7xl py-8 animate-fade-in">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Bell className="h-8 w-8 text-primary" />
-            Templates de Notificações
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Personalize as mensagens automáticas enviadas aos tutores
-          </p>
+    <div className="page-container">
+      {/* Header */}
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="page-header-icon">
+            <Bell />
+          </div>
+          <div className="page-header-info">
+            <h1>Templates de Notificações</h1>
+            <p>Personalize mensagens automáticas</p>
+          </div>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Template
-            </Button>
-          </DialogTrigger>
+        <div className="page-header-actions">
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="btn-primary">
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                Novo Template
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Criar Novo Template</DialogTitle>
@@ -176,51 +178,48 @@ export default function AdminNotificationTemplatesPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Templates Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {templates?.map((template: any) => (
-          <Card key={template.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{template.title}</CardTitle>
-                  <CardDescription className="mt-1">
-                    {template.type}
-                  </CardDescription>
-                </div>
-                <Badge variant={template.isActive ? "default" : "secondary"}>
-                  {template.isActive ? "Ativo" : "Inativo"}
-                </Badge>
+          <div key={template.id} className="p-5 rounded-xl border bg-card hover:border-primary/30 hover:shadow-sm transition-all">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <p className="font-semibold">{template.title}</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {template.type}
+                </p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                {template.content}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setEditingTemplate(template);
-                    setIsEditDialogOpen(true);
-                  }}
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Editar
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDelete(template.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              <Badge className={template.isActive ? "badge-green" : "badge-neutral"}>
+                {template.isActive ? "Ativo" : "Inativo"}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+              {template.content}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditingTemplate(template);
+                  setIsEditDialogOpen(true);
+                }}
+              >
+                <Edit className="h-3.5 w-3.5 mr-1.5" />
+                Editar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDelete(template.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+              </Button>
+            </div>
+          </div>
         ))}
       </div>
 
