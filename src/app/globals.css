@@ -3,122 +3,121 @@
 @tailwind utilities;
 
 /* ========================================
-   TETECARE - DESIGN SYSTEM
-   Suave, Sofisticado, Minimalista
-   Paleta: Laranja, Azul, Branco, Preto
+   TETECARE - DESIGN SYSTEM REFINADO
+   Harmonioso • Delicado • Minimalista
    ======================================== */
 
 @layer base {
   :root {
     /* ===== MODO CLARO - Suave e Acolhedor ===== */
     
-    /* Backgrounds - Tom creme suave */
-    --background: 40 33% 98%;
-    --foreground: 220 20% 15%;
+    /* Backgrounds - Creme muito suave */
+    --background: 40 20% 98%;
+    --foreground: 220 15% 20%;
     
-    /* Cards - Branco com leve calor */
+    /* Cards - Branco puro, limpo */
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 220 15% 20%;
     
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 220 15% 20%;
     
-    /* Primary - Laranja TeteCare (suave) */
-    --primary: 24 85% 55%;
+    /* Primary - Laranja TeteCare suavizado */
+    --primary: 24 80% 52%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Azul suave */
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 210 30% 25%;
+    /* Secondary - Cinza azulado muito suave */
+    --secondary: 220 20% 96%;
+    --secondary-foreground: 220 15% 35%;
     
-    /* Muted - Cinza quente */
-    --muted: 40 20% 95%;
-    --muted-foreground: 220 10% 50%;
+    /* Muted - Cinza quente, delicado */
+    --muted: 40 15% 95%;
+    --muted-foreground: 220 10% 55%;
     
-    /* Accent - Azul claro */
-    --accent: 210 50% 95%;
-    --accent-foreground: 210 40% 30%;
+    /* Accent - Tom neutro */
+    --accent: 220 15% 95%;
+    --accent-foreground: 220 15% 35%;
     
     /* Destructive */
-    --destructive: 0 70% 55%;
+    --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Borders - Muito suave */
-    --border: 40 15% 90%;
-    --input: 40 15% 90%;
-    --ring: 24 85% 55%;
+    /* Borders - Ultra suave */
+    --border: 220 15% 92%;
+    --input: 220 15% 92%;
+    --ring: 24 80% 52%;
     
-    /* Radius - Mais arredondado para suavidade */
-    --radius: 0.875rem;
+    /* Radius - Cantos suaves */
+    --radius: 0.75rem;
     
-    /* Chart colors - Harmonizados */
-    --chart-1: 24 85% 55%;
-    --chart-2: 210 70% 50%;
-    --chart-3: 160 50% 45%;
-    --chart-4: 45 80% 55%;
-    --chart-5: 340 65% 55%;
+    /* Chart colors - Tons pastel harmoniosos */
+    --chart-1: 24 70% 55%;
+    --chart-2: 200 60% 55%;
+    --chart-3: 160 45% 50%;
+    --chart-4: 45 65% 55%;
+    --chart-5: 280 45% 55%;
 
-    /* Sidebar Light - Limpo e elegante */
+    /* Sidebar Light */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 20% 20%;
-    --sidebar-primary: 24 85% 55%;
+    --sidebar-foreground: 220 15% 25%;
+    --sidebar-primary: 24 80% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 30% 96%;
-    --sidebar-accent-foreground: 220 20% 25%;
-    --sidebar-border: 40 15% 92%;
-    --sidebar-ring: 24 85% 55%;
+    --sidebar-accent: 220 15% 96%;
+    --sidebar-accent-foreground: 220 15% 35%;
+    --sidebar-border: 220 15% 93%;
+    --sidebar-ring: 24 80% 52%;
   }
 
   .dark {
-    /* ===== MODO ESCURO - Elegante e Sofisticado ===== */
+    /* ===== MODO ESCURO - Elegante e Profundo ===== */
     
     /* Backgrounds - Azul escuro profundo */
-    --background: 222 35% 8%;
-    --foreground: 210 20% 95%;
+    --background: 222 30% 9%;
+    --foreground: 220 15% 92%;
     
     /* Cards - Azul escuro elevado */
-    --card: 222 30% 11%;
-    --card-foreground: 210 20% 95%;
+    --card: 222 25% 12%;
+    --card-foreground: 220 15% 92%;
     
     /* Popover */
-    --popover: 222 30% 11%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 222 25% 12%;
+    --popover-foreground: 220 15% 92%;
     
-    /* Primary - Laranja vibrante */
-    --primary: 24 90% 58%;
+    /* Primary - Laranja vibrante mas não agressivo */
+    --primary: 24 85% 55%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Azul escuro suave */
-    --secondary: 220 25% 18%;
-    --secondary-foreground: 210 20% 90%;
+    /* Secondary */
+    --secondary: 222 20% 18%;
+    --secondary-foreground: 220 15% 85%;
     
     /* Muted */
-    --muted: 220 20% 15%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 222 18% 16%;
+    --muted-foreground: 220 12% 55%;
     
-    /* Accent - Com toque de laranja */
-    --accent: 220 25% 16%;
-    --accent-foreground: 210 20% 90%;
+    /* Accent */
+    --accent: 222 20% 18%;
+    --accent-foreground: 220 15% 85%;
     
     /* Destructive */
-    --destructive: 0 65% 50%;
+    --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
     
     /* Borders */
-    --border: 220 20% 18%;
-    --input: 220 20% 18%;
-    --ring: 24 90% 58%;
+    --border: 222 18% 20%;
+    --input: 222 18% 20%;
+    --ring: 24 85% 55%;
 
     /* Sidebar Dark */
-    --sidebar-background: 222 35% 7%;
-    --sidebar-foreground: 210 20% 92%;
-    --sidebar-primary: 24 90% 58%;
+    --sidebar-background: 222 30% 8%;
+    --sidebar-foreground: 220 15% 90%;
+    --sidebar-primary: 24 85% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 25% 14%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 220 20% 15%;
-    --sidebar-ring: 24 90% 58%;
+    --sidebar-accent: 222 20% 15%;
+    --sidebar-accent-foreground: 220 15% 85%;
+    --sidebar-border: 222 18% 18%;
+    --sidebar-ring: 24 85% 55%;
   }
 }
 
@@ -129,204 +128,278 @@
   
   html {
     scroll-behavior: smooth;
-    font-size: 17px; /* Base maior para melhor legibilidade */
+    font-size: 16px;
   }
   
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
-    line-height: 1.65;
-    letter-spacing: -0.01em;
+    line-height: 1.6;
+    letter-spacing: -0.008em;
   }
 
-  /* Headings - Clean e Sofisticados */
+  /* ===== TIPOGRAFIA HARMONIOSA ===== */
+  
   h1 {
-    @apply text-3xl md:text-4xl font-semibold tracking-tight;
+    @apply text-2xl font-medium tracking-tight;
     letter-spacing: -0.02em;
+    color: hsl(var(--foreground));
   }
   
   h2 {
-    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+    @apply text-xl font-medium tracking-tight;
     letter-spacing: -0.015em;
   }
   
   h3 {
-    @apply text-xl md:text-2xl font-medium;
+    @apply text-lg font-medium;
     letter-spacing: -0.01em;
   }
   
   h4 {
-    @apply text-lg md:text-xl font-medium;
+    @apply text-base font-medium;
   }
   
   p {
-    @apply text-base leading-relaxed;
+    @apply text-sm leading-relaxed;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Texto secundário */
+  .text-secondary {
+    @apply text-sm;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Labels */
+  label {
+    @apply text-sm font-medium;
+    color: hsl(var(--foreground));
   }
 }
 
 /* ========================================
-   ANIMAÇÕES SUAVES
+   ANIMAÇÕES DELICADAS
    ======================================== */
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
 @keyframes scale-in {
-  from { opacity: 0; transform: scale(0.96); }
+  from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-/* ========================================
-   UTILITÁRIOS DE ANIMAÇÃO
-   ======================================== */
-
 .animate-fade-in {
-  animation: fade-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: fade-in 0.3s ease-out;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: scale-in 0.25s ease-out;
 }
 
 .animate-slide-up {
-  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: slide-up 0.35s ease-out;
 }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    hsl(var(--muted)) 0%,
-    hsl(var(--muted-foreground) / 0.08) 50%,
-    hsl(var(--muted)) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
-}
+/* Stagger para listas */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
 
 /* ========================================
-   CARDS - Design Suave
+   COMPONENTES PADRONIZADOS
    ======================================== */
 
-.card-soft {
-  @apply rounded-2xl border bg-card shadow-sm;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+/* Cards - Limpos e Elegantes */
+.card-clean {
+  @apply rounded-xl border bg-card;
+  border-color: hsl(var(--border));
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.card-soft:hover {
-  @apply shadow-md;
-  transform: translateY(-2px);
+.card-clean:hover {
+  box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.06);
 }
 
-.dark .card-soft {
-  box-shadow: 
-    0 1px 3px 0 rgb(0 0 0 / 0.2),
-    0 1px 2px -1px rgb(0 0 0 / 0.2),
-    inset 0 1px 0 0 hsl(220 20% 20% / 0.5);
+/* Stats Card */
+.stat-card {
+  @apply rounded-xl border bg-card p-5;
+  border-color: hsl(var(--border) / 0.6);
 }
 
-.dark .card-soft:hover {
-  box-shadow: 
-    0 4px 12px 0 rgb(0 0 0 / 0.3),
-    0 2px 4px -1px rgb(0 0 0 / 0.2),
-    0 0 0 1px hsl(var(--primary) / 0.1),
-    inset 0 1px 0 0 hsl(220 20% 22% / 0.5);
+.stat-card .stat-icon {
+  @apply p-2.5 rounded-xl mb-4;
+  background: hsl(var(--muted));
 }
 
-/* Card elevado para destaque */
-.card-elevated {
-  @apply rounded-2xl border-0 bg-card;
-  box-shadow: 
-    0 2px 8px -2px rgb(0 0 0 / 0.08),
-    0 4px 16px -4px rgb(0 0 0 / 0.06);
+.stat-card .stat-icon svg {
+  @apply h-4 w-4;
+  color: hsl(var(--muted-foreground));
 }
 
-.dark .card-elevated {
-  box-shadow: 
-    0 2px 8px -2px rgb(0 0 0 / 0.4),
-    0 4px 16px -4px rgb(0 0 0 / 0.3);
-  border: 1px solid hsl(220 20% 15%);
+.stat-card .stat-value {
+  @apply text-2xl font-semibold tracking-tight;
+  color: hsl(var(--foreground));
+}
+
+.stat-card .stat-label {
+  @apply text-xs mt-1;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Stat Card com destaque (pendentes, alertas) */
+.stat-card.highlight {
+  border-color: hsl(40 70% 70% / 0.5);
+}
+
+.stat-card.highlight .stat-icon {
+  background: hsl(40 80% 94%);
+}
+
+.stat-card.highlight .stat-icon svg {
+  color: hsl(40 70% 45%);
+}
+
+.stat-card.highlight .stat-value {
+  color: hsl(40 70% 45%);
+}
+
+.dark .stat-card.highlight {
+  border-color: hsl(40 60% 35% / 0.4);
+}
+
+.dark .stat-card.highlight .stat-icon {
+  background: hsl(40 50% 20%);
+}
+
+.dark .stat-card.highlight .stat-icon svg {
+  color: hsl(40 70% 60%);
+}
+
+.dark .stat-card.highlight .stat-value {
+  color: hsl(40 70% 60%);
 }
 
 /* ========================================
-   BOTÕES - Interativos e Suaves
+   INPUTS & FORMS - Delicados
    ======================================== */
 
-.btn-primary {
-  @apply bg-primary text-primary-foreground rounded-xl px-5 py-2.5 font-medium;
-  transition: all 0.2s ease;
+.input-clean {
+  @apply w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm;
+  border-color: hsl(var(--border));
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.btn-primary:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px hsl(var(--primary) / 0.3);
+.input-clean:focus {
+  outline: none;
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.08);
 }
 
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-.btn-soft {
-  @apply bg-secondary text-secondary-foreground rounded-xl px-5 py-2.5 font-medium;
-  transition: all 0.2s ease;
-}
-
-.btn-soft:hover {
-  @apply bg-accent;
+.input-clean::placeholder {
+  color: hsl(var(--muted-foreground) / 0.7);
 }
 
 /* ========================================
-   INPUTS - Minimalistas
+   BOTÕES - Suaves
    ======================================== */
 
-.input-soft {
-  @apply w-full rounded-xl border bg-background px-4 py-3 text-base;
-  @apply focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary;
-  transition: all 0.2s ease;
+.btn-primary-soft {
+  @apply rounded-lg px-4 py-2 text-sm font-medium;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.input-soft::placeholder {
-  @apply text-muted-foreground;
+.btn-primary-soft:hover {
+  opacity: 0.9;
+}
+
+.btn-primary-soft:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary-soft {
+  @apply rounded-lg px-4 py-2 text-sm font-medium;
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  transition: background 0.15s ease;
+}
+
+.btn-secondary-soft:hover {
+  background: hsl(var(--accent));
+}
+
+.btn-ghost-soft {
+  @apply rounded-lg px-4 py-2 text-sm font-medium;
+  color: hsl(var(--muted-foreground));
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn-ghost-soft:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
 }
 
 /* ========================================
-   SCROLLBAR - Discreto e Elegante
+   BADGES - Discretos e Harmoniosos
+   ======================================== */
+
+.badge-neutral {
+  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+
+.badge-success {
+  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
+  background: hsl(150 50% 94%);
+  color: hsl(150 45% 35%);
+}
+
+.dark .badge-success {
+  background: hsl(150 35% 18%);
+  color: hsl(150 50% 60%);
+}
+
+.badge-warning {
+  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
+  background: hsl(40 80% 94%);
+  color: hsl(40 70% 35%);
+}
+
+.dark .badge-warning {
+  background: hsl(40 50% 18%);
+  color: hsl(40 70% 60%);
+}
+
+.badge-info {
+  @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
+  background: hsl(200 70% 94%);
+  color: hsl(200 60% 35%);
+}
+
+.dark .badge-info {
+  background: hsl(200 40% 18%);
+  color: hsl(200 60% 60%);
+}
+
+/* ========================================
+   SCROLLBAR - Ultra Discreto
    ======================================== */
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -334,20 +407,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.15);
+  background: hsl(var(--muted-foreground) / 0.12);
   border-radius: 100px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.25);
-}
-
-.dark ::-webkit-scrollbar-thumb {
   background: hsl(var(--muted-foreground) / 0.2);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.35);
 }
 
 /* ========================================
@@ -355,130 +420,188 @@
    ======================================== */
 
 *:focus-visible {
-  outline: 2px solid hsl(var(--primary) / 0.5);
+  outline: 2px solid hsl(var(--primary) / 0.4);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* ========================================
-   GLASSMORPHISM - Sutil
+   DIVISORES & SEPARADORES
    ======================================== */
 
-.glass {
-  background: hsl(var(--background) / 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+.divider {
+  @apply h-px w-full;
+  background: hsl(var(--border));
 }
 
-.dark .glass {
-  background: hsl(222 35% 10% / 0.9);
-  border: 1px solid hsl(220 20% 18% / 0.6);
+.divider-vertical {
+  @apply w-px h-full;
+  background: hsl(var(--border));
 }
 
 /* ========================================
-   GRADIENTES - Sutis
+   SECTION HEADERS - Consistentes
    ======================================== */
 
-.gradient-soft {
-  background: linear-gradient(
-    135deg,
-    hsl(var(--background)) 0%,
-    hsl(var(--muted)) 100%
-  );
+.section-header {
+  @apply flex items-center justify-between mb-4;
 }
 
-.gradient-primary {
-  background: linear-gradient(
-    135deg,
-    hsl(24 85% 55%) 0%,
-    hsl(24 90% 60%) 100%
-  );
+.section-title {
+  @apply text-base font-medium flex items-center gap-2;
+  color: hsl(var(--foreground));
 }
 
-.gradient-accent {
-  background: linear-gradient(
-    135deg,
-    hsl(210 50% 50%) 0%,
-    hsl(210 60% 55%) 100%
-  );
+.section-title svg {
+  @apply h-4 w-4;
+  color: hsl(var(--muted-foreground));
+}
+
+.section-description {
+  @apply text-xs mt-0.5;
+  color: hsl(var(--muted-foreground));
 }
 
 /* ========================================
-   BADGES - Discretos
+   LISTA DE ITENS - Elegante
    ======================================== */
 
-.badge-soft {
-  @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-medium;
-  @apply bg-muted text-muted-foreground;
+.list-item {
+  @apply flex items-center gap-3 p-3 rounded-lg;
+  transition: background 0.15s ease;
 }
 
-.badge-primary {
-  @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-medium;
-  @apply bg-primary/10 text-primary;
+.list-item:hover {
+  background: hsl(var(--muted) / 0.5);
 }
 
-.badge-success {
-  @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-medium;
-  background: hsl(160 50% 95%);
-  color: hsl(160 50% 35%);
+.list-item-icon {
+  @apply flex-shrink-0 p-2 rounded-lg;
+  background: hsl(var(--muted));
 }
 
-.dark .badge-success {
-  background: hsl(160 40% 20%);
-  color: hsl(160 50% 65%);
+.list-item-icon svg {
+  @apply h-4 w-4;
+  color: hsl(var(--muted-foreground));
+}
+
+.list-item-content {
+  @apply flex-1 min-w-0;
+}
+
+.list-item-title {
+  @apply text-sm font-medium truncate;
+  color: hsl(var(--foreground));
+}
+
+.list-item-subtitle {
+  @apply text-xs truncate;
+  color: hsl(var(--muted-foreground));
 }
 
 /* ========================================
-   SKELETON LOADING
+   EMPTY STATE - Delicado
    ======================================== */
 
-.skeleton {
-  @apply rounded-lg;
-  background: linear-gradient(
-    90deg,
-    hsl(var(--muted)) 25%,
-    hsl(var(--muted-foreground) / 0.08) 50%,
-    hsl(var(--muted)) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+.empty-state {
+  @apply flex flex-col items-center justify-center py-12 text-center;
+}
+
+.empty-state-icon {
+  @apply mb-4;
+  color: hsl(var(--muted-foreground) / 0.4);
+}
+
+.empty-state-icon svg {
+  @apply h-12 w-12;
+}
+
+.empty-state-title {
+  @apply text-sm font-medium mb-1;
+  color: hsl(var(--foreground));
+}
+
+.empty-state-description {
+  @apply text-xs max-w-xs;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ========================================
+   TABS - Minimalista
+   ======================================== */
+
+.tabs-clean {
+  @apply flex gap-1 p-1 rounded-lg;
+  background: hsl(var(--muted));
+}
+
+.tab-clean {
+  @apply px-3 py-1.5 rounded-md text-xs font-medium;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.15s ease;
+}
+
+.tab-clean:hover {
+  color: hsl(var(--foreground));
+}
+
+.tab-clean.active {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.05);
 }
 
 /* ========================================
    TRANSIÇÕES GLOBAIS
    ======================================== */
 
-a, button, input, select, textarea, [role="button"] {
-  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  transition-duration: 200ms;
+a, button, input, select, textarea {
+  transition-property: color, background-color, border-color, box-shadow, opacity;
+  transition-timing-function: ease;
+  transition-duration: 150ms;
 }
 
 /* ========================================
-   TEMA CONSISTENTE - Helpers
+   PAGE LAYOUT
    ======================================== */
 
-/* Texto gradiente sutil */
-.text-gradient {
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(24 85% 45%) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.page-container {
+  @apply space-y-6 animate-fade-in;
 }
 
-/* Divisores suaves */
-.divider {
-  @apply h-px bg-border;
+.page-header {
+  @apply flex items-center justify-between gap-4;
 }
 
-/* Seção com padding adequado */
-.section {
-  @apply py-8 md:py-12;
+.page-header-left {
+  @apply flex items-center gap-3;
 }
 
-/* Container consistente */
-.container-app {
-  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+.page-header-info {
+  @apply space-y-0.5;
+}
+
+.page-header-title {
+  @apply text-xl font-medium tracking-tight;
+  color: hsl(var(--foreground));
+}
+
+.page-header-subtitle {
+  @apply text-sm flex items-center gap-1.5;
+  color: hsl(var(--muted-foreground));
+}
+
+.page-header-subtitle svg {
+  @apply h-3.5 w-3.5;
+}
+
+.page-header-actions {
+  @apply flex items-center gap-2;
+}
+
+/* Grid de estatísticas */
+.stats-grid {
+  @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
 }
 
 /* ========================================
@@ -491,22 +614,4 @@ a, button, input, select, textarea, [role="button"] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* ========================================
-   SIDEBAR CUSTOMIZATIONS
-   ======================================== */
-
-/* Menu items mais espaçados */
-[data-sidebar="menu-button"] {
-  @apply py-3 px-4 rounded-xl text-base;
-}
-
-/* Active state mais visível */
-[data-sidebar="menu-button"][data-active="true"] {
-  @apply bg-primary/10 text-primary font-medium;
-}
-
-.dark [data-sidebar="menu-button"][data-active="true"] {
-  @apply bg-primary/15;
 }

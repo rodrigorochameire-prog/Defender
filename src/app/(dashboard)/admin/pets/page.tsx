@@ -113,60 +113,53 @@ export default function AdminPetsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header - Clean e Minimalista */}
-      <div className="flex items-center gap-4 mb-8">
-        <PageIcon icon={PawPrint} size="lg" />
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Gestão de Pets</h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie todos os pets cadastrados no sistema
-          </p>
+    <div className="page-container">
+      {/* Header */}
+      <div className="page-header">
+        <div className="page-header-left">
+          <PageIcon icon={PawPrint} size="md" />
+          <div className="page-header-info">
+            <h1 className="page-header-title">Gestão de Pets</h1>
+            <p className="page-header-subtitle">
+              Gerencie todos os pets cadastrados
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Stats Cards - Minimalista */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-border/50 hover:shadow-md transition-all duration-200">
-          <CardContent className="pt-5 pb-4">
-            <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 w-fit mb-3">
-              <PawPrint className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-            </div>
-            <p className="text-2xl font-semibold tracking-tight">{stats.total}</p>
-            <p className="text-xs text-muted-foreground">Total de pets</p>
-          </CardContent>
-        </Card>
+      {/* Stats */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon">
+            <PawPrint />
+          </div>
+          <div className="stat-value">{stats.total}</div>
+          <div className="stat-label">Total de pets</div>
+        </div>
 
-        <Card className="border-border/50 hover:shadow-md transition-all duration-200">
-          <CardContent className="pt-5 pb-4">
-            <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 w-fit mb-3">
-              <CheckCircle2 className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-            </div>
-            <p className="text-2xl font-semibold tracking-tight">{stats.approved}</p>
-            <p className="text-xs text-muted-foreground">Aprovados</p>
-          </CardContent>
-        </Card>
+        <div className="stat-card">
+          <div className="stat-icon">
+            <CheckCircle2 />
+          </div>
+          <div className="stat-value">{stats.approved}</div>
+          <div className="stat-label">Aprovados</div>
+        </div>
 
-        <Card className={`hover:shadow-md transition-all duration-200 ${stats.pending > 0 ? 'border-amber-300/50 dark:border-amber-700/50' : 'border-border/50'}`}>
-          <CardContent className="pt-5 pb-4">
-            <div className={`p-2 rounded-xl w-fit mb-3 ${stats.pending > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-slate-100 dark:bg-slate-800'}`}>
-              <Clock className={`h-4 w-4 ${stats.pending > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}`} />
-            </div>
-            <p className={`text-2xl font-semibold tracking-tight ${stats.pending > 0 ? 'text-amber-600 dark:text-amber-400' : ''}`}>{stats.pending}</p>
-            <p className="text-xs text-muted-foreground">Pendentes</p>
-          </CardContent>
-        </Card>
+        <div className={`stat-card ${stats.pending > 0 ? 'highlight' : ''}`}>
+          <div className="stat-icon">
+            <Clock />
+          </div>
+          <div className="stat-value">{stats.pending}</div>
+          <div className="stat-label">Pendentes</div>
+        </div>
 
-        <Card className="border-border/50 hover:shadow-md transition-all duration-200">
-          <CardContent className="pt-5 pb-4">
-            <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 w-fit mb-3">
-              <Dog className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-            </div>
-            <p className="text-2xl font-semibold tracking-tight">{stats.dogs}</p>
-            <p className="text-xs text-muted-foreground">Cachorros</p>
-          </CardContent>
-        </Card>
-
+        <div className="stat-card">
+          <div className="stat-icon">
+            <Dog />
+          </div>
+          <div className="stat-value">{stats.dogs}</div>
+          <div className="stat-label">Cachorros</div>
+        </div>
       </div>
 
       {/* Pending Approvals - Minimalista */}
