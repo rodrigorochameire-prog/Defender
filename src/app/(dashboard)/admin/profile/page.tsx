@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/utils";
 import { LoadingPage } from "@/components/shared/loading";
 import { PageHeader } from "@/components/shared/page-header";
 
-export default function TutorProfilePage() {
+export default function AdminProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",

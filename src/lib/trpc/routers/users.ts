@@ -4,7 +4,7 @@ import { db, users, petTutors, pets } from "@/lib/db";
 import { eq, desc, sql, and, ne } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, emailSchema, nameSchema, phoneSchema } from "@/lib/validations";
-import { hashPassword } from "@/lib/auth/password";
+import { hashPassword, verifyPassword } from "@/lib/auth/password";
 
 export const usersRouter = router({
   /**
@@ -460,5 +460,103 @@ export const usersRouter = router({
           phone: updated.phone,
         };
       }, "Erro ao atualizar perfil");
+    }),
+
+  /**
+   * Verifica se o usuário tem senha definida
+   */
+  hasPassword: protectedProcedure.query(async ({ ctx }) => {
+    return safeAsync(async () => {
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, ctx.user!.id),
+        columns: { passwordHash: true },
+      });
+
+      return {
+        hasPassword: !!user?.passwordHash,
+      };
+    }, "Erro ao verificar senha");
+  }),
+
+  /**
+   * Criar senha (para usuários que entraram via Google)
+   */
+  createPassword: protectedProcedure
+    .input(
+      z.object({
+        newPassword: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+        confirmPassword: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        if (input.newPassword !== input.confirmPassword) {
+          throw Errors.badRequest("As senhas não conferem");
+        }
+
+        // Verificar se já tem senha
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, ctx.user!.id),
+          columns: { passwordHash: true },
+        });
+
+        if (user?.passwordHash) {
+          throw Errors.badRequest("Você já possui uma senha. Use a opção de alterar senha.");
+        }
+
+        const passwordHash = await hashPassword(input.newPassword);
+
+        await db
+          .update(users)
+          .set({ passwordHash, updatedAt: new Date() })
+          .where(eq(users.id, ctx.user!.id));
+
+        return { success: true };
+      }, "Erro ao criar senha");
+    }),
+
+  /**
+   * Alterar senha (para usuários que já têm senha)
+   */
+  changePassword: protectedProcedure
+    .input(
+      z.object({
+        currentPassword: z.string().min(1, "Senha atual é obrigatória"),
+        newPassword: z.string().min(6, "Nova senha deve ter no mínimo 6 caracteres"),
+        confirmPassword: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        if (input.newPassword !== input.confirmPassword) {
+          throw Errors.badRequest("As senhas não conferem");
+        }
+
+        // Buscar usuário com senha
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, ctx.user!.id),
+          columns: { passwordHash: true },
+        });
+
+        if (!user?.passwordHash) {
+          throw Errors.badRequest("Você não possui uma senha. Use a opção de criar senha.");
+        }
+
+        // Verificar senha atual
+        const isValid = await verifyPassword(input.currentPassword, user.passwordHash);
+        if (!isValid) {
+          throw Errors.unauthorized("Senha atual incorreta");
+        }
+
+        // Atualizar senha
+        const passwordHash = await hashPassword(input.newPassword);
+
+        await db
+          .update(users)
+          .set({ passwordHash, updatedAt: new Date() })
+          .where(eq(users.id, ctx.user!.id));
+
+        return { success: true };
+      }, "Erro ao alterar senha");
     }),
 });
