@@ -9,70 +9,71 @@
 
 @layer base {
   :root {
-    /* MODO CLARO */
-    --background: 0 0% 98%;
-    --foreground: 222 20% 18%;
+    /* MODO CLARO - Cores suaves e limpas */
+    --background: 0 0% 99%;
+    --foreground: 222 25% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 222 20% 18%;
+    --card-foreground: 222 25% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 20% 18%;
-    --primary: 24 80% 50%;
+    --popover-foreground: 222 25% 15%;
+    --primary: 24 75% 48%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
+    --secondary: 220 15% 97%;
     --secondary-foreground: 222 20% 30%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 46%;
-    --accent: 220 14% 96%;
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 220 15% 96%;
     --accent-foreground: 222 20% 30%;
-    --destructive: 0 72% 51%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 24 80% 50%;
-    --radius: 0.5rem;
-    --chart-1: 24 80% 50%;
-    --chart-2: 217 91% 60%;
-    --chart-3: 142 71% 45%;
-    --chart-4: 45 93% 47%;
-    --chart-5: 0 72% 51%;
+    --border: 220 15% 92%;
+    --input: 220 15% 92%;
+    --ring: 24 75% 48%;
+    --radius: 0.625rem;
+    --chart-1: 24 75% 48%;
+    --chart-2: 215 80% 55%;
+    --chart-3: 150 60% 42%;
+    --chart-4: 45 85% 50%;
+    --chart-5: 0 70% 50%;
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 20% 22%;
-    --sidebar-primary: 24 80% 50%;
+    --sidebar-foreground: 222 25% 20%;
+    --sidebar-primary: 24 75% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent: 220 15% 97%;
     --sidebar-accent-foreground: 222 20% 30%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 24 80% 50%;
+    --sidebar-border: 220 15% 92%;
+    --sidebar-ring: 24 75% 48%;
   }
 
   .dark {
-    --background: 224 30% 8%;
-    --foreground: 210 20% 94%;
-    --card: 224 25% 11%;
-    --card-foreground: 210 20% 94%;
-    --popover: 224 25% 11%;
-    --popover-foreground: 210 20% 94%;
-    --primary: 24 85% 55%;
+    /* MODO ESCURO - Elegante e confortável */
+    --background: 224 25% 7%;
+    --foreground: 210 15% 94%;
+    --card: 224 22% 10%;
+    --card-foreground: 210 15% 94%;
+    --popover: 224 22% 10%;
+    --popover-foreground: 210 15% 94%;
+    --primary: 24 80% 52%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 224 20% 16%;
-    --secondary-foreground: 210 20% 85%;
-    --muted: 224 20% 16%;
-    --muted-foreground: 215 15% 55%;
-    --accent: 224 20% 16%;
-    --accent-foreground: 210 20% 85%;
-    --destructive: 0 62% 55%;
+    --secondary: 224 18% 14%;
+    --secondary-foreground: 210 15% 85%;
+    --muted: 224 18% 14%;
+    --muted-foreground: 215 12% 52%;
+    --accent: 224 18% 14%;
+    --accent-foreground: 210 15% 85%;
+    --destructive: 0 60% 52%;
     --destructive-foreground: 0 0% 100%;
-    --border: 224 15% 18%;
-    --input: 224 15% 18%;
-    --ring: 24 85% 55%;
-    --sidebar-background: 224 30% 7%;
-    --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 24 85% 55%;
+    --border: 224 15% 16%;
+    --input: 224 15% 16%;
+    --ring: 24 80% 52%;
+    --sidebar-background: 224 25% 6%;
+    --sidebar-foreground: 210 15% 90%;
+    --sidebar-primary: 24 80% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 20% 14%;
-    --sidebar-accent-foreground: 210 20% 85%;
-    --sidebar-border: 224 15% 16%;
-    --sidebar-ring: 24 85% 55%;
+    --sidebar-accent: 224 18% 12%;
+    --sidebar-accent-foreground: 210 15% 85%;
+    --sidebar-border: 224 15% 14%;
+    --sidebar-ring: 24 80% 52%;
   }
 }
 
@@ -87,21 +88,22 @@
   
   html {
     scroll-behavior: smooth;
-    font-size: 16px;
+    font-size: 15px;
   }
   
   body {
     @apply bg-background text-foreground antialiased;
-    line-height: 1.6;
-    letter-spacing: -0.01em;
+    line-height: 1.55;
+    letter-spacing: -0.008em;
   }
 
-  h1 { @apply text-2xl font-semibold tracking-tight text-foreground; }
-  h2 { @apply text-xl font-semibold text-foreground; }
-  h3 { @apply text-lg font-medium text-foreground; }
-  h4 { @apply text-base font-medium text-foreground; }
-  p, span, label { @apply text-base; }
-  small { @apply text-sm; }
+  h1 { @apply text-2xl font-bold tracking-tight text-foreground; }
+  h2 { @apply text-xl font-semibold tracking-tight text-foreground; }
+  h3 { @apply text-lg font-semibold text-foreground; }
+  h4 { @apply text-base font-semibold text-foreground; }
+  p { @apply text-[0.9375rem] leading-relaxed; }
+  span, label { @apply text-[0.875rem]; }
+  small { @apply text-xs; }
 }
 
 /* ========================================
@@ -122,7 +124,7 @@
    ======================================== */
 
 .page-container {
-  @apply space-y-6 animate-fade-in;
+  @apply space-y-5 animate-fade-in;
 }
 
 /* ========================================
@@ -130,29 +132,29 @@
    ======================================== */
 
 .page-header {
-  @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-2;
+  @apply flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-border/50;
 }
 
 .page-header-content {
-  @apply flex items-center gap-4;
+  @apply flex items-center gap-3.5;
 }
 
 .page-header-icon {
-  @apply h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm;
-  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85));
+  @apply h-11 w-11 rounded-xl flex items-center justify-center flex-shrink-0;
+  background: hsl(var(--primary));
 }
 
 .page-header-icon svg {
-  @apply h-6 w-6 text-white;
-  stroke-width: 2;
+  @apply h-5 w-5 text-white;
+  stroke-width: 2.25;
 }
 
 .page-header-info h1 {
-  @apply text-xl font-semibold tracking-tight;
+  @apply text-xl font-bold tracking-tight;
 }
 
 .page-header-info p {
-  @apply text-sm text-muted-foreground mt-0.5;
+  @apply text-[0.8125rem] text-muted-foreground mt-0.5;
 }
 
 .page-header-actions {
@@ -164,66 +166,61 @@
    ======================================== */
 
 .stats-grid {
-  @apply grid grid-cols-2 lg:grid-cols-4 gap-4;
+  @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
 }
 
 .stats-row {
-  @apply grid grid-cols-2 lg:grid-cols-4 gap-4;
+  @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
 }
 
 .stat-card {
-  @apply rounded-xl p-5 border bg-card transition-all;
+  @apply rounded-xl p-4 border bg-card;
   border-color: hsl(var(--border));
 }
 
-.stat-card:hover {
-  @apply shadow-sm;
-  transform: translateY(-1px);
-}
-
 .stat-card-header {
-  @apply flex items-center justify-between mb-3;
+  @apply flex items-center justify-between mb-2;
 }
 
 .stat-card-header .title {
-  @apply text-sm font-medium text-muted-foreground;
+  @apply text-xs font-semibold uppercase tracking-wide text-muted-foreground;
 }
 
 .stat-card-header .icon {
-  @apply h-5 w-5;
+  @apply h-4 w-4 opacity-70;
 }
 
 .stat-card-title {
-  @apply text-sm font-medium text-muted-foreground;
+  @apply text-xs font-semibold uppercase tracking-wide text-muted-foreground;
 }
 
 .stat-card-icon {
-  @apply h-5 w-5;
+  @apply h-4 w-4 opacity-70;
 }
 
 .stat-card-icon.primary { color: hsl(var(--primary)); }
-.stat-card-icon.blue { color: hsl(217 91% 60%); }
-.stat-card-icon.green { color: hsl(142 71% 45%); }
-.stat-card-icon.amber { color: hsl(45 93% 47%); }
+.stat-card-icon.blue { color: hsl(215 80% 55%); }
+.stat-card-icon.green { color: hsl(150 60% 42%); }
+.stat-card-icon.amber { color: hsl(45 85% 45%); }
 .stat-card-icon.muted { color: hsl(var(--muted-foreground)); }
 
 .stat-card-value {
-  @apply text-3xl font-bold tracking-tight text-foreground;
+  @apply text-2xl font-bold tracking-tight text-foreground;
 }
 
 .stat-card-description {
-  @apply text-sm text-muted-foreground mt-1;
+  @apply text-xs text-muted-foreground mt-1;
 }
 
 /* Variante Alert */
 .stat-card.alert {
-  border-color: hsl(45 93% 75% / 0.6);
-  background: hsl(45 100% 98%);
+  border-color: hsl(45 80% 75% / 0.5);
+  background: hsl(45 90% 98%);
 }
 
 .dark .stat-card.alert {
-  border-color: hsl(45 70% 40% / 0.4);
-  background: hsl(45 40% 10%);
+  border-color: hsl(45 60% 35% / 0.3);
+  background: hsl(45 35% 10%);
 }
 
 /* Variante com destaque */
@@ -255,30 +252,30 @@
 }
 
 .section-card-header {
-  @apply flex items-center justify-between px-5 py-4 border-b;
+  @apply flex items-center justify-between px-4 py-3 border-b;
   border-color: hsl(var(--border));
 }
 
 .section-card-title {
-  @apply flex items-center gap-2.5 text-base font-semibold text-foreground;
+  @apply flex items-center gap-2 text-sm font-semibold text-foreground;
 }
 
 .section-card-title .icon,
 .section-card-title svg {
-  @apply h-5 w-5;
+  @apply h-4 w-4;
   color: hsl(var(--primary));
 }
 
 .section-card-description {
-  @apply text-sm text-muted-foreground mt-0.5;
+  @apply text-xs text-muted-foreground;
 }
 
 .section-card-subtitle {
-  @apply text-sm text-muted-foreground;
+  @apply text-xs text-muted-foreground;
 }
 
 .section-card-action {
-  @apply text-sm font-medium flex items-center gap-1.5 transition-colors;
+  @apply text-xs font-semibold flex items-center gap-1 transition-colors;
   color: hsl(var(--primary));
 }
 
@@ -287,11 +284,11 @@
 }
 
 .section-card-action svg {
-  @apply h-3.5 w-3.5;
+  @apply h-3 w-3;
 }
 
 .section-card-content {
-  @apply p-5;
+  @apply p-4;
 }
 
 /* ========================================
@@ -299,19 +296,19 @@
    ======================================== */
 
 .list-container {
-  @apply space-y-1;
+  @apply space-y-0.5;
 }
 
 .list-item {
-  @apply flex items-center gap-3 p-2.5 rounded-md cursor-pointer transition-colors;
+  @apply flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors;
 }
 
 .list-item:hover {
-  background: hsl(var(--muted) / 0.5);
+  background: hsl(var(--muted) / 0.4);
 }
 
 .list-item-icon {
-  @apply h-8 w-8 rounded-md flex items-center justify-center flex-shrink-0;
+  @apply h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0;
   background: hsl(var(--muted));
 }
 
@@ -320,18 +317,18 @@
   color: hsl(var(--muted-foreground));
 }
 
-.list-item-icon.primary { background: hsl(var(--primary) / 0.1); }
+.list-item-icon.primary { background: hsl(var(--primary) / 0.08); }
 .list-item-icon.primary svg { color: hsl(var(--primary)); }
 
-.list-item-icon.blue { background: hsl(217 91% 60% / 0.1); }
-.list-item-icon.blue svg { color: hsl(217 91% 60%); }
+.list-item-icon.blue { background: hsl(215 70% 50% / 0.08); }
+.list-item-icon.blue svg { color: hsl(215 70% 50%); }
 
 .list-item-content {
   @apply flex-1 min-w-0;
 }
 
 .list-item-title {
-  @apply text-sm font-medium truncate text-foreground;
+  @apply text-[0.8125rem] font-semibold truncate text-foreground;
 }
 
 .list-item-subtitle {
@@ -362,43 +359,43 @@
 }
 
 .badge-green {
-  background: hsl(142 76% 95%);
-  color: hsl(142 71% 35%);
+  background: hsl(150 50% 94%);
+  color: hsl(150 50% 32%);
 }
 
 .dark .badge-green {
-  background: hsl(142 71% 45% / 0.15);
-  color: hsl(142 71% 55%);
+  background: hsl(150 50% 20% / 0.4);
+  color: hsl(150 45% 58%);
 }
 
 .badge-blue {
-  background: hsl(217 91% 95%);
-  color: hsl(217 91% 45%);
+  background: hsl(215 70% 94%);
+  color: hsl(215 70% 40%);
 }
 
 .dark .badge-blue {
-  background: hsl(217 91% 60% / 0.15);
-  color: hsl(217 91% 65%);
+  background: hsl(215 60% 25% / 0.4);
+  color: hsl(215 55% 62%);
 }
 
 .badge-amber {
-  background: hsl(45 100% 94%);
-  color: hsl(45 80% 30%);
+  background: hsl(45 80% 93%);
+  color: hsl(45 70% 30%);
 }
 
 .dark .badge-amber {
-  background: hsl(45 93% 47% / 0.15);
-  color: hsl(45 85% 55%);
+  background: hsl(45 60% 20% / 0.4);
+  color: hsl(45 65% 58%);
 }
 
 .badge-rose {
-  background: hsl(0 85% 95%);
-  color: hsl(0 72% 45%);
+  background: hsl(0 60% 94%);
+  color: hsl(0 60% 40%);
 }
 
 .dark .badge-rose {
-  background: hsl(0 72% 51% / 0.15);
-  color: hsl(0 72% 60%);
+  background: hsl(0 50% 22% / 0.4);
+  color: hsl(0 55% 62%);
 }
 
 .badge-success {
@@ -436,25 +433,29 @@
    ======================================== */
 
 .empty-state {
-  @apply flex flex-col items-center justify-center py-12 text-center;
+  @apply flex flex-col items-center justify-center py-10 text-center;
 }
 
 .empty-state-icon {
-  @apply h-12 w-12 rounded-lg flex items-center justify-center mb-3;
+  @apply h-10 w-10 rounded-xl flex items-center justify-center mb-3;
   background: hsl(var(--muted));
 }
 
 .empty-state-icon svg {
-  @apply h-6 w-6;
-  color: hsl(var(--muted-foreground) / 0.5);
+  @apply h-5 w-5;
+  color: hsl(var(--muted-foreground) / 0.4);
+}
+
+.empty-state-text {
+  @apply text-[0.8125rem] text-muted-foreground;
 }
 
 .empty-state-title {
-  @apply text-sm font-medium text-foreground;
+  @apply text-[0.8125rem] font-medium text-foreground;
 }
 
 .empty-state-description {
-  @apply text-xs text-muted-foreground mt-1 max-w-[200px];
+  @apply text-xs text-muted-foreground mt-1 max-w-[220px];
 }
 
 /* ========================================

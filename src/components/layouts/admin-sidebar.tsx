@@ -344,7 +344,7 @@ function AdminSidebarContent({
                           >
                             {/* Ícone SEMPRE colorido */}
                             <item.icon
-                              className={`h-5 w-5 relative z-10 transition-transform duration-200 group-hover:scale-105 ${colors.icon}`}
+                              className={`h-6 w-6 relative z-10 transition-transform duration-200 group-hover:scale-105 ${colors.icon}`}
                             />
                             {/* Texto SEMPRE neutro */}
                             <span className={`relative z-10 text-sm ${
