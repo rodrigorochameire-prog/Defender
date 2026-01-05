@@ -1,7 +1,6 @@
 "use server";
 
-import { db, users } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { createClient } from "@supabase/supabase-js";
 
 interface ForgotPasswordResult {
   success: boolean;
@@ -17,26 +16,40 @@ export async function forgotPasswordAction(email: string): Promise<ForgotPasswor
       };
     }
 
-    // Buscar usuário pelo email
-    const user = await db.query.users.findFirst({
-      where: eq(users.email, email.toLowerCase().trim()),
-    });
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    // Sempre retornar sucesso para não revelar se o email existe
-    if (!user) {
-      console.log(`[Forgot Password] Email não encontrado: ${email}`);
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("[Forgot Password] Supabase não configurado");
+      return {
+        success: false,
+        message: "Serviço de email não configurado. Entre em contato com o suporte.",
+      };
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    // URL de redirecionamento para reset de senha
+    const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL || "https://tetecare-v2.vercel.app"}/reset-password`;
+
+    // Enviar email de recuperação via Supabase Auth
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      email.toLowerCase().trim(),
+      {
+        redirectTo,
+      }
+    );
+
+    if (error) {
+      console.error("[Forgot Password] Supabase error:", error.message);
+      // Não revelar detalhes do erro para o usuário
       return {
         success: true,
         message: "Se o email existir, você receberá as instruções de recuperação",
       };
     }
 
-    // Em produção, enviar email real aqui
-    console.log("=".repeat(50));
-    console.log("📧 EMAIL DE RECUPERAÇÃO DE SENHA");
-    console.log(`Para: ${email}`);
-    console.log(`Nome: ${user.name}`);
-    console.log("=".repeat(50));
+    console.log(`[Forgot Password] Email de recuperação enviado para: ${email}`);
 
     return {
       success: true,
