@@ -3,92 +3,92 @@
 @tailwind utilities;
 
 /* ========================================
-   TETECARE - DESIGN SYSTEM v5
-   Cores Claras • Luminosas • Com Vida
+   TETECARE - DESIGN SYSTEM v6
+   Sofisticado • Equilibrado • Limpo
    ======================================== */
 
 @layer base {
   :root {
-    /* MODO CLARO - Branco limpo com toques quentes */
-    --background: 0 0% 99%;
-    --foreground: 220 25% 18%;
+    /* MODO CLARO - Branco puro, limpo */
+    --background: 0 0% 100%;
+    --foreground: 220 20% 20%;
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 18%;
+    --card-foreground: 220 20% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 18%;
+    --popover-foreground: 220 20% 20%;
     
-    /* Primary - Laranja vibrante mas claro */
-    --primary: 24 85% 58%;
+    /* Primary - Laranja sofisticado */
+    --primary: 24 80% 52%;
     --primary-foreground: 0 0% 100%;
     
-    /* Neutros claros */
-    --secondary: 220 20% 97%;
-    --secondary-foreground: 220 20% 30%;
-    --muted: 220 15% 96%;
-    --muted-foreground: 220 12% 48%;
-    --accent: 220 20% 96%;
-    --accent-foreground: 220 20% 30%;
+    /* Neutros elegantes */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 15% 35%;
+    --muted: 220 12% 95%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 220 14% 95%;
+    --accent-foreground: 220 15% 35%;
     
-    --destructive: 0 72% 55%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 18% 91%;
-    --input: 220 18% 91%;
-    --ring: 24 85% 58%;
-    --radius: 0.625rem;
+    --border: 220 14% 90%;
+    --input: 220 14% 90%;
+    --ring: 24 80% 52%;
+    --radius: 0.5rem;
     
-    /* Charts */
-    --chart-1: 24 85% 58%;
-    --chart-2: 210 75% 55%;
-    --chart-3: 150 55% 48%;
-    --chart-4: 45 80% 52%;
-    --chart-5: 340 65% 55%;
+    /* Charts - Paleta harmonizada (laranja + azul) */
+    --chart-1: 24 80% 52%;
+    --chart-2: 200 70% 50%;
+    --chart-3: 24 70% 65%;
+    --chart-4: 200 60% 60%;
+    --chart-5: 220 15% 50%;
     
-    /* Sidebar - Limpo */
+    /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 25% 20%;
-    --sidebar-primary: 24 85% 58%;
+    --sidebar-foreground: 220 20% 25%;
+    --sidebar-primary: 24 80% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 97%;
-    --sidebar-accent-foreground: 220 20% 30%;
-    --sidebar-border: 220 18% 93%;
-    --sidebar-ring: 24 85% 58%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 220 15% 35%;
+    --sidebar-border: 220 14% 92%;
+    --sidebar-ring: 24 80% 52%;
   }
 
   .dark {
-    /* MODO ESCURO - Elegante e vibrante */
-    --background: 222 25% 8%;
-    --foreground: 220 15% 93%;
-    --card: 222 22% 11%;
-    --card-foreground: 220 15% 93%;
-    --popover: 222 22% 11%;
-    --popover-foreground: 220 15% 93%;
+    /* MODO ESCURO - Elegante, profundo */
+    --background: 220 20% 10%;
+    --foreground: 220 12% 92%;
+    --card: 220 18% 13%;
+    --card-foreground: 220 12% 92%;
+    --popover: 220 18% 13%;
+    --popover-foreground: 220 12% 92%;
     
-    /* Primary - Laranja vibrante */
-    --primary: 24 90% 55%;
+    /* Primary - Laranja luminoso */
+    --primary: 24 85% 55%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 222 18% 14%;
-    --secondary-foreground: 220 12% 82%;
-    --muted: 222 16% 15%;
+    --secondary: 220 15% 16%;
+    --secondary-foreground: 220 10% 80%;
+    --muted: 220 14% 17%;
     --muted-foreground: 220 10% 55%;
-    --accent: 222 18% 14%;
-    --accent-foreground: 220 12% 82%;
+    --accent: 220 15% 16%;
+    --accent-foreground: 220 10% 80%;
     
-    --destructive: 0 65% 52%;
+    --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 222 18% 18%;
-    --input: 222 18% 18%;
-    --ring: 24 90% 55%;
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 24 85% 55%;
     
     /* Sidebar escuro */
-    --sidebar-background: 222 25% 7%;
-    --sidebar-foreground: 220 15% 90%;
-    --sidebar-primary: 24 90% 55%;
+    --sidebar-background: 220 20% 9%;
+    --sidebar-foreground: 220 12% 88%;
+    --sidebar-primary: 24 85% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 18% 12%;
-    --sidebar-accent-foreground: 220 12% 82%;
-    --sidebar-border: 222 18% 15%;
-    --sidebar-ring: 24 90% 55%;
+    --sidebar-accent: 220 15% 14%;
+    --sidebar-accent-foreground: 220 10% 80%;
+    --sidebar-border: 220 15% 17%;
+    --sidebar-ring: 24 85% 55%;
   }
 }
 
@@ -216,9 +216,9 @@
 }
 
 .stat-card-icon.primary { color: hsl(var(--primary)); }
-.stat-card-icon.blue { color: hsl(210 70% 55%); }
-.stat-card-icon.green { color: hsl(150 50% 45%); }
-.stat-card-icon.amber { color: hsl(40 75% 50%); }
+.stat-card-icon.blue { color: hsl(200 65% 50%); }
+.stat-card-icon.green { color: hsl(var(--primary)); }
+.stat-card-icon.amber { color: hsl(var(--primary)); }
 .stat-card-icon.muted { color: hsl(var(--muted-foreground)); }
 
 .stat-card-value {
@@ -334,11 +334,11 @@
   color: hsl(var(--muted-foreground));
 }
 
-.list-item-icon.primary { background: hsl(var(--primary) / 0.12); }
+.list-item-icon.primary { background: hsl(var(--primary) / 0.1); }
 .list-item-icon.primary svg { color: hsl(var(--primary)); }
 
-.list-item-icon.blue { background: hsl(210 70% 55% / 0.1); }
-.list-item-icon.blue svg { color: hsl(210 70% 55%); }
+.list-item-icon.blue { background: hsl(200 60% 50% / 0.1); }
+.list-item-icon.blue svg { color: hsl(200 60% 50%); }
 
 .list-item-content {
   @apply flex-1 min-w-0;
@@ -376,43 +376,43 @@
 }
 
 .badge-green {
-  background: hsl(150 60% 95%);
-  color: hsl(150 55% 35%);
+  background: hsl(160 50% 94%);
+  color: hsl(160 45% 38%);
 }
 
 .dark .badge-green {
-  background: hsl(150 45% 18% / 0.5);
-  color: hsl(150 50% 60%);
+  background: hsl(160 40% 20% / 0.4);
+  color: hsl(160 45% 60%);
 }
 
 .badge-blue {
-  background: hsl(210 70% 95%);
-  color: hsl(210 65% 42%);
+  background: hsl(200 60% 94%);
+  color: hsl(200 55% 42%);
 }
 
 .dark .badge-blue {
-  background: hsl(210 50% 22% / 0.5);
-  color: hsl(210 55% 62%);
+  background: hsl(200 45% 22% / 0.4);
+  color: hsl(200 50% 62%);
 }
 
 .badge-amber {
-  background: hsl(40 80% 94%);
-  color: hsl(40 70% 32%);
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
 }
 
 .dark .badge-amber {
-  background: hsl(40 55% 18% / 0.5);
-  color: hsl(40 65% 60%);
+  background: hsl(var(--primary) / 0.15);
+  color: hsl(var(--primary));
 }
 
 .badge-rose {
-  background: hsl(350 60% 95%);
-  color: hsl(350 55% 45%);
+  background: hsl(0 55% 95%);
+  color: hsl(0 50% 48%);
 }
 
 .dark .badge-rose {
-  background: hsl(350 45% 20% / 0.5);
-  color: hsl(350 50% 62%);
+  background: hsl(0 40% 22% / 0.4);
+  color: hsl(0 45% 62%);
 }
 
 .badge-success {
