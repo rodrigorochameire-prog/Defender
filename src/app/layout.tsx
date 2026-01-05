@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const plusJakarta = Plus_Jakarta_Sans({ 
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: "TeteCare - Gestão de Creche para Pets",
@@ -37,7 +41,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={inter.className}>
+      <body className={`${plusJakarta.className} ${plusJakarta.variable}`}>
         <Providers>
           {children}
         </Providers>

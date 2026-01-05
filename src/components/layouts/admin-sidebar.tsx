@@ -104,63 +104,64 @@ const menuGroups = [
   },
 ];
 
+// Cores mais suaves e harmoniosas
 const colorClasses = {
   blue: {
-    icon: "text-cyan-500 dark:text-cyan-400",
-    iconHover: "group-hover:text-cyan-500 dark:group-hover:text-cyan-400",
-    iconActive: "text-cyan-600 dark:text-cyan-300",
-    bg: "bg-cyan-50 dark:bg-cyan-950/50",
-    bgHover: "hover:bg-cyan-50/80 dark:hover:bg-cyan-950/40",
-    bgActive: "bg-cyan-100 dark:bg-cyan-900/60",
-    border: "border-cyan-200 dark:border-cyan-700/50",
-    glow: "dark:shadow-cyan-500/20",
+    icon: "text-blue-500/80 dark:text-blue-400",
+    iconHover: "group-hover:text-blue-600 dark:group-hover:text-blue-300",
+    iconActive: "text-blue-600 dark:text-blue-300",
+    bg: "bg-blue-50/50 dark:bg-blue-950/30",
+    bgHover: "hover:bg-blue-50/70 dark:hover:bg-blue-950/40",
+    bgActive: "bg-blue-100/70 dark:bg-blue-900/40",
+    border: "border-blue-100 dark:border-blue-800/30",
+    glow: "dark:shadow-blue-500/10",
   },
   orange: {
-    icon: "text-orange-500 dark:text-orange-400",
-    iconHover: "group-hover:text-orange-500 dark:group-hover:text-orange-400",
+    icon: "text-orange-500/80 dark:text-orange-400",
+    iconHover: "group-hover:text-orange-600 dark:group-hover:text-orange-300",
     iconActive: "text-orange-600 dark:text-orange-300",
-    bg: "bg-orange-50 dark:bg-orange-950/50",
-    bgHover: "hover:bg-orange-50/80 dark:hover:bg-orange-950/40",
-    bgActive: "bg-orange-100 dark:bg-orange-900/60",
-    border: "border-orange-200 dark:border-orange-700/50",
-    glow: "dark:shadow-orange-500/20",
+    bg: "bg-orange-50/50 dark:bg-orange-950/30",
+    bgHover: "hover:bg-orange-50/70 dark:hover:bg-orange-950/40",
+    bgActive: "bg-orange-100/70 dark:bg-orange-900/40",
+    border: "border-orange-100 dark:border-orange-800/30",
+    glow: "dark:shadow-orange-500/10",
   },
   red: {
-    icon: "text-rose-500 dark:text-rose-400",
-    iconHover: "group-hover:text-rose-500 dark:group-hover:text-rose-400",
+    icon: "text-rose-500/80 dark:text-rose-400",
+    iconHover: "group-hover:text-rose-600 dark:group-hover:text-rose-300",
     iconActive: "text-rose-600 dark:text-rose-300",
-    bg: "bg-rose-50 dark:bg-rose-950/50",
-    bgHover: "hover:bg-rose-50/80 dark:hover:bg-rose-950/40",
-    bgActive: "bg-rose-100 dark:bg-rose-900/60",
-    border: "border-rose-200 dark:border-rose-700/50",
-    glow: "dark:shadow-rose-500/20",
+    bg: "bg-rose-50/50 dark:bg-rose-950/30",
+    bgHover: "hover:bg-rose-50/70 dark:hover:bg-rose-950/40",
+    bgActive: "bg-rose-100/70 dark:bg-rose-900/40",
+    border: "border-rose-100 dark:border-rose-800/30",
+    glow: "dark:shadow-rose-500/10",
   },
   green: {
-    icon: "text-emerald-500 dark:text-emerald-400",
-    iconHover: "group-hover:text-emerald-500 dark:group-hover:text-emerald-400",
+    icon: "text-emerald-500/80 dark:text-emerald-400",
+    iconHover: "group-hover:text-emerald-600 dark:group-hover:text-emerald-300",
     iconActive: "text-emerald-600 dark:text-emerald-300",
-    bg: "bg-emerald-50 dark:bg-emerald-950/50",
-    bgHover: "hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40",
-    bgActive: "bg-emerald-100 dark:bg-emerald-900/60",
-    border: "border-emerald-200 dark:border-emerald-700/50",
-    glow: "dark:shadow-emerald-500/20",
+    bg: "bg-emerald-50/50 dark:bg-emerald-950/30",
+    bgHover: "hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40",
+    bgActive: "bg-emerald-100/70 dark:bg-emerald-900/40",
+    border: "border-emerald-100 dark:border-emerald-800/30",
+    glow: "dark:shadow-emerald-500/10",
   },
   purple: {
-    icon: "text-violet-500 dark:text-violet-400",
-    iconHover: "group-hover:text-violet-500 dark:group-hover:text-violet-400",
+    icon: "text-violet-500/80 dark:text-violet-400",
+    iconHover: "group-hover:text-violet-600 dark:group-hover:text-violet-300",
     iconActive: "text-violet-600 dark:text-violet-300",
-    bg: "bg-violet-50 dark:bg-violet-950/50",
-    bgHover: "hover:bg-violet-50/80 dark:hover:bg-violet-950/40",
-    bgActive: "bg-violet-100 dark:bg-violet-900/60",
-    border: "border-violet-200 dark:border-violet-700/50",
-    glow: "dark:shadow-violet-500/20",
+    bg: "bg-violet-50/50 dark:bg-violet-950/30",
+    bgHover: "hover:bg-violet-50/70 dark:hover:bg-violet-950/40",
+    bgActive: "bg-violet-100/70 dark:bg-violet-900/40",
+    border: "border-violet-100 dark:border-violet-800/30",
+    glow: "dark:shadow-violet-500/10",
   },
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
-const DEFAULT_WIDTH = 280;
-const MIN_WIDTH = 240;
-const MAX_WIDTH = 400;
+const DEFAULT_WIDTH = 300;
+const MIN_WIDTH = 260;
+const MAX_WIDTH = 420;
 
 export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProps) {
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
