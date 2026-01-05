@@ -490,7 +490,7 @@ export default function AdminPetsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-birthDate">Data de Nascimento</Label>
-                  <Input id="edit-birthDate" name="birthDate" type="date" defaultValue={selectedPet.birthDate?.split("T")[0] || ""} />
+                  <Input id="edit-birthDate" name="birthDate" type="date" defaultValue={selectedPet.birthDate ? (typeof selectedPet.birthDate === 'string' ? selectedPet.birthDate.split("T")[0] : new Date(selectedPet.birthDate).toISOString().split("T")[0]) : ""} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-weight">Peso (kg)</Label>
