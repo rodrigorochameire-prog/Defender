@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,20 +80,30 @@ export default function TutorDocuments() {
 
   const { data: myPets } = trpc.pets.myPets.useQuery();
 
-  // Buscar documentos para cada pet
-  const petDocumentsQueries = myPets?.map((pet) => ({
-    petId: pet.id,
-    petName: pet.name,
-    photoUrl: pet.photoUrl,
-    query: trpc.documents.byPet.useQuery({ petId: pet.id }),
-  })) || [];
+  const petIds = useMemo(() => (myPets ?? []).map((p) => p.id), [myPets]);
+
+  // Buscar documentos de todos os pets em uma única query (evita hooks em loop)
+  const documentsQuery = trpc.documents.byPets.useQuery(
+    { petIds },
+    { enabled: petIds.length > 0 }
+  );
+
+  const docsByPetId = useMemo(() => {
+    const map = new Map<number, any[]>();
+    for (const doc of documentsQuery.data ?? []) {
+      const list = map.get(doc.petId) ?? [];
+      list.push(doc);
+      map.set(doc.petId, list);
+    }
+    return map;
+  }, [documentsQuery.data]);
 
   const saveDocumentMutation = trpc.documents.upload.useMutation({
     onSuccess: () => {
       toast.success("Documento enviado com sucesso!");
       setIsUploadDialogOpen(false);
       resetForm();
-      petDocumentsQueries.forEach(q => q.query.refetch());
+      documentsQuery.refetch();
     },
     onError: (error) => {
       toast.error("Erro ao enviar documento: " + error.message);
@@ -103,7 +113,7 @@ export default function TutorDocuments() {
   const deleteDocument = trpc.documents.delete.useMutation({
     onSuccess: () => {
       toast.success("Documento removido!");
-      petDocumentsQueries.forEach(q => q.query.refetch());
+      documentsQuery.refetch();
     },
     onError: (error) => {
       toast.error("Erro ao remover documento: " + error.message);
@@ -245,17 +255,17 @@ export default function TutorDocuments() {
         </Card>
       ) : (
         <Accordion type="single" collapsible className="space-y-4">
-          {petDocumentsQueries.map(({ petId, petName, photoUrl, query }) => {
-            const documents = query.data || [];
+          {myPets.map((pet) => {
+            const documents = docsByPetId.get(pet.id) ?? [];
 
             return (
-              <AccordionItem key={petId} value={String(petId)} className="border rounded-lg px-4">
+              <AccordionItem key={pet.id} value={String(pet.id)} className="border rounded-lg px-4">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
-                    {photoUrl ? (
+                    {pet.photoUrl ? (
                       <img 
-                        src={photoUrl} 
-                        alt={petName}
+                        src={pet.photoUrl} 
+                        alt={pet.name}
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
@@ -264,7 +274,7 @@ export default function TutorDocuments() {
                       </div>
                     )}
                     <div className="text-left">
-                      <p className="font-medium">{petName}</p>
+                      <p className="font-medium">{pet.name}</p>
                       <p className="text-sm text-muted-foreground">
                         {documents.length} documentos
                       </p>
@@ -272,7 +282,7 @@ export default function TutorDocuments() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  {query.isLoading ? (
+                  {documentsQuery.isLoading ? (
                     <div className="flex justify-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
@@ -285,7 +295,7 @@ export default function TutorDocuments() {
                         size="sm" 
                         className="mt-2"
                         onClick={() => {
-                          setSelectedPetId(String(petId));
+                          setSelectedPetId(String(pet.id));
                           setIsUploadDialogOpen(true);
                         }}
                       >

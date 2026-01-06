@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, pets, petTutors } from "@/lib/db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
   pgTable,
@@ -59,6 +59,54 @@ export const documentsRouter = router({
         if (input.category) {
           conditions.push(eq(documents.category, input.category));
         }
+
+        const result = await db
+          .select()
+          .from(documents)
+          .where(and(...conditions))
+          .orderBy(desc(documents.createdAt));
+
+        return result;
+      }, "Erro ao buscar documentos");
+    }),
+
+  /**
+   * Lista documentos de vários pets (evita N queries no client)
+   */
+  byPets: protectedProcedure
+    .input(
+      z.object({
+        petIds: z.array(z.number()).default([]),
+        category: z.string().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const petIds = Array.from(new Set(input.petIds)).filter(
+          (id) => Number.isFinite(id) && id > 0
+        );
+
+        if (petIds.length === 0) return [];
+
+        // Verificar acesso aos pets
+        if (ctx.user.role !== "admin") {
+          const relations = await db
+            .select({ petId: petTutors.petId })
+            .from(petTutors)
+            .where(
+              and(
+                eq(petTutors.tutorId, ctx.user.id),
+                inArray(petTutors.petId, petIds)
+              )
+            );
+
+          const allowedIds = new Set(relations.map((r) => r.petId));
+          const allAllowed = petIds.every((id) => allowedIds.has(id));
+          if (!allAllowed) throw Errors.forbidden();
+        }
+
+        const conditions = [inArray(documents.petId, petIds)];
+        if (input.category) conditions.push(eq(documents.category, input.category));
 
         const result = await db
           .select()
