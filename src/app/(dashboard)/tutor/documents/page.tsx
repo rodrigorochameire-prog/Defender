@@ -194,8 +194,6 @@ export default function TutorDocuments() {
         description,
         category: selectedCategory as any,
         fileUrl: uploadJson.url,
-        fileType: selectedFile.name.split(".").pop() || "bin",
-        fileSize: selectedFile.size,
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao fazer upload");
