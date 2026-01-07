@@ -1,0 +1,1 @@
+ALTER TABLE `chat_messages` ADD `source` enum('platform','whatsapp') DEFAULT 'platform' NOT NULL;

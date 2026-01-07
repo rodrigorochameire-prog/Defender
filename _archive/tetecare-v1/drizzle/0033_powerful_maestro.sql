@@ -1,0 +1,1 @@
+ALTER TABLE `calendar_events` MODIFY COLUMN `eventType` enum('holiday','medical','general','vaccination','medication','closure','checkin','checkout','preventive') NOT NULL;
