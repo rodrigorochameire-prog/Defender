@@ -32,6 +32,25 @@ export async function uploadDocument(
 }
 
 /**
+ * Faz upload de um documento (com categoria)
+ * Path: pets/{petId}/{category}/{timestamp}-{random}.{ext}
+ */
+export async function uploadPetDocument(
+  file: File,
+  petId: number,
+  category: string
+): Promise<{ url: string; path: string }> {
+  const safeCategory =
+    category
+      ?.toString()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "_") || "other";
+
+  return uploadFile(file, BUCKETS.DOCUMENTS, `pets/${petId}/${safeCategory}`);
+}
+
+/**
  * Faz upload de mídia do mural
  * Path: posts/{timestamp}-{random}.{ext}
  */

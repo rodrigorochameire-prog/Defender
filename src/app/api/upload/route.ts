@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { uploadPetPhoto, uploadWallMedia } from "@/lib/supabase/storage";
+import { uploadPetDocument, uploadPetPhoto, uploadWallMedia } from "@/lib/supabase/storage";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const petIdStr = formData.get("petId") as string | null;
-    const uploadType = formData.get("type") as string | null; // "wall" ou "pet"
+    const uploadType = formData.get("type") as string | null; // "wall" | "pet" | "document"
+    const category = (formData.get("category") as string | null) || "other";
 
     if (!file) {
       return NextResponse.json(
@@ -26,13 +27,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar tipo de arquivo
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    // Validar tipo de arquivo (varia conforme o tipo de upload)
+    const allowedImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    const allowedDocumentTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ...allowedImageTypes,
+    ];
+    const allowedTypes = uploadType === "document" ? allowedDocumentTypes : allowedImageTypes;
+
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: "Tipo de arquivo não permitido. Use JPG, PNG, GIF ou WebP." },
-        { status: 400 }
-      );
+      const message =
+        uploadType === "document"
+          ? "Tipo de arquivo não permitido. Use PDF, JPG, PNG, WebP ou DOC/DOCX."
+          : "Tipo de arquivo não permitido. Use JPG, PNG, GIF ou WebP.";
+      return NextResponse.json({ error: message }, { status: 400 });
     }
 
     // Validar tamanho (máximo 10MB)
@@ -52,6 +62,9 @@ export async function POST(request: NextRequest) {
     if (uploadType === "wall" || petId === 0 || isNaN(petId)) {
       // Upload para o bucket do mural
       result = await uploadWallMedia(file);
+    } else if (uploadType === "document") {
+      // Upload para bucket de documentos (com categoria)
+      result = await uploadPetDocument(file, petId, category);
     } else {
       // Upload para o bucket de pets
       result = await uploadPetPhoto(file, petId);

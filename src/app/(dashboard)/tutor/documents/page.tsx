@@ -110,12 +110,6 @@ export default function TutorDocuments() {
     },
   });
 
-  const getUploadUrlMutation = trpc.documents.getUploadUrl.useMutation({
-    onError: (error) => {
-      toast.error("Erro ao gerar URL de upload: " + error.message);
-    },
-  });
-
   const resetForm = () => {
     setSelectedFile(null);
     setSelectedPetId("");
@@ -176,44 +170,30 @@ export default function TutorDocuments() {
 
     setUploading(true);
     try {
-      // 1. Obter URL assinada do servidor
-      const uploadData = await getUploadUrlMutation.mutateAsync({
-        petId: parseInt(selectedPetId),
-        category: selectedCategory,
-        fileName: selectedFile.name,
-        fileType: selectedFile.type,
+      // 1. Upload via servidor (mais robusto que signed PUT)
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", selectedFile);
+      uploadFormData.append("petId", selectedPetId);
+      uploadFormData.append("type", "document");
+      uploadFormData.append("category", selectedCategory);
+
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadFormData,
       });
 
-      // 2. Fazer upload direto para o Supabase Storage
-      const uploadResponse = await fetch(uploadData.signedUrl, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${uploadData.token}`,
-          "Content-Type": selectedFile.type,
-          "x-upsert": "false",
-        },
-        body: selectedFile,
-      });
-
+      const uploadJson = await uploadResponse.json().catch(() => null);
       if (!uploadResponse.ok) {
-        const details = await uploadResponse.text().catch(() => "");
-        throw new Error(
-          `Falha no upload do arquivo (${uploadResponse.status})${details ? `: ${details}` : ""}`
-        );
+        throw new Error(uploadJson?.error || "Falha no upload do arquivo");
       }
 
-      // 3. Gerar URL pública do arquivo
-      const supabaseUrl =
-        process.env.NEXT_PUBLIC_SUPABASE_URL || "https://siwapjqndevuwsluncnr.supabase.co";
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/documents/${uploadData.path}`;
-
-      // 4. Salvar documento no banco
+      // 2. Salvar documento no banco
       await saveDocumentMutation.mutateAsync({
         petId: parseInt(selectedPetId),
         title,
         description,
         category: selectedCategory as any,
-        fileUrl: publicUrl,
+        fileUrl: uploadJson.url,
         fileType: selectedFile.name.split(".").pop() || "bin",
         fileSize: selectedFile.size,
       });
