@@ -117,21 +117,27 @@ export const documentsRouter = router({
           }
         }
 
-        const [document] = await db
-          .insert(documents)
-          .values({
-            petId: input.petId,
-            uploadedById: ctx.user.id,
-            title: input.title,
-            description: input.description || null,
-            category: input.category,
-            fileUrl: input.fileUrl,
-            fileType: input.fileType || null,
-            fileSize: input.fileSize || null,
-          })
-          .returning();
+        try {
+          const [document] = await db
+            .insert(documents)
+            .values({
+              petId: input.petId,
+              uploadedById: ctx.user.id,
+              title: input.title,
+              description: input.description || null,
+              category: input.category,
+              fileUrl: input.fileUrl,
+              fileType: input.fileType || null,
+              fileSize: input.fileSize || null,
+            })
+            .returning();
 
-        return document;
+          return document;
+        } catch (err: any) {
+          // Expor uma mensagem útil (principalmente para erros de schema/migração)
+          const msg = err?.message ? String(err.message) : "Erro desconhecido no banco";
+          throw Errors.internal(`Erro ao fazer upload do documento: ${msg}`);
+        }
       }, "Erro ao fazer upload do documento");
     }),
 
