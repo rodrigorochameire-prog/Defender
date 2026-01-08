@@ -17,31 +17,7 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
-// Componente para animação de transição de página
-function PageTransition({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const [displayChildren, setDisplayChildren] = useState(children);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
-  useEffect(() => {
-    setIsTransitioning(true);
-    const timeout = setTimeout(() => {
-      setDisplayChildren(children);
-      setIsTransitioning(false);
-    }, 50);
-    return () => clearTimeout(timeout);
-  }, [children, pathname]);
-
-  return (
-    <div
-      className={`transition-all duration-200 ease-out ${
-        isTransitioning ? "opacity-90 scale-[0.995]" : "opacity-100 scale-100"
-      }`}
-    >
-      {displayChildren}
-    </div>
-  );
-}
+// PageTransition removido - causava interferência com tooltips e movimento indesejado
 
 // Loading spinner minimalista
 function LoadingSpinner() {
@@ -92,7 +68,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <Suspense fallback={<LoadingSpinner />}>
-              <PageTransition>{children}</PageTransition>
+              {children}
             </Suspense>
             <Toaster 
               richColors 
