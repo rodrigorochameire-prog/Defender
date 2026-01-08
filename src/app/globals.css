@@ -5,8 +5,17 @@
 /* ========================================
    TETECARE - DESIGN SYSTEM v6.1
    Sofisticado • Equilibrado • Limpo
-   CACHE BUST: 2026-01-08-v2
+   CACHE BUST: 2026-01-08-v3
    ======================================== */
+
+/* ========================================
+   LOGO - Azul Escuro e Profundo
+   ======================================== */
+
+/* Ajusta o azul da logo para um tom mais escuro e profundo */
+img[src*="tetecare-logo"] {
+  filter: brightness(0.82) saturate(1.4) contrast(1.15) hue-rotate(10deg);
+}
 
 @layer base {
   :root {
