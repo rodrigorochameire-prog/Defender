@@ -29,9 +29,9 @@ export default async function SignInPage() {
     <div className="min-h-screen flex bg-[hsl(210_20%_98%)]">
       {/* Lado Esquerdo - Informações (Design Refinado) */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        {/* Gradiente suave e profissional */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-orange-500 to-orange-600" />
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_30%,white,transparent_40%)]" />
+        {/* Gradiente suave coral/pêssego - mais leve */}
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-orange-300 to-rose-400" />
+        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(circle_at_30%_30%,white,transparent_40%)]" />
         
         <div className="relative z-10 flex flex-col justify-center items-center w-full px-20 py-16 text-white">
           {/* Logo com sombra suave */}
@@ -75,7 +75,7 @@ export default async function SignInPage() {
       
       {/* Lado Direito - Formulário de Login (Design Refinado) */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-12">
-        <div className="w-full max-w-[460px]">
+        <div className="w-full max-w-[520px]">
           {/* Header Mobile - Mais equilibrado */}
           <div className="lg:hidden flex flex-col items-center mb-8">
             <Image 
@@ -91,13 +91,13 @@ export default async function SignInPage() {
             <p className="text-sm text-muted-foreground mt-1">Gestão de Creche para Pets</p>
           </div>
           
-          {/* Card de Login - Sombras suaves multicamadas */}
-          <div className="rounded-[14px] border-0 bg-card shadow-[0_2px_4px_0_rgba(0,0,0,0.03),0_4px_8px_0_rgba(0,0,0,0.05),0_8px_16px_0_rgba(0,0,0,0.04)] p-8 md:p-10 space-y-6">
-            {/* Header do Card */}
+          {/* Card de Login - Mais espaçoso */}
+          <div className="rounded-[14px] border-0 bg-card shadow-[0_2px_4px_0_rgba(0,0,0,0.03),0_4px_8px_0_rgba(0,0,0,0.05),0_8px_16px_0_rgba(0,0,0,0.04)] p-10 md:p-12 space-y-6">
+            {/* Header do Card - Melhor contraste */}
             <div className="space-y-3 text-center">
-              <p className="text-xs uppercase tracking-wider font-semibold text-primary">Acesso Seguro</p>
-              <h2 className="text-2xl font-bold text-foreground">Entrar no TeteCare</h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-xs uppercase tracking-wider font-bold text-orange-600">Acesso Seguro</p>
+              <h2 className="text-3xl font-bold text-foreground">Entrar no TeteCare</h2>
+              <p className="text-base text-[hsl(220_11%_45%)] leading-relaxed">
                 Use sua conta para continuar cuidando dos seus pets
               </p>
             </div>
