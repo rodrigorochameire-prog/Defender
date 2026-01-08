@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 /* ========================================
-   TETECARE - DESIGN SYSTEM v6
+   TETECARE - DESIGN SYSTEM v6.1
    Sofisticado • Equilibrado • Limpo
+   CACHE BUST: 2026-01-08-v2
    ======================================== */
 
 @layer base {
