@@ -122,12 +122,12 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
   
   if (iconFile) {
     return (
-      <div className={cn("relative rounded-full overflow-hidden bg-white border border-gray-200", className)} style={{ width: size, height: size }}>
+      <div className={cn("relative", className)} style={{ width: size, height: size }}>
         <Image
           src={`/breed-icons/${iconFile}.png`}
           alt={breed || 'Pet'}
           fill
-          className="object-contain p-1"
+          className="object-contain"
         />
       </div>
     );
