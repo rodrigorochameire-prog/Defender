@@ -9,10 +9,10 @@
 
 @layer base {
   :root {
-    /* MODO CLARO - Branco puro, limpo */
-    --background: 0 0% 100%;
-    --foreground: 220 20% 20%;
-    --card: 0 0% 100%;
+    /* MODO CLARO - Off-white para fundo, branco puro para cards */
+    --background: 210 20% 98%; /* #F8FAFC - Off-white sofisticado */
+    --foreground: 220 22% 18%; /* Texto principal mais escuro */
+    --card: 0 0% 100%; /* Branco puro para cards */
     --card-foreground: 220 20% 20%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 20%;
@@ -21,20 +21,20 @@
     --primary: 24 80% 52%;
     --primary-foreground: 0 0% 100%;
     
-    /* Neutros elegantes */
+    /* Neutros elegantes - Azul profundo (Slate/Navy) para inativos */
     --secondary: 220 14% 96%;
-    --secondary-foreground: 220 15% 35%;
-    --muted: 220 12% 95%;
-    --muted-foreground: 220 10% 45%;
-    --accent: 220 14% 95%;
-    --accent-foreground: 220 15% 35%;
+    --secondary-foreground: 220 16% 42%; /* Azul slate mais profundo */
+    --muted: 220 13% 96%;
+    --muted-foreground: 220 11% 50%; /* Textos secundários mais definidos */
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 16% 38%; /* Azul slate para elementos inativos */
     
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 14% 90%;
-    --input: 220 14% 90%;
+    --border: 220 13% 91%; /* Borda mais suave */
+    --input: 220 14% 94%;
     --ring: 24 80% 52%;
-    --radius: 0.5rem;
+    --radius: 0.875rem; /* 14px - Border-radius padronizado */
     
     /* Charts - Paleta harmonizada (laranja + azul) */
     --chart-1: 24 80% 52%;
@@ -108,18 +108,20 @@
   
   body {
     @apply bg-background text-foreground antialiased;
-    line-height: 1.6;
+    line-height: 1.65;
     letter-spacing: -0.01em;
     font-weight: 400;
+    background-color: hsl(var(--background));
   }
 
-  h1 { @apply text-2xl font-semibold tracking-tight text-foreground; }
-  h2 { @apply text-xl font-semibold tracking-tight text-foreground; }
-  h3 { @apply text-lg font-medium text-foreground; }
-  h4 { @apply text-base font-medium text-foreground; }
-  p { @apply text-base leading-relaxed; }
-  span, label { @apply text-sm; }
-  small { @apply text-xs; }
+  /* Hierarquia Tipográfica Melhorada */
+  h1 { @apply text-2xl font-bold tracking-tight text-foreground; }
+  h2 { @apply text-xl font-bold tracking-tight text-foreground; }
+  h3 { @apply text-lg font-semibold text-foreground; }
+  h4 { @apply text-base font-semibold text-foreground; }
+  p { @apply text-base leading-relaxed text-foreground; }
+  span, label { @apply text-sm text-muted-foreground; }
+  small { @apply text-xs text-muted-foreground; }
 }
 
 /* ========================================
@@ -190,8 +192,19 @@
 }
 
 .stat-card {
-  @apply rounded-xl p-4 border bg-card;
-  border-color: hsl(var(--border));
+  @apply rounded-[14px] p-5 bg-card;
+  border: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 
+              0 1px 3px 0 rgba(0, 0, 0, 0.05),
+              0 2px 6px 0 rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.06), 
+              0 2px 4px 0 rgba(0, 0, 0, 0.08),
+              0 8px 16px 0 rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
 }
 
 .stat-card-header {
@@ -264,13 +277,22 @@
    ======================================== */
 
 .section-card {
-  @apply rounded-xl border bg-card overflow-hidden;
-  border-color: hsl(var(--border));
+  @apply rounded-[14px] bg-card overflow-hidden;
+  border: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 
+              0 1px 3px 0 rgba(0, 0, 0, 0.05),
+              0 2px 6px 0 rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+.section-card:hover {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.06), 
+              0 2px 4px 0 rgba(0, 0, 0, 0.08),
+              0 8px 16px 0 rgba(0, 0, 0, 0.04);
 }
 
 .section-card-header {
-  @apply flex items-center justify-between px-4 py-3 border-b;
-  border-color: hsl(var(--border));
+  @apply flex items-center justify-between px-6 py-4 border-b border-border/30;
 }
 
 .section-card-title {
@@ -305,7 +327,7 @@
 }
 
 .section-card-content {
-  @apply p-4;
+  @apply p-6;
 }
 
 /* ========================================
@@ -317,21 +339,31 @@
 }
 
 .list-item {
-  @apply flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors;
+  @apply flex items-center gap-4 p-4 rounded-[14px] cursor-pointer;
+  transition: all 0.3s ease;
+  border: none;
 }
 
 .list-item:hover {
-  background: hsl(var(--muted) / 0.4);
-  }
+  background: hsl(var(--muted) / 0.5);
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04), 
+              0 1px 2px 0 rgba(0, 0, 0, 0.02);
+  transform: translateY(-1px);
+}
 
 .list-item-icon {
-  @apply h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0;
+  @apply h-10 w-10 rounded-[14px] flex items-center justify-center flex-shrink-0;
   background: hsl(var(--muted));
+  transition: all 0.3s ease;
 }
 
 .list-item-icon svg {
   @apply h-4 w-4;
-  color: hsl(var(--muted-foreground));
+  color: hsl(220 13% 45%); /* Azul slate para ícones inativos */
+}
+
+.list-item:hover .list-item-icon {
+  background: hsl(var(--muted) / 0.8);
 }
 
 .list-item-icon.primary { background: hsl(var(--primary) / 0.1); }
@@ -345,11 +377,12 @@
 }
 
 .list-item-title {
-  @apply text-[0.8125rem] font-semibold truncate text-foreground;
+  @apply text-sm font-bold truncate text-foreground;
 }
 
 .list-item-subtitle {
-  @apply text-xs truncate text-muted-foreground;
+  @apply text-xs truncate;
+  color: hsl(220 11% 50%); /* Texto secundário com cor mais definida */
 }
 
 /* ========================================
@@ -357,7 +390,10 @@
    ======================================== */
 
 .badge {
-  @apply inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium;
+  @apply inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 
 .badge-neutral {
@@ -416,34 +452,37 @@
 }
 
 .badge-success {
-  background: hsl(142 76% 95%);
-  color: hsl(142 71% 35%);
+  background: hsl(142 76% 96%);
+  color: hsl(142 71% 32%);
+  box-shadow: 0 1px 2px 0 rgba(34, 197, 94, 0.1);
 }
 
 .dark .badge-success {
-  background: hsl(142 71% 45% / 0.15);
-  color: hsl(142 71% 55%);
+  background: hsl(142 71% 45% / 0.2);
+  color: hsl(142 71% 60%);
 }
 
 .badge-warning {
-  background: hsl(45 100% 94%);
-  color: hsl(45 80% 30%);
+  background: hsl(45 100% 96%);
+  color: hsl(45 75% 28%);
+  box-shadow: 0 1px 2px 0 rgba(234, 179, 8, 0.1);
 }
 
 .dark .badge-warning {
-  background: hsl(45 93% 47% / 0.15);
-  color: hsl(45 85% 55%);
+  background: hsl(45 93% 47% / 0.2);
+  color: hsl(45 85% 60%);
 }
 
 .badge-error {
-  background: hsl(0 85% 95%);
-  color: hsl(0 72% 45%);
+  background: hsl(0 85% 97%);
+  color: hsl(0 72% 42%);
+  box-shadow: 0 1px 2px 0 rgba(239, 68, 68, 0.1);
 }
 
 .dark .badge-error {
-  background: hsl(0 72% 51% / 0.15);
-  color: hsl(0 72% 60%);
-  }
+  background: hsl(0 72% 51% / 0.2);
+  color: hsl(0 72% 65%);
+}
 
 /* ========================================
    EMPTY STATE
@@ -484,13 +523,20 @@
 }
 
 .action-card {
-  @apply flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all;
-  border-color: hsl(var(--border));
+  @apply flex items-center gap-4 p-4 rounded-[14px] cursor-pointer;
+  border: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 
+              0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  background: hsl(var(--card));
 }
 
 .action-card:hover {
-  background: hsl(var(--muted) / 0.3);
-  border-color: hsl(var(--border));
+  background: hsl(var(--muted) / 0.4);
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.06), 
+              0 2px 4px 0 rgba(0, 0, 0, 0.08),
+              0 8px 16px 0 rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
 }
 
 .action-card-icon {
@@ -730,7 +776,24 @@
    ======================================== */
 
 a, button {
-  transition: all 0.15s ease;
+  transition: all 0.3s ease;
+}
+
+/* Transições suaves em elementos interativos */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: ease;
+  transition-duration: 0.3s;
+}
+
+/* Exceções para elementos que não devem ter transição */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* ========================================

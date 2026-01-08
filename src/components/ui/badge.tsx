@@ -3,23 +3,25 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-300 ease focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "shadow-[0_1px_2px_0_rgba(0,0,0,0.03)]",
+  "hover:shadow-[0_2px_4px_0_rgba(0,0,0,0.05)]",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "bg-[hsl(24_80%_52%)] text-white hover:bg-[hsl(24_80%_48%)] hover:shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)]",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-[hsl(220_14%_96%)] text-[hsl(220_16%_42%)] hover:bg-[hsl(220_14%_92%)]",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
+          "bg-[hsl(0_72%_96%)] text-[hsl(0_72%_42%)] hover:bg-[hsl(0_72%_92%)] shadow-[0_1px_2px_0_rgba(239,68,68,0.1)]",
+        outline: "text-foreground border border-border/40",
         success:
-          "border-transparent bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100",
+          "bg-[hsl(142_76%_96%)] text-[hsl(142_71%_32%)] shadow-[0_1px_2px_0_rgba(34,197,94,0.1)] dark:bg-[hsl(142_71%_45%/0.2)] dark:text-[hsl(142_71%_60%)] hover:shadow-[0_2px_4px_0_rgba(34,197,94,0.15)]",
         warning:
-          "border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100",
+          "bg-[hsl(45_100%_96%)] text-[hsl(45_75%_28%)] shadow-[0_1px_2px_0_rgba(234,179,8,0.1)] dark:bg-[hsl(45_93%_47%/0.2)] dark:text-[hsl(45_85%_60%)] hover:shadow-[0_2px_4px_0_rgba(234,179,8,0.15)]",
         info:
-          "border-transparent bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100",
+          "bg-[hsl(200_60%_96%)] text-[hsl(200_55%_38%)] shadow-[0_1px_2px_0_rgba(59,130,246,0.1)] dark:bg-[hsl(200_45%_22%/0.3)] dark:text-[hsl(200_50%_65%)] hover:shadow-[0_2px_4px_0_rgba(59,130,246,0.15)]",
       },
     },
     defaultVariants: {

@@ -300,8 +300,8 @@ function AdminSidebarContent({
                   tooltip={isCollapsed ? "Expandir Menu" : "Recolher Menu"}
                   className={`${isCollapsed ? "h-9" : "h-12"} hover:bg-primary/10 transition-all duration-300`}
                 >
-                  <PanelLeft className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                  <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">
+                  <PanelLeft className="h-6 w-6 text-[hsl(220_13%_45%)] group-hover:text-primary transition-colors duration-300" />
+                  <span className="text-sm font-medium text-[hsl(220_11%_50%)] group-hover:text-foreground transition-colors duration-300">
                     {isCollapsed ? "Expandir" : "Recolher Menu"}
                   </span>
                 </SidebarMenuButton>
@@ -314,7 +314,7 @@ function AdminSidebarContent({
                 <div key={group.label}>
                   {!isCollapsed && (
                     <div className="px-3 py-2 mt-4 mb-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[hsl(220_11%_50%)]">
                         {group.label}
                       </span>
                     </div>
@@ -332,10 +332,10 @@ function AdminSidebarContent({
                           asChild
                           isActive={isActive}
                           tooltip={item.label}
-                          className={`${isCollapsed ? "h-9" : "h-12"} transition-all duration-200 rounded-xl group relative overflow-hidden ${
+                          className={`${isCollapsed ? "h-9" : "h-12"} transition-all duration-300 ease rounded-[14px] group relative overflow-hidden ${
                             isActive
-                              ? `${colors.bgActive} shadow-sm ring-1 ${colors.border}`
-                              : `${colors.bgHover}`
+                              ? `${colors.bgActive} shadow-[0_2px_4px_0_rgba(0,0,0,0.06)] ring-1 ${colors.border}`
+                              : `${colors.bgHover} hover:shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]`
                           }`}
                         >
                           <Link
@@ -349,13 +349,17 @@ function AdminSidebarContent({
                           >
                             {/* Ícone SEMPRE colorido */}
                             <item.icon
-                              className={`h-6 w-6 relative z-10 transition-transform duration-200 group-hover:scale-105 ${colors.icon}`}
+                              className={`h-6 w-6 relative z-10 transition-all duration-300 ease ${
+                                isActive
+                                  ? `${colors.iconActive} scale-105`
+                                  : `text-[hsl(220_13%_45%)] group-hover:text-[hsl(220_16%_38%)] group-hover:scale-105`
+                              }`}
                             />
-                            {/* Texto SEMPRE neutro */}
-                            <span className={`relative z-10 text-sm ${
+                            {/* Texto com hierarquia melhorada */}
+                            <span className={`relative z-10 text-sm transition-colors duration-300 ${
                               isActive 
-                                ? "font-medium text-foreground" 
-                                : "text-muted-foreground group-hover:text-foreground"
+                                ? "font-bold text-foreground" 
+                                : "font-medium text-[hsl(220_11%_50%)] group-hover:text-[hsl(220_16%_38%)]"
                             }`}>
                               {item.label}
                             </span>
@@ -381,7 +385,7 @@ function AdminSidebarContent({
           <SidebarFooter className="p-3 border-t border-border/40 bg-gradient-to-t from-primary/5 to-transparent">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 transition-all duration-300 w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 group shadow-sm hover:shadow-md">
+                <button className="flex items-center gap-3 rounded-[14px] px-3 py-3 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 transition-all duration-300 ease w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 group shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] hover:shadow-[0_2px_4px_0_rgba(0,0,0,0.06)] hover:translate-y-[-1px]">
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10 blur-lg rounded-full" />
                     <Avatar className="h-11 w-11 border-2 border-primary/30 shadow-lg relative ring-2 ring-background">
@@ -396,7 +400,7 @@ function AdminSidebarContent({
                         {userName}
                       </p>
                       {userEmail && (
-                        <p className="text-xs text-muted-foreground truncate mt-1.5 font-medium">
+                        <p className="text-xs text-[hsl(220_11%_50%)] truncate mt-1.5 font-medium">
                           {userEmail}
                         </p>
                       )}
@@ -464,10 +468,10 @@ function AdminSidebarContent({
           </div>
         )}
         {!isMobile && (
-          <div className="flex border-b border-border/40 h-14 items-center justify-center bg-background/95 backdrop-blur-xl px-6 sticky top-0 z-40 gap-3 shadow-sm relative">
+          <div className="flex border-b border-border/30 h-14 items-center justify-center bg-card/95 backdrop-blur-xl px-6 sticky top-0 z-40 gap-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] relative">
             <Link
               href="/admin"
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-300 cursor-pointer"
             >
               <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-lg bg-white flex items-center justify-center">
                 <Image
@@ -479,7 +483,7 @@ function AdminSidebarContent({
                 />
               </div>
               <span
-                className="text-xl font-semibold tracking-tight text-foreground"
+                className="text-xl font-bold tracking-tight text-foreground"
                 style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
               >
                 Tetê Care
@@ -492,7 +496,7 @@ function AdminSidebarContent({
             </div>
           </div>
         )}
-        <main className="flex-1 p-6 md:p-8">{children}</main>
+        <main className="flex-1 p-6 md:p-8 min-h-screen">{children}</main>
       </SidebarInset>
     </>
   );
