@@ -19,9 +19,9 @@ export default function TutorPetsPage() {
 
   // Stats
   const totalPets = pets?.length || 0;
-  const approvedPets = pets?.filter(p => p.approvalStatus === "approved").length || 0;
+  const approvedPets = pets?.filter((p) => p.approvalStatus === "approved").length || 0;
   const totalCredits = pets?.reduce((sum, p) => sum + (p.credits || 0), 0) || 0;
-  const pendingPets = pets?.filter(p => p.approvalStatus === "pending").length || 0;
+  const pendingPets = pets?.filter((p) => p.approvalStatus === "pending").length || 0;
 
   return (
     <div className="page-container">
