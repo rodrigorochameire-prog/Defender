@@ -502,7 +502,7 @@ export function PremiumCalendar({
               {showCreateButton && onCreateEvent && (
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="rounded-lg shadow-sm h-8 px-3 text-sm gap-1.5">
+                    <Button className="rounded-[14px] shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] h-8 px-3 text-sm gap-1.5 bg-primary text-white hover:bg-primary/90 [&_svg]:text-white [&_span]:text-white font-semibold">
                       <Plus className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Novo</span>
                     </Button>

@@ -106,7 +106,6 @@ export default function TutorPetsPage() {
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {pets.map((pet) => {
                 const breedIcon = getBreedIcon(pet.breed);
-                const IconComponent = breedIcon.icon;
                 
                 return (
                 <Link key={pet.id} href={`/tutor/pets/${pet.id}`}>
@@ -128,10 +127,10 @@ export default function TutorPetsPage() {
                             backgroundColor: breedIcon.bgColor,
                             border: `2px solid ${breedIcon.ringColor}`
                           }}>
-                          <IconComponent 
-                            className="h-7 w-7" 
-                            style={{ color: breedIcon.color }} 
-                          />
+                          {React.createElement(breedIcon.icon, {
+                            className: "h-7 w-7",
+                            style: { color: breedIcon.color }
+                          })}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
