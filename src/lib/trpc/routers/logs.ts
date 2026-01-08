@@ -270,6 +270,7 @@ export const logsRouter = router({
               id: pets.id,
               name: pets.name,
               photoUrl: pets.photoUrl,
+              breed: pets.breed,
             },
             createdBy: {
               id: users.id,

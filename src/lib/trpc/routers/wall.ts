@@ -79,6 +79,7 @@ export const wallRouter = router({
               id: pets.id,
               name: pets.name,
               photoUrl: pets.photoUrl,
+              breed: pets.breed,
             },
           })
           .from(wallPosts)

@@ -40,6 +40,7 @@ export const tutorsRouter = router({
                   id: pets.id,
                   name: pets.name,
                   photoUrl: pets.photoUrl,
+                  breed: pets.breed,
                 },
                 isPrimary: petTutors.isPrimary,
               })

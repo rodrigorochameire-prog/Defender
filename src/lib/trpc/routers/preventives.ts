@@ -237,6 +237,7 @@ export const preventivesRouter = router({
               id: pets.id,
               name: pets.name,
               photoUrl: pets.photoUrl,
+              breed: pets.breed,
             },
           })
           .from(preventiveTreatments)
@@ -267,6 +268,7 @@ export const preventivesRouter = router({
             id: pets.id,
             name: pets.name,
             photoUrl: pets.photoUrl,
+            breed: pets.breed,
           },
         })
         .from(preventiveTreatments)
