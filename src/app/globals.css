@@ -12,9 +12,9 @@
    LOGO - Azul Escuro e Profundo
    ======================================== */
 
-/* Ajusta o azul da logo para um tom mais escuro e profundo */
+/* Ajusta o azul da logo para um tom mais escuro preservando outras cores */
 img[src*="tetecare-logo"] {
-  filter: brightness(0.82) saturate(1.4) contrast(1.15) hue-rotate(10deg);
+  filter: saturate(1.2) contrast(1.08) hue-rotate(8deg);
 }
 
 @layer base {
