@@ -353,6 +353,7 @@ export const documents = pgTable("documents", {
   description: text("description"),
   category: varchar("category", { length: 100 }).notNull(), // 'vaccination' | 'exam' | 'prescription' | 'other'
   fileUrl: text("file_url").notNull(),
+  fileKey: text("file_key"),
   fileType: varchar("file_type", { length: 50 }),
   fileSize: integer("file_size"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
