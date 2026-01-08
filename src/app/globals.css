@@ -809,10 +809,7 @@ select {
 [data-radix-popover-content],
 [data-radix-menu-content],
 [data-radix-select-content] {
-  animation-duration: 0s !important;
-  animation-delay: 0s !important;
-  transition-duration: 0s !important;
-  transition-delay: 0s !important;
+  /* Mantém animações padrão; não forçar durations para permitir fade */
 }
 
 /* ========================================

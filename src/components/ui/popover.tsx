@@ -22,6 +22,8 @@ const PopoverContent = React.forwardRef<
       sideOffset={sideOffset}
       className={cn(
         "z-50 w-72 rounded-xl border bg-popover p-4 text-popover-foreground shadow-lg outline-none",
+        // Somente FADE (sem slide/zoom)
+        "animate-in fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
         className
       )}
       {...props}
