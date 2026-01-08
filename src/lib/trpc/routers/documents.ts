@@ -103,6 +103,9 @@ export const documentsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
+        // Log detalhado para debug
+        console.log('[documents.upload] ctx.user:', JSON.stringify(ctx.user));
+        console.log('[documents.upload] input:', JSON.stringify(input));
         // Verificar acesso ao pet
         if (ctx.user.role !== "admin") {
           const relation = await db.query.petTutors.findFirst({
