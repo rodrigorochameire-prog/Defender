@@ -3,6 +3,9 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db, users } from "@/lib/db";
 import { eq } from "drizzle-orm";
 
+// Lista de emails que são admin
+const ADMIN_EMAILS = ["rodrigorochameire@gmail.com"];
+
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
 
@@ -13,21 +16,50 @@ export default async function AuthRedirectPage() {
     redirect("/sign-in");
   }
 
-  // Buscar usuário do banco pelo email do Clerk
   const email = clerkUser.emailAddresses[0]?.emailAddress;
+  const name = clerkUser.firstName && clerkUser.lastName 
+    ? `${clerkUser.firstName} ${clerkUser.lastName}` 
+    : clerkUser.firstName || email?.split("@")[0] || "Usuário";
   
   if (!email) {
     redirect("/sign-in");
   }
 
-  const dbUser = await db.query.users.findFirst({
+  // Verificar/sincronizar usuário no banco de dados
+  let dbUser = await db.query.users.findFirst({
     where: eq(users.email, email),
   });
 
-  console.log("[AuthRedirect] Email:", email, "DB Role:", dbUser?.role);
+  const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+
+  if (!dbUser) {
+    // Criar novo usuário no banco
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        name,
+        email,
+        role: isAdmin ? "admin" : "user",
+        emailVerified: true,
+      })
+      .returning();
+    dbUser = newUser;
+    console.log("[AuthRedirect] Novo usuário criado:", email, "Role:", dbUser.role);
+  } else if (isAdmin && dbUser.role !== "admin") {
+    // Corrigir role de admin se necessário
+    const [updated] = await db
+      .update(users)
+      .set({ role: "admin", updatedAt: new Date() })
+      .where(eq(users.email, email))
+      .returning();
+    dbUser = updated;
+    console.log("[AuthRedirect] Admin corrigido:", email);
+  }
+
+  console.log("[AuthRedirect] Email:", email, "Role:", dbUser.role);
 
   // Redirecionar baseado no role DO BANCO DE DADOS
-  if (dbUser?.role === "admin") {
+  if (dbUser.role === "admin") {
     redirect("/admin");
   } else {
     redirect("/tutor");
