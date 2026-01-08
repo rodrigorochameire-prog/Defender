@@ -800,17 +800,7 @@ select {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* ========================================
-   RADIX UI - Desabilita animações (mantém posicionamento)
-   ======================================== */
-
-/* Remove animações mas NÃO interfere no transform de posicionamento */
-[data-radix-tooltip-content],
-[data-radix-popover-content],
-[data-radix-menu-content],
-[data-radix-select-content] {
-  /* Mantém animações padrão; não forçar durations para permitir fade */
-}
+/* (Removido overrides de animação do Radix para não afetar posicionamento) */
 
 /* ========================================
    REDUCED MOTION
