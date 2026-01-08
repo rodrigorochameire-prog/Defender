@@ -104,10 +104,10 @@ export default function TutorPetsPage() {
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {pets.map((pet) => (
                 <Link key={pet.id} href={`/tutor/pets/${pet.id}`}>
-                  <div className="p-4 rounded-xl border bg-card hover:border-primary/30 hover:shadow-sm transition-all group">
-                    <div className="flex items-center gap-3">
+                  <div className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
+                    <div className="flex items-center gap-4">
                       {pet.photoUrl ? (
-                        <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                        <div className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-[hsl(220_14%_92%)] shadow-[0_2px_4px_0_rgba(0,0,0,0.08)]">
                           <Image
                             src={pet.photoUrl}
                             alt={pet.name}
@@ -116,19 +116,19 @@ export default function TutorPetsPage() {
                           />
                         </div>
                       ) : (
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Dog className="h-5 w-5 text-primary" />
+                        <div className="w-14 h-14 rounded-full bg-[hsl(24_85%_58%)]/15 flex items-center justify-center flex-shrink-0 ring-2 ring-[hsl(24_85%_58%)]/25 shadow-[0_2px_4px_0_rgba(24,85%,58%,0.15)]">
+                          <Dog className="h-7 w-7 text-[hsl(24_85%_48%)]" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">{pet.name}</p>
-                        <p className="text-sm text-muted-foreground truncate">
+                        <p className="pet-card-name font-bold text-base text-foreground leading-tight truncate">{pet.name}</p>
+                        <p className="pet-card-breed text-sm font-medium text-[hsl(220_13%_45%)] mt-0.5 leading-tight truncate">
                           {pet.breed || "Sem raça definida"}
                         </p>
                       </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowRight className="h-5 w-5 text-[hsl(220_13%_45%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                    <div className="mt-3 pt-3 border-t flex items-center justify-between">
+                    <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between">
                       <Badge className={
                         pet.approvalStatus === "approved" ? "badge-green" :
                         pet.approvalStatus === "pending" ? "badge-amber" : "badge-rose"
@@ -136,9 +136,9 @@ export default function TutorPetsPage() {
                         {pet.approvalStatus === "approved" ? "Aprovado" :
                          pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
                       </Badge>
-                      <div className="flex items-center gap-1 text-sm">
-                        <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="font-medium">{pet.credits} dias</span>
+                      <div className="flex items-center gap-1.5 pet-card-credits text-sm">
+                        <CreditCard className="h-4 w-4 text-[hsl(220_13%_45%)]" />
+                        <span className="font-semibold text-[hsl(220_16%_38%)]">{pet.credits} dias</span>
                       </div>
                     </div>
                   </div>

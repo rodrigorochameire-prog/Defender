@@ -412,13 +412,14 @@
 }
 
 .badge-green {
-  background: hsl(160 50% 94%);
-  color: hsl(160 45% 38%);
-  }
+  background: hsl(142 65% 96%);
+  color: hsl(142 58% 32%);
+  box-shadow: 0 1px 2px 0 rgba(34, 197, 94, 0.12);
+}
 
 .dark .badge-green {
-  background: hsl(160 40% 20% / 0.4);
-  color: hsl(160 45% 60%);
+  background: hsl(142 50% 25% / 0.4);
+  color: hsl(142 55% 62%);
 }
 
 .badge-blue {
@@ -432,23 +433,25 @@
 }
 
 .badge-amber {
-  background: hsl(var(--primary) / 0.1);
-  color: hsl(var(--primary));
+  background: hsl(24 85% 96%);
+  color: hsl(24 75% 35%);
+  box-shadow: 0 1px 2px 0 rgba(234, 179, 8, 0.12);
 }
 
 .dark .badge-amber {
-  background: hsl(var(--primary) / 0.15);
-  color: hsl(var(--primary));
+  background: hsl(24 75% 30% / 0.35);
+  color: hsl(24 80% 58%);
 }
 
 .badge-rose {
-  background: hsl(0 55% 95%);
-  color: hsl(0 50% 48%);
+  background: hsl(0 65% 97%);
+  color: hsl(0 58% 40%);
+  box-shadow: 0 1px 2px 0 rgba(239, 68, 68, 0.12);
 }
 
 .dark .badge-rose {
-  background: hsl(0 40% 22% / 0.4);
-  color: hsl(0 45% 62%);
+  background: hsl(0 50% 25% / 0.4);
+  color: hsl(0 60% 65%);
 }
 
 .badge-success {
@@ -844,7 +847,20 @@ html.font-large .section-card-title {
 }
 
 html.font-large .list-item-title {
-  @apply text-sm;
+  @apply text-base;
+}
+
+/* Tamanhos de fonte aumentados para cards de pets no modo fonte grande */
+html.font-large .pet-card-name {
+  @apply text-lg;
+}
+
+html.font-large .pet-card-breed {
+  @apply text-base;
+}
+
+html.font-large .pet-card-credits {
+  @apply text-base;
 }
 
 html.font-large .badge {

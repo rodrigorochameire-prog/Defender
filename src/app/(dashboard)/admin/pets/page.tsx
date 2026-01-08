@@ -336,15 +336,15 @@ export default function AdminPetsPage() {
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {filteredPets.map((pet) => (
-                <div key={pet.id} className="p-4 rounded-xl border bg-card hover:border-primary/30 transition-all group">
+                <div key={pet.id} className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Dog className="h-6 w-6 text-primary" />
+                    <div className="flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-full bg-[hsl(24_85%_58%)]/15 flex items-center justify-center ring-2 ring-[hsl(24_85%_58%)]/25 shadow-[0_2px_4px_0_rgba(24,85%,58%,0.15)]">
+                        <Dog className="h-7 w-7 text-[hsl(24_85%_48%)]" />
                       </div>
-                      <div>
-                        <p className="font-semibold">{pet.name}</p>
-                        <p className="text-sm text-muted-foreground">{pet.breed || "Sem raça"}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="pet-card-name font-bold text-base text-foreground leading-tight">{pet.name}</p>
+                        <p className="pet-card-breed text-sm font-medium text-[hsl(220_13%_45%)] mt-0.5 leading-tight">{pet.breed || "Sem raça"}</p>
                       </div>
                     </div>
                     <DropdownMenu>
@@ -390,9 +390,9 @@ export default function AdminPetsPage() {
                       {pet.approvalStatus === "approved" ? "Aprovado" :
                        pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
                     </Badge>
-                    <div className="flex items-center gap-1 text-sm">
-                      <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium">{pet.credits}</span>
+                    <div className="flex items-center gap-1.5 pet-card-credits text-sm">
+                      <CreditCard className="h-4 w-4 text-[hsl(220_13%_45%)]" />
+                      <span className="font-semibold text-[hsl(220_16%_38%)]">{pet.credits}</span>
                     </div>
                   </div>
                 </div>
