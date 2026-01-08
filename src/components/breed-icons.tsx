@@ -116,9 +116,11 @@ const BREED_ICON_MAP: Record<string, string> = {
 // Função auxiliar para compatibilidade com código antigo
 export function getBreedIcon(breed: string | null | undefined) {
   // Retorna um componente wrapper que usa BreedIcon
-  return ({ className }: { className?: string }) => (
+  const BreedIconWrapper = ({ className }: { className?: string }) => (
     <BreedIcon breed={breed} className={className} size={32} />
   );
+  BreedIconWrapper.displayName = `BreedIconWrapper(${breed || 'unknown'})`;
+  return BreedIconWrapper;
 }
 
 export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
