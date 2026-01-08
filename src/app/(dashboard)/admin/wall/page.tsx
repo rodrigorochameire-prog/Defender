@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getInitials } from "@/lib/utils";
+import { WallSkeleton } from "@/components/shared/skeletons";
 
 export default function AdminWall() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
