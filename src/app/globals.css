@@ -800,6 +800,31 @@ select {
 }
 
 /* ========================================
+   TOOLTIP - Sem Animações
+   ======================================== */
+
+[data-radix-tooltip-content] {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+[data-radix-tooltip-content][data-state="delayed-open"],
+[data-radix-tooltip-content][data-state="open"] {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+[data-radix-tooltip-content][data-state="closed"] {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  opacity: 0 !important;
+}
+
+/* ========================================
    REDUCED MOTION
    ======================================== */
 
@@ -807,7 +832,7 @@ select {
   * {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
-}
+  }
 }
 
 /* ========================================
