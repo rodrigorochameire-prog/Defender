@@ -12,7 +12,7 @@ const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
 >(({ className, sideOffset = 4, ...props }, ref) => {
-  const contentRef = React.useRef<HTMLDivElement>(null);
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
 
   // Sobrescreve estilos inline aplicados dinamicamente pelo Radix UI
   React.useEffect(() => {
@@ -21,15 +21,16 @@ const TooltipContent = React.forwardRef<
 
     // Função para remover todas as animações e transforms
     const removeAnimations = () => {
-      if (content) {
-        content.style.setProperty('animation', 'none', 'important');
-        content.style.setProperty('transition', 'none', 'important');
-        content.style.setProperty('transform', 'none', 'important');
-        content.style.setProperty('animation-duration', '0s', 'important');
-        content.style.setProperty('transition-duration', '0s', 'important');
-        content.style.setProperty('animation-delay', '0s', 'important');
-        content.style.setProperty('transition-delay', '0s', 'important');
-        content.style.setProperty('will-change', 'auto', 'important');
+      if (contentRef.current) {
+        const el = contentRef.current;
+        el.style.setProperty('animation', 'none', 'important');
+        el.style.setProperty('transition', 'none', 'important');
+        el.style.setProperty('transform', 'none', 'important');
+        el.style.setProperty('animation-duration', '0s', 'important');
+        el.style.setProperty('transition-duration', '0s', 'important');
+        el.style.setProperty('animation-delay', '0s', 'important');
+        el.style.setProperty('transition-delay', '0s', 'important');
+        el.style.setProperty('will-change', 'auto', 'important');
       }
     };
 
@@ -55,18 +56,21 @@ const TooltipContent = React.forwardRef<
     };
   }, []);
 
+  // Combina refs de forma segura
+  const setRefs = React.useCallback((node: HTMLDivElement | null) => {
+    contentRef.current = node;
+    
+    if (typeof ref === 'function') {
+      ref(node);
+    } else if (ref) {
+      (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    }
+  }, [ref]);
+
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
-        ref={(node) => {
-          // Combina refs
-          if (typeof ref === 'function') {
-            ref(node);
-          } else if (ref) {
-            ref.current = node;
-          }
-          contentRef.current = node;
-        }}
+        ref={setRefs}
         sideOffset={sideOffset}
         className={cn(
           "z-50 overflow-hidden rounded-[14px] bg-slate-800 dark:bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white shadow-lg",
