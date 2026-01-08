@@ -515,29 +515,57 @@ export function BehaviorSkeleton() {
   );
 }
 
-// Skeleton para Logs (grid 3 colunas de cards)
+// Skeleton PRECISO para Logs Diários (admin/logs/page.tsx)
 export function LogsSkeleton() {
   const names = [32, 40, 28, 36, 44, 32];
   
   return (
     <div className="page-container">
+      {/* Header */}
       <div className="page-header">
         <div className="page-header-content">
-          <Skeleton className="h-12 w-12 rounded-[14px]" />
-          <div className="space-y-2">
+          <div className="page-header-icon">
+            <Skeleton className="h-5 w-5" />
+          </div>
+          <div className="page-header-info">
             <Skeleton className="h-7 w-40" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-4 w-72" />
           </div>
         </div>
-        <Skeleton className="h-9 w-32 rounded-[14px]" />
+        <div className="page-header-actions">
+          <Skeleton className="h-9 w-28 rounded-[14px]" />
+        </div>
       </div>
       
-      {/* Filtros */}
-      <Card className="mb-5">
-        <CardContent className="p-5">
-          <div className="flex gap-3">
-            <Skeleton className="h-11 w-48 rounded-[14px]" />
-            <Skeleton className="h-11 w-40 rounded-[14px]" />
+      {/* Stats Row - 3 cards */}
+      <div className="stats-row">
+        {[
+          "Total de Logs",
+          "Logs de Hoje",
+          "Creche Hoje"
+        ].map((title, i) => (
+          <div key={i} className="stat-card">
+            <div className="stat-card-header">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-6 w-6 rounded" />
+            </div>
+            <Skeleton className="h-10 w-12 mt-3" />
+          </div>
+        ))}
+      </div>
+      
+      {/* Card de Filtros */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-11 w-40 rounded-[14px]" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-11 w-40 rounded-[14px]" />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -555,19 +583,24 @@ export function LogsSkeleton() {
                     <Skeleton className="h-3 w-24" />
                   </div>
                 </div>
-                <Skeleton className="h-8 w-8 rounded" />
+                <Skeleton className="h-6 w-20 rounded-full" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2 mb-3">
-                <Skeleton className="h-5 w-5 rounded-full" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-6 w-16 rounded-full" />
+              {/* Grid 3 colunas: Humor, Fezes, Apetite */}
+              <div className="grid grid-cols-3 gap-2 text-center mb-3">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="p-2 rounded-lg bg-muted/50">
+                    <Skeleton className="h-4 w-4 mx-auto mb-1" />
+                    <Skeleton className="h-3 w-12 mx-auto" />
+                  </div>
+                ))}
               </div>
-              {i % 3 !== 2 && (
+              {/* Notas (aparece em alguns) */}
+              {i % 2 === 0 && (
                 <>
                   <Skeleton className="h-3 w-16 mb-2" />
-                  <Skeleton className="h-12 w-full rounded-lg" />
+                  <Skeleton className="h-16 w-full rounded-lg bg-muted/50" />
                 </>
               )}
             </CardContent>
