@@ -12,6 +12,7 @@ interface BreedIconProps {
 const BREED_ICON_MAP: Record<string, string> = {
   // Golden Retriever
   'golden retriever': 'golden_retriever',
+  'golden retriver': 'golden_retriever', // erro comum de digitação
   'golden': 'golden_retriever',
   
   // Cavalier King Charles Spaniel
@@ -48,6 +49,7 @@ const BREED_ICON_MAP: Record<string, string> = {
   
   // Labrador Retriever
   'labrador retriever': 'labrador_retriever',
+  'labrador retriver': 'labrador_retriever', // erro comum
   'labrador': 'labrador_retriever',
   
   // Yorkshire Terrier
@@ -66,6 +68,7 @@ const BREED_ICON_MAP: Record<string, string> = {
   // German Shepherd (Pastor Alemão)
   'german shepherd': 'pastor_alemao',
   'pastor alemao': 'pastor_alemao',
+  'pastor alemão': 'pastor_alemao',
   'pastor': 'pastor_alemao',
   
   // Boxer
