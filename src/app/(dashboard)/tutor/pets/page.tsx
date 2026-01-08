@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dog, Plus, CreditCard, Calendar, Heart, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { LoadingPage } from "@/components/shared/loading";
-import { getBreedIcon } from "@/lib/pet-breed-icons";
+import { BreedIcon } from "@/components/breed-icons";
 
 export default function TutorPetsPage() {
   const { data: pets, isLoading } = trpc.pets.myPets.useQuery();
@@ -104,10 +104,7 @@ export default function TutorPetsPage() {
             </div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {pets.map((pet) => {
-                const breedIcon = getBreedIcon(pet.breed);
-                
-                return (
+              {pets.map((pet) => (
                 <Link key={pet.id} href={`/tutor/pets/${pet.id}`}>
                   <div className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
                     <div className="flex items-center gap-4">
@@ -121,16 +118,8 @@ export default function TutorPetsPage() {
                           />
                         </div>
                       ) : (
-                        <div 
-                          className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 shadow-[0_2px_4px_0_rgba(0,0,0,0.08)]"
-                          style={{ 
-                            backgroundColor: breedIcon.bgColor,
-                            border: `2px solid ${breedIcon.ringColor}`
-                          }}>
-                          {React.createElement(breedIcon.icon, {
-                            className: "h-7 w-7",
-                            style: { color: breedIcon.color }
-                          })}
+                        <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <BreedIcon breed={pet.breed} className="h-7 w-7 text-primary" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
