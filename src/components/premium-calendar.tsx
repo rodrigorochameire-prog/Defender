@@ -383,41 +383,61 @@ export function PremiumCalendar({
             {/* View Mode & Filters */}
             <div className="flex flex-wrap items-center gap-1.5">
               {/* View Mode Toggle */}
-              <div className="flex items-center bg-muted/60 rounded-lg p-0.5">
+              <div className="flex items-center bg-muted/40 rounded-[14px] p-1">
                 <Button
                   variant={viewMode === "month" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("month")}
-                  className="rounded-md h-7 px-2.5 text-xs"
+                  className={cn(
+                    "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
+                    viewMode === "month" 
+                      ? "bg-primary text-white hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)]" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60"
+                  )}
                 >
-                  <LayoutGrid className="h-3.5 w-3.5 mr-1" />
+                  <LayoutGrid className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "month" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
                   <span className="hidden sm:inline">Mês</span>
                 </Button>
                 <Button
                   variant={viewMode === "week" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("week")}
-                  className="rounded-md h-7 px-2.5 text-xs"
+                  className={cn(
+                    "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
+                    viewMode === "week" 
+                      ? "bg-primary text-white hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)]" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60"
+                  )}
                 >
-                  <CalendarDays className="h-3.5 w-3.5 mr-1" />
+                  <CalendarDays className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "week" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
                   <span className="hidden sm:inline">Semana</span>
                 </Button>
                 <Button
                   variant={viewMode === "day" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("day")}
-                  className="rounded-md h-7 px-2.5 text-xs"
+                  className={cn(
+                    "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
+                    viewMode === "day" 
+                      ? "bg-primary text-white hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)]" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60"
+                  )}
                 >
-                  <Sun className="h-3.5 w-3.5 mr-1" />
+                  <Sun className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "day" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
                   <span className="hidden sm:inline">Dia</span>
                 </Button>
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className="rounded-md h-7 px-2.5 text-xs"
+                  className={cn(
+                    "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
+                    viewMode === "list" 
+                      ? "bg-primary text-white hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)]" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60"
+                  )}
                 >
-                  <List className="h-3.5 w-3.5 mr-1" />
+                  <List className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "list" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
                   <span className="hidden sm:inline">Lista</span>
                 </Button>
               </div>

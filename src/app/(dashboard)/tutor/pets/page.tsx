@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dog, Plus, CreditCard, Calendar, Heart, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { LoadingPage } from "@/components/shared/loading";
+import { getBreedIcon } from "@/lib/pet-breed-icons";
 
 export default function TutorPetsPage() {
   const { data: pets, isLoading } = trpc.pets.myPets.useQuery();
@@ -102,7 +103,11 @@ export default function TutorPetsPage() {
             </div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {pets.map((pet) => (
+              {pets.map((pet) => {
+                const breedIcon = getBreedIcon(pet.breed);
+                const IconComponent = breedIcon.icon;
+                
+                return (
                 <Link key={pet.id} href={`/tutor/pets/${pet.id}`}>
                   <div className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
                     <div className="flex items-center gap-4">
@@ -116,8 +121,12 @@ export default function TutorPetsPage() {
                           />
                         </div>
                       ) : (
-                        <div className="w-14 h-14 rounded-full bg-[hsl(24_85%_58%)]/15 flex items-center justify-center flex-shrink-0 ring-2 ring-[hsl(24_85%_58%)]/25 shadow-[0_2px_4px_0_rgba(24,85%,58%,0.15)]">
-                          <Dog className="h-7 w-7 text-[hsl(24_85%_48%)]" />
+                        <div className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ring-2 shadow-[0_2px_4px_0_rgba(0,0,0,0.08)]`}
+                             style={{ 
+                               backgroundColor: breedIcon.bgColor,
+                               ringColor: breedIcon.ringColor 
+                             }}>
+                          <IconComponent className="h-7 w-7" style={{ color: breedIcon.color }} />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
@@ -130,8 +139,8 @@ export default function TutorPetsPage() {
                     </div>
                     <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between">
                       <Badge className={
-                        pet.approvalStatus === "approved" ? "badge-green" :
-                        pet.approvalStatus === "pending" ? "badge-amber" : "badge-rose"
+                        pet.approvalStatus === "approved" ? "badge-success" :
+                        pet.approvalStatus === "pending" ? "badge-warning" : "badge-error"
                       }>
                         {pet.approvalStatus === "approved" ? "Aprovado" :
                          pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
@@ -143,7 +152,7 @@ export default function TutorPetsPage() {
                     </div>
                   </div>
                 </Link>
-              ))}
+              )})}
             </div>
           )}
         </div>
