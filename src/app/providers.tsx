@@ -64,8 +64,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider 
       localization={ptBR}
-      afterSignInUrl="/auth-redirect"
-      afterSignUpUrl="/auth-redirect"
+      signInFallbackRedirectUrl="/auth-redirect"
+      signUpFallbackRedirectUrl="/auth-redirect"
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
     >
