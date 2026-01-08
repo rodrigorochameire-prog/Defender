@@ -28,12 +28,6 @@ const TooltipContent = React.forwardRef<
         "z-50 overflow-hidden rounded-lg bg-slate-800 dark:bg-slate-700 px-3 py-1.5 text-xs text-white shadow-lg",
         className
       )}
-      // Desabilita animações via inline styles
-      style={{
-        animation: 'none',
-        transition: 'none',
-        transform: 'none',
-      }}
       {...props}
     />
   </TooltipPrimitive.Portal>

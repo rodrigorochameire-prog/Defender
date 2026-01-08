@@ -21,15 +21,10 @@ const PopoverContent = React.forwardRef<
       align={align}
       sideOffset={sideOffset}
       className={cn(
-        // Estilos base - SEM animações
+        // Estilos base - SEM animações (CSS global cuida disso)
         "z-50 w-72 rounded-xl border bg-popover p-4 text-popover-foreground shadow-lg outline-none",
         className
       )}
-      // Desabilita animações inline
-      style={{
-        animation: 'none',
-        transition: 'none',
-      }}
       {...props}
     />
   </PopoverPrimitive.Portal>

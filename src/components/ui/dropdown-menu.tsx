@@ -41,11 +41,10 @@ const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      // Estilos base - SEM animações
+      // Estilos base - SEM animações (CSS global cuida disso)
       "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg",
       className
     )}
-    style={{ animation: 'none', transition: 'none' }}
     {...props}
   />
 ));
@@ -61,11 +60,10 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        // Estilos base - SEM animações
+        // Estilos base - SEM animações (CSS global cuida disso)
         "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
         className
       )}
-      style={{ animation: 'none', transition: 'none' }}
       {...props}
     />
   </DropdownMenuPrimitive.Portal>

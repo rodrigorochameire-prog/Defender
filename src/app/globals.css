@@ -801,99 +801,34 @@ select {
 }
 
 /* ========================================
-   TOOLTIP - Sem Animações (FORÇADO TOTAL)
+   TOOLTIP & POPOVER - Sem Animações
    ======================================== */
 
 /* 
- * HIPÓTESE: O Radix UI usa JavaScript para aplicar transforms inline
- * durante a abertura, causando o efeito de "arrastamento do topo".
- * Esta seção tenta sobrescrever TODOS os comportamentos possíveis.
+ * Remove apenas animações e transições, mantendo o posicionamento
+ * O Radix UI usa transform para posicionar - NÃO interferir nisso
  */
 
-/* Reset de TODAS as custom properties do Radix Tooltip */
+/* Tooltip - Remove animações mas mantém posicionamento */
 [data-radix-tooltip-content] {
-  --radix-tooltip-content-transform-origin: center center !important;
-}
-
-/* Remove completamente TODAS as animações e transições */
-[data-radix-tooltip-content],
-[data-radix-tooltip-content][data-state],
-[data-radix-tooltip-content][data-side],
-[data-radix-tooltip-content][data-align] {
   animation: none !important;
   transition: none !important;
-  animation-name: none !important;
   animation-duration: 0s !important;
-  animation-delay: 0s !important;
-  animation-fill-mode: none !important;
-  animation-timing-function: step-end !important;
-  transition-property: none !important;
   transition-duration: 0s !important;
-  transition-delay: 0s !important;
-  transition-timing-function: step-end !important;
-  transform: none !important;
-  transform-origin: center center !important;
-  will-change: auto !important;
-  -webkit-animation: none !important;
-  -webkit-transition: none !important;
 }
 
-/* Tooltips abertos aparecem instantaneamente - posição fixa */
-[data-radix-tooltip-content][data-state="delayed-open"],
-[data-radix-tooltip-content][data-state="instant-open"],
-[data-radix-tooltip-content][data-state="open"] {
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Tooltips fechados desaparecem instantaneamente */
-[data-radix-tooltip-content][data-state="closed"] {
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  display: none !important;
-}
-
-/* Override para todos os lados do tooltip - sem transform */
-[data-radix-tooltip-content][data-side="top"],
-[data-radix-tooltip-content][data-side="bottom"],
-[data-radix-tooltip-content][data-side="left"],
-[data-radix-tooltip-content][data-side="right"] {
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
-}
-
-/* Portal do Radix também não deve ter animações */
-[data-radix-portal] [data-radix-tooltip-content] {
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
-}
-
-/* ========================================
-   POPOVER - Sem Animações
-   ======================================== */
-
-/* Remove TODAS as animações do Radix Popover */
-[data-radix-popper-content-wrapper],
+/* Popover - Remove animações mas mantém posicionamento */
 [data-radix-popover-content] {
   animation: none !important;
   transition: none !important;
-  transform: translate(var(--radix-popper-transform-origin)) !important;
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
 }
 
-[data-radix-popover-content][data-state],
-[data-radix-popover-content][data-side] {
+/* Dropdown Menu - Remove animações */
+[data-radix-menu-content] {
   animation: none !important;
   transition: none !important;
-  animation-name: none !important;
   animation-duration: 0s !important;
   transition-duration: 0s !important;
 }
