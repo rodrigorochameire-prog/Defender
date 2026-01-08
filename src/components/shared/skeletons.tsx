@@ -1,6 +1,65 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
+// Skeleton genérico para páginas simples
+export function PageSkeleton() {
+  return (
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header-content">
+          <Skeleton className="h-12 w-12 rounded-[14px]" />
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+      </div>
+      <div className="space-y-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="p-6">
+            <div className="space-y-3">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Skeleton para listas com tabela
+export function TableSkeleton() {
+  return (
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header-content">
+          <Skeleton className="h-12 w-12 rounded-[14px]" />
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+      </div>
+      <Card>
+        <div className="p-6 space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center gap-4 pb-4 border-b last:border-0">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-3 w-1/3" />
+              </div>
+              <Skeleton className="h-8 w-24 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 // Skeleton para Dashboard (stats + listas)
 export function DashboardSkeleton() {
   return (

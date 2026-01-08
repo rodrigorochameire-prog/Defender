@@ -27,6 +27,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { BreedIcon } from "@/components/breed-icons";
+import { PageSkeleton } from "@/components/shared/skeletons";
 
 const moodLabels: Record<string, string> = {
   happy: "Feliz",
@@ -135,9 +136,7 @@ export default function TutorReports() {
           </CardContent>
         </Card>
       ) : isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+        <PageSkeleton />
       ) : report ? (
         <div className="space-y-6">
           {/* Pet Info */}

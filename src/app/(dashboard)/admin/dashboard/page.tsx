@@ -18,6 +18,7 @@ import {
   Plus 
 } from "lucide-react";
 import Link from "next/link";
+import { DashboardSkeleton } from "@/components/shared/skeletons";
 
 export default function AdminDashboard() {
   const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery();
@@ -25,11 +26,7 @@ export default function AdminDashboard() {
   const { data: vaccineStats } = trpc.vaccines.stats.useQuery();
 
   if (statsLoading || petsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

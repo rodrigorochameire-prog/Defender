@@ -28,6 +28,7 @@ import {
   RefreshCw,
   type LucideIcon
 } from "lucide-react";
+import { PageSkeleton } from "@/components/shared/skeletons";
 
 const categoryOptions: { value: string; label: string; icon: LucideIcon }[] = [
   { value: "obedience", label: "Obediência", icon: Target },
@@ -99,9 +100,7 @@ export default function TutorTraining() {
       )}
 
       {isLoading && selectedPet ? (
-        <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+        <PageSkeleton />
       ) : progress ? (
         <>
           {/* Stats Cards */}

@@ -39,6 +39,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { BreedIcon } from "@/components/breed-icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 export default function TutorMedications() {
@@ -151,7 +152,7 @@ export default function TutorMedications() {
                 <AccordionContent>
                   {query.isLoading ? (
                     <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <Skeleton className="h-20 w-full rounded-[14px]" />
                     </div>
                   ) : medications.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
