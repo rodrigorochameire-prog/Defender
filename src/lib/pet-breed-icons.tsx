@@ -1,3 +1,4 @@
+import React from "react";
 import { LucideIcon } from "lucide-react";
 import {
   GoldenRetrieverIcon,
@@ -17,7 +18,7 @@ import {
 } from "@/components/pet-breed-icons";
 
 export type BreedIconType = {
-  icon: LucideIcon | React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   color: string;
   bgColor: string;
   ringColor: string;

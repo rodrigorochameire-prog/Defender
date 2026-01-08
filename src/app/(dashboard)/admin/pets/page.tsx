@@ -339,7 +339,7 @@ export default function AdminPetsPage() {
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {filteredPets.map((pet) => {
                 const breedIcon = getBreedIcon(pet.breed);
-                const IconComponent = breedIcon.icon as React.ComponentType<any>;
+                const IconComponent = breedIcon.icon;
                 
                 return (
                   <div key={pet.id} className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
@@ -351,10 +351,10 @@ export default function AdminPetsPage() {
                             backgroundColor: breedIcon.bgColor,
                             border: `2px solid ${breedIcon.ringColor}`
                           }}>
-                          {React.createElement(IconComponent, { 
-                            className: "h-7 w-7", 
-                            style: { color: breedIcon.color } 
-                          })}
+                          <IconComponent 
+                            className="h-7 w-7" 
+                            style={{ color: breedIcon.color }} 
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="pet-card-name font-bold text-base text-foreground leading-tight">{pet.name}</p>
