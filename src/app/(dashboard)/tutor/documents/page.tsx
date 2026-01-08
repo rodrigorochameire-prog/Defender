@@ -337,7 +337,7 @@ export default function TutorDocuments() {
                                   size="sm"
                                   onClick={() => {
                                     if (confirm("Remover este documento?")) {
-                                      deleteDocument.mutate({ id: doc.id });
+                                      deleteDocument.mutate({ id: Number(doc.id) });
                                     }
                                   }}
                                 >

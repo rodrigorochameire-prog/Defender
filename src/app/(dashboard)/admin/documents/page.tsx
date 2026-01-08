@@ -420,7 +420,7 @@ export default function AdminDocuments() {
                           variant="destructive"
                           onClick={() => {
                             if (confirm("Remover este documento?")) {
-                              deleteDocument.mutate({ id: item.document.id });
+                              deleteDocument.mutate({ id: Number(item.document.id) });
                             }
                           }}
                         >
@@ -505,7 +505,7 @@ export default function AdminDocuments() {
                             variant="ghost"
                             onClick={() => {
                               if (confirm("Remover este documento?")) {
-                                deleteDocument.mutate({ id: item.document.id });
+                                deleteDocument.mutate({ id: Number(item.document.id) });
                               }
                             }}
                           >
