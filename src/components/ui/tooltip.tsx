@@ -5,7 +5,14 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { cn } from "@/lib/utils";
 
 const TooltipProvider = TooltipPrimitive.Provider;
-const Tooltip = TooltipPrimitive.Root;
+
+// Tooltip sem delay para aparecer instantaneamente
+const Tooltip = ({ children, ...props }: React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>) => (
+  <TooltipPrimitive.Root delayDuration={0} {...props}>
+    {children}
+  </TooltipPrimitive.Root>
+);
+
 const TooltipTrigger = TooltipPrimitive.Trigger;
 
 const TooltipContent = React.forwardRef<
@@ -18,11 +25,12 @@ const TooltipContent = React.forwardRef<
       sideOffset={sideOffset}
       className={cn(
         "z-50 overflow-hidden rounded-lg bg-slate-800 dark:bg-slate-700 px-3 py-1.5 text-xs text-white shadow-lg",
-        "opacity-100",
+        // Remove todas as animações
+        "animate-none transition-none",
         className
       )}
-      // Desabilita animações do Radix UI na origem
-      forceMount={undefined}
+      // Evita animações de entrada/saída
+      onAnimationStart={(e) => e.preventDefault()}
       {...props}
     />
   </TooltipPrimitive.Portal>

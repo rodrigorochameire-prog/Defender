@@ -803,11 +803,26 @@ select {
    TOOLTIP - Sem Animações
    ======================================== */
 
-/* Remove animações do Radix UI Tooltip */
+/* Remove completamente animações do Radix UI Tooltip */
 [data-radix-tooltip-content] {
   animation: none !important;
   transition: none !important;
-  transform: none !important;
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
+
+/* Tooltips abertos aparecem instantaneamente */
+[data-radix-tooltip-content][data-state="delayed-open"],
+[data-radix-tooltip-content][data-state="open"] {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Tooltips fechados desaparecem instantaneamente */
+[data-radix-tooltip-content][data-state="closed"] {
+  animation: none !important;
+  transition: none !important;
+  display: none;
 }
 
 /* ========================================
