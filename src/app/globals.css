@@ -800,84 +800,11 @@ select {
 }
 
 /* ========================================
-   TOOLTIP - Sem Animações COMPLETAS
+   TOOLTIP - Sem Animações
    ======================================== */
 
-/* Remove TODAS as animações do Radix UI Tooltip - sem exceções */
-[data-radix-tooltip-content],
-[data-radix-tooltip-content][data-state],
-[data-radix-tooltip-content][data-state="delayed-open"],
-[data-radix-tooltip-content][data-state="open"],
-[data-radix-tooltip-content][data-state="closed"],
-[data-radix-tooltip-content][data-side],
-[data-radix-tooltip-content][data-side="top"],
-[data-radix-tooltip-content][data-side="bottom"],
-[data-radix-tooltip-content][data-side="left"],
-[data-radix-tooltip-content][data-side="right"],
-[data-radix-tooltip-content][data-align],
-[data-radix-tooltip-content][data-swipe-direction] {
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
-  animation-duration: 0s !important;
-  transition-duration: 0s !important;
-  animation-delay: 0s !important;
-  transition-delay: 0s !important;
-  animation-fill-mode: none !important;
-  transition-property: none !important;
-  transform-origin: center center !important;
-  will-change: auto !important;
-  opacity: 1 !important;
-}
-
-/* FORÇA remoção de transform inline aplicado pelo Radix UI via JavaScript */
+/* Remove animações do Radix UI Tooltip */
 [data-radix-tooltip-content] {
-  /* Sobrescreve qualquer transform inline */
-  transform: none !important;
-  /* Remove qualquer movimento */
-  top: var(--radix-tooltip-content-available-height, auto) !important;
-  left: var(--radix-tooltip-content-available-width, auto) !important;
-  right: var(--radix-tooltip-content-available-width, auto) !important;
-  bottom: var(--radix-tooltip-content-available-height, auto) !important;
-}
-
-/* Garante que tooltips fechados sejam totalmente ocultos e sem movimento */
-[data-radix-tooltip-content][data-state="closed"],
-[data-radix-tooltip-content][data-state="delayed-close"] {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  transform: none !important;
-  animation: none !important;
-  transition: none !important;
-}
-
-/* Garante que tooltips abertos apareçam instantaneamente SEM movimento */
-[data-radix-tooltip-content][data-state="delayed-open"],
-[data-radix-tooltip-content][data-state="open"] {
-  display: block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  transform: none !important;
-  animation: none !important;
-  transition: none !important;
-}
-
-/* Override qualquer keyframe animation do Radix UI */
-@keyframes tooltip-none {
-  from { 
-    opacity: 1 !important; 
-    transform: none !important;
-  }
-  to { 
-    opacity: 1 !important; 
-    transform: none !important;
-  }
-}
-
-/* Remove animações de qualquer Portal relacionado ao tooltip */
-[data-radix-portal][data-radix-tooltip-content],
-[data-radix-portal] [data-radix-tooltip-content] {
   animation: none !important;
   transition: none !important;
   transform: none !important;
