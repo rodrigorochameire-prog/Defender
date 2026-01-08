@@ -391,12 +391,12 @@ export function PremiumCalendar({
                   className={cn(
                     "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
                     viewMode === "month" 
-                      ? "bg-primary text-white hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)]" 
-                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60"
+                      ? "bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] [&_span]:!text-white [&_svg]:!text-white" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60 [&_span]:text-[hsl(220_13%_45%)] [&_svg]:text-[hsl(220_13%_45%)]"
                   )}
                 >
-                  <LayoutGrid className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "month" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
-                  <span className={cn("hidden sm:inline font-semibold", viewMode === "month" ? "text-white" : "text-[hsl(220_13%_45%)]")}>Mês</span>
+                  <LayoutGrid className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="hidden sm:inline font-semibold">Mês</span>
                 </Button>
                 <Button
                   variant={viewMode === "week" ? "default" : "ghost"}
@@ -405,12 +405,12 @@ export function PremiumCalendar({
                   className={cn(
                     "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
                     viewMode === "week" 
-                      ? "bg-primary text-white hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)]" 
-                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60"
+                      ? "bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] [&_span]:!text-white [&_svg]:!text-white" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60 [&_span]:text-[hsl(220_13%_45%)] [&_svg]:text-[hsl(220_13%_45%)]"
                   )}
                 >
-                  <CalendarDays className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "week" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
-                  <span className={cn("hidden sm:inline font-semibold", viewMode === "week" ? "text-white" : "text-[hsl(220_13%_45%)]")}>Semana</span>
+                  <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="hidden sm:inline font-semibold">Semana</span>
                 </Button>
                 <Button
                   variant={viewMode === "day" ? "default" : "ghost"}
@@ -419,12 +419,12 @@ export function PremiumCalendar({
                   className={cn(
                     "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
                     viewMode === "day" 
-                      ? "bg-primary text-white hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)]" 
-                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60"
+                      ? "bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] [&_span]:!text-white [&_svg]:!text-white" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60 [&_span]:text-[hsl(220_13%_45%)] [&_svg]:text-[hsl(220_13%_45%)]"
                   )}
                 >
-                  <Sun className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "day" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
-                  <span className={cn("hidden sm:inline font-semibold", viewMode === "day" ? "text-white" : "text-[hsl(220_13%_45%)]")}>Dia</span>
+                  <Sun className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="hidden sm:inline font-semibold">Dia</span>
                 </Button>
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
@@ -433,12 +433,12 @@ export function PremiumCalendar({
                   className={cn(
                     "rounded-[10px] h-8 px-3 text-xs font-semibold transition-all duration-300",
                     viewMode === "list" 
-                      ? "bg-primary text-white hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)]" 
-                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60"
+                      ? "bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] [&_span]:!text-white [&_svg]:!text-white" 
+                      : "text-[hsl(220_13%_45%)] hover:text-[hsl(220_16%_38%)] hover:bg-muted/60 [&_span]:text-[hsl(220_13%_45%)] [&_svg]:text-[hsl(220_13%_45%)]"
                   )}
                 >
-                  <List className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "list" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
-                  <span className={cn("hidden sm:inline font-semibold", viewMode === "list" ? "text-white" : "text-[hsl(220_13%_45%)]")}>Lista</span>
+                  <List className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="hidden sm:inline font-semibold">Lista</span>
                 </Button>
               </div>
 

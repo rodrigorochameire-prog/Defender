@@ -120,7 +120,7 @@ function SidebarProvider({
 
   return (
     <SidebarContext.Provider value={contextValue}>
-      <TooltipProvider delayDuration={0} skipDelayDuration={0}>
+      <TooltipProvider delayDuration={0} skipDelayDuration={0} disableHoverableContent>
         <div
           data-slot="sidebar-wrapper"
           style={
