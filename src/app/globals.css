@@ -878,6 +878,27 @@ select {
 }
 
 /* ========================================
+   POPOVER - Sem Animações
+   ======================================== */
+
+/* Remove TODAS as animações do Radix Popover */
+[data-radix-popper-content-wrapper],
+[data-radix-popover-content] {
+  animation: none !important;
+  transition: none !important;
+  transform: translate(var(--radix-popper-transform-origin)) !important;
+}
+
+[data-radix-popover-content][data-state],
+[data-radix-popover-content][data-side] {
+  animation: none !important;
+  transition: none !important;
+  animation-name: none !important;
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
+
+/* ========================================
    REDUCED MOTION
    ======================================== */
 
