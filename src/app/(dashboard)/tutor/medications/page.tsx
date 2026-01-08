@@ -53,6 +53,7 @@ export default function TutorMedications() {
     petId: pet.id,
     petName: pet.name,
     photoUrl: pet.photoUrl,
+    breed: pet.breed,
     query: trpc.medications.getPetMedications.useQuery({ petId: pet.id }),
   })) || [];
 
@@ -115,7 +116,7 @@ export default function TutorMedications() {
         </Card>
       ) : (
         <Accordion type="single" collapsible className="space-y-4">
-          {petMedicationsQueries.map(({ petId, petName, photoUrl, query }) => {
+          {petMedicationsQueries.map(({ petId, petName, photoUrl, breed, query }) => {
             const medications = query.data || [];
             const activeCount = medications.filter(m => m.medication.isActive).length;
 
@@ -131,7 +132,7 @@ export default function TutorMedications() {
                       />
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <BreedIcon breed={pet.breed} className="h-5 w-5 text-primary" />
+                        <BreedIcon breed={breed} className="h-5 w-5 text-primary" />
                       </div>
                     )}
                     <div className="text-left">

@@ -52,6 +52,7 @@ export default function TutorVaccines() {
     petId: pet.id,
     petName: pet.name,
     photoUrl: pet.photoUrl,
+    breed: pet.breed,
     query: trpc.vaccines.getPetVaccinations.useQuery({ petId: pet.id }),
   })) || [];
 
@@ -111,7 +112,7 @@ export default function TutorVaccines() {
         </Card>
       ) : (
         <Accordion type="single" collapsible className="space-y-4">
-          {petVaccinesQueries.map(({ petId, petName, photoUrl, query }) => {
+          {petVaccinesQueries.map(({ petId, petName, photoUrl, breed, query }) => {
             const vaccinations = query.data || [];
             const upcomingCount = vaccinations.filter(
               v => v.vaccination.nextDueDate && new Date(v.vaccination.nextDueDate) > new Date()
@@ -129,7 +130,7 @@ export default function TutorVaccines() {
                       />
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <BreedIcon breed={pet.breed} className="h-5 w-5 text-primary" />
+                        <BreedIcon breed={breed} className="h-5 w-5 text-primary" />
                       </div>
                     )}
                     <div className="text-left">
