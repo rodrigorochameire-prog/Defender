@@ -43,7 +43,7 @@ export default function SignUpPage() {
         </div>
       </div>
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-xl">
           <div className="lg:hidden flex flex-col items-center mb-8">
             <Image src="/tetecare-logo.png" alt="TeteCare" width={80} height={80} className="rounded-full shadow-xl mb-4" />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">TeteCare</h1>
@@ -53,7 +53,17 @@ export default function SignUpPage() {
               elements: {
                 rootBox: "w-full",
                 card: "shadow-none border-0 w-full",
-                formButtonPrimary: "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-lg",
+                formButtonPrimary: "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold shadow-lg transition-all duration-300",
+                formFieldInput: "h-12 text-base rounded-[14px] border-border/50 focus:border-primary/60 transition-all duration-300",
+                socialButtonsBlockButton: "h-12 text-base rounded-[14px] border-border/50 hover:bg-muted/50 transition-all duration-300",
+                footerActionLink: "text-primary font-semibold hover:text-primary/80 transition-colors duration-300",
+                formFieldLabel: "text-foreground font-semibold text-sm mb-2",
+                identityPreviewText: "text-foreground font-medium",
+                formHeaderTitle: "text-foreground text-2xl font-bold",
+                formHeaderSubtitle: "text-muted-foreground text-base",
+                dividerLine: "bg-border/30",
+                dividerText: "text-muted-foreground text-sm",
+                footerActionText: "text-muted-foreground text-sm",
               },
             }}
             routing="path"
