@@ -341,72 +341,73 @@ export default function AdminPetsPage() {
                 const IconComponent = breedIcon.icon;
                 
                 return (
-                <div key={pet.id} className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="h-14 w-14 rounded-full flex items-center justify-center shadow-[0_2px_4px_0_rgba(0,0,0,0.08)]"
-                        style={{ 
-                          backgroundColor: breedIcon.bgColor,
-                          border: `2px solid ${breedIcon.ringColor}`
-                        }>
-                        <IconComponent className="h-7 w-7" style={{ color: breedIcon.color }} />
+                  <div key={pet.id} className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-4">
+                        <div 
+                          className="h-14 w-14 rounded-full flex items-center justify-center shadow-[0_2px_4px_0_rgba(0,0,0,0.08)]"
+                          style={{ 
+                            backgroundColor: breedIcon.bgColor,
+                            border: `2px solid ${breedIcon.ringColor}`
+                          }}>
+                          <IconComponent className="h-7 w-7" style={{ color: breedIcon.color }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="pet-card-name font-bold text-base text-foreground leading-tight">{pet.name}</p>
+                          <p className="pet-card-breed text-sm font-medium text-[hsl(220_13%_45%)] mt-0.5 leading-tight">{pet.breed || "Sem raça"}</p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="pet-card-name font-bold text-base text-foreground leading-tight">{pet.name}</p>
-                        <p className="pet-card-breed text-sm font-medium text-[hsl(220_13%_45%)] mt-0.5 leading-tight">{pet.breed || "Sem raça"}</p>
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { setSelectedPet(pet); setIsDetailOpen(true); }}>
-                          <Eye className="h-4 w-4 mr-2" /> Ver Detalhes
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setSelectedPet(pet); setIsEditOpen(true); }}>
-                          <Edit className="h-4 w-4 mr-2" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleQuickAddCredits(pet.id, 5)}>
-                          <CreditCard className="h-4 w-4 mr-2" /> +5 Créditos
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleQuickAddCredits(pet.id, 10)}>
-                          <CreditCard className="h-4 w-4 mr-2" /> +10 Créditos
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {pet.approvalStatus !== "approved" && (
-                          <DropdownMenuItem onClick={() => approveMutation.mutate({ id: pet.id })}>
-                            <Check className="h-4 w-4 mr-2 text-green-500" /> Aprovar
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => { setSelectedPet(pet); setIsDetailOpen(true); }}>
+                            <Eye className="h-4 w-4 mr-2" /> Ver Detalhes
                           </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem 
-                          onClick={() => { setSelectedPet(pet); setIsDeleteConfirmOpen(true); }}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <Badge className={
-                      pet.approvalStatus === "approved" ? "badge-success" :
-                      pet.approvalStatus === "pending" ? "badge-warning" : "badge-error"
-                    }>
-                      {pet.approvalStatus === "approved" ? "Aprovado" :
-                       pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
-                    </Badge>
-                    <div className="flex items-center gap-1.5 pet-card-credits text-sm">
-                      <CreditCard className="h-4 w-4 text-[hsl(220_13%_45%)]" />
-                      <span className="font-semibold text-[hsl(220_16%_38%)]">{pet.credits}</span>
+                          <DropdownMenuItem onClick={() => { setSelectedPet(pet); setIsEditOpen(true); }}>
+                            <Edit className="h-4 w-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleQuickAddCredits(pet.id, 5)}>
+                            <CreditCard className="h-4 w-4 mr-2" /> +5 Créditos
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleQuickAddCredits(pet.id, 10)}>
+                            <CreditCard className="h-4 w-4 mr-2" /> +10 Créditos
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {pet.approvalStatus !== "approved" && (
+                            <DropdownMenuItem onClick={() => approveMutation.mutate({ id: pet.id })}>
+                              <Check className="h-4 w-4 mr-2 text-green-500" /> Aprovar
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem 
+                            onClick={() => { setSelectedPet(pet); setIsDeleteConfirmOpen(true); }}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between">
+                      <Badge className={
+                        pet.approvalStatus === "approved" ? "badge-success" :
+                        pet.approvalStatus === "pending" ? "badge-warning" : "badge-error"
+                      }>
+                        {pet.approvalStatus === "approved" ? "Aprovado" :
+                         pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
+                      </Badge>
+                      <div className="flex items-center gap-1.5 pet-card-credits text-sm">
+                        <CreditCard className="h-4 w-4 text-[hsl(220_13%_45%)]" />
+                        <span className="font-semibold text-[hsl(220_16%_38%)]">{pet.credits}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )})}
+                );
+              })}
             </div>
           )}
         </div>

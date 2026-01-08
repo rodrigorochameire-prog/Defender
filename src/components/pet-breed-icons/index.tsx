@@ -3,7 +3,7 @@ import { LucideProps } from "lucide-react";
 
 // Ícones personalizados de raças - SVG simplificados e elegantes
 
-export const GoldenRetrieverIcon = ({ className, color, ...props }: LucideProps) => (
+export const GoldenRetrieverIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -12,7 +12,7 @@ export const GoldenRetrieverIcon = ({ className, color, ...props }: LucideProps)
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <path d="M12 8c-2 0-4 1-4 3s2 3 4 3 4-1 4-3-2-3-4-3z" />
@@ -26,7 +26,7 @@ export const GoldenRetrieverIcon = ({ className, color, ...props }: LucideProps)
   </svg>
 );
 
-export const CavalierIcon = ({ className, color, ...props }: LucideProps) => (
+export const CavalierIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -35,7 +35,7 @@ export const CavalierIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <path d="M12 7c-1.5 0-3 1-3 2.5s1.5 2.5 3 2.5 3-1 3-2.5-1.5-2.5-3-2.5z" />
@@ -51,7 +51,7 @@ export const CavalierIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const ViraLataIcon = ({ className, color, ...props }: LucideProps) => (
+export const ViraLataIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -60,7 +60,7 @@ export const ViraLataIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <path d="M12 8c-2 0-3.5 1-3.5 2.5s1.5 2.5 3.5 2.5 3.5-1 3.5-2.5-1.5-2.5-3.5-2.5z" />
@@ -77,7 +77,7 @@ export const ViraLataIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const ShitzuIcon = ({ className, color, ...props }: LucideProps) => (
+export const ShitzuIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -86,7 +86,7 @@ export const ShitzuIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <path d="M12 7c-2 0-3.5 1.5-3.5 3s1.5 3 3.5 3 3.5-1 3.5-3-1.5-3-3.5-3z" />
@@ -103,7 +103,7 @@ export const ShitzuIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const BeagleIcon = ({ className, color, ...props }: LucideProps) => (
+export const BeagleIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -112,7 +112,7 @@ export const BeagleIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <path d="M12 8c-2 0-3.5 1-3.5 2.5s1.5 2.5 3.5 2.5 3.5-1 3.5-2.5-1.5-2.5-3.5-2.5z" />
@@ -128,7 +128,7 @@ export const BeagleIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const SalsichaIcon = ({ className, color, ...props }: LucideProps) => (
+export const SalsichaIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -137,7 +137,7 @@ export const SalsichaIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <ellipse cx="12" cy="11" rx="3.5" ry="3" />
@@ -153,7 +153,7 @@ export const SalsichaIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const PomeranianIcon = ({ className, color, ...props }: LucideProps) => (
+export const PomeranianIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -162,7 +162,7 @@ export const PomeranianIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <circle cx="12" cy="10" r="2.5" />
@@ -178,7 +178,7 @@ export const PomeranianIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const ChihuahuaIcon = ({ className, color, ...props }: LucideProps) => (
+export const ChihuahuaIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -187,7 +187,7 @@ export const ChihuahuaIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <circle cx="12" cy="10" r="2" />
@@ -203,7 +203,7 @@ export const ChihuahuaIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const LabradorIcon = ({ className, color, ...props }: LucideProps) => (
+export const LabradorIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -212,7 +212,7 @@ export const LabradorIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <path d="M12 8c-2 0-4 1-4 3s2 3 4 3 4-1 4-3-2-3-4-3z" />
@@ -227,7 +227,7 @@ export const LabradorIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const YorkshireIcon = ({ className, color, ...props }: LucideProps) => (
+export const YorkshireIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -236,7 +236,7 @@ export const YorkshireIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <path d="M12 7.5c-1.5 0-3 1-3 2.5s1.5 2.5 3 2.5 3-1 3-2.5-1.5-2.5-3-2.5z" />
@@ -251,7 +251,7 @@ export const YorkshireIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const PugIcon = ({ className, color, ...props }: LucideProps) => (
+export const PugIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -260,7 +260,7 @@ export const PugIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <circle cx="12" cy="11" r="2.5" />
@@ -277,7 +277,7 @@ export const PugIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const FrenchBulldogIcon = ({ className, color, ...props }: LucideProps) => (
+export const FrenchBulldogIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -286,7 +286,7 @@ export const FrenchBulldogIcon = ({ className, color, ...props }: LucideProps) =
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <path d="M12 9c-2 0-3.5 1.5-3.5 3s1.5 3 3.5 3 3.5-1 3.5-3-1.5-3-3.5-3z" />
@@ -302,7 +302,7 @@ export const FrenchBulldogIcon = ({ className, color, ...props }: LucideProps) =
   </svg>
 );
 
-export const HuskyIcon = ({ className, color, ...props }: LucideProps) => (
+export const HuskyIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -311,7 +311,7 @@ export const HuskyIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <path d="M12 8c-2 0-4 1.5-4 3.5s2 3 4 3 4-1 4-3-2-3.5-4-3.5z" />
@@ -327,7 +327,7 @@ export const HuskyIcon = ({ className, color, ...props }: LucideProps) => (
   </svg>
 );
 
-export const PoodleIcon = ({ className, color, ...props }: LucideProps) => (
+export const PoodleIcon = ({ className, style, ...props }: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -336,7 +336,7 @@ export const PoodleIcon = ({ className, color, ...props }: LucideProps) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    color={color}
+    style={style}
     {...props}
   >
     <circle cx="12" cy="10" r="2.5" />
