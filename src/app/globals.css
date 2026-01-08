@@ -872,40 +872,30 @@ html.font-large .badge {
 }
 
 /* ========================================
-   OVERRIDE FINAL - RADIX UI COM FADE SUAVE
+   OVERRIDE FINAL - RADIX UI SEM ANIMAÇÕES
    FORA DE @layer - MÁXIMA PRIORIDADE  
-   CACHE BUST v7 - SEM PageTransition
+   CACHE BUST v8 - ESTADO ESTÁVEL
    ======================================== */
 
-/* Remove animações de slide/zoom mas permite fade em opacity */
+/* Desabilita COMPLETAMENTE qualquer animação/transição do Radix */
 [data-radix-tooltip-content],
 [data-radix-popover-content],
 [data-radix-dropdown-menu-content],
-[data-radix-select-content] {
-  /* Remove completamente animações de keyframes */
+[data-radix-select-content],
+[data-radix-popper-content-wrapper],
+[data-radix-popper-content-wrapper] > * {
   animation: none !important;
   animation-name: none !important;
+  animation-duration: 0s !important;
+  transition: none !important;
+  transition-property: none !important;
+  transition-duration: 0s !important;
   -webkit-animation: none !important;
-  
-  /* Fade suave apenas em opacity - NÃO em transform */
-  transition: opacity 0.15s ease-out !important;
-  transition-property: opacity !important;
-  -webkit-transition: opacity 0.15s ease-out !important;
+  -webkit-transition: none !important;
 }
 
-/* Estado aberto - visível */
+/* Garante opacidade total - aparece instantaneamente */
 [data-radix-tooltip-content][data-state="open"],
-[data-radix-popover-content][data-state="open"],
-[data-radix-dropdown-menu-content][data-state="open"],
-[data-radix-select-content][data-state="open"] {
+[data-radix-popover-content][data-state="open"] {
   opacity: 1 !important;
-}
-
-/* Estado fechado - invisível */
-[data-radix-tooltip-content][data-state="closed"],
-[data-radix-popover-content][data-state="closed"],
-[data-radix-dropdown-menu-content][data-state="closed"],
-[data-radix-select-content][data-state="closed"] {
-  opacity: 0 !important;
-  pointer-events: none !important;
 }
