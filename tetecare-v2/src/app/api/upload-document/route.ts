@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
 
-const BUCKET_NAME = "pet-documents";
+const BUCKET_NAME = "documents";
 
 export async function POST(request: NextRequest) {
   try {
