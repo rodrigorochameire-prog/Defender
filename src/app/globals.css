@@ -801,14 +801,22 @@ select {
 }
 
 /* ========================================
-   RADIX UI - Sem Animações de Slide
+   RADIX UI - Fade Simples (CSS Puro)
    ======================================== */
 
-/* 
- * NOTA: As animações são controladas removendo as classes
- * animate-in, slide-in-from-*, etc. dos componentes.
- * Este CSS é apenas um fallback de segurança.
- */
+/* Fade suave para todos os componentes Radix */
+[data-radix-popper-content-wrapper] {
+  animation: simpleAppear 0.15s ease-out !important;
+}
+
+@keyframes simpleAppear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 
 /* ========================================
    REDUCED MOTION
