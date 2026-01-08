@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { BreedIcon } from "@/components/breed-icons";
 import { toast } from "sonner";
-import { TableSkeleton } from "@/components/shared/skeletons";
+import { LogsSkeleton } from "@/components/shared/skeletons";
 
 const moodOptions = [
   { value: "happy", label: "Feliz", icon: Smile, color: "text-emerald-600 dark:text-emerald-400" },
@@ -101,7 +101,7 @@ export default function AdminLogs() {
   };
 
   if (isLoading) {
-    return <TableSkeleton />;
+    return <LogsSkeleton />;
   }
 
   return (

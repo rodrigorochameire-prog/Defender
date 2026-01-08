@@ -197,6 +197,7 @@ export function PetsListSkeleton() {
   
   return (
     <div className="page-container">
+      {/* Header com botão */}
       <div className="page-header">
         <div className="page-header-content">
           <Skeleton className="h-12 w-12 rounded-[14px]" />
@@ -207,44 +208,72 @@ export function PetsListSkeleton() {
         </div>
         <Skeleton className="h-9 w-32 rounded-[14px]" />
       </div>
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
-        {[28, 32, 28, 40].map((w, i) => (
-          <Card key={i} className="p-5">
-            <div className="flex justify-between mb-2">
-              <Skeleton className="h-4" style={{ width: `${w * 4}px` }} />
+      
+      {/* 4 Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        {[
+          { title: 32, icon: 8 },
+          { title: 28, icon: 8 },
+          { title: 28, icon: 8 },
+          { title: 40, icon: 8 }
+        ].map((stat, i) => (
+          <div key={i} className="stat-card">
+            <div className="stat-card-header">
+              <Skeleton className="h-4" style={{ width: `${stat.title * 4}px` }} />
               <Skeleton className="h-6 w-6 rounded-full" />
             </div>
-            <Skeleton className="h-8 w-12" />
-            <Skeleton className="h-3 w-32 mt-2" />
-          </Card>
+            <Skeleton className="h-10 w-12 mt-3" />
+          </div>
         ))}
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {names.map((name, i) => (
-          <Card key={i} className="p-5">
-            <div className="flex items-center gap-4 mb-4">
-              <Skeleton className="h-14 w-14 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-5" style={{ width: `${name * 4}px` }} />
-                <Skeleton className="h-4" style={{ width: `${breeds[i] * 4}px` }} />
+      
+      {/* Filtros de busca */}
+      <div className="flex gap-3">
+        <Skeleton className="h-11 flex-1 rounded-[14px]" />
+        <Skeleton className="h-11 w-40 rounded-[14px]" />
+      </div>
+      
+      {/* Grid de Pets (3 colunas) */}
+      <div className="section-card">
+        <div className="section-card-header">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-5" />
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-5 w-8 rounded-full" />
+          </div>
+        </div>
+        <div className="section-card-content">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {names.map((name, i) => (
+              <div key={i} className="p-5 rounded-[14px] bg-card border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)]">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-14 w-14 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-5" style={{ width: `${name * 4}px` }} />
+                      <Skeleton className="h-4" style={{ width: `${breeds[i] * 4}px` }} />
+                    </div>
+                  </div>
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b">
+                  <div className="space-y-1">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <div className="space-y-1">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="space-y-1">
-                <Skeleton className="h-3 w-16" />
-                <Skeleton className="h-4 w-12" />
-              </div>
-              <div className="space-y-1">
-                <Skeleton className="h-3 w-20" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-            </div>
-            <div className="flex justify-between pt-4 border-t">
-              <Skeleton className="h-6 w-24 rounded-full" />
-              <Skeleton className="h-4 w-20" />
-            </div>
-          </Card>
-        ))}
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -277,6 +306,135 @@ export function AccordionSkeleton() {
                 <Skeleton className="h-6 w-20 rounded-full" />
               </div>
             </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Skeleton para Behavior/Logs (grid 2 colunas de cards)
+export function BehaviorSkeleton() {
+  const names = [36, 28, 40, 32];
+  
+  return (
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header-content">
+          <Skeleton className="h-12 w-12 rounded-[14px]" />
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-56" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+        </div>
+        <Skeleton className="h-9 w-36 rounded-[14px]" />
+      </div>
+      
+      {/* Filtros */}
+      <Card className="mb-5">
+        <CardContent className="p-5">
+          <div className="flex gap-3">
+            <Skeleton className="h-11 w-48 rounded-[14px]" />
+            <Skeleton className="h-11 w-40 rounded-[14px]" />
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Grid 2 colunas de registros */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {names.map((w, i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4" style={{ width: `${w * 4}px` }} />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                </div>
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                {[1, 2].map((j) => (
+                  <div key={j} className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                ))}
+              </div>
+              {i % 2 === 0 && (
+                <>
+                  <Skeleton className="h-3 w-20 mb-2" />
+                  <Skeleton className="h-16 w-full rounded-lg" />
+                </>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Skeleton para Logs (grid 3 colunas de cards)
+export function LogsSkeleton() {
+  const names = [32, 40, 28, 36, 44, 32];
+  
+  return (
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header-content">
+          <Skeleton className="h-12 w-12 rounded-[14px]" />
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-40" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+        <Skeleton className="h-9 w-32 rounded-[14px]" />
+      </div>
+      
+      {/* Filtros */}
+      <Card className="mb-5">
+        <CardContent className="p-5">
+          <div className="flex gap-3">
+            <Skeleton className="h-11 w-48 rounded-[14px]" />
+            <Skeleton className="h-11 w-40 rounded-[14px]" />
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Grid 3 colunas de logs */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {names.map((w, i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4" style={{ width: `${w * 4}px` }} />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 mb-3">
+                <Skeleton className="h-5 w-5 rounded-full" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </div>
+              {i % 3 !== 2 && (
+                <>
+                  <Skeleton className="h-3 w-16 mb-2" />
+                  <Skeleton className="h-12 w-full rounded-lg" />
+                </>
+              )}
+            </CardContent>
           </Card>
         ))}
       </div>

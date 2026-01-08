@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { BreedIcon } from "@/components/breed-icons";
 import { toast } from "sonner";
-import { TableSkeleton } from "@/components/shared/skeletons";
+import { BehaviorSkeleton } from "@/components/shared/skeletons";
 
 const socializationOptions = [
   { value: "excellent", label: "Excelente", color: "text-green-600" },
@@ -95,7 +95,7 @@ export default function AdminBehavior() {
   };
 
   if (isLoading) {
-    return <TableSkeleton />;
+    return <BehaviorSkeleton />;
   }
 
   return (
