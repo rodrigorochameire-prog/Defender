@@ -41,7 +41,8 @@ import {
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { LoadingPage } from "@/components/shared/loading";
-import { getBreedIcon } from "@/lib/pet-breed-icons";
+import { BreedIcon } from "@/components/breed-icons";
+import { DOG_BREEDS } from "@/lib/breeds";
 import React from "react";
 import {
   DropdownMenu,
@@ -431,7 +432,18 @@ export default function AdminPetsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="breed">Raça</Label>
-                <Input id="breed" name="breed" />
+                <Select name="breed">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a raça" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DOG_BREEDS.map((breed) => (
+                      <SelectItem key={breed.value} value={breed.value}>
+                        {breed.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -498,7 +510,18 @@ export default function AdminPetsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-breed">Raça</Label>
-                  <Input id="edit-breed" name="breed" defaultValue={selectedPet.breed || ""} />
+                  <Select name="breed" defaultValue={selectedPet.breed || undefined}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a raça" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DOG_BREEDS.map((breed) => (
+                        <SelectItem key={breed.value} value={breed.value}>
+                          {breed.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

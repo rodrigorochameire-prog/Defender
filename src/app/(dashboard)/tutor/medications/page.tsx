@@ -38,6 +38,7 @@ import {
   Clock,
   AlertCircle
 } from "lucide-react";
+import { BreedIcon } from "@/components/breed-icons";
 import { toast } from "sonner";
 
 export default function TutorMedications() {
@@ -130,7 +131,7 @@ export default function TutorMedications() {
                       />
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Dog className="h-5 w-5 text-primary" />
+                        <BreedIcon breed={pet.breed} className="h-5 w-5 text-primary" />
                       </div>
                     )}
                     <div className="text-left">

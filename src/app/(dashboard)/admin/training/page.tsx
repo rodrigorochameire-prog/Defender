@@ -41,6 +41,7 @@ import {
   RefreshCw,
   type LucideIcon
 } from "lucide-react";
+import { BreedIcon } from "@/components/breed-icons";
 import { toast } from "sonner";
 
 const categoryOptions: { value: string; label: string; icon: LucideIcon }[] = [
@@ -221,7 +222,7 @@ export default function AdminTraining() {
                       />
                     ) : (
                       <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                        <Dog className="h-6 w-6 text-muted-foreground" />
+                        <BreedIcon breed={session.pet?.breed} className="h-6 w-6 text-muted-foreground" />
                       </div>
                     )}
                     <div>

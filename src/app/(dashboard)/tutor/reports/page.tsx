@@ -26,6 +26,7 @@ import {
   Syringe,
   BarChart3
 } from "lucide-react";
+import { BreedIcon } from "@/components/breed-icons";
 
 const moodLabels: Record<string, string> = {
   happy: "Feliz",
@@ -151,7 +152,7 @@ export default function TutorReports() {
                   />
                 ) : (
                   <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Dog className="h-8 w-8 text-primary" />
+                    <BreedIcon breed={pet.breed} className="h-8 w-8 text-primary" />
                   </div>
                 )}
                 <div>

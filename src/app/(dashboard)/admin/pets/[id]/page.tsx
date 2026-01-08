@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Edit, CheckCircle2, XCircle, Calendar, Weight, Utensils, Loader2, Syringe, Pill, FileText, Camera, Dog } from "lucide-react";
+import { BreedIcon } from "@/components/breed-icons";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
