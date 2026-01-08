@@ -15,14 +15,6 @@ const isTutorRoute = createRouteMatcher(["/tutor(.*)"]);
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
 
-  // Redirect rotas antigas para novas (antes de qualquer outra lógica)
-  if (req.nextUrl.pathname === "/login") {
-    return NextResponse.redirect(new URL("/sign-in", req.url));
-  }
-  if (req.nextUrl.pathname === "/register") {
-    return NextResponse.redirect(new URL("/sign-up", req.url));
-  }
-
   if (isPublicRoute(req)) {
     return NextResponse.next();
   }
