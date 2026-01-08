@@ -222,7 +222,7 @@ export default function AdminTraining() {
                       />
                     ) : (
                       <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                        <BreedIcon breed={session.pet?.breed} className="h-6 w-6 text-muted-foreground" />
+                        <BreedIcon breed={log.pet?.breed} className="h-6 w-6 text-muted-foreground" />
                       </div>
                     )}
                     <div>
