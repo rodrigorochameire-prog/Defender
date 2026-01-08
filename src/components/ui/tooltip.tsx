@@ -5,14 +5,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { cn } from "@/lib/utils";
 
 const TooltipProvider = TooltipPrimitive.Provider;
-
-// Tooltip com delay zero para aparecer instantaneamente
-const Tooltip = ({ children, ...props }: React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>) => (
-  <TooltipPrimitive.Root delayDuration={0} {...props}>
-    {children}
-  </TooltipPrimitive.Root>
-);
-
+const Tooltip = TooltipPrimitive.Root;
 const TooltipTrigger = TooltipPrimitive.Trigger;
 
 const TooltipContent = React.forwardRef<
@@ -24,7 +17,7 @@ const TooltipContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        // Estilos visuais - SEM classes de animação
+        // Estilos visuais apenas - SEM classes de animação
         "z-50 overflow-hidden rounded-lg bg-slate-800 dark:bg-slate-700 px-3 py-1.5 text-xs text-white shadow-lg",
         className
       )}

@@ -801,37 +801,14 @@ select {
 }
 
 /* ========================================
-   TOOLTIP & POPOVER - Sem Animações
+   RADIX UI - Sem Animações de Slide
    ======================================== */
 
 /* 
- * Remove apenas animações e transições, mantendo o posicionamento
- * O Radix UI usa transform para posicionar - NÃO interferir nisso
+ * NOTA: As animações são controladas removendo as classes
+ * animate-in, slide-in-from-*, etc. dos componentes.
+ * Este CSS é apenas um fallback de segurança.
  */
-
-/* Tooltip - Remove animações mas mantém posicionamento */
-[data-radix-tooltip-content] {
-  animation: none !important;
-  transition: none !important;
-  animation-duration: 0s !important;
-  transition-duration: 0s !important;
-}
-
-/* Popover - Remove animações mas mantém posicionamento */
-[data-radix-popover-content] {
-  animation: none !important;
-  transition: none !important;
-  animation-duration: 0s !important;
-  transition-duration: 0s !important;
-}
-
-/* Dropdown Menu - Remove animações */
-[data-radix-menu-content] {
-  animation: none !important;
-  transition: none !important;
-  animation-duration: 0s !important;
-  transition-duration: 0s !important;
-}
 
 /* ========================================
    REDUCED MOTION
