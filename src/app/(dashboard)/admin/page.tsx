@@ -20,7 +20,7 @@ import {
   Plus
 } from "lucide-react";
 import Link from "next/link";
-import { LoadingPage } from "@/components/shared/loading";
+import { DashboardSkeleton } from "@/components/shared/skeletons";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -38,7 +38,7 @@ export default function AdminDashboard() {
   });
 
   if (loadingPets) {
-    return <LoadingPage />;
+    return <DashboardSkeleton />;
   }
 
   const totalPets = petsData?.length || 0;

@@ -184,7 +184,7 @@ export default function AdminWall() {
   };
 
   if (isLoading) {
-    return <DelayedSpinner delay={300} className="min-h-[60vh]" />;
+    return <WallSkeleton />;
   }
 
   // Filtrar posts com imagens para a galeria
