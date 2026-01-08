@@ -145,34 +145,39 @@ export function WallSkeleton() {
           <Skeleton className="h-12 w-12 rounded-[14px]" />
           <div className="space-y-2">
             <Skeleton className="h-7 w-28" />
-            <Skeleton className="h-4 w-52" />
+            <Skeleton className="h-4 w-56" />
           </div>
         </div>
-        <Skeleton className="h-9 w-32 rounded-[14px]" />
+        <Skeleton className="h-9 w-36 rounded-[14px]" />
       </div>
 
-      {/* Posts com variações */}
+      {/* Posts com variações realistas */}
       <div className="space-y-5">
         {[
-          { text: [80, 70], hasImage: true, imageHeight: 72 },
-          { text: [90, 85, 60], hasImage: true, imageHeight: 56 },
-          { text: [75], hasImage: false, imageHeight: 0 }
+          { text: [85, 75, 40], hasImage: true, imageHeight: 64, likes: 8, comments: 12 },
+          { text: [90, 88, 70, 30], hasImage: true, imageHeight: 72, likes: 12, comments: 16 },
+          { text: [78, 65], hasImage: false, imageHeight: 0, likes: 6, comments: 8 }
         ].map((post, i) => (
           <Card key={i}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3 mb-4">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-36" />
-                  <Skeleton className="h-3 w-28" />
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-11 w-11 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
                 </div>
+                <Skeleton className="h-8 w-8 rounded" />
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Texto do post - linhas variadas */}
-              {post.text.map((width, j) => (
-                <Skeleton key={j} className="h-4" style={{ width: `${width}%` }} />
-              ))}
+              <div className="space-y-2">
+                {post.text.map((width, j) => (
+                  <Skeleton key={j} className="h-4" style={{ width: `${width}%` }} />
+                ))}
+              </div>
               
               {/* Imagem (se tiver) */}
               {post.hasImage && (
@@ -182,10 +187,16 @@ export function WallSkeleton() {
                 />
               )}
               
-              {/* Ações (curtir, comentar) */}
-              <div className="flex items-center gap-6 pt-2">
-                <Skeleton className="h-8 w-16" />
-                <Skeleton className="h-8 w-20" />
+              {/* Ações (curtir, comentar) com contadores */}
+              <div className="flex items-center gap-6 pt-3 border-t">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-4" style={{ width: `${post.likes * 4}px` }} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-4" style={{ width: `${post.comments * 4}px` }} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -204,29 +215,29 @@ export function TableSkeleton() {
         <div className="page-header-content">
           <Skeleton className="h-12 w-12 rounded-[14px]" />
           <div className="space-y-2">
-            <Skeleton className="h-7 w-52" />
-            <Skeleton className="h-4 w-68" />
+            <Skeleton className="h-7 w-56" />
+            <Skeleton className="h-4 w-72" />
           </div>
         </div>
-        <Skeleton className="h-9 w-28 rounded-[14px]" />
+        <Skeleton className="h-9 w-32 rounded-[14px]" />
       </div>
 
       {/* Filtros/Search */}
       <div className="flex gap-3">
         <Skeleton className="h-11 flex-1 rounded-[14px]" />
-        <Skeleton className="h-11 w-32 rounded-[14px]" />
+        <Skeleton className="h-11 w-36 rounded-[14px]" />
       </div>
 
-      {/* Lista com variações */}
+      {/* Lista com variações realistas */}
       <Card>
         <div className="p-6 space-y-4">
           {[
+            { name: 52, desc: 68, badge: 28 },
             { name: 48, desc: 64, badge: 24 },
-            { name: 56, desc: 72, badge: 28 },
+            { name: 60, desc: 76, badge: 32 },
             { name: 44, desc: 60, badge: 20 },
-            { name: 52, desc: 68, badge: 24 },
-            { name: 40, desc: 56, badge: 28 },
-            { name: 60, desc: 76, badge: 24 }
+            { name: 56, desc: 72, badge: 28 },
+            { name: 40, desc: 56, badge: 24 }
           ].map((sizes, i) => (
             <div key={i} className="flex items-center gap-4 pb-4 border-b last:border-0">
               <Skeleton className="h-10 w-10 rounded-full" />
@@ -234,7 +245,7 @@ export function TableSkeleton() {
                 <Skeleton className="h-4" style={{ width: `${sizes.name * 4}px` }} />
                 <Skeleton className="h-3" style={{ width: `${sizes.desc * 4}px` }} />
               </div>
-              <Skeleton className="h-8 rounded-full" style={{ width: `${sizes.badge * 4}px` }} />
+              <Skeleton className="h-7 rounded-full" style={{ width: `${sizes.badge * 4}px` }} />
               <Skeleton className="h-8 w-8 rounded" />
             </div>
           ))}
@@ -244,7 +255,7 @@ export function TableSkeleton() {
   );
 }
 
-// Skeleton para Lista de Pets (grid de cards)
+// Skeleton para Lista de Pets (grid de cards detalhado)
 export function PetsListSkeleton() {
   return (
     <div className="page-container">
@@ -254,19 +265,19 @@ export function PetsListSkeleton() {
           <Skeleton className="h-12 w-12 rounded-[14px]" />
           <div className="space-y-2">
             <Skeleton className="h-7 w-48" />
-            <Skeleton className="h-4 w-72" />
+            <Skeleton className="h-4 w-76" />
           </div>
         </div>
-        <Skeleton className="h-9 w-28 rounded-[14px]" />
+        <Skeleton className="h-9 w-32 rounded-[14px]" />
       </div>
 
       {/* Stats (4 cards) */}
       <div className="grid gap-4 md:grid-cols-4">
         {[
-          { label: 28, value: 12 },
-          { label: 32, value: 12 },
-          { label: 28, value: 12 },
-          { label: 36, value: 16 }
+          { label: 28, value: 8 },
+          { label: 32, value: 8 },
+          { label: 28, value: 8 },
+          { label: 40, value: 12 }
         ].map((sizes, i) => (
           <Card key={i} className="p-5">
             <div className="flex items-center justify-between mb-2">
@@ -282,12 +293,12 @@ export function PetsListSkeleton() {
       {/* Grid de Pets (3 colunas) - variações */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {[
-          { name: 32, breed: 44 },
-          { name: 28, breed: 40 },
-          { name: 36, breed: 52 },
+          { name: 36, breed: 48 },
+          { name: 28, breed: 44 },
           { name: 40, breed: 36 },
-          { name: 24, breed: 48 },
-          { name: 44, breed: 40 }
+          { name: 32, breed: 52 },
+          { name: 44, breed: 40 },
+          { name: 24, breed: 48 }
         ].map((sizes, i) => (
           <Card key={i} className="p-5">
             <div className="flex items-center gap-4 mb-4">
@@ -297,6 +308,8 @@ export function PetsListSkeleton() {
                 <Skeleton className="h-4" style={{ width: `${sizes.breed * 4}px` }} />
               </div>
             </div>
+            
+            {/* Stats do pet */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="space-y-1">
                 <Skeleton className="h-3 w-16" />
@@ -307,6 +320,8 @@ export function PetsListSkeleton() {
                 <Skeleton className="h-4 w-16" />
               </div>
             </div>
+            
+            {/* Footer */}
             <div className="flex items-center justify-between pt-4 border-t">
               <Skeleton className="h-6 w-24 rounded-full" />
               <Skeleton className="h-4 w-20" />
