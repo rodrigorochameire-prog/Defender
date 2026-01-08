@@ -801,25 +801,18 @@ select {
 }
 
 /* ========================================
-   RADIX UI - Desabilita TODAS animações
+   RADIX UI - Desabilita animações (mantém posicionamento)
    ======================================== */
 
-/* Força remoção de QUALQUER animação do Radix */
-[data-radix-popper-content-wrapper],
-[data-radix-popper-content-wrapper] > * {
-  animation: none !important;
-  transition: none !important;
-  transform: translate3d(var(--radix-popper-transform-origin-x, 0), var(--radix-popper-transform-origin-y, 0), 0) !important;
-}
-
-/* Força opacidade total */
+/* Remove animações mas NÃO interfere no transform de posicionamento */
 [data-radix-tooltip-content],
 [data-radix-popover-content],
 [data-radix-menu-content],
 [data-radix-select-content] {
-  opacity: 1 !important;
-  animation: none !important;
-  transition: none !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
 }
 
 /* ========================================
