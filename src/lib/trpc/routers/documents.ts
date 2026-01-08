@@ -128,7 +128,6 @@ export const documentsRouter = router({
             fileUrl: input.fileUrl,
             fileType: input.fileType || null,
             fileSize: input.fileSize || null,
-            fileKey: input.fileUrl.split('/').pop() || 'document',
           })
           .returning();
 
