@@ -803,25 +803,32 @@ select {
    TOOLTIP - Sem Animações
    ======================================== */
 
-[data-radix-tooltip-content] {
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
-}
-
+/* Remove todas as animações do Radix UI Tooltip */
+[data-radix-tooltip-content],
 [data-radix-tooltip-content][data-state="delayed-open"],
-[data-radix-tooltip-content][data-state="open"] {
+[data-radix-tooltip-content][data-state="open"],
+[data-radix-tooltip-content][data-state="closed"] {
   animation: none !important;
   transition: none !important;
   transform: none !important;
   opacity: 1 !important;
 }
 
+/* Garante que tooltips apareçam instantaneamente sem movimento */
+[data-radix-tooltip-content] {
+  animation-delay: 0s !important;
+  transition-delay: 0s !important;
+}
+
+/* Desabilita todas as animações de entrada/saída */
 [data-radix-tooltip-content][data-state="closed"] {
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
-  opacity: 0 !important;
+  display: none !important;
+}
+
+[data-radix-tooltip-content][data-state="delayed-open"],
+[data-radix-tooltip-content][data-state="open"] {
+  display: block !important;
+  opacity: 1 !important;
 }
 
 /* ========================================

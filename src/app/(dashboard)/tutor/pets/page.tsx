@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -105,7 +106,7 @@ export default function TutorPetsPage() {
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {pets.map((pet) => {
                 const breedIcon = getBreedIcon(pet.breed);
-                const IconComponent = breedIcon.icon;
+                const IconComponent = breedIcon.icon as React.ComponentType<any>;
                 
                 return (
                 <Link key={pet.id} href={`/tutor/pets/${pet.id}`}>
@@ -127,7 +128,10 @@ export default function TutorPetsPage() {
                             backgroundColor: breedIcon.bgColor,
                             border: `2px solid ${breedIcon.ringColor}`
                           }}>
-                          <IconComponent className="h-7 w-7" style={{ color: breedIcon.color }} />
+                          {React.createElement(IconComponent, { 
+                            className: "h-7 w-7", 
+                            style: { color: breedIcon.color } 
+                          })}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">

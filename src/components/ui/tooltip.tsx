@@ -18,17 +18,19 @@ const TooltipContent = React.forwardRef<
       sideOffset={sideOffset}
       className={cn(
         "z-50 overflow-hidden rounded-[14px] bg-slate-800 dark:bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white shadow-lg",
-        "!animate-none !transition-none",
-        "data-[state=delayed-open]:opacity-100 data-[state=closed]:opacity-0",
-        "[&[data-state=delayed-open]]:!transform-none",
-        "[&[data-state=closed]]:!transform-none",
+        "!animate-none !transition-none !duration-0",
+        "[&[data-state]]:!animate-none [&[data-state]]:!transition-none [&[data-state]]:!transform-none",
+        "[&[data-state=delayed-open]]:opacity-100 [&[data-state=open]]:opacity-100",
+        "[&[data-state=closed]]:opacity-0 [&[data-state=closed]]:hidden",
         className
       )}
       style={{
-        animation: 'none',
-        transition: 'none',
-        transform: 'none'
-      } as React.CSSProperties}
+        animation: 'none !important',
+        transition: 'none !important',
+        transform: 'none !important',
+        animationDuration: '0s !important',
+        transitionDuration: '0s !important'
+      } as React.CSSProperties & { animationDuration?: string; transitionDuration?: string }}
       {...props}
     />
   </TooltipPrimitive.Portal>

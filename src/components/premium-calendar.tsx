@@ -396,7 +396,7 @@ export function PremiumCalendar({
                   )}
                 >
                   <LayoutGrid className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "month" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
-                  <span className="hidden sm:inline">Mês</span>
+                  <span className={cn("hidden sm:inline font-semibold", viewMode === "month" ? "text-white" : "text-[hsl(220_13%_45%)]")}>Mês</span>
                 </Button>
                 <Button
                   variant={viewMode === "week" ? "default" : "ghost"}
@@ -410,7 +410,7 @@ export function PremiumCalendar({
                   )}
                 >
                   <CalendarDays className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "week" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
-                  <span className="hidden sm:inline">Semana</span>
+                  <span className={cn("hidden sm:inline font-semibold", viewMode === "week" ? "text-white" : "text-[hsl(220_13%_45%)]")}>Semana</span>
                 </Button>
                 <Button
                   variant={viewMode === "day" ? "default" : "ghost"}
@@ -424,7 +424,7 @@ export function PremiumCalendar({
                   )}
                 >
                   <Sun className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "day" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
-                  <span className="hidden sm:inline">Dia</span>
+                  <span className={cn("hidden sm:inline font-semibold", viewMode === "day" ? "text-white" : "text-[hsl(220_13%_45%)]")}>Dia</span>
                 </Button>
                 <Button
                   variant={viewMode === "list" ? "default" : "ghost"}
@@ -438,7 +438,7 @@ export function PremiumCalendar({
                   )}
                 >
                   <List className={cn("h-3.5 w-3.5 mr-1.5", viewMode === "list" ? "text-white" : "text-[hsl(220_13%_45%)]")} />
-                  <span className="hidden sm:inline">Lista</span>
+                  <span className={cn("hidden sm:inline font-semibold", viewMode === "list" ? "text-white" : "text-[hsl(220_13%_45%)]")}>Lista</span>
                 </Button>
               </div>
 
