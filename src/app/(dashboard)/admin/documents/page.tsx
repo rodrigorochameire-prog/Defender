@@ -178,7 +178,8 @@ export default function AdminDocuments() {
         description,
         category: selectedCategory as any,
         fileUrl,
-        fileType: formData.get("fileType") as string || undefined,
+        fileName: formData.get("fileName") as string || undefined,
+        mimeType: formData.get("mimeType") as string || undefined,
       });
       return;
     }
@@ -196,7 +197,7 @@ export default function AdminDocuments() {
         petId: parseInt(selectedPetId),
         category: selectedCategory,
         fileName: selectedFile.name,
-        fileType: selectedFile.type,
+        mimeType: selectedFile.type,
       });
 
       // 2. Fazer upload direto para o Supabase Storage
@@ -222,7 +223,8 @@ export default function AdminDocuments() {
         description,
         category: selectedCategory as any,
         fileUrl: publicUrl,
-        fileType: selectedFile.name.split(".").pop() || "bin",
+        fileName: selectedFile.name,
+        mimeType: selectedFile.type,
         fileSize: selectedFile.size,
       });
     } catch (error) {
@@ -622,13 +624,13 @@ export default function AdminDocuments() {
                   <p className="text-xs text-muted-foreground">Cole a URL do arquivo</p>
                   <div className="space-y-2">
                     <Label>Tipo do Arquivo</Label>
-                    <Select name="fileType">
+                    <Select name="mimeType">
                       <SelectTrigger><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pdf">PDF</SelectItem>
-                        <SelectItem value="jpg">Imagem (JPG, PNG)</SelectItem>
-                        <SelectItem value="doc">Documento (DOC)</SelectItem>
-                        <SelectItem value="other">Outro</SelectItem>
+                        <SelectItem value="application/pdf">PDF</SelectItem>
+                        <SelectItem value="image/jpeg">Imagem (JPG, PNG)</SelectItem>
+                        <SelectItem value="application/msword">Documento (DOC)</SelectItem>
+                        <SelectItem value="application/octet-stream">Outro</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

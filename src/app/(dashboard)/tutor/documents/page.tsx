@@ -181,7 +181,7 @@ export default function TutorDocuments() {
         petId: parseInt(selectedPetId),
         category: selectedCategory,
         fileName: selectedFile.name,
-        fileType: selectedFile.type,
+        mimeType: selectedFile.type,
       });
 
       // 2. Fazer upload direto para o Supabase Storage
@@ -207,7 +207,8 @@ export default function TutorDocuments() {
         description,
         category: selectedCategory as any,
         fileUrl: publicUrl,
-        fileType: selectedFile.name.split(".").pop() || "bin",
+        fileName: selectedFile.name,
+        mimeType: selectedFile.type,
         fileSize: selectedFile.size,
       });
     } catch (error) {

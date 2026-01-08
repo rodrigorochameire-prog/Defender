@@ -1,31 +1,12 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, pets, petTutors } from "@/lib/db";
+import { db, pets, petTutors, documents } from "@/lib/db";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
-import {
-  pgTable,
-  serial,
-  text,
-  varchar,
-  timestamp,
-  integer,
-} from "drizzle-orm/pg-core";
+
 import { getSupabaseAdmin } from "@/lib/supabase/client";
 
-// Schema para documentos
-export const documents = pgTable("documents", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id").notNull(),
-  uploadedById: integer("uploaded_by_id").notNull(),
-  title: varchar("title", { length: 200 }).notNull(),
-  description: text("description"),
-  category: varchar("category", { length: 100 }).notNull(), // 'vaccination' | 'exam' | 'prescription' | 'other'
-  fileUrl: text("file_url").notNull(),
-  fileType: varchar("file_type", { length: 50 }),
-  fileSize: integer("file_size"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+
 
 export const documentsRouter = router({
   /**
@@ -95,7 +76,8 @@ export const documentsRouter = router({
           "other"
         ]),
         fileUrl: z.string().url(),
-        fileType: z.string().optional(),
+        fileName: z.string().optional(),
+        mimeType: z.string().optional(),
         fileSize: z.number().optional(),
         eventDate: z.string().or(z.date()).optional(), // Para integrar com calendário
         expirationDate: z.string().or(z.date()).optional(), // Data de vencimento
@@ -129,7 +111,8 @@ export const documentsRouter = router({
             description: input.description || null,
             category: input.category,
             fileUrl: input.fileUrl,
-            fileType: input.fileType || null,
+            fileName: input.fileName || null,
+            mimeType: input.mimeType || null,
             fileSize: input.fileSize || null,
           })
           .returning();
@@ -264,7 +247,7 @@ export const documentsRouter = router({
         petId: z.number(),
         category: z.string(),
         fileName: z.string(),
-        fileType: z.string(),
+        mimeType: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -316,7 +299,7 @@ export const documentsRouter = router({
         category: z.string(),
         fileName: z.string(),
         fileBase64: z.string(), // Arquivo em base64
-        fileType: z.string(),
+        mimeType: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -349,7 +332,7 @@ export const documentsRouter = router({
         const { data, error } = await supabase.storage
           .from("documents")
           .upload(filePath, buffer, {
-            contentType: input.fileType,
+            contentType: input.mimeType,
             upsert: false,
           });
 
@@ -365,7 +348,8 @@ export const documentsRouter = router({
         return {
           url: urlData.publicUrl,
           path: data.path,
-          fileType: fileExt,
+          fileName: input.fileName,
+          mimeType: input.mimeType,
           fileSize: buffer.length,
         };
       }, "Erro ao fazer upload do arquivo");

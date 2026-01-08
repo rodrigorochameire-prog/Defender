@@ -23,7 +23,7 @@ export async function uploadDocumentClient(
   file: File,
   petId: number,
   category: string
-): Promise<{ url: string; fileType: string; fileSize: number; path: string }> {
+): Promise<{ url: string; fileName: string; mimeType: string; fileSize: number; path: string }> {
   const supabase = getSupabaseClient();
   
   // Gerar nome único - usando padrão pets/{petId} para compatibilidade com RLS
@@ -50,7 +50,8 @@ export async function uploadDocumentClient(
 
   return {
     url: signedUrlData?.signedUrl || "",
-    fileType: fileExt,
+    fileName: file.name,
+    mimeType: file.type,
     fileSize: file.size,
     path: data.path,
   };

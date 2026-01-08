@@ -354,7 +354,8 @@ export const documents = pgTable("documents", {
   category: varchar("category", { length: 100 }).notNull(), // 'vaccination' | 'exam' | 'prescription' | 'other'
   fileUrl: text("file_url").notNull(),
   fileKey: text("file_key"),
-  fileType: varchar("file_type", { length: 50 }),
+  fileName: varchar("file_name", { length: 255 }),
+  mimeType: varchar("mime_type", { length: 100 }),
   fileSize: integer("file_size"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
