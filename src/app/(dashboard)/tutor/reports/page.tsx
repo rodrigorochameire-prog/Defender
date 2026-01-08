@@ -151,8 +151,8 @@ export default function TutorReports() {
                     className="h-16 w-16 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
-                    <BreedIcon breed={report.pet?.breed} className="h-8 w-8 text-primary" />
+                  <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center">
+                    <BreedIcon breed={report.pet?.breed} className="h-8 w-8 text-slate-500" />
                   </div>
                 )}
                 <div>

@@ -114,8 +114,8 @@ export default function TutorPetsPage() {
                           />
                         </div>
                       ) : (
-                        <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <BreedIcon breed={pet.breed} className="h-7 w-7 text-primary" />
+                        <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                          <BreedIcon breed={pet.breed} className="h-7 w-7 text-slate-500" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">

@@ -25,12 +25,18 @@ const TooltipContent = React.forwardRef<
       sideOffset={sideOffset}
       className={cn(
         "z-50 overflow-hidden rounded-lg bg-slate-800 dark:bg-slate-700 px-3 py-1.5 text-xs text-white shadow-lg",
-        // Remove todas as animações
-        "animate-none transition-none",
+        // Remove TODAS as animações explicitamente
+        "!animate-none !transition-none",
+        "[animation:none_!important] [transition:none_!important]",
         className
       )}
-      // Evita animações de entrada/saída
-      onAnimationStart={(e) => e.preventDefault()}
+      // Inline styles para garantir remoção de animações
+      style={{
+        animation: 'none',
+        transition: 'none',
+        animationDuration: '0s',
+        transitionDuration: '0s',
+      }}
       {...props}
     />
   </TooltipPrimitive.Portal>

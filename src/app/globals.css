@@ -800,29 +800,51 @@ select {
 }
 
 /* ========================================
-   TOOLTIP - Sem Animações
+   TOOLTIP - Sem Animações (FORÇADO)
    ======================================== */
 
-/* Remove completamente animações do Radix UI Tooltip */
-[data-radix-tooltip-content] {
+/* Remove completamente TODAS as animações do Radix UI Tooltip */
+[data-radix-tooltip-content],
+[data-radix-tooltip-content][data-state],
+[data-radix-tooltip-content][data-side] {
   animation: none !important;
   transition: none !important;
   animation-duration: 0s !important;
   transition-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-delay: 0s !important;
+  animation-fill-mode: none !important;
+  animation-timing-function: step-end !important;
+  transition-timing-function: step-end !important;
+  transform-origin: center center !important;
+  will-change: auto !important;
 }
 
-/* Tooltips abertos aparecem instantaneamente */
+/* Tooltips abertos aparecem instantaneamente - sem movimento */
 [data-radix-tooltip-content][data-state="delayed-open"],
 [data-radix-tooltip-content][data-state="open"] {
   animation: none !important;
   transition: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
-/* Tooltips fechados desaparecem instantaneamente */
+/* Tooltips fechados desaparecem instantaneamente - sem movimento */
 [data-radix-tooltip-content][data-state="closed"] {
   animation: none !important;
   transition: none !important;
-  display: none;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Override para todos os lados do tooltip */
+[data-radix-tooltip-content][data-side="top"],
+[data-radix-tooltip-content][data-side="bottom"],
+[data-radix-tooltip-content][data-side="left"],
+[data-radix-tooltip-content][data-side="right"] {
+  animation: none !important;
+  transition: none !important;
 }
 
 /* ========================================
