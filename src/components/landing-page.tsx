@@ -56,14 +56,15 @@ export function LandingPage() {
 
             {/* Main Heading */}
             <div className="space-y-6">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-foreground">
-                Cuidado profissional
-                <br />
-                <span className="text-primary">
+              <div className="space-y-3">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
+                  Cuidado profissional
+                </h1>
+                <p className="text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-primary">
                   para seu melhor amigo
-                </span>
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                </p>
+              </div>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                 Plataforma completa para gestão de creches de pets. Controle de saúde, vacinas, 
                 medicamentos e comunicação em tempo real com os tutores.
               </p>
