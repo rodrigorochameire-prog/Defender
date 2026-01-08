@@ -26,87 +26,97 @@ export default async function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-background via-background to-muted/30">
-      {/* Lado Esquerdo - Informações */}
+    <div className="min-h-screen flex bg-[hsl(210_20%_98%)]">
+      {/* Lado Esquerdo - Informações (Design Refinado) */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-red-500 to-rose-600" />
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_20%,white,transparent_30%),radial-gradient(circle_at_80%_10%,white,transparent_25%),radial-gradient(circle_at_50%_80%,white,transparent_28%)]" />
-        <div className="relative z-10 flex flex-col justify-center items-center w-full px-16 py-14 text-white">
-          {/* Logo */}
-          <div className="mb-12">
+        {/* Gradiente suave e profissional */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-orange-500 to-orange-600" />
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_30%,white,transparent_40%)]" />
+        
+        <div className="relative z-10 flex flex-col justify-center items-center w-full px-20 py-16 text-white">
+          {/* Logo com sombra suave */}
+          <div className="mb-10">
             <Image
               src="/tetecare-logo.png"
               alt="TeteCare"
-              width={124}
-              height={124}
-              className="rounded-full shadow-2xl border-4 border-white/25"
+              width={110}
+              height={110}
+              className="rounded-full shadow-[0_8px_24px_0_rgba(0,0,0,0.15)] border-4 border-white/30"
             />
           </div>
           
-          {/* Título e Subtítulo */}
-          <div className="space-y-3 mb-12 text-center">
-            <p className="text-sm uppercase tracking-[0.2em] text-white/70">Cuidar com carinho</p>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Bem-vindo ao TeteCare</h1>
-            <p className="text-lg text-white/90 max-w-xl leading-relaxed">
+          {/* Título e Subtítulo - Hierarquia clara */}
+          <div className="space-y-4 mb-14 text-center">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/80 font-semibold">Cuidar com Carinho</p>
+            <h1 className="text-4xl font-bold tracking-tight leading-tight">
+              Bem-vindo ao TeteCare
+            </h1>
+            <p className="text-base text-white/90 max-w-md leading-relaxed font-medium">
               A plataforma completa para gestão de creches e hotéis para pets
             </p>
           </div>
           
-          {/* Features */}
-          <div className="space-y-3 w-full max-w-xl">
+          {/* Features - Cards suaves */}
+          <div className="space-y-3.5 w-full max-w-lg">
             {features.map((feature, index) => (
               <div 
                 key={index} 
-                className="flex items-center gap-4 bg-white/12 backdrop-blur-md rounded-2xl p-4 border border-white/25 transition-all hover:bg-white/18 hover:border-white/35 shadow-lg shadow-black/10"
+                className="flex items-center gap-4 bg-white/15 backdrop-blur-sm rounded-[14px] p-4 border border-white/20 transition-all duration-300 ease hover:bg-white/20 hover:border-white/30 shadow-[0_2px_8px_0_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.15)] hover:translate-y-[-2px]"
               >
-                <div className="p-3 bg-white/20 rounded-xl">
-                  <feature.icon className="h-6 w-6" />
+                <div className="p-2.5 bg-white/25 rounded-[14px] flex items-center justify-center">
+                  <feature.icon className="h-5 w-5" strokeWidth={2.5} />
                 </div>
-                <span className="font-medium text-base">{feature.text}</span>
+                <span className="font-semibold text-base">{feature.text}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
       
-      {/* Lado Direito - Formulário de Login */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-10">
-        <div className="w-full max-w-md">
-          {/* Header Mobile */}
-          <div className="lg:hidden flex flex-col items-center mb-10">
+      {/* Lado Direito - Formulário de Login (Design Refinado) */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-12">
+        <div className="w-full max-w-[460px]">
+          {/* Header Mobile - Mais equilibrado */}
+          <div className="lg:hidden flex flex-col items-center mb-8">
             <Image 
               src="/tetecare-logo.png" 
               alt="TeteCare" 
-              width={82} 
-              height={82} 
-              className="rounded-full shadow-xl mb-4" 
+              width={72} 
+              height={72} 
+              className="rounded-full shadow-[0_4px_12px_0_rgba(0,0,0,0.1)] mb-4" 
             />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold text-foreground">
               TeteCare
             </h1>
+            <p className="text-sm text-muted-foreground mt-1">Gestão de Creche para Pets</p>
           </div>
           
-          <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm shadow-xl shadow-orange-500/10 p-6 md:p-8 space-y-6">
-            <div className="space-y-2 text-center">
-              <p className="text-sm font-medium text-orange-600/90">Acesso seguro</p>
-              <h2 className="text-2xl font-semibold text-foreground">Entrar no TeteCare</h2>
-              <p className="text-sm text-muted-foreground">
+          {/* Card de Login - Sombras suaves multicamadas */}
+          <div className="rounded-[14px] border-0 bg-card shadow-[0_2px_4px_0_rgba(0,0,0,0.03),0_4px_8px_0_rgba(0,0,0,0.05),0_8px_16px_0_rgba(0,0,0,0.04)] p-8 md:p-10 space-y-6">
+            {/* Header do Card */}
+            <div className="space-y-3 text-center">
+              <p className="text-xs uppercase tracking-wider font-semibold text-primary">Acesso Seguro</p>
+              <h2 className="text-2xl font-bold text-foreground">Entrar no TeteCare</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Use sua conta para continuar cuidando dos seus pets
               </p>
             </div>
 
-            {/* Clerk SignIn Component */}
+            {/* Clerk SignIn Component - Estilos refinados */}
             <SignIn
               appearance={{
                 elements: {
                   rootBox: "w-full",
                   card: "shadow-none border-0 bg-transparent p-0",
-                  formButtonPrimary: "h-11 text-base font-semibold rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl transition-all",
-                  formFieldInput: "h-11 rounded-xl bg-muted/40 border-border/60 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all",
-                  socialButtonsBlockButton: "h-11 rounded-xl border border-border/60 bg-background hover:bg-muted/70 transition-all",
-                  socialButtonsBlockButtonText: "text-sm font-medium",
-                  dividerLine: "bg-border/60",
-                  footerActionLink: "text-orange-600 hover:text-orange-700 transition-colors",
+                  formButtonPrimary: "h-11 text-base font-semibold rounded-[14px] bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.2)] hover:shadow-[0_4px_8px_0_rgba(24,80%,52%,0.3)] transition-all duration-300",
+                  formFieldInput: "h-11 rounded-[14px] bg-background border border-border/40 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:shadow-[0_0_0_3px_rgba(24,80%,52%,0.1)] transition-all duration-300",
+                  formFieldLabel: "text-sm font-semibold text-foreground mb-2",
+                  socialButtonsBlockButton: "h-11 rounded-[14px] border border-border/40 bg-background hover:bg-muted/50 hover:border-border/60 transition-all duration-300 shadow-[0_1px_2px_0_rgba(0,0,0,0.03)]",
+                  socialButtonsBlockButtonText: "text-sm font-medium text-foreground",
+                  dividerLine: "bg-border/40",
+                  dividerText: "text-muted-foreground text-xs",
+                  footerActionLink: "text-primary hover:text-primary/80 font-semibold transition-colors",
+                  footerActionText: "text-muted-foreground text-sm",
                 },
               }}
               routing="path"

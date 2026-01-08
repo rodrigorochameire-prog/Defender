@@ -13,80 +13,105 @@ const features = [
 
 export default function SignUpPage() {
   return (
-    <div className="min-h-screen flex">
-      {/* Lado Esquerdo - Informações */}
+    <div className="min-h-screen flex bg-[hsl(210_20%_98%)]">
+      {/* Lado Esquerdo - Informações (Design Refinado) */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600" />
-        <div className="relative z-10 flex flex-col justify-center items-center w-full px-16 py-12 text-white">
-          {/* Logo */}
+        {/* Gradiente azul profundo e elegante */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500" />
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_30%,white,transparent_40%)]" />
+        
+        <div className="relative z-10 flex flex-col justify-center items-center w-full px-20 py-16 text-white">
+          {/* Logo com sombra suave */}
           <div className="mb-10">
             <Image
               src="/tetecare-logo.png"
               alt="TeteCare"
-              width={120}
-              height={120}
-              className="rounded-full shadow-2xl border-4 border-white/20"
+              width={110}
+              height={110}
+              className="rounded-full shadow-[0_8px_24px_0_rgba(0,0,0,0.15)] border-4 border-white/30"
             />
           </div>
           
-          {/* Título e Subtítulo */}
-          <div className="space-y-3 mb-12 text-center">
-            <h1 className="text-3xl font-bold tracking-tight">Junte-se ao TeteCare</h1>
-            <p className="text-lg text-white/90 max-w-md leading-relaxed">
+          {/* Título e Subtítulo - Hierarquia clara */}
+          <div className="space-y-4 mb-14 text-center">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/80 font-semibold">Nova Conta</p>
+            <h1 className="text-4xl font-bold tracking-tight leading-tight">
+              Junte-se ao TeteCare
+            </h1>
+            <p className="text-base text-white/90 max-w-md leading-relaxed font-medium">
               Crie sua conta e comece a cuidar dos seus pets de forma inteligente
             </p>
           </div>
           
-          {/* Features */}
-          <div className="space-y-3 w-full max-w-md">
+          {/* Features - Cards suaves */}
+          <div className="space-y-3.5 w-full max-w-lg">
             {features.map((feature, index) => (
               <div 
                 key={index} 
-                className="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 transition-all hover:bg-white/15 hover:border-white/30"
+                className="flex items-center gap-4 bg-white/15 backdrop-blur-sm rounded-[14px] p-4 border border-white/20 transition-all duration-300 ease hover:bg-white/20 hover:border-white/30 shadow-[0_2px_8px_0_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.15)] hover:translate-y-[-2px]"
               >
-                <div className="p-2.5 bg-white/20 rounded-lg">
-                  <feature.icon className="h-5 w-5" />
+                <div className="p-2.5 bg-white/25 rounded-[14px] flex items-center justify-center">
+                  <feature.icon className="h-5 w-5" strokeWidth={2.5} />
                 </div>
-                <span className="font-medium text-base">{feature.text}</span>
+                <span className="font-semibold text-base">{feature.text}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
       
-      {/* Lado Direito - Formulário de Registro */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md">
-          {/* Header Mobile */}
-          <div className="lg:hidden flex flex-col items-center mb-10">
+      {/* Lado Direito - Formulário de Registro (Design Refinado) */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-12">
+        <div className="w-full max-w-[460px]">
+          {/* Header Mobile - Mais equilibrado */}
+          <div className="lg:hidden flex flex-col items-center mb-8">
             <Image 
               src="/tetecare-logo.png" 
               alt="TeteCare" 
-              width={80} 
-              height={80} 
-              className="rounded-full shadow-xl mb-4" 
+              width={72} 
+              height={72} 
+              className="rounded-full shadow-[0_4px_12px_0_rgba(0,0,0,0.1)] mb-4" 
             />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold text-foreground">
               TeteCare
             </h1>
+            <p className="text-sm text-muted-foreground mt-1">Gestão de Creche para Pets</p>
           </div>
           
-          {/* Clerk SignUp Component */}
-          <SignUp
-            appearance={{
-              elements: {
-                rootBox: "w-full",
-                card: "shadow-none border-0 w-full",
-                formButtonPrimary: "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all",
-                formFieldInput: "focus:ring-2 focus:ring-cyan-500/20 transition-all",
-                footerActionLink: "text-cyan-500 hover:text-cyan-600 transition-colors",
-              },
-            }}
-            routing="path"
-            path="/sign-up"
-            signInUrl="/sign-in"
-            fallbackRedirectUrl="/auth-redirect"
-          />
+          {/* Card de Registro - Sombras suaves multicamadas */}
+          <div className="rounded-[14px] border-0 bg-card shadow-[0_2px_4px_0_rgba(0,0,0,0.03),0_4px_8px_0_rgba(0,0,0,0.05),0_8px_16px_0_rgba(0,0,0,0.04)] p-8 md:p-10 space-y-6">
+            {/* Header do Card */}
+            <div className="space-y-3 text-center">
+              <p className="text-xs uppercase tracking-wider font-semibold text-blue-600">Nova Conta</p>
+              <h2 className="text-2xl font-bold text-foreground">Criar Conta</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Preencha seus dados para começar a usar o TeteCare
+              </p>
+            </div>
+
+            {/* Clerk SignUp Component - Estilos refinados */}
+            <SignUp
+              appearance={{
+                elements: {
+                  rootBox: "w-full",
+                  card: "shadow-none border-0 bg-transparent p-0",
+                  formButtonPrimary: "h-11 text-base font-semibold rounded-[14px] bg-blue-600 hover:bg-blue-700 shadow-[0_2px_4px_0_rgba(37,99,235,0.2)] hover:shadow-[0_4px_8px_0_rgba(37,99,235,0.3)] transition-all duration-300",
+                  formFieldInput: "h-11 rounded-[14px] bg-background border border-border/40 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)] transition-all duration-300",
+                  formFieldLabel: "text-sm font-semibold text-foreground mb-2",
+                  socialButtonsBlockButton: "h-11 rounded-[14px] border border-border/40 bg-background hover:bg-muted/50 hover:border-border/60 transition-all duration-300 shadow-[0_1px_2px_0_rgba(0,0,0,0.03)]",
+                  socialButtonsBlockButtonText: "text-sm font-medium text-foreground",
+                  dividerLine: "bg-border/40",
+                  dividerText: "text-muted-foreground text-xs",
+                  footerActionLink: "text-blue-600 hover:text-blue-700 font-semibold transition-colors",
+                  footerActionText: "text-muted-foreground text-sm",
+                },
+              }}
+              routing="path"
+              path="/sign-up"
+              signInUrl="/sign-in"
+              fallbackRedirectUrl="/auth-redirect"
+            />
+          </div>
         </div>
       </div>
     </div>
