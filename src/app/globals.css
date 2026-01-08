@@ -828,10 +828,17 @@ select {
   transform-origin: center center !important;
   will-change: auto !important;
   opacity: 1 !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  bottom: auto !important;
+}
+
+/* FORÇA remoção de transform inline aplicado pelo Radix UI via JavaScript */
+[data-radix-tooltip-content] {
+  /* Sobrescreve qualquer transform inline */
+  transform: none !important;
+  /* Remove qualquer movimento */
+  top: var(--radix-tooltip-content-available-height, auto) !important;
+  left: var(--radix-tooltip-content-available-width, auto) !important;
+  right: var(--radix-tooltip-content-available-width, auto) !important;
+  bottom: var(--radix-tooltip-content-available-height, auto) !important;
 }
 
 /* Garante que tooltips fechados sejam totalmente ocultos e sem movimento */
@@ -854,10 +861,6 @@ select {
   transform: none !important;
   animation: none !important;
   transition: none !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  bottom: auto !important;
 }
 
 /* Override qualquer keyframe animation do Radix UI */
@@ -865,19 +868,16 @@ select {
   from { 
     opacity: 1 !important; 
     transform: none !important;
-    top: auto !important;
-    left: auto !important;
   }
   to { 
     opacity: 1 !important; 
     transform: none !important;
-    top: auto !important;
-    left: auto !important;
   }
 }
 
 /* Remove animações de qualquer Portal relacionado ao tooltip */
-[data-radix-portal][data-radix-tooltip-content] {
+[data-radix-portal][data-radix-tooltip-content],
+[data-radix-portal] [data-radix-tooltip-content] {
   animation: none !important;
   transition: none !important;
   transform: none !important;
