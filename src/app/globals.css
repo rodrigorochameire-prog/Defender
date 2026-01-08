@@ -872,36 +872,50 @@ html.font-large .badge {
 }
 
 /* ========================================
-   OVERRIDE FINAL - RADIX UI SEM ANIMAÇÕES
+   OVERRIDE FINAL - RADIX UI COM FADE SUAVE
    FORA DE @layer - MÁXIMA PRIORIDADE  
-   CACHE BUST v2
+   CACHE BUST v3
    ======================================== */
 
-/* Desabilita QUALQUER animação/transição do Radix */
+/* Keyframe de fade suave - APENAS opacity (sem transform) */
+@keyframes radixFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes radixFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Desabilita animações de SLIDE/ZOOM mas permite FADE */
 [data-radix-tooltip-content],
 [data-radix-popover-content],
 [data-radix-dropdown-menu-content],
-[data-radix-select-content],
-[data-radix-popper-content-wrapper],
-[data-radix-popper-content-wrapper] > * {
-  animation: none !important;
-  animation-name: none !important;
-  animation-duration: 0s !important;
-  animation-delay: 0s !important;
-  animation-iteration-count: 0 !important;
-  animation-fill-mode: none !important;
-  animation-timing-function: linear !important;
-  transition: none !important;
+[data-radix-select-content] {
+  /* Remove transforms que causam slide */
+  animation-name: radixFadeIn !important;
+  animation-duration: 0.15s !important;
+  animation-timing-function: ease-out !important;
+  animation-fill-mode: forwards !important;
+  /* Garante que não há transition em transform */
   transition-property: none !important;
-  transition-duration: 0s !important;
-  transition-delay: 0s !important;
-  transition-timing-function: linear !important;
-  -webkit-animation: none !important;
-  -webkit-transition: none !important;
 }
 
-/* Força opacity 1 para evitar fade se necessário */
-[data-radix-tooltip-content][data-state="open"],
-[data-radix-popover-content][data-state="open"] {
-  opacity: 1 !important;
+/* Fade out ao fechar */
+[data-radix-tooltip-content][data-state="closed"],
+[data-radix-popover-content][data-state="closed"],
+[data-radix-dropdown-menu-content][data-state="closed"],
+[data-radix-select-content][data-state="closed"] {
+  animation-name: radixFadeOut !important;
+  animation-duration: 0.1s !important;
+  opacity: 0 !important;
 }
