@@ -353,24 +353,25 @@
 
 .list-item-icon {
   @apply h-10 w-10 rounded-[14px] flex items-center justify-center flex-shrink-0;
-  background: hsl(var(--muted));
+  background: hsl(220 14% 96%); /* Slate-100 */
   transition: all 0.3s ease;
 }
 
 .list-item-icon svg {
   @apply h-4 w-4;
-  color: hsl(220 13% 45%); /* Azul slate para ícones inativos */
+  color: hsl(215 16% 47%); /* Slate-500 - Cinza neutro */
 }
 
 .list-item:hover .list-item-icon {
-  background: hsl(var(--muted) / 0.8);
+  background: hsl(220 14% 93%);
 }
 
-.list-item-icon.primary { background: hsl(var(--primary) / 0.1); }
-.list-item-icon.primary svg { color: hsl(var(--primary)); }
+/* Todos os ícones de lista agora são neutros (cinza) */
+.list-item-icon.primary { background: hsl(220 14% 96%); }
+.list-item-icon.primary svg { color: hsl(215 16% 47%); }
 
-.list-item-icon.blue { background: hsl(200 60% 50% / 0.1); }
-.list-item-icon.blue svg { color: hsl(200 60% 50%); }
+.list-item-icon.blue { background: hsl(220 14% 96%); }
+.list-item-icon.blue svg { color: hsl(215 16% 47%); }
 
 .list-item-content {
   @apply flex-1 min-w-0;
@@ -800,51 +801,80 @@ select {
 }
 
 /* ========================================
-   TOOLTIP - Sem Animações (FORÇADO)
+   TOOLTIP - Sem Animações (FORÇADO TOTAL)
    ======================================== */
 
-/* Remove completamente TODAS as animações do Radix UI Tooltip */
-[data-radix-tooltip-content],
-[data-radix-tooltip-content][data-state],
-[data-radix-tooltip-content][data-side] {
-  animation: none !important;
-  transition: none !important;
-  animation-duration: 0s !important;
-  transition-duration: 0s !important;
-  animation-delay: 0s !important;
-  transition-delay: 0s !important;
-  animation-fill-mode: none !important;
-  animation-timing-function: step-end !important;
-  transition-timing-function: step-end !important;
-  transform-origin: center center !important;
-  will-change: auto !important;
+/* 
+ * HIPÓTESE: O Radix UI usa JavaScript para aplicar transforms inline
+ * durante a abertura, causando o efeito de "arrastamento do topo".
+ * Esta seção tenta sobrescrever TODOS os comportamentos possíveis.
+ */
+
+/* Reset de TODAS as custom properties do Radix Tooltip */
+[data-radix-tooltip-content] {
+  --radix-tooltip-content-transform-origin: center center !important;
 }
 
-/* Tooltips abertos aparecem instantaneamente - sem movimento */
+/* Remove completamente TODAS as animações e transições */
+[data-radix-tooltip-content],
+[data-radix-tooltip-content][data-state],
+[data-radix-tooltip-content][data-side],
+[data-radix-tooltip-content][data-align] {
+  animation: none !important;
+  transition: none !important;
+  animation-name: none !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  animation-fill-mode: none !important;
+  animation-timing-function: step-end !important;
+  transition-property: none !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  transition-timing-function: step-end !important;
+  transform: none !important;
+  transform-origin: center center !important;
+  will-change: auto !important;
+  -webkit-animation: none !important;
+  -webkit-transition: none !important;
+}
+
+/* Tooltips abertos aparecem instantaneamente - posição fixa */
 [data-radix-tooltip-content][data-state="delayed-open"],
+[data-radix-tooltip-content][data-state="instant-open"],
 [data-radix-tooltip-content][data-state="open"] {
   animation: none !important;
   transition: none !important;
+  transform: none !important;
   opacity: 1 !important;
   visibility: visible !important;
 }
 
-/* Tooltips fechados desaparecem instantaneamente - sem movimento */
+/* Tooltips fechados desaparecem instantaneamente */
 [data-radix-tooltip-content][data-state="closed"] {
   animation: none !important;
   transition: none !important;
+  transform: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
+  display: none !important;
 }
 
-/* Override para todos os lados do tooltip */
+/* Override para todos os lados do tooltip - sem transform */
 [data-radix-tooltip-content][data-side="top"],
 [data-radix-tooltip-content][data-side="bottom"],
 [data-radix-tooltip-content][data-side="left"],
 [data-radix-tooltip-content][data-side="right"] {
   animation: none !important;
   transition: none !important;
+  transform: none !important;
+}
+
+/* Portal do Radix também não deve ter animações */
+[data-radix-portal] [data-radix-tooltip-content] {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
 }
 
 /* ========================================
