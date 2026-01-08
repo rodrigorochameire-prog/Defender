@@ -17,6 +17,7 @@ export default function TutorPetsPage() {
     return <LoadingPage />;
   }
 
+  // Stats
   const totalPets = pets?.length || 0;
   const approvedPets = pets?.filter((p) => p.approvalStatus === "approved").length || 0;
   const totalCredits = pets?.reduce((sum, p) => sum + (p.credits || 0), 0) || 0;
@@ -24,6 +25,7 @@ export default function TutorPetsPage() {
 
   return (
     <div className="page-container">
+      {/* Header */}
       <div className="page-header">
         <div className="page-header-content">
           <div className="page-header-icon">
@@ -44,6 +46,7 @@ export default function TutorPetsPage() {
         </div>
       </div>
 
+      {/* Stats */}
       <div className="stats-row">
         <div className="stat-card">
           <div className="stat-card-header">
@@ -78,6 +81,7 @@ export default function TutorPetsPage() {
         </div>
       </div>
 
+      {/* Pets List */}
       <div className="section-card">
         <div className="section-card-header">
           <div className="section-card-title">
@@ -141,7 +145,7 @@ export default function TutorPetsPage() {
                     </div>
                   </div>
                 </Link>
-              ))}
+              )})}
             </div>
           )}
         </div>
