@@ -256,19 +256,34 @@ export function PetsListSkeleton() {
                   </div>
                   <Skeleton className="h-8 w-8 rounded" />
                 </div>
-                <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b">
+                <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-border/50">
+                  {/* Tutor */}
                   <div className="space-y-1">
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-3 w-12" />
+                    <Skeleton className="h-4 w-24" />
                   </div>
+                  {/* Idade */}
                   <div className="space-y-1">
-                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-3 w-14" />
                     <Skeleton className="h-4 w-16" />
                   </div>
+                  {/* Status */}
+                  <div className="space-y-1">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </div>
+                  {/* Créditos */}
+                  <div className="space-y-1">
+                    <Skeleton className="h-3 w-18" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <Skeleton className="h-6 w-24 rounded-full" />
-                  <Skeleton className="h-4 w-20" />
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-6 w-28 rounded-full" />
+                  <div className="flex items-center gap-1">
+                    <Skeleton className="h-4 w-4 rounded" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
                 </div>
               </div>
             ))}
