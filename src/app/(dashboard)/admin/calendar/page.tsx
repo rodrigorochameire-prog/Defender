@@ -51,7 +51,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { PremiumCalendar, CalendarEvent } from "@/components/premium-calendar";
-import { LoadingPage } from "@/components/shared/loading";
+import { CalendarSkeleton } from "@/components/shared/skeletons";
 import { PageHeader } from "@/components/shared/page-header";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -312,7 +312,7 @@ export default function AdminCalendarPage() {
   };
 
   if (isLoading) {
-    return <LoadingPage />;
+    return <CalendarSkeleton />;
   }
 
   return (
