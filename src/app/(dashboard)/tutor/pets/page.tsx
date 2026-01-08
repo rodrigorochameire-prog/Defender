@@ -121,11 +121,12 @@ export default function TutorPetsPage() {
                           />
                         </div>
                       ) : (
-                        <div className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ring-2 shadow-[0_2px_4px_0_rgba(0,0,0,0.08)]`}
-                             style={{ 
-                               backgroundColor: breedIcon.bgColor,
-                               ringColor: breedIcon.ringColor 
-                             }}>
+                        <div 
+                          className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 shadow-[0_2px_4px_0_rgba(0,0,0,0.08)]"
+                          style={{ 
+                            backgroundColor: breedIcon.bgColor,
+                            border: `2px solid ${breedIcon.ringColor}`
+                          }}>
                           <IconComponent className="h-7 w-7" style={{ color: breedIcon.color }} />
                         </div>
                       )}
