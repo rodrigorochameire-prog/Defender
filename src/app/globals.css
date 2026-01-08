@@ -870,3 +870,38 @@ html.font-large .pet-card-credits {
 html.font-large .badge {
   @apply text-sm px-3 py-1;
 }
+
+/* ========================================
+   OVERRIDE FINAL - RADIX UI SEM ANIMAÇÕES
+   FORA DE @layer - MÁXIMA PRIORIDADE  
+   CACHE BUST v2
+   ======================================== */
+
+/* Desabilita QUALQUER animação/transição do Radix */
+[data-radix-tooltip-content],
+[data-radix-popover-content],
+[data-radix-dropdown-menu-content],
+[data-radix-select-content],
+[data-radix-popper-content-wrapper],
+[data-radix-popper-content-wrapper] > * {
+  animation: none !important;
+  animation-name: none !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 0 !important;
+  animation-fill-mode: none !important;
+  animation-timing-function: linear !important;
+  transition: none !important;
+  transition-property: none !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  transition-timing-function: linear !important;
+  -webkit-animation: none !important;
+  -webkit-transition: none !important;
+}
+
+/* Força opacity 1 para evitar fade se necessário */
+[data-radix-tooltip-content][data-state="open"],
+[data-radix-popover-content][data-state="open"] {
+  opacity: 1 !important;
+}
