@@ -776,6 +776,29 @@ img[src*="tetecare-logo"] {
   background: hsl(var(--muted-foreground) / 0.25);
 }
 
+/* Sidebar - Scrollbar ultra-discreta */
+[data-sidebar="content"]::-webkit-scrollbar {
+  width: 3px;
+}
+
+[data-sidebar="content"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-sidebar="content"]::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 100px;
+  transition: background 0.2s ease;
+}
+
+[data-sidebar="content"]:hover::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.12);
+}
+
+[data-sidebar="content"]::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.2);
+}
+
 /* ========================================
    FOCUS
    ======================================== */
