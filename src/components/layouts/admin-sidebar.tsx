@@ -342,21 +342,21 @@ function AdminSidebarContent({
                             <item.icon
                               className={`relative z-10 transition-all duration-300 ease ${
                                 isActive
-                                  ? `${colors.iconActive} h-[26px] w-[26px] drop-shadow-[0_0_3px_currentColor]`
-                                  : `h-6 w-6 text-[hsl(220_13%_45%)] group-hover:text-[hsl(220_16%_38%)] group-hover:scale-105`
+                                  ? `${colors.iconActive} h-[22px] w-[22px]`
+                                  : `h-5 w-5 text-[hsl(220_13%_45%)] group-hover:text-[hsl(220_16%_38%)]`
                               }`}
-                              strokeWidth={isActive ? 2.5 : 2}
+                              strokeWidth={isActive ? 2.5 : 1.75}
                             />
                             {/* Texto com hierarquia melhorada */}
                             <span className={`relative z-10 text-sm transition-colors duration-300 ${
                               isActive 
-                                ? "font-bold text-foreground" 
+                                ? "font-semibold text-foreground" 
                                 : "font-medium text-[hsl(220_11%_50%)] group-hover:text-[hsl(220_16%_38%)]"
                             }`}>
                               {item.label}
                             </span>
                             {isActive && !isCollapsed && (
-                              <div className={`ml-auto w-2 h-2 rounded-full ${colors.icon} shadow-[0_0_4px_currentColor]`} />
+                              <div className={`ml-auto w-1.5 h-1.5 rounded-full ${colors.icon}`} />
                             )}
                           </Link>
                         </SidebarMenuButton>
