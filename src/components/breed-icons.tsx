@@ -170,19 +170,23 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
   const iconFile = normalizedBreed ? BREED_ICON_MAP[normalizedBreed] : null;
   
   if (iconFile) {
-    // Adicionar versão para forçar atualização do cache
-    const imageUrl = `/breed-icons/${iconFile}.png?v=2`;
+    // Usar background-image para renderizar corretamente a transparência
+    const imageUrl = `/breed-icons/${iconFile}.png?v=4`;
     
     return (
-      <div className={cn("relative", className)} style={{ width: size, height: size }}>
-        <Image
-          src={imageUrl}
-          alt={breed || 'Pet'}
-          fill
-          className="object-contain"
-          unoptimized
-        />
-      </div>
+      <div 
+        className={cn("relative flex-shrink-0", className)} 
+        style={{ 
+          width: size, 
+          height: size,
+          backgroundImage: `url(${imageUrl})`,
+          backgroundSize: 'contain',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+        role="img"
+        aria-label={breed || 'Pet'}
+      />
     );
   }
   
