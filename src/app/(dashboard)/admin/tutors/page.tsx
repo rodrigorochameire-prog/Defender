@@ -276,9 +276,9 @@ export default function AdminTutorsPage() {
       <div className="section-card">
         <div className="section-card-header">
           <div className="section-card-title">
-            <Users />
+            <Users className="h-4 w-4 text-muted-foreground" />
             Todos os Tutores
-            <Badge variant="secondary" className="ml-2">{tutors?.length || 0}</Badge>
+            <span className="ml-2 text-sm font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{tutors?.length || 0}</span>
           </div>
         </div>
         <div className="section-card-content">
@@ -290,23 +290,23 @@ export default function AdminTutorsPage() {
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {tutors.map((tutor) => (
-                <div key={tutor.id} className="p-4 rounded-xl border bg-card hover:border-primary/30 transition-all group">
+                <div key={tutor.id} className="p-4 rounded-xl border bg-card hover:border-border transition-all group">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-primary/10 text-primary">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm font-medium">
                           {getInitials(tutor.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <p className="font-semibold">{tutor.name}</p>
-                        <p className="text-sm text-muted-foreground">{tutor.email}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{tutor.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{tutor.email}</p>
                       </div>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
-                          <MoreVertical className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100">
+                          <MoreVertical className="h-3.5 w-3.5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -315,12 +315,12 @@ export default function AdminTutorsPage() {
                         </DropdownMenuItem>
                         {tutor.approvalStatus !== "approved" && (
                           <DropdownMenuItem onClick={() => approveMutation.mutate({ id: tutor.id })}>
-                            <Check className="h-4 w-4 mr-2 text-green-500" /> Aprovar
+                            <Check className="h-4 w-4 mr-2" /> Aprovar
                           </DropdownMenuItem>
                         )}
                         {tutor.approvalStatus === "approved" && (
                           <DropdownMenuItem onClick={() => { setSelectedUserId(tutor.id); setPromoteDialogOpen(true); }}>
-                            <Crown className="h-4 w-4 mr-2 text-amber-500" /> Promover a Admin
+                            <Crown className="h-4 w-4 mr-2" /> Promover a Admin
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
@@ -335,18 +335,19 @@ export default function AdminTutorsPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <Badge className={
-                      tutor.approvalStatus === "approved" ? "badge-green" :
-                      tutor.approvalStatus === "pending" ? "badge-amber" : "badge-rose"
+                  <div className="mt-3 flex items-center justify-between">
+                    <Badge variant="outline" className={
+                      tutor.approvalStatus === "approved" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400" :
+                      tutor.approvalStatus === "pending" ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-400" : 
+                      "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-400"
                     }>
                       {tutor.approvalStatus === "approved" ? "Aprovado" :
                        tutor.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
                     </Badge>
-                    <div className="flex items-center gap-1 text-sm">
-                      <Dog className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium">{tutor.petCount} pets</span>
-                    </div>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Dog className="h-3 w-3" />
+                      {tutor.petCount} pets
+                    </span>
                   </div>
                 </div>
               ))}
