@@ -134,7 +134,14 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
     return (
       <div 
         className={cn(
-          "relative rounded-md overflow-hidden bg-white shadow-sm ring-1 ring-black/5 flex items-center justify-center",
+          "relative rounded-lg overflow-hidden bg-gradient-to-br from-white to-slate-50/50",
+          "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.06)]",
+          "ring-1 ring-slate-200/60 dark:ring-slate-700/40",
+          "transition-all duration-200 ease-out",
+          "hover:shadow-[0_4px_12px_rgba(0,0,0,0.12),0_2px_6px_rgba(0,0,0,0.08)]",
+          "hover:ring-slate-300/80 dark:hover:ring-slate-600/60",
+          "hover:-translate-y-0.5",
+          "flex items-center justify-center",
           className
         )} 
         style={{ width: size, height: size }}
