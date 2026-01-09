@@ -170,8 +170,7 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
   const iconFile = normalizedBreed ? BREED_ICON_MAP[normalizedBreed] : null;
   
   if (iconFile) {
-    // Usar background-image para renderizar corretamente a transparência
-    const imageUrl = `/breed-icons/${iconFile}.png?v=5`;
+    // Usar background-image para renderizar corretamente a transparência    const imageUrl = `/breed-icons/${iconFile}.png?v=12`;
     
     return (
       <div 
