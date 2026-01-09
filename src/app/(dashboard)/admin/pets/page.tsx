@@ -342,9 +342,7 @@ export default function AdminPetsPage() {
                 <div key={pet.id} className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-full bg-slate-100 flex items-center justify-center">
-                        <BreedIcon breed={pet.breed} className="h-7 w-7 text-slate-500" />
-                      </div>
+                      <BreedIcon breed={pet.breed} className="h-14 w-14" />
                       <div className="flex-1 min-w-0">
                         <p className="pet-card-name font-bold text-base text-foreground leading-tight">{pet.name}</p>
                         <p className="pet-card-breed text-sm font-medium text-[hsl(220_13%_45%)] mt-0.5 leading-tight">{pet.breed || "Sem raça"}</p>
