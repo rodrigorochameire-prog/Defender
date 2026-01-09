@@ -332,7 +332,7 @@ export const petsRouter = router({
             species: input.species,
             breed: input.breed || null,
             birthDate: input.birthDate ? new Date(input.birthDate) : null,
-            weight: input.weight ? Math.round(input.weight * 1000) : null,
+            weight: input.weight || null,
             notes: input.notes || null,
             credits: input.credits,
             approvalStatus: input.approvalStatus,
