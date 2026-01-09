@@ -27,6 +27,11 @@ import {
   UserCog,
   User,
   GraduationCap,
+  MessageCircle,
+  Package,
+  Settings,
+  BarChart3,
+  Building2,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -85,17 +90,11 @@ const menuGroups = [
     ],
   },
   {
-    label: "Gestão",
-    color: "slate",
-    items: [
-      { icon: Users, label: "Tutores", path: "/admin/tutors" },
-    ],
-  },
-  {
     label: "Financeiro",
     color: "green",
     items: [
       { icon: TrendingUp, label: "Finanças", path: "/admin/finances" },
+      { icon: Package, label: "Planos e Serviços", path: "/admin/plans" },
     ],
   },
   {
@@ -104,6 +103,17 @@ const menuGroups = [
     items: [
       { icon: MessageSquare, label: "Mural", path: "/admin/wall" },
       { icon: FileText, label: "Documentos", path: "/admin/documents" },
+      { icon: MessageCircle, label: "WhatsApp", path: "/admin/whatsapp" },
+    ],
+  },
+  {
+    label: "Gestão",
+    color: "slate",
+    items: [
+      { icon: Users, label: "Tutores", path: "/admin/tutors" },
+      { icon: Building2, label: "Creche", path: "/admin/daycare" },
+      { icon: BarChart3, label: "Relatórios", path: "/admin/reports" },
+      { icon: Settings, label: "Configurações", path: "/admin/settings" },
     ],
   },
 ];
