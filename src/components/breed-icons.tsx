@@ -25,6 +25,18 @@ const BREED_ICON_MAP: Record<string, string> = {
   'sem raça definida': 'vira_lata_mixed_breed',
   'srd': 'vira_lata_mixed_breed',
   
+  // Vira-Latas Específicos
+  'vira-lata caramelo': 'viralatacaramelo',
+  'vira lata caramelo': 'viralatacaramelo',
+  'vira-lata pretinho': 'viralatapretinho',
+  'vira lata pretinho': 'viralatapretinho',
+  'vira-lata preto e caramelo': 'viralatapretocaramelo',
+  'vira lata preto e caramelo': 'viralatapretocaramelo',
+  'vira-lata preto e caramelo forte': 'viralatapretocaramelo2',
+  'vira lata preto e caramelo forte': 'viralatapretocaramelo2',
+  'vira-lata fiapo de manga': 'viralatafiapodemanga',
+  'vira lata fiapo de manga': 'viralatafiapodemanga',
+  
   // Shih Tzu
   'shih tzu': 'shitzu',
   'shitzu': 'shitzu',
@@ -111,6 +123,33 @@ const BREED_ICON_MAP: Record<string, string> = {
   // Chow Chow
   'chow chow': 'chow_chow',
   'chow': 'chow_chow',
+  
+  // Maltês
+  'maltese': 'maltes',
+  'maltes': 'maltes',
+  'maltês': 'maltes',
+  
+  // Lhasa Apso
+  'lhasa apso': 'lhasaapso',
+  'lhasa': 'lhasaapso',
+  
+  // Buldogue Inglês
+  'english bulldog': 'bulldogingles',
+  'buldogue ingles': 'bulldogingles',
+  'bulldog ingles': 'bulldogingles',
+  'buldogue inglês': 'bulldogingles',
+  
+  // Jack Russell Terrier
+  'jack russell terrier': 'jackrussel',
+  'jack russell': 'jackrussel',
+  
+  // Lebrel Italiano
+  'italian greyhound': 'lebrelitaliano',
+  'lebrel italiano': 'lebrelitaliano',
+  
+  // Labrador Preto
+  'black labrador': 'labradorpreto',
+  'labrador preto': 'labradorpreto',
 };
 
 // Função auxiliar para compatibilidade com código antigo
@@ -147,7 +186,7 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
         style={{ width: size, height: size }}
       >
         <Image
-          src={`/breed-icons/${iconFile}.png`}
+          src={`/breed-icons/${iconFile}.png?v=16`}
           alt={breed || 'Pet'}
           fill
           className="object-contain"

@@ -3,6 +3,11 @@ export const DOG_BREEDS = [
   { value: "golden retriever", label: "Golden Retriever" },
   { value: "cavalier king charles spaniel", label: "Cavalier King Charles Spaniel" },
   { value: "vira-lata", label: "Vira-lata / SRD" },
+  { value: "vira-lata caramelo", label: "Vira-lata Caramelo" },
+  { value: "vira-lata pretinho", label: "Vira-lata Pretinho" },
+  { value: "vira-lata preto e caramelo", label: "Vira-lata Preto e Caramelo" },
+  { value: "vira-lata preto e caramelo forte", label: "Vira-lata Preto e Caramelo Forte" },
+  { value: "vira-lata fiapo de manga", label: "Vira-lata Fiapo de Manga" },
   { value: "shih tzu", label: "Shih Tzu" },
   { value: "beagle", label: "Beagle" },
   { value: "dachshund", label: "Dachshund / Salsicha" },
@@ -24,6 +29,12 @@ export const DOG_BREEDS = [
   { value: "border collie", label: "Border Collie" },
   { value: "alaskan malamute", label: "Malamute do Alasca" },
   { value: "chow chow", label: "Chow Chow" },
+  { value: "maltese", label: "Maltês" },
+  { value: "lhasa apso", label: "Lhasa Apso" },
+  { value: "english bulldog", label: "Buldogue Inglês" },
+  { value: "jack russell terrier", label: "Jack Russell Terrier" },
+  { value: "italian greyhound", label: "Lebrel Italiano" },
+  { value: "black labrador", label: "Labrador Preto" },
 ] as const;
 
 export type DogBreed = typeof DOG_BREEDS[number]["value"];
