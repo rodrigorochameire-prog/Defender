@@ -376,7 +376,7 @@ function AdminSidebarContent({
 
                   {groupIndex < menuGroups.length - 1 && (
                     <div
-                      className={`h-px bg-border/20 mx-3 ${isCollapsed ? "my-1" : "my-3"}`}
+                      className={`bg-border/30 ${isCollapsed ? "h-px mx-1.5 my-2" : "h-px mx-3 my-3"}`}
                     />
                   )}
                 </div>
