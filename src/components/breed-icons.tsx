@@ -111,6 +111,57 @@ const BREED_ICON_MAP: Record<string, string> = {
   // Chow Chow
   'chow chow': 'chow_chow',
   'chow': 'chow_chow',
+  
+  // Maltês
+  'maltes': 'maltes',
+  'maltês': 'maltes',
+  'maltese': 'maltes',
+  
+  // Lhasa Apso
+  'lhasa apso': 'lhasaapso',
+  'lhasaapso': 'lhasaapso',
+  'lhasa': 'lhasaapso',
+  
+  // Jack Russell Terrier
+  'jack russell terrier': 'jackrussel',
+  'jack russell': 'jackrussel',
+  'jackrussel': 'jackrussel',
+  
+  // Vira-Lata Caramelo
+  'vira-lata caramelo': 'viralatacaramelo',
+  'vira lata caramelo': 'viralatacaramelo',
+  'caramelo': 'viralatacaramelo',
+  
+  // Vira-Lata Pretinho
+  'vira-lata preto': 'viralatapretinho',
+  'vira lata preto': 'viralatapretinho',
+  'vira-lata pretinho': 'viralatapretinho',
+  'vira lata pretinho': 'viralatapretinho',
+  
+  // Vira-Lata Fiapo de Manga
+  'vira-lata fiapo de manga': 'viralatafiapodemanga',
+  'vira lata fiapo de manga': 'viralatafiapodemanga',
+  'fiapo de manga': 'viralatafiapodemanga',
+  
+  // Vira-Lata Preto e Caramelo
+  'vira-lata preto e caramelo': 'viralatapretocaramelo',
+  'vira lata preto e caramelo': 'viralatapretocaramelo',
+  'preto e caramelo': 'viralatapretocaramelo',
+  
+  // English Bulldog (Buldogue Inglês)
+  'english bulldog': 'bulldogingles',
+  'bulldog ingles': 'bulldogingles',
+  'buldogue ingles': 'bulldogingles',
+  'bulldog inglês': 'bulldogingles',
+  'buldogue inglês': 'bulldogingles',
+  
+  // Labrador Preto
+  'labrador preto': 'labradorpreto',
+  'labrador black': 'labradorpreto',
+  
+  // Lebrel Italiano (Italian Greyhound)
+  'lebrel italiano': 'lebrelitaliano',
+  'italian greyhound': 'lebrelitaliano',
 };
 
 // Função auxiliar para compatibilidade com código antigo
@@ -140,7 +191,7 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
         style={{ width: size, height: size }}
       >
         <Image
-          src={`/breed-icons/${iconFile}.png`}
+          src={`/breed-icons/${iconFile}.png?v=6`}
           alt={breed || 'Pet'}
           fill
           className="object-cover scale-[1.02]"
