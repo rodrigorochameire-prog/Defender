@@ -12,7 +12,6 @@ interface BreedIconProps {
 const BREED_ICON_MAP: Record<string, string> = {
   // Golden Retriever
   'golden retriever': 'golden_retriever',
-  'golden retriver': 'golden_retriever', // erro comum de digitação
   'golden': 'golden_retriever',
   
   // Cavalier King Charles Spaniel
@@ -49,7 +48,6 @@ const BREED_ICON_MAP: Record<string, string> = {
   
   // Labrador Retriever
   'labrador retriever': 'labrador_retriever',
-  'labrador retriver': 'labrador_retriever', // erro comum
   'labrador': 'labrador_retriever',
   
   // Yorkshire Terrier
@@ -68,7 +66,6 @@ const BREED_ICON_MAP: Record<string, string> = {
   // German Shepherd (Pastor Alemão)
   'german shepherd': 'pastor_alemao',
   'pastor alemao': 'pastor_alemao',
-  'pastor alemão': 'pastor_alemao',
   'pastor': 'pastor_alemao',
   
   // Boxer
@@ -114,42 +111,6 @@ const BREED_ICON_MAP: Record<string, string> = {
   // Chow Chow
   'chow chow': 'chow_chow',
   'chow': 'chow_chow',
-  
-  // Maltês
-  'maltes': 'maltes',
-  'maltês': 'maltes',
-  'maltese': 'maltes',
-  
-  // Lhasa Apso
-  'lhasa apso': 'lhasaapso',
-  'lhasaapso': 'lhasaapso',
-  'lhasa': 'lhasaapso',
-  
-  // Jack Russell Terrier
-  'jack russell terrier': 'jackrussel',
-  'jack russell': 'jackrussel',
-  'jackrussel': 'jackrussel',
-  
-  // Vira-Lata Caramelo
-  'vira-lata caramelo': 'viralatacaramelo',
-  'vira lata caramelo': 'viralatacaramelo',
-  'caramelo': 'viralatacaramelo',
-  
-  // Vira-Lata Pretinho
-  'vira-lata preto': 'viralatapretinho',
-  'vira lata preto': 'viralatapretinho',
-  'vira-lata pretinho': 'viralatapretinho',
-  'vira lata pretinho': 'viralatapretinho',
-  
-  // Vira-Lata Fiapo de Manga
-  'vira-lata fiapo de manga': 'viralatafiapodemanga',
-  'vira lata fiapo de manga': 'viralatafiapodemanga',
-  'fiapo de manga': 'viralatafiapodemanga',
-  
-  // Vira-Lata Preto e Caramelo
-  'vira-lata preto e caramelo': 'viralatapretocaramelo',
-  'vira lata preto e caramelo': 'viralatapretocaramelo',
-  'preto e caramelo': 'viralatapretocaramelo',
 };
 
 // Função auxiliar para compatibilidade com código antigo
@@ -170,29 +131,34 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
   const iconFile = normalizedBreed ? BREED_ICON_MAP[normalizedBreed] : null;
   
   if (iconFile) {
-    // Usar background-image para renderizar corretamente a transparência
-    const imageUrl = `/breed-icons/${iconFile}.png?v=5`;
-    
     return (
       <div 
-        className={cn("relative flex-shrink-0", className)} 
-        style={{ 
-          width: size, 
-          height: size,
-          backgroundImage: `url(${imageUrl})`,
-          backgroundSize: 'contain',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-        role="img"
-        aria-label={breed || 'Pet'}
-      />
+        className={cn(
+          "relative rounded-full overflow-hidden bg-white shadow-sm ring-1 ring-black/5",
+          className
+        )} 
+        style={{ width: size, height: size }}
+      >
+        <Image
+          src={`/breed-icons/${iconFile}.png`}
+          alt={breed || 'Pet'}
+          fill
+          className="object-cover scale-[1.02]"
+          sizes={`${size}px`}
+        />
+      </div>
     );
   }
   
   // Fallback: ícone genérico de cachorro
   return (
-    <div className={cn("rounded-full bg-primary/10 flex items-center justify-center", className)} style={{ width: size, height: size }}>
+    <div 
+      className={cn(
+        "rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shadow-sm ring-1 ring-black/5",
+        className
+      )} 
+      style={{ width: size, height: size }}
+    >
       <Dog className="text-primary" style={{ width: size * 0.5, height: size * 0.5 }} />
     </div>
   );

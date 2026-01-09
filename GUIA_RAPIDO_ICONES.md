@@ -134,3 +134,4 @@ npm run convert-svgs
 
 **Documentação completa:** `COMO_ADICIONAR_ICONES.md`
 
+
