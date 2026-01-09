@@ -75,7 +75,7 @@ const menuGroups = [
   },
   {
     label: "Cuidados",
-    color: "red",
+    color: "orange",
     items: [
       { icon: Heart, label: "Central de Saúde", path: "/admin/health" },
       { icon: UtensilsCrossed, label: "Alimentação", path: "/admin/food" },
@@ -85,11 +85,10 @@ const menuGroups = [
     ],
   },
   {
-    label: "Comunicação",
-    color: "orange",
+    label: "Gestão",
+    color: "slate",
     items: [
-      { icon: MessageSquare, label: "Mural", path: "/admin/wall" },
-      { icon: FileText, label: "Documentos", path: "/admin/documents" },
+      { icon: Users, label: "Tutores", path: "/admin/tutors" },
     ],
   },
   {
@@ -100,20 +99,21 @@ const menuGroups = [
     ],
   },
   {
-    label: "Gestão",
-    color: "purple",
+    label: "Comunicação",
+    color: "slate",
     items: [
-      { icon: Users, label: "Tutores", path: "/admin/tutors" },
+      { icon: MessageSquare, label: "Mural", path: "/admin/wall" },
+      { icon: FileText, label: "Documentos", path: "/admin/documents" },
     ],
   },
 ];
 
 // Sistema de cores harmonioso e organizado
 // - Operacional (azul): Dashboard, Pets, Calendário
-// - Cuidados (rosa): Saúde, Alimentação, Comportamento, Treinamento, Logs
-// - Comunicação (laranja): Mural, Documentos  
+// - Cuidados (laranja): Saúde, Alimentação, Comportamento, Treinamento, Logs
+// - Gestão (preto/slate): Tutores
 // - Financeiro (verde): Finanças
-// - Gestão (slate): Tutores
+// - Comunicação (preto/slate): Mural, Documentos
 const colorClasses = {
   blue: {
     icon: "text-blue-500 dark:text-blue-400",
@@ -122,15 +122,6 @@ const colorClasses = {
     bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
     bgActive: "bg-blue-50/80 dark:bg-blue-950/50",
     border: "border-blue-200/50 dark:border-blue-700/30",
-    glow: "",
-  },
-  red: {
-    icon: "text-rose-500 dark:text-rose-400",
-    iconActive: "text-rose-600 dark:text-rose-400",
-    bg: "bg-rose-50/60 dark:bg-rose-950/40",
-    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
-    bgActive: "bg-rose-50/80 dark:bg-rose-950/50",
-    border: "border-rose-200/50 dark:border-rose-700/30",
     glow: "",
   },
   orange: {
@@ -151,9 +142,9 @@ const colorClasses = {
     border: "border-emerald-200/50 dark:border-emerald-700/30",
     glow: "",
   },
-  purple: {
-    icon: "text-slate-500 dark:text-slate-400",
-    iconActive: "text-slate-600 dark:text-slate-400",
+  slate: {
+    icon: "text-slate-600 dark:text-slate-400",
+    iconActive: "text-slate-700 dark:text-slate-300",
     bg: "bg-slate-50/60 dark:bg-slate-800/40",
     bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
     bgActive: "bg-slate-100/80 dark:bg-slate-800/50",

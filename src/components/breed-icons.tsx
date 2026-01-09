@@ -12,6 +12,7 @@ interface BreedIconProps {
 const BREED_ICON_MAP: Record<string, string> = {
   // Golden Retriever
   'golden retriever': 'golden_retriever',
+  'golden retriver': 'golden_retriever', // erro comum de digitação
   'golden': 'golden_retriever',
   
   // Cavalier King Charles Spaniel
@@ -48,6 +49,7 @@ const BREED_ICON_MAP: Record<string, string> = {
   
   // Labrador Retriever
   'labrador retriever': 'labrador_retriever',
+  'labrador retriver': 'labrador_retriever', // erro comum
   'labrador': 'labrador_retriever',
   
   // Yorkshire Terrier
@@ -66,6 +68,7 @@ const BREED_ICON_MAP: Record<string, string> = {
   // German Shepherd (Pastor Alemão)
   'german shepherd': 'pastor_alemao',
   'pastor alemao': 'pastor_alemao',
+  'pastor alemão': 'pastor_alemao',
   'pastor': 'pastor_alemao',
   
   // Boxer
@@ -182,6 +185,9 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
   const iconFile = normalizedBreed ? BREED_ICON_MAP[normalizedBreed] : null;
   
   if (iconFile) {
+    // Usar background-image para renderizar corretamente a transparência
+    const imageUrl = `/breed-icons/${iconFile}.png?v=5`;
+    
     return (
       <div 
         className={cn(
@@ -203,13 +209,7 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
   
   // Fallback: ícone genérico de cachorro
   return (
-    <div 
-      className={cn(
-        "rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shadow-sm ring-1 ring-black/5",
-        className
-      )} 
-      style={{ width: size, height: size }}
-    >
+    <div className={cn("rounded-full bg-primary/10 flex items-center justify-center", className)} style={{ width: size, height: size }}>
       <Dog className="text-primary" style={{ width: size * 0.5, height: size * 0.5 }} />
     </div>
   );

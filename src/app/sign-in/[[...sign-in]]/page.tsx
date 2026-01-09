@@ -76,7 +76,7 @@ export default async function SignInPage() {
       
       {/* Lado Direito - Formulário de Login */}
       <div className="flex items-center justify-center p-6 md:p-8 lg:p-12 bg-background">
-        <div className="w-full max-w-[480px]">
+        <div className="w-full max-w-[540px]">
           {/* Header Mobile */}
           <div className="lg:hidden flex flex-col items-center mb-10">
             <div className="w-20 h-20 rounded-full bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.08)] flex items-center justify-center mb-4">
@@ -95,7 +95,7 @@ export default async function SignInPage() {
           {/* Card de Login */}
           <div className="space-y-8">
             {/* Header */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.15em] font-bold text-primary">Acesso Seguro</p>
               <h2 className="text-3xl font-bold text-foreground leading-tight">
                 Entrar no TeteCare
@@ -111,7 +111,7 @@ export default async function SignInPage() {
                 elements: {
                   rootBox: "w-full",
                   card: "shadow-none border-0 bg-transparent p-0 w-full",
-                  formButtonPrimary: "h-12 text-base font-semibold rounded-[14px] bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.15)] hover:shadow-[0_4px_8px_0_rgba(24,80%,52%,0.25)] transition-all duration-300",
+                  formButtonPrimary: "h-12 text-base font-semibold rounded-[14px] bg-primary hover:bg-primary/90 text-white shadow-[0_2px_4px_0_rgba(24,80%,52%,0.15)] hover:shadow-[0_4px_8px_0_rgba(24,80%,52%,0.25)] transition-all duration-300",
                   formFieldInput: "h-12 text-base rounded-[14px] bg-background border border-border/40 text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:shadow-[0_0_0_3px_rgba(24,80%,52%,0.08)] transition-all duration-300",
                   formFieldLabel: "text-sm font-bold text-foreground mb-2.5",
                   socialButtonsBlockButton: "h-12 rounded-[14px] border border-border/40 bg-background hover:bg-muted/50 hover:border-border/60 transition-all duration-300 shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]",
