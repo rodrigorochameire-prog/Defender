@@ -170,13 +170,17 @@ export function BreedIcon({ breed, className, size = 48 }: BreedIconProps) {
   const iconFile = normalizedBreed ? BREED_ICON_MAP[normalizedBreed] : null;
   
   if (iconFile) {
+    // Adicionar versão para forçar atualização do cache
+    const imageUrl = `/breed-icons/${iconFile}.png?v=2`;
+    
     return (
       <div className={cn("relative", className)} style={{ width: size, height: size }}>
         <Image
-          src={`/breed-icons/${iconFile}.png`}
+          src={imageUrl}
           alt={breed || 'Pet'}
           fill
           className="object-contain"
+          unoptimized
         />
       </div>
     );
