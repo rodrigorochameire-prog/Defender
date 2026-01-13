@@ -264,6 +264,11 @@ export const petsRelations = relations(pets, ({ many }) => ({
   bookingRequests: many(bookingRequests),
   notifications: many(notifications),
   dailyLogs: many(dailyLogs),
+  foodPlans: many(petFoodPlans),
+  foodInventory: many(petFoodInventory),
+  foodHistory: many(petFoodHistory),
+  treats: many(petTreats),
+  naturalFood: many(petNaturalFood),
 }));
 
 export const petTutorsRelations = relations(petTutors, ({ one }) => ({
@@ -512,3 +517,181 @@ export const trainingCommands = pgTable("training_commands", {
 
 export type TrainingCommand = typeof trainingCommands.$inferSelect;
 export type InsertTrainingCommand = typeof trainingCommands.$inferInsert;
+
+// ==========================================
+// PLANO DE ALIMENTAÇÃO DO PET
+// ==========================================
+
+export const petFoodPlans = pgTable("pet_food_plans", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  foodType: varchar("food_type", { length: 50 }).notNull(), // 'dry' | 'wet' | 'natural' | 'mixed'
+  brand: varchar("brand", { length: 200 }).notNull(),
+  productName: varchar("product_name", { length: 200 }),
+  dailyAmount: integer("daily_amount").notNull(), // quantidade diária em gramas
+  portionsPerDay: integer("portions_per_day").default(2).notNull(), // número de porções por dia
+  portionTimes: text("portion_times"), // JSON array de horários ["08:00", "18:00"]
+  notes: text("notes"),
+  isActive: boolean("is_active").default(true).notNull(),
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  endDate: timestamp("end_date"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type PetFoodPlan = typeof petFoodPlans.$inferSelect;
+export type InsertPetFoodPlan = typeof petFoodPlans.$inferInsert;
+
+// ==========================================
+// ESTOQUE DE RAÇÃO DO PET
+// ==========================================
+
+export const petFoodInventory = pgTable("pet_food_inventory", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  brand: varchar("brand", { length: 200 }).notNull(),
+  productName: varchar("product_name", { length: 200 }),
+  quantityReceived: integer("quantity_received").notNull(), // quantidade recebida em gramas
+  quantityRemaining: integer("quantity_remaining").notNull(), // quantidade restante em gramas
+  receivedDate: timestamp("received_date").defaultNow().notNull(),
+  expirationDate: timestamp("expiration_date"),
+  batchNumber: varchar("batch_number", { length: 100 }),
+  notes: text("notes"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type PetFoodInventory = typeof petFoodInventory.$inferSelect;
+export type InsertPetFoodInventory = typeof petFoodInventory.$inferInsert;
+
+// ==========================================
+// HISTÓRICO DE RAÇÃO DO PET (REAÇÕES)
+// ==========================================
+
+export const petFoodHistory = pgTable("pet_food_history", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  foodPlanId: integer("food_plan_id").references(() => petFoodPlans.id, { onDelete: "set null" }),
+  brand: varchar("brand", { length: 200 }).notNull(),
+  productName: varchar("product_name", { length: 200 }),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  // Reações do pet
+  acceptance: varchar("acceptance", { length: 20 }), // 'loved' | 'liked' | 'neutral' | 'disliked' | 'rejected'
+  digestion: varchar("digestion", { length: 20 }), // 'excellent' | 'good' | 'regular' | 'poor'
+  stoolQuality: varchar("stool_quality", { length: 20 }), // 'normal' | 'soft' | 'hard' | 'diarrhea'
+  coatCondition: varchar("coat_condition", { length: 20 }), // 'excellent' | 'good' | 'regular' | 'poor'
+  energyLevel: varchar("energy_level", { length: 20 }), // 'high' | 'normal' | 'low'
+  allergicReaction: boolean("allergic_reaction").default(false),
+  allergicDetails: text("allergic_details"),
+  overallRating: integer("overall_rating"), // 1-5 estrelas
+  notes: text("notes"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type PetFoodHistory = typeof petFoodHistory.$inferSelect;
+export type InsertPetFoodHistory = typeof petFoodHistory.$inferInsert;
+
+// ==========================================
+// PETISCOS E SNACKS
+// ==========================================
+
+export const petTreats = pgTable("pet_treats", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  treatType: varchar("treat_type", { length: 50 }).notNull(), // 'snack' | 'biscuit' | 'natural' | 'supplement' | 'other'
+  name: varchar("name", { length: 200 }).notNull(),
+  brand: varchar("brand", { length: 200 }),
+  purpose: varchar("purpose", { length: 100 }), // 'reward' | 'training' | 'dental' | 'supplement' | 'enrichment'
+  frequency: varchar("frequency", { length: 50 }), // 'daily' | 'weekly' | 'occasionally' | 'training_only'
+  maxPerDay: integer("max_per_day"), // quantidade máxima por dia
+  caloriesPerUnit: integer("calories_per_unit"), // calorias por unidade
+  acceptance: varchar("acceptance", { length: 20 }), // 'loved' | 'liked' | 'neutral' | 'disliked'
+  notes: text("notes"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type PetTreat = typeof petTreats.$inferSelect;
+export type InsertPetTreat = typeof petTreats.$inferInsert;
+
+// ==========================================
+// ALIMENTAÇÃO NATURAL
+// ==========================================
+
+export const petNaturalFood = pgTable("pet_natural_food", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  mealType: varchar("meal_type", { length: 50 }).notNull(), // 'barf' | 'cooked' | 'mixed' | 'supplement'
+  name: varchar("name", { length: 200 }).notNull(), // nome da receita/alimento
+  ingredients: text("ingredients"), // JSON array de ingredientes
+  proteinSource: varchar("protein_source", { length: 200 }), // fonte de proteína principal
+  portionSize: integer("portion_size"), // tamanho da porção em gramas
+  frequency: varchar("frequency", { length: 50 }), // 'daily' | 'weekly' | 'occasionally'
+  preparationNotes: text("preparation_notes"),
+  acceptance: varchar("acceptance", { length: 20 }), // 'loved' | 'liked' | 'neutral' | 'disliked'
+  notes: text("notes"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type PetNaturalFood = typeof petNaturalFood.$inferSelect;
+export type InsertPetNaturalFood = typeof petNaturalFood.$inferInsert;
+
+// ==========================================
+// RELAÇÕES DE ALIMENTAÇÃO
+// ==========================================
+
+export const petFoodPlansRelations = relations(petFoodPlans, ({ one }) => ({
+  pet: one(pets, { fields: [petFoodPlans.petId], references: [pets.id] }),
+  createdBy: one(users, { fields: [petFoodPlans.createdById], references: [users.id] }),
+}));
+
+export const petFoodInventoryRelations = relations(petFoodInventory, ({ one }) => ({
+  pet: one(pets, { fields: [petFoodInventory.petId], references: [pets.id] }),
+  createdBy: one(users, { fields: [petFoodInventory.createdById], references: [users.id] }),
+}));
+
+export const petFoodHistoryRelations = relations(petFoodHistory, ({ one }) => ({
+  pet: one(pets, { fields: [petFoodHistory.petId], references: [pets.id] }),
+  foodPlan: one(petFoodPlans, { fields: [petFoodHistory.foodPlanId], references: [petFoodPlans.id] }),
+  createdBy: one(users, { fields: [petFoodHistory.createdById], references: [users.id] }),
+}));
+
+export const petTreatsRelations = relations(petTreats, ({ one }) => ({
+  pet: one(pets, { fields: [petTreats.petId], references: [pets.id] }),
+  createdBy: one(users, { fields: [petTreats.createdById], references: [users.id] }),
+}));
+
+export const petNaturalFoodRelations = relations(petNaturalFood, ({ one }) => ({
+  pet: one(pets, { fields: [petNaturalFood.petId], references: [pets.id] }),
+  createdBy: one(users, { fields: [petNaturalFood.createdById], references: [users.id] }),
+}));

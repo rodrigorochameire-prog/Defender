@@ -13,6 +13,7 @@
     "db:test": "tsx scripts/test-db.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:create-admin": "tsx scripts/create-admin.ts",
+    "db:migrate-food": "node scripts/migrate-food-tables.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
