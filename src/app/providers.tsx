@@ -2,11 +2,13 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
-import { useState, Suspense, ReactNode, useEffect } from "react";
+import { useState, Suspense } from "react";
 import superjson from "superjson";
 import { trpc } from "@/lib/trpc/client";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { Toaster } from "sonner";
+import { ClerkProvider } from "@clerk/nextjs";
+import { ptBR } from "@clerk/localizations";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") return "";
@@ -23,80 +25,6 @@ function LoadingSpinner() {
       </div>
     </div>
   );
-}
-
-// Wrapper condicional para Clerk - carrega dinamicamente apenas se disponível
-function ClerkWrapper({ children }: { children: ReactNode }) {
-  const [ClerkProvider, setClerkProvider] = useState<React.ComponentType<any> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    // Verificar se a chave do Clerk está disponível
-    const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-    
-    if (!clerkKey) {
-      setIsLoading(false);
-      return;
-    }
-
-    // Timeout para evitar loading infinito em mobile
-    const timeout = setTimeout(() => {
-      if (isLoading) {
-        console.warn("Clerk loading timeout - continuando sem autenticação");
-        setIsLoading(false);
-      }
-    }, 5000);
-
-    // Importar Clerk dinamicamente com tratamento de erro robusto
-    const loadClerk = async () => {
-      try {
-        const [clerkModule, localizationsModule] = await Promise.all([
-          import("@clerk/nextjs"),
-          import("@clerk/localizations")
-        ]);
-
-        const { ClerkProvider: CP } = clerkModule;
-        const { ptBR } = localizationsModule;
-
-        const WrappedProvider = ({ children }: { children: ReactNode }) => (
-          <CP 
-            localization={ptBR}
-            signInFallbackRedirectUrl="/auth-redirect"
-            signUpFallbackRedirectUrl="/auth-redirect"
-            signInUrl="/sign-in"
-            signUpUrl="/sign-up"
-          >
-            {children}
-          </CP>
-        );
-        
-        setClerkProvider(() => WrappedProvider);
-      } catch (error) {
-        console.error("Erro ao carregar Clerk:", error);
-        setHasError(true);
-      } finally {
-        clearTimeout(timeout);
-        setIsLoading(false);
-      }
-    };
-
-    loadClerk();
-
-    return () => clearTimeout(timeout);
-  }, []);
-
-  // Enquanto carrega, renderiza children normalmente
-  if (isLoading) {
-    return <>{children}</>;
-  }
-
-  // Se teve erro ou não tem provider, renderiza sem Clerk
-  if (hasError || !ClerkProvider) {
-    return <>{children}</>;
-  }
-
-  return <ClerkProvider>{children}</ClerkProvider>;
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -132,7 +60,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ClerkWrapper>
+    <ClerkProvider
+      localization={ptBR}
+      signInFallbackRedirectUrl="/auth-redirect"
+      signUpFallbackRedirectUrl="/auth-redirect"
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+    >
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
@@ -150,6 +84,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </ThemeProvider>
         </QueryClientProvider>
       </trpc.Provider>
-    </ClerkWrapper>
+    </ClerkProvider>
   );
 }
