@@ -10,14 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -31,10 +23,8 @@ import {
   XCircle, 
   Wifi, 
   WifiOff,
-  QrCode,
   Settings,
   FileText,
-  Image,
   Phone,
   RefreshCw,
   AlertTriangle,
@@ -43,8 +33,9 @@ import {
   ExternalLink,
   Smartphone,
   Zap,
-  Bell,
-  Users,
+  Shield,
+  Star,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -53,8 +44,6 @@ export default function WhatsAppPage() {
   const [testPhone, setTestPhone] = useState("");
   const [customMessage, setCustomMessage] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [showQRDialog, setShowQRDialog] = useState(false);
 
   // Queries
   const { data: isConfigured, isLoading: checkingConfig } = trpc.whatsapp.isConfigured.useQuery();
@@ -63,9 +52,13 @@ export default function WhatsAppPage() {
     { enabled: isConfigured === true, retry: false }
   );
   const { data: templates } = trpc.whatsapp.getTemplates.useQuery();
-  const { data: qrCode, refetch: refetchQR, isLoading: loadingQR } = trpc.whatsapp.getQRCode.useQuery(
+  const { data: configInfo } = trpc.whatsapp.getConfigInfo.useQuery(
     undefined,
-    { enabled: showQRDialog && isConfigured === true, retry: false }
+    { enabled: isConfigured === true }
+  );
+  const { data: approvedTemplates } = trpc.whatsapp.listTemplates.useQuery(
+    undefined,
+    { enabled: isConfigured === true }
   );
 
   // Mutations
@@ -83,16 +76,6 @@ export default function WhatsAppPage() {
     onSuccess: () => {
       toast.success("Mensagem enviada com sucesso!");
       setCustomMessage("");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const disconnectMutation = trpc.whatsapp.disconnect.useMutation({
-    onSuccess: () => {
-      toast.success("WhatsApp desconectado!");
-      refetchStatus();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -125,7 +108,7 @@ export default function WhatsAppPage() {
     toast.success("Copiado!");
   };
 
-  // Se não está configurado
+  // Loading state
   if (checkingConfig) {
     return (
       <div className="page-container">
@@ -136,6 +119,7 @@ export default function WhatsAppPage() {
     );
   }
 
+  // Not configured state
   if (!isConfigured) {
     return (
       <div className="page-container">
@@ -145,13 +129,13 @@ export default function WhatsAppPage() {
               <MessageCircle />
             </div>
             <div className="page-header-info">
-              <h1>WhatsApp</h1>
-              <p>Integração com Evolution API</p>
+              <h1>WhatsApp Business</h1>
+              <p>Integração com API oficial da Meta</p>
             </div>
           </div>
         </div>
 
-        <Card className="max-w-2xl mx-auto">
+        <Card className="max-w-3xl mx-auto">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-900/30">
@@ -159,49 +143,87 @@ export default function WhatsAppPage() {
               </div>
               <div>
                 <CardTitle>Configuração Necessária</CardTitle>
-                <CardDescription>A Evolution API não está configurada</CardDescription>
+                <CardDescription>Configure a API do WhatsApp Business para começar</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <p className="text-muted-foreground">
-              Para usar a integração com WhatsApp, configure as seguintes variáveis de ambiente no Vercel:
-            </p>
-            
+            {/* Passo a passo */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg">Como configurar:</h3>
+              
+              <div className="space-y-3">
+                <div className="flex gap-3 p-4 rounded-lg bg-muted/50">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">1</div>
+                  <div>
+                    <p className="font-medium">Criar conta no Meta for Developers</p>
+                    <p className="text-sm text-muted-foreground">Acesse developers.facebook.com e crie um app do tipo "Business"</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-4 rounded-lg bg-muted/50">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">2</div>
+                  <div>
+                    <p className="font-medium">Adicionar produto WhatsApp</p>
+                    <p className="text-sm text-muted-foreground">No painel do app, adicione "WhatsApp" como produto</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-4 rounded-lg bg-muted/50">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">3</div>
+                  <div>
+                    <p className="font-medium">Obter credenciais</p>
+                    <p className="text-sm text-muted-foreground">Em "API Setup", copie o Access Token e Phone Number ID</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-4 rounded-lg bg-muted/50">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">4</div>
+                  <div>
+                    <p className="font-medium">Configurar no Vercel</p>
+                    <p className="text-sm text-muted-foreground">Adicione as variáveis de ambiente no projeto</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Variáveis necessárias */}
             <div className="space-y-3">
+              <h4 className="font-medium">Variáveis de ambiente:</h4>
               <div className="p-4 rounded-lg bg-muted/50 font-mono text-sm space-y-2">
                 <div className="flex items-center justify-between">
-                  <span>EVOLUTION_API_URL</span>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("EVOLUTION_API_URL")}>
+                  <span className="text-green-600">WHATSAPP_ACCESS_TOKEN</span>
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("WHATSAPP_ACCESS_TOKEN")}>
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>EVOLUTION_API_KEY</span>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("EVOLUTION_API_KEY")}>
+                  <span className="text-green-600">WHATSAPP_PHONE_NUMBER_ID</span>
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("WHATSAPP_PHONE_NUMBER_ID")}>
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>EVOLUTION_INSTANCE_NAME</span>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("EVOLUTION_INSTANCE_NAME")}>
+                  <span className="text-muted-foreground">WHATSAPP_BUSINESS_ACCOUNT_ID <span className="text-xs">(opcional)</span></span>
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("WHATSAPP_BUSINESS_ACCOUNT_ID")}>
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <Button variant="outline" asChild>
-                <a href="https://doc.evolution-api.com" target="_blank" rel="noopener noreferrer">
+            {/* Botões de ação */}
+            <div className="flex gap-3 pt-4">
+              <Button asChild>
+                <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" />
-                  Documentação
+                  Abrir Meta for Developers
                 </a>
               </Button>
               <Button variant="outline" asChild>
-                <a href="https://vercel.com" target="_blank" rel="noopener noreferrer">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Configurar Vercel
+                <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Ver Documentação
                 </a>
               </Button>
             </div>
@@ -220,8 +242,8 @@ export default function WhatsAppPage() {
             <MessageCircle />
           </div>
           <div className="page-header-info">
-            <h1>WhatsApp</h1>
-            <p>Integração com Evolution API</p>
+            <h1>WhatsApp Business</h1>
+            <p>API oficial da Meta</p>
           </div>
         </div>
         <div className="page-header-actions">
@@ -250,40 +272,46 @@ export default function WhatsAppPage() {
           </div>
           <div className="stat-card-value">
             <Badge variant={connectionStatus?.connected ? "default" : "secondary"}>
-              {connectionStatus?.connected ? "Conectado" : connectionStatus?.state || "Desconectado"}
+              {connectionStatus?.connected ? "Conectado" : "Verificando..."}
             </Badge>
           </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Instância</span>
+            <span className="stat-card-title">Número</span>
             <Smartphone className="stat-card-icon blue" />
           </div>
           <div className="stat-card-value text-sm font-medium">
-            {connectionStatus?.instance || "—"}
+            {connectionStatus?.profile?.phone || "—"}
           </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">API</span>
-            <Zap className="stat-card-icon primary" />
+            <span className="stat-card-title">Qualidade</span>
+            <Star className="stat-card-icon amber" />
           </div>
           <div className="stat-card-value">
-            <Badge variant="outline" className="text-green-600">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              Configurada
+            <Badge variant="outline" className={
+              connectionStatus?.profile?.quality === "GREEN" ? "text-green-600" :
+              connectionStatus?.profile?.quality === "YELLOW" ? "text-amber-600" : ""
+            }>
+              {connectionStatus?.profile?.quality || "—"}
             </Badge>
           </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Templates</span>
-            <FileText className="stat-card-icon muted" />
+            <span className="stat-card-title">Verificação</span>
+            <Shield className="stat-card-icon primary" />
           </div>
-          <div className="stat-card-value">{templates ? Object.keys(templates).length : 0}</div>
+          <div className="stat-card-value">
+            <Badge variant="outline">
+              {connectionStatus?.profile?.status || "—"}
+            </Badge>
+          </div>
         </div>
       </div>
 
@@ -292,22 +320,26 @@ export default function WhatsAppPage() {
         <TabsList className="bg-muted/50">
           <TabsTrigger value="status" className="gap-2">
             <Wifi className="h-4 w-4" />
-            Conexão
+            Status
           </TabsTrigger>
           <TabsTrigger value="send" className="gap-2">
             <Send className="h-4 w-4" />
-            Enviar Mensagem
+            Enviar
           </TabsTrigger>
           <TabsTrigger value="templates" className="gap-2">
             <FileText className="h-4 w-4" />
             Templates
           </TabsTrigger>
-        </TabsList>
+          <TabsTrigger value="config" className="gap-2">
+            <Settings className="h-4 w-4" />
+            Configuração
+          </TabsTrigger>
+        </Tabs>
 
-        {/* Tab: Conexão */}
+        {/* Tab: Status */}
         <TabsContent value="status" className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-2">
-            {/* Status da Conexão */}
+            {/* Perfil do Número */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -316,51 +348,42 @@ export default function WhatsAppPage() {
                   ) : (
                     <XCircle className="h-5 w-5 text-amber-500" />
                   )}
-                  Status da Conexão
+                  Perfil do Número
                 </CardTitle>
                 <CardDescription>
-                  Estado atual da instância WhatsApp
+                  Informações do número WhatsApp Business
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-lg bg-muted/50">
-                    <p className="text-xs text-muted-foreground mb-1">Estado</p>
-                    <p className="font-semibold capitalize">
-                      {connectionStatus?.state === "open" ? "Conectado" :
-                       connectionStatus?.state === "connecting" ? "Conectando..." :
-                       connectionStatus?.state === "close" ? "Desconectado" : "Desconhecido"}
-                    </p>
+                {connectionStatus?.profile ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <p className="text-xs text-muted-foreground mb-1">Nome Verificado</p>
+                      <p className="font-semibold">{connectionStatus.profile.name}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <p className="text-xs text-muted-foreground mb-1">Telefone</p>
+                      <p className="font-semibold">{connectionStatus.profile.phone}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <p className="text-xs text-muted-foreground mb-1">Qualidade</p>
+                      <p className="font-semibold">{connectionStatus.profile.quality}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <p className="text-xs text-muted-foreground mb-1">Status</p>
+                      <p className="font-semibold">{connectionStatus.profile.status}</p>
+                    </div>
                   </div>
-                  <div className="p-4 rounded-lg bg-muted/50">
-                    <p className="text-xs text-muted-foreground mb-1">Instância</p>
-                    <p className="font-semibold">{connectionStatus?.instance || "—"}</p>
+                ) : connectionStatus?.error ? (
+                  <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+                    <p className="font-medium">Erro de conexão:</p>
+                    <p className="text-sm">{connectionStatus.error}</p>
                   </div>
-                </div>
-
-                <div className="flex gap-3">
-                  {!connectionStatus?.connected && (
-                    <Button onClick={() => setShowQRDialog(true)} className="flex-1">
-                      <QrCode className="h-4 w-4 mr-2" />
-                      Conectar via QR Code
-                    </Button>
-                  )}
-                  {connectionStatus?.connected && (
-                    <Button 
-                      variant="destructive" 
-                      onClick={() => disconnectMutation.mutate()}
-                      disabled={disconnectMutation.isPending}
-                      className="flex-1"
-                    >
-                      {disconnectMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <WifiOff className="h-4 w-4 mr-2" />
-                      )}
-                      Desconectar
-                    </Button>
-                  )}
-                </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -376,18 +399,26 @@ export default function WhatsAppPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
+                  <div className="flex gap-2">
+                    <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                    <p>
+                      <strong>Importante:</strong> Mensagens de texto só podem ser enviadas para números que 
+                      enviaram mensagem nas últimas 24h. Para mensagens proativas, use Templates aprovados.
+                    </p>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Número de Telefone</Label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="(11) 98888-7777"
-                        value={testPhone}
-                        onChange={(e) => setTestPhone(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="(11) 98888-7777"
+                      value={testPhone}
+                      onChange={(e) => setTestPhone(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
                   {formatNumber.data && testPhone.length >= 10 && (
                     <p className="text-xs text-muted-foreground">
@@ -413,12 +444,6 @@ export default function WhatsAppPage() {
                   )}
                   Enviar Mensagem de Teste
                 </Button>
-
-                {!connectionStatus?.connected && (
-                  <p className="text-xs text-amber-600 text-center">
-                    Conecte o WhatsApp primeiro para enviar mensagens
-                  </p>
-                )}
               </CardContent>
             </Card>
           </div>
@@ -430,10 +455,10 @@ export default function WhatsAppPage() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Send className="h-5 w-5" />
-                Enviar Mensagem Personalizada
+                Enviar Mensagem
               </CardTitle>
               <CardDescription>
-                Envie uma mensagem customizada para qualquer número
+                Envie uma mensagem personalizada (requer janela de 24h ativa)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -452,7 +477,7 @@ export default function WhatsAppPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Template (opcional)</Label>
+                  <Label>Usar Template de Exemplo</Label>
                   <Select value={selectedTemplate} onValueChange={(value) => {
                     setSelectedTemplate(value);
                     if (templates && value && templates[value as keyof typeof templates]) {
@@ -504,14 +529,47 @@ export default function WhatsAppPage() {
 
         {/* Tab: Templates */}
         <TabsContent value="templates" className="space-y-4">
+          {/* Templates aprovados na conta */}
+          {approvedTemplates && approvedTemplates.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-green-500" />
+                  Templates Aprovados
+                </CardTitle>
+                <CardDescription>
+                  Templates aprovados pela Meta na sua conta
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {approvedTemplates.map((template, index) => (
+                    <div key={index} className="p-4 rounded-lg border bg-card">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">{template.name}</span>
+                        <Badge variant={template.status === "APPROVED" ? "default" : "secondary"}>
+                          {template.status}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {template.category} • {template.language}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Templates de exemplo */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Templates de Mensagens
+                Templates de Exemplo
               </CardTitle>
               <CardDescription>
-                Mensagens pré-definidas para diferentes situações
+                Use estes modelos para criar seus templates no Meta Business Manager
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -526,6 +584,7 @@ export default function WhatsAppPage() {
                         <div>
                           <h4 className="font-semibold">{template.name}</h4>
                           <p className="text-xs text-muted-foreground">{template.description}</p>
+                          <p className="text-xs text-primary mt-1 font-mono">{template.metaTemplateName}</p>
                         </div>
                         <Button 
                           variant="ghost" 
@@ -549,60 +608,82 @@ export default function WhatsAppPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Tab: Configuração */}
+        <TabsContent value="config" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Configuração da API
+              </CardTitle>
+              <CardDescription>
+                Informações sobre a configuração atual
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-800 dark:text-green-200">API Configurada</p>
+                  <p className="text-sm text-green-600 dark:text-green-300">
+                    As variáveis de ambiente estão configuradas corretamente
+                  </p>
+                </div>
+              </div>
+
+              {configInfo && (
+                <>
+                  <div className="space-y-3">
+                    <h4 className="font-medium">Variáveis Obrigatórias</h4>
+                    <div className="space-y-2">
+                      {configInfo.requiredVars.map((v) => (
+                        <div key={v.name} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <div>
+                            <span className="font-mono text-sm">{v.name}</span>
+                            <span className="text-muted-foreground text-sm ml-2">— {v.description}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="font-medium">Variáveis Opcionais</h4>
+                    <div className="space-y-2">
+                      {configInfo.optionalVars.map((v) => (
+                        <div key={v.name} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
+                          <div>
+                            <span className="font-mono text-sm">{v.name}</span>
+                            <span className="text-muted-foreground text-sm ml-2">— {v.description}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button variant="outline" asChild>
+                      <a href={configInfo.docsUrl} target="_blank" rel="noopener noreferrer">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Documentação
+                      </a>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <a href={configInfo.setupUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Meta for Developers
+                      </a>
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
-
-      {/* QR Code Dialog */}
-      <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <QrCode className="h-5 w-5" />
-              Conectar WhatsApp
-            </DialogTitle>
-            <DialogDescription>
-              Escaneie o QR Code com o WhatsApp do seu celular
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex flex-col items-center py-6">
-            {loadingQR ? (
-              <div className="w-64 h-64 flex items-center justify-center bg-muted rounded-lg">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : qrCode?.base64 ? (
-              <img 
-                src={qrCode.base64} 
-                alt="QR Code" 
-                className="w-64 h-64 rounded-lg border"
-              />
-            ) : (
-              <div className="w-64 h-64 flex flex-col items-center justify-center bg-muted rounded-lg">
-                <AlertTriangle className="h-8 w-8 text-amber-500 mb-2" />
-                <p className="text-sm text-muted-foreground text-center px-4">
-                  Não foi possível gerar o QR Code. Verifique a configuração da API.
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="text-sm text-muted-foreground space-y-2">
-            <p>1. Abra o WhatsApp no seu celular</p>
-            <p>2. Vá em <strong>Configurações → Aparelhos conectados</strong></p>
-            <p>3. Toque em <strong>Conectar um aparelho</strong></p>
-            <p>4. Escaneie o QR Code acima</p>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => refetchQR()} disabled={loadingQR}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loadingQR ? 'animate-spin' : ''}`} />
-              Atualizar QR
-            </Button>
-            <Button variant="outline" onClick={() => setShowQRDialog(false)}>
-              Fechar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
