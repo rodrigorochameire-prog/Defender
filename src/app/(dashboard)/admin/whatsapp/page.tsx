@@ -338,7 +338,7 @@ export default function WhatsAppPage() {
                   </div>
                 ) : !isConfigured ? (
                   <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600">
-                    <p>Configure suas credenciais na aba "Configuração"</p>
+                    <p>Configure suas credenciais na aba &quot;Configuração&quot;</p>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-8">
@@ -364,7 +364,7 @@ export default function WhatsAppPage() {
                   <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
                     <div className="flex gap-2">
                       <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                      <p>Configure suas credenciais primeiro na aba "Configuração"</p>
+                      <p>Configure suas credenciais primeiro na aba &quot;Configuração&quot;</p>
                     </div>
                   </div>
                 )}
@@ -657,7 +657,7 @@ export default function WhatsAppPage() {
                 <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
                   <div className="flex gap-2">
                     <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                    <p>Configure suas credenciais na aba "Configuração" para enviar mensagens</p>
+                    <p>Configure suas credenciais na aba &quot;Configuração&quot; para enviar mensagens</p>
                   </div>
                 </div>
               )}
