@@ -38,13 +38,13 @@ export default function SignUpPage() {
           
           {/* Título e Subtítulo */}
           <div className="space-y-4 mb-12 max-w-lg">
-            <p className="text-xs uppercase tracking-[0.2em] text-blue-600 font-bold">Nova Conta</p>
-            <h1 className="text-5xl font-bold text-[hsl(220_22%_18%)] leading-tight">
+            <p className="text-xs uppercase tracking-[0.2em] text-blue-700 font-bold">Nova Conta</p>
+            <h1 className="text-5xl font-bold text-slate-900 leading-tight">
               Junte-se ao<br />TeteCare
             </h1>
-            <p className="text-lg text-[hsl(220_11%_40%)] leading-relaxed font-medium">
-            Crie sua conta e comece a cuidar dos seus pets de forma inteligente
-          </p>
+            <p className="text-lg text-slate-700 leading-relaxed font-medium">
+              Crie sua conta e comece a cuidar dos seus pets de forma inteligente
+            </p>
           </div>
           
           {/* Features */}
@@ -90,35 +90,38 @@ export default function SignUpPage() {
               <h2 className="text-3xl font-bold text-foreground leading-tight">
                 Criar Conta
               </h2>
-              <p className="text-base text-[hsl(220_13%_45%)] leading-relaxed">
+              <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
                 Preencha seus dados para começar a usar o TeteCare
               </p>
             </div>
 
             {/* Clerk SignUp Component */}
-          <SignUp
-            appearance={{
-              elements: {
-                rootBox: "w-full",
+            <SignUp
+              appearance={{
+                elements: {
+                  rootBox: "w-full",
                   card: "shadow-none border-0 bg-transparent p-0 w-full",
                   formButtonPrimary: "h-12 text-base font-semibold rounded-[14px] bg-blue-600 hover:bg-blue-700 shadow-[0_2px_4px_0_rgba(37,99,235,0.15)] hover:shadow-[0_4px_8px_0_rgba(37,99,235,0.25)] transition-all duration-300",
-                  formFieldInput: "h-12 text-base rounded-[14px] bg-background border border-border/40 text-foreground placeholder:text-muted-foreground focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.08)] transition-all duration-300",
-                  formFieldLabel: "text-sm font-bold text-foreground mb-2.5",
-                  socialButtonsBlockButton: "h-12 rounded-[14px] border border-border/40 bg-background hover:bg-muted/50 hover:border-border/60 transition-all duration-300 shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]",
-                  socialButtonsBlockButtonText: "text-base font-medium text-foreground",
-                  dividerLine: "bg-border/30",
-                  dividerText: "text-muted-foreground text-sm px-4",
+                  formFieldInput: "h-12 text-base rounded-[14px] bg-background border border-slate-300 dark:border-slate-600 text-foreground placeholder:text-slate-500 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.08)] transition-all duration-300",
+                  formFieldLabel: "text-sm font-bold text-slate-800 dark:text-slate-200 mb-2.5",
+                  socialButtonsBlockButton: "h-12 rounded-[14px] border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-500 transition-all duration-300 shadow-sm hover:shadow-md",
+                  socialButtonsBlockButtonText: "text-base font-semibold text-slate-800 dark:text-slate-200",
+                  socialButtonsBlockButtonArrow: "text-slate-600 dark:text-slate-400",
+                  dividerLine: "bg-slate-200 dark:bg-slate-700",
+                  dividerText: "text-slate-500 dark:text-slate-400 text-sm px-4 font-medium",
                   footerActionLink: "text-blue-600 hover:text-blue-700 font-bold transition-colors text-base",
-                  footerActionText: "text-[hsl(220_13%_45%)] text-base",
+                  footerActionText: "text-slate-600 dark:text-slate-400 text-base",
                   identityPreviewText: "text-base font-semibold text-foreground",
                   identityPreviewEditButton: "text-blue-600 hover:text-blue-700 text-sm font-semibold",
-              },
-            }}
-            routing="path"
-            path="/sign-up"
-            signInUrl="/sign-in"
-            fallbackRedirectUrl="/auth-redirect"
-          />
+                  headerTitle: "text-slate-900 dark:text-slate-100",
+                  headerSubtitle: "text-slate-600 dark:text-slate-400",
+                },
+              }}
+              routing="path"
+              path="/sign-up"
+              signInUrl="/sign-in"
+              fallbackRedirectUrl="/auth-redirect"
+            />
           </div>
         </div>
       </div>

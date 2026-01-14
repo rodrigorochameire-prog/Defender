@@ -512,7 +512,7 @@ export const foodRouter = router({
    */
   listAllPetsFoodSummary: adminProcedure.query(async () => {
     const allPets = await db.query.pets.findMany({
-      where: eq(pets.status, "active"),
+      where: eq(pets.approvalStatus, "approved"),
       orderBy: [desc(pets.name)],
     });
 

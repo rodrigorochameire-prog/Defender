@@ -56,11 +56,11 @@ export default async function SignInPage() {
           
           {/* Título e Subtítulo */}
           <div className="space-y-4 mb-12 max-w-lg">
-            <p className="text-xs uppercase tracking-[0.2em] text-orange-600 font-bold">Cuidar com Carinho</p>
-            <h1 className="text-5xl font-bold text-[hsl(220_22%_18%)] leading-tight">
+            <p className="text-xs uppercase tracking-[0.2em] text-orange-700 font-bold">Cuidar com Carinho</p>
+            <h1 className="text-5xl font-bold text-slate-900 leading-tight">
               Bem-vindo ao<br />TeteCare
             </h1>
-            <p className="text-lg text-[hsl(220_11%_40%)] leading-relaxed font-medium">
+            <p className="text-lg text-slate-700 leading-relaxed font-medium">
               A plataforma completa para gestão de creches e hotéis para pets
             </p>
           </div>
@@ -108,7 +108,7 @@ export default async function SignInPage() {
               <h2 className="text-3xl font-bold text-foreground leading-tight">
                 Entrar no TeteCare
               </h2>
-              <p className="text-base text-[hsl(220_13%_45%)] leading-relaxed">
+              <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
                 Use sua conta para continuar cuidando dos seus pets
               </p>
             </div>
@@ -120,16 +120,19 @@ export default async function SignInPage() {
                   rootBox: "w-full",
                   card: "shadow-none border-0 bg-transparent p-0 w-full",
                   formButtonPrimary: "h-12 text-base font-semibold rounded-[14px] bg-primary hover:bg-primary/90 shadow-[0_2px_4px_0_rgba(24,80%,52%,0.15)] hover:shadow-[0_4px_8px_0_rgba(24,80%,52%,0.25)] transition-all duration-300",
-                  formFieldInput: "h-12 text-base rounded-[14px] bg-background border border-border/40 text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:shadow-[0_0_0_3px_rgba(24,80%,52%,0.08)] transition-all duration-300",
-                  formFieldLabel: "text-sm font-bold text-foreground mb-2.5",
-                  socialButtonsBlockButton: "h-12 rounded-[14px] border border-border/40 bg-background hover:bg-muted/50 hover:border-border/60 transition-all duration-300 shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]",
-                  socialButtonsBlockButtonText: "text-base font-medium text-foreground",
-                  dividerLine: "bg-border/30",
-                  dividerText: "text-muted-foreground text-sm px-4",
+                  formFieldInput: "h-12 text-base rounded-[14px] bg-background border border-slate-300 dark:border-slate-600 text-foreground placeholder:text-slate-500 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:shadow-[0_0_0_3px_rgba(24,80%,52%,0.08)] transition-all duration-300",
+                  formFieldLabel: "text-sm font-bold text-slate-800 dark:text-slate-200 mb-2.5",
+                  socialButtonsBlockButton: "h-12 rounded-[14px] border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-500 transition-all duration-300 shadow-sm hover:shadow-md",
+                  socialButtonsBlockButtonText: "text-base font-semibold text-slate-800 dark:text-slate-200",
+                  socialButtonsBlockButtonArrow: "text-slate-600 dark:text-slate-400",
+                  dividerLine: "bg-slate-200 dark:bg-slate-700",
+                  dividerText: "text-slate-500 dark:text-slate-400 text-sm px-4 font-medium",
                   footerActionLink: "text-primary hover:text-primary/80 font-bold transition-colors text-base",
-                  footerActionText: "text-[hsl(220_13%_45%)] text-base",
+                  footerActionText: "text-slate-600 dark:text-slate-400 text-base",
                   identityPreviewText: "text-base font-semibold text-foreground",
                   identityPreviewEditButton: "text-primary hover:text-primary/80 text-sm font-semibold",
+                  headerTitle: "text-slate-900 dark:text-slate-100",
+                  headerSubtitle: "text-slate-600 dark:text-slate-400",
                 },
               }}
               routing="path"
