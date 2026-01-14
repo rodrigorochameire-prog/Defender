@@ -186,7 +186,7 @@ export default function AdminMedications() {
                           </CardDescription>
                         </div>
                       </div>
-                      <Badge className="bg-green-500">Ativo</Badge>
+                      <Badge className="bg-slate-600">Ativo</Badge>
                     </div>
                   </CardHeader>
                   <CardContent>

@@ -199,10 +199,10 @@ export default function AdminTutorsPage() {
 
       {/* Pending Approvals */}
       {pendingTutors && pendingTutors.length > 0 && (
-        <div className="section-card border-amber-200/50 dark:border-amber-800/30 bg-amber-50/30 dark:bg-amber-950/10">
+        <div className="section-card border-slate-200/50 dark:border-slate-700/30 bg-slate-50/30 dark:bg-slate-900/10">
           <div className="section-card-header">
             <div className="section-card-title">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertCircle className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               Aguardando Aprovação ({pendingTutors.length})
             </div>
           </div>
@@ -212,7 +212,7 @@ export default function AdminTutorsPage() {
                 <div key={tutor.id} className="flex items-center justify-between p-3 bg-card rounded-xl border">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-amber-100 text-amber-700">
+                      <AvatarFallback className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                         {getInitials(tutor.name)}
                       </AvatarFallback>
                     </Avatar>
@@ -226,7 +226,7 @@ export default function AdminTutorsPage() {
                       size="sm"
                       onClick={() => approveMutation.mutate({ id: tutor.id })}
                       disabled={approveMutation.isPending}
-                      className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600"
+                      className="h-8 w-8 p-0 bg-slate-600 hover:bg-slate-700"
                     >
                       <Check className="h-4 w-4" />
                     </Button>
@@ -337,9 +337,9 @@ export default function AdminTutorsPage() {
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <Badge variant="outline" className={
-                      tutor.approvalStatus === "approved" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400" :
-                      tutor.approvalStatus === "pending" ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-400" : 
-                      "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-400"
+                      tutor.approvalStatus === "approved" ? "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300" :
+                      tutor.approvalStatus === "pending" ? "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400" : 
+                      "border-slate-400 bg-slate-200 text-slate-800 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200"
                     }>
                       {tutor.approvalStatus === "approved" ? "Aprovado" :
                        tutor.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
@@ -434,7 +434,7 @@ export default function AdminTutorsPage() {
               <div className="flex gap-2 pt-2">
                 {selectedTutor.approvalStatus !== "approved" && (
                   <Button 
-                    className="flex-1 bg-green-500 hover:bg-green-600"
+                    className="flex-1 bg-slate-600 hover:bg-slate-700"
                     onClick={() => { approveMutation.mutate({ id: selectedTutor.id }); setIsDetailOpen(false); }}
                   >
                     <Check className="h-4 w-4 mr-2" /> Aprovar

@@ -60,19 +60,19 @@ import { cn } from "@/lib/utils";
 // Tipos de eventos que podem ser marcados como "realizados"
 const ACTIONABLE_EVENT_TYPES = ["vaccination", "medication", "medical", "preventive", "grooming"];
 
-// Configuração dos tipos de eventos
+// Configuração dos tipos de eventos - cores neutras
 const EVENT_TYPE_CONFIG = {
-  vaccination: { label: "Vacinação", icon: Syringe, color: "text-blue-500" },
-  medication: { label: "Medicamento", icon: Pill, color: "text-purple-500" },
-  medical: { label: "Consulta", icon: AlertCircle, color: "text-rose-500" },
-  preventive: { label: "Preventivo", icon: Shield, color: "text-cyan-500" },
-  grooming: { label: "Banho/Tosa", icon: Dog, color: "text-pink-500" },
-  general: { label: "Geral", icon: Calendar, color: "text-slate-500" },
-  holiday: { label: "Feriado", icon: Calendar, color: "text-emerald-500" },
-  closure: { label: "Fechamento", icon: AlertCircle, color: "text-orange-500" },
-  checkin: { label: "Check-in", icon: Clock, color: "text-teal-500" },
-  checkout: { label: "Check-out", icon: Clock, color: "text-amber-500" },
-  training: { label: "Treinamento", icon: Dog, color: "text-indigo-500" },
+  vaccination: { label: "Vacinação", icon: Syringe, color: "text-slate-600 dark:text-slate-400" },
+  medication: { label: "Medicamento", icon: Pill, color: "text-slate-600 dark:text-slate-400" },
+  medical: { label: "Consulta", icon: AlertCircle, color: "text-slate-600 dark:text-slate-400" },
+  preventive: { label: "Preventivo", icon: Shield, color: "text-slate-600 dark:text-slate-400" },
+  grooming: { label: "Banho/Tosa", icon: Dog, color: "text-slate-600 dark:text-slate-400" },
+  general: { label: "Geral", icon: Calendar, color: "text-slate-500 dark:text-slate-500" },
+  holiday: { label: "Feriado", icon: Calendar, color: "text-slate-600 dark:text-slate-400" },
+  closure: { label: "Fechamento", icon: AlertCircle, color: "text-slate-600 dark:text-slate-400" },
+  checkin: { label: "Check-in", icon: Clock, color: "text-slate-600 dark:text-slate-400" },
+  checkout: { label: "Check-out", icon: Clock, color: "text-slate-600 dark:text-slate-400" },
+  training: { label: "Treinamento", icon: Dog, color: "text-slate-600 dark:text-slate-400" },
 };
 
 export default function AdminCalendarPage() {
@@ -414,10 +414,10 @@ export default function AdminCalendarPage() {
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center",
-                        isCompleted ? "bg-green-100 dark:bg-green-900" : "bg-muted"
+                        isCompleted ? "bg-slate-200 dark:bg-slate-700" : "bg-muted"
                       )}>
                         {isCompleted ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          <CheckCircle2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                         ) : (
                           <EventIcon className={cn("h-5 w-5", eventConfig.color)} />
                         )}
@@ -438,13 +438,13 @@ export default function AdminCalendarPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {isCompleted && (
-                        <Badge className="bg-green-500 hover:bg-green-600 text-white">
+                        <Badge className="bg-slate-600 hover:bg-slate-700 text-white">
                           <Check className="h-3 w-3 mr-1" />
                           Realizado
                         </Badge>
                       )}
                       {isActionable && !isCompleted && (
-                        <Badge variant="outline" className="text-orange-600 border-orange-300">
+                        <Badge variant="outline" className="text-slate-600 border-slate-300 dark:text-slate-400 dark:border-slate-600">
                           Pendente
                         </Badge>
                       )}
@@ -475,7 +475,7 @@ export default function AdminCalendarPage() {
               })()}
               {isEditMode ? "Editar Evento" : selectedEvent?.title}
               {selectedEvent?.status === "completed" && !isEditMode && (
-                <Badge className="bg-green-500 text-white ml-2">
+                <Badge className="bg-slate-600 text-white ml-2">
                   <Check className="h-3 w-3 mr-1" />
                   Realizado
                 </Badge>
@@ -493,21 +493,21 @@ export default function AdminCalendarPage() {
                 <div className={cn(
                   "p-3 rounded-lg flex items-center justify-between",
                   selectedEvent.status === "completed"
-                    ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
-                    : "bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800"
+                    ? "bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                    : "bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
                 )}>
                   <div className="flex items-center gap-2">
                     {selectedEvent.status === "completed" ? (
                       <>
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                        <span className="text-green-700 dark:text-green-400 font-medium">
+                        <CheckCircle2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">
                           Marcado como realizado
                         </span>
                       </>
                     ) : (
                       <>
-                        <AlertCircle className="h-5 w-5 text-orange-600" />
-                        <span className="text-orange-700 dark:text-orange-400 font-medium">
+                        <AlertCircle className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">
                           Ação pendente
                         </span>
                       </>

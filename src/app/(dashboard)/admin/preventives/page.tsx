@@ -213,10 +213,10 @@ export default function AdminPreventives() {
 
         <TabsContent value="overdue" className="space-y-4">
           {!overdueTreatments || overdueTreatments.length === 0 ? (
-            <Card className="border-green-200 bg-green-50 dark:bg-green-950">
+            <Card className="border-slate-200 bg-slate-50 dark:bg-slate-900">
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Shield className="h-12 w-12 text-green-600 mb-4" />
-                <p className="text-lg font-medium text-green-700">
+                <Shield className="h-12 w-12 text-slate-500 dark:text-slate-400 mb-4" />
+                <p className="text-lg font-medium text-slate-600 dark:text-slate-400">
                   Todos os tratamentos em dia!
                 </p>
               </CardContent>
@@ -231,12 +231,12 @@ export default function AdminPreventives() {
                 const typeInfo = treatmentTypes.find(t => t.value === item.treatment.type);
 
                 return (
-                  <Card key={item.treatment.id} className="border-red-200 hover:shadow-md transition-shadow">
+                  <Card key={item.treatment.id} className="border-slate-300 dark:border-slate-700 hover:shadow-md transition-shadow">
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                            <AlertCircle className="h-5 w-5 text-red-600" />
+                          <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                            <AlertCircle className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                           </div>
                           <div>
                             <CardTitle className="text-base">{item.pet?.name}</CardTitle>
