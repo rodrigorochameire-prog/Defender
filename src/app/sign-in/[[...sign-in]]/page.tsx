@@ -1,8 +1,10 @@
 import { SignIn } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { Dog, Heart, Shield, Calendar } from "lucide-react";
 import Image from "next/image";
+
+// Forçar renderização dinâmica para evitar problemas de build
+export const dynamic = "force-dynamic";
 
 const features = [
   { icon: Dog, text: "Gestão completa de pets" },
@@ -12,17 +14,23 @@ const features = [
 ];
 
 export default async function SignInPage() {
-  const { userId } = await auth();
-  
-  // Se já está logado, redirecionar
-  if (userId) {
-    const user = await currentUser();
-    const role = (user?.publicMetadata as { role?: string })?.role || "tutor";
+  // Tentar verificar se já está logado usando Clerk
+  try {
+    const { auth, currentUser } = await import("@clerk/nextjs/server");
+    const { userId } = await auth();
     
-    if (role === "admin") {
-      redirect("/admin");
+    // Se já está logado, redirecionar
+    if (userId) {
+      const user = await currentUser();
+      const role = (user?.publicMetadata as { role?: string })?.role || "tutor";
+      
+      if (role === "admin") {
+        redirect("/admin");
+      }
+      redirect("/tutor");
     }
-    redirect("/tutor");
+  } catch {
+    // Clerk não disponível, continuar para renderizar a página
   }
 
   return (

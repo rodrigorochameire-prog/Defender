@@ -1,10 +1,8 @@
 "use client";
 
-import { ClerkProvider } from "@clerk/nextjs";
-import { ptBR } from "@clerk/localizations";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
-import { useState, Suspense } from "react";
+import { useState, Suspense, ReactNode, useEffect } from "react";
 import superjson from "superjson";
 import { trpc } from "@/lib/trpc/client";
 import { ThemeProvider } from "@/contexts/theme-context";
@@ -16,8 +14,6 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
-// PageTransition removido - causava interferência com tooltips, redirecionamentos e movimento indesejado
-
 // Loading spinner minimalista
 function LoadingSpinner() {
   return (
@@ -27,6 +23,52 @@ function LoadingSpinner() {
       </div>
     </div>
   );
+}
+
+// Wrapper condicional para Clerk - carrega dinamicamente apenas se disponível
+function ClerkWrapper({ children }: { children: ReactNode }) {
+  const [ClerkProvider, setClerkProvider] = useState<React.ComponentType<any> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Verificar se a chave do Clerk está disponível
+    const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+    
+    if (clerkKey) {
+      // Importar Clerk dinamicamente
+      import("@clerk/nextjs").then(({ ClerkProvider: CP }) => {
+        import("@clerk/localizations").then(({ ptBR }) => {
+          const WrappedProvider = ({ children }: { children: ReactNode }) => (
+            <CP 
+              localization={ptBR}
+              signInFallbackRedirectUrl="/auth-redirect"
+              signUpFallbackRedirectUrl="/auth-redirect"
+              signInUrl="/sign-in"
+              signUpUrl="/sign-up"
+            >
+              {children}
+            </CP>
+          );
+          setClerkProvider(() => WrappedProvider);
+          setIsLoading(false);
+        });
+      }).catch(() => {
+        setIsLoading(false);
+      });
+    } else {
+      setIsLoading(false);
+    }
+  }, []);
+
+  if (isLoading) {
+    return <>{children}</>;
+  }
+
+  if (ClerkProvider) {
+    return <ClerkProvider>{children}</ClerkProvider>;
+  }
+
+  return <>{children}</>;
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -62,13 +104,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ClerkProvider 
-      localization={ptBR}
-      signInFallbackRedirectUrl="/auth-redirect"
-      signUpFallbackRedirectUrl="/auth-redirect"
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-    >
+    <ClerkWrapper>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
@@ -86,6 +122,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </ThemeProvider>
         </QueryClientProvider>
       </trpc.Provider>
-    </ClerkProvider>
+    </ClerkWrapper>
   );
 }

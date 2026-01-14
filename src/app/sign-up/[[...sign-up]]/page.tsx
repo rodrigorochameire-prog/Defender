@@ -4,6 +4,9 @@ import { SignUp } from "@clerk/nextjs";
 import { Dog, Heart, Shield, Calendar } from "lucide-react";
 import Image from "next/image";
 
+// Forçar renderização dinâmica para evitar problemas de build
+export const dynamic = "force-dynamic";
+
 const features = [
   { icon: Dog, text: "Gestão completa de pets" },
   { icon: Shield, text: "Controle de vacinas e saúde" },

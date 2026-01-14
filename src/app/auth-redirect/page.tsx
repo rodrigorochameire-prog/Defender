@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { currentUser } from "@clerk/nextjs/server";
 import { db, users } from "@/lib/db";
 import { eq } from "drizzle-orm";
 
@@ -10,7 +9,15 @@ const ADMIN_EMAILS = ["rodrigorochameire@gmail.com"];
 export const dynamic = "force-dynamic";
 
 export default async function AuthRedirectPage() {
-  const clerkUser = await currentUser();
+  // Importar Clerk dinamicamente
+  let clerkUser = null;
+  try {
+    const { currentUser } = await import("@clerk/nextjs/server");
+    clerkUser = await currentUser();
+  } catch {
+    // Clerk não disponível
+    redirect("/sign-in");
+  }
 
   if (!clerkUser) {
     redirect("/sign-in");
