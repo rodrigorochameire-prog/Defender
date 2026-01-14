@@ -334,7 +334,7 @@ export default function WhatsAppPage() {
             <Settings className="h-4 w-4" />
             Configuração
           </TabsTrigger>
-        </Tabs>
+        </TabsList>
 
         {/* Tab: Status */}
         <TabsContent value="status" className="space-y-4">
