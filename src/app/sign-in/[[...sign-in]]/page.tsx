@@ -1,4 +1,5 @@
 import { SignIn } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Dog, Heart, Shield, Calendar } from "lucide-react";
 import Image from "next/image";
@@ -14,17 +15,12 @@ const features = [
 ];
 
 export default async function SignInPage() {
-  // Verificar se já está logado usando Clerk
-  try {
-    const { auth } = await import("@clerk/nextjs/server");
-    const { userId } = await auth();
-    
-    // Se já está logado, redirecionar para auth-redirect que faz a lógica correta
-    if (userId) {
-      redirect("/auth-redirect");
-    }
-  } catch {
-    // Clerk não disponível, continuar para renderizar a página
+  // Verificar se já está logado
+  const { userId } = await auth();
+  
+  // Se já está logado, redirecionar para auth-redirect
+  if (userId) {
+    redirect("/auth-redirect");
   }
 
   return (
