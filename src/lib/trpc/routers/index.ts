@@ -26,6 +26,7 @@ import { reviewsRouter } from "./reviews";
 import { notificationTemplatesRouter } from "./notificationTemplates";
 import { trainingRouter } from "./training";
 import { whatsappRouter } from "./whatsapp";
+import { analyticsRouter } from "./analytics";
 
 export const appRouter = router({
   // Autenticação
@@ -76,6 +77,7 @@ export const appRouter = router({
   // Dashboard e estatísticas
   dashboard: dashboardRouter,
   stats: statsRouter,
+  analytics: analyticsRouter,
 });
 
 export type AppRouter = typeof appRouter;
