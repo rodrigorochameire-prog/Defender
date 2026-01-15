@@ -12,6 +12,21 @@ EXCEPTION WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
+  CREATE TYPE unidade AS ENUM (
+    'CAMACARI', 'CANDEIAS', 'DIAS_DAVILA', 'SIMOES_FILHO', 
+    'LAURO_DE_FREITAS', 'SALVADOR'
+  );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE status_processo AS ENUM (
+    'FLAGRANTE', 'INQUERITO', 'INSTRUCAO', 'RECURSO', 'EXECUCAO', 'ARQUIVADO'
+  );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
   CREATE TYPE status_prisional AS ENUM (
     'SOLTO', 'CADEIA_PUBLICA', 'PENITENCIARIA', 'COP', 
     'HOSPITAL_CUSTODIA', 'DOMICILIAR', 'MONITORADO'
@@ -130,6 +145,10 @@ CREATE TABLE IF NOT EXISTS processos (
   -- Observações
   observacoes TEXT,
   
+  -- Integração Google Drive
+  link_drive TEXT,
+  drive_folder_id TEXT,
+  
   -- Metadados
   deleted_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW() NOT NULL,
@@ -175,6 +194,9 @@ CREATE TABLE IF NOT EXISTS demandas (
   
   -- Flag réu preso
   reu_preso BOOLEAN DEFAULT FALSE,
+  
+  -- Integração Google Calendar
+  google_calendar_event_id TEXT,
   
   -- Metadados
   deleted_at TIMESTAMP,
@@ -404,6 +426,45 @@ CREATE INDEX IF NOT EXISTS peca_templates_area_idx ON peca_templates(area);
 CREATE INDEX IF NOT EXISTS peca_templates_is_public_idx ON peca_templates(is_public);
 
 -- ==========================================
+-- TABELA: banco_pecas (Biblioteca Jurídica)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS banco_pecas (
+  id SERIAL PRIMARY KEY,
+  titulo TEXT NOT NULL,
+  descricao TEXT,
+  
+  -- Conteúdo
+  conteudo_texto TEXT,
+  arquivo_url TEXT,
+  arquivo_key TEXT,
+  
+  -- Classificação
+  tipo_peca VARCHAR(100) NOT NULL,
+  area area,
+  tags TEXT,
+  
+  -- Resultado
+  sucesso BOOLEAN,
+  resultado_descricao TEXT,
+  
+  -- Referência
+  processo_referencia TEXT,
+  
+  -- Visibilidade
+  is_public BOOLEAN DEFAULT TRUE,
+  
+  -- Metadados
+  created_by_id INTEGER NOT NULL REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS banco_pecas_tipo_peca_idx ON banco_pecas(tipo_peca);
+CREATE INDEX IF NOT EXISTS banco_pecas_area_idx ON banco_pecas(area);
+CREATE INDEX IF NOT EXISTS banco_pecas_sucesso_idx ON banco_pecas(sucesso);
+CREATE INDEX IF NOT EXISTS banco_pecas_is_public_idx ON banco_pecas(is_public);
+
+-- ==========================================
 -- TABELA: calculos_pena
 -- ==========================================
 CREATE TABLE IF NOT EXISTS calculos_pena (
@@ -568,6 +629,13 @@ CREATE POLICY IF NOT EXISTS "peca_templates_delete_admin" ON peca_templates FOR 
 CREATE POLICY IF NOT EXISTS "calculos_pena_select_all" ON calculos_pena FOR SELECT USING (true);
 CREATE POLICY IF NOT EXISTS "calculos_pena_insert_admin" ON calculos_pena FOR INSERT WITH CHECK (true);
 
+-- Políticas para banco_pecas
+ALTER TABLE banco_pecas ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "banco_pecas_select_all" ON banco_pecas FOR SELECT USING (true);
+CREATE POLICY IF NOT EXISTS "banco_pecas_insert_admin" ON banco_pecas FOR INSERT WITH CHECK (true);
+CREATE POLICY IF NOT EXISTS "banco_pecas_update_admin" ON banco_pecas FOR UPDATE USING (true);
+CREATE POLICY IF NOT EXISTS "banco_pecas_delete_admin" ON banco_pecas FOR DELETE USING (true);
+
 COMMENT ON TABLE assistidos IS 'Tabela de assistidos da defensoria pública';
 COMMENT ON TABLE processos IS 'Processos judiciais dos assistidos';
 COMMENT ON TABLE demandas IS 'Demandas e prazos a serem cumpridos';
@@ -579,3 +647,4 @@ COMMENT ON TABLE anotacoes IS 'Anotações e providências';
 COMMENT ON TABLE atendimentos IS 'Atendimentos aos assistidos';
 COMMENT ON TABLE peca_templates IS 'Modelos de peças processuais';
 COMMENT ON TABLE calculos_pena IS 'Cálculos de pena e prescrição';
+COMMENT ON TABLE banco_pecas IS 'Biblioteca de peças jurídicas para consulta e reutilização';

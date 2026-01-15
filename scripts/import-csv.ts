@@ -302,20 +302,159 @@ async function importSessoesJuri(rows: Record<string, string>[]) {
   console.log(`\n✓ Importação concluída: ${imported} sessões importadas, ${errors} erros`);
 }
 
+// Importar assistidos
+async function importAssistidos(rows: Record<string, string>[]) {
+  console.log(`\nImportando ${rows.length} assistidos...`);
+  
+  let imported = 0;
+  let errors = 0;
+  
+  for (const row of rows) {
+    try {
+      const nome = row["Nome"] || row["Assistido"] || row["Réu"] || "";
+      const cpf = row["CPF"] || "";
+      const rg = row["RG"] || "";
+      const nomeMae = row["Nome da Mãe"] || row["Mãe"] || "";
+      const dataNascimento = row["Data de Nascimento"] || row["Nascimento"] || "";
+      const telefone = row["Telefone"] || row["Celular"] || "";
+      const endereco = row["Endereço"] || row["Endereco"] || "";
+      const statusPrisional = row["Status"] || row["Situação"] || "";
+      const localPrisao = row["Local"] || row["Unidade"] || "";
+      
+      if (!nome) {
+        console.log(`  ⚠ Linha ignorada (sem nome)`);
+        continue;
+      }
+      
+      // Verificar se já existe
+      const existing = await db.query.assistidos.findFirst({
+        where: eq(assistidos.nome, nome.trim()),
+      });
+      
+      if (existing) {
+        console.log(`  ⚠ Assistido já existe: ${nome}`);
+        continue;
+      }
+      
+      // Mapear status prisional
+      let status: "SOLTO" | "CADEIA_PUBLICA" | "PENITENCIARIA" | "COP" | "HOSPITAL_CUSTODIA" | "DOMICILIAR" | "MONITORADO" = "SOLTO";
+      if (statusPrisional.toLowerCase().includes("preso") || statusPrisional.toLowerCase().includes("cadeia")) {
+        status = "CADEIA_PUBLICA";
+      } else if (statusPrisional.toLowerCase().includes("penitenciária") || statusPrisional.toLowerCase().includes("penitenciaria")) {
+        status = "PENITENCIARIA";
+      } else if (statusPrisional.toLowerCase().includes("monitorado")) {
+        status = "MONITORADO";
+      } else if (statusPrisional.toLowerCase().includes("domiciliar")) {
+        status = "DOMICILIAR";
+      }
+      
+      await db.insert(assistidos).values({
+        nome: nome.trim(),
+        cpf: cpf || null,
+        rg: rg || null,
+        nomeMae: nomeMae || null,
+        dataNascimento: parseDate(dataNascimento),
+        telefone: telefone || null,
+        endereco: endereco || null,
+        statusPrisional: status,
+        localPrisao: localPrisao || null,
+      });
+      
+      imported++;
+      console.log(`  ✓ Assistido importado: ${nome}`);
+      
+    } catch (error) {
+      errors++;
+      console.error(`  ✗ Erro ao importar linha:`, error);
+    }
+  }
+  
+  console.log(`\n✓ Importação concluída: ${imported} assistidos importados, ${errors} erros`);
+}
+
+// Importar processos
+async function importProcessos(rows: Record<string, string>[]) {
+  console.log(`\nImportando ${rows.length} processos...`);
+  
+  let imported = 0;
+  let errors = 0;
+  
+  for (const row of rows) {
+    try {
+      const nome = row["Assistido"] || row["Nome"] || row["Réu"] || "";
+      const numeroAutos = row["Autos"] || row["Número"] || row["Processo"] || "";
+      const areaStr = row["Área"] || row["Area"] || "Júri";
+      const comarca = row["Comarca"] || "";
+      const vara = row["Vara"] || "";
+      const assunto = row["Assunto"] || row["Crime"] || "";
+      
+      if (!nome || !numeroAutos) {
+        console.log(`  ⚠ Linha ignorada (dados incompletos)`);
+        continue;
+      }
+      
+      // Verificar se já existe
+      const existing = await db.query.processos.findFirst({
+        where: eq(processos.numeroAutos, numeroAutos.trim()),
+      });
+      
+      if (existing) {
+        console.log(`  ⚠ Processo já existe: ${numeroAutos}`);
+        continue;
+      }
+      
+      const assistidoId = await getOrCreateAssistido(nome);
+      
+      await db.insert(processos).values({
+        numeroAutos: numeroAutos.trim(),
+        assistidoId,
+        area: mapArea(areaStr),
+        comarca: comarca || null,
+        vara: vara || null,
+        assunto: assunto || null,
+        isJuri: areaStr.toLowerCase().includes("júri") || areaStr.toLowerCase().includes("juri"),
+        situacao: "ativo",
+      });
+      
+      imported++;
+      console.log(`  ✓ Processo importado: ${numeroAutos}`);
+      
+    } catch (error) {
+      errors++;
+      console.error(`  ✗ Erro ao importar linha:`, error);
+    }
+  }
+  
+  console.log(`\n✓ Importação concluída: ${imported} processos importados, ${errors} erros`);
+}
+
 // Função principal
 async function main() {
   const args = process.argv.slice(2);
   
   if (args.length < 1) {
     console.log(`
+╔═══════════════════════════════════════════════════════════════╗
+║           DEFENSORHUB - IMPORTADOR DE PLANILHAS               ║
+╚═══════════════════════════════════════════════════════════════╝
+
 Uso: npx tsx scripts/import-csv.ts <arquivo.csv> [tipo]
 
 Tipos suportados:
-  - demandas: Importa demandas/prazos (padrão)
-  - juri: Importa sessões do júri
+  - demandas    : Importa demandas/prazos
+  - juri        : Importa sessões do júri
+  - assistidos  : Importa assistidos
+  - processos   : Importa processos
 
-Exemplo:
-  npx tsx scripts/import-csv.ts dados.csv demandas
+Exemplos:
+  npx tsx scripts/import-csv.ts "Demandas Júri.csv" demandas
+  npx tsx scripts/import-csv.ts "Plenários.csv" juri
+  npx tsx scripts/import-csv.ts "Assistidos.csv" assistidos
+
+Dicas:
+  - O arquivo deve estar em formato CSV (separado por vírgulas)
+  - A primeira linha deve conter os cabeçalhos
+  - O sistema tenta identificar as colunas automaticamente
     `);
     process.exit(1);
   }
@@ -324,18 +463,25 @@ Exemplo:
   const type = args[1] || "demandas";
   
   if (!existsSync(filePath)) {
-    console.error(`Arquivo não encontrado: ${filePath}`);
+    console.error(`❌ Arquivo não encontrado: ${filePath}`);
     process.exit(1);
   }
   
-  console.log(`\n📂 Lendo arquivo: ${filePath}`);
+  console.log(`
+╔═══════════════════════════════════════════════════════════════╗
+║                    INICIANDO IMPORTAÇÃO                       ║
+╚═══════════════════════════════════════════════════════════════╝
+  `);
+  
+  console.log(`📂 Lendo arquivo: ${filePath}`);
   const content = readFileSync(filePath, "utf-8");
   const rows = parseCSV(content);
   
   console.log(`📊 ${rows.length} linhas encontradas`);
   
   if (rows.length > 0) {
-    console.log(`📋 Colunas detectadas: ${Object.keys(rows[0]).join(", ")}`);
+    console.log(`📋 Colunas detectadas:`);
+    Object.keys(rows[0]).forEach(col => console.log(`   - ${col}`));
   }
   
   switch (type) {
@@ -345,10 +491,23 @@ Exemplo:
     case "juri":
       await importSessoesJuri(rows);
       break;
+    case "assistidos":
+      await importAssistidos(rows);
+      break;
+    case "processos":
+      await importProcessos(rows);
+      break;
     default:
-      console.error(`Tipo não suportado: ${type}`);
+      console.error(`❌ Tipo não suportado: ${type}`);
+      console.log(`   Tipos válidos: demandas, juri, assistidos, processos`);
       process.exit(1);
   }
+  
+  console.log(`
+╔═══════════════════════════════════════════════════════════════╗
+║                    IMPORTAÇÃO CONCLUÍDA                       ║
+╚═══════════════════════════════════════════════════════════════╝
+  `);
   
   process.exit(0);
 }

@@ -62,6 +62,26 @@ export const prioridadeEnum = pgEnum("prioridade", [
   "REU_PRESO",
 ]);
 
+// Unidade/Comarca de atuação
+export const unidadeEnum = pgEnum("unidade", [
+  "CAMACARI",
+  "CANDEIAS",
+  "DIAS_DAVILA",
+  "SIMOES_FILHO",
+  "LAURO_DE_FREITAS",
+  "SALVADOR",
+]);
+
+// Status do processo
+export const statusProcessoEnum = pgEnum("status_processo", [
+  "FLAGRANTE",
+  "INQUERITO",
+  "INSTRUCAO",
+  "RECURSO",
+  "EXECUCAO",
+  "ARQUIVADO",
+]);
+
 // ==========================================
 // USUÁRIOS (DEFENSORES)
 // ==========================================
@@ -186,6 +206,10 @@ export const processos = pgTable("processos", {
   // Observações
   observacoes: text("observacoes"),
   
+  // Integração Google Drive
+  linkDrive: text("link_drive"), // Link para pasta no Google Drive
+  driveFolderId: text("drive_folder_id"), // ID da pasta no Drive
+  
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -239,6 +263,9 @@ export const demandas = pgTable("demandas", {
   
   // Flag de réu preso (prioridade automática)
   reuPreso: boolean("reu_preso").default(false),
+  
+  // Integração Google Calendar
+  googleCalendarEventId: text("google_calendar_event_id"), // ID do evento no Google Calendar
   
   // Metadados
   deletedAt: timestamp("deleted_at"),
@@ -658,6 +685,51 @@ export type PecaTemplate = typeof pecaTemplates.$inferSelect;
 export type InsertPecaTemplate = typeof pecaTemplates.$inferInsert;
 
 // ==========================================
+// BANCO DE PEÇAS (Biblioteca Jurídica)
+// ==========================================
+
+export const bancoPecas = pgTable("banco_pecas", {
+  id: serial("id").primaryKey(),
+  titulo: text("titulo").notNull(), // ex: "Relaxamento - Excesso de Prazo"
+  descricao: text("descricao"),
+  
+  // Conteúdo
+  conteudoTexto: text("conteudo_texto"), // Texto completo para busca full-text
+  arquivoUrl: text("arquivo_url"), // URL do arquivo no Supabase Storage ou Drive
+  arquivoKey: text("arquivo_key"), // Key do arquivo no storage
+  
+  // Classificação
+  tipoPeca: varchar("tipo_peca", { length: 100 }).notNull(), // 'resposta_acusacao' | 'alegacoes_finais' | 'relaxamento' | etc
+  area: areaEnum("area"),
+  tags: text("tags"), // JSON array de tags: ["tráfico", "nulidade", "busca domiciliar"]
+  
+  // Resultado
+  sucesso: boolean("sucesso"), // Se a tese foi acolhida (para filtrar as melhores)
+  resultadoDescricao: text("resultado_descricao"),
+  
+  // Referência
+  processoReferencia: text("processo_referencia"), // Número do processo de referência
+  
+  // Visibilidade
+  isPublic: boolean("is_public").default(true), // Se pode ser acessado por todos
+  
+  // Metadados
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("banco_pecas_tipo_peca_idx").on(table.tipoPeca),
+  index("banco_pecas_area_idx").on(table.area),
+  index("banco_pecas_sucesso_idx").on(table.sucesso),
+  index("banco_pecas_is_public_idx").on(table.isPublic),
+]);
+
+export type BancoPeca = typeof bancoPecas.$inferSelect;
+export type InsertBancoPeca = typeof bancoPecas.$inferInsert;
+
+// ==========================================
 // CALCULADORA DE PENA/PRESCRIÇÃO
 // ==========================================
 
@@ -847,4 +919,8 @@ export const calculosPenaRelations = relations(calculosPena, ({ one }) => ({
 export const atendimentosRelations = relations(atendimentos, ({ one }) => ({
   assistido: one(assistidos, { fields: [atendimentos.assistidoId], references: [assistidos.id] }),
   atendidoPor: one(users, { fields: [atendimentos.atendidoPorId], references: [users.id] }),
+}));
+
+export const bancoPecasRelations = relations(bancoPecas, ({ one }) => ({
+  createdBy: one(users, { fields: [bancoPecas.createdById], references: [users.id] }),
 }));
