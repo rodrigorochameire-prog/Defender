@@ -9,6 +9,7 @@ import {
   dailyLogs, 
   petVaccinations, 
   petMedications,
+  medicationLibrary,
   bookingRequests,
   creditPackages,
 } from "@/lib/db";
@@ -281,11 +282,12 @@ export const analyticsRouter = router({
           petId: petMedications.petId,
           petName: pets.name,
           petPhoto: pets.photoUrl,
-          medicationName: petMedications.name,
+          medicationName: medicationLibrary.name,
           type: sql<string>`'medication'`,
         })
         .from(petMedications)
         .innerJoin(pets, eq(petMedications.petId, pets.id))
+        .innerJoin(medicationLibrary, eq(petMedications.medicationId, medicationLibrary.id))
         .where(
           and(
             eq(petMedications.isActive, true),
@@ -480,8 +482,8 @@ export const analyticsRouter = router({
             logDate: dailyLogs.logDate,
             notes: dailyLogs.notes,
             mood: dailyLogs.mood,
-            activities: dailyLogs.activities,
-            photoUrl: dailyLogs.photoUrl,
+            energy: dailyLogs.energy,
+            attachments: dailyLogs.attachments,
           })
           .from(dailyLogs)
           .where(

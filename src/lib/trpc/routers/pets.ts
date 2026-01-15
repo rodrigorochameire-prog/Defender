@@ -1,9 +1,26 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, pets, petTutors, users } from "@/lib/db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { 
+  db, 
+  pets, 
+  petTutors, 
+  users, 
+  dailyLogs, 
+  behaviorLogs, 
+  trainingLogs,
+  petVaccinations,
+  petMedications,
+  preventiveTreatments,
+  documents,
+  calendarEvents,
+  transactions,
+  vaccineLibrary,
+  medicationLibrary,
+} from "@/lib/db";
+import { eq, and, desc, sql, gte, or } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { petSchema, updatePetSchema, idSchema } from "@/lib/validations";
+import { addCredits as creditEngineAddCredits } from "@/lib/services/credit-engine";
 
 export const petsRouter = router({
   /**
@@ -451,16 +468,18 @@ export const petsRouter = router({
     }),
 
   /**
-   * Adiciona créditos a um pet (admin)
+   * Adiciona créditos a um pet (admin) - Usa Credit Engine para transação atômica
    */
   addCredits: adminProcedure
     .input(
       z.object({
         petId: idSchema,
         credits: z.number().int().min(1).max(365),
+        amountInCents: z.number().int().optional(),
+        packageName: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
         const existingPet = await db.query.pets.findFirst({
           where: eq(pets.id, input.petId),
@@ -470,16 +489,28 @@ export const petsRouter = router({
           throw Errors.notFound("Pet");
         }
 
-        const [pet] = await db
-          .update(pets)
-          .set({
-            credits: existingPet.credits + input.credits,
-            updatedAt: new Date(),
-          })
-          .where(eq(pets.id, input.petId))
-          .returning();
+        // Usar Credit Engine para operação atômica
+        const result = await creditEngineAddCredits(
+          input.petId,
+          input.credits,
+          ctx.user!.id,
+          {
+            amountInCents: input.amountInCents,
+            packageName: input.packageName,
+          }
+        );
 
-        return pet;
+        if (!result.success) {
+          throw Errors.badRequest(result.error || "Erro ao adicionar créditos");
+        }
+
+        // Retornar pet atualizado
+        const [updatedPet] = await db
+          .select()
+          .from(pets)
+          .where(eq(pets.id, input.petId));
+
+        return updatedPet;
       }, "Erro ao adicionar créditos");
     }),
 
@@ -521,4 +552,251 @@ export const petsRouter = router({
       };
     }, "Erro ao buscar estatísticas");
   }),
+
+  /**
+   * Timeline Unificada - Histórico completo do pet
+   * Combina logs diários, comportamento, treinamento, vacinas, preventivos, 
+   * documentos e eventos de calendário em uma única timeline ordenada
+   */
+  getFullHistory: protectedProcedure
+    .input(z.object({
+      petId: idSchema,
+      limit: z.number().min(10).max(100).default(50),
+      cursor: z.number().optional(), // Para paginação infinita
+      types: z.array(z.enum([
+        "daily_log", "behavior", "training", "vaccine", 
+        "medication", "preventive", "document", "calendar", "transaction"
+      ])).optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const { petId, limit, types } = input;
+
+        // Verificar permissão (admin pode ver qualquer pet)
+        if (ctx.user.role !== "admin") {
+          const relation = await db.query.petTutors.findFirst({
+            where: and(
+              eq(petTutors.petId, petId),
+              eq(petTutors.tutorId, ctx.user.id)
+            ),
+          });
+          if (!relation) {
+            throw Errors.forbidden();
+          }
+        }
+
+        // Buscar dados de todas as tabelas em paralelo
+        const [
+          dailyLogsData,
+          behaviorLogsData,
+          trainingLogsData,
+          vaccinationsData,
+          medicationsData,
+          preventivesData,
+          documentsData,
+          calendarData,
+          transactionsData,
+        ] = await Promise.all([
+          // Daily Logs
+          (!types || types.includes("daily_log")) 
+            ? db.select({
+                id: dailyLogs.id,
+                date: dailyLogs.logDate,
+                type: sql<string>`'daily_log'`,
+                subtype: dailyLogs.logType,
+                title: sql<string>`'Log Diário'`,
+                description: dailyLogs.notes,
+                mood: dailyLogs.mood,
+                energy: dailyLogs.energy,
+                appetite: dailyLogs.appetite,
+                attachments: dailyLogs.attachments,
+                createdAt: dailyLogs.createdAt,
+              }).from(dailyLogs).where(eq(dailyLogs.petId, petId))
+            : Promise.resolve([]),
+
+          // Behavior Logs
+          (!types || types.includes("behavior"))
+            ? db.select({
+                id: behaviorLogs.id,
+                date: behaviorLogs.logDate,
+                type: sql<string>`'behavior'`,
+                subtype: sql<string>`'behavior'`,
+                title: sql<string>`'Registro de Comportamento'`,
+                description: behaviorLogs.notes,
+                socialization: behaviorLogs.socialization,
+                obedience: behaviorLogs.obedience,
+                anxiety: behaviorLogs.anxiety,
+                attachments: behaviorLogs.attachments,
+                createdAt: behaviorLogs.createdAt,
+              }).from(behaviorLogs).where(eq(behaviorLogs.petId, petId))
+            : Promise.resolve([]),
+
+          // Training Logs
+          (!types || types.includes("training"))
+            ? db.select({
+                id: trainingLogs.id,
+                date: trainingLogs.logDate,
+                type: sql<string>`'training'`,
+                subtype: trainingLogs.category,
+                title: sql<string>`CONCAT('Treinamento: ', ${trainingLogs.command})`,
+                description: trainingLogs.notes,
+                status: trainingLogs.status,
+                successRate: trainingLogs.successRate,
+                attachments: trainingLogs.attachments,
+                createdAt: trainingLogs.createdAt,
+              }).from(trainingLogs).where(eq(trainingLogs.petId, petId))
+            : Promise.resolve([]),
+
+          // Vaccinations
+          (!types || types.includes("vaccine"))
+            ? db.select({
+                id: petVaccinations.id,
+                date: petVaccinations.applicationDate,
+                type: sql<string>`'vaccine'`,
+                subtype: sql<string>`'vaccination'`,
+                title: vaccineLibrary.name,
+                description: petVaccinations.notes,
+                veterinarian: petVaccinations.veterinarian,
+                clinic: petVaccinations.clinic,
+                nextDueDate: petVaccinations.nextDueDate,
+                documentUrl: petVaccinations.documentUrl,
+                createdAt: petVaccinations.createdAt,
+              })
+              .from(petVaccinations)
+              .leftJoin(vaccineLibrary, eq(petVaccinations.vaccineId, vaccineLibrary.id))
+              .where(eq(petVaccinations.petId, petId))
+            : Promise.resolve([]),
+
+          // Medications
+          (!types || types.includes("medication"))
+            ? db.select({
+                id: petMedications.id,
+                date: petMedications.startDate,
+                type: sql<string>`'medication'`,
+                subtype: medicationLibrary.type,
+                title: medicationLibrary.name,
+                description: petMedications.notes,
+                dosage: petMedications.dosage,
+                frequency: petMedications.frequency,
+                endDate: petMedications.endDate,
+                isActive: petMedications.isActive,
+                createdAt: petMedications.createdAt,
+              })
+              .from(petMedications)
+              .leftJoin(medicationLibrary, eq(petMedications.medicationId, medicationLibrary.id))
+              .where(eq(petMedications.petId, petId))
+            : Promise.resolve([]),
+
+          // Preventives
+          (!types || types.includes("preventive"))
+            ? db.select({
+                id: preventiveTreatments.id,
+                date: preventiveTreatments.applicationDate,
+                type: sql<string>`'preventive'`,
+                subtype: preventiveTreatments.type,
+                title: preventiveTreatments.productName,
+                description: preventiveTreatments.notes,
+                nextDueDate: preventiveTreatments.nextDueDate,
+                createdAt: preventiveTreatments.createdAt,
+              }).from(preventiveTreatments).where(eq(preventiveTreatments.petId, petId))
+            : Promise.resolve([]),
+
+          // Documents
+          (!types || types.includes("document"))
+            ? db.select({
+                id: documents.id,
+                date: documents.createdAt,
+                type: sql<string>`'document'`,
+                subtype: documents.category,
+                title: documents.title,
+                description: documents.description,
+                fileUrl: documents.fileUrl,
+                fileName: documents.fileName,
+                relatedModule: documents.relatedModule,
+                relatedId: documents.relatedId,
+                createdAt: documents.createdAt,
+              }).from(documents).where(eq(documents.petId, petId))
+            : Promise.resolve([]),
+
+          // Calendar Events
+          (!types || types.includes("calendar"))
+            ? db.select({
+                id: calendarEvents.id,
+                date: calendarEvents.eventDate,
+                type: sql<string>`'calendar'`,
+                subtype: calendarEvents.eventType,
+                title: calendarEvents.title,
+                description: calendarEvents.description,
+                status: calendarEvents.status,
+                createdAt: calendarEvents.createdAt,
+              }).from(calendarEvents).where(eq(calendarEvents.petId, petId))
+            : Promise.resolve([]),
+
+          // Transactions (Credit history)
+          (!types || types.includes("transaction"))
+            ? db.select({
+                id: transactions.id,
+                date: transactions.createdAt,
+                type: sql<string>`'transaction'`,
+                subtype: transactions.type,
+                title: sql<string>`CASE 
+                  WHEN ${transactions.type} = 'credit_purchase' THEN 'Compra de Créditos'
+                  WHEN ${transactions.type} = 'credit_use' THEN 'Uso de Crédito'
+                  ELSE 'Transação'
+                END`,
+                description: transactions.description,
+                credits: transactions.credits,
+                amount: transactions.amount,
+                createdAt: transactions.createdAt,
+              }).from(transactions).where(eq(transactions.petId, petId))
+            : Promise.resolve([]),
+        ]);
+
+        // Combinar todos os itens em uma única timeline
+        const allItems = [
+          ...dailyLogsData.map(item => ({ ...item, sortDate: new Date(item.date) })),
+          ...behaviorLogsData.map(item => ({ ...item, sortDate: new Date(item.date) })),
+          ...trainingLogsData.map(item => ({ ...item, sortDate: new Date(item.date) })),
+          ...vaccinationsData.map(item => ({ ...item, sortDate: new Date(item.date) })),
+          ...medicationsData.map(item => ({ ...item, sortDate: new Date(item.date) })),
+          ...preventivesData.map(item => ({ ...item, sortDate: new Date(item.date) })),
+          ...documentsData.map(item => ({ ...item, sortDate: new Date(item.date) })),
+          ...calendarData.map(item => ({ ...item, sortDate: new Date(item.date) })),
+          ...transactionsData.map(item => ({ ...item, sortDate: new Date(item.date) })),
+        ];
+
+        // Ordenar por data (mais recente primeiro)
+        allItems.sort((a, b) => b.sortDate.getTime() - a.sortDate.getTime());
+
+        // Aplicar paginação
+        const paginatedItems = allItems.slice(0, limit);
+
+        // Calcular próximo cursor para paginação infinita
+        const hasMore = allItems.length > limit;
+        const nextCursor = hasMore ? paginatedItems.length : undefined;
+
+        // Estatísticas resumidas
+        const stats = {
+          totalItems: allItems.length,
+          byType: {
+            daily_log: dailyLogsData.length,
+            behavior: behaviorLogsData.length,
+            training: trainingLogsData.length,
+            vaccine: vaccinationsData.length,
+            medication: medicationsData.length,
+            preventive: preventivesData.length,
+            document: documentsData.length,
+            calendar: calendarData.length,
+            transaction: transactionsData.length,
+          },
+        };
+
+        return {
+          items: paginatedItems,
+          stats,
+          hasMore,
+          nextCursor,
+        };
+      }, "Erro ao buscar histórico do pet");
+    }),
 });

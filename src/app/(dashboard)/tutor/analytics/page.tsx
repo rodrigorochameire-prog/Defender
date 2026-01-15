@@ -421,9 +421,9 @@ export default function TutorAnalyticsPage() {
                             key={log.id} 
                             className="flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                           >
-                            {log.photoUrl ? (
+                            {log.attachments && JSON.parse(log.attachments)?.[0] ? (
                               <img 
-                                src={log.photoUrl} 
+                                src={JSON.parse(log.attachments)[0]} 
                                 alt="Log" 
                                 className="w-12 h-12 rounded-lg object-cover"
                               />

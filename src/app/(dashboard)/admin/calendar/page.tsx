@@ -53,9 +53,10 @@ import {
 import { PremiumCalendar, CalendarEvent } from "@/components/premium-calendar";
 import { CalendarSkeleton } from "@/components/shared/skeletons";
 import { PageHeader } from "@/components/shared/page-header";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight, Thermometer } from "lucide-react";
 
 // Tipos de eventos que podem ser marcados como "realizados"
 const ACTIONABLE_EVENT_TYPES = ["vaccination", "medication", "medical", "preventive", "grooming"];
@@ -79,6 +80,7 @@ export default function AdminCalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [heatmapMonth, setHeatmapMonth] = useState(new Date());
   const [editFormData, setEditFormData] = useState({
     title: "",
     description: "",
@@ -98,6 +100,11 @@ export default function AdminCalendarPage() {
   });
 
   const { data: petsData } = trpc.pets.list.useQuery();
+
+  const { data: heatmapData } = trpc.petManagement.getOccupancyHeatmap.useQuery({
+    year: heatmapMonth.getFullYear(),
+    month: heatmapMonth.getMonth(),
+  });
 
   const createEvent = trpc.calendar.create.useMutation({
     onSuccess: () => {
@@ -381,6 +388,114 @@ export default function AdminCalendarPage() {
         pets={pets}
         showCreateButton={true}
       />
+
+      {/* Mapa de Calor de Ocupação */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Thermometer className="h-5 w-5 text-primary" />
+            Mapa de Ocupação
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => setHeatmapMonth(subMonths(heatmapMonth, 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium min-w-[120px] text-center">
+              {format(heatmapMonth, "MMMM yyyy", { locale: ptBR })}
+            </span>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => setHeatmapMonth(addMonths(heatmapMonth, 1))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {heatmapData && (
+            <>
+              {/* Legenda */}
+              <div className="flex items-center gap-4 mb-4 text-sm">
+                <span className="text-muted-foreground">Ocupação:</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded bg-gray-100 dark:bg-gray-800" />
+                  <span>Vazio</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded bg-green-200 dark:bg-green-900" />
+                  <span>Baixa</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded bg-yellow-200 dark:bg-yellow-900" />
+                  <span>Média</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded bg-orange-300 dark:bg-orange-800" />
+                  <span>Alta</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded bg-red-400 dark:bg-red-700" />
+                  <span>Lotado</span>
+                </div>
+                <div className="ml-auto text-muted-foreground">
+                  Capacidade: {heatmapData.maxCapacity} pets | 
+                  Média: {heatmapData.avgOccupancy.toFixed(0)}%
+                </div>
+              </div>
+
+              {/* Grid do mapa de calor */}
+              <div className="grid grid-cols-7 gap-1">
+                {/* Cabeçalho dos dias da semana */}
+                {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
+                  <div key={day} className="text-center text-xs text-muted-foreground font-medium py-1">
+                    {day}
+                  </div>
+                ))}
+                
+                {/* Células vazias para alinhar o primeiro dia */}
+                {Array.from({ length: new Date(heatmapMonth.getFullYear(), heatmapMonth.getMonth(), 1).getDay() }).map((_, i) => (
+                  <div key={`empty-${i}`} />
+                ))}
+                
+                {/* Dias do mês */}
+                {heatmapData.heatmap.map((day, idx) => {
+                  const dayNum = idx + 1;
+                  const isToday = isSameDay(new Date(day.date), new Date());
+                  
+                  const bgColor = 
+                    day.level === "full" ? "bg-red-400 dark:bg-red-700" :
+                    day.level === "high" ? "bg-orange-300 dark:bg-orange-800" :
+                    day.level === "medium" ? "bg-yellow-200 dark:bg-yellow-900" :
+                    day.level === "low" ? "bg-green-200 dark:bg-green-900" :
+                    "bg-gray-100 dark:bg-gray-800";
+
+                  return (
+                    <div
+                      key={day.date}
+                      className={cn(
+                        "aspect-square rounded-md flex flex-col items-center justify-center text-xs cursor-default transition-all hover:ring-2 hover:ring-primary/50",
+                        bgColor,
+                        isToday && "ring-2 ring-primary"
+                      )}
+                      title={`${format(new Date(day.date), "dd/MM")}: ${day.count} check-ins (${day.percentage.toFixed(0)}%)`}
+                    >
+                      <span className="font-medium">{dayNum}</span>
+                      {day.count > 0 && (
+                        <span className="text-[10px] opacity-70">{day.count}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Próximos Eventos - DEPOIS DO CALENDÁRIO */}
       {upcomingWeekEvents.length > 0 && (

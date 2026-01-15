@@ -36,6 +36,8 @@ import {
   CreditCard,
   ChevronRight,
   PawPrint,
+  Package,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardSkeleton } from "@/components/shared/skeletons";
@@ -68,6 +70,8 @@ export default function AdminDashboard() {
   const { data: vaccineStats } = trpc.vaccines.stats.useQuery();
   const { data: allPets } = trpc.pets.list.useQuery();
   const { data: petsAttention } = trpc.analytics.petsRequiringAttention.useQuery();
+  const { data: dailyStatus } = trpc.petManagement.getDailyStatusCards.useQuery();
+  const { data: lowStockPets } = trpc.petManagement.getLowStockPets.useQuery();
 
   // Dados calculados para gráficos
   const chartData = useMemo(() => {
@@ -160,6 +164,85 @@ export default function AdminDashboard() {
 
         {/* Tab: Visão Geral */}
         <TabsContent value="overview" className="space-y-6">
+          {/* Cards de Status do Dia */}
+          {dailyStatus && (
+            <div className="grid gap-3 md:grid-cols-4">
+              <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                        {dailyStatus.petsScheduledToEnter}
+                      </p>
+                      <p className="text-sm text-blue-600 dark:text-blue-400">Pets para entrar</p>
+                    </div>
+                    <Dog className="h-8 w-8 text-blue-500 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+                        {dailyStatus.medicationsToApply}
+                      </p>
+                      <p className="text-sm text-purple-600 dark:text-purple-400">Medicamentos hoje</p>
+                    </div>
+                    <Pill className="h-8 w-8 text-purple-500 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className={`${dailyStatus.lowStockPets > 0 
+                ? "bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800" 
+                : "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"}`}>
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-3xl font-bold ${dailyStatus.lowStockPets > 0 
+                        ? "text-orange-700 dark:text-orange-300" 
+                        : "text-green-700 dark:text-green-300"}`}>
+                        {dailyStatus.lowStockPets}
+                      </p>
+                      <p className={`text-sm ${dailyStatus.lowStockPets > 0 
+                        ? "text-orange-600 dark:text-orange-400" 
+                        : "text-green-600 dark:text-green-400"}`}>
+                        Estoques baixos
+                      </p>
+                    </div>
+                    <Package className={`h-8 w-8 opacity-50 ${dailyStatus.lowStockPets > 0 
+                      ? "text-orange-500" : "text-green-500"}`} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className={`${dailyStatus.behaviorAlertsCount > 0 
+                ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" 
+                : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"}`}>
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-3xl font-bold ${dailyStatus.behaviorAlertsCount > 0 
+                        ? "text-red-700 dark:text-red-300" 
+                        : "text-slate-700 dark:text-slate-300"}`}>
+                        {dailyStatus.behaviorAlertsCount}
+                      </p>
+                      <p className={`text-sm ${dailyStatus.behaviorAlertsCount > 0 
+                        ? "text-red-600 dark:text-red-400" 
+                        : "text-slate-600 dark:text-slate-400"}`}>
+                        Alertas comportamento
+                      </p>
+                    </div>
+                    <Zap className={`h-8 w-8 opacity-50 ${dailyStatus.behaviorAlertsCount > 0 
+                      ? "text-red-500" : "text-slate-500"}`} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Stats Cards - Cores Neutras */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card className="shadow-sm hover:shadow-md transition-shadow">
@@ -317,6 +400,59 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Pets com Estoque Baixo */}
+          {lowStockPets && lowStockPets.length > 0 && (
+            <Card className="shadow-sm border-orange-200 dark:border-orange-900">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                      <Package className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Estoques de Ração Baixos</CardTitle>
+                      <CardDescription className="mt-1">
+                        Avisar tutores para reposição
+                      </CardDescription>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {lowStockPets.slice(0, 5).map((pet) => (
+                    <Link key={pet.id} href={`/admin/pets/${pet.id}`}>
+                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                            {pet.photoUrl ? (
+                              <img src={pet.photoUrl} alt={pet.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <PawPrint className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium">{pet.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {pet.foodBrand || "Ração"} • {pet.foodStockGrams ? `${(pet.foodStockGrams / 1000).toFixed(1)} kg` : "0 kg"}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge 
+                          variant={pet.alertLevel === "empty" ? "destructive" : 
+                                   pet.alertLevel === "critical" ? "destructive" : "secondary"}
+                          className="gap-1"
+                        >
+                          {pet.daysRemaining <= 0 ? "Zerado" : `${pet.daysRemaining} dias`}
+                        </Badge>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Pets que Requerem Atenção */}
           {petsAttention && petsAttention.summary.petsAffected > 0 && (
