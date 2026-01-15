@@ -204,15 +204,57 @@ export const petsRouter = router({
           updatedAt: new Date(),
         };
 
+        // Dados básicos
         if (data.name !== undefined) updateData.name = data.name;
         if (data.breed !== undefined) updateData.breed = data.breed;
         if (data.species !== undefined) updateData.species = data.species;
         if (data.weight !== undefined) updateData.weight = data.weight;
         if (data.notes !== undefined) updateData.notes = data.notes;
-        if (data.foodBrand !== undefined) updateData.foodBrand = data.foodBrand;
-        if (data.foodAmount !== undefined) updateData.foodAmount = data.foodAmount;
         if (data.birthDate !== undefined) {
           updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
+        }
+        if (data.photoUrl !== undefined) updateData.photoUrl = data.photoUrl;
+        
+        // Dados físicos avançados
+        if (data.size !== undefined) updateData.size = data.size;
+        if (data.coatType !== undefined) updateData.coatType = data.coatType;
+        if (data.gender !== undefined) updateData.sex = data.gender;
+        
+        // Perfil comportamental
+        if (data.energyLevel !== undefined) updateData.energyLevel = data.energyLevel;
+        if (data.dogSociability !== undefined) updateData.dogSociability = data.dogSociability;
+        if (data.humanSociability !== undefined) updateData.humanSociability = data.humanSociability;
+        if (data.playStyle !== undefined) updateData.playStyle = data.playStyle;
+        if (data.correctionSensitivity !== undefined) updateData.correctionSensitivity = data.correctionSensitivity;
+        if (data.humanFocusLevel !== undefined) updateData.humanFocus = data.humanFocusLevel;
+        if (data.fearTriggers !== undefined) updateData.fearTriggers = data.fearTriggers;
+        if (data.calmingMethods !== undefined) updateData.calmingTechnique = data.calmingMethods?.[0] || null;
+        if (data.equipmentRestrictions !== undefined) updateData.equipmentRestrictions = data.equipmentRestrictions;
+        if (data.coexistenceRestrictions !== undefined) updateData.convivenceRestrictions = data.coexistenceRestrictions;
+        
+        // Alimentação
+        if (data.foodBrand !== undefined) updateData.foodBrand = data.foodBrand;
+        if (data.foodType !== undefined) updateData.foodType = data.foodType;
+        if (data.foodAmount !== undefined) updateData.foodAmount = data.foodAmount;
+        if (data.foodPreparation !== undefined) updateData.foodPreparation = data.foodPreparation;
+        if (data.feedingInstructions !== undefined) updateData.feedingInstructions = data.feedingInstructions;
+        
+        // Saúde e alergias
+        if (data.hasFoodAllergy !== undefined) updateData.hasFoodAllergy = data.hasFoodAllergy;
+        if (data.foodAllergies !== undefined) updateData.foodAllergyDetails = data.foodAllergies?.join(", ");
+        if (data.hasMedicationAllergy !== undefined) updateData.hasMedicationAllergy = data.hasMedicationAllergy;
+        if (data.medicationAllergies !== undefined) updateData.medicationAllergyDetails = data.medicationAllergies?.join(", ");
+        if (data.hasChronicCondition !== undefined) updateData.hasChronicCondition = data.hasChronicCondition;
+        if (data.chronicConditions !== undefined) updateData.chronicConditionDetails = data.chronicConditions?.join(", ");
+        
+        // Protocolo de emergência
+        if (data.emergencyVetName !== undefined) updateData.emergencyVetName = data.emergencyVetName;
+        if (data.emergencyVetPhone !== undefined) updateData.emergencyVetPhone = data.emergencyVetPhone;
+        if (data.emergencyVetAddress !== undefined) updateData.emergencyVetAddress = data.emergencyVetAddress;
+        
+        // Dados de cio (fêmeas não castradas)
+        if (data.lastHeatDate !== undefined) {
+          updateData.lastHeatDate = data.lastHeatDate ? new Date(data.lastHeatDate) : null;
         }
 
         const [updatedPet] = await db

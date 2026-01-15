@@ -185,9 +185,15 @@ export default function AdminPetDetailPage() {
           <Badge variant={pet.status === "checked-in" ? "default" : "secondary"} className="text-sm">
             {pet.status === "checked-in" ? "Na Creche" : "Fora da Creche"}
           </Badge>
+          <Link href={`/admin/pets/${petId}/edit`}>
+            <Button variant="outline">
+              <Edit className="h-4 w-4 mr-2" />
+              Perfil Avançado
+            </Button>
+          </Link>
           <Button onClick={() => setIsEditDialogOpen(true)}>
             <Edit className="h-4 w-4 mr-2" />
-            Editar
+            Edição Rápida
           </Button>
         </div>
       </div>
