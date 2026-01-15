@@ -55,21 +55,53 @@ export const pets = pgTable("pets", {
   approvalStatus: varchar("approval_status", { length: 50 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
   notes: text("notes"),
   
-  // Alimentação
+  // === DADOS FÍSICOS AVANÇADOS ===
+  size: varchar("size", { length: 20 }), // 'mini' | 'small' | 'medium' | 'large' | 'giant'
+  coatType: varchar("coat_type", { length: 30 }), // 'short' | 'long' | 'double' | 'wire' | 'curly' | 'hairless'
+  isCastrated: boolean("is_castrated"),
+  lastHeatDate: timestamp("last_heat_date"), // Para fêmeas não castradas
+  sex: varchar("sex", { length: 10 }), // 'male' | 'female'
+  
+  // === PERFIL COMPORTAMENTAL ===
+  energyLevel: varchar("energy_level", { length: 20 }), // 'very_low' | 'low' | 'medium' | 'high' | 'very_high'
+  dogSociability: varchar("dog_sociability", { length: 20 }), // 'social' | 'selective' | 'reactive' | 'antisocial'
+  humanSociability: varchar("human_sociability", { length: 20 }), // 'friendly' | 'cautious' | 'fearful' | 'reactive'
+  playStyle: varchar("play_style", { length: 20 }), // 'wrestling' | 'chase' | 'independent' | 'observer'
+  correctionSensitivity: varchar("correction_sensitivity", { length: 20 }), // 'high' | 'medium' | 'low'
+  humanFocus: varchar("human_focus", { length: 20 }), // 'low' | 'medium' | 'high'
+  fearTriggers: jsonb("fear_triggers").$type<string[]>().default([]), // ['thunder', 'dryer', 'broom', 'men_hat', 'dogs_barking', 'motorcycles']
+  calmingTechnique: varchar("calming_technique", { length: 30 }), // 'treat' | 'chest_pet' | 'timeout' | 'specific_toy'
+  equipmentRestrictions: jsonb("equipment_restrictions").$type<string[]>().default([]), // ['no_choke', 'harness_only', 'no_overhead_collar']
+  
+  // === RESTRIÇÕES DE CONVÍVIO ===
+  sociabilityLevel: varchar("sociability_level", { length: 20 }), // 'shy' | 'selective' | 'friendly' | 'very_social'
+  anxietySeparation: varchar("anxiety_separation", { length: 20 }), // 'none' | 'mild' | 'moderate' | 'severe'
+  roomPreference: varchar("room_preference", { length: 50 }), // 'small_dogs' | 'large_dogs' | 'calm' | 'active'
+  convivenceRestrictions: jsonb("convivence_restrictions").$type<string[]>().default([]), // ['no_intact_males', 'no_small_dogs', 'resource_guarding']
+  
+  // === MÉTRICAS DE TEMPERAMENTO (1-5) ===
+  confidenceLevel: integer("confidence_level"), // 1=medroso, 5=muito confiante
+  impulsivityLevel: integer("impulsivity_level"), // 1=reflexivo, 5=impulsivo
+  resilienceLevel: integer("resilience_level"), // 1=demora a recuperar, 5=recupera rápido
+  
+  // === ALIMENTAÇÃO ===
   foodBrand: varchar("food_brand", { length: 200 }),
   foodType: varchar("food_type", { length: 50 }), // 'dry' | 'wet' | 'mixed' | 'natural' | 'barf'
   foodAmount: integer("food_amount"), // quantidade diária em gramas
   foodStockGrams: integer("food_stock_grams"), // estoque atual na creche em gramas
   foodStockLastUpdate: timestamp("food_stock_last_update"), // última atualização do estoque
   feedingInstructions: text("feeding_instructions"), // instruções especiais de preparo
+  foodPreparation: varchar("food_preparation", { length: 30 }), // 'dry' | 'with_water' | 'natural_cold' | 'natural_heated' | 'with_topping'
   
-  // Comportamento e Energia
-  energyLevel: varchar("energy_level", { length: 20 }), // 'low' | 'medium' | 'high' | 'very_high'
-  sociabilityLevel: varchar("sociability_level", { length: 20 }), // 'shy' | 'selective' | 'friendly' | 'very_social'
-  anxietySeparation: varchar("anxiety_separation", { length: 20 }), // 'none' | 'mild' | 'moderate' | 'severe'
-  roomPreference: varchar("room_preference", { length: 50 }), // 'small_dogs' | 'large_dogs' | 'calm' | 'active'
+  // === SAÚDE E ALERGIAS ===
+  hasFoodAllergy: boolean("has_food_allergy"),
+  foodAllergyDetails: text("food_allergy_details"), // Ingredientes alérgicos
+  hasMedicationAllergy: boolean("has_medication_allergy"),
+  medicationAllergyDetails: text("medication_allergy_details"),
+  hasChronicCondition: boolean("has_chronic_condition"),
+  chronicConditionDetails: text("chronic_condition_details"), // Cardíaco, Renal, Epilético
   
-  // Protocolo de Emergência
+  // === PROTOCOLO DE EMERGÊNCIA ===
   emergencyVetName: varchar("emergency_vet_name", { length: 200 }),
   emergencyVetPhone: varchar("emergency_vet_phone", { length: 50 }),
   emergencyVetAddress: text("emergency_vet_address"),
@@ -89,6 +121,7 @@ export const pets = pgTable("pets", {
   index("pets_deleted_at_idx").on(table.deletedAt),
   index("pets_energy_level_idx").on(table.energyLevel),
   index("pets_room_preference_idx").on(table.roomPreference),
+  index("pets_dog_sociability_idx").on(table.dogSociability),
 ]);
 
 export type Pet = typeof pets.$inferSelect;
@@ -305,13 +338,23 @@ export const dailyLogs = pgTable("daily_logs", {
   logDate: timestamp("log_date").notNull(),
   source: varchar("source", { length: 50 }).notNull(), // 'daycare' | 'home'
   logType: varchar("log_type", { length: 50 }).default("general"), // 'general' | 'health' | 'feeding' | 'exercise' | 'grooming' | 'incident'
-  mood: varchar("mood", { length: 50 }), // 'happy' | 'calm' | 'anxious' | 'tired' | 'agitated' | 'sick'
+  mood: varchar("mood", { length: 50 }), // 'happy' | 'calm' | 'anxious' | 'tired' | 'agitated' | 'sick' | 'playful' | 'fearful' | 'aggressive' | 'apathetic'
   stool: varchar("stool", { length: 50 }), // 'normal' | 'soft' | 'hard' | 'diarrhea' | 'bloody' | 'mucus' | 'none'
-  appetite: varchar("appetite", { length: 50 }), // 'excellent' | 'good' | 'moderate' | 'poor' | 'none'
+  appetite: varchar("appetite", { length: 50 }), // 'excellent' | 'good' | 'moderate' | 'poor' | 'none' | 'stimulated'
   energy: varchar("energy", { length: 50 }), // 'high' | 'normal' | 'low' | 'very_low'
   waterIntake: varchar("water_intake", { length: 50 }), // 'normal' | 'increased' | 'decreased' | 'none'
   notes: text("notes"),
   attachments: text("attachments"), // JSON array de URLs de anexos
+  // NOVOS CAMPOS ESTRUTURADOS
+  stoolQuality: varchar("stool_quality", { length: 50 }), // Escala Bristol: type_1-7, blood, mucus, none
+  urineQuality: varchar("urine_quality", { length: 50 }), // normal, dark, frequent, straining, blood, none
+  physicalIntegrity: varchar("physical_integrity", { length: 50 }), // perfect, minor_scratch, bite_mark, limping, skin_issue, ear_issue, injury
+  physicalNotes: text("physical_notes"), // Descrição de marcas/lesões
+  napQuality: varchar("nap_quality", { length: 50 }), // deep, rested, restless, none
+  groupRole: varchar("group_role", { length: 50 }), // leader, follower, peacemaker, shadow, loner, instigator
+  bestFriendPetId: integer("best_friend_pet_id").references(() => pets.id, { onDelete: "set null" }), // Melhor amigo do dia
+  activitiesPerformed: jsonb("activities_performed").$type<string[]>().default([]), // Atividades realizadas
+  checkoutObservations: jsonb("checkout_observations").$type<string[]>().default([]), // Observações de checkout
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),

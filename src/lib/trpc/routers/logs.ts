@@ -36,9 +36,9 @@ export const logsRouter = router({
         logDate: z.string().or(z.date()),
         source: z.enum(["home", "daycare"]),
         // Saúde física
-        mood: z.enum(["happy", "calm", "anxious", "tired", "agitated", "sick"]).optional(),
+        mood: z.enum(["happy", "calm", "anxious", "tired", "agitated", "sick", "playful", "fearful", "aggressive", "apathetic"]).optional(),
         stool: z.enum(["normal", "soft", "hard", "diarrhea", "bloody", "mucus", "none"]).optional(),
-        appetite: z.enum(["excellent", "good", "moderate", "poor", "none"]).optional(),
+        appetite: z.enum(["excellent", "good", "moderate", "poor", "none", "stimulated"]).optional(),
         vomit: z.boolean().optional(),
         cough: z.boolean().optional(),
         sneeze: z.boolean().optional(),
@@ -51,6 +51,24 @@ export const logsRouter = router({
         // Água e alimentação
         waterIntake: z.enum(["normal", "increased", "decreased", "none"]).optional(),
         foodAmount: z.enum(["all", "most", "half", "little", "none"]).optional(),
+        // NOVOS CAMPOS ESTRUTURADOS
+        // Qualidade fecal (Escala Bristol)
+        stoolQuality: z.enum(["type_1", "type_3", "type_5", "type_6", "type_7", "blood", "mucus", "none"]).optional(),
+        // Qualidade urinária
+        urineQuality: z.enum(["normal", "dark", "frequent", "straining", "blood", "none"]).optional(),
+        // Integridade física
+        physicalIntegrity: z.enum(["perfect", "minor_scratch", "bite_mark", "limping", "skin_issue", "ear_issue", "injury"]).optional(),
+        physicalNotes: z.string().optional(),
+        // Qualidade do descanso
+        napQuality: z.enum(["deep", "rested", "restless", "none"]).optional(),
+        // Papel no grupo
+        groupRole: z.enum(["leader", "follower", "peacemaker", "shadow", "loner", "instigator"]).optional(),
+        // Melhor amigo do dia
+        bestFriendPetId: z.number().optional(),
+        // Atividades realizadas (array)
+        activitiesPerformed: z.array(z.string()).optional(),
+        // Observações de checkout (array)
+        checkoutObservations: z.array(z.string()).optional(),
         // Outros
         notes: z.string().optional(),
         photos: z.array(z.string()).optional(), // URLs das fotos
@@ -70,7 +88,19 @@ export const logsRouter = router({
             mood: input.mood || null,
             stool: input.stool || null,
             appetite: input.appetite || null,
+            energy: input.energy || null,
+            waterIntake: input.waterIntake || null,
             notes: input.notes || null,
+            // Novos campos estruturados
+            stoolQuality: input.stoolQuality || null,
+            urineQuality: input.urineQuality || null,
+            physicalIntegrity: input.physicalIntegrity || null,
+            physicalNotes: input.physicalNotes || null,
+            napQuality: input.napQuality || null,
+            groupRole: input.groupRole || null,
+            bestFriendPetId: input.bestFriendPetId || null,
+            activitiesPerformed: input.activitiesPerformed || [],
+            checkoutObservations: input.checkoutObservations || [],
             createdById: ctx.user.id,
           })
           .returning();

@@ -79,15 +79,32 @@ import {
   Area,
 } from "recharts";
 
+import {
+  MOOD_STATUS,
+  STOOL_QUALITY,
+  URINE_QUALITY,
+  PHYSICAL_INTEGRITY,
+  NAP_QUALITY,
+  GROUP_ROLE,
+  ACTIVITIES_PERFORMED,
+  CHECKOUT_OBSERVATIONS,
+  APPETITE_STATUS,
+  WATER_INTAKE,
+} from "@/lib/constants/pet-options";
+
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
 
 const moodOptions = [
   { value: "happy", label: "Feliz", icon: Smile, color: "text-emerald-600 dark:text-emerald-400" },
   { value: "calm", label: "Calmo", icon: Meh, color: "text-sky-600 dark:text-sky-400" },
+  { value: "playful", label: "Brincalhão", icon: Smile, color: "text-green-600" },
   { value: "anxious", label: "Ansioso", icon: Frown, color: "text-amber-600 dark:text-amber-400" },
   { value: "tired", label: "Cansado", icon: Meh, color: "text-muted-foreground" },
   { value: "agitated", label: "Agitado", icon: Frown, color: "text-primary" },
+  { value: "fearful", label: "Medroso", icon: Frown, color: "text-orange-600" },
+  { value: "aggressive", label: "Agressivo", icon: Frown, color: "text-red-700" },
   { value: "sick", label: "Doente", icon: Frown, color: "text-red-600" },
+  { value: "apathetic", label: "Apático", icon: Meh, color: "text-gray-600" },
 ];
 
 const stoolOptions = [
@@ -100,12 +117,77 @@ const stoolOptions = [
   { value: "none", label: "Não fez", color: "text-gray-500" },
 ];
 
+// Opções detalhadas de qualidade fecal (Escala Bristol)
+const stoolQualityOptions = STOOL_QUALITY.map(opt => ({
+  value: opt.value,
+  label: opt.label,
+  color: opt.color === "green" ? "text-green-600" : 
+         opt.color === "yellow" ? "text-yellow-600" : 
+         opt.color === "orange" ? "text-orange-600" : 
+         opt.color === "red" ? "text-red-600" : "text-gray-500",
+  icon: opt.icon,
+  description: opt.description,
+}));
+
+// Opções de urina
+const urineQualityOptions = URINE_QUALITY.map(opt => ({
+  value: opt.value,
+  label: opt.label,
+  color: opt.color === "green" ? "text-green-600" : 
+         opt.color === "yellow" ? "text-yellow-600" : 
+         opt.color === "orange" ? "text-orange-600" : 
+         opt.color === "red" ? "text-red-600" : "text-gray-500",
+  icon: opt.icon,
+}));
+
+// Opções de integridade física
+const physicalIntegrityOptions = PHYSICAL_INTEGRITY.map(opt => ({
+  value: opt.value,
+  label: opt.label,
+  color: opt.color === "green" ? "text-green-600" : 
+         opt.color === "yellow" ? "text-yellow-600" : 
+         opt.color === "orange" ? "text-orange-600" : 
+         opt.color === "red" ? "text-red-600" : "text-gray-500",
+  icon: opt.icon,
+}));
+
+// Opções de qualidade de descanso
+const napQualityOptions = NAP_QUALITY.map(opt => ({
+  value: opt.value,
+  label: opt.label,
+  color: opt.color === "green" ? "text-green-600" : 
+         opt.color === "blue" ? "text-blue-600" : 
+         opt.color === "orange" ? "text-orange-600" : "text-yellow-600",
+  icon: opt.icon,
+}));
+
+// Opções de papel no grupo
+const groupRoleOptions = GROUP_ROLE.map(opt => ({
+  value: opt.value,
+  label: opt.label,
+  icon: opt.icon,
+}));
+
+// Opções de atividades
+const activitiesOptions = ACTIVITIES_PERFORMED.map(opt => ({
+  value: opt.value,
+  label: opt.label,
+  icon: opt.icon,
+}));
+
+// Opções de observações de checkout
+const checkoutOptions = CHECKOUT_OBSERVATIONS.map(opt => ({
+  value: opt.value,
+  label: opt.label,
+}));
+
 const appetiteOptions = [
   { value: "excellent", label: "Excelente", color: "text-green-600" },
   { value: "good", label: "Bom", color: "text-emerald-600" },
   { value: "moderate", label: "Moderado", color: "text-yellow-600" },
   { value: "poor", label: "Ruim", color: "text-orange-600" },
   { value: "none", label: "Não comeu", color: "text-red-600" },
+  { value: "stimulated", label: "Precisou de estímulo", color: "text-yellow-600" },
 ];
 
 const energyOptions = [
@@ -373,6 +455,17 @@ export default function AdminLogs() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
+    // Processar campos multi-select (checkboxes)
+    const activitiesPerformed: string[] = [];
+    const checkoutObservations: string[] = [];
+    
+    formData.getAll("activitiesPerformed").forEach(v => {
+      if (v) activitiesPerformed.push(v as string);
+    });
+    formData.getAll("checkoutObservations").forEach(v => {
+      if (v) checkoutObservations.push(v as string);
+    });
+    
     // TODO: Upload attachments first if any
     
     addLog.mutate({
@@ -384,6 +477,16 @@ export default function AdminLogs() {
       appetite: formData.get("appetite") as any || undefined,
       energy: formData.get("energy") as any || undefined,
       waterIntake: formData.get("waterIntake") as any || undefined,
+      // Novos campos estruturados
+      stoolQuality: formData.get("stoolQuality") as any || undefined,
+      urineQuality: formData.get("urineQuality") as any || undefined,
+      physicalIntegrity: formData.get("physicalIntegrity") as any || undefined,
+      physicalNotes: formData.get("physicalNotes") as string || undefined,
+      napQuality: formData.get("napQuality") as any || undefined,
+      groupRole: formData.get("groupRole") as any || undefined,
+      bestFriendPetId: formData.get("bestFriendPetId") ? Number(formData.get("bestFriendPetId")) : undefined,
+      activitiesPerformed: activitiesPerformed.length > 0 ? activitiesPerformed : undefined,
+      checkoutObservations: checkoutObservations.length > 0 ? checkoutObservations : undefined,
       notes: formData.get("notes") as string || undefined,
     });
   };
@@ -1119,9 +1222,174 @@ export default function AdminLogs() {
                 </Select>
               </div>
 
+              {/* === SEÇÃO: BEM-ESTAR FÍSICO (NOVOS CAMPOS) === */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-medium text-sm text-muted-foreground mb-3">Bem-Estar Físico (Check-out)</h4>
+                
+                {/* Qualidade Fecal e Urinária */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="stoolQuality">Qualidade Fecal (Bristol)</Label>
+                    <Select name="stoolQuality">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stoolQualityOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <span className={option.color}>
+                              {option.icon} {option.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="urineQuality">Qualidade Urinária</Label>
+                    <Select name="urineQuality">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {urineQualityOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <span className={option.color}>
+                              {option.icon} {option.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Integridade Física e Descanso */}
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="physicalIntegrity">Integridade Física</Label>
+                    <Select name="physicalIntegrity">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {physicalIntegrityOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <span className={option.color}>
+                              {option.icon} {option.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="napQuality">Qualidade do Descanso</Label>
+                    <Select name="napQuality">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {napQualityOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <span className={option.color}>
+                              {option.icon} {option.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Notas de integridade física */}
+                <div className="space-y-2 mt-4">
+                  <Label htmlFor="physicalNotes">Descrição de Marcas/Lesões (se houver)</Label>
+                  <Input
+                    id="physicalNotes"
+                    name="physicalNotes"
+                    placeholder="Descreva qualquer marca ou lesão observada..."
+                  />
+                </div>
+              </div>
+
+              {/* === SEÇÃO: DINÂMICA SOCIAL === */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-medium text-sm text-muted-foreground mb-3">Dinâmica Social</h4>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="groupRole">Papel no Grupo</Label>
+                    <Select name="groupRole">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {groupRoleOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.icon} {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bestFriendPetId">Melhor Amigo do Dia</Label>
+                    <Select name="bestFriendPetId">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pets?.filter(p => p.approvalStatus === "approved").map((pet) => (
+                          <SelectItem key={pet.id} value={String(pet.id)}>
+                            {pet.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* === SEÇÃO: ATIVIDADES REALIZADAS === */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-medium text-sm text-muted-foreground mb-3">Atividades Realizadas</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {activitiesOptions.map((option) => (
+                    <label key={option.value} className="flex items-center gap-2 p-2 rounded-lg border hover:bg-accent cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="activitiesPerformed"
+                        value={option.value}
+                        className="rounded"
+                      />
+                      <span className="text-sm">{option.icon} {option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* === SEÇÃO: OBSERVAÇÕES DE CHECK-OUT === */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-medium text-sm text-muted-foreground mb-3">Resumo do Dia</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {checkoutOptions.map((option) => (
+                    <label key={option.value} className="flex items-center gap-2 p-2 rounded-lg border hover:bg-accent cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="checkoutObservations"
+                        value={option.value}
+                        className="rounded"
+                      />
+                      <span className="text-sm">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               {/* Observações */}
-              <div className="space-y-2">
-                <Label htmlFor="notes">Observações</Label>
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="notes">Observações Adicionais</Label>
                 <Textarea
                   id="notes"
                   name="notes"
