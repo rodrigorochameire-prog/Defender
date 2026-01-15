@@ -4,10 +4,10 @@ import React from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dog, Plus, CreditCard, Calendar, Heart, ArrowRight } from "lucide-react";
+import { Dog, Plus, CreditCard, Calendar, Heart } from "lucide-react";
 import Link from "next/link";
 import { LoadingPage } from "@/components/shared/loading";
-import { PetAvatar } from "@/components/pet-avatar";
+import { PetCard } from "@/components/pet-card";
 
 export default function TutorPetsPage() {
   const { data: pets, isLoading } = trpc.pets.myPets.useQuery();
@@ -100,39 +100,14 @@ export default function TutorPetsPage() {
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {pets.map((pet) => (
-                <Link key={pet.id} href={`/tutor/pets/${pet.id}`}>
-                  <div className="p-5 rounded-[14px] bg-card hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)] transition-all duration-300 ease group border-0 shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)] hover:translate-y-[-2px]">
-                    <div className="flex items-center gap-4">
-                      <PetAvatar 
-                        photoUrl={pet.photoUrl} 
-                        breed={pet.breed} 
-                        name={pet.name} 
-                        size={56} 
-                        className="flex-shrink-0 ring-2 ring-[hsl(220_14%_92%)] shadow-[0_2px_4px_0_rgba(0,0,0,0.08)]" 
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="pet-card-name font-bold text-base text-foreground leading-tight truncate">{pet.name}</p>
-                        <p className="pet-card-breed text-sm font-medium text-[hsl(220_13%_45%)] mt-0.5 leading-tight truncate">
-                          {pet.breed || "Sem raça definida"}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-[hsl(220_13%_45%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between">
-                      <Badge className={
-                        pet.approvalStatus === "approved" ? "badge-success" :
-                        pet.approvalStatus === "pending" ? "badge-warning" : "badge-error"
-                      }>
-                        {pet.approvalStatus === "approved" ? "Aprovado" :
-                         pet.approvalStatus === "pending" ? "Pendente" : "Rejeitado"}
-                      </Badge>
-                      <div className="flex items-center gap-1.5 pet-card-credits text-sm">
-                        <CreditCard className="h-4 w-4 text-[hsl(220_13%_45%)]" />
-                        <span className="font-semibold text-[hsl(220_16%_38%)]">{pet.credits} dias</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                <PetCard
+                  key={pet.id}
+                  pet={pet}
+                  variant="compact"
+                  showActions={false}
+                  showCreditsBar={false}
+                  href={`/tutor/pets/${pet.id}`}
+                />
               ))}
             </div>
           )}
