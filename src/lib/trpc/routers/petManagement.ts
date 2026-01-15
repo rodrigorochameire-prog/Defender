@@ -28,6 +28,80 @@ export const petManagementRouter = router({
   /**
    * Status cards para o dashboard
    */
+  /**
+   * Mapa de calor de ocupação
+   */
+  getOccupancyHeatmap: adminProcedure
+    .input(z.object({
+      year: z.number(),
+      month: z.number().min(0).max(11),
+    }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const startOfMonth = new Date(input.year, input.month, 1);
+        const endOfMonth = new Date(input.year, input.month + 1, 0, 23, 59, 59);
+        const daysInMonth = endOfMonth.getDate();
+
+        // Buscar todos os check-ins do mês
+        const checkins = await db
+          .select({
+            date: sql<string>`DATE(${calendarEvents.eventDate})`,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(calendarEvents)
+          .where(
+            and(
+              eq(calendarEvents.eventType, "checkin"),
+              gte(calendarEvents.eventDate, startOfMonth),
+              lte(calendarEvents.eventDate, endOfMonth)
+            )
+          )
+          .groupBy(sql`DATE(${calendarEvents.eventDate})`);
+
+        // Buscar capacidade aproximada (pets aprovados)
+        const approvedPets = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(pets)
+          .where(
+            and(
+              eq(pets.approvalStatus, "approved"),
+              isNull(pets.deletedAt)
+            )
+          );
+
+        const maxCapacity = Math.max(approvedPets[0]?.count || 10, 10);
+        
+        // Criar mapa de ocupação por dia
+        const heatmapData: { date: string; count: number; percentage: number; level: "empty" | "low" | "medium" | "high" | "full" }[] = [];
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${input.year}-${String(input.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const checkin = checkins.find(c => c.date === dateStr);
+          const count = checkin?.count || 0;
+          const percentage = (count / maxCapacity) * 100;
+          
+          let level: "empty" | "low" | "medium" | "high" | "full" = "empty";
+          if (percentage > 90) level = "full";
+          else if (percentage > 70) level = "high";
+          else if (percentage > 40) level = "medium";
+          else if (percentage > 0) level = "low";
+
+          heatmapData.push({
+            date: dateStr,
+            count,
+            percentage,
+            level,
+          });
+        }
+
+        return {
+          heatmap: heatmapData,
+          maxCapacity,
+          avgOccupancy: heatmapData.reduce((sum, d) => sum + d.percentage, 0) / heatmapData.length,
+        };
+      }, "Erro ao calcular mapa de calor");
+    }),
+
   getDailyStatusCards: adminProcedure
     .query(async () => {
       return safeAsync(async () => {

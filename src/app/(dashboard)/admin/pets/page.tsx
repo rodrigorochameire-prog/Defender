@@ -87,6 +87,10 @@ import Link from "next/link";
 export default function AdminPetsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [creditFilter, setCreditFilter] = useState<string>("all");
+  const [energyFilter, setEnergyFilter] = useState<string>("all");
+  const [roomFilter, setRoomFilter] = useState<string>("all");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedPet, setSelectedPet] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -98,6 +102,7 @@ export default function AdminPetsPage() {
   const { data: pets, isLoading } = trpc.pets.list.useQuery();
   const { data: pendingPets } = trpc.pets.pending.useQuery();
   const { data: tutors } = trpc.users.tutors.useQuery();
+  const { data: lowStockPets } = trpc.petManagement.getLowStockPets.useQuery();
 
   const approveMutation = trpc.pets.approve.useMutation({
     onSuccess: () => {
@@ -157,14 +162,44 @@ export default function AdminPetsPage() {
   // Filtered pets
   const filteredPets = useMemo(() => {
     if (!pets) return [];
-    return pets.filter((pet) => {
+    
+    // Set de IDs de pets com estoque baixo para verificação rápida
+    const lowStockPetIds = new Set(lowStockPets?.map(p => p.id) || []);
+    
+    return pets.filter((pet: any) => {
+      // Filtro de busca
       const matchesSearch = 
         pet.name.toLowerCase().includes(search.toLowerCase()) ||
         pet.breed?.toLowerCase().includes(search.toLowerCase());
+      
+      // Filtro de status de aprovação
       const matchesStatus = statusFilter === "all" || pet.approvalStatus === statusFilter;
-      return matchesSearch && matchesStatus;
+      
+      // Filtro de créditos
+      let matchesCredits = true;
+      if (creditFilter === "zero") matchesCredits = (pet.credits || 0) === 0;
+      else if (creditFilter === "low") matchesCredits = (pet.credits || 0) > 0 && (pet.credits || 0) <= 3;
+      else if (creditFilter === "ok") matchesCredits = (pet.credits || 0) > 3;
+      else if (creditFilter === "lowStock") matchesCredits = lowStockPetIds.has(pet.id);
+      
+      // Filtro de energia
+      let matchesEnergy = true;
+      if (energyFilter !== "all") matchesEnergy = pet.energyLevel === energyFilter;
+      
+      // Filtro de sala/preferência
+      let matchesRoom = true;
+      if (roomFilter !== "all") matchesRoom = pet.roomPreference === roomFilter;
+      
+      return matchesSearch && matchesStatus && matchesCredits && matchesEnergy && matchesRoom;
     });
-  }, [pets, search, statusFilter]);
+  }, [pets, search, statusFilter, creditFilter, energyFilter, roomFilter, lowStockPets]);
+  
+  // Contagem de filtros ativos
+  const activeFiltersCount = [
+    creditFilter !== "all",
+    energyFilter !== "all",
+    roomFilter !== "all",
+  ].filter(Boolean).length;
 
   // Stats
   const stats = useMemo(() => {
@@ -448,28 +483,135 @@ export default function AdminPetsPage() {
           )}
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome ou raça..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome ou raça..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="approved">Aprovados</SelectItem>
+                  <SelectItem value="pending">Pendentes</SelectItem>
+                  <SelectItem value="rejected">Rejeitados</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button 
+                variant={showAdvancedFilters ? "default" : "outline"} 
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="gap-2"
+              >
+                <ListFilter className="h-4 w-4" />
+                Filtros
+                {activeFiltersCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                    {activeFiltersCount}
+                  </Badge>
+                )}
+              </Button>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[160px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="approved">Aprovados</SelectItem>
-                <SelectItem value="pending">Pendentes</SelectItem>
-                <SelectItem value="rejected">Rejeitados</SelectItem>
-              </SelectContent>
-            </Select>
+            
+            {/* Filtros Avançados */}
+            {showAdvancedFilters && (
+              <Card className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* Filtro de Créditos */}
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Status de Crédito</Label>
+                    <Select value={creditFilter} onValueChange={setCreditFilter}>
+                      <SelectTrigger>
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Créditos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="zero">Sem créditos</SelectItem>
+                        <SelectItem value="low">Poucos (1-3)</SelectItem>
+                        <SelectItem value="ok">Adequado (4+)</SelectItem>
+                        <SelectItem value="lowStock">Estoque baixo ração</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Filtro de Energia */}
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Nível de Energia</Label>
+                    <Select value={energyFilter} onValueChange={setEnergyFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Energia" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="low">Baixa</SelectItem>
+                        <SelectItem value="medium">Média</SelectItem>
+                        <SelectItem value="high">Alta</SelectItem>
+                        <SelectItem value="very_high">Muito Alta</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Filtro de Sala */}
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Preferência de Sala</Label>
+                    <Select value={roomFilter} onValueChange={setRoomFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sala" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="small_dogs">Pequenos</SelectItem>
+                        <SelectItem value="large_dogs">Grandes</SelectItem>
+                        <SelectItem value="calm">Calmos</SelectItem>
+                        <SelectItem value="active">Ativos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Botão Limpar */}
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">&nbsp;</Label>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full"
+                      onClick={() => {
+                        setCreditFilter("all");
+                        setEnergyFilter("all");
+                        setRoomFilter("all");
+                      }}
+                    >
+                      Limpar Filtros
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Estatísticas dos filtros */}
+                <div className="mt-4 pt-4 border-t flex items-center gap-4 text-sm text-muted-foreground">
+                  <span>
+                    <strong className="text-foreground">{filteredPets.length}</strong> pets encontrados
+                  </span>
+                  {lowStockPets && lowStockPets.length > 0 && (
+                    <span className="text-orange-600">
+                      <strong>{lowStockPets.length}</strong> com estoque baixo
+                    </span>
+                  )}
+                  {pets && (
+                    <span>
+                      <strong>{pets.filter((p: any) => (p.credits || 0) <= 3).length}</strong> com poucos créditos
+                    </span>
+                  )}
+                </div>
+              </Card>
+            )}
           </div>
 
           {/* Pets Grid */}
