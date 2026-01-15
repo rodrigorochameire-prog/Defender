@@ -93,7 +93,9 @@ export function PetCard({
   const creditsPercent = Math.min((pet.credits / maxCredits) * 100, 100);
   const hasLowCredits = pet.credits <= 0;
   const hasLowStock = pet.foodStockGrams !== null && 
+                      pet.foodStockGrams !== undefined &&
                       pet.foodAmount !== null && 
+                      pet.foodAmount !== undefined &&
                       pet.foodStockGrams < (pet.foodAmount * 3);
 
   const cardContent = (
