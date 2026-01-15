@@ -116,6 +116,13 @@ const menuGroups = [
       { icon: Settings, label: "Configurações", path: "/admin/settings" },
     ],
   },
+  {
+    label: "Inteligência",
+    color: "purple",
+    items: [
+      { icon: Brain, label: "IA & Insights", path: "/admin/ai" },
+    ],
+  },
 ];
 
 // Sistema de cores harmonioso e organizado
@@ -146,6 +153,15 @@ const colorClasses = {
   green: {
     icon: "text-emerald-500 dark:text-emerald-400",
     iconActive: "text-emerald-500 dark:text-emerald-400",
+    bg: "bg-slate-50/60 dark:bg-slate-800/40",
+    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
+    bgActive: "bg-slate-100/80 dark:bg-slate-800/50",
+    border: "border-slate-200/50 dark:border-slate-700/30",
+    glow: "",
+  },
+  purple: {
+    icon: "text-purple-500 dark:text-purple-400",
+    iconActive: "text-purple-500 dark:text-purple-400",
     bg: "bg-slate-50/60 dark:bg-slate-800/40",
     bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
     bgActive: "bg-slate-100/80 dark:bg-slate-800/50",

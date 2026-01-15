@@ -29,6 +29,7 @@ import { whatsappRouter } from "./whatsapp";
 import { analyticsRouter } from "./analytics";
 import { petManagementRouter } from "./petManagement";
 import { businessRulesRouter } from "./businessRules";
+import { aiRouter } from "./ai";
 
 export const appRouter = router({
   // Autenticação
@@ -86,6 +87,9 @@ export const appRouter = router({
   
   // Motor de Regras de Negócio
   businessRules: businessRulesRouter,
+  
+  // Inteligência Artificial
+  ai: aiRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -17,6 +17,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.10",
+    "@axiomhq/nextjs": "^0.1.6",
     "@clerk/localizations": "^3.12.0",
     "@clerk/nextjs": "^6.12.0",
     "@radix-ui/react-accordion": "^1.2.12",
@@ -39,12 +41,14 @@
     "@trpc/client": "^11.0.0-rc.608",
     "@trpc/react-query": "^11.0.0-rc.608",
     "@trpc/server": "^11.0.0-rc.608",
+    "ai": "^6.0.35",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.36.4",
+    "inngest": "^3.49.1",
     "jose": "^5.9.6",
     "lucide-react": "^0.460.0",
     "next": "^14.2.28",
