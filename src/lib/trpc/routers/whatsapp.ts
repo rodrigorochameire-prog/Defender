@@ -23,7 +23,7 @@ export const whatsappRouter = router({
   isConfigured: protectedProcedure.query(async ({ ctx }) => {
     // Verifica config do admin logado
     if (ctx.user?.role === "admin") {
-      const adminConfigured = await WhatsAppService.isAdminConfigured(ctx.dbUser.id);
+      const adminConfigured = await WhatsAppService.isAdminConfigured(ctx.user.id);
       if (adminConfigured) return true;
     }
     // Fallback para env
@@ -34,7 +34,7 @@ export const whatsappRouter = router({
    * Obtém configuração do admin atual (sem dados sensíveis)
    */
   getMyConfig: adminProcedure.query(async ({ ctx }) => {
-    const config = await WhatsAppService.getAdminConfig(ctx.dbUser.id);
+    const config = await WhatsAppService.getAdminConfig(ctx.user.id);
     return {
       hasConfig: !!config,
       config: config ? {
@@ -70,7 +70,7 @@ export const whatsappRouter = router({
       autoNotifyBooking: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await WhatsAppService.saveAdminConfig(ctx.dbUser.id, input);
+      await WhatsAppService.saveAdminConfig(ctx.user.id, input);
       return { success: true };
     }),
 
@@ -78,11 +78,11 @@ export const whatsappRouter = router({
    * Testa e ativa a configuração
    */
   testAndActivate: adminProcedure.mutation(async ({ ctx }) => {
-    const service = await WhatsAppService.forAdmin(ctx.dbUser.id);
+    const service = await WhatsAppService.forAdmin(ctx.user.id);
     
     if (!service) {
       // Tenta criar um serviço temporário para teste
-      const config = await WhatsAppService.getAdminConfig(ctx.dbUser.id);
+      const config = await WhatsAppService.getAdminConfig(ctx.user.id);
       if (!config?.phoneNumberId) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -92,7 +92,7 @@ export const whatsappRouter = router({
     }
 
     // Tenta obter o serviço novamente com as credenciais
-    const testService = await WhatsAppService.forAdmin(ctx.dbUser.id);
+    const testService = await WhatsAppService.forAdmin(ctx.user.id);
     if (!testService) {
       throw new TRPCError({
         code: "PRECONDITION_FAILED",
@@ -103,7 +103,7 @@ export const whatsappRouter = router({
     const result = await testService.checkConnection();
     
     if (result.connected) {
-      await WhatsAppService.setAdminConfigActive(ctx.dbUser.id, true);
+      await WhatsAppService.setAdminConfigActive(ctx.user.id, true);
       return {
         success: true,
         profile: {
@@ -124,7 +124,7 @@ export const whatsappRouter = router({
    * Desativa configuração
    */
   deactivate: adminProcedure.mutation(async ({ ctx }) => {
-    await WhatsAppService.setAdminConfigActive(ctx.dbUser.id, false);
+    await WhatsAppService.setAdminConfigActive(ctx.user.id, false);
     return { success: true };
   }),
 
@@ -136,7 +136,7 @@ export const whatsappRouter = router({
    * Verifica status da conexão
    */
   getConnectionStatus: adminProcedure.query(async ({ ctx }) => {
-    const service = await WhatsAppService.forAdminOrEnv(ctx.dbUser.id);
+    const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
     
     if (!service) {
       return {
@@ -147,7 +147,7 @@ export const whatsappRouter = router({
     }
 
     const result = await service.checkConnection();
-    const config = await WhatsAppService.getAdminConfig(ctx.dbUser.id);
+    const config = await WhatsAppService.getAdminConfig(ctx.user.id);
     
     return {
       connected: result.connected,
@@ -177,7 +177,7 @@ export const whatsappRouter = router({
       context: z.enum(["checkin", "checkout", "daily_log", "booking", "manual"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const service = await WhatsAppService.forAdminOrEnv(ctx.dbUser.id);
+      const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
       
       if (!service) {
         throw new TRPCError({
@@ -197,7 +197,7 @@ export const whatsappRouter = router({
       const result = await service.sendText(input.phone, input.message, {
         petId: input.petId,
         context: input.context || "manual",
-        sentById: ctx.dbUser.id,
+        sentById: ctx.user.id,
       });
 
       return {
@@ -228,7 +228,7 @@ export const whatsappRouter = router({
       context: z.enum(["checkin", "checkout", "daily_log", "booking", "manual"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const service = await WhatsAppService.forAdminOrEnv(ctx.dbUser.id);
+      const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
       
       if (!service) {
         throw new TRPCError({
@@ -245,7 +245,7 @@ export const whatsappRouter = router({
         {
           petId: input.petId,
           context: input.context || "manual",
-          sentById: ctx.dbUser.id,
+          sentById: ctx.user.id,
         }
       );
 
@@ -268,7 +268,7 @@ export const whatsappRouter = router({
       context: z.enum(["checkin", "checkout", "daily_log", "booking", "manual"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const service = await WhatsAppService.forAdminOrEnv(ctx.dbUser.id);
+      const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
       
       if (!service) {
         throw new TRPCError({
@@ -280,7 +280,7 @@ export const whatsappRouter = router({
       const result = await service.sendImage(input.phone, input.imageUrl, input.caption, {
         petId: input.petId,
         context: input.context || "manual",
-        sentById: ctx.dbUser.id,
+        sentById: ctx.user.id,
       });
 
       return {
@@ -303,7 +303,7 @@ export const whatsappRouter = router({
       context: z.enum(["checkin", "checkout", "daily_log", "booking", "manual"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const service = await WhatsAppService.forAdminOrEnv(ctx.dbUser.id);
+      const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
       
       if (!service) {
         throw new TRPCError({
@@ -320,7 +320,7 @@ export const whatsappRouter = router({
         {
           petId: input.petId,
           context: input.context || "manual",
-          sentById: ctx.dbUser.id,
+          sentById: ctx.user.id,
         }
       );
 
@@ -339,7 +339,7 @@ export const whatsappRouter = router({
       phone: z.string().min(10),
     }))
     .mutation(async ({ ctx, input }) => {
-      const service = await WhatsAppService.forAdminOrEnv(ctx.dbUser.id);
+      const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
       
       if (!service) {
         throw new TRPCError({
@@ -352,7 +352,7 @@ export const whatsappRouter = router({
       
       const result = await service.sendText(input.phone, testMessage, {
         context: "manual",
-        sentById: ctx.dbUser.id,
+        sentById: ctx.user.id,
       });
 
       return {
@@ -377,7 +377,7 @@ export const whatsappRouter = router({
       context: z.enum(["checkin", "checkout", "daily_log", "booking", "manual"]).optional(),
     }))
     .query(async ({ ctx, input }) => {
-      const config = await WhatsAppService.getAdminConfig(ctx.dbUser.id);
+      const config = await WhatsAppService.getAdminConfig(ctx.user.id);
       
       if (!config) {
         return { messages: [], total: 0 };
@@ -417,7 +417,7 @@ export const whatsappRouter = router({
    * Lista templates aprovados na conta
    */
   listApprovedTemplates: adminProcedure.query(async ({ ctx }) => {
-    const service = await WhatsAppService.forAdminOrEnv(ctx.dbUser.id);
+    const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
     
     if (!service) {
       return [];
@@ -510,7 +510,7 @@ export const whatsappRouter = router({
    * Retorna informações de configuração
    */
   getConfigInfo: adminProcedure.query(async ({ ctx }) => {
-    const adminConfig = await WhatsAppService.getAdminConfig(ctx.dbUser.id);
+    const adminConfig = await WhatsAppService.getAdminConfig(ctx.user.id);
     
     return {
       hasAdminConfig: !!adminConfig,
