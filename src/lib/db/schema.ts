@@ -1138,3 +1138,166 @@ export const petAlertsRelations = relations(petAlerts, ({ one }) => ({
   createdBy: one(users, { fields: [petAlerts.createdById], references: [users.id] }),
   resolvedBy: one(users, { fields: [petAlerts.resolvedById], references: [users.id] }),
 }));
+
+// ==========================================
+// CONFIGURAÇÕES GLOBAIS DE NEGÓCIO
+// ==========================================
+
+export const businessSettings = pgTable("business_settings", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: text("value").notNull(), // JSON stringified
+  category: varchar("category", { length: 50 }).notNull(), // 'thresholds' | 'notifications' | 'scheduling' | 'financial'
+  label: varchar("label", { length: 200 }).notNull(),
+  description: text("description"),
+  dataType: varchar("data_type", { length: 20 }).notNull(), // 'number' | 'boolean' | 'string' | 'json'
+  updatedById: integer("updated_by_id")
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("business_settings_key_idx").on(table.key),
+  index("business_settings_category_idx").on(table.category),
+]);
+
+export type BusinessSetting = typeof businessSettings.$inferSelect;
+export type InsertBusinessSetting = typeof businessSettings.$inferInsert;
+
+// ==========================================
+// REGRAS DE NEGÓCIO (AUTOMAÇÕES)
+// ==========================================
+
+export const businessRules = pgTable("business_rules", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  priority: integer("priority").default(0).notNull(), // ordem de execução
+  
+  // Gatilho (Trigger)
+  triggerType: varchar("trigger_type", { length: 50 }).notNull(),
+  // 'pet_field_change' | 'log_created' | 'event_created' | 'threshold_reached' | 'schedule'
+  triggerEntity: varchar("trigger_entity", { length: 50 }), // 'pet' | 'daily_log' | 'calendar_event' | 'behavior_log'
+  triggerField: varchar("trigger_field", { length: 100 }), // campo específico
+  triggerCondition: varchar("trigger_condition", { length: 50 }), // 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'is_empty' | 'is_not_empty'
+  triggerValue: text("trigger_value"), // valor para comparação
+  
+  // Ação (Action)
+  actionType: varchar("action_type", { length: 50 }).notNull(),
+  // 'create_alert' | 'send_notification' | 'add_flag' | 'block_booking' | 'send_whatsapp' | 'assign_task' | 'update_field'
+  actionConfig: text("action_config").notNull(), // JSON com configuração da ação
+  
+  // Metadados
+  executionCount: integer("execution_count").default(0).notNull(),
+  lastExecutedAt: timestamp("last_executed_at"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("business_rules_is_active_idx").on(table.isActive),
+  index("business_rules_trigger_type_idx").on(table.triggerType),
+  index("business_rules_priority_idx").on(table.priority),
+]);
+
+export type BusinessRule = typeof businessRules.$inferSelect;
+export type InsertBusinessRule = typeof businessRules.$inferInsert;
+
+// Relações das regras de negócio
+export const businessRulesRelations = relations(businessRules, ({ one }) => ({
+  createdBy: one(users, { fields: [businessRules.createdById], references: [users.id] }),
+}));
+
+// ==========================================
+// FLAGS DINÂMICAS (ETIQUETAS)
+// ==========================================
+
+export const dynamicFlags = pgTable("dynamic_flags", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  color: varchar("color", { length: 20 }).notNull(), // 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple'
+  icon: varchar("icon", { length: 50 }), // nome do ícone Lucide
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  
+  // Condição automática (opcional)
+  autoAssignCondition: text("auto_assign_condition"), // JSON com regra de atribuição automática
+  
+  // Onde exibir
+  showOnCheckin: boolean("show_on_checkin").default(true).notNull(),
+  showOnCalendar: boolean("show_on_calendar").default(true).notNull(),
+  showOnPetCard: boolean("show_on_pet_card").default(true).notNull(),
+  showOnDailyLog: boolean("show_on_daily_log").default(true).notNull(),
+  
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("dynamic_flags_is_active_idx").on(table.isActive),
+]);
+
+export type DynamicFlag = typeof dynamicFlags.$inferSelect;
+export type InsertDynamicFlag = typeof dynamicFlags.$inferInsert;
+
+// ==========================================
+// ATRIBUIÇÃO DE FLAGS A PETS
+// ==========================================
+
+export const petFlags = pgTable("pet_flags", {
+  id: serial("id").primaryKey(),
+  petId: integer("pet_id")
+    .notNull()
+    .references(() => pets.id, { onDelete: "cascade" }),
+  flagId: integer("flag_id")
+    .notNull()
+    .references(() => dynamicFlags.id, { onDelete: "cascade" }),
+  assignedById: integer("assigned_by_id")
+    .references(() => users.id),
+  assignedByRule: integer("assigned_by_rule")
+    .references(() => businessRules.id), // se foi atribuída automaticamente
+  notes: text("notes"),
+  expiresAt: timestamp("expires_at"), // flag temporária
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("pet_flags_pet_id_idx").on(table.petId),
+  index("pet_flags_flag_id_idx").on(table.flagId),
+]);
+
+export type PetFlag = typeof petFlags.$inferSelect;
+export type InsertPetFlag = typeof petFlags.$inferInsert;
+
+// Relações das flags de pets
+export const petFlagsRelations = relations(petFlags, ({ one }) => ({
+  pet: one(pets, { fields: [petFlags.petId], references: [pets.id] }),
+  flag: one(dynamicFlags, { fields: [petFlags.flagId], references: [dynamicFlags.id] }),
+  assignedBy: one(users, { fields: [petFlags.assignedById], references: [users.id] }),
+  rule: one(businessRules, { fields: [petFlags.assignedByRule], references: [businessRules.id] }),
+}));
+
+// ==========================================
+// LOG DE EXECUÇÃO DE REGRAS
+// ==========================================
+
+export const ruleExecutionLog = pgTable("rule_execution_log", {
+  id: serial("id").primaryKey(),
+  ruleId: integer("rule_id")
+    .notNull()
+    .references(() => businessRules.id, { onDelete: "cascade" }),
+  petId: integer("pet_id")
+    .references(() => pets.id, { onDelete: "set null" }),
+  triggerData: text("trigger_data"), // JSON com dados do gatilho
+  actionResult: text("action_result"), // JSON com resultado da ação
+  success: boolean("success").default(true).notNull(),
+  errorMessage: text("error_message"),
+  executedAt: timestamp("executed_at").defaultNow().notNull(),
+}, (table) => [
+  index("rule_execution_log_rule_id_idx").on(table.ruleId),
+  index("rule_execution_log_pet_id_idx").on(table.petId),
+  index("rule_execution_log_executed_at_idx").on(table.executedAt),
+]);
+
+export type RuleExecutionLog = typeof ruleExecutionLog.$inferSelect;
+export type InsertRuleExecutionLog = typeof ruleExecutionLog.$inferInsert;
