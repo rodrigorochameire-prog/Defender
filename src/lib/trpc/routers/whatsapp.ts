@@ -49,7 +49,7 @@ export const whatsappRouter = router({
         autoNotifyCheckout: config.autoNotifyCheckout,
         autoNotifyDailyLog: config.autoNotifyDailyLog,
         autoNotifyBooking: config.autoNotifyBooking,
-        hasAccessToken: !!config.accessToken,
+        hasAccessToken: config.hasAccessToken,
       } : null,
       hasEnvFallback: WhatsAppService.isEnvConfigured(),
     };

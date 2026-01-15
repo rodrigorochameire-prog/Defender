@@ -176,7 +176,7 @@ export class WhatsAppService {
   /**
    * Obtém configuração do admin (sem credentials sensíveis)
    */
-  static async getAdminConfig(adminId: number): Promise<Omit<WhatsAppConfig, "accessToken"> | null> {
+  static async getAdminConfig(adminId: number): Promise<(Omit<WhatsAppConfig, "accessToken"> & { hasAccessToken: boolean }) | null> {
     const config = await db.query.whatsappConfig.findFirst({
       where: eq(whatsappConfig.adminId, adminId),
     });
@@ -185,9 +185,12 @@ export class WhatsAppService {
       return null;
     }
 
-    // Remove o accessToken por segurança
-    const { accessToken: _, ...safeConfig } = config;
-    return safeConfig;
+    // Remove o accessToken por segurança e adiciona flag
+    const { accessToken, ...safeConfig } = config;
+    return {
+      ...safeConfig,
+      hasAccessToken: !!accessToken,
+    };
   }
 
   /**
