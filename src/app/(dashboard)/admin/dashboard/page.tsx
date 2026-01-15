@@ -31,7 +31,11 @@ import {
   Download,
   ArrowUpRight,
   ArrowDownRight,
-  Eye
+  Eye,
+  AlertTriangle,
+  CreditCard,
+  ChevronRight,
+  PawPrint,
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardSkeleton } from "@/components/shared/skeletons";
@@ -63,6 +67,7 @@ export default function AdminDashboard() {
   const { data: checkedInPets, isLoading: petsLoading } = trpc.dashboard.checkedInPets.useQuery();
   const { data: vaccineStats } = trpc.vaccines.stats.useQuery();
   const { data: allPets } = trpc.pets.list.useQuery();
+  const { data: petsAttention } = trpc.analytics.petsRequiringAttention.useQuery();
 
   // Dados calculados para gráficos
   const chartData = useMemo(() => {
@@ -312,6 +317,87 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Pets que Requerem Atenção */}
+          {petsAttention && petsAttention.summary.petsAffected > 0 && (
+            <Card className="shadow-sm border-amber-200 dark:border-amber-900">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                      <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Pets que Requerem Atenção</CardTitle>
+                      <CardDescription className="mt-1">
+                        {petsAttention.summary.totalAlerts} alertas pendentes
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {petsAttention.summary.vaccinesDue > 0 && (
+                      <Badge variant="destructive" className="gap-1">
+                        <Syringe className="h-3 w-3" />
+                        {petsAttention.summary.vaccinesDue}
+                      </Badge>
+                    )}
+                    {petsAttention.summary.medicationsToday > 0 && (
+                      <Badge variant="default" className="gap-1">
+                        <Pill className="h-3 w-3" />
+                        {petsAttention.summary.medicationsToday}
+                      </Badge>
+                    )}
+                    {petsAttention.summary.lowCredits > 0 && (
+                      <Badge variant="secondary" className="gap-1">
+                        <CreditCard className="h-3 w-3" />
+                        {petsAttention.summary.lowCredits}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {petsAttention.items.slice(0, 5).map((item) => (
+                    <Link key={item.petId} href={`/admin/pets/${item.petId}`}>
+                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                            {item.petPhoto ? (
+                              <img src={item.petPhoto} alt={item.petName} className="w-full h-full object-cover" />
+                            ) : (
+                              <PawPrint className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium">{item.petName}</p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.alerts.slice(0, 2).map((alert, i) => (
+                                <span key={i} className="text-xs text-muted-foreground">
+                                  {alert.message}{i < Math.min(item.alerts.length, 2) - 1 && " • "}
+                                </span>
+                              ))}
+                              {item.alerts.length > 2 && (
+                                <span className="text-xs text-muted-foreground">+{item.alerts.length - 2}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                {petsAttention.items.length > 5 && (
+                  <Link href="/admin/analytics">
+                    <Button variant="outline" className="w-full mt-4">
+                      Ver todos ({petsAttention.summary.petsAffected} pets)
+                    </Button>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Ações Rápidas */}
           <Card className="shadow-sm">
