@@ -189,6 +189,7 @@ export const loginSchema = z.object({
 // ==========================================
 
 export const petSchema = z.object({
+  // Dados básicos
   name: z
     .string()
     .min(1, "Nome é obrigatório")
@@ -200,8 +201,51 @@ export const petSchema = z.object({
   weight: z.number().min(0).max(200000).optional(), // até 200kg em gramas
   photoUrl: optionalUrlSchema,
   notes: z.string().max(2000).optional(),
+  
+  // Dados físicos
+  size: z.enum(["mini", "small", "medium", "large", "giant"]).optional(),
+  coatType: z.enum(["short", "medium", "long", "wire", "curly", "double", "hairless"]).optional(),
+  gender: z.enum(["male", "female"]).optional(),
+  neuteredStatus: z.enum(["yes", "no", "scheduled"]).optional(),
+  neuteredDate: dateStringSchema,
+  
+  // Alimentação
   foodBrand: z.string().max(200).optional(),
+  foodType: z.enum(["dry_kibble", "wet_food", "natural_raw", "natural_cooked", "mixed", "prescription"]).optional(),
   foodAmount: z.number().min(0).max(10000).optional(), // até 10kg por dia
+  foodPreparation: z.enum(["dry_pure", "dry_warm_water", "dry_broth", "natural_cold", "natural_heated", "kibble_topping", "hand_feed", "slow_feeder", "elevated"]).optional(),
+  feedingInstructions: z.string().max(1000).optional(),
+  
+  // Perfil Comportamental
+  energyLevel: z.enum(["very_low", "low", "moderate", "high", "hyperactive"]).optional(),
+  dogSociability: z.enum(["social", "selective", "reactive", "antisocial"]).optional(),
+  humanSociability: z.enum(["friendly", "cautious", "fearful", "reactive"]).optional(),
+  playStyle: z.enum(["wrestling", "chase", "fetch", "tug", "independent", "observer"]).optional(),
+  correctionSensitivity: z.enum(["high", "medium", "low"]).optional(),
+  humanFocusLevel: z.enum(["low", "medium", "high"]).optional(),
+  
+  // Arrays de seleção múltipla (JSON)
+  fearTriggers: z.array(z.string()).optional(),
+  calmingMethods: z.array(z.string()).optional(),
+  equipmentRestrictions: z.array(z.string()).optional(),
+  coexistenceRestrictions: z.array(z.string()).optional(),
+  
+  // Saúde
+  hasFoodAllergy: z.boolean().optional(),
+  foodAllergies: z.array(z.string()).optional(),
+  hasMedicationAllergy: z.boolean().optional(),
+  medicationAllergies: z.array(z.string()).optional(),
+  hasChronicCondition: z.boolean().optional(),
+  chronicConditions: z.array(z.string()).optional(),
+  
+  // Protocolo de Emergência
+  emergencyVetName: z.string().max(200).optional(),
+  emergencyVetPhone: z.string().max(50).optional(),
+  emergencyVetAddress: z.string().max(500).optional(),
+  
+  // Dados de Cio (fêmeas não castradas)
+  lastHeatDate: dateStringSchema,
+  heatDurationDays: z.number().min(1).max(30).optional(),
 });
 
 export const createPetSchema = petSchema;
