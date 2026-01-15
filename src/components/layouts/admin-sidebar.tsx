@@ -7,31 +7,31 @@ import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Dog,
-  Calendar,
   Users,
-  CreditCard,
+  Calendar,
   Bell,
-  Syringe,
   FileText,
   LogOut,
-  Pill,
   ClipboardList,
   TrendingUp,
   MessageSquare,
-  Shield,
   PanelLeft,
-  Heart,
-  Brain,
-  UtensilsCrossed,
-  UserCog,
   User,
-  GraduationCap,
   MessageCircle,
-  Package,
   Settings,
   BarChart3,
+  Scale,
+  Gavel,
+  FileSearch,
+  Clock,
+  AlertTriangle,
+  Calculator,
+  FolderOpen,
+  UserCheck,
   Building2,
+  Briefcase,
+  Timer,
+  Target,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -70,71 +70,82 @@ interface AdminSidebarProps {
 
 const menuGroups = [
   {
-    label: "Operacional",
+    label: "Principal",
     color: "blue",
     items: [
       { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-      { icon: Dog, label: "Pets", path: "/admin/pets" },
-      { icon: Calendar, label: "Calendário", path: "/admin/calendar" },
+      { icon: Users, label: "Assistidos", path: "/admin/assistidos" },
+      { icon: Scale, label: "Processos", path: "/admin/processos" },
     ],
   },
   {
-    label: "Cuidados",
+    label: "Prazos e Demandas",
+    color: "red",
+    items: [
+      { icon: Clock, label: "Demandas", path: "/admin/demandas" },
+      { icon: AlertTriangle, label: "Prazos Urgentes", path: "/admin/prazos" },
+      { icon: Target, label: "Kanban", path: "/admin/kanban" },
+    ],
+  },
+  {
+    label: "Agenda",
     color: "orange",
     items: [
-      { icon: Heart, label: "Central de Saúde", path: "/admin/health" },
-      { icon: UtensilsCrossed, label: "Alimentação", path: "/admin/food" },
-      { icon: Brain, label: "Comportamento", path: "/admin/behavior" },
-      { icon: GraduationCap, label: "Treinamento", path: "/admin/training" },
-      { icon: ClipboardList, label: "Logs Diários", path: "/admin/logs" },
+      { icon: Calendar, label: "Calendário", path: "/admin/calendar" },
+      { icon: Gavel, label: "Júri / Plenário", path: "/admin/juri" },
+      { icon: Briefcase, label: "Audiências", path: "/admin/audiencias" },
+      { icon: UserCheck, label: "Atendimentos", path: "/admin/atendimentos" },
     ],
   },
   {
-    label: "Financeiro",
+    label: "Documentos",
     color: "green",
     items: [
-      { icon: TrendingUp, label: "Finanças", path: "/admin/finances" },
-      { icon: Package, label: "Planos e Serviços", path: "/admin/plans" },
+      { icon: FileText, label: "Peças e Docs", path: "/admin/documentos" },
+      { icon: FolderOpen, label: "Templates", path: "/admin/templates" },
+    ],
+  },
+  {
+    label: "Ferramentas",
+    color: "purple",
+    items: [
+      { icon: Calculator, label: "Calculadoras", path: "/admin/calculadoras" },
+      { icon: FileSearch, label: "Buscar Processos", path: "/admin/busca" },
     ],
   },
   {
     label: "Comunicação",
     color: "slate",
     items: [
-      { icon: MessageSquare, label: "Mural", path: "/admin/wall" },
-      { icon: FileText, label: "Documentos", path: "/admin/documents" },
       { icon: MessageCircle, label: "WhatsApp", path: "/admin/whatsapp" },
+      { icon: Bell, label: "Notificações", path: "/admin/notifications" },
     ],
   },
   {
     label: "Gestão",
     color: "slate",
     items: [
-      { icon: Users, label: "Tutores", path: "/admin/tutors" },
-      { icon: Building2, label: "Creche", path: "/admin/daycare" },
-      { icon: BarChart3, label: "Relatórios", path: "/admin/reports" },
+      { icon: Building2, label: "Defensoria", path: "/admin/defensoria" },
+      { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
       { icon: Settings, label: "Configurações", path: "/admin/settings" },
-    ],
-  },
-  {
-    label: "Inteligência",
-    color: "purple",
-    items: [
-      { icon: Brain, label: "IA & Insights", path: "/admin/ai" },
     ],
   },
 ];
 
-// Sistema de cores harmonioso e organizado
-// - Operacional (azul): Dashboard, Pets, Calendário
-// - Cuidados (laranja): Saúde, Alimentação, Comportamento, Treinamento, Logs
-// - Gestão (preto/slate): Tutores
-// - Financeiro (verde): Finanças
-// - Comunicação (preto/slate): Mural, Documentos
+// Sistema de cores harmonioso
 const colorClasses = {
   blue: {
     icon: "text-blue-500 dark:text-blue-400",
     iconActive: "text-blue-500 dark:text-blue-400",
+    bg: "bg-slate-50/60 dark:bg-slate-800/40",
+    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
+    bgActive: "bg-slate-100/80 dark:bg-slate-800/50",
+    border: "border-slate-200/50 dark:border-slate-700/30",
+    glow: "",
+  },
+  red: {
+    icon: "text-red-500 dark:text-red-400",
+    iconActive: "text-red-500 dark:text-red-400",
     bg: "bg-slate-50/60 dark:bg-slate-800/40",
     bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
     bgActive: "bg-slate-100/80 dark:bg-slate-800/50",
@@ -282,9 +293,7 @@ function AdminSidebarContent({
   }, [isResizing, setSidebarWidth]);
 
   async function handleLogout() {
-    // Limpa a sessão customizada (cookies)
     await logoutAction();
-    // Faz logout do Clerk e redireciona para a página inicial
     await signOut({ redirectUrl: "/" });
   }
 
@@ -301,7 +310,7 @@ function AdminSidebarContent({
               {!isCollapsed && (
                 <div className="flex flex-col">
                   <span className="text-xs font-bold tracking-wider uppercase bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    Administração
+                    DefensorHub
                   </span>
                 </div>
               )}
@@ -364,7 +373,6 @@ function AdminSidebarContent({
                               }
                             }}
                           >
-                            {/* Ícone com destaque quando ativo */}
                             <item.icon
                               className={`relative z-10 transition-all duration-300 ease ${
                                 isActive
@@ -373,7 +381,6 @@ function AdminSidebarContent({
                               }`}
                               strokeWidth={isActive ? 2.5 : 1.75}
                             />
-                            {/* Texto com hierarquia melhorada */}
                             <span className={`relative z-10 text-sm transition-colors duration-300 ${
                               isActive 
                                 ? "font-semibold text-foreground" 
@@ -467,17 +474,11 @@ function AdminSidebarContent({
             <div className="flex items-center gap-3">
               <SidebarTrigger className="h-10 w-10 rounded-xl bg-accent/50 hover:bg-primary/20 transition-colors" />
               <Link href="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-9 h-9 rounded-full overflow-hidden shadow-sm bg-white flex items-center justify-center">
-                  <Image
-                    src="/tetecare-logo.png"
-                    alt="Tetê Care"
-                    width={36}
-                    height={36}
-                    className="w-full h-full object-contain"
-                  />
+                <div className="w-9 h-9 rounded-full overflow-hidden shadow-sm bg-primary/10 flex items-center justify-center">
+                  <Scale className="h-5 w-5 text-primary" />
                 </div>
                 <span className="font-semibold text-sm">
-                  {activeMenuItem?.label ?? "Admin"}
+                  {activeMenuItem?.label ?? "DefensorHub"}
                 </span>
               </Link>
             </div>
@@ -494,21 +495,20 @@ function AdminSidebarContent({
               href="/admin"
               className="flex items-center gap-3.5 hover:opacity-90 transition-all duration-300 cursor-pointer hover:scale-[1.02]"
             >
-              <div className="relative w-14 h-14 rounded-full overflow-hidden shadow-xl bg-white flex items-center justify-center ring-2 ring-primary/10">
-                <Image
-                  src="/tetecare-logo.png"
-                  alt="Tetê Care"
-                  width={56}
-                  height={56}
-                  className="w-full h-full object-contain"
-                />
+              <div className="relative w-14 h-14 rounded-full overflow-hidden shadow-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center ring-2 ring-primary/10">
+                <Scale className="h-7 w-7 text-primary" />
               </div>
-              <span
-                className="text-2xl font-bold tracking-tight text-foreground"
-                style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
-              >
-                Tetê Care
-              </span>
+              <div className="flex flex-col">
+                <span
+                  className="text-2xl font-bold tracking-tight text-foreground"
+                  style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
+                >
+                  DefensorHub
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Sistema de Gestão Jurídica
+                </span>
+              </div>
             </Link>
             <div className="flex items-center gap-2 absolute right-6">
               <NotificationsPopover />
@@ -522,4 +522,3 @@ function AdminSidebarContent({
     </>
   );
 }
-

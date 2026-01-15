@@ -1,5 +1,6 @@
 /**
  * Serviço de integração com WhatsApp Business API (Meta Cloud API)
+ * DefensorHub - Sistema de Gestão Jurídica
  * 
  * Suporta duas formas de configuração:
  * 1. Variáveis de ambiente (global/fallback)
@@ -56,7 +57,7 @@ export interface WhatsAppBusinessProfile {
 }
 
 export type MessageStatus = "pending" | "sent" | "delivered" | "read" | "failed";
-export type MessageContext = "checkin" | "checkout" | "daily_log" | "booking" | "manual";
+export type MessageContext = "prazo" | "audiencia" | "juri" | "movimentacao" | "manual";
 
 // ============================================
 // Configuração
@@ -203,10 +204,10 @@ export class WhatsAppService {
       phoneNumberId?: string;
       businessAccountId?: string;
       webhookVerifyToken?: string;
-      autoNotifyCheckin?: boolean;
-      autoNotifyCheckout?: boolean;
-      autoNotifyDailyLog?: boolean;
-      autoNotifyBooking?: boolean;
+      autoNotifyPrazo?: boolean;
+      autoNotifyAudiencia?: boolean;
+      autoNotifyJuri?: boolean;
+      autoNotifyMovimentacao?: boolean;
     }
   ): Promise<WhatsAppConfig> {
     const existing = await db.query.whatsappConfig.findFirst({
@@ -315,7 +316,7 @@ export class WhatsAppService {
     to: string,
     message: string,
     options?: {
-      petId?: number;
+      assistidoId?: number;
       context?: MessageContext;
       sentById?: number;
     }
@@ -362,7 +363,7 @@ export class WhatsAppService {
             status: "failed",
             errorMessage,
             context: options?.context,
-            petId: options?.petId,
+            assistidoId: options?.assistidoId,
             sentById: options?.sentById,
           });
         }
@@ -382,7 +383,7 @@ export class WhatsAppService {
           status: "sent",
           sentAt: new Date(),
           context: options?.context,
-          petId: options?.petId,
+          assistidoId: options?.assistidoId,
           sentById: options?.sentById,
         });
       }
@@ -411,7 +412,7 @@ export class WhatsAppService {
       }>;
     }>,
     options?: {
-      petId?: number;
+      assistidoId?: number;
       context?: MessageContext;
       sentById?: number;
     }
@@ -462,7 +463,7 @@ export class WhatsAppService {
           status: "sent",
           sentAt: new Date(),
           context: options?.context,
-          petId: options?.petId,
+          assistidoId: options?.assistidoId,
           sentById: options?.sentById,
         });
       }
@@ -482,7 +483,7 @@ export class WhatsAppService {
     imageUrl: string,
     caption?: string,
     options?: {
-      petId?: number;
+      assistidoId?: number;
       context?: MessageContext;
       sentById?: number;
     }
@@ -532,7 +533,7 @@ export class WhatsAppService {
           status: "sent",
           sentAt: new Date(),
           context: options?.context,
-          petId: options?.petId,
+          assistidoId: options?.assistidoId,
           sentById: options?.sentById,
         });
       }
@@ -553,7 +554,7 @@ export class WhatsAppService {
     fileName: string,
     caption?: string,
     options?: {
-      petId?: number;
+      assistidoId?: number;
       context?: MessageContext;
       sentById?: number;
     }
@@ -604,7 +605,7 @@ export class WhatsAppService {
           status: "sent",
           sentAt: new Date(),
           context: options?.context,
-          petId: options?.petId,
+          assistidoId: options?.assistidoId,
           sentById: options?.sentById,
         });
       }
@@ -725,7 +726,7 @@ export class WhatsAppService {
     status: MessageStatus;
     errorMessage?: string;
     context?: MessageContext;
-    petId?: number;
+    assistidoId?: number;
     sentById?: number;
     sentAt?: Date;
   }): Promise<void> {
@@ -743,7 +744,7 @@ export class WhatsAppService {
         status: data.status,
         errorMessage: data.errorMessage,
         context: data.context,
-        petId: data.petId,
+        assistidoId: data.assistidoId,
         sentById: data.sentById,
         sentAt: data.sentAt,
       });
@@ -755,43 +756,51 @@ export class WhatsAppService {
 }
 
 // ============================================
-// Templates de Mensagens para TeteCare
+// Templates de Mensagens para DefensorHub
 // ============================================
 
 export const WhatsAppTemplates = {
-  checkin: (petName: string, tutorName: string) =>
-    `Olá ${tutorName}! 🐾\n\nO(a) ${petName} acabou de fazer check-in na TeteCare!\n\nQualquer novidade, entraremos em contato. Tenha um ótimo dia! 💙`,
+  // Notificação de prazo
+  prazoAlerta: (assistidoNome: string, ato: string, prazo: string, processo: string) =>
+    `⚠️ *Alerta de Prazo - Defensoria Pública*\n\nOlá! Informamos que há um prazo próximo:\n\n📋 *Ato:* ${ato}\n📅 *Prazo:* ${prazo}\n📂 *Processo:* ${processo}\n👤 *Assistido:* ${assistidoNome}\n\nFavor entrar em contato se precisar de mais informações.`,
 
-  checkout: (petName: string, tutorName: string) =>
-    `Olá ${tutorName}! 🐾\n\nO(a) ${petName} está pronto(a) para ir para casa!\n\nFoi um prazer cuidar do(a) seu(sua) pet hoje. Até a próxima! 💙`,
+  // Lembrete de audiência
+  audienciaLembrete: (assistidoNome: string, data: string, hora: string, local: string, tipo: string) =>
+    `📅 *Lembrete de Audiência - Defensoria Pública*\n\nOlá ${assistidoNome}!\n\nLembramos que você tem uma audiência agendada:\n\n📆 *Data:* ${data}\n⏰ *Horário:* ${hora}\n📍 *Local:* ${local}\n📋 *Tipo:* ${tipo}\n\n*Importante:* Compareça com 30 minutos de antecedência e traga documento com foto.\n\nDúvidas? Entre em contato com a Defensoria.`,
 
-  vaccineReminder: (petName: string, vaccineName: string, date: string) =>
-    `🔔 Lembrete de Vacina\n\nOlá! O(a) ${petName} tem vacina de ${vaccineName} agendada para ${date}.\n\nNão se esqueça de trazer a carteirinha de vacinação! 💉`,
+  // Aviso de sessão do júri
+  juriAviso: (assistidoNome: string, data: string, local: string, defensor: string) =>
+    `⚖️ *Aviso de Sessão do Júri - Defensoria Pública*\n\nOlá!\n\nInformamos sobre a sessão do Tribunal do Júri:\n\n👤 *Assistido:* ${assistidoNome}\n📆 *Data:* ${data}\n📍 *Local:* ${local}\n👨‍⚖️ *Defensor(a):* ${defensor}\n\nO familiar/contato receberá orientações sobre o procedimento.`,
 
-  medicationReminder: (petName: string, medicationName: string, dosage: string) =>
-    `💊 Lembrete de Medicação\n\nHora de dar ${medicationName} para o(a) ${petName}!\n\nDosagem: ${dosage}`,
+  // Movimentação processual
+  movimentacao: (assistidoNome: string, processo: string, descricao: string) =>
+    `📋 *Movimentação Processual - Defensoria Pública*\n\nOlá! Há uma nova movimentação no processo:\n\n👤 *Assistido:* ${assistidoNome}\n📂 *Processo:* ${processo}\n📝 *Movimentação:* ${descricao}\n\nPara mais informações, entre em contato com a Defensoria.`,
 
-  dailyUpdate: (petName: string, updateType: string) =>
-    `📸 Atualização de ${petName}\n\nAcabamos de publicar ${updateType} no mural do(a) ${petName}!\n\nAcesse o app para ver as novidades. 🐕`,
+  // Atendimento agendado
+  atendimentoAgendado: (nome: string, data: string, hora: string, local: string) =>
+    `📆 *Atendimento Agendado - Defensoria Pública*\n\nOlá ${nome}!\n\nSeu atendimento foi agendado:\n\n📅 *Data:* ${data}\n⏰ *Horário:* ${hora}\n📍 *Local:* ${local}\n\n*Documentos:* Traga RG, CPF, comprovante de residência e documentos relacionados ao caso.\n\nEm caso de impossibilidade, favor entrar em contato para reagendar.`,
 
-  bookingConfirmation: (petName: string, date: string, service: string) =>
-    `✅ Reserva Confirmada\n\nA reserva para ${petName} foi confirmada!\n\n📅 Data: ${date}\n🐾 Serviço: ${service}\n\nAguardamos vocês! 💙`,
+  // Confirmação de visita carcerária
+  visitaCarceraria: (nome: string, data: string, unidade: string, assistido: string) =>
+    `🏢 *Visita Carcerária Agendada - Defensoria Pública*\n\nOlá ${nome}!\n\nA visita foi agendada:\n\n📅 *Data:* ${data}\n🏢 *Unidade:* ${unidade}\n👤 *Assistido:* ${assistido}\n\nLeve documento com foto.`,
 
-  bookingReminder: (petName: string, date: string, time: string) =>
-    `⏰ Lembrete de Reserva\n\nOlá! Lembrando que amanhã (${date}) às ${time} você tem reserva para o(a) ${petName}.\n\nAté lá! 🐾`,
+  // Resultado do júri
+  juriResultado: (assistidoNome: string, resultado: string, observacoes: string) =>
+    `⚖️ *Resultado da Sessão do Júri - Defensoria Pública*\n\nInformamos o resultado da sessão:\n\n👤 *Assistido:* ${assistidoNome}\n📋 *Resultado:* ${resultado}\n${observacoes ? `\n📝 *Observações:* ${observacoes}` : ""}\n\nPara mais informações, entre em contato com a Defensoria.`,
 
-  behaviorAlert: (petName: string, observation: string) =>
-    `⚠️ Observação Importante\n\nNotamos algo sobre o(a) ${petName}:\n\n${observation}\n\nEntre em contato se precisar de mais informações.`,
+  // Alerta genérico
+  alertaGenerico: (titulo: string, mensagem: string) =>
+    `🔔 *${titulo} - Defensoria Pública*\n\n${mensagem}\n\nDefensoria Pública do Estado`,
 };
 
 export const MetaTemplateNames = {
-  CHECKIN: "tetecare_pet_checkin",
-  CHECKOUT: "tetecare_pet_checkout",
-  VACCINE_REMINDER: "tetecare_vaccine_reminder",
-  MEDICATION_REMINDER: "tetecare_medication_reminder",
-  DAILY_UPDATE: "tetecare_daily_update",
-  BOOKING_CONFIRMATION: "tetecare_booking_confirmation",
-  BOOKING_REMINDER: "tetecare_booking_reminder",
-  BEHAVIOR_ALERT: "tetecare_behavior_alert",
-  WELCOME: "tetecare_welcome",
+  PRAZO_ALERTA: "defensoria_prazo_alerta",
+  AUDIENCIA_LEMBRETE: "defensoria_audiencia_lembrete",
+  JURI_AVISO: "defensoria_juri_aviso",
+  MOVIMENTACAO: "defensoria_movimentacao",
+  ATENDIMENTO_AGENDADO: "defensoria_atendimento_agendado",
+  VISITA_CARCERARIA: "defensoria_visita_carceraria",
+  JURI_RESULTADO: "defensoria_juri_resultado",
+  ALERTA_GENERICO: "defensoria_alerta_generico",
+  WELCOME: "defensoria_bem_vindo",
 };

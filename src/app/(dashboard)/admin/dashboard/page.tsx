@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,33 +13,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  Dog, 
   Users, 
   Calendar, 
-  TrendingUp, 
   AlertCircle, 
-  CheckCircle2, 
   Clock, 
   Activity, 
-  Pill, 
-  Syringe, 
   Plus,
   BarChart3,
   PieChart,
-  Filter,
   Download,
-  ArrowUpRight,
-  ArrowDownRight,
   Eye,
   AlertTriangle,
-  CreditCard,
   ChevronRight,
-  PawPrint,
-  Package,
-  Zap,
+  Scale,
+  Gavel,
+  FileText,
+  Timer,
+  Target,
+  TrendingUp,
+  Briefcase,
+  UserCheck,
+  AlertOctagon,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
-import { DashboardSkeleton } from "@/components/shared/skeletons";
 import {
   BarChart,
   Bar,
@@ -52,80 +48,90 @@ import {
   PieChart as RechartsPie,
   Pie,
   Cell,
-  LineChart,
-  Line,
   Legend,
   Area,
   AreaChart
 } from "recharts";
 
+// Cores neutras para gráficos
 const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
+
+// Dados mockados para demonstração
+const mockStats = {
+  totalAssistidos: 156,
+  reusPresos: 42,
+  totalProcessos: 287,
+  prazosHoje: 8,
+  prazosUrgentes: 15,
+  audienciasHoje: 3,
+  jurisSemana: 2,
+};
+
+const mockPrazosUrgentes = [
+  { id: 1, assistido: "Diego Bonfim Almeida", processo: "8012906-74.2025.8.05.0039", ato: "Resposta à Acusação", prazo: "Hoje", prioridade: "REU_PRESO" },
+  { id: 2, assistido: "Maria Silva Santos", processo: "0001234-56.2025.8.05.0039", ato: "Alegações Finais", prazo: "Amanhã", prioridade: "URGENTE" },
+  { id: 3, assistido: "José Carlos Oliveira", processo: "0005678-90.2025.8.05.0039", ato: "Memoriais", prazo: "Em 2 dias", prioridade: "ALTA" },
+  { id: 4, assistido: "Ana Paula Costa", processo: "0009012-34.2025.8.05.0039", ato: "Recurso", prazo: "Em 3 dias", prioridade: "NORMAL" },
+];
+
+const mockAudienciasHoje = [
+  { id: 1, hora: "09:00", assistido: "Carlos Eduardo", tipo: "Instrução", vara: "1ª Vara Criminal" },
+  { id: 2, hora: "14:00", assistido: "Maria Fernanda", tipo: "Custódia", vara: "CEAC" },
+  { id: 3, hora: "16:00", assistido: "Pedro Henrique", tipo: "Conciliação", vara: "Juizado Especial" },
+];
+
+const mockJurisSemana = [
+  { id: 1, data: "17/01", assistido: "Roberto Silva", defensor: "Dr. Rodrigo", sala: "Plenário 1" },
+  { id: 2, data: "19/01", assistido: "Marcos Souza", defensor: "Dra. Juliane", sala: "Plenário 2" },
+];
+
+const mockDemandasPorStatus = [
+  { name: "Fila", value: 45, color: "#94a3b8" },
+  { name: "Atender", value: 28, color: "#f97316" },
+  { name: "Monitorar", value: 15, color: "#eab308" },
+  { name: "Protocolado", value: 67, color: "#22c55e" },
+];
+
+const mockDemandasPorArea = [
+  { name: "Júri", value: 32 },
+  { name: "Exec. Penal", value: 45 },
+  { name: "Viol. Dom.", value: 28 },
+  { name: "Substituição", value: 18 },
+  { name: "Curadoria", value: 12 },
+];
+
+const mockAtividadeSemanal = [
+  { dia: "Seg", protocolados: 12, recebidos: 8 },
+  { dia: "Ter", protocolados: 15, recebidos: 10 },
+  { dia: "Qua", protocolados: 8, recebidos: 14 },
+  { dia: "Qui", protocolados: 18, recebidos: 6 },
+  { dia: "Sex", protocolados: 22, recebidos: 9 },
+];
+
+function getPrioridadeBadge(prioridade: string) {
+  const configs: Record<string, { variant: "default" | "destructive" | "secondary" | "outline", label: string }> = {
+    REU_PRESO: { variant: "destructive", label: "RÉU PRESO" },
+    URGENTE: { variant: "destructive", label: "URGENTE" },
+    ALTA: { variant: "default", label: "ALTA" },
+    NORMAL: { variant: "secondary", label: "NORMAL" },
+    BAIXA: { variant: "outline", label: "BAIXA" },
+  };
+  const config = configs[prioridade] || configs.NORMAL;
+  return <Badge variant={config.variant}>{config.label}</Badge>;
+}
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [period, setPeriod] = useState("month");
-  
-  const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery();
-  const { data: checkedInPets, isLoading: petsLoading } = trpc.dashboard.checkedInPets.useQuery();
-  const { data: vaccineStats } = trpc.vaccines.stats.useQuery();
-  const { data: allPets } = trpc.pets.list.useQuery();
-  const { data: petsAttention } = trpc.analytics.petsRequiringAttention.useQuery();
-  const { data: dailyStatus } = trpc.petManagement.getDailyStatusCards.useQuery();
-  const { data: lowStockPets } = trpc.petManagement.getLowStockPets.useQuery();
-
-  // Dados calculados para gráficos
-  const chartData = useMemo(() => {
-    if (!allPets) return { breeds: [], status: [], timeline: [] };
-
-    // Contagem por raça
-    const breedCount: Record<string, number> = {};
-    allPets.forEach(pet => {
-      const breed = pet.breed || "Sem raça";
-      breedCount[breed] = (breedCount[breed] || 0) + 1;
-    });
-    const breeds = Object.entries(breedCount)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
-
-    // Status de aprovação
-    const statusCount = {
-      approved: allPets.filter(p => p.approvalStatus === "approved").length,
-      pending: allPets.filter(p => p.approvalStatus === "pending").length,
-      rejected: allPets.filter(p => p.approvalStatus === "rejected").length,
-    };
-    const status = [
-      { name: "Aprovados", value: statusCount.approved },
-      { name: "Pendentes", value: statusCount.pending },
-      { name: "Rejeitados", value: statusCount.rejected },
-    ].filter(s => s.value > 0);
-
-    // Dados de timeline simulados (últimos 7 dias)
-    const timeline = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - i));
-      return {
-        date: date.toLocaleDateString("pt-BR", { weekday: "short" }),
-        checkins: Math.floor(Math.random() * 10) + 1,
-        cadastros: Math.floor(Math.random() * 3),
-      };
-    });
-
-    return { breeds, status, timeline };
-  }, [allPets]);
-
-  if (statsLoading || petsLoading) {
-    return <DashboardSkeleton />;
-  }
+  const [period, setPeriod] = useState("week");
 
   return (
     <div className="space-y-6">
-      {/* Header com filtros */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Visão geral da creche e gestão de pets
+            Visão geral da Defensoria e gestão de processos
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -134,9 +140,9 @@ export default function AdminDashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="today">Hoje</SelectItem>
               <SelectItem value="week">Semana</SelectItem>
               <SelectItem value="month">Mês</SelectItem>
-              <SelectItem value="year">Ano</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon">
@@ -145,7 +151,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Tabs para diferentes visualizações */}
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="overview" className="gap-2">
@@ -164,359 +170,259 @@ export default function AdminDashboard() {
 
         {/* Tab: Visão Geral */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Cards de Status do Dia */}
-          {dailyStatus && (
-            <div className="grid gap-3 md:grid-cols-4">
-              <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
-                        {dailyStatus.petsScheduledToEnter}
-                      </p>
-                      <p className="text-sm text-blue-600 dark:text-blue-400">Pets para entrar</p>
-                    </div>
-                    <Dog className="h-8 w-8 text-blue-500 opacity-50" />
+          {/* Cards de Status Urgente */}
+          <div className="grid gap-3 md:grid-cols-4">
+            <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-3xl font-bold text-red-700 dark:text-red-300">
+                      {mockStats.prazosHoje}
+                    </p>
+                    <p className="text-sm text-red-600 dark:text-red-400">Prazos Hoje</p>
                   </div>
-                </CardContent>
-              </Card>
+                  <Timer className="h-8 w-8 text-red-500 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
-                        {dailyStatus.medicationsToApply}
-                      </p>
-                      <p className="text-sm text-purple-600 dark:text-purple-400">Medicamentos hoje</p>
-                    </div>
-                    <Pill className="h-8 w-8 text-purple-500 opacity-50" />
+            <Card className="bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800">
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-3xl font-bold text-orange-700 dark:text-orange-300">
+                      {mockStats.prazosUrgentes}
+                    </p>
+                    <p className="text-sm text-orange-600 dark:text-orange-400">Prazos Urgentes</p>
                   </div>
-                </CardContent>
-              </Card>
+                  <AlertTriangle className="h-8 w-8 text-orange-500 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className={`${dailyStatus.lowStockPets > 0 
-                ? "bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800" 
-                : "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"}`}>
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-3xl font-bold ${dailyStatus.lowStockPets > 0 
-                        ? "text-orange-700 dark:text-orange-300" 
-                        : "text-green-700 dark:text-green-300"}`}>
-                        {dailyStatus.lowStockPets}
-                      </p>
-                      <p className={`text-sm ${dailyStatus.lowStockPets > 0 
-                        ? "text-orange-600 dark:text-orange-400" 
-                        : "text-green-600 dark:text-green-400"}`}>
-                        Estoques baixos
-                      </p>
-                    </div>
-                    <Package className={`h-8 w-8 opacity-50 ${dailyStatus.lowStockPets > 0 
-                      ? "text-orange-500" : "text-green-500"}`} />
+            <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                      {mockStats.audienciasHoje}
+                    </p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400">Audiências Hoje</p>
                   </div>
-                </CardContent>
-              </Card>
+                  <Briefcase className="h-8 w-8 text-blue-500 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className={`${dailyStatus.behaviorAlertsCount > 0 
-                ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" 
-                : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"}`}>
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-3xl font-bold ${dailyStatus.behaviorAlertsCount > 0 
-                        ? "text-red-700 dark:text-red-300" 
-                        : "text-slate-700 dark:text-slate-300"}`}>
-                        {dailyStatus.behaviorAlertsCount}
-                      </p>
-                      <p className={`text-sm ${dailyStatus.behaviorAlertsCount > 0 
-                        ? "text-red-600 dark:text-red-400" 
-                        : "text-slate-600 dark:text-slate-400"}`}>
-                        Alertas comportamento
-                      </p>
-                    </div>
-                    <Zap className={`h-8 w-8 opacity-50 ${dailyStatus.behaviorAlertsCount > 0 
-                      ? "text-red-500" : "text-slate-500"}`} />
+            <Card className="bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+                      {mockStats.jurisSemana}
+                    </p>
+                    <p className="text-sm text-purple-600 dark:text-purple-400">Júris na Semana</p>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                  <Gavel className="h-8 w-8 text-purple-500 opacity-50" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Stats Cards - Cores Neutras */}
+          {/* Stats Cards Principais */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card className="shadow-sm hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Pets</CardTitle>
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <Dog className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats?.totalPets || 0}</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Cadastrados na plataforma
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Na Creche</CardTitle>
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats?.checkedIn || 0}</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Pets presentes hoje
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Tutores</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Assistidos</CardTitle>
                 <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
                   <Users className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{stats?.totalTutors || 0}</div>
+                <div className="text-3xl font-bold">{mockStats.totalAssistidos}</div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Cadastrados na plataforma
+                  Cadastrados no sistema
                 </p>
               </CardContent>
             </Card>
 
             <Card className="shadow-sm hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Pendentes</CardTitle>
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                <CardTitle className="text-sm font-medium text-muted-foreground">Réus Presos</CardTitle>
+                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                  <AlertOctagon className="h-5 w-5 text-red-600 dark:text-red-400" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{stats?.pendingApproval || 0}</div>
+                <div className="text-3xl font-bold text-red-600">{mockStats.reusPresos}</div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Aguardando aprovação
+                  Prioridade máxima
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Processos</CardTitle>
+                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                  <Scale className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{mockStats.totalProcessos}</div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Processos ativos
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Demandas em Fila</CardTitle>
+                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                  <FileText className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">45</div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Aguardando análise
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Main Content Grid */}
+          {/* Prazos Urgentes e Audiências */}
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Pets na Creche */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">Pets na Creche</CardTitle>
-                    <CardDescription className="mt-1">
-                      Pets que fizeram check-in hoje
-                    </CardDescription>
-                  </div>
-                  <Badge variant="secondary" className="text-base px-3 py-1">
-                    {checkedInPets?.length || 0}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {!checkedInPets || checkedInPets.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
-                      <Dog className="h-12 w-12 text-slate-400" />
-                    </div>
-                    <p className="text-lg font-medium text-muted-foreground mb-2">Nenhum pet na creche</p>
-                    <p className="text-sm text-muted-foreground max-w-sm">
-                      Faça o check-in dos pets quando chegarem
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {checkedInPets.slice(0, 5).map((pet) => (
-                      <Link key={pet.id} href={`/admin/pets/${pet.id}`}>
-                        <div className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 font-semibold">
-                              {pet.name[0]}
-                            </div>
-                            <div>
-                              <p className="font-medium">{pet.name}</p>
-                              <p className="text-sm text-muted-foreground">{pet.breed || "Sem raça"}</p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary">Na creche</Badge>
-                        </div>
-                      </Link>
-                    ))}
-                    {checkedInPets.length > 5 && (
-                      <Link href="/admin/pets">
-                        <Button variant="outline" className="w-full mt-4">
-                          Ver todos ({checkedInPets.length})
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Vacinas */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">Estatísticas de Vacinas</CardTitle>
-                    <CardDescription className="mt-1">
-                      Visão geral das vacinações
-                    </CardDescription>
-                  </div>
-                  <Syringe className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                    <p className="text-2xl font-bold">{vaccineStats?.total || 0}</p>
-                    <p className="text-xs text-muted-foreground">Total</p>
-                  </div>
-                  <div className="text-center p-4 rounded-lg bg-slate-100 dark:bg-slate-800">
-                    <p className="text-2xl font-bold">{vaccineStats?.upcoming || 0}</p>
-                    <p className="text-xs text-muted-foreground">Próximas</p>
-                  </div>
-                  <div className="text-center p-4 rounded-lg bg-slate-200 dark:bg-slate-700">
-                    <p className="text-2xl font-bold">{vaccineStats?.overdue || 0}</p>
-                    <p className="text-xs text-muted-foreground">Atrasadas</p>
-                  </div>
-                </div>
-                <Link href="/admin/vaccines">
-                  <Button variant="outline" className="w-full mt-4">
-                    Ver todas as vacinas
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Pets com Estoque Baixo */}
-          {lowStockPets && lowStockPets.length > 0 && (
-            <Card className="shadow-sm border-orange-200 dark:border-orange-900">
+            {/* Prazos Urgentes */}
+            <Card className="shadow-sm border-red-200 dark:border-red-900">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                      <Package className="h-5 w-5 text-orange-600" />
+                    <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                      <Timer className="h-5 w-5 text-red-600" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Estoques de Ração Baixos</CardTitle>
+                      <CardTitle className="text-lg">Prazos Urgentes</CardTitle>
                       <CardDescription className="mt-1">
-                        Avisar tutores para reposição
+                        Demandas com prazo próximo
                       </CardDescription>
                     </div>
                   </div>
+                  <Link href="/admin/prazos">
+                    <Button variant="outline" size="sm">Ver todos</Button>
+                  </Link>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {lowStockPets.slice(0, 5).map((pet) => (
-                    <Link key={pet.id} href={`/admin/pets/${pet.id}`}>
+                <div className="space-y-3">
+                  {mockPrazosUrgentes.map((prazo) => (
+                    <Link key={prazo.id} href={`/admin/demandas/${prazo.id}`}>
                       <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                            {pet.photoUrl ? (
-                              <img src={pet.photoUrl} alt={pet.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <PawPrint className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium">{pet.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {pet.foodBrand || "Ração"} • {pet.foodStockGrams ? `${(pet.foodStockGrams / 1000).toFixed(1)} kg` : "0 kg"}
-                            </p>
-                          </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{prazo.assistido}</p>
+                          <p className="text-xs text-muted-foreground truncate">{prazo.ato}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{prazo.processo}</p>
                         </div>
-                        <Badge 
-                          variant={pet.alertLevel === "empty" ? "destructive" : 
-                                   pet.alertLevel === "critical" ? "destructive" : "secondary"}
-                          className="gap-1"
-                        >
-                          {pet.daysRemaining <= 0 ? "Zerado" : `${pet.daysRemaining} dias`}
-                        </Badge>
+                        <div className="flex items-center gap-2 ml-4">
+                          <span className="text-sm font-medium text-red-600">{prazo.prazo}</span>
+                          {getPrioridadeBadge(prazo.prioridade)}
+                        </div>
                       </div>
                     </Link>
                   ))}
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* Pets que Requerem Atenção */}
-          {petsAttention && petsAttention.summary.petsAffected > 0 && (
-            <Card className="shadow-sm border-amber-200 dark:border-amber-900">
+            {/* Audiências de Hoje */}
+            <Card className="shadow-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                      <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <Briefcase className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Pets que Requerem Atenção</CardTitle>
+                      <CardTitle className="text-lg">Audiências de Hoje</CardTitle>
                       <CardDescription className="mt-1">
-                        {petsAttention.summary.totalAlerts} alertas pendentes
+                        Compromissos agendados
                       </CardDescription>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    {petsAttention.summary.vaccinesDue > 0 && (
-                      <Badge variant="destructive" className="gap-1">
-                        <Syringe className="h-3 w-3" />
-                        {petsAttention.summary.vaccinesDue}
-                      </Badge>
-                    )}
-                    {petsAttention.summary.medicationsToday > 0 && (
-                      <Badge variant="default" className="gap-1">
-                        <Pill className="h-3 w-3" />
-                        {petsAttention.summary.medicationsToday}
-                      </Badge>
-                    )}
-                    {petsAttention.summary.lowCredits > 0 && (
-                      <Badge variant="secondary" className="gap-1">
-                        <CreditCard className="h-3 w-3" />
-                        {petsAttention.summary.lowCredits}
-                      </Badge>
-                    )}
-                  </div>
+                  <Link href="/admin/audiencias">
+                    <Button variant="outline" size="sm">Ver todas</Button>
+                  </Link>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {petsAttention.items.slice(0, 5).map((item) => (
-                    <Link key={item.petId} href={`/admin/pets/${item.petId}`}>
-                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                            {item.petPhoto ? (
-                              <img src={item.petPhoto} alt={item.petName} className="w-full h-full object-cover" />
-                            ) : (
-                              <PawPrint className="h-5 w-5 text-muted-foreground" />
-                            )}
+                {mockAudienciasHoje.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
+                      <Briefcase className="h-12 w-12 text-slate-400" />
+                    </div>
+                    <p className="text-lg font-medium text-muted-foreground mb-2">Sem audiências hoje</p>
+                    <p className="text-sm text-muted-foreground max-w-sm">
+                      Não há audiências agendadas para hoje
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {mockAudienciasHoje.map((audiencia) => (
+                      <Link key={audiencia.id} href={`/admin/audiencias/${audiencia.id}`}>
+                        <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer">
+                          <div className="flex items-center gap-3">
+                            <div className="text-center">
+                              <p className="text-lg font-bold text-primary">{audiencia.hora}</p>
+                            </div>
+                            <div>
+                              <p className="font-medium">{audiencia.assistido}</p>
+                              <p className="text-xs text-muted-foreground">{audiencia.vara}</p>
+                            </div>
+                          </div>
+                          <Badge variant="secondary">{audiencia.tipo}</Badge>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Júris da Semana */}
+          {mockJurisSemana.length > 0 && (
+            <Card className="shadow-sm border-purple-200 dark:border-purple-900">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                      <Gavel className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Sessões do Júri</CardTitle>
+                      <CardDescription className="mt-1">
+                        Plenários agendados esta semana
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Link href="/admin/juri">
+                    <Button variant="outline" size="sm">Ver todos</Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {mockJurisSemana.map((juri) => (
+                    <Link key={juri.id} href={`/admin/juri/${juri.id}`}>
+                      <div className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer bg-purple-50/50 dark:bg-purple-950/20">
+                        <div className="flex items-center gap-4">
+                          <div className="text-center bg-purple-100 dark:bg-purple-900/50 rounded-lg px-3 py-2">
+                            <p className="text-lg font-bold text-purple-600">{juri.data}</p>
                           </div>
                           <div>
-                            <p className="font-medium">{item.petName}</p>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {item.alerts.slice(0, 2).map((alert, i) => (
-                                <span key={i} className="text-xs text-muted-foreground">
-                                  {alert.message}{i < Math.min(item.alerts.length, 2) - 1 && " • "}
-                                </span>
-                              ))}
-                              {item.alerts.length > 2 && (
-                                <span className="text-xs text-muted-foreground">+{item.alerts.length - 2}</span>
-                              )}
-                            </div>
+                            <p className="font-medium">{juri.assistido}</p>
+                            <p className="text-xs text-muted-foreground">{juri.defensor} • {juri.sala}</p>
                           </div>
                         </div>
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -524,13 +430,6 @@ export default function AdminDashboard() {
                     </Link>
                   ))}
                 </div>
-                {petsAttention.items.length > 5 && (
-                  <Link href="/admin/analytics">
-                    <Button variant="outline" className="w-full mt-4">
-                      Ver todos ({petsAttention.summary.petsAffected} pets)
-                    </Button>
-                  </Link>
-                )}
               </CardContent>
             </Card>
           )}
@@ -545,16 +444,16 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Link href="/admin/pets/new">
+                <Link href="/admin/assistidos/novo">
                   <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
-                    <Dog className="h-6 w-6" />
-                    <span>Novo Pet</span>
+                    <Users className="h-6 w-6" />
+                    <span>Novo Assistido</span>
                   </Button>
                 </Link>
-                <Link href="/admin/logs">
+                <Link href="/admin/demandas/nova">
                   <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
-                    <Clock className="h-6 w-6" />
-                    <span>Registrar Log</span>
+                    <FileText className="h-6 w-6" />
+                    <span>Nova Demanda</span>
                   </Button>
                 </Link>
                 <Link href="/admin/calendar">
@@ -563,10 +462,10 @@ export default function AdminDashboard() {
                     <span>Calendário</span>
                   </Button>
                 </Link>
-                <Link href="/admin/finances">
+                <Link href="/admin/kanban">
                   <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
-                    <TrendingUp className="h-6 w-6" />
-                    <span>Finanças</span>
+                    <Target className="h-6 w-6" />
+                    <span>Kanban</span>
                   </Button>
                 </Link>
               </div>
@@ -574,109 +473,97 @@ export default function AdminDashboard() {
           </Card>
         </TabsContent>
 
-        {/* Tab: Análises com Gráficos */}
+        {/* Tab: Análises */}
         <TabsContent value="analytics" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Gráfico de Raças */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Distribuição por Raça
-                </CardTitle>
-                <CardDescription>Top 6 raças cadastradas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {chartData.breeds.length > 0 ? (
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData.breeds} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis type="number" stroke="#94a3b8" fontSize={12} />
-                        <YAxis 
-                          type="category" 
-                          dataKey="name" 
-                          width={100} 
-                          stroke="#94a3b8" 
-                          fontSize={12}
-                          tickFormatter={(value) => value.length > 12 ? value.slice(0, 12) + '...' : value}
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'white', 
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px'
-                          }} 
-                        />
-                        <Bar dataKey="value" fill="#64748b" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                    Nenhum dado disponível
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Gráfico de Status */}
+            {/* Demandas por Status */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <PieChart className="h-5 w-5" />
-                  Status de Aprovação
+                  Demandas por Status
                 </CardTitle>
-                <CardDescription>Distribuição por status</CardDescription>
+                <CardDescription>Distribuição atual das demandas</CardDescription>
               </CardHeader>
               <CardContent>
-                {chartData.status.length > 0 ? (
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPie>
-                        <Pie
-                          data={chartData.status}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={2}
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                          labelLine={false}
-                        >
-                          {chartData.status.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={NEUTRAL_COLORS[index % NEUTRAL_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </RechartsPie>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                    Nenhum dado disponível
-                  </div>
-                )}
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPie>
+                      <Pie
+                        data={mockDemandasPorStatus}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={2}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {mockDemandasPorStatus.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Demandas por Área */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Demandas por Área
+                </CardTitle>
+                <CardDescription>Distribuição por área de atuação</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={mockDemandasPorArea} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis type="number" stroke="#94a3b8" fontSize={12} />
+                      <YAxis 
+                        type="category" 
+                        dataKey="name" 
+                        width={80} 
+                        stroke="#94a3b8" 
+                        fontSize={12}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px'
+                        }} 
+                      />
+                      <Bar dataKey="value" fill="#64748b" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Gráfico de Timeline */}
+          {/* Atividade Semanal */}
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Atividade nos Últimos 7 Dias
+                Atividade Semanal
               </CardTitle>
-              <CardDescription>Check-ins e novos cadastros</CardDescription>
+              <CardDescription>Demandas protocoladas vs recebidas</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData.timeline}>
+                  <AreaChart data={mockAtividadeSemanal}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
+                    <XAxis dataKey="dia" stroke="#94a3b8" fontSize={12} />
                     <YAxis stroke="#94a3b8" fontSize={12} />
                     <Tooltip 
                       contentStyle={{ 
@@ -688,18 +575,18 @@ export default function AdminDashboard() {
                     <Legend />
                     <Area 
                       type="monotone" 
-                      dataKey="checkins" 
-                      name="Check-ins"
-                      stroke="#475569" 
-                      fill="#94a3b8" 
+                      dataKey="protocolados" 
+                      name="Protocolados"
+                      stroke="#22c55e" 
+                      fill="#22c55e" 
                       fillOpacity={0.3}
                     />
                     <Area 
                       type="monotone" 
-                      dataKey="cadastros" 
-                      name="Cadastros"
-                      stroke="#64748b" 
-                      fill="#cbd5e1" 
+                      dataKey="recebidos" 
+                      name="Recebidos"
+                      stroke="#f97316" 
+                      fill="#f97316" 
                       fillOpacity={0.3}
                     />
                   </AreaChart>
@@ -722,41 +609,41 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                        <Dog className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-medium">Pets Ativos</p>
-                        <p className="text-sm text-muted-foreground">Com status aprovado</p>
+                        <p className="font-medium">Demandas Concluídas</p>
+                        <p className="text-sm text-muted-foreground">Esta semana</p>
                       </div>
                     </div>
-                    <span className="text-2xl font-bold">{allPets?.filter(p => p.approvalStatus === 'approved').length || 0}</span>
+                    <span className="text-2xl font-bold text-green-600">67</span>
                   </div>
                   
                   <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                        <Calendar className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <Briefcase className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        <p className="font-medium">Check-ins Hoje</p>
-                        <p className="text-sm text-muted-foreground">Pets presentes na creche</p>
+                        <p className="font-medium">Audiências Realizadas</p>
+                        <p className="text-sm text-muted-foreground">Esta semana</p>
                       </div>
                     </div>
-                    <span className="text-2xl font-bold">{checkedInPets?.length || 0}</span>
+                    <span className="text-2xl font-bold">12</span>
                   </div>
                   
                   <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                        <Syringe className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                        <UserCheck className="h-5 w-5 text-purple-600" />
                       </div>
                       <div>
-                        <p className="font-medium">Vacinas Pendentes</p>
-                        <p className="text-sm text-muted-foreground">Próximas ou atrasadas</p>
+                        <p className="font-medium">Atendimentos</p>
+                        <p className="text-sm text-muted-foreground">Esta semana</p>
                       </div>
                     </div>
-                    <span className="text-2xl font-bold">{(vaccineStats?.upcoming || 0) + (vaccineStats?.overdue || 0)}</span>
+                    <span className="text-2xl font-bold">28</span>
                   </div>
                 </div>
               </CardContent>
@@ -772,63 +659,39 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Taxa de Aprovação</span>
-                      <span className="font-medium">
-                        {allPets && allPets.length > 0 
-                          ? Math.round((allPets.filter(p => p.approvalStatus === 'approved').length / allPets.length) * 100)
-                          : 0}%
-                      </span>
+                      <span className="text-sm text-muted-foreground">Taxa de Cumprimento</span>
+                      <span className="font-medium text-green-600">94%</span>
                     </div>
                     <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-slate-500 rounded-full transition-all"
-                        style={{ 
-                          width: `${allPets && allPets.length > 0 
-                            ? (allPets.filter(p => p.approvalStatus === 'approved').length / allPets.length) * 100
-                            : 0}%` 
-                        }}
+                        className="h-full bg-green-500 rounded-full transition-all"
+                        style={{ width: '94%' }}
                       />
                     </div>
                   </div>
                   
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Ocupação Diária</span>
-                      <span className="font-medium">
-                        {allPets && allPets.length > 0 
-                          ? Math.round(((checkedInPets?.length || 0) / allPets.filter(p => p.approvalStatus === 'approved').length) * 100)
-                          : 0}%
-                      </span>
+                      <span className="text-sm text-muted-foreground">Prazos em Dia</span>
+                      <span className="font-medium">87%</span>
                     </div>
                     <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-slate-400 rounded-full transition-all"
-                        style={{ 
-                          width: `${allPets && allPets.length > 0 
-                            ? ((checkedInPets?.length || 0) / allPets.filter(p => p.approvalStatus === 'approved').length) * 100
-                            : 0}%` 
-                        }}
+                        className="h-full bg-blue-500 rounded-full transition-all"
+                        style={{ width: '87%' }}
                       />
                     </div>
                   </div>
                   
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Vacinas em Dia</span>
-                      <span className="font-medium">
-                        {vaccineStats && vaccineStats.total > 0 
-                          ? Math.round(((vaccineStats.total - (vaccineStats.overdue || 0)) / vaccineStats.total) * 100)
-                          : 100}%
-                      </span>
+                      <span className="text-sm text-muted-foreground">Atendimentos Realizados</span>
+                      <span className="font-medium">78%</span>
                     </div>
                     <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-slate-600 rounded-full transition-all"
-                        style={{ 
-                          width: `${vaccineStats && vaccineStats.total > 0 
-                            ? ((vaccineStats.total - (vaccineStats.overdue || 0)) / vaccineStats.total) * 100
-                            : 100}%` 
-                        }}
+                        className="h-full bg-purple-500 rounded-full transition-all"
+                        style={{ width: '78%' }}
                       />
                     </div>
                   </div>

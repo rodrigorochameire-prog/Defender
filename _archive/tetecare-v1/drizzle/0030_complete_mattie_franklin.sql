@@ -1,1 +1,0 @@
-ALTER TABLE `pets` ADD `approvalStatus` enum('pending','approved','rejected') DEFAULT 'pending' NOT NULL;

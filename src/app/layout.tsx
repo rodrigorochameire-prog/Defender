@@ -10,8 +10,11 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "TeteCare - Gestão de Creche para Pets",
-  description: "Sistema completo de gestão para creche e daycare de pets",
+  title: "DefensorHub - Sistema de Gestão Jurídica",
+  description: "Sistema de gestão de processos, prazos e demandas para Defensoria Pública",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 // Script to prevent flash of wrong theme - default to light

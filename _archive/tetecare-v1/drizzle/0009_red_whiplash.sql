@@ -1,1 +1,0 @@
-ALTER TABLE `notifications` MODIFY COLUMN `type` enum('vaccine_reminder','medication_reminder','credit_low','daily_update','check_in','check_out','daily_report','calendar_event','system') NOT NULL;

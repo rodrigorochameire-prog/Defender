@@ -1,15 +1,19 @@
 import Link from "next/link";
-import Image from "next/image";
 import { 
-  Dog, 
-  Heart, 
+  Scale, 
+  Clock, 
   Calendar, 
   Bell, 
   Shield, 
-  Sparkles,
+  FileText,
   CheckCircle2,
   ArrowRight,
-  Star
+  Users,
+  Gavel,
+  Calculator,
+  MessageCircle,
+  Target,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,14 +25,10 @@ export function LandingPage() {
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Image
-              src="/tetecare-logo.png"
-              alt="Tetê Care"
-              width={44}
-              height={44}
-              className="rounded-full object-contain shadow-sm"
-            />
-            <span className="text-xl font-semibold tracking-tight">Tetê Care</span>
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+              <Scale className="h-6 w-6 text-primary" />
+            </div>
+            <span className="text-xl font-semibold tracking-tight">DefensorHub</span>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
@@ -50,23 +50,23 @@ export function LandingPage() {
           <div className="text-center space-y-8">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
-              <Sparkles className="w-4 h-4" />
-              <span>Gestão Profissional de Creche para Pets</span>
+              <Scale className="w-4 h-4" />
+              <span>Sistema de Gestão para Defensoria Pública</span>
             </div>
 
             {/* Main Heading */}
             <div className="space-y-6">
               <div className="space-y-3">
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-                  Cuidado profissional
+                  Gestão Jurídica
                 </h1>
                 <p className="text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-primary">
-                  para seu melhor amigo
+                  Simplificada e Eficiente
                 </p>
               </div>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Plataforma completa para gestão de creches de pets. Controle de saúde, vacinas, 
-                medicamentos e comunicação em tempo real com os tutores.
+                Plataforma completa para gestão de processos, prazos e demandas. 
+                Controle de assistidos, audiências, júris e comunicação integrada.
               </p>
             </div>
 
@@ -79,178 +79,202 @@ export function LandingPage() {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="gap-2 text-base px-8 h-12">
-                <Dog className="w-5 h-5" />
+                <Scale className="w-5 h-5" />
                 Ver Demonstração
               </Button>
             </div>
 
-            {/* Social Proof */}
-            <div className="flex items-center justify-center gap-6 pt-8 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-background"></div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 border-2 border-background"></div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-background"></div>
-                </div>
-                <span className="font-medium">260+ pets cadastrados</span>
+            {/* Stats */}
+            <div className="flex items-center justify-center gap-8 pt-8 text-sm">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary">150+</div>
+                <div className="text-muted-foreground">Assistidos</div>
               </div>
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-orange-400 text-orange-400" />
-                ))}
-                <span className="ml-1 font-medium">5.0</span>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary">280+</div>
+                <div className="text-muted-foreground">Processos</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary">94%</div>
+                <div className="text-muted-foreground">Prazos Cumpridos</div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Features Section */}
       <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Tudo que você precisa em um só lugar
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Ferramentas profissionais para oferecer o melhor cuidado e tranquilidade para tutores
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            Tudo que você precisa para uma gestão eficiente
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Ferramentas pensadas para otimizar o trabalho da Defensoria Pública
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="w-12 h-12 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+              <Clock className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Controle de Prazos</h3>
+            <p className="text-muted-foreground">
+              Acompanhe todos os prazos processuais com alertas automáticos e priorização por urgência.
             </p>
-          </div>
+          </Card>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {/* Feature 1 */}
-            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
-              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Dog className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Gestão Completa</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Controle de check-in/out, créditos, histórico completo e relatórios detalhados.
-              </p>
-            </Card>
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Gestão de Assistidos</h3>
+            <p className="text-muted-foreground">
+              Cadastro completo com status prisional, contatos e histórico de atendimentos.
+            </p>
+          </Card>
 
-            {/* Feature 2 */}
-            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
-              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Heart className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Saúde em Dia</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Vacinas, medicamentos, preventivos e lembretes automáticos.
-              </p>
-            </Card>
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
+              <Gavel className="w-6 h-6 text-purple-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Tribunal do Júri</h3>
+            <p className="text-muted-foreground">
+              Controle de sessões, designação de defensores e registro de resultados.
+            </p>
+          </Card>
 
-            {/* Feature 3 */}
-            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
-              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Calendar className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Calendário Inteligente</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Agende eventos e compromissos com notificações automáticas.
-              </p>
-            </Card>
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="w-12 h-12 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-4">
+              <Calendar className="w-6 h-6 text-orange-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Calendário Integrado</h3>
+            <p className="text-muted-foreground">
+              Visualize audiências, júris e prazos em um calendário unificado.
+            </p>
+          </Card>
 
-            {/* Feature 4 */}
-            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
-              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Bell className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Notificações</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Mensagens automáticas para manter tutores sempre informados.
-              </p>
-            </Card>
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
+              <FileText className="w-6 h-6 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Templates de Peças</h3>
+            <p className="text-muted-foreground">
+              Biblioteca de modelos de peças processuais para agilizar a produção.
+            </p>
+          </Card>
 
-            {/* Feature 5 */}
-            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
-              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Shield className="w-5 h-5 text-primary" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Segurança</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Dados protegidos com criptografia e controle de acesso.
-              </p>
-            </Card>
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="w-12 h-12 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mb-4">
+              <Calculator className="w-6 h-6 text-teal-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Calculadoras</h3>
+            <p className="text-muted-foreground">
+              Cálculo de pena, prescrição, progressão de regime e livramento condicional.
+            </p>
+          </Card>
+        </div>
+      </section>
 
-            {/* Feature 6 */}
-            <Card className="p-6 hover:shadow-md transition-all border hover:border-primary/30 bg-card/80">
-              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Sparkles className="w-5 h-5 text-primary" />
+      {/* Kanban Preview */}
+      <section className="container mx-auto px-4 py-16 md:py-24 bg-slate-50 dark:bg-slate-900/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-sm font-medium text-primary mb-4">
+                <Target className="w-4 h-4" />
+                Visualização Kanban
               </div>
-              <h3 className="text-lg font-medium mb-2">Assistente IA</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Inteligência artificial para responder dúvidas e gerar relatórios.
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                Gerencie demandas de forma visual
+              </h2>
+              <p className="text-lg text-muted-foreground mb-6">
+                Organize suas demandas em colunas por status. Arraste e solte para atualizar 
+                o andamento. Priorize réus presos automaticamente.
               </p>
-            </Card>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <span>Visualização por status (Atender, Fila, Monitorar, Protocolado)</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <span>Destaque automático para réus presos</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <span>Filtros por área (Júri, EP, VD, Substituição)</span>
+                </li>
+              </ul>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <span className="font-medium text-sm">Atender</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-900">
+                    <div className="text-xs text-red-600 font-bold mb-1">HOJE</div>
+                    <div className="text-sm font-medium">Resp. à Acusação</div>
+                    <div className="text-xs text-muted-foreground">Diego Bonfim</div>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border">
+                    <div className="text-xs text-orange-600 mb-1">Amanhã</div>
+                    <div className="text-sm font-medium">Habeas Corpus</div>
+                    <div className="text-xs text-muted-foreground">Lucas Silva</div>
+                  </div>
+                </div>
+              </Card>
+              <Card className="p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span className="font-medium text-sm">Protocolado</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-900">
+                    <div className="text-xs text-green-600 mb-1">Concluído</div>
+                    <div className="text-sm font-medium">Memoriais</div>
+                    <div className="text-xs text-muted-foreground">Roberto Lima</div>
+                  </div>
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24 bg-gradient-to-b from-accent/5 to-background">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold">
-                Por que escolher o Tetê Care?
-              </h2>
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold mb-1">Transparência Total</h4>
-                    <p className="text-muted-foreground">
-                      Tutores acompanham tudo em tempo real: check-in, relatórios diários e saúde do pet.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold mb-1">Economia de Tempo</h4>
-                    <p className="text-muted-foreground">
-                      Automatize notificações, relatórios e lembretes. Foque no que importa: cuidar dos pets.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold mb-1">Profissionalismo</h4>
-                    <p className="text-muted-foreground">
-                      Demonstre organização e cuidado com uma plataforma moderna e completa.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold mb-1">Suporte Completo</h4>
-                    <p className="text-muted-foreground">
-                      Documentação detalhada e sistema intuitivo para facilitar o dia a dia.
-                    </p>
-                  </div>
-                </div>
-              </div>
+      {/* WhatsApp Integration */}
+      <section className="container mx-auto px-4 py-16 md:py-24">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-sm font-medium text-green-700 dark:text-green-300 mb-4">
+            <MessageCircle className="w-4 h-4" />
+            Integração WhatsApp
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            Comunicação direta com assistidos e familiares
+          </h2>
+          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Envie notificações automáticas sobre movimentações processuais, 
+            audiências e prazos diretamente pelo WhatsApp.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+              <Bell className="w-4 h-4" />
+              <span className="text-sm">Notificações de Prazo</span>
             </div>
-
-            <div className="relative">
-              <div className="aspect-square rounded-2xl bg-gradient-to-br from-orange-100 via-teal-50 to-blue-100 p-8 flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <Image
-                    src="/tetecare-logo.png"
-                    alt="Tetê Care"
-                    width={200}
-                    height={200}
-                    className="rounded-full object-contain mx-auto shadow-2xl"
-                  />
-                  <div className="bg-white rounded-xl p-4 shadow-lg">
-                    <p className="text-2xl font-bold text-primary">260+</p>
-                    <p className="text-sm text-muted-foreground">Pets felizes</p>
-                  </div>
-                </div>
-              </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+              <Calendar className="w-4 h-4" />
+              <span className="text-sm">Lembretes de Audiência</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+              <Gavel className="w-4 h-4" />
+              <span className="text-sm">Avisos de Júri</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+              <FileText className="w-4 h-4" />
+              <span className="text-sm">Movimentações</span>
             </div>
           </div>
         </div>
@@ -258,55 +282,49 @@ export function LandingPage() {
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="max-w-4xl mx-auto">
-          <Card className="p-8 md:p-12 text-center bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 border-2 border-primary/20">
-            <div className="space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold">
-                Pronto para transformar sua creche?
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Comece agora e ofereça o melhor cuidado para os pets com tecnologia de ponta.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                <Button size="lg" className="gap-2 text-base px-8 h-12 shadow-lg hover:shadow-xl transition-all" asChild>
-                  <Link href="/login">
-                    Acessar Plataforma
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
-                </Button>
-              </div>
+        <Card className="max-w-4xl mx-auto p-8 md:p-12 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+          <div className="text-center space-y-6">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Pronto para modernizar sua Defensoria?
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Comece agora e transforme a gestão de processos e prazos em algo simples e eficiente.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button size="lg" className="gap-2 text-base px-8 h-12" asChild>
+                <Link href="/register">
+                  Criar Conta Gratuita
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="gap-2 text-base px-8 h-12" asChild>
+                <Link href="/login">
+                  Já tenho conta
+                </Link>
+              </Button>
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-muted/30">
-        <div className="container mx-auto px-4 py-8">
+      <footer className="border-t py-8">
+        <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Image
-                src="/tetecare-logo.png"
-                alt="Tetê Care"
-                width={36}
-                height={36}
-                className="rounded-full object-contain"
-              />
-              <span className="text-sm text-muted-foreground">
-                © 2025 Tetê Care. Todos os direitos reservados.
-              </span>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                <Scale className="h-4 w-4 text-primary" />
+              </div>
+              <span className="font-semibold">DefensorHub</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">
-                Privacidade
-              </a>
-              <a href="#" className="hover:text-foreground transition-colors">
-                Termos
-              </a>
-              <a href="#" className="hover:text-foreground transition-colors">
-                Contato
-              </a>
+              <Link href="#" className="hover:text-foreground transition-colors">Termos</Link>
+              <Link href="#" className="hover:text-foreground transition-colors">Privacidade</Link>
+              <Link href="#" className="hover:text-foreground transition-colors">Suporte</Link>
             </div>
+            <p className="text-sm text-muted-foreground">
+              © 2026 DefensorHub. Todos os direitos reservados.
+            </p>
           </div>
         </div>
       </footer>
