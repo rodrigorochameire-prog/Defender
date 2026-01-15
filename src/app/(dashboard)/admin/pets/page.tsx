@@ -246,15 +246,9 @@ function PetCard({
       <CardContent className="p-4">
         {/* Header com foto e info básica */}
         <div className="flex items-start gap-3">
+          {/* Avatar limpo - sem ícones sobrepostos */}
           <Link href={`/admin/pets/${pet.id}`} className="shrink-0">
-            <div className="relative">
-              <BreedIcon breed={pet.breed} className="h-14 w-14" />
-              {/* Indicadores de saúde */}
-              <div className="absolute -bottom-1 -right-1 flex gap-0.5 bg-white dark:bg-gray-900 rounded-full p-0.5 shadow-sm">
-                <HealthIndicator type="vaccine" status={healthStatus.vaccine} label="Vacinas" />
-                <HealthIndicator type="preventive" status={healthStatus.preventive} label="Preventivos" />
-              </div>
-            </div>
+            <BreedIcon breed={pet.breed} className="h-14 w-14 rounded-xl" />
           </Link>
           
           <div className="flex-1 min-w-0">
@@ -266,7 +260,7 @@ function PetCard({
             <p className="text-sm text-muted-foreground truncate">{pet.breed || "Sem raça definida"}</p>
             
             {/* Info compacta */}
-            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
               {pet.weight && (
                 <span>{(pet.weight / 1000).toFixed(1)}kg</span>
               )}
@@ -275,8 +269,14 @@ function PetCard({
                   {Math.floor((Date.now() - new Date(pet.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365))}a
                 </span>
               )}
+            </div>
+            
+            {/* Indicadores de saúde - linha separada */}
+            <div className="flex items-center gap-2 mt-1.5">
+              <HealthIndicator type="vaccine" status={healthStatus.vaccine} label="Vacinas" />
+              <HealthIndicator type="preventive" status={healthStatus.preventive} label="Preventivos" />
               {pet.energyLevel && (
-                <Badge variant="outline" className="text-xs h-5 px-1.5">
+                <Badge variant="outline" className="text-xs h-5 px-1.5 ml-auto">
                   <Zap className="h-3 w-3 mr-0.5" />
                   {pet.energyLevel === "very_high" ? "+++" : 
                    pet.energyLevel === "high" ? "++" : 
