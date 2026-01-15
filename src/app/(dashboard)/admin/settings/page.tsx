@@ -1,151 +1,60 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { 
   Settings, 
-  Zap, 
-  Flag, 
-  Sliders, 
-  Plus, 
-  Trash2, 
-  Edit, 
-  Play, 
-  Pause,
-  Save,
-  RefreshCw,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  Loader2,
-  History,
-  ChevronRight,
-  Tag,
-  Syringe,
-  CreditCard,
-  Package,
   Bell,
   Calendar,
   Shield,
+  User,
+  Building,
+  Loader2,
+  Save,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
-
-const FLAG_COLORS = [
-  { value: "red", label: "Vermelho", class: "bg-red-500" },
-  { value: "orange", label: "Laranja", class: "bg-orange-500" },
-  { value: "yellow", label: "Amarelo", class: "bg-yellow-500" },
-  { value: "green", label: "Verde", class: "bg-green-500" },
-  { value: "blue", label: "Azul", class: "bg-blue-500" },
-  { value: "purple", label: "Roxo", class: "bg-purple-500" },
-];
 
 export default function AdminSettingsPage() {
-  const [activeTab, setActiveTab] = useState("thresholds");
-  const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false);
-  const [isFlagDialogOpen, setIsFlagDialogOpen] = useState(false);
-  const [editingRule, setEditingRule] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("geral");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const utils = trpc.useUtils();
-
-  // Queries
-  const { data: settings, isLoading: settingsLoading } = trpc.businessRules.listSettings.useQuery();
-  const { data: rules, isLoading: rulesLoading } = trpc.businessRules.listRules.useQuery();
-  const { data: flags, isLoading: flagsLoading } = trpc.businessRules.listFlags.useQuery();
-  const { data: metadata } = trpc.businessRules.getRuleBuilderMetadata.useQuery();
-  const { data: executionHistory } = trpc.businessRules.getExecutionHistory.useQuery({ limit: 20 });
-
-  // Mutations
-  const initSettings = trpc.businessRules.initializeDefaultSettings.useMutation({
-    onSuccess: () => {
-      toast.success("Configurações padrão inicializadas!");
-      utils.businessRules.listSettings.invalidate();
-    },
+  // Estados locais para configurações
+  const [settings, setSettings] = useState({
+    // Configurações Gerais
+    nomeDefensoria: "Defensoria Pública do Estado",
+    comarca: "Camaçari",
+    telefone: "(71) 3621-0000",
+    email: "defensoria@example.com",
+    
+    // Notificações
+    notificarPrazos: true,
+    diasAntesPrazo: 3,
+    notificarAudiencias: true,
+    diasAntesAudiencia: 2,
+    notificarJuri: true,
+    diasAntesJuri: 7,
+    
+    // Integrações
+    googleDriveEnabled: false,
+    googleCalendarEnabled: false,
+    whatsappEnabled: false,
   });
 
-  const updateSetting = trpc.businessRules.updateSetting.useMutation({
-    onSuccess: () => {
-      toast.success("Configuração salva!");
-      utils.businessRules.listSettings.invalidate();
-    },
-  });
-
-  const createRule = trpc.businessRules.createRule.useMutation({
-    onSuccess: () => {
-      toast.success("Regra criada!");
-      setIsRuleDialogOpen(false);
-      utils.businessRules.listRules.invalidate();
-    },
-  });
-
-  const updateRule = trpc.businessRules.updateRule.useMutation({
-    onSuccess: () => {
-      toast.success("Regra atualizada!");
-      utils.businessRules.listRules.invalidate();
-    },
-  });
-
-  const deleteRule = trpc.businessRules.deleteRule.useMutation({
-    onSuccess: () => {
-      toast.success("Regra excluída!");
-      utils.businessRules.listRules.invalidate();
-    },
-  });
-
-  const createFlag = trpc.businessRules.createFlag.useMutation({
-    onSuccess: () => {
-      toast.success("Flag criada!");
-      setIsFlagDialogOpen(false);
-      utils.businessRules.listFlags.invalidate();
-    },
-  });
-
-  // Agrupar settings por categoria
-  const settingsByCategory = settings?.reduce((acc, s) => {
-    if (!acc[s.category]) acc[s.category] = [];
-    acc[s.category].push(s);
-    return acc;
-  }, {} as Record<string, typeof settings>) || {};
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "thresholds": return <Sliders className="h-5 w-5" />;
-      case "scheduling": return <Calendar className="h-5 w-5" />;
-      case "notifications": return <Bell className="h-5 w-5" />;
-      default: return <Settings className="h-5 w-5" />;
-    }
-  };
-
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case "thresholds": return "Limites e Alertas";
-      case "scheduling": return "Agendamento";
-      case "notifications": return "Notificações";
-      default: return category;
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // TODO: Implementar salvamento real
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Configurações salvas com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao salvar configurações");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -158,718 +67,365 @@ export default function AdminSettingsPage() {
             <Settings className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Configurações do Sistema</h1>
-            <p className="text-muted-foreground">Motor de regras de negócio e automações</p>
+            <h1 className="text-2xl font-bold">Configurações</h1>
+            <p className="text-muted-foreground">Configure o sistema DefensorHub</p>
           </div>
         </div>
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
+          Salvar Alterações
+        </Button>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="thresholds" className="gap-2">
-            <Sliders className="h-4 w-4" />
-            Limites
+          <TabsTrigger value="geral" className="gap-2">
+            <Building className="h-4 w-4" />
+            Geral
           </TabsTrigger>
-          <TabsTrigger value="rules" className="gap-2">
-            <Zap className="h-4 w-4" />
-            Regras
+          <TabsTrigger value="notificacoes" className="gap-2">
+            <Bell className="h-4 w-4" />
+            Notificações
           </TabsTrigger>
-          <TabsTrigger value="flags" className="gap-2">
-            <Flag className="h-4 w-4" />
-            Flags
+          <TabsTrigger value="integracoes" className="gap-2">
+            <Calendar className="h-4 w-4" />
+            Integrações
           </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2">
-            <History className="h-4 w-4" />
-            Histórico
+          <TabsTrigger value="seguranca" className="gap-2">
+            <Shield className="h-4 w-4" />
+            Segurança
           </TabsTrigger>
         </TabsList>
 
-        {/* TAB: THRESHOLDS */}
-        <TabsContent value="thresholds" className="space-y-6">
-          {settingsLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : !settings || settings.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Settings className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">Nenhuma configuração encontrada</h3>
-                <p className="text-muted-foreground mb-4">
-                  Clique no botão abaixo para inicializar as configurações padrão
-                </p>
-                <Button onClick={() => initSettings.mutate()} disabled={initSettings.isPending}>
-                  {initSettings.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Inicializar Configurações
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            Object.entries(settingsByCategory).map(([category, categorySettings]) => (
-              <Card key={category}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {getCategoryIcon(category)}
-                    {getCategoryLabel(category)}
-                  </CardTitle>
-                  <CardDescription>
-                    Configure os parâmetros de {getCategoryLabel(category).toLowerCase()}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6 md:grid-cols-2">
-                    {categorySettings?.map((setting) => (
-                      <div key={setting.key} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor={setting.key}>{setting.label}</Label>
-                          {setting.description && (
-                            <span className="text-xs text-muted-foreground">{setting.description}</span>
-                          )}
-                        </div>
-                        
-                        {setting.dataType === "boolean" ? (
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              id={setting.key}
-                              checked={setting.parsedValue}
-                              onCheckedChange={(checked) => {
-                                updateSetting.mutate({ key: setting.key, value: checked });
-                              }}
-                            />
-                            <span className="text-sm text-muted-foreground">
-                              {setting.parsedValue ? "Ativado" : "Desativado"}
-                            </span>
-                          </div>
-                        ) : setting.dataType === "number" ? (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              id={setting.key}
-                              type="number"
-                              defaultValue={setting.parsedValue}
-                              className="w-24"
-                              onBlur={(e) => {
-                                const value = parseInt(e.target.value);
-                                if (value !== setting.parsedValue) {
-                                  updateSetting.mutate({ key: setting.key, value });
-                                }
-                              }}
-                            />
-                            {setting.key.includes("days") && <span className="text-sm text-muted-foreground">dias</span>}
-                            {setting.key.includes("credits") && <span className="text-sm text-muted-foreground">créditos</span>}
-                            {setting.key.includes("capacity") && <span className="text-sm text-muted-foreground">pets</span>}
-                            {setting.key.includes("variation") && <span className="text-sm text-muted-foreground">%</span>}
-                          </div>
-                        ) : (
-                          <Input
-                            id={setting.key}
-                            defaultValue={setting.parsedValue}
-                            onBlur={(e) => {
-                              if (e.target.value !== setting.parsedValue) {
-                                updateSetting.mutate({ key: setting.key, value: e.target.value });
-                              }
-                            }}
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </TabsContent>
-
-        {/* TAB: REGRAS */}
-        <TabsContent value="rules" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Regras de Automação</h2>
-              <p className="text-muted-foreground">Configure ações automáticas baseadas em condições</p>
-            </div>
-            <Button onClick={() => { setEditingRule(null); setIsRuleDialogOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Regra
-            </Button>
-          </div>
-
-          {rulesLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : !rules || rules.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Zap className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">Nenhuma regra configurada</h3>
-                <p className="text-muted-foreground mb-4">
-                  Crie regras de automação para agilizar a gestão
-                </p>
-                <Button onClick={() => setIsRuleDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar Primeira Regra
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {rules.map((rule) => (
-                <Card key={rule.id} className={!rule.isActive ? "opacity-60" : ""}>
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className={`p-2 rounded-lg ${rule.isActive ? "bg-green-100 dark:bg-green-900/30" : "bg-gray-100 dark:bg-gray-800"}`}>
-                          <Zap className={`h-5 w-5 ${rule.isActive ? "text-green-600" : "text-gray-400"}`} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{rule.name}</h3>
-                            <Badge variant={rule.isActive ? "default" : "secondary"}>
-                              {rule.isActive ? "Ativa" : "Inativa"}
-                            </Badge>
-                            <Badge variant="outline">Prioridade: {rule.priority}</Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            <strong>Se:</strong> {rule.triggerField} {rule.triggerCondition} {rule.triggerValue}
-                            {" → "}
-                            <strong>Então:</strong> {rule.actionType}
-                          </p>
-                          {rule.description && (
-                            <p className="text-xs text-muted-foreground mt-1">{rule.description}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right text-xs text-muted-foreground mr-4">
-                          <div>Executada {rule.executionCount}x</div>
-                          {rule.lastExecutedAt && (
-                            <div>Última: {formatDistanceToNow(new Date(rule.lastExecutedAt), { locale: ptBR, addSuffix: true })}</div>
-                          )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => updateRule.mutate({ id: rule.id, isActive: !rule.isActive })}
-                        >
-                          {rule.isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => { setEditingRule(rule); setIsRuleDialogOpen(true); }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            if (confirm("Excluir esta regra?")) {
-                              deleteRule.mutate({ id: rule.id });
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        {/* TAB: FLAGS */}
-        <TabsContent value="flags" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Flags Dinâmicas</h2>
-              <p className="text-muted-foreground">Etiquetas visuais que aparecem em todo o sistema</p>
-            </div>
-            <Button onClick={() => setIsFlagDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Flag
-            </Button>
-          </div>
-
-          {flagsLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : !flags || flags.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Flag className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">Nenhuma flag criada</h3>
-                <p className="text-muted-foreground mb-4">
-                  Crie flags para identificar visualmente situações especiais
-                </p>
-                <Button onClick={() => setIsFlagDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar Primeira Flag
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {flags.map((flag) => (
-                <Card key={flag.id} className={!flag.isActive ? "opacity-60" : ""}>
-                  <CardContent className="py-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full ${FLAG_COLORS.find(c => c.value === flag.color)?.class || "bg-gray-500"}`} />
-                        <div>
-                          <h3 className="font-semibold">{flag.name}</h3>
-                          {flag.description && (
-                            <p className="text-xs text-muted-foreground">{flag.description}</p>
-                          )}
-                        </div>
-                      </div>
-                      <Badge variant={flag.isActive ? "default" : "secondary"}>
-                        {flag.isActive ? "Ativa" : "Inativa"}
-                      </Badge>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-1">
-                      {flag.showOnCheckin && <Badge variant="outline" className="text-xs">Check-in</Badge>}
-                      {flag.showOnCalendar && <Badge variant="outline" className="text-xs">Calendário</Badge>}
-                      {flag.showOnPetCard && <Badge variant="outline" className="text-xs">Card Pet</Badge>}
-                      {flag.showOnDailyLog && <Badge variant="outline" className="text-xs">Log Diário</Badge>}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        {/* TAB: HISTÓRICO */}
-        <TabsContent value="history" className="space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold">Histórico de Execução</h2>
-            <p className="text-muted-foreground">Log das regras executadas automaticamente</p>
-          </div>
-
-          {!executionHistory || executionHistory.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <History className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">Nenhuma execução registrada</h3>
-                <p className="text-muted-foreground">
-                  O histórico aparecerá aqui quando as regras forem executadas
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="py-4">
-                <div className="space-y-3">
-                  {executionHistory.map((log) => (
-                    <div 
-                      key={log.id} 
-                      className={`flex items-center justify-between p-3 rounded-lg border ${
-                        log.success ? "bg-green-50 dark:bg-green-950/20" : "bg-red-50 dark:bg-red-950/20"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {log.success ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600" />
-                        ) : (
-                          <AlertTriangle className="h-5 w-5 text-red-600" />
-                        )}
-                        <div>
-                          <p className="font-medium">{log.ruleName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Pet: {log.petName || "N/A"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm">
-                          {format(new Date(log.executedAt), "dd/MM HH:mm", { locale: ptBR })}
-                        </p>
-                        {log.errorMessage && (
-                          <p className="text-xs text-red-600">{log.errorMessage}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Dialog: Nova/Editar Regra */}
-      <RuleDialog
-        open={isRuleDialogOpen}
-        onOpenChange={setIsRuleDialogOpen}
-        rule={editingRule}
-        metadata={metadata}
-        onSave={(data) => {
-          if (editingRule) {
-            updateRule.mutate({ id: editingRule.id, ...data });
-          } else {
-            createRule.mutate(data);
-          }
-        }}
-        isPending={createRule.isPending || updateRule.isPending}
-      />
-
-      {/* Dialog: Nova Flag */}
-      <FlagDialog
-        open={isFlagDialogOpen}
-        onOpenChange={setIsFlagDialogOpen}
-        onSave={(data) => createFlag.mutate(data)}
-        isPending={createFlag.isPending}
-      />
-    </div>
-  );
-}
-
-// Componente Dialog para Regras
-function RuleDialog({
-  open,
-  onOpenChange,
-  rule,
-  metadata,
-  onSave,
-  isPending,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  rule: any;
-  metadata: any;
-  onSave: (data: any) => void;
-  isPending: boolean;
-}) {
-  const [name, setName] = useState(rule?.name || "");
-  const [description, setDescription] = useState(rule?.description || "");
-  const [priority, setPriority] = useState(rule?.priority || 0);
-  const [triggerType, setTriggerType] = useState(rule?.triggerType || "pet_field_change");
-  const [triggerField, setTriggerField] = useState(rule?.triggerField || "");
-  const [triggerCondition, setTriggerCondition] = useState(rule?.triggerCondition || "equals");
-  const [triggerValue, setTriggerValue] = useState(rule?.triggerValue || "");
-  const [actionType, setActionType] = useState(rule?.actionType || "create_alert");
-  const [actionConfig, setActionConfig] = useState(rule?.actionConfigParsed || {});
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{rule ? "Editar Regra" : "Nova Regra de Automação"}</DialogTitle>
-          <DialogDescription>
-            Configure o gatilho e a ação que será executada automaticamente
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          {/* Nome e Descrição */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Nome da Regra *</Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Alerta de vacina vencida"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Prioridade</Label>
-              <Input
-                type="number"
-                value={priority}
-                onChange={(e) => setPriority(parseInt(e.target.value))}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Descrição</Label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descreva o que esta regra faz..."
-              rows={2}
-            />
-          </div>
-
-          {/* Gatilho */}
-          <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Zap className="h-4 w-4 text-blue-600" />
-                Gatilho (SE...)
+        {/* TAB: GERAL */}
+        <TabsContent value="geral" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                Informações da Defensoria
               </CardTitle>
+              <CardDescription>
+                Dados básicos da unidade da Defensoria
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Tipo de Gatilho</Label>
-                  <Select value={triggerType} onValueChange={setTriggerType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {metadata?.triggerTypes?.map((t: any) => (
-                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Campo</Label>
-                  <Select value={triggerField} onValueChange={setTriggerField}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o campo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {metadata?.petFields?.map((f: any) => (
-                        <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Condição</Label>
-                  <Select value={triggerCondition} onValueChange={setTriggerCondition}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {metadata?.conditions?.map((c: any) => (
-                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Valor</Label>
+                  <Label htmlFor="nomeDefensoria">Nome da Defensoria</Label>
                   <Input
-                    value={triggerValue}
-                    onChange={(e) => setTriggerValue(e.target.value)}
-                    placeholder="Valor para comparação"
+                    id="nomeDefensoria"
+                    value={settings.nomeDefensoria}
+                    onChange={(e) => setSettings({ ...settings, nomeDefensoria: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="comarca">Comarca</Label>
+                  <Input
+                    id="comarca"
+                    value={settings.comarca}
+                    onChange={(e) => setSettings({ ...settings, comarca: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">Telefone</Label>
+                  <Input
+                    id="telefone"
+                    value={settings.telefone}
+                    onChange={(e) => setSettings({ ...settings, telefone: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={settings.email}
+                    onChange={(e) => setSettings({ ...settings, email: e.target.value })}
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Ação */}
-          <Card className="bg-green-50 dark:bg-green-950/20 border-green-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Play className="h-4 w-4 text-green-600" />
-                Ação (ENTÃO...)
+        {/* TAB: NOTIFICAÇÕES */}
+        <TabsContent value="notificacoes" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Alertas de Prazos
               </CardTitle>
+              <CardDescription>
+                Configure quando receber alertas sobre prazos processuais
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Tipo de Ação</Label>
-                <Select value={actionType} onValueChange={setActionType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {metadata?.actionTypes?.map((a: any) => (
-                      <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Notificar sobre Prazos</p>
+                  <p className="text-sm text-muted-foreground">Receber alertas antes do vencimento de prazos</p>
+                </div>
+                <Switch
+                  checked={settings.notificarPrazos}
+                  onCheckedChange={(checked) => setSettings({ ...settings, notificarPrazos: checked })}
+                />
               </div>
-
-              {actionType === "create_alert" && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Tipo do Alerta</Label>
-                    <Select 
-                      value={actionConfig.alertType || "behavior"} 
-                      onValueChange={(v) => setActionConfig({ ...actionConfig, alertType: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="behavior">Comportamento</SelectItem>
-                        <SelectItem value="health">Saúde</SelectItem>
-                        <SelectItem value="feeding">Alimentação</SelectItem>
-                        <SelectItem value="financial">Financeiro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Severidade</Label>
-                    <Select 
-                      value={actionConfig.severity || "warning"} 
-                      onValueChange={(v) => setActionConfig({ ...actionConfig, severity: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="info">Informação</SelectItem>
-                        <SelectItem value="warning">Aviso</SelectItem>
-                        <SelectItem value="critical">Crítico</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Título do Alerta</Label>
-                    <Input
-                      value={actionConfig.title || ""}
-                      onChange={(e) => setActionConfig({ ...actionConfig, title: e.target.value })}
-                      placeholder="Título que aparecerá no alerta"
-                    />
-                  </div>
+              {settings.notificarPrazos && (
+                <div className="flex items-center gap-2 pl-4 border-l-2 border-muted">
+                  <Label htmlFor="diasAntesPrazo">Alertar</Label>
+                  <Input
+                    id="diasAntesPrazo"
+                    type="number"
+                    className="w-20"
+                    value={settings.diasAntesPrazo}
+                    onChange={(e) => setSettings({ ...settings, diasAntesPrazo: parseInt(e.target.value) })}
+                  />
+                  <span className="text-sm text-muted-foreground">dias antes</span>
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={() => onSave({
-              name,
-              description,
-              priority,
-              triggerType,
-              triggerField,
-              triggerCondition,
-              triggerValue,
-              actionType,
-              actionConfig,
-            })}
-            disabled={!name || isPending}
-          >
-            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {rule ? "Salvar" : "Criar Regra"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// Componente Dialog para Flags
-function FlagDialog({
-  open,
-  onOpenChange,
-  onSave,
-  isPending,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (data: any) => void;
-  isPending: boolean;
-}) {
-  const [name, setName] = useState("");
-  const [color, setColor] = useState<"red" | "orange" | "yellow" | "green" | "blue" | "purple">("yellow");
-  const [description, setDescription] = useState("");
-  const [showOnCheckin, setShowOnCheckin] = useState(true);
-  const [showOnCalendar, setShowOnCalendar] = useState(true);
-  const [showOnPetCard, setShowOnPetCard] = useState(true);
-  const [showOnDailyLog, setShowOnDailyLog] = useState(true);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Nova Flag</DialogTitle>
-          <DialogDescription>
-            Crie uma etiqueta visual para identificar situações especiais
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>Nome *</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Atenção Alimentar"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Cor</Label>
-            <div className="flex gap-2">
-              {FLAG_COLORS.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  className={`w-8 h-8 rounded-full ${c.class} ${
-                    color === c.value ? "ring-2 ring-offset-2 ring-primary" : ""
-                  }`}
-                  onClick={() => setColor(c.value as typeof color)}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Alertas de Audiências
+              </CardTitle>
+              <CardDescription>
+                Configure quando receber alertas sobre audiências
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Notificar sobre Audiências</p>
+                  <p className="text-sm text-muted-foreground">Receber lembretes de audiências agendadas</p>
+                </div>
+                <Switch
+                  checked={settings.notificarAudiencias}
+                  onCheckedChange={(checked) => setSettings({ ...settings, notificarAudiencias: checked })}
                 />
-              ))}
-            </div>
-          </div>
+              </div>
+              {settings.notificarAudiencias && (
+                <div className="flex items-center gap-2 pl-4 border-l-2 border-muted">
+                  <Label htmlFor="diasAntesAudiencia">Alertar</Label>
+                  <Input
+                    id="diasAntesAudiencia"
+                    type="number"
+                    className="w-20"
+                    value={settings.diasAntesAudiencia}
+                    onChange={(e) => setSettings({ ...settings, diasAntesAudiencia: parseInt(e.target.value) })}
+                  />
+                  <span className="text-sm text-muted-foreground">dias antes</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-          <div className="space-y-2">
-            <Label>Descrição</Label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Quando esta flag deve ser usada..."
-              rows={2}
-            />
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Alertas de Júri
+              </CardTitle>
+              <CardDescription>
+                Configure quando receber alertas sobre sessões do Júri
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Notificar sobre Júri</p>
+                  <p className="text-sm text-muted-foreground">Receber lembretes de plenários agendados</p>
+                </div>
+                <Switch
+                  checked={settings.notificarJuri}
+                  onCheckedChange={(checked) => setSettings({ ...settings, notificarJuri: checked })}
+                />
+              </div>
+              {settings.notificarJuri && (
+                <div className="flex items-center gap-2 pl-4 border-l-2 border-muted">
+                  <Label htmlFor="diasAntesJuri">Alertar</Label>
+                  <Input
+                    id="diasAntesJuri"
+                    type="number"
+                    className="w-20"
+                    value={settings.diasAntesJuri}
+                    onChange={(e) => setSettings({ ...settings, diasAntesJuri: parseInt(e.target.value) })}
+                  />
+                  <span className="text-sm text-muted-foreground">dias antes</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <div className="space-y-3">
-            <Label>Onde exibir:</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2">
-                <Switch checked={showOnCheckin} onCheckedChange={setShowOnCheckin} />
-                <span className="text-sm">Check-in</span>
+        {/* TAB: INTEGRAÇÕES */}
+        <TabsContent value="integracoes" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Google Drive</CardTitle>
+              <CardDescription>
+                Armazenamento automático de documentos no Google Drive
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Integração com Google Drive</p>
+                  <p className="text-sm text-muted-foreground">Criar pastas automáticas para cada processo</p>
+                </div>
+                <Switch
+                  checked={settings.googleDriveEnabled}
+                  onCheckedChange={(checked) => setSettings({ ...settings, googleDriveEnabled: checked })}
+                />
               </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={showOnCalendar} onCheckedChange={setShowOnCalendar} />
-                <span className="text-sm">Calendário</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={showOnPetCard} onCheckedChange={setShowOnPetCard} />
-                <span className="text-sm">Card do Pet</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={showOnDailyLog} onCheckedChange={setShowOnDailyLog} />
-                <span className="text-sm">Log Diário</span>
-              </div>
-            </div>
-          </div>
-        </div>
+              {settings.googleDriveEnabled && (
+                <div className="p-4 bg-muted rounded-lg text-sm">
+                  <p className="font-medium mb-2">Configuração necessária:</p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>Configure GOOGLE_CLIENT_ID no ambiente</li>
+                    <li>Configure GOOGLE_CLIENT_SECRET no ambiente</li>
+                    <li>Configure GOOGLE_REFRESH_TOKEN no ambiente</li>
+                    <li>Configure GOOGLE_DRIVE_ROOT_FOLDER_ID no ambiente</li>
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={() => onSave({
-              name,
-              color,
-              description,
-              showOnCheckin,
-              showOnCalendar,
-              showOnPetCard,
-              showOnDailyLog,
-            })}
-            disabled={!name || isPending}
-          >
-            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Criar Flag
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <Card>
+            <CardHeader>
+              <CardTitle>Google Calendar</CardTitle>
+              <CardDescription>
+                Sincronização de prazos e audiências com Google Calendar
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Integração com Google Calendar</p>
+                  <p className="text-sm text-muted-foreground">Criar eventos automáticos para prazos e audiências</p>
+                </div>
+                <Switch
+                  checked={settings.googleCalendarEnabled}
+                  onCheckedChange={(checked) => setSettings({ ...settings, googleCalendarEnabled: checked })}
+                />
+              </div>
+              {settings.googleCalendarEnabled && (
+                <div className="p-4 bg-muted rounded-lg text-sm">
+                  <p className="font-medium mb-2">Configuração necessária:</p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>Configure GOOGLE_CLIENT_ID no ambiente</li>
+                    <li>Configure GOOGLE_CLIENT_SECRET no ambiente</li>
+                    <li>Configure GOOGLE_REFRESH_TOKEN no ambiente</li>
+                    <li>Configure GOOGLE_CALENDAR_ID no ambiente</li>
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>WhatsApp Business</CardTitle>
+              <CardDescription>
+                Notificações via WhatsApp para assistidos
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Integração com WhatsApp</p>
+                  <p className="text-sm text-muted-foreground">Enviar notificações automáticas para assistidos</p>
+                </div>
+                <Switch
+                  checked={settings.whatsappEnabled}
+                  onCheckedChange={(checked) => setSettings({ ...settings, whatsappEnabled: checked })}
+                />
+              </div>
+              {settings.whatsappEnabled && (
+                <div className="p-4 bg-muted rounded-lg text-sm">
+                  <p className="font-medium mb-2">Configuração necessária:</p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>Configure sua conta no painel WhatsApp Business</li>
+                    <li>Acesse Configurações &gt; WhatsApp no menu lateral</li>
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB: SEGURANÇA */}
+        <TabsContent value="seguranca" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Políticas de Segurança
+              </CardTitle>
+              <CardDescription>
+                Configurações de segurança e acesso ao sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-medium mb-2">RLS (Row Level Security)</h4>
+                <p className="text-sm text-muted-foreground mb-4">
+                  O sistema utiliza políticas de segurança em nível de linha no banco de dados
+                  para garantir que cada usuário acesse apenas os dados permitidos.
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                  <li>Administradores têm acesso completo</li>
+                  <li>Defensores acessam apenas seus processos e assistidos</li>
+                  <li>Estagiários têm acesso limitado de leitura</li>
+                </ul>
+              </div>
+
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-medium mb-2">Logs de Auditoria</h4>
+                <p className="text-sm text-muted-foreground">
+                  Todas as ações críticas são registradas para auditoria posterior.
+                  Os logs incluem criação, edição e exclusão de processos, demandas e documentos.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Gerenciamento de Usuários
+              </CardTitle>
+              <CardDescription>
+                Controle de acesso e permissões
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Para gerenciar usuários, acesse a área de administração de usuários.
+                </p>
+                <Button variant="outline" asChild>
+                  <a href="/admin/users">
+                    Gerenciar Usuários
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

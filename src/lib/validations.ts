@@ -220,7 +220,10 @@ export const calendarEventSchema = z.object({
   eventDate: dateTimeSchema,
   endDate: dateTimeSchema.optional(),
   eventType: z.string().min(1).max(100),
-  petId: optionalIdSchema,
+  // Relacionamentos jurídicos
+  processoId: optionalIdSchema,
+  assistidoId: optionalIdSchema,
+  demandaId: optionalIdSchema,
   isAllDay: z.boolean().default(true),
   color: z.string().max(20).optional(),
   location: z.string().max(200).optional(),

@@ -59,6 +59,7 @@
     "react-dom": "18.3.1",
     "recharts": "^3.6.0",
     "sonner": "^1.7.0",
+    "stripe": "^20.1.2",
     "superjson": "^2.2.1",
     "tailwind-merge": "^2.5.5",
     "zod": "^3.23.8"

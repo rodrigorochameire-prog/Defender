@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { router, adminProcedure, protectedProcedure } from "../init";
-import { WhatsAppService, WhatsAppTemplates, MetaTemplateNames } from "@/lib/services/whatsapp";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
 import { whatsappMessages, whatsappConfig } from "@/lib/db/schema";
@@ -8,9 +7,7 @@ import { eq, desc, and } from "drizzle-orm";
 
 /**
  * Router tRPC para integração com WhatsApp Business API (Meta)
- * 
- * Suporta configurações por admin (multi-tenant) com fallback
- * para variáveis de ambiente globais.
+ * Adaptado para DefensorHub - notificações jurídicas
  */
 export const whatsappRouter = router({
   // ============================================
@@ -18,23 +15,26 @@ export const whatsappRouter = router({
   // ============================================
 
   /**
-   * Verifica se há configuração ativa (admin ou global)
+   * Verifica se há configuração ativa
    */
   isConfigured: protectedProcedure.query(async ({ ctx }) => {
-    // Verifica config do admin logado
-    if (ctx.user?.role === "admin") {
-      const adminConfigured = await WhatsAppService.isAdminConfigured(ctx.user.id);
-      if (adminConfigured) return true;
-    }
-    // Fallback para env
-    return WhatsAppService.isEnvConfigured();
+    if (ctx.user?.role !== "admin") return false;
+    
+    const config = await db.query.whatsappConfig.findFirst({
+      where: eq(whatsappConfig.adminId, ctx.user.id),
+    });
+    
+    return config?.isActive ?? false;
   }),
 
   /**
    * Obtém configuração do admin atual (sem dados sensíveis)
    */
   getMyConfig: adminProcedure.query(async ({ ctx }) => {
-    const config = await WhatsAppService.getAdminConfig(ctx.user.id);
+    const config = await db.query.whatsappConfig.findFirst({
+      where: eq(whatsappConfig.adminId, ctx.user.id),
+    });
+    
     return {
       hasConfig: !!config,
       config: config ? {
@@ -45,13 +45,12 @@ export const whatsappRouter = router({
         qualityRating: config.qualityRating,
         isActive: config.isActive,
         lastVerifiedAt: config.lastVerifiedAt,
-        autoNotifyCheckin: config.autoNotifyCheckin,
-        autoNotifyCheckout: config.autoNotifyCheckout,
-        autoNotifyDailyLog: config.autoNotifyDailyLog,
-        autoNotifyBooking: config.autoNotifyBooking,
-        hasAccessToken: config.hasAccessToken,
+        autoNotifyPrazo: config.autoNotifyPrazo,
+        autoNotifyAudiencia: config.autoNotifyAudiencia,
+        autoNotifyJuri: config.autoNotifyJuri,
+        autoNotifyMovimentacao: config.autoNotifyMovimentacao,
+        hasAccessToken: !!config.accessToken,
       } : null,
-      hasEnvFallback: WhatsAppService.isEnvConfigured(),
     };
   }),
 
@@ -64,271 +63,146 @@ export const whatsappRouter = router({
       phoneNumberId: z.string().min(1).optional(),
       businessAccountId: z.string().optional(),
       webhookVerifyToken: z.string().optional(),
-      autoNotifyCheckin: z.boolean().optional(),
-      autoNotifyCheckout: z.boolean().optional(),
-      autoNotifyDailyLog: z.boolean().optional(),
-      autoNotifyBooking: z.boolean().optional(),
+      autoNotifyPrazo: z.boolean().optional(),
+      autoNotifyAudiencia: z.boolean().optional(),
+      autoNotifyJuri: z.boolean().optional(),
+      autoNotifyMovimentacao: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await WhatsAppService.saveAdminConfig(ctx.user.id, input);
+      const existingConfig = await db.query.whatsappConfig.findFirst({
+        where: eq(whatsappConfig.adminId, ctx.user.id),
+      });
+      
+      if (existingConfig) {
+        await db
+          .update(whatsappConfig)
+          .set({
+            ...input,
+            updatedAt: new Date(),
+          })
+          .where(eq(whatsappConfig.adminId, ctx.user.id));
+      } else {
+        await db.insert(whatsappConfig).values({
+          adminId: ctx.user.id,
+          ...input,
+        });
+      }
+      
       return { success: true };
     }),
 
   /**
-   * Testa e ativa a configuração
+   * Ativa/Desativa configuração
    */
-  testAndActivate: adminProcedure.mutation(async ({ ctx }) => {
-    const service = await WhatsAppService.forAdmin(ctx.user.id);
-    
-    if (!service) {
-      // Tenta criar um serviço temporário para teste
-      const config = await WhatsAppService.getAdminConfig(ctx.user.id);
-      if (!config?.phoneNumberId) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "Configure o Access Token e Phone Number ID primeiro",
-        });
-      }
-    }
-
-    // Tenta obter o serviço novamente com as credenciais
-    const testService = await WhatsAppService.forAdmin(ctx.user.id);
-    if (!testService) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message: "Credenciais incompletas",
-      });
-    }
-
-    const result = await testService.checkConnection();
-    
-    if (result.connected) {
-      await WhatsAppService.setAdminConfigActive(ctx.user.id, true);
-      return {
-        success: true,
-        profile: {
-          name: result.profile?.verified_name,
-          phone: result.profile?.display_phone_number,
-          quality: result.profile?.quality_rating,
-        },
-      };
-    } else {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: result.error || "Não foi possível conectar à API",
-      });
-    }
-  }),
-
-  /**
-   * Desativa configuração
-   */
-  deactivate: adminProcedure.mutation(async ({ ctx }) => {
-    await WhatsAppService.setAdminConfigActive(ctx.user.id, false);
-    return { success: true };
-  }),
-
-  // ============================================
-  // Status e Conexão
-  // ============================================
-
-  /**
-   * Verifica status da conexão
-   */
-  getConnectionStatus: adminProcedure.query(async ({ ctx }) => {
-    const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
-    
-    if (!service) {
-      return {
-        connected: false,
-        source: "none" as const,
-        error: "Nenhuma configuração encontrada",
-      };
-    }
-
-    const result = await service.checkConnection();
-    const config = await WhatsAppService.getAdminConfig(ctx.user.id);
-    
-    return {
-      connected: result.connected,
-      source: config?.isActive ? "admin" as const : "env" as const,
-      profile: result.profile ? {
-        name: result.profile.verified_name,
-        phone: result.profile.display_phone_number,
-        quality: result.profile.quality_rating,
-        status: result.profile.code_verification_status,
-      } : null,
-      error: result.error,
-    };
-  }),
+  setActive: adminProcedure
+    .input(z.object({ active: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await db
+        .update(whatsappConfig)
+        .set({
+          isActive: input.active,
+          updatedAt: new Date(),
+        })
+        .where(eq(whatsappConfig.adminId, ctx.user.id));
+      
+      return { success: true };
+    }),
 
   // ============================================
   // Envio de Mensagens
   // ============================================
 
   /**
-   * Envia mensagem de texto
+   * Envia mensagem de texto simples
    */
   sendText: adminProcedure
     .input(z.object({
       phone: z.string().min(10),
       message: z.string().min(1).max(4096),
-      petId: z.number().optional(),
-      context: z.enum(["checkin", "checkout", "daily_log", "booking", "manual"]).optional(),
+      assistidoId: z.number().optional(),
+      context: z.enum(["prazo", "audiencia", "juri", "movimentacao", "manual"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
-      
-      if (!service) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "WhatsApp não está configurado",
-        });
-      }
-
-      const validation = WhatsAppService.validateNumber(input.phone);
-      if (!validation.valid) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: validation.reason || "Número inválido",
-        });
-      }
-
-      const result = await service.sendText(input.phone, input.message, {
-        petId: input.petId,
-        context: input.context || "manual",
-        sentById: ctx.user.id,
+      const config = await db.query.whatsappConfig.findFirst({
+        where: and(
+          eq(whatsappConfig.adminId, ctx.user.id),
+          eq(whatsappConfig.isActive, true)
+        ),
       });
-
-      return {
-        success: true,
-        messageId: result.messages[0]?.id,
-        to: result.contacts[0]?.wa_id,
-      };
-    }),
-
-  /**
-   * Envia template
-   */
-  sendTemplate: adminProcedure
-    .input(z.object({
-      phone: z.string().min(10),
-      templateName: z.string().min(1),
-      languageCode: z.string().default("pt_BR"),
-      parameters: z.array(z.object({
-        type: z.enum(["header", "body", "button"]),
-        parameters: z.array(z.object({
-          type: z.enum(["text", "image", "document", "video"]),
-          text: z.string().optional(),
-          image: z.object({ link: z.string() }).optional(),
-          document: z.object({ link: z.string(), filename: z.string() }).optional(),
-        })),
-      })).optional(),
-      petId: z.number().optional(),
-      context: z.enum(["checkin", "checkout", "daily_log", "booking", "manual"]).optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
       
-      if (!service) {
+      if (!config?.accessToken || !config?.phoneNumberId) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: "WhatsApp não está configurado",
         });
       }
 
-      const result = await service.sendTemplate(
-        input.phone,
-        input.templateName,
-        input.languageCode,
-        input.parameters as Parameters<typeof service.sendTemplate>[3],
-        {
-          petId: input.petId,
+      // Formatar número
+      const formattedPhone = input.phone.replace(/\D/g, "");
+      const phoneWithCountry = formattedPhone.startsWith("55") ? formattedPhone : `55${formattedPhone}`;
+
+      try {
+        // Enviar via API do WhatsApp
+        const response = await fetch(
+          `https://graph.facebook.com/v18.0/${config.phoneNumberId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${config.accessToken}`,
+            },
+            body: JSON.stringify({
+              messaging_product: "whatsapp",
+              to: phoneWithCountry,
+              type: "text",
+              text: { body: input.message },
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error?.message || "Erro ao enviar mensagem");
+        }
+
+        // Registrar mensagem
+        await db.insert(whatsappMessages).values({
+          configId: config.id,
+          toPhone: phoneWithCountry,
+          assistidoId: input.assistidoId || null,
+          messageType: "text",
+          content: input.message,
+          messageId: data.messages?.[0]?.id,
+          status: "sent",
           context: input.context || "manual",
           sentById: ctx.user.id,
-        }
-      );
-
-      return {
-        success: true,
-        messageId: result.messages[0]?.id,
-        to: result.contacts[0]?.wa_id,
-      };
-    }),
-
-  /**
-   * Envia imagem
-   */
-  sendImage: adminProcedure
-    .input(z.object({
-      phone: z.string().min(10),
-      imageUrl: z.string().url(),
-      caption: z.string().max(1024).optional(),
-      petId: z.number().optional(),
-      context: z.enum(["checkin", "checkout", "daily_log", "booking", "manual"]).optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
-      
-      if (!service) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "WhatsApp não está configurado",
+          sentAt: new Date(),
         });
-      }
 
-      const result = await service.sendImage(input.phone, input.imageUrl, input.caption, {
-        petId: input.petId,
-        context: input.context || "manual",
-        sentById: ctx.user.id,
-      });
-
-      return {
-        success: true,
-        messageId: result.messages[0]?.id,
-        to: result.contacts[0]?.wa_id,
-      };
-    }),
-
-  /**
-   * Envia documento
-   */
-  sendDocument: adminProcedure
-    .input(z.object({
-      phone: z.string().min(10),
-      documentUrl: z.string().url(),
-      fileName: z.string().min(1),
-      caption: z.string().max(1024).optional(),
-      petId: z.number().optional(),
-      context: z.enum(["checkin", "checkout", "daily_log", "booking", "manual"]).optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
-      
-      if (!service) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "WhatsApp não está configurado",
-        });
-      }
-
-      const result = await service.sendDocument(
-        input.phone,
-        input.documentUrl,
-        input.fileName,
-        input.caption,
-        {
-          petId: input.petId,
+        return {
+          success: true,
+          messageId: data.messages?.[0]?.id,
+        };
+      } catch (error: any) {
+        // Registrar erro
+        await db.insert(whatsappMessages).values({
+          configId: config.id,
+          toPhone: phoneWithCountry,
+          assistidoId: input.assistidoId || null,
+          messageType: "text",
+          content: input.message,
+          status: "failed",
+          errorMessage: error.message,
           context: input.context || "manual",
           sentById: ctx.user.id,
-        }
-      );
+        });
 
-      return {
-        success: true,
-        messageId: result.messages[0]?.id,
-        to: result.contacts[0]?.wa_id,
-      };
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Erro ao enviar mensagem",
+        });
+      }
     }),
 
   /**
@@ -339,26 +213,54 @@ export const whatsappRouter = router({
       phone: z.string().min(10),
     }))
     .mutation(async ({ ctx, input }) => {
-      const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
+      const config = await db.query.whatsappConfig.findFirst({
+        where: and(
+          eq(whatsappConfig.adminId, ctx.user.id),
+          eq(whatsappConfig.isActive, true)
+        ),
+      });
       
-      if (!service) {
+      if (!config?.accessToken || !config?.phoneNumberId) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: "WhatsApp não está configurado",
         });
       }
 
-      const testMessage = `🐾 *TeteCare Hub - Teste de Conexão*\n\n✅ A integração com WhatsApp está funcionando!\n\n_Mensagem enviada em ${new Date().toLocaleString("pt-BR")}_`;
-      
-      const result = await service.sendText(input.phone, testMessage, {
-        context: "manual",
-        sentById: ctx.user.id,
-      });
+      const formattedPhone = input.phone.replace(/\D/g, "");
+      const phoneWithCountry = formattedPhone.startsWith("55") ? formattedPhone : `55${formattedPhone}`;
+
+      const testMessage = `⚖️ *DefensorHub - Teste de Conexão*\n\n✅ A integração com WhatsApp está funcionando!\n\n_Mensagem enviada em ${new Date().toLocaleString("pt-BR")}_`;
+
+      const response = await fetch(
+        `https://graph.facebook.com/v18.0/${config.phoneNumberId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${config.accessToken}`,
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: phoneWithCountry,
+            type: "text",
+            text: { body: testMessage },
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: data.error?.message || "Erro ao enviar mensagem de teste",
+        });
+      }
 
       return {
         success: true,
-        messageId: result.messages[0]?.id,
-        to: result.contacts[0]?.wa_id,
+        messageId: data.messages?.[0]?.id,
       };
     }),
 
@@ -373,11 +275,13 @@ export const whatsappRouter = router({
     .input(z.object({
       limit: z.number().min(1).max(100).default(50),
       offset: z.number().min(0).default(0),
-      petId: z.number().optional(),
-      context: z.enum(["checkin", "checkout", "daily_log", "booking", "manual"]).optional(),
+      assistidoId: z.number().optional(),
+      context: z.enum(["prazo", "audiencia", "juri", "movimentacao", "manual"]).optional(),
     }))
     .query(async ({ ctx, input }) => {
-      const config = await WhatsAppService.getAdminConfig(ctx.user.id);
+      const config = await db.query.whatsappConfig.findFirst({
+        where: eq(whatsappConfig.adminId, ctx.user.id),
+      });
       
       if (!config) {
         return { messages: [], total: 0 };
@@ -385,8 +289,8 @@ export const whatsappRouter = router({
 
       const conditions = [eq(whatsappMessages.configId, config.id)];
       
-      if (input.petId) {
-        conditions.push(eq(whatsappMessages.petId, input.petId));
+      if (input.assistidoId) {
+        conditions.push(eq(whatsappMessages.assistidoId, input.assistidoId));
       }
       if (input.context) {
         conditions.push(eq(whatsappMessages.context, input.context));
@@ -398,7 +302,7 @@ export const whatsappRouter = router({
         limit: input.limit,
         offset: input.offset,
         with: {
-          pet: true,
+          assistido: true,
           sentBy: true,
         },
       });
@@ -410,78 +314,65 @@ export const whatsappRouter = router({
     }),
 
   // ============================================
-  // Templates
+  // Templates Jurídicos
   // ============================================
 
   /**
-   * Lista templates aprovados na conta
-   */
-  listApprovedTemplates: adminProcedure.query(async ({ ctx }) => {
-    const service = await WhatsAppService.forAdminOrEnv(ctx.user.id);
-    
-    if (!service) {
-      return [];
-    }
-
-    try {
-      return await service.listTemplates();
-    } catch {
-      return [];
-    }
-  }),
-
-  /**
-   * Retorna templates de exemplo
+   * Retorna templates de mensagem para contexto jurídico
    */
   getTemplates: protectedProcedure.query(() => {
     return {
-      checkin: {
-        name: "Check-in",
-        metaTemplateName: MetaTemplateNames.CHECKIN,
-        description: "Notificação quando pet faz check-in",
-        example: WhatsAppTemplates.checkin("Max", "João"),
+      prazoVencimento: {
+        name: "Lembrete de Prazo",
+        description: "Notificação sobre prazo próximo ao vencimento",
+        example: `⚖️ *Defensoria Pública - Lembrete*
+
+Olá, {nome}!
+
+📋 *Processo:* {numero_processo}
+📅 *Prazo:* {data_prazo}
+📝 *Ato:* {tipo_ato}
+
+Em caso de dúvidas, entre em contato com a Defensoria.`,
       },
-      checkout: {
-        name: "Check-out",
-        metaTemplateName: MetaTemplateNames.CHECKOUT,
-        description: "Notificação quando pet está pronto para ir embora",
-        example: WhatsAppTemplates.checkout("Max", "João"),
+      audienciaAgendada: {
+        name: "Audiência Agendada",
+        description: "Notificação sobre audiência marcada",
+        example: `⚖️ *Defensoria Pública - Audiência*
+
+Olá, {nome}!
+
+📋 *Processo:* {numero_processo}
+📅 *Data:* {data_audiencia}
+📍 *Local:* {local}
+
+*IMPORTANTE:* Compareça com 30min de antecedência.`,
       },
-      vaccineReminder: {
-        name: "Lembrete de Vacina",
-        metaTemplateName: MetaTemplateNames.VACCINE_REMINDER,
-        description: "Lembrete de vacina agendada",
-        example: WhatsAppTemplates.vaccineReminder("Max", "V10", "15/01/2026"),
+      juriAgendado: {
+        name: "Sessão do Júri",
+        description: "Notificação sobre plenário do Júri",
+        example: `⚖️ *Defensoria Pública - Júri*
+
+Olá, {nome}!
+
+📋 *Processo:* {numero_processo}
+📅 *Data:* {data_juri}
+🏛️ *Sala:* {sala}
+
+*IMPORTANTE:* Compareça 1h antes. Traga documento com foto.`,
       },
-      medicationReminder: {
-        name: "Lembrete de Medicação",
-        metaTemplateName: MetaTemplateNames.MEDICATION_REMINDER,
-        description: "Lembrete de medicação",
-        example: WhatsAppTemplates.medicationReminder("Max", "Frontline", "1 pipeta"),
-      },
-      dailyUpdate: {
-        name: "Atualização Diária",
-        metaTemplateName: MetaTemplateNames.DAILY_UPDATE,
-        description: "Notificação de nova postagem no mural",
-        example: WhatsAppTemplates.dailyUpdate("Max", "uma foto nova"),
-      },
-      bookingConfirmation: {
-        name: "Confirmação de Reserva",
-        metaTemplateName: MetaTemplateNames.BOOKING_CONFIRMATION,
-        description: "Confirmação de reserva agendada",
-        example: WhatsAppTemplates.bookingConfirmation("Max", "20/01/2026", "Day Care"),
-      },
-      bookingReminder: {
-        name: "Lembrete de Reserva",
-        metaTemplateName: MetaTemplateNames.BOOKING_REMINDER,
-        description: "Lembrete de reserva para o dia seguinte",
-        example: WhatsAppTemplates.bookingReminder("Max", "20/01/2026", "08:00"),
-      },
-      behaviorAlert: {
-        name: "Alerta de Comportamento",
-        metaTemplateName: MetaTemplateNames.BEHAVIOR_ALERT,
-        description: "Notificação sobre observação importante",
-        example: WhatsAppTemplates.behaviorAlert("Max", "O pet está um pouco mais quieto que o normal hoje."),
+      movimentacao: {
+        name: "Movimentação Processual",
+        description: "Notificação sobre nova movimentação",
+        example: `⚖️ *Defensoria Pública - Atualização*
+
+Olá, {nome}!
+
+📋 *Processo:* {numero_processo}
+📅 *Data:* {data}
+📝 *Movimentação:* {descricao}
+
+Entre em contato para mais informações.`,
       },
     };
   }),
@@ -496,13 +387,15 @@ export const whatsappRouter = router({
   formatNumber: protectedProcedure
     .input(z.object({ phone: z.string() }))
     .query(({ input }) => {
-      const formatted = WhatsAppService.formatNumber(input.phone);
-      const validation = WhatsAppService.validateNumber(input.phone);
+      const cleaned = input.phone.replace(/\D/g, "");
+      const formatted = cleaned.startsWith("55") ? cleaned : `55${cleaned}`;
+      const isValid = formatted.length >= 12 && formatted.length <= 13;
+      
       return {
         original: input.phone,
         formatted,
-        valid: validation.valid,
-        reason: validation.reason,
+        valid: isValid,
+        reason: isValid ? undefined : "Número deve ter 10-11 dígitos + código do país",
       };
     }),
 
@@ -510,22 +403,22 @@ export const whatsappRouter = router({
    * Retorna informações de configuração
    */
   getConfigInfo: adminProcedure.query(async ({ ctx }) => {
-    const adminConfig = await WhatsAppService.getAdminConfig(ctx.user.id);
+    const config = await db.query.whatsappConfig.findFirst({
+      where: eq(whatsappConfig.adminId, ctx.user.id),
+    });
     
     return {
-      hasAdminConfig: !!adminConfig,
-      isAdminActive: adminConfig?.isActive ?? false,
-      hasEnvFallback: WhatsAppService.isEnvConfigured(),
+      hasConfig: !!config,
+      isActive: config?.isActive ?? false,
       requiredVars: [
         { name: "accessToken", description: "Token de acesso da API (Access Token)" },
         { name: "phoneNumberId", description: "ID do número de telefone (Phone Number ID)" },
       ],
       optionalVars: [
-        { name: "businessAccountId", description: "ID da conta Business (para listar templates)" },
+        { name: "businessAccountId", description: "ID da conta Business" },
         { name: "webhookVerifyToken", description: "Token para verificar webhooks" },
       ],
       docsUrl: "https://developers.facebook.com/docs/whatsapp/cloud-api",
-      setupUrl: "https://developers.facebook.com/apps",
     };
   }),
 });

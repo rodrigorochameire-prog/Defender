@@ -10,47 +10,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { 
   MessageCircle, 
   Send, 
   CheckCircle2, 
   XCircle, 
-  Wifi, 
-  WifiOff,
   Settings,
-  FileText,
   Phone,
   RefreshCw,
-  AlertTriangle,
   Loader2,
-  Copy,
   ExternalLink,
-  Smartphone,
-  Zap,
-  Shield,
-  Star,
-  Info,
   Key,
   History,
   Save,
-  Power,
-  PowerOff,
   Bell,
 } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function WhatsAppPage() {
   const [activeTab, setActiveTab] = useState("status");
   const [testPhone, setTestPhone] = useState("");
   const [customMessage, setCustomMessage] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState("");
   
   // Form de configuração
   const [configForm, setConfigForm] = useState({
@@ -60,19 +42,11 @@ export default function WhatsAppPage() {
   });
 
   // Queries
-  const { data: isConfigured, isLoading: checkingConfig } = trpc.whatsapp.isConfigured.useQuery();
+  const { data: isConfigured, isLoading: checkingConfig, refetch: refetchConfigured } = trpc.whatsapp.isConfigured.useQuery();
   const { data: myConfig, refetch: refetchConfig } = trpc.whatsapp.getMyConfig.useQuery();
-  const { data: connectionStatus, refetch: refetchStatus, isLoading: checkingStatus } = trpc.whatsapp.getConnectionStatus.useQuery(
-    undefined,
-    { enabled: isConfigured === true, retry: false }
-  );
   const { data: templates } = trpc.whatsapp.getTemplates.useQuery();
   const { data: configInfo } = trpc.whatsapp.getConfigInfo.useQuery();
-  const { data: approvedTemplates } = trpc.whatsapp.listApprovedTemplates.useQuery(
-    undefined,
-    { enabled: isConfigured === true }
-  );
-  const { data: messageHistory } = trpc.whatsapp.getMessageHistory.useQuery(
+  const { data: messageHistory, refetch: refetchHistory } = trpc.whatsapp.getMessageHistory.useQuery(
     { limit: 20 },
     { enabled: myConfig?.hasConfig }
   );
@@ -82,6 +56,7 @@ export default function WhatsAppPage() {
     onSuccess: () => {
       toast.success("Configuração salva!");
       refetchConfig();
+      refetchConfigured();
       setConfigForm({ accessToken: "", phoneNumberId: "", businessAccountId: "" });
     },
     onError: (error) => {
@@ -89,22 +64,11 @@ export default function WhatsAppPage() {
     },
   });
 
-  const testAndActivateMutation = trpc.whatsapp.testAndActivate.useMutation({
-    onSuccess: (data) => {
-      toast.success(`Conectado! Número: ${data.profile?.phone}`);
+  const setActiveMutation = trpc.whatsapp.setActive.useMutation({
+    onSuccess: (_, variables) => {
+      toast.success(variables.active ? "WhatsApp ativado!" : "WhatsApp desativado!");
       refetchConfig();
-      refetchStatus();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const deactivateMutation = trpc.whatsapp.deactivate.useMutation({
-    onSuccess: () => {
-      toast.success("Configuração desativada");
-      refetchConfig();
-      refetchStatus();
+      refetchConfigured();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -115,6 +79,7 @@ export default function WhatsAppPage() {
     onSuccess: () => {
       toast.success("Mensagem de teste enviada!");
       setTestPhone("");
+      refetchHistory();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -125,27 +90,24 @@ export default function WhatsAppPage() {
     onSuccess: () => {
       toast.success("Mensagem enviada!");
       setCustomMessage("");
+      setTestPhone("");
+      refetchHistory();
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
 
-  const formatNumber = trpc.whatsapp.formatNumber.useQuery(
-    { phone: testPhone },
-    { enabled: testPhone.length >= 10 }
-  );
-
   const handleSaveConfig = () => {
-    if (!configForm.accessToken && !configForm.phoneNumberId) {
-      toast.error("Preencha pelo menos o Access Token e Phone Number ID");
-      return;
-    }
-    
-    const data: Record<string, string> = {};
+    const data: any = {};
     if (configForm.accessToken) data.accessToken = configForm.accessToken;
     if (configForm.phoneNumberId) data.phoneNumberId = configForm.phoneNumberId;
     if (configForm.businessAccountId) data.businessAccountId = configForm.businessAccountId;
+    
+    if (Object.keys(data).length === 0) {
+      toast.error("Preencha pelo menos um campo");
+      return;
+    }
     
     saveConfigMutation.mutate(data);
   };
@@ -158,134 +120,68 @@ export default function WhatsAppPage() {
     sendTestMutation.mutate({ phone: testPhone });
   };
 
-  const handleSendCustom = () => {
+  const handleSendMessage = () => {
     if (!testPhone || !customMessage) {
-      toast.error("Preencha o número e a mensagem");
+      toast.error("Preencha o telefone e a mensagem");
       return;
     }
-    sendTextMutation.mutate({ phone: testPhone, message: customMessage });
+    sendTextMutation.mutate({
+      phone: testPhone,
+      message: customMessage,
+      context: "manual",
+    });
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copiado!");
-  };
-
-  // Loading state
   if (checkingConfig) {
     return (
-      <div className="page-container">
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="page-container">
+    <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
-      <div className="page-header">
-        <div className="page-header-content">
-          <div className="page-header-icon">
-            <MessageCircle />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+            <MessageCircle className="h-6 w-6 text-green-600" />
           </div>
-          <div className="page-header-info">
-            <h1>WhatsApp Business</h1>
-            <p>Configuração da sua conta</p>
+          <div>
+            <h1 className="text-2xl font-bold">WhatsApp Business</h1>
+            <p className="text-muted-foreground">Notificações automáticas para assistidos</p>
           </div>
         </div>
-        <div className="page-header-actions">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => {
-              refetchStatus();
-              refetchConfig();
-            }}
-            disabled={checkingStatus}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${checkingStatus ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
-        </div>
+        <Badge variant={isConfigured ? "default" : "secondary"} className="text-sm">
+          {isConfigured ? (
+            <>
+              <CheckCircle2 className="h-4 w-4 mr-1" />
+              Conectado
+            </>
+          ) : (
+            <>
+              <XCircle className="h-4 w-4 mr-1" />
+              Desconectado
+            </>
+          )}
+        </Badge>
       </div>
 
-      {/* Status Cards */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Status</span>
-            {connectionStatus?.connected ? (
-              <Wifi className="stat-card-icon green" />
-            ) : (
-              <WifiOff className="stat-card-icon amber" />
-            )}
-          </div>
-          <div className="stat-card-value">
-            <Badge variant={connectionStatus?.connected ? "default" : "secondary"}>
-              {connectionStatus?.connected ? "Conectado" : "Desconectado"}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Fonte</span>
-            <Key className="stat-card-icon blue" />
-          </div>
-          <div className="stat-card-value">
-            <Badge variant="outline">
-              {connectionStatus?.source === "admin" ? "Sua Config" : 
-               connectionStatus?.source === "env" ? "Global" : "—"}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Número</span>
-            <Smartphone className="stat-card-icon primary" />
-          </div>
-          <div className="stat-card-value text-sm font-medium">
-            {connectionStatus?.profile?.phone || myConfig?.config?.displayPhoneNumber || "—"}
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-title">Qualidade</span>
-            <Star className="stat-card-icon amber" />
-          </div>
-          <div className="stat-card-value">
-            <Badge variant="outline" className={
-              connectionStatus?.profile?.quality === "GREEN" ? "text-green-600" :
-              connectionStatus?.profile?.quality === "YELLOW" ? "text-amber-600" : ""
-            }>
-              {connectionStatus?.profile?.quality || "—"}
-            </Badge>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-muted/50">
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="status" className="gap-2">
-            <Wifi className="h-4 w-4" />
+            <Phone className="h-4 w-4" />
             Status
           </TabsTrigger>
           <TabsTrigger value="config" className="gap-2">
-            <Key className="h-4 w-4" />
+            <Settings className="h-4 w-4" />
             Configuração
           </TabsTrigger>
           <TabsTrigger value="send" className="gap-2">
             <Send className="h-4 w-4" />
             Enviar
-          </TabsTrigger>
-          <TabsTrigger value="templates" className="gap-2">
-            <FileText className="h-4 w-4" />
-            Templates
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
             <History className="h-4 w-4" />
@@ -293,281 +189,182 @@ export default function WhatsAppPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Tab: Status */}
-        <TabsContent value="status" className="space-y-4">
-          <div className="grid gap-4 lg:grid-cols-2">
-            {/* Perfil do Número */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  {connectionStatus?.connected ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-amber-500" />
-                  )}
-                  Perfil do Número
-                </CardTitle>
-                <CardDescription>
-                  Informações do número WhatsApp Business
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {connectionStatus?.profile ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <p className="text-xs text-muted-foreground mb-1">Nome Verificado</p>
-                      <p className="font-semibold">{connectionStatus.profile.name}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <p className="text-xs text-muted-foreground mb-1">Telefone</p>
-                      <p className="font-semibold">{connectionStatus.profile.phone}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <p className="text-xs text-muted-foreground mb-1">Qualidade</p>
-                      <p className="font-semibold">{connectionStatus.profile.quality}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <p className="text-xs text-muted-foreground mb-1">Status</p>
-                      <p className="font-semibold">{connectionStatus.profile.status}</p>
-                    </div>
-                  </div>
-                ) : connectionStatus?.error ? (
-                  <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
-                    <p className="font-medium">Erro de conexão:</p>
-                    <p className="text-sm">{connectionStatus.error}</p>
-                  </div>
-                ) : !isConfigured ? (
-                  <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600">
-                    <p>Configure suas credenciais na aba &quot;Configuração&quot;</p>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Teste Rápido */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  Teste Rápido
-                </CardTitle>
-                <CardDescription>
-                  Envie uma mensagem de teste
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {!isConfigured && (
-                  <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
-                    <div className="flex gap-2">
-                      <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                      <p>Configure suas credenciais primeiro na aba &quot;Configuração&quot;</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label>Número de Telefone</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="(11) 98888-7777"
-                      value={testPhone}
-                      onChange={(e) => setTestPhone(e.target.value)}
-                      className="pl-10"
-                      disabled={!isConfigured}
-                    />
-                  </div>
-                  {formatNumber.data && testPhone.length >= 10 && (
-                    <p className="text-xs text-muted-foreground">
-                      Será enviado para: <span className="font-mono">{formatNumber.data.formatted}</span>
-                      {formatNumber.data.valid ? (
-                        <CheckCircle2 className="inline h-3 w-3 ml-1 text-green-500" />
+        {/* TAB: STATUS */}
+        <TabsContent value="status" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="h-5 w-5" />
+                Status da Conexão
+              </CardTitle>
+              <CardDescription>
+                Verifique o status da integração com WhatsApp Business
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {myConfig?.hasConfig ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {myConfig.config?.isActive ? (
+                        <CheckCircle2 className="h-6 w-6 text-green-600" />
                       ) : (
-                        <span className="text-red-500 ml-1">({formatNumber.data.reason})</span>
+                        <XCircle className="h-6 w-6 text-muted-foreground" />
                       )}
-                    </p>
-                  )}
-                </div>
-
-                <Button 
-                  onClick={handleSendTest} 
-                  disabled={!testPhone || sendTestMutation.isPending || !isConfigured}
-                  className="w-full"
-                >
-                  {sendTestMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4 mr-2" />
-                  )}
-                  Enviar Mensagem de Teste
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Tab: Configuração */}
-        <TabsContent value="config" className="space-y-4">
-          <div className="grid gap-4 lg:grid-cols-2">
-            {/* Configuração Atual */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Sua Configuração
-                </CardTitle>
-                <CardDescription>
-                  Configure suas próprias credenciais do WhatsApp Business
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {myConfig?.config ? (
-                  <>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
                       <div>
-                        <p className="font-medium">Status</p>
+                        <p className="font-medium">
+                          {myConfig.config?.isActive ? "Ativo" : "Inativo"}
+                        </p>
                         <p className="text-sm text-muted-foreground">
-                          {myConfig.config.isActive ? "Ativa" : "Inativa"}
+                          {myConfig.config?.displayPhoneNumber || myConfig.config?.phoneNumberId || "Número não verificado"}
                         </p>
                       </div>
-                      <Badge variant={myConfig.config.isActive ? "default" : "secondary"}>
-                        {myConfig.config.isActive ? (
-                          <><Power className="h-3 w-3 mr-1" /> Ativa</>
-                        ) : (
-                          <><PowerOff className="h-3 w-3 mr-1" /> Inativa</>
-                        )}
-                      </Badge>
                     </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Phone Number ID:</span>
-                        <span className="font-mono">{myConfig.config.phoneNumberId || "—"}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Business Account ID:</span>
-                        <span className="font-mono">{myConfig.config.businessAccountId || "—"}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Access Token:</span>
-                        <span className="font-mono">
-                          {myConfig.config.hasAccessToken ? "••••••••" : "Não configurado"}
-                        </span>
-                      </div>
-                      {myConfig.config.verifiedName && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Nome Verificado:</span>
-                          <span>{myConfig.config.verifiedName}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex gap-2">
-                      {myConfig.config.isActive ? (
-                        <Button 
-                          variant="destructive" 
-                          className="flex-1"
-                          onClick={() => deactivateMutation.mutate()}
-                          disabled={deactivateMutation.isPending}
-                        >
-                          {deactivateMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <PowerOff className="h-4 w-4 mr-2" />
-                          )}
-                          Desativar
-                        </Button>
+                    <Button
+                      variant={myConfig.config?.isActive ? "outline" : "default"}
+                      onClick={() => setActiveMutation.mutate({ active: !myConfig.config?.isActive })}
+                      disabled={setActiveMutation.isPending}
+                    >
+                      {setActiveMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : myConfig.config?.isActive ? (
+                        "Desativar"
                       ) : (
-                        <Button 
-                          className="flex-1"
-                          onClick={() => testAndActivateMutation.mutate()}
-                          disabled={testAndActivateMutation.isPending}
-                        >
-                          {testAndActivateMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Power className="h-4 w-4 mr-2" />
-                          )}
-                          Testar e Ativar
-                        </Button>
+                        "Ativar"
                       )}
+                    </Button>
+                  </div>
+
+                  {/* Configurações de Notificação Automática */}
+                  <div className="space-y-3 pt-4 border-t">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <Bell className="h-4 w-4" />
+                      Notificações Automáticas
+                    </h4>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <span className="text-sm">Prazos</span>
+                        <Badge variant={myConfig.config?.autoNotifyPrazo ? "default" : "secondary"}>
+                          {myConfig.config?.autoNotifyPrazo ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <span className="text-sm">Audiências</span>
+                        <Badge variant={myConfig.config?.autoNotifyAudiencia ? "default" : "secondary"}>
+                          {myConfig.config?.autoNotifyAudiencia ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <span className="text-sm">Júri</span>
+                        <Badge variant={myConfig.config?.autoNotifyJuri ? "default" : "secondary"}>
+                          {myConfig.config?.autoNotifyJuri ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <span className="text-sm">Movimentações</span>
+                        <Badge variant={myConfig.config?.autoNotifyMovimentacao ? "default" : "secondary"}>
+                          {myConfig.config?.autoNotifyMovimentacao ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </div>
                     </div>
-                  </>
-                ) : (
-                  <div className="text-center py-8">
-                    <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      Você ainda não configurou suas credenciais
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Preencha o formulário ao lado para começar
-                    </p>
                   </div>
-                )}
-
-                {myConfig?.hasEnvFallback && !myConfig?.config?.isActive && (
-                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm">
-                    <Info className="inline h-4 w-4 mr-1" />
-                    Usando configuração global como fallback
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Formulário de Configuração */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  {myConfig?.config ? "Atualizar Credenciais" : "Configurar Credenciais"}
-                </CardTitle>
-                <CardDescription>
-                  Obtenha as credenciais no Meta for Developers
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Access Token *</Label>
-                  <Input
-                    type="password"
-                    placeholder="EAAxxxxx..."
-                    value={configForm.accessToken}
-                    onChange={(e) => setConfigForm(f => ({ ...f, accessToken: e.target.value }))}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Encontre em: App Dashboard → WhatsApp → API Setup
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">WhatsApp não configurado</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Configure as credenciais da API para começar a enviar notificações
                   </p>
+                  <Button onClick={() => setActiveTab("config")}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configurar
+                  </Button>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                <div className="space-y-2">
-                  <Label>Phone Number ID *</Label>
-                  <Input
-                    placeholder="123456789012345"
-                    value={configForm.phoneNumberId}
-                    onChange={(e) => setConfigForm(f => ({ ...f, phoneNumberId: e.target.value }))}
-                  />
-                </div>
+          {/* Templates Disponíveis */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Templates de Mensagem</CardTitle>
+              <CardDescription>
+                Modelos de mensagem para notificações jurídicas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                {templates && Object.entries(templates).map(([key, template]) => (
+                  <Card key={key} className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <h4 className="font-medium mb-2">{template.name}</h4>
+                      <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
+                      <pre className="text-xs bg-background p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
+                        {template.example}
+                      </pre>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                <div className="space-y-2">
-                  <Label>Business Account ID (opcional)</Label>
-                  <Input
-                    placeholder="123456789012345"
-                    value={configForm.businessAccountId}
-                    onChange={(e) => setConfigForm(f => ({ ...f, businessAccountId: e.target.value }))}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Necessário apenas para listar templates aprovados
-                  </p>
-                </div>
+        {/* TAB: CONFIGURAÇÃO */}
+        <TabsContent value="config" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                Credenciais da API
+              </CardTitle>
+              <CardDescription>
+                Configure as credenciais do WhatsApp Business Cloud API
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="accessToken">Access Token *</Label>
+                <Input
+                  id="accessToken"
+                  type="password"
+                  value={configForm.accessToken}
+                  onChange={(e) => setConfigForm({ ...configForm, accessToken: e.target.value })}
+                  placeholder={myConfig?.config?.hasAccessToken ? "••••••••" : "Cole seu token aqui"}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Token de acesso permanente ou temporário da API
+                </p>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumberId">Phone Number ID *</Label>
+                <Input
+                  id="phoneNumberId"
+                  value={configForm.phoneNumberId}
+                  onChange={(e) => setConfigForm({ ...configForm, phoneNumberId: e.target.value })}
+                  placeholder={myConfig?.config?.phoneNumberId || "Ex: 123456789012345"}
+                />
+                <p className="text-xs text-muted-foreground">
+                  ID do número de telefone na plataforma Meta
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="businessAccountId">Business Account ID (opcional)</Label>
+                <Input
+                  id="businessAccountId"
+                  value={configForm.businessAccountId}
+                  onChange={(e) => setConfigForm({ ...configForm, businessAccountId: e.target.value })}
+                  placeholder={myConfig?.config?.businessAccountId || "Ex: 123456789012345"}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
                 <Button 
-                  className="w-full"
                   onClick={handleSaveConfig}
-                  disabled={saveConfigMutation.isPending || (!configForm.accessToken && !configForm.phoneNumberId)}
+                  disabled={saveConfigMutation.isPending}
                 >
                   {saveConfigMutation.isPending ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -576,298 +373,201 @@ export default function WhatsAppPage() {
                   )}
                   Salvar Configuração
                 </Button>
-
-                <div className="pt-4 border-t">
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Abrir Meta for Developers
-                    </a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                <Button variant="outline" asChild>
+                  <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Documentação
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Notificações Automáticas */}
-          {myConfig?.config && (
+          {myConfig?.hasConfig && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2">
                   <Bell className="h-5 w-5" />
                   Notificações Automáticas
                 </CardTitle>
                 <CardDescription>
-                  Configure quais eventos enviam notificações automáticas
+                  Configure quais notificações devem ser enviadas automaticamente
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <div className="flex items-center justify-between p-4 rounded-lg border">
-                    <div>
-                      <p className="font-medium">Check-in</p>
-                      <p className="text-xs text-muted-foreground">Quando pet faz check-in</p>
-                    </div>
-                    <Switch checked={myConfig.config.autoNotifyCheckin} disabled />
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Lembretes de Prazo</p>
+                    <p className="text-sm text-muted-foreground">Notificar sobre prazos próximos ao vencimento</p>
                   </div>
-                  <div className="flex items-center justify-between p-4 rounded-lg border">
-                    <div>
-                      <p className="font-medium">Check-out</p>
-                      <p className="text-xs text-muted-foreground">Quando pet está pronto</p>
-                    </div>
-                    <Switch checked={myConfig.config.autoNotifyCheckout} disabled />
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-lg border">
-                    <div>
-                      <p className="font-medium">Mural</p>
-                      <p className="text-xs text-muted-foreground">Nova postagem no mural</p>
-                    </div>
-                    <Switch checked={myConfig.config.autoNotifyDailyLog} disabled />
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-lg border">
-                    <div>
-                      <p className="font-medium">Reservas</p>
-                      <p className="text-xs text-muted-foreground">Confirmação de reserva</p>
-                    </div>
-                    <Switch checked={myConfig.config.autoNotifyBooking} disabled />
-                  </div>
+                  <Switch
+                    checked={myConfig.config?.autoNotifyPrazo ?? false}
+                    onCheckedChange={(checked) => saveConfigMutation.mutate({ autoNotifyPrazo: checked })}
+                  />
                 </div>
-                <p className="text-sm text-muted-foreground mt-4">
-                  Em breve: Configure as notificações automáticas para cada evento
-                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Audiências</p>
+                    <p className="text-sm text-muted-foreground">Notificar sobre audiências agendadas</p>
+                  </div>
+                  <Switch
+                    checked={myConfig.config?.autoNotifyAudiencia ?? false}
+                    onCheckedChange={(checked) => saveConfigMutation.mutate({ autoNotifyAudiencia: checked })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Sessões do Júri</p>
+                    <p className="text-sm text-muted-foreground">Notificar sobre plenários agendados</p>
+                  </div>
+                  <Switch
+                    checked={myConfig.config?.autoNotifyJuri ?? false}
+                    onCheckedChange={(checked) => saveConfigMutation.mutate({ autoNotifyJuri: checked })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Movimentações</p>
+                    <p className="text-sm text-muted-foreground">Notificar sobre novas movimentações processuais</p>
+                  </div>
+                  <Switch
+                    checked={myConfig.config?.autoNotifyMovimentacao ?? false}
+                    onCheckedChange={(checked) => saveConfigMutation.mutate({ autoNotifyMovimentacao: checked })}
+                  />
+                </div>
               </CardContent>
             </Card>
           )}
         </TabsContent>
 
-        {/* Tab: Enviar Mensagem */}
-        <TabsContent value="send" className="space-y-4">
+        {/* TAB: ENVIAR */}
+        <TabsContent value="send" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
                 <Send className="h-5 w-5" />
                 Enviar Mensagem
               </CardTitle>
               <CardDescription>
-                Envie uma mensagem personalizada
+                Envie mensagens manuais para assistidos
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {!isConfigured && (
-                <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
-                  <div className="flex gap-2">
-                    <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                    <p>Configure suas credenciais na aba &quot;Configuração&quot; para enviar mensagens</p>
-                  </div>
+              {!isConfigured ? (
+                <div className="text-center py-8">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground mb-4">
+                    Configure o WhatsApp primeiro para enviar mensagens
+                  </p>
+                  <Button onClick={() => setActiveTab("config")}>
+                    Configurar
+                  </Button>
                 </div>
-              )}
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Número de Telefone</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="testPhone">Telefone</Label>
                     <Input
-                      placeholder="(11) 98888-7777"
+                      id="testPhone"
                       value={testPhone}
                       onChange={(e) => setTestPhone(e.target.value)}
-                      className="pl-10"
-                      disabled={!isConfigured}
+                      placeholder="(71) 99999-9999"
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Usar Template de Exemplo</Label>
-                  <Select 
-                    value={selectedTemplate} 
-                    onValueChange={(value) => {
-                      setSelectedTemplate(value);
-                      if (templates && value && templates[value as keyof typeof templates]) {
-                        setCustomMessage(templates[value as keyof typeof templates].example);
-                      }
-                    }}
-                    disabled={!isConfigured}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um template" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {templates && Object.entries(templates).map(([key, template]) => (
-                        <SelectItem key={key} value={key}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="customMessage">Mensagem</Label>
+                    <Textarea
+                      id="customMessage"
+                      value={customMessage}
+                      onChange={(e) => setCustomMessage(e.target.value)}
+                      placeholder="Digite sua mensagem..."
+                      rows={4}
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label>Mensagem</Label>
-                <Textarea
-                  placeholder="Digite sua mensagem..."
-                  value={customMessage}
-                  onChange={(e) => setCustomMessage(e.target.value)}
-                  rows={5}
-                  disabled={!isConfigured}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {customMessage.length}/4096 caracteres
-                </p>
-              </div>
-
-              <Button 
-                onClick={handleSendCustom} 
-                disabled={!testPhone || !customMessage || sendTextMutation.isPending || !isConfigured}
-                className="w-full"
-              >
-                {sendTextMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4 mr-2" />
-                )}
-                Enviar Mensagem
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab: Templates */}
-        <TabsContent value="templates" className="space-y-4">
-          {/* Templates aprovados */}
-          {approvedTemplates && approvedTemplates.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-green-500" />
-                  Templates Aprovados
-                </CardTitle>
-                <CardDescription>
-                  Templates aprovados pela Meta na sua conta
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {approvedTemplates.map((template, index) => (
-                    <div key={index} className="p-4 rounded-lg border bg-card">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">{template.name}</span>
-                        <Badge variant={template.status === "APPROVED" ? "default" : "secondary"}>
-                          {template.status}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {template.category} • {template.language}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Templates de exemplo */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Templates de Exemplo
-              </CardTitle>
-              <CardDescription>
-                Use estes modelos para criar seus templates no Meta Business Manager
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {templates ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {Object.entries(templates).map(([key, template]) => (
-                    <div 
-                      key={key} 
-                      className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={sendTextMutation.isPending || !testPhone || !customMessage}
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="font-semibold">{template.name}</h4>
-                          <p className="text-xs text-muted-foreground">{template.description}</p>
-                          <p className="text-xs text-primary mt-1 font-mono">{template.metaTemplateName}</p>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => copyToClipboard(template.example)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="p-3 rounded-lg bg-muted/50 text-sm whitespace-pre-wrap">
-                        {template.example}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Carregando templates...
-                </div>
+                      {sendTextMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
+                      Enviar Mensagem
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleSendTest}
+                      disabled={sendTestMutation.isPending || !testPhone}
+                    >
+                      {sendTestMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                      )}
+                      Enviar Teste
+                    </Button>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Tab: Histórico */}
-        <TabsContent value="history" className="space-y-4">
+        {/* TAB: HISTÓRICO */}
+        <TabsContent value="history" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Histórico de Mensagens
-              </CardTitle>
-              <CardDescription>
-                Últimas mensagens enviadas
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Histórico de Mensagens
+                </CardTitle>
+                <CardDescription>
+                  Últimas mensagens enviadas
+                </CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => refetchHistory()}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent>
-              {!myConfig?.hasConfig ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Configure suas credenciais para ver o histórico</p>
-                </div>
-              ) : messageHistory?.messages && messageHistory.messages.length > 0 ? (
-                <div className="space-y-3">
-                  {messageHistory.messages.map((msg) => (
-                    <div key={msg.id} className="flex items-start gap-3 p-3 rounded-lg border">
-                      <div className={`p-2 rounded-full ${
-                        msg.status === "sent" ? "bg-green-100 text-green-600" :
-                        msg.status === "failed" ? "bg-red-100 text-red-600" :
-                        "bg-muted text-muted-foreground"
-                      }`}>
-                        {msg.status === "sent" ? <CheckCircle2 className="h-4 w-4" /> :
-                         msg.status === "failed" ? <XCircle className="h-4 w-4" /> :
-                         <Loader2 className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{msg.toPhone}</span>
-                          {msg.context && (
-                            <Badge variant="outline" className="text-xs">{msg.context}</Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {msg.content || msg.templateName || "—"}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {msg.sentAt ? new Date(msg.sentAt).toLocaleString("pt-BR") : 
-                           new Date(msg.createdAt).toLocaleString("pt-BR")}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+              {!messageHistory?.messages?.length ? (
+                <div className="text-center py-8">
+                  <History className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground">
+                    Nenhuma mensagem enviada ainda
+                  </p>
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Nenhuma mensagem enviada ainda</p>
+                <div className="space-y-3">
+                  {messageHistory.messages.map((msg: any) => (
+                    <div key={msg.id} className="flex items-start justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">
+                          {msg.toName || msg.toPhone}
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate max-w-md">
+                          {msg.content}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {msg.context}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(msg.createdAt), "dd/MM HH:mm", { locale: ptBR })}
+                          </span>
+                        </div>
+                      </div>
+                      <Badge variant={msg.status === "sent" ? "default" : "destructive"}>
+                        {msg.status === "sent" ? "Enviada" : "Erro"}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

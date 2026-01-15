@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, users, petTutors, pets } from "@/lib/db";
+import { db, users, processos, assistidos } from "@/lib/db";
 import { eq, desc, sql, and, ne } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, emailSchema, nameSchema, phoneSchema } from "@/lib/validations";
@@ -14,7 +14,7 @@ export const usersRouter = router({
     .input(
       z
         .object({
-          role: z.enum(["admin", "user"]).optional(),
+          role: z.enum(["admin", "defensor", "estagiario", "servidor"]).optional(),
           search: z.string().optional(),
         })
         .optional()
@@ -28,6 +28,8 @@ export const usersRouter = router({
             email: users.email,
             role: users.role,
             phone: users.phone,
+            oab: users.oab,
+            comarca: users.comarca,
             emailVerified: users.emailVerified,
             createdAt: users.createdAt,
           })
@@ -45,7 +47,8 @@ export const usersRouter = router({
             (u) =>
               u.name.toLowerCase().includes(search) ||
               u.email.toLowerCase().includes(search) ||
-              u.phone?.toLowerCase().includes(search)
+              u.phone?.toLowerCase().includes(search) ||
+              u.oab?.toLowerCase().includes(search)
           );
         }
 
@@ -54,9 +57,9 @@ export const usersRouter = router({
     }),
 
   /**
-   * Lista apenas tutores (role = user)
+   * Lista defensores
    */
-  tutors: adminProcedure
+  defensores: adminProcedure
     .input(
       z
         .object({
@@ -73,12 +76,14 @@ export const usersRouter = router({
             name: users.name,
             email: users.email,
             phone: users.phone,
+            oab: users.oab,
+            comarca: users.comarca,
             emailVerified: users.emailVerified,
             approvalStatus: users.approvalStatus,
             createdAt: users.createdAt,
           })
           .from(users)
-          .where(eq(users.role, "user"))
+          .where(eq(users.role, "defensor"))
           .orderBy(desc(users.createdAt));
 
         if (input?.approvalStatus) {
@@ -90,33 +95,40 @@ export const usersRouter = router({
           result = result.filter(
             (u) =>
               u.name.toLowerCase().includes(search) ||
-              u.email.toLowerCase().includes(search)
+              u.email.toLowerCase().includes(search) ||
+              u.oab?.toLowerCase().includes(search)
           );
         }
 
-        // Buscar quantidade de pets de cada tutor
-        const tutorsWithPets = await Promise.all(
-          result.map(async (tutor) => {
-            const [petCount] = await db
+        // Buscar quantidade de processos de cada defensor
+        const defensoresWithStats = await Promise.all(
+          result.map(async (defensor) => {
+            const [processoCount] = await db
               .select({ count: sql<number>`count(*)::int` })
-              .from(petTutors)
-              .where(eq(petTutors.tutorId, tutor.id));
+              .from(processos)
+              .where(eq(processos.defensorId, defensor.id));
+
+            const [assistidoCount] = await db
+              .select({ count: sql<number>`count(*)::int` })
+              .from(assistidos)
+              .where(eq(assistidos.defensorId, defensor.id));
 
             return {
-              ...tutor,
-              petCount: petCount.count,
+              ...defensor,
+              processoCount: processoCount.count,
+              assistidoCount: assistidoCount.count,
             };
           })
         );
 
-        return tutorsWithPets;
-      }, "Erro ao listar tutores");
+        return defensoresWithStats;
+      }, "Erro ao listar defensores");
     }),
 
   /**
-   * Lista tutores pendentes de aprovação
+   * Lista usuários pendentes de aprovação
    */
-  pendingTutors: adminProcedure.query(async () => {
+  pendingUsers: adminProcedure.query(async () => {
     return safeAsync(async () => {
       const pending = await db
         .select({
@@ -124,20 +136,21 @@ export const usersRouter = router({
           name: users.name,
           email: users.email,
           phone: users.phone,
+          role: users.role,
           createdAt: users.createdAt,
         })
         .from(users)
-        .where(and(eq(users.role, "user"), eq(users.approvalStatus, "pending")))
+        .where(eq(users.approvalStatus, "pending"))
         .orderBy(desc(users.createdAt));
 
       return pending;
-    }, "Erro ao listar tutores pendentes");
+    }, "Erro ao listar usuários pendentes");
   }),
 
   /**
-   * Aprova um tutor
+   * Aprova um usuário
    */
-  approveTutor: adminProcedure
+  approve: adminProcedure
     .input(z.object({ id: idSchema }))
     .mutation(async ({ input }) => {
       return safeAsync(async () => {
@@ -152,13 +165,13 @@ export const usersRouter = router({
         }
 
         return updated;
-      }, "Erro ao aprovar tutor");
+      }, "Erro ao aprovar usuário");
     }),
 
   /**
-   * Rejeita um tutor
+   * Rejeita um usuário
    */
-  rejectTutor: adminProcedure
+  reject: adminProcedure
     .input(z.object({ id: idSchema, reason: z.string().optional() }))
     .mutation(async ({ input }) => {
       return safeAsync(async () => {
@@ -173,7 +186,7 @@ export const usersRouter = router({
         }
 
         return updated;
-      }, "Erro ao rejeitar tutor");
+      }, "Erro ao rejeitar usuário");
     }),
 
   /**
@@ -191,19 +204,16 @@ export const usersRouter = router({
           throw Errors.notFound("Usuário");
         }
 
-        // Buscar pets do usuário
-        const userPets = await db
-          .select({
-            id: pets.id,
-            name: pets.name,
-            breed: pets.breed,
-            species: pets.species,
-            approvalStatus: pets.approvalStatus,
-            isPrimary: petTutors.isPrimary,
-          })
-          .from(petTutors)
-          .innerJoin(pets, eq(petTutors.petId, pets.id))
-          .where(eq(petTutors.tutorId, input.id));
+        // Buscar estatísticas do usuário
+        const [processoStats] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(processos)
+          .where(eq(processos.defensorId, input.id));
+
+        const [assistidoStats] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(assistidos)
+          .where(eq(assistidos.defensorId, input.id));
 
         return {
           id: user.id,
@@ -211,9 +221,12 @@ export const usersRouter = router({
           email: user.email,
           role: user.role,
           phone: user.phone,
+          oab: user.oab,
+          comarca: user.comarca,
           emailVerified: user.emailVerified,
           createdAt: user.createdAt,
-          pets: userPets,
+          processoCount: processoStats.count,
+          assistidoCount: assistidoStats.count,
         };
       }, "Erro ao buscar usuário");
     }),
@@ -227,8 +240,10 @@ export const usersRouter = router({
         name: nameSchema,
         email: emailSchema,
         password: z.string().min(6),
-        role: z.enum(["admin", "user"]).default("user"),
+        role: z.enum(["admin", "defensor", "estagiario", "servidor"]).default("defensor"),
         phone: phoneSchema,
+        oab: z.string().optional(),
+        comarca: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -253,6 +268,8 @@ export const usersRouter = router({
             passwordHash,
             role: input.role,
             phone: input.phone || null,
+            oab: input.oab || null,
+            comarca: input.comarca || null,
             emailVerified: true, // Admin criando, já verificado
             approvalStatus: "approved", // Admin criando, já aprovado
           })
@@ -276,7 +293,9 @@ export const usersRouter = router({
         id: idSchema,
         name: nameSchema.optional(),
         phone: phoneSchema,
-        role: z.enum(["admin", "user"]).optional(),
+        oab: z.string().optional(),
+        comarca: z.string().optional(),
+        role: z.enum(["admin", "defensor", "estagiario", "servidor"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -302,6 +321,8 @@ export const usersRouter = router({
         const updateData: Record<string, unknown> = { updatedAt: new Date() };
         if (data.name) updateData.name = data.name;
         if (data.phone !== undefined) updateData.phone = data.phone || null;
+        if (data.oab !== undefined) updateData.oab = data.oab || null;
+        if (data.comarca !== undefined) updateData.comarca = data.comarca || null;
         if (data.role) updateData.role = data.role;
 
         const [updated] = await db
@@ -354,7 +375,7 @@ export const usersRouter = router({
 
         const [updated] = await db
           .update(users)
-          .set({ role: "user", updatedAt: new Date() })
+          .set({ role: "defensor", updatedAt: new Date() })
           .where(eq(users.id, input.id))
           .returning();
 
@@ -406,27 +427,33 @@ export const usersRouter = router({
         .from(users)
         .where(eq(users.role, "admin"));
 
-      const [tutors] = await db
+      const [defensores] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(users)
-        .where(eq(users.role, "user"));
+        .where(eq(users.role, "defensor"));
 
-      const [pendingTutors] = await db
+      const [estagiarios] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(users)
-        .where(and(eq(users.role, "user"), eq(users.approvalStatus, "pending")));
+        .where(eq(users.role, "estagiario"));
 
-      const [approvedTutors] = await db
+      const [servidores] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(users)
-        .where(and(eq(users.role, "user"), eq(users.approvalStatus, "approved")));
+        .where(eq(users.role, "servidor"));
+
+      const [pendingUsers] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(users)
+        .where(eq(users.approvalStatus, "pending"));
 
       return {
         total: totalUsers.count,
         admins: admins.count,
-        tutors: tutors.count,
-        pendingTutors: pendingTutors.count,
-        approvedTutors: approvedTutors.count,
+        defensores: defensores.count,
+        estagiarios: estagiarios.count,
+        servidores: servidores.count,
+        pendingUsers: pendingUsers.count,
       };
     }, "Erro ao buscar estatísticas");
   }),
@@ -439,6 +466,8 @@ export const usersRouter = router({
       z.object({
         name: nameSchema.optional(),
         phone: phoneSchema,
+        oab: z.string().optional(),
+        comarca: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -446,6 +475,8 @@ export const usersRouter = router({
         const updateData: Record<string, unknown> = { updatedAt: new Date() };
         if (input.name) updateData.name = input.name;
         if (input.phone !== undefined) updateData.phone = input.phone || null;
+        if (input.oab !== undefined) updateData.oab = input.oab || null;
+        if (input.comarca !== undefined) updateData.comarca = input.comarca || null;
 
         const [updated] = await db
           .update(users)
@@ -458,6 +489,8 @@ export const usersRouter = router({
           name: updated.name,
           email: updated.email,
           phone: updated.phone,
+          oab: updated.oab,
+          comarca: updated.comarca,
         };
       }, "Erro ao atualizar perfil");
     }),

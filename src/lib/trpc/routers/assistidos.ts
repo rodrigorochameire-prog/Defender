@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure } from "../init";
+import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { assistidos } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql } from "drizzle-orm";
+import { eq, ilike, or, desc, sql, and, isNull } from "drizzle-orm";
 
 export const assistidosRouter = router({
   // Listar todos os assistidos
@@ -18,17 +18,15 @@ export const assistidosRouter = router({
     .query(async ({ input }) => {
       const { search, statusPrisional, limit = 50, offset = 0 } = input || {};
       
-      let query = db.select().from(assistidos);
-      
-      // Filtros
-      const conditions = [];
+      // Construir condições
+      const conditions = [isNull(assistidos.deletedAt)];
       
       if (search) {
         conditions.push(
           or(
             ilike(assistidos.nome, `%${search}%`),
-            ilike(assistidos.cpf, `%${search}%`)
-          )
+            ilike(assistidos.cpf || "", `%${search}%`)
+          )!
         );
       }
       
@@ -36,11 +34,10 @@ export const assistidosRouter = router({
         conditions.push(eq(assistidos.statusPrisional, statusPrisional as any));
       }
       
-      if (conditions.length > 0) {
-        query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(" AND ")}`);
-      }
-      
-      const result = await query
+      const result = await db
+        .select()
+        .from(assistidos)
+        .where(and(...conditions))
         .orderBy(desc(assistidos.createdAt))
         .limit(limit)
         .offset(offset);
@@ -68,24 +65,49 @@ export const assistidosRouter = router({
         cpf: z.string().optional(),
         rg: z.string().optional(),
         nomeMae: z.string().optional(),
+        nomePai: z.string().optional(),
         dataNascimento: z.string().optional(),
+        naturalidade: z.string().optional(),
+        nacionalidade: z.string().optional(),
         statusPrisional: z.enum([
           "SOLTO", "CADEIA_PUBLICA", "PENITENCIARIA", "COP", 
           "HOSPITAL_CUSTODIA", "DOMICILIAR", "MONITORADO"
         ]).default("SOLTO"),
         localPrisao: z.string().optional(),
         unidadePrisional: z.string().optional(),
+        dataPrisao: z.string().optional(),
         telefone: z.string().optional(),
+        telefoneContato: z.string().optional(),
+        nomeContato: z.string().optional(),
+        parentescoContato: z.string().optional(),
         endereco: z.string().optional(),
         observacoes: z.string().optional(),
+        defensorId: z.number().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const [novoAssistido] = await db
         .insert(assistidos)
         .values({
-          ...input,
+          nome: input.nome,
+          cpf: input.cpf || null,
+          rg: input.rg || null,
+          nomeMae: input.nomeMae || null,
+          nomePai: input.nomePai || null,
           dataNascimento: input.dataNascimento || null,
+          naturalidade: input.naturalidade || null,
+          nacionalidade: input.nacionalidade || "Brasileira",
+          statusPrisional: input.statusPrisional,
+          localPrisao: input.localPrisao || null,
+          unidadePrisional: input.unidadePrisional || null,
+          dataPrisao: input.dataPrisao || null,
+          telefone: input.telefone || null,
+          telefoneContato: input.telefoneContato || null,
+          nomeContato: input.nomeContato || null,
+          parentescoContato: input.parentescoContato || null,
+          endereco: input.endereco || null,
+          observacoes: input.observacoes || null,
+          defensorId: input.defensorId || ctx.user.id,
         })
         .returning();
       
@@ -101,27 +123,42 @@ export const assistidosRouter = router({
         cpf: z.string().optional(),
         rg: z.string().optional(),
         nomeMae: z.string().optional(),
+        nomePai: z.string().optional(),
         dataNascimento: z.string().optional(),
+        naturalidade: z.string().optional(),
+        nacionalidade: z.string().optional(),
         statusPrisional: z.enum([
           "SOLTO", "CADEIA_PUBLICA", "PENITENCIARIA", "COP", 
           "HOSPITAL_CUSTODIA", "DOMICILIAR", "MONITORADO"
         ]).optional(),
         localPrisao: z.string().optional(),
         unidadePrisional: z.string().optional(),
+        dataPrisao: z.string().optional(),
         telefone: z.string().optional(),
+        telefoneContato: z.string().optional(),
+        nomeContato: z.string().optional(),
+        parentescoContato: z.string().optional(),
         endereco: z.string().optional(),
         observacoes: z.string().optional(),
+        defensorId: z.number().optional(),
+        photoUrl: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
       
+      const updateData: Record<string, unknown> = { updatedAt: new Date() };
+      
+      // Só incluir campos que foram enviados
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined) {
+          updateData[key] = value;
+        }
+      });
+      
       const [atualizado] = await db
         .update(assistidos)
-        .set({
-          ...data,
-          updatedAt: new Date(),
-        })
+        .set(updateData)
         .where(eq(assistidos.id, id))
         .returning();
       
@@ -143,24 +180,46 @@ export const assistidosRouter = router({
 
   // Estatísticas
   stats: protectedProcedure.query(async () => {
-    const total = await db.select({ count: sql<number>`count(*)` }).from(assistidos);
+    const total = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(assistidos)
+      .where(isNull(assistidos.deletedAt));
     
-    // Contagem por status prisional
+    // Contagem por status prisional (presos)
     const presos = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql<number>`count(*)::int` })
       .from(assistidos)
       .where(
-        or(
-          eq(assistidos.statusPrisional, "CADEIA_PUBLICA"),
-          eq(assistidos.statusPrisional, "PENITENCIARIA"),
-          eq(assistidos.statusPrisional, "COP"),
-          eq(assistidos.statusPrisional, "HOSPITAL_CUSTODIA")
+        and(
+          isNull(assistidos.deletedAt),
+          or(
+            eq(assistidos.statusPrisional, "CADEIA_PUBLICA"),
+            eq(assistidos.statusPrisional, "PENITENCIARIA"),
+            eq(assistidos.statusPrisional, "COP"),
+            eq(assistidos.statusPrisional, "HOSPITAL_CUSTODIA")
+          )
+        )
+      );
+    
+    // Contagem soltos
+    const soltos = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(assistidos)
+      .where(
+        and(
+          isNull(assistidos.deletedAt),
+          or(
+            eq(assistidos.statusPrisional, "SOLTO"),
+            eq(assistidos.statusPrisional, "DOMICILIAR"),
+            eq(assistidos.statusPrisional, "MONITORADO")
+          )
         )
       );
     
     return {
       total: Number(total[0]?.count || 0),
       presos: Number(presos[0]?.count || 0),
+      soltos: Number(soltos[0]?.count || 0),
     };
   }),
 });

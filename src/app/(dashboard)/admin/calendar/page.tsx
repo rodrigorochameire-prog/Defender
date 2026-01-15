@@ -18,19 +18,17 @@ import {
 } from "@/components/ui/select";
 import { 
   Calendar, 
-  Download, 
   AlertCircle, 
   CheckCircle2, 
   TrendingUp,
-  Pill,
-  Shield,
-  Syringe,
+  Gavel,
+  Scale,
+  Users,
   RefreshCw,
   Edit,
   Trash2,
   Clock,
   MapPin,
-  Dog,
   Check,
   X,
   Save
@@ -44,43 +42,29 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { PremiumCalendar, CalendarEvent } from "@/components/premium-calendar";
 import { CalendarSkeleton } from "@/components/shared/skeletons";
-import { PageHeader } from "@/components/shared/page-header";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Thermometer } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Bell } from "lucide-react";
 
-// Tipos de eventos que podem ser marcados como "realizados"
-const ACTIONABLE_EVENT_TYPES = ["vaccination", "medication", "medical", "preventive", "grooming"];
-
-// Configuração dos tipos de eventos - cores neutras
+// Configuração dos tipos de eventos - contexto jurídico
 const EVENT_TYPE_CONFIG = {
-  vaccination: { label: "Vacinação", icon: Syringe, color: "text-slate-600 dark:text-slate-400" },
-  medication: { label: "Medicamento", icon: Pill, color: "text-slate-600 dark:text-slate-400" },
-  medical: { label: "Consulta", icon: AlertCircle, color: "text-slate-600 dark:text-slate-400" },
-  preventive: { label: "Preventivo", icon: Shield, color: "text-slate-600 dark:text-slate-400" },
-  grooming: { label: "Banho/Tosa", icon: Dog, color: "text-slate-600 dark:text-slate-400" },
-  general: { label: "Geral", icon: Calendar, color: "text-slate-500 dark:text-slate-500" },
-  holiday: { label: "Feriado", icon: Calendar, color: "text-slate-600 dark:text-slate-400" },
-  closure: { label: "Fechamento", icon: AlertCircle, color: "text-slate-600 dark:text-slate-400" },
-  checkin: { label: "Check-in", icon: Clock, color: "text-slate-600 dark:text-slate-400" },
-  checkout: { label: "Check-out", icon: Clock, color: "text-slate-600 dark:text-slate-400" },
-  training: { label: "Treinamento", icon: Dog, color: "text-slate-600 dark:text-slate-400" },
+  prazo: { label: "Prazo", icon: AlertCircle, color: "text-red-600 dark:text-red-400", bgColor: "bg-red-100 dark:bg-red-900/30" },
+  audiencia: { label: "Audiência", icon: Gavel, color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
+  juri: { label: "Júri", icon: Scale, color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-100 dark:bg-purple-900/30" },
+  reuniao: { label: "Reunião", icon: Users, color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/30" },
+  atendimento: { label: "Atendimento", icon: Users, color: "text-green-600 dark:text-green-400", bgColor: "bg-green-100 dark:bg-green-900/30" },
+  visita: { label: "Visita", icon: MapPin, color: "text-teal-600 dark:text-teal-400", bgColor: "bg-teal-100 dark:bg-teal-900/30" },
+  lembrete: { label: "Lembrete", icon: Bell, color: "text-slate-600 dark:text-slate-400", bgColor: "bg-slate-100 dark:bg-slate-900/30" },
+  custom: { label: "Outro", icon: FileText, color: "text-slate-500 dark:text-slate-500", bgColor: "bg-slate-100 dark:bg-slate-900/30" },
 };
 
 export default function AdminCalendarPage() {
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [heatmapMonth, setHeatmapMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [editFormData, setEditFormData] = useState({
     title: "",
     description: "",
@@ -91,29 +75,12 @@ export default function AdminCalendarPage() {
   });
 
   const now = new Date();
-  const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59);
+  const startDate = startOfMonth(subMonths(now, 1));
+  const endDate = endOfMonth(addMonths(now, 2));
 
   const { data: eventsData, isLoading, refetch } = trpc.calendar.list.useQuery({
     start: startDate.toISOString(),
     end: endDate.toISOString(),
-  });
-
-  const { data: petsData } = trpc.pets.list.useQuery();
-
-  const { data: heatmapData } = trpc.petManagement.getOccupancyHeatmap.useQuery({
-    year: heatmapMonth.getFullYear(),
-    month: heatmapMonth.getMonth(),
-  });
-
-  const createEvent = trpc.calendar.create.useMutation({
-    onSuccess: () => {
-      toast.success("Evento criado com sucesso!");
-      refetch();
-    },
-    onError: (error) => {
-      toast.error(`Erro ao criar evento: ${error.message}`);
-    },
   });
 
   const updateEvent = trpc.calendar.update.useMutation({
@@ -140,22 +107,7 @@ export default function AdminCalendarPage() {
   });
 
   // Transform events data
-  const events: CalendarEvent[] =
-    eventsData?.map((event: any) => ({
-      id: event.id,
-      title: event.title,
-      description: event.description,
-      eventDate: new Date(event.eventDate),
-      endDate: event.endDate ? new Date(event.endDate) : null,
-      eventType: event.eventType as CalendarEvent["eventType"],
-      petId: event.petId,
-      petName: event.pet?.name,
-      location: event.location,
-      isAllDay: event.isAllDay ?? false,
-      status: event.status as CalendarEvent["status"],
-      notes: event.notes,
-      priority: event.priority,
-    })) || [];
+  const events = eventsData || [];
 
   // Função para iniciar edição
   const handleStartEdit = () => {
@@ -213,99 +165,7 @@ export default function AdminCalendarPage() {
     setSelectedEvent(null);
   };
 
-  // Verifica se o evento é do tipo que pode ser marcado como realizado
-  const isActionableEvent = (eventType: string) => {
-    return ACTIONABLE_EVENT_TYPES.includes(eventType);
-  };
-
-  // Transform pets data
-  const pets =
-    petsData?.map((pet: any) => ({
-      id: pet.id,
-      name: pet.name,
-    })) || [];
-
-  // Calculate stats
-  const thisMonthEvents = events.filter((e) => {
-    const eventDate = new Date(e.eventDate);
-    return (
-      eventDate.getMonth() === now.getMonth() &&
-      eventDate.getFullYear() === now.getFullYear()
-    );
-  });
-
-  const upcomingVaccinations = events.filter((e) => {
-    const eventDate = new Date(e.eventDate);
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-    return (
-      e.eventType === "vaccination" &&
-      eventDate >= now &&
-      eventDate <= thirtyDaysFromNow
-    );
-  });
-
-  const upcomingMedications = events.filter((e) => {
-    const eventDate = new Date(e.eventDate);
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-    return (
-      e.eventType === "medication" &&
-      eventDate >= now &&
-      eventDate <= sevenDaysFromNow
-    );
-  });
-
-  const upcomingPreventives = events.filter((e) => {
-    const eventDate = new Date(e.eventDate);
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-    return (
-      e.eventType === "preventive" &&
-      eventDate >= now &&
-      eventDate <= thirtyDaysFromNow
-    );
-  });
-
-  const todayEvents = events.filter((e) => {
-    const eventDate = new Date(e.eventDate);
-    return (
-      eventDate.getDate() === now.getDate() &&
-      eventDate.getMonth() === now.getMonth() &&
-      eventDate.getFullYear() === now.getFullYear()
-    );
-  });
-
-  // Próximos 7 dias
-  const upcomingWeekEvents = events.filter((e) => {
-    const eventDate = new Date(e.eventDate);
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-    return eventDate >= now && eventDate <= sevenDaysFromNow;
-  }).slice(0, 10);
-
-  const handleCreateEvent = (eventData: Record<string, unknown>) => {
-    createEvent.mutate({
-      title: eventData.title as string,
-      description: (eventData.description as string) || undefined,
-      eventDate: eventData.eventDate as string,
-      endDate: (eventData.endDate as string) || undefined,
-      eventType: eventData.eventType as string,
-      petId: eventData.petId as number | undefined,
-      isAllDay: (eventData.isAllDay as boolean) ?? false,
-      // Campos opcionais
-      notes: (eventData.notes as string) || undefined,
-      priority: (eventData.priority as "low" | "normal" | "high" | "urgent") || undefined,
-      reminderMinutes: (eventData.reminderMinutes as number) || undefined,
-      isRecurring: (eventData.isRecurring as boolean) || false,
-      recurrenceType: (eventData.recurrenceType as "daily" | "weekly" | "biweekly" | "monthly" | "yearly") || undefined,
-      recurrenceInterval: (eventData.recurrenceInterval as number) || undefined,
-      recurrenceEndDate: (eventData.recurrenceEndDate as string) || undefined,
-      recurrenceCount: (eventData.recurrenceCount as number) || undefined,
-    });
-  };
-
-  const handleEventClick = (event: CalendarEvent) => {
+  const handleEventClick = (event: any) => {
     setSelectedEvent(event);
     setIsEditMode(false);
     setIsEventDialogOpen(true);
@@ -316,6 +176,53 @@ export default function AdminCalendarPage() {
     deleteEvent.mutate({
       id: selectedEvent.id,
     });
+  };
+
+  // Calculate stats
+  const todayEvents = events.filter((e: any) => {
+    const eventDate = new Date(e.eventDate);
+    return isSameDay(eventDate, now);
+  });
+
+  const upcomingPrazos = events.filter((e: any) => {
+    const eventDate = new Date(e.eventDate);
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    return e.eventType === "prazo" && eventDate >= now && eventDate <= sevenDaysFromNow;
+  });
+
+  const upcomingAudiencias = events.filter((e: any) => {
+    const eventDate = new Date(e.eventDate);
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    return e.eventType === "audiencia" && eventDate >= now && eventDate <= thirtyDaysFromNow;
+  });
+
+  const upcomingJuri = events.filter((e: any) => {
+    const eventDate = new Date(e.eventDate);
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    return e.eventType === "juri" && eventDate >= now && eventDate <= thirtyDaysFromNow;
+  });
+
+  // Próximos 7 dias
+  const upcomingWeekEvents = events.filter((e: any) => {
+    const eventDate = new Date(e.eventDate);
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    return eventDate >= now && eventDate <= sevenDaysFromNow;
+  }).slice(0, 10);
+
+  // Calendário do mês
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const daysInMonth = [];
+  for (let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)) {
+    daysInMonth.push(new Date(d));
+  }
+
+  const getEventsForDay = (day: Date) => {
+    return events.filter((e: any) => isSameDay(new Date(e.eventDate), day));
   };
 
   if (isLoading) {
@@ -331,14 +238,14 @@ export default function AdminCalendarPage() {
             <Calendar />
           </div>
           <div className="page-header-info">
-            <h1>Calendário</h1>
-            <p>Gerencie eventos, vacinações e agendamentos</p>
+            <h1>Calendário Jurídico</h1>
+            <p>Prazos, audiências e eventos importantes</p>
           </div>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <div className="stat-card">
           <div className="stat-card-header">
             <span className="stat-card-title">Eventos Hoje</span>
@@ -347,157 +254,130 @@ export default function AdminCalendarPage() {
           <div className="stat-card-value">{todayEvents.length}</div>
         </div>
 
-        <div className="stat-card">
+        <div className={`stat-card ${upcomingPrazos.length > 0 ? "highlight" : ""}`}>
           <div className="stat-card-header">
-            <span className="stat-card-title">Este Mês</span>
-            <TrendingUp className="stat-card-icon blue" />
+            <span className="stat-card-title">Prazos (7d)</span>
+            <AlertCircle className={`stat-card-icon ${upcomingPrazos.length > 0 ? "red" : "muted"}`} />
           </div>
-          <div className="stat-card-value">{thisMonthEvents.length}</div>
-        </div>
-
-        <div className={`stat-card ${upcomingVaccinations.length > 0 ? "highlight" : ""}`}>
-          <div className="stat-card-header">
-            <span className="stat-card-title">Vacinas (30d)</span>
-            <Syringe className={`stat-card-icon ${upcomingVaccinations.length > 0 ? "amber" : "muted"}`} />
-          </div>
-          <div className="stat-card-value">{upcomingVaccinations.length}</div>
+          <div className="stat-card-value">{upcomingPrazos.length}</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Medicamentos</span>
-            <Pill className="stat-card-icon blue" />
+            <span className="stat-card-title">Audiências</span>
+            <Gavel className="stat-card-icon blue" />
           </div>
-          <div className="stat-card-value">{upcomingMedications.length}</div>
+          <div className="stat-card-value">{upcomingAudiencias.length}</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="stat-card-title">Preventivos</span>
-            <Shield className="stat-card-icon green" />
+            <span className="stat-card-title">Júri</span>
+            <Scale className="stat-card-icon purple" />
           </div>
-          <div className="stat-card-value">{upcomingPreventives.length}</div>
+          <div className="stat-card-value">{upcomingJuri.length}</div>
         </div>
       </div>
 
-      {/* Premium Calendar */}
-      <PremiumCalendar
-        events={events}
-        onEventClick={handleEventClick}
-        onCreateEvent={handleCreateEvent}
-        pets={pets}
-        showCreateButton={true}
-      />
-
-      {/* Mapa de Calor de Ocupação */}
+      {/* Calendário */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Thermometer className="h-5 w-5 text-primary" />
-            Mapa de Ocupação
+            <Calendar className="h-5 w-5 text-primary" />
+            {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
           </CardTitle>
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
               size="icon"
-              onClick={() => setHeatmapMonth(subMonths(heatmapMonth, 1))}
+              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[120px] text-center">
-              {format(heatmapMonth, "MMMM yyyy", { locale: ptBR })}
-            </span>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setCurrentMonth(new Date())}
+            >
+              Hoje
+            </Button>
             <Button 
               variant="outline" 
               size="icon"
-              onClick={() => setHeatmapMonth(addMonths(heatmapMonth, 1))}
+              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          {heatmapData && (
-            <>
-              {/* Legenda */}
-              <div className="flex items-center gap-4 mb-4 text-sm">
-                <span className="text-muted-foreground">Ocupação:</span>
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 rounded bg-gray-100 dark:bg-gray-800" />
-                  <span>Vazio</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 rounded bg-green-200 dark:bg-green-900" />
-                  <span>Baixa</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 rounded bg-yellow-200 dark:bg-yellow-900" />
-                  <span>Média</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 rounded bg-orange-300 dark:bg-orange-800" />
-                  <span>Alta</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 rounded bg-red-400 dark:bg-red-700" />
-                  <span>Lotado</span>
-                </div>
-                <div className="ml-auto text-muted-foreground">
-                  Capacidade: {heatmapData.maxCapacity} pets | 
-                  Média: {heatmapData.avgOccupancy.toFixed(0)}%
-                </div>
+          <div className="grid grid-cols-7 gap-1">
+            {/* Cabeçalho dos dias da semana */}
+            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
+              <div key={day} className="text-center text-xs text-muted-foreground font-medium py-2">
+                {day}
               </div>
-
-              {/* Grid do mapa de calor */}
-              <div className="grid grid-cols-7 gap-1">
-                {/* Cabeçalho dos dias da semana */}
-                {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
-                  <div key={day} className="text-center text-xs text-muted-foreground font-medium py-1">
-                    {day}
+            ))}
+            
+            {/* Células vazias para alinhar o primeiro dia */}
+            {Array.from({ length: monthStart.getDay() }).map((_, i) => (
+              <div key={`empty-start-${i}`} className="aspect-square" />
+            ))}
+            
+            {/* Dias do mês */}
+            {daysInMonth.map((day) => {
+              const dayEvents = getEventsForDay(day);
+              const isToday = isSameDay(day, now);
+              
+              return (
+                <div
+                  key={day.toISOString()}
+                  className={cn(
+                    "aspect-square rounded-lg border p-1 flex flex-col cursor-pointer transition-all hover:bg-muted/50",
+                    isToday && "ring-2 ring-primary bg-primary/5"
+                  )}
+                >
+                  <span className={cn(
+                    "text-xs font-medium",
+                    isToday && "text-primary"
+                  )}>
+                    {day.getDate()}
+                  </span>
+                  <div className="flex-1 overflow-hidden mt-1 space-y-0.5">
+                    {dayEvents.slice(0, 3).map((event: any) => {
+                      const config = EVENT_TYPE_CONFIG[event.eventType as keyof typeof EVENT_TYPE_CONFIG] || EVENT_TYPE_CONFIG.custom;
+                      return (
+                        <div
+                          key={event.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEventClick(event);
+                          }}
+                          className={cn(
+                            "text-[10px] px-1 rounded truncate cursor-pointer hover:opacity-80",
+                            config.bgColor,
+                            config.color
+                          )}
+                          title={event.title}
+                        >
+                          {event.title}
+                        </div>
+                      );
+                    })}
+                    {dayEvents.length > 3 && (
+                      <div className="text-[10px] text-muted-foreground px-1">
+                        +{dayEvents.length - 3} mais
+                      </div>
+                    )}
                   </div>
-                ))}
-                
-                {/* Células vazias para alinhar o primeiro dia */}
-                {Array.from({ length: new Date(heatmapMonth.getFullYear(), heatmapMonth.getMonth(), 1).getDay() }).map((_, i) => (
-                  <div key={`empty-${i}`} />
-                ))}
-                
-                {/* Dias do mês */}
-                {heatmapData.heatmap.map((day, idx) => {
-                  const dayNum = idx + 1;
-                  const isToday = isSameDay(new Date(day.date), new Date());
-                  
-                  const bgColor = 
-                    day.level === "full" ? "bg-red-400 dark:bg-red-700" :
-                    day.level === "high" ? "bg-orange-300 dark:bg-orange-800" :
-                    day.level === "medium" ? "bg-yellow-200 dark:bg-yellow-900" :
-                    day.level === "low" ? "bg-green-200 dark:bg-green-900" :
-                    "bg-gray-100 dark:bg-gray-800";
-
-                  return (
-                    <div
-                      key={day.date}
-                      className={cn(
-                        "aspect-square rounded-md flex flex-col items-center justify-center text-xs cursor-default transition-all hover:ring-2 hover:ring-primary/50",
-                        bgColor,
-                        isToday && "ring-2 ring-primary"
-                      )}
-                      title={`${format(new Date(day.date), "dd/MM")}: ${day.count} check-ins (${day.percentage.toFixed(0)}%)`}
-                    >
-                      <span className="font-medium">{dayNum}</span>
-                      {day.count > 0 && (
-                        <span className="text-[10px] opacity-70">{day.count}</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Próximos Eventos - DEPOIS DO CALENDÁRIO */}
+      {/* Próximos Eventos */}
       {upcomingWeekEvents.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -511,11 +391,10 @@ export default function AdminCalendarPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {upcomingWeekEvents.map((event) => {
-                const eventConfig = EVENT_TYPE_CONFIG[event.eventType as keyof typeof EVENT_TYPE_CONFIG] || EVENT_TYPE_CONFIG.general;
+              {upcomingWeekEvents.map((event: any) => {
+                const eventConfig = EVENT_TYPE_CONFIG[event.eventType as keyof typeof EVENT_TYPE_CONFIG] || EVENT_TYPE_CONFIG.custom;
                 const EventIcon = eventConfig.icon;
                 const isCompleted = event.status === "completed";
-                const isActionable = isActionableEvent(event.eventType);
                 
                 return (
                   <div 
@@ -529,10 +408,10 @@ export default function AdminCalendarPage() {
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center",
-                        isCompleted ? "bg-slate-200 dark:bg-slate-700" : "bg-muted"
+                        isCompleted ? "bg-green-200 dark:bg-green-700" : eventConfig.bgColor
                       )}>
                         {isCompleted ? (
-                          <CheckCircle2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                          <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                         ) : (
                           <EventIcon className={cn("h-5 w-5", eventConfig.color)} />
                         )}
@@ -545,7 +424,7 @@ export default function AdminCalendarPage() {
                           {event.title}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {event.petName && `${event.petName} • `}
+                          {event.processo?.numeroAutos && `${event.processo.numeroAutos} • `}
                           {format(new Date(event.eventDate), "EEEE, dd/MM", { locale: ptBR })}
                           {!event.isAllDay && ` às ${format(new Date(event.eventDate), "HH:mm")}`}
                         </p>
@@ -553,14 +432,9 @@ export default function AdminCalendarPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {isCompleted && (
-                        <Badge className="bg-slate-600 hover:bg-slate-700 text-white">
+                        <Badge className="bg-green-600 hover:bg-green-700 text-white">
                           <Check className="h-3 w-3 mr-1" />
-                          Realizado
-                        </Badge>
-                      )}
-                      {isActionable && !isCompleted && (
-                        <Badge variant="outline" className="text-slate-600 border-slate-300 dark:text-slate-400 dark:border-slate-600">
-                          Pendente
+                          Concluído
                         </Badge>
                       )}
                       <Badge variant="outline" className="capitalize">
@@ -584,73 +458,71 @@ export default function AdminCalendarPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selectedEvent && (() => {
-                const config = EVENT_TYPE_CONFIG[selectedEvent.eventType as keyof typeof EVENT_TYPE_CONFIG] || EVENT_TYPE_CONFIG.general;
+                const config = EVENT_TYPE_CONFIG[selectedEvent.eventType as keyof typeof EVENT_TYPE_CONFIG] || EVENT_TYPE_CONFIG.custom;
                 const Icon = config.icon;
                 return <Icon className={cn("h-5 w-5", config.color)} />;
               })()}
               {isEditMode ? "Editar Evento" : selectedEvent?.title}
               {selectedEvent?.status === "completed" && !isEditMode && (
-                <Badge className="bg-slate-600 text-white ml-2">
+                <Badge className="bg-green-600 text-white ml-2">
                   <Check className="h-3 w-3 mr-1" />
-                  Realizado
+                  Concluído
                 </Badge>
               )}
             </DialogTitle>
             <DialogDescription>
-              {isEditMode ? "Edite as informações do evento" : "Detalhes e gerenciamento do evento"}
+              {isEditMode ? "Edite as informações do evento" : "Detalhes do evento"}
             </DialogDescription>
           </DialogHeader>
 
           {selectedEvent && !isEditMode && (
             <div className="space-y-4">
-              {/* Status Banner para eventos acionáveis */}
-              {isActionableEvent(selectedEvent.eventType) && (
-                <div className={cn(
-                  "p-3 rounded-lg flex items-center justify-between",
-                  selectedEvent.status === "completed"
-                    ? "bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                    : "bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
-                )}>
-                  <div className="flex items-center gap-2">
-                    {selectedEvent.status === "completed" ? (
-                      <>
-                        <CheckCircle2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                        <span className="text-slate-700 dark:text-slate-300 font-medium">
-                          Marcado como realizado
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                        <span className="text-slate-700 dark:text-slate-300 font-medium">
-                          Ação pendente
-                        </span>
-                      </>
-                    )}
-                  </div>
+              {/* Status Banner */}
+              <div className={cn(
+                "p-3 rounded-lg flex items-center justify-between",
+                selectedEvent.status === "completed"
+                  ? "bg-green-100 dark:bg-green-800 border border-green-200 dark:border-green-700"
+                  : "bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
+              )}>
+                <div className="flex items-center gap-2">
                   {selectedEvent.status === "completed" ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleMarkAsPending}
-                      disabled={updateEvent.isPending}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Desmarcar
-                    </Button>
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <span className="text-green-700 dark:text-green-300 font-medium">
+                        Marcado como concluído
+                      </span>
+                    </>
                   ) : (
-                    <Button
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                      onClick={handleMarkAsCompleted}
-                      disabled={updateEvent.isPending}
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      Marcar Realizado
-                    </Button>
+                    <>
+                      <AlertCircle className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                      <span className="text-slate-700 dark:text-slate-300 font-medium">
+                        Pendente
+                      </span>
+                    </>
                   )}
                 </div>
-              )}
+                {selectedEvent.status === "completed" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleMarkAsPending}
+                    disabled={updateEvent.isPending}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Desmarcar
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    onClick={handleMarkAsCompleted}
+                    disabled={updateEvent.isPending}
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Concluir
+                  </Button>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -671,12 +543,12 @@ export default function AdminCalendarPage() {
                       : format(new Date(selectedEvent.eventDate), "HH:mm")}
                   </p>
                 </div>
-                {selectedEvent.petName && (
+                {selectedEvent.processo?.numeroAutos && (
                   <div>
-                    <p className="font-medium text-muted-foreground">Pet</p>
+                    <p className="font-medium text-muted-foreground">Processo</p>
                     <p className="flex items-center gap-1">
-                      <Dog className="h-4 w-4" />
-                      {selectedEvent.petName}
+                      <FileText className="h-4 w-4" />
+                      {selectedEvent.processo.numeroAutos}
                     </p>
                   </div>
                 )}

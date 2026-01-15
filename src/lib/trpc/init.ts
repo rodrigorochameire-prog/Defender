@@ -249,25 +249,45 @@ export function isApprovedTutor(user: User | null): user is User & { approvalSta
 }
 
 /**
- * Verifica se o usuário pode acessar dados de um pet específico
- * Admin pode acessar todos, tutores só seus próprios pets
+ * Verifica se o usuário pode acessar dados de um processo específico
+ * Admin pode acessar todos, defensores acessam apenas seus processos
  */
-export async function canAccessPet(
+export async function canAccessProcesso(
   user: User,
-  petId: number,
+  processoId: number,
   db: any
 ): Promise<boolean> {
   if (user.role === "admin") return true;
   
-  const { petTutors } = await import("@/lib/db/schema");
-  const { eq, and } = await import("drizzle-orm");
+  const { processos } = await import("@/lib/db/schema");
+  const { eq } = await import("drizzle-orm");
   
-  const relation = await db.query.petTutors.findFirst({
-    where: and(
-      eq(petTutors.petId, petId),
-      eq(petTutors.tutorId, user.id)
-    ),
+  const processo = await db.query.processos.findFirst({
+    where: eq(processos.id, processoId),
   });
   
-  return !!relation;
+  // Defensor pode acessar se for o responsável pelo processo
+  return processo?.defensorId === user.id;
+}
+
+/**
+ * Verifica se o usuário pode acessar dados de um assistido específico
+ * Admin pode acessar todos, defensores acessam apenas seus assistidos
+ */
+export async function canAccessAssistido(
+  user: User,
+  assistidoId: number,
+  db: any
+): Promise<boolean> {
+  if (user.role === "admin") return true;
+  
+  const { assistidos } = await import("@/lib/db/schema");
+  const { eq } = await import("drizzle-orm");
+  
+  const assistido = await db.query.assistidos.findFirst({
+    where: eq(assistidos.id, assistidoId),
+  });
+  
+  // Defensor pode acessar se for o responsável pelo assistido
+  return assistido?.defensorId === user.id;
 }
