@@ -241,14 +241,15 @@ const mockAssistidos = [
 ];
 
 // Configurações
+// Cores iOS 26.2 - Suaves e sofisticadas
 const statusConfig: Record<string, { label: string; color: string; bgColor: string; priority: number }> = {
-  CADEIA_PUBLICA: { label: "Cadeia Pública", color: "text-red-700 dark:text-red-400", bgColor: "bg-red-50 dark:bg-red-950/30", priority: 1 },
-  PENITENCIARIA: { label: "Penitenciária", color: "text-red-700 dark:text-red-400", bgColor: "bg-red-50 dark:bg-red-950/30", priority: 2 },
-  COP: { label: "COP", color: "text-red-700 dark:text-red-400", bgColor: "bg-red-50 dark:bg-red-950/30", priority: 3 },
-  HOSPITAL_CUSTODIA: { label: "Hosp. Custódia", color: "text-red-700 dark:text-red-400", bgColor: "bg-red-50 dark:bg-red-950/30", priority: 4 },
-  MONITORADO: { label: "Monitorado", color: "text-amber-700 dark:text-amber-400", bgColor: "bg-amber-50 dark:bg-amber-950/30", priority: 5 },
-  DOMICILIAR: { label: "Domiciliar", color: "text-orange-700 dark:text-orange-400", bgColor: "bg-orange-50 dark:bg-orange-950/30", priority: 6 },
-  SOLTO: { label: "Solto", color: "text-emerald-700 dark:text-emerald-400", bgColor: "bg-emerald-50 dark:bg-emerald-950/30", priority: 7 },
+  CADEIA_PUBLICA: { label: "Cadeia Pública", color: "text-rose-600 dark:text-rose-400", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", priority: 1 },
+  PENITENCIARIA: { label: "Penitenciária", color: "text-rose-600 dark:text-rose-400", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", priority: 2 },
+  COP: { label: "COP", color: "text-rose-600 dark:text-rose-400", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", priority: 3 },
+  HOSPITAL_CUSTODIA: { label: "Hosp. Custódia", color: "text-rose-600 dark:text-rose-400", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", priority: 4 },
+  MONITORADO: { label: "Monitorado", color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-50/70 dark:bg-amber-950/20", priority: 5 },
+  DOMICILIAR: { label: "Domiciliar", color: "text-orange-500 dark:text-orange-400", bgColor: "bg-orange-50/70 dark:bg-orange-950/20", priority: 6 },
+  SOLTO: { label: "Solto", color: "text-emerald-600 dark:text-emerald-400", bgColor: "bg-emerald-50/70 dark:bg-emerald-950/20", priority: 7 },
 };
 
 const areaConfig: Record<string, { label: string; color: string }> = {
@@ -266,9 +267,9 @@ function getPrazoInfo(prazoStr: string | null) {
   if (!prazoStr) return null;
   const dias = differenceInDays(parseISO(prazoStr), new Date());
   
-  if (dias < 0) return { text: "Vencido", urgent: true, color: "text-red-600" };
-  if (dias === 0) return { text: "Hoje", urgent: true, color: "text-red-600" };
-  if (dias === 1) return { text: "Amanhã", urgent: true, color: "text-orange-600" };
+  if (dias < 0) return { text: "Vencido", urgent: true, color: "text-rose-600" };
+  if (dias === 0) return { text: "Hoje", urgent: true, color: "text-rose-600" };
+  if (dias === 1) return { text: "Amanhã", urgent: true, color: "text-amber-600" };
   if (dias <= 3) return { text: `${dias}d`, urgent: true, color: "text-orange-500" };
   if (dias <= 7) return { text: `${dias}d`, urgent: false, color: "text-amber-600" };
   return { text: `${dias}d`, urgent: false, color: "text-muted-foreground" };
@@ -431,7 +432,7 @@ function AssistidoCard({ assistido, onPhotoClick }: AssistidoCardProps) {
             >
               <AvatarImage src={assistido.photoUrl || undefined} />
               <AvatarFallback className={`font-semibold ${
-                isPreso ? "bg-red-100 text-red-700" : "bg-primary/10 text-primary"
+                isPreso ? "bg-rose-100/80 text-rose-700" : "bg-primary/10 text-primary"
               }`}>
                 {getInitials(assistido.nome)}
               </AvatarFallback>
@@ -561,7 +562,7 @@ function AssistidoRow({ assistido, onPhotoClick }: AssistidoCardProps) {
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
 
   return (
-    <TableRow className={isPreso ? "bg-red-50/50 dark:bg-red-950/10" : ""}>
+    <TableRow className={isPreso ? "border-l-2 border-l-rose-300" : ""}>
       <TableCell>
         <div className="flex items-center gap-3">
           <div className="relative group/avatar">
@@ -570,7 +571,7 @@ function AssistidoRow({ assistido, onPhotoClick }: AssistidoCardProps) {
               onClick={onPhotoClick}
             >
               <AvatarImage src={assistido.photoUrl || undefined} />
-              <AvatarFallback className={`text-xs font-semibold ${isPreso ? "bg-red-100 text-red-700" : "bg-primary/10 text-primary"}`}>
+              <AvatarFallback className={`text-xs font-semibold ${isPreso ? "bg-rose-100/80 text-rose-700" : "bg-primary/10 text-primary"}`}>
                 {getInitials(assistido.nome)}
               </AvatarFallback>
             </Avatar>
@@ -717,10 +718,10 @@ export default function AssistidosPage() {
             <p className="text-[10px] text-muted-foreground">Total</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50">
-          <AlertOctagon className="h-5 w-5 text-red-600" />
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/30">
+          <AlertOctagon className="h-5 w-5 text-rose-500" />
           <div>
-            <p className="text-xl font-bold text-red-600">{stats.presos}</p>
+            <p className="text-xl font-bold text-rose-600">{stats.presos}</p>
             <p className="text-[10px] text-muted-foreground">Presos</p>
           </div>
         </div>

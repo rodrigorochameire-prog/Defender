@@ -41,13 +41,13 @@ import {
   PolarRadiusAxis,
 } from "recharts";
 
-// Cores sóbrias do design system
+// Cores iOS 26.2 Design System
 const COLORS = {
-  fatal: "hsl(0, 65%, 45%)",
-  urgente: "hsl(25, 85%, 50%)",
-  andamento: "hsl(158, 50%, 35%)",
-  arquivado: "hsl(240, 4%, 46%)",
-  primary: "hsl(158, 64%, 28%)",
+  fatal: "hsl(350, 55%, 60%)",      // Rosa suave
+  urgente: "hsl(35, 75%, 55%)",     // Âmbar suave
+  andamento: "hsl(158, 50%, 45%)",  // Verde suave
+  arquivado: "hsl(160, 8%, 55%)",   // Cinza esverdeado
+  primary: "hsl(158, 55%, 42%)",    // Verde principal
 };
 
 // Dados mockados para demonstração
