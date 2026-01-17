@@ -17,7 +17,17 @@ import { relations } from "drizzle-orm";
 // ENUMS JURÍDICOS
 // ==========================================
 
-// Áreas de atuação da Defensoria
+// O Coração da Divisão - Atribuições/Workspaces
+export const atribuicaoEnum = pgEnum("atribuicao", [
+  "JURI_CAMACARI",      // Vara do Júri Camaçari (Processual + Plenário Local)
+  "VVD_CAMACARI",       // Violência Doméstica
+  "EXECUCAO_PENAL",     // Execução Penal
+  "SUBSTITUICAO",       // Substituição Criminal
+  "SUBSTITUICAO_CIVEL", // Substituição Não Penal (Cível, Família, etc.)
+  "GRUPO_JURI",         // Grupo Especial de Atuação (Apenas Plenários pelo Estado)
+]);
+
+// Áreas de atuação da Defensoria (compatibilidade)
 export const areaEnum = pgEnum("area", [
   "JURI",
   "EXECUCAO_PENAL",
@@ -172,6 +182,9 @@ export const processos = pgTable("processos", {
   assistidoId: integer("assistido_id")
     .notNull()
     .references(() => assistidos.id, { onDelete: "cascade" }),
+  
+  // ATRIBUIÇÃO - O filtro mestre para workspaces
+  atribuicao: atribuicaoEnum("atribuicao").notNull().default("SUBSTITUICAO"),
   
   // Identificação do Processo
   numeroAutos: text("numero_autos").notNull(),
@@ -766,6 +779,107 @@ export const calculosPena = pgTable("calculos_pena", {
 
 export type CalculoPena = typeof calculosPena.$inferSelect;
 export type InsertCalculoPena = typeof calculosPena.$inferInsert;
+
+// ==========================================
+// MÓDULO VVD - MEDIDAS PROTETIVAS
+// ==========================================
+
+export const medidasProtetivas = pgTable("medidas_protetivas", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id")
+    .references(() => assistidos.id, { onDelete: "set null" }),
+  
+  // Dados da Medida
+  numeroMedida: varchar("numero_medida", { length: 50 }),
+  tipoMedida: varchar("tipo_medida", { length: 100 }).notNull(), // 'afastamento_lar' | 'proibicao_contato' | 'proibicao_aproximacao' | etc
+  dataDecisao: date("data_decisao"),
+  prazoDias: integer("prazo_dias"), // Prazo em dias
+  dataVencimento: date("data_vencimento"),
+  
+  // Distância mínima (se aplicável)
+  distanciaMetros: integer("distancia_metros"),
+  
+  // Partes
+  nomeVitima: text("nome_vitima"),
+  telefoneVitima: varchar("telefone_vitima", { length: 20 }),
+  
+  // Status
+  status: varchar("status", { length: 30 }).default("ativa"), // 'ativa' | 'expirada' | 'revogada' | 'renovada'
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("medidas_protetivas_processo_id_idx").on(table.processoId),
+  index("medidas_protetivas_status_idx").on(table.status),
+  index("medidas_protetivas_data_vencimento_idx").on(table.dataVencimento),
+]);
+
+export type MedidaProtetiva = typeof medidasProtetivas.$inferSelect;
+export type InsertMedidaProtetiva = typeof medidasProtetivas.$inferInsert;
+
+// ==========================================
+// MÓDULO EP - CÁLCULO SEEU (BENEFÍCIOS)
+// ==========================================
+
+export const calculosSEEU = pgTable("calculos_seeu", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id")
+    .references(() => assistidos.id, { onDelete: "set null" }),
+  
+  // Dados Base
+  dataBase: date("data_base").notNull(), // Data-base do cálculo
+  penaTotal: integer("pena_total").notNull(), // Total em dias
+  regimeInicial: varchar("regime_inicial", { length: 20 }), // 'fechado' | 'semiaberto' | 'aberto'
+  
+  // Frações de progressão
+  fracaoProgressao: varchar("fracao_progressao", { length: 20 }), // '1/6' | '2/5' | '40%' | '50%' | '60%' | '70%'
+  fracaoLivramento: varchar("fracao_livramento", { length: 20 }), // '1/3' | '1/2' | '2/3'
+  
+  // Datas calculadas
+  dataProgressao: date("data_progressao"),
+  dataLivramento: date("data_livramento"),
+  dataTermino: date("data_termino"),
+  dataSaida: date("data_saida"), // Saída temporária
+  
+  // Remição
+  diasRemidos: integer("dias_remidos").default(0),
+  diasTrabalho: integer("dias_trabalho").default(0),
+  diasEstudo: integer("dias_estudo").default(0),
+  
+  // Crime hediondo
+  isHediondo: boolean("is_hediondo").default(false),
+  isPrimario: boolean("is_primario").default(true),
+  
+  // Status do benefício
+  statusProgressao: varchar("status_progressao", { length: 30 }), // 'aguardando' | 'requerido' | 'deferido' | 'indeferido'
+  statusLivramento: varchar("status_livramento", { length: 30 }),
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Metadados
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("calculos_seeu_processo_id_idx").on(table.processoId),
+  index("calculos_seeu_assistido_id_idx").on(table.assistidoId),
+  index("calculos_seeu_data_progressao_idx").on(table.dataProgressao),
+  index("calculos_seeu_data_livramento_idx").on(table.dataLivramento),
+]);
+
+export type CalculoSEEU = typeof calculosSEEU.$inferSelect;
+export type InsertCalculoSEEU = typeof calculosSEEU.$inferInsert;
 
 // ==========================================
 // JURADOS (Banco de Dados do Júri)

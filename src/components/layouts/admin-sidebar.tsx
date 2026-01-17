@@ -28,6 +28,11 @@ import {
   Briefcase,
   Target,
   ChevronRight,
+  Shield,
+  Lock,
+  RefreshCw,
+  Award,
+  TrendingUp,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -53,6 +58,8 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeToggle } from "@/components/font-size-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
+import { AssignmentSwitcher } from "@/components/layout/assignment-switcher";
+import { useAssignment } from "@/contexts/assignment-context";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -63,61 +70,40 @@ interface AdminSidebarProps {
   userEmail?: string;
 }
 
-const menuGroups = [
-  {
-    label: "Principal",
-    items: [
-      { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-      { icon: Users, label: "Assistidos", path: "/admin/assistidos" },
-      { icon: Scale, label: "Processos", path: "/admin/processos" },
-      { icon: Calendar, label: "Calendário", path: "/admin/calendar" },
-    ],
-  },
-  {
-    label: "Demandas",
-    items: [
-      { icon: Clock, label: "Demandas", path: "/admin/demandas" },
-      { icon: AlertTriangle, label: "Prazos", path: "/admin/prazos" },
-      { icon: Target, label: "Kanban", path: "/admin/kanban" },
-    ],
-  },
-  {
-    label: "Audiências",
-    items: [
-      { icon: Gavel, label: "Júri", path: "/admin/juri" },
-      { icon: Briefcase, label: "Audiências", path: "/admin/audiencias" },
-      { icon: UserCheck, label: "Atendimentos", path: "/admin/atendimentos" },
-    ],
-  },
-  {
-    label: "Documentos",
-    items: [
-      { icon: FileText, label: "Peças e Docs", path: "/admin/documentos" },
-      { icon: FolderOpen, label: "Templates", path: "/admin/templates" },
-    ],
-  },
-  {
-    label: "Ferramentas",
-    items: [
-      { icon: Calculator, label: "Calculadoras", path: "/admin/calculadoras" },
-      { icon: FileSearch, label: "Buscar", path: "/admin/busca" },
-    ],
-  },
-  {
-    label: "Comunicação",
-    items: [
-      { icon: MessageCircle, label: "WhatsApp", path: "/admin/whatsapp" },
-      { icon: Bell, label: "Notificações", path: "/admin/notifications" },
-    ],
-  },
-  {
-    label: "Gestão",
-    items: [
-      { icon: Building2, label: "Defensoria", path: "/admin/defensoria" },
-      { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
-      { icon: Settings, label: "Configurações", path: "/admin/settings" },
-    ],
-  },
+// Mapeamento de ícones para o menu dinâmico
+const iconMap: Record<string, React.ElementType> = {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  Bell,
+  FileText,
+  User,
+  MessageCircle,
+  Settings,
+  BarChart3,
+  Scale,
+  Gavel,
+  FileSearch,
+  Clock,
+  AlertTriangle,
+  Calculator,
+  FolderOpen,
+  UserCheck,
+  Building2,
+  Briefcase,
+  Target,
+  Shield,
+  Lock,
+  RefreshCw,
+  Award,
+  TrendingUp,
+};
+
+// Menu secundário fixo (sempre visível)
+const secondaryMenuItems = [
+  { icon: "MessageCircle", label: "WhatsApp", path: "/admin/whatsapp" },
+  { icon: "Bell", label: "Notificações", path: "/admin/notifications" },
+  { icon: "Settings", label: "Configurações", path: "/admin/settings" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
@@ -179,13 +165,17 @@ function AdminSidebarContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const activeMenuItem = menuGroups
-    .flatMap((g) => g.items)
-    .find(
-      (item) =>
-        pathname === item.path ||
-        (item.path !== "/admin" && pathname.startsWith(item.path + "/"))
-    );
+  // Contexto de atribuição
+  const { config, currentAssignment } = useAssignment();
+
+  // Menu dinâmico baseado na atribuição
+  const menuItems = config.menuItems;
+
+  const activeMenuItem = menuItems.find(
+    (item) =>
+      pathname === item.path ||
+      (item.path !== "/admin" && pathname.startsWith(item.path + "/"))
+  );
 
   useEffect(() => {
     if (isCollapsed) {
@@ -232,20 +222,15 @@ function AdminSidebarContent({
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
-          className="border-r border-[hsl(155_15%_90%)] dark:border-[hsl(160_12%_14%)] bg-[hsl(155_15%_98%)] dark:bg-[hsl(160_15%_5%)] backdrop-blur-xl"
+          className={cn(
+            "border-r border-[hsl(155_15%_90%)] dark:border-[hsl(160_12%_14%)]",
+            "bg-[hsl(155_15%_98%)] dark:bg-[hsl(160_15%_5%)] backdrop-blur-xl"
+          )}
           disableTransition={isResizing}
         >
-          {/* Header com gradiente verde sutil */}
-          <SidebarHeader className="h-14 justify-center border-b border-[hsl(155_15%_92%)] dark:border-[hsl(160_12%_12%)] bg-gradient-to-r from-[hsl(158_30%_96%)] to-transparent dark:from-[hsl(158_20%_8%)] dark:to-transparent">
-            <div className="flex items-center gap-3 px-5 transition-all w-full">
-              {!isCollapsed && (
-                <div className="flex flex-col">
-                  <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[hsl(158_40%_35%)] dark:text-[hsl(158_40%_55%)]">
-                    Administração
-                  </span>
-                </div>
-              )}
-            </div>
+          {/* Header com Switcher de Atribuição */}
+          <SidebarHeader className="border-b border-[hsl(155_15%_92%)] dark:border-[hsl(160_12%_12%)] py-2">
+            <AssignmentSwitcher collapsed={isCollapsed} />
           </SidebarHeader>
 
           <SidebarContent className="gap-0 px-2.5 py-3 overflow-y-auto flex-1">
@@ -270,95 +255,164 @@ function AdminSidebarContent({
 
               <div className="h-px bg-[hsl(155_15%_90%)] dark:bg-[hsl(160_12%_14%)] my-2 mx-2" />
 
-              {/* Menu Groups */}
-              {menuGroups.map((group, groupIndex) => (
-                <div key={group.label}>
-                  {!isCollapsed && (
-                    <div className="px-3 py-2 mt-3 mb-1">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[hsl(160_8%_50%)] dark:text-[hsl(150_6%_45%)]">
-                        {group.label}
-                      </span>
-                    </div>
-                  )}
+              {/* Label da atribuição */}
+              {!isCollapsed && (
+                <div className="px-3 py-2 mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[hsl(160_8%_50%)] dark:text-[hsl(150_6%_45%)]">
+                    {config.shortName}
+                  </span>
+                </div>
+              )}
 
-                  {group.items.map((item) => {
-                    const isActive =
-                      pathname === item.path ||
-                      (item.path !== "/admin" && pathname.startsWith(item.path + "/"));
+              {/* Menu Principal Dinâmico */}
+              {menuItems.map((item) => {
+                const Icon = iconMap[item.icon] || Briefcase;
+                const isActive =
+                  pathname === item.path ||
+                  (item.path !== "/admin" && pathname.startsWith(item.path + "/"));
 
-                    return (
-                      <SidebarMenuItem key={item.path}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.label}
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.label}
+                      className={cn(
+                        "h-10 transition-all duration-200 rounded-xl group relative",
+                        isActive
+                          ? "shadow-sm ring-1"
+                          : "hover:bg-[hsl(155_15%_95%)] dark:hover:bg-[hsl(160_12%_10%)]"
+                      )}
+                      style={{
+                        backgroundColor: isActive ? config.accentColorLight : undefined,
+                        borderColor: isActive ? config.accentColor + "30" : undefined,
+                      }}
+                    >
+                      <Link
+                        href={item.path}
+                        prefetch={true}
+                        onClick={() => {
+                          if (isMobile && openMobile) {
+                            setOpenMobile(false);
+                          }
+                        }}
+                      >
+                        <Icon
                           className={cn(
-                            "h-10 transition-all duration-200 rounded-xl group relative",
+                            "transition-colors duration-200",
+                            isActive ? "h-5 w-5" : "h-[18px] w-[18px]"
+                          )}
+                          style={{
+                            color: isActive
+                              ? config.accentColor
+                              : "hsl(160, 8%, 45%)",
+                          }}
+                          strokeWidth={isActive ? 2 : 1.5}
+                        />
+                        <span
+                          className={cn(
+                            "text-[13px] transition-colors duration-200",
                             isActive
-                              ? "bg-[hsl(158_35%_92%)] dark:bg-[hsl(158_25%_12%)] shadow-sm ring-1 ring-[hsl(158_30%_88%)] dark:ring-[hsl(158_20%_18%)]"
-                              : "hover:bg-[hsl(155_15%_95%)] dark:hover:bg-[hsl(160_12%_10%)]"
+                              ? "font-semibold text-foreground"
+                              : "font-medium text-[hsl(160_8%_40%)] dark:text-[hsl(150_6%_60%)]"
                           )}
                         >
-                          <Link
-                            href={item.path}
-                            prefetch={true}
-                            onClick={() => {
-                              if (isMobile && openMobile) {
-                                setOpenMobile(false);
-                              }
-                            }}
-                          >
-                            <item.icon
-                              className={cn(
-                                "transition-colors duration-200",
-                                isActive
-                                  ? "h-5 w-5 text-[hsl(158_55%_38%)] dark:text-[hsl(158_50%_52%)]"
-                                  : "h-[18px] w-[18px] text-[hsl(160_8%_45%)] dark:text-[hsl(150_6%_50%)] group-hover:text-[hsl(158_40%_40%)] dark:group-hover:text-[hsl(158_35%_55%)]"
-                              )}
-                              strokeWidth={isActive ? 2 : 1.5}
-                            />
-                            <span
-                              className={cn(
-                                "text-[13px] transition-colors duration-200",
-                                isActive
-                                  ? "font-semibold text-[hsl(160_15%_20%)] dark:text-[hsl(150_10%_90%)]"
-                                  : "font-medium text-[hsl(160_8%_40%)] dark:text-[hsl(150_6%_60%)] group-hover:text-[hsl(160_12%_25%)] dark:group-hover:text-[hsl(150_8%_75%)]"
-                              )}
-                            >
-                              {item.label}
-                            </span>
-                            {isActive && !isCollapsed && (
-                              <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[hsl(158_55%_42%)] dark:bg-[hsl(158_50%_50%)]" />
-                            )}
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
+                          {item.label}
+                        </span>
+                        {isActive && !isCollapsed && (
+                          <div
+                            className="ml-auto w-1.5 h-1.5 rounded-full"
+                            style={{ backgroundColor: config.accentColor }}
+                          />
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
 
-                  {groupIndex < menuGroups.length - 1 && (
-                    <div
-                      className={cn(
-                        "my-2 mx-2",
-                        isCollapsed
-                          ? "h-[2px] bg-[hsl(155_12%_88%)] dark:bg-[hsl(160_10%_15%)] rounded-full"
-                          : "h-px bg-[hsl(155_15%_92%)] dark:bg-[hsl(160_12%_12%)]"
-                      )}
-                    />
-                  )}
+              {/* Separador */}
+              <div className="h-px bg-[hsl(155_15%_92%)] dark:bg-[hsl(160_12%_12%)] my-3 mx-2" />
+
+              {/* Menu Secundário (fixo) */}
+              {!isCollapsed && (
+                <div className="px-3 py-2 mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[hsl(160_8%_50%)] dark:text-[hsl(150_6%_45%)]">
+                    Sistema
+                  </span>
                 </div>
-              ))}
+              )}
+
+              {secondaryMenuItems.map((item) => {
+                const Icon = iconMap[item.icon] || Settings;
+                const isActive = pathname.startsWith(item.path);
+
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.label}
+                      className={cn(
+                        "h-10 transition-all duration-200 rounded-xl group",
+                        isActive
+                          ? "bg-[hsl(158_35%_92%)] dark:bg-[hsl(158_25%_12%)] shadow-sm"
+                          : "hover:bg-[hsl(155_15%_95%)] dark:hover:bg-[hsl(160_12%_10%)]"
+                      )}
+                    >
+                      <Link
+                        href={item.path}
+                        prefetch={true}
+                        onClick={() => {
+                          if (isMobile && openMobile) {
+                            setOpenMobile(false);
+                          }
+                        }}
+                      >
+                        <Icon
+                          className={cn(
+                            "transition-colors duration-200 h-[18px] w-[18px]",
+                            isActive
+                              ? "text-[hsl(158_55%_38%)]"
+                              : "text-[hsl(160_8%_45%)]"
+                          )}
+                          strokeWidth={1.5}
+                        />
+                        <span
+                          className={cn(
+                            "text-[13px] font-medium transition-colors duration-200",
+                            isActive
+                              ? "text-foreground"
+                              : "text-[hsl(160_8%_40%)] dark:text-[hsl(150_6%_60%)]"
+                          )}
+                        >
+                          {item.label}
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarContent>
 
-          {/* Footer com gradiente verde sutil */}
-          <SidebarFooter className="p-3 border-t border-[hsl(155_15%_92%)] dark:border-[hsl(160_12%_12%)] bg-gradient-to-t from-[hsl(158_25%_96%)] to-transparent dark:from-[hsl(158_15%_7%)] dark:to-transparent">
+          {/* Footer */}
+          <SidebarFooter className="p-3 border-t border-[hsl(155_15%_92%)] dark:border-[hsl(160_12%_12%)]">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-[hsl(158_20%_94%)] dark:hover:bg-[hsl(158_15%_12%)] transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(158_55%_42%)/0.4] group">
                   <div className="relative">
-                    <Avatar className="h-10 w-10 border-2 border-[hsl(158_30%_85%)] dark:border-[hsl(158_20%_25%)] shadow-sm ring-1 ring-white dark:ring-transparent">
-                      <AvatarFallback className="text-xs font-semibold bg-gradient-to-br from-[hsl(158_40%_92%)] to-[hsl(158_35%_88%)] dark:from-[hsl(158_30%_18%)] dark:to-[hsl(158_25%_14%)] text-[hsl(158_50%_35%)] dark:text-[hsl(158_45%_60%)]">
+                    <Avatar
+                      className="h-10 w-10 border-2 shadow-sm ring-1 ring-white dark:ring-transparent"
+                      style={{ borderColor: config.accentColor + "40" }}
+                    >
+                      <AvatarFallback
+                        className="text-xs font-semibold"
+                        style={{
+                          background: config.accentColorLight,
+                          color: config.accentColor,
+                        }}
+                      >
                         {getInitials(userName)}
                       </AvatarFallback>
                     </Avatar>
@@ -377,7 +431,10 @@ function AdminSidebarContent({
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 shadow-xl border-[hsl(155_15%_90%)] dark:border-[hsl(160_12%_18%)]">
+              <DropdownMenuContent
+                align="end"
+                className="w-52 shadow-xl border-[hsl(155_15%_90%)] dark:border-[hsl(160_12%_18%)]"
+              >
                 <DropdownMenuItem
                   onClick={() => router.push("/admin/profile")}
                   className="cursor-pointer font-medium text-[13px]"
@@ -415,15 +472,26 @@ function AdminSidebarContent({
       <SidebarInset className="ml-0">
         {/* Mobile Header */}
         {isMobile && (
-          <div className="flex border-b border-[hsl(155_15%_92%)] dark:border-[hsl(160_12%_14%)] h-14 items-center justify-between bg-[hsl(155_15%_99%)]/95 dark:bg-[hsl(160_15%_6%)]/95 backdrop-blur-xl px-4 sticky top-0 z-40">
+          <div
+            className={cn(
+              "flex border-b h-14 items-center justify-between backdrop-blur-xl px-4 sticky top-0 z-40",
+              config.borderColor
+            )}
+            style={{ background: config.accentColorLight }}
+          >
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="h-9 w-9 rounded-xl bg-[hsl(158_20%_95%)] dark:bg-[hsl(158_15%_12%)] hover:bg-[hsl(158_25%_92%)] dark:hover:bg-[hsl(158_18%_16%)] transition-colors" />
+              <SidebarTrigger className="h-9 w-9 rounded-xl bg-white/80 dark:bg-[hsl(160_12%_12%)] transition-colors" />
               <Link href="/admin" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-[hsl(158_55%_42%)] to-[hsl(160_50%_35%)] flex items-center justify-center shadow-sm">
+                <div
+                  className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shadow-sm"
+                  style={{
+                    background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
+                  }}
+                >
                   <Scale className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-semibold text-[13px] text-[hsl(160_15%_20%)] dark:text-[hsl(150_10%_88%)]">
-                  {activeMenuItem?.label ?? "DefesaHub"}
+                <span className="font-semibold text-[13px] text-foreground">
+                  {activeMenuItem?.label ?? config.shortName}
                 </span>
               </Link>
             </div>
@@ -437,23 +505,39 @@ function AdminSidebarContent({
 
         {/* Desktop Header */}
         {!isMobile && (
-          <div className="flex border-b border-[hsl(155_15%_92%)] dark:border-[hsl(160_12%_14%)] h-16 items-center justify-center bg-[hsl(155_15%_99%)]/95 dark:bg-[hsl(160_15%_6%)]/95 backdrop-blur-xl px-6 sticky top-0 z-40 relative">
+          <div
+            className={cn(
+              "flex border-b h-16 items-center justify-center backdrop-blur-xl px-6 sticky top-0 z-40 relative",
+              config.borderColor
+            )}
+            style={{
+              background: `linear-gradient(135deg, ${config.accentColorLight} 0%, hsl(155, 15%, 99%) 100%)`,
+            }}
+          >
             <Link
               href="/admin"
               className="flex items-center gap-3 hover:opacity-90 transition-opacity duration-200"
             >
-              <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-gradient-to-br from-[hsl(158_55%_42%)] to-[hsl(160_50%_32%)] flex items-center justify-center shadow-lg ring-1 ring-[hsl(158_40%_75%)] dark:ring-[hsl(158_30%_25%)]">
+              <div
+                className="relative w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shadow-lg ring-1"
+                style={{
+                  background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
+                }}
+              >
                 <Scale className="h-5 w-5 text-white" />
               </div>
               <div className="flex flex-col">
                 <span
-                  className="text-xl font-bold tracking-tight text-[hsl(160_15%_15%)] dark:text-[hsl(150_10%_92%)]"
+                  className="text-xl font-bold tracking-tight text-foreground"
                   style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
                 >
                   DefesaHub
                 </span>
-                <span className="text-[10px] text-[hsl(160_8%_50%)] dark:text-[hsl(150_6%_50%)] font-medium tracking-wide">
-                  Sistema de Gestão Jurídica
+                <span
+                  className="text-[10px] font-medium tracking-wide"
+                  style={{ color: config.accentColor }}
+                >
+                  {config.shortName}
                 </span>
               </div>
             </Link>
@@ -465,7 +549,13 @@ function AdminSidebarContent({
           </div>
         )}
 
-        <main className="flex-1 p-5 md:p-6 min-h-screen overflow-x-hidden max-w-full bg-[hsl(150_10%_98%)] dark:bg-[hsl(160_15%_6%)]">
+        <main
+          className={cn(
+            "flex-1 p-5 md:p-6 min-h-screen overflow-x-hidden max-w-full",
+            "bg-gradient-to-br",
+            config.bgGradient
+          )}
+        >
           {children}
         </main>
       </SidebarInset>

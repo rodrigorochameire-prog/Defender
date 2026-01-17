@@ -6,6 +6,7 @@ import { useState, Suspense } from "react";
 import superjson from "superjson";
 import { trpc } from "@/lib/trpc/client";
 import { ThemeProvider } from "@/contexts/theme-context";
+import { AssignmentProvider } from "@/contexts/assignment-context";
 import { Toaster } from "sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ptBR } from "@clerk/localizations";
@@ -68,17 +69,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
-            <Suspense fallback={<LoadingSpinner />}>
-              {children}
-            </Suspense>
-            <Toaster 
-              richColors 
-              position="top-right" 
-              toastOptions={{
-                className: "glass",
-                duration: 3000,
-              }}
-            />
+            <AssignmentProvider>
+              <Suspense fallback={<LoadingSpinner />}>
+                {children}
+              </Suspense>
+              <Toaster 
+                richColors 
+                position="top-right" 
+                toastOptions={{
+                  className: "glass",
+                  duration: 3000,
+                }}
+              />
+            </AssignmentProvider>
           </ThemeProvider>
         </QueryClientProvider>
       </trpc.Provider>
