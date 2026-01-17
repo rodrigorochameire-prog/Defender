@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
@@ -12,9 +11,6 @@ import {
   Bell,
   FileText,
   LogOut,
-  ClipboardList,
-  TrendingUp,
-  MessageSquare,
   PanelLeft,
   User,
   MessageCircle,
@@ -30,11 +26,10 @@ import {
   UserCheck,
   Building2,
   Briefcase,
-  Timer,
   Target,
+  ChevronRight,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/utils";
 import {
   Sidebar,
@@ -70,17 +65,18 @@ interface AdminSidebarProps {
 
 const menuGroups = [
   {
-    label: "Principal",
-    color: "emerald",
+    label: "Operacional",
+    color: "primary", // Emerald - cor primária da marca
     items: [
-      { icon: LayoutDashboard, label: "Sala de Guerra", path: "/admin" },
+      { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
       { icon: Users, label: "Assistidos", path: "/admin/assistidos" },
       { icon: Scale, label: "Processos", path: "/admin/processos" },
+      { icon: Calendar, label: "Calendário", path: "/admin/calendar" },
     ],
   },
   {
     label: "Prazos e Demandas",
-    color: "slate",
+    color: "primary", // Emerald
     items: [
       { icon: Clock, label: "Demandas", path: "/admin/demandas" },
       { icon: AlertTriangle, label: "Prazos Urgentes", path: "/admin/prazos" },
@@ -88,10 +84,9 @@ const menuGroups = [
     ],
   },
   {
-    label: "Agenda",
-    color: "slate",
+    label: "Audiências",
+    color: "primary", // Emerald
     items: [
-      { icon: Calendar, label: "Calendário", path: "/admin/calendar" },
       { icon: Gavel, label: "Tribunal do Júri", path: "/admin/juri" },
       { icon: Briefcase, label: "Audiências", path: "/admin/audiencias" },
       { icon: UserCheck, label: "Atendimentos", path: "/admin/atendimentos" },
@@ -99,7 +94,7 @@ const menuGroups = [
   },
   {
     label: "Documentos",
-    color: "slate",
+    color: "secondary", // Slate/Navy
     items: [
       { icon: FileText, label: "Peças e Docs", path: "/admin/documentos" },
       { icon: FolderOpen, label: "Templates", path: "/admin/templates" },
@@ -107,7 +102,7 @@ const menuGroups = [
   },
   {
     label: "Ferramentas",
-    color: "slate",
+    color: "secondary", // Slate
     items: [
       { icon: Calculator, label: "Calculadoras", path: "/admin/calculadoras" },
       { icon: FileSearch, label: "Buscar Processos", path: "/admin/busca" },
@@ -115,7 +110,7 @@ const menuGroups = [
   },
   {
     label: "Comunicação",
-    color: "slate",
+    color: "secondary", // Slate
     items: [
       { icon: MessageCircle, label: "WhatsApp", path: "/admin/whatsapp" },
       { icon: Bell, label: "Notificações", path: "/admin/notifications" },
@@ -123,7 +118,7 @@ const menuGroups = [
   },
   {
     label: "Gestão",
-    color: "slate",
+    color: "secondary", // Slate
     items: [
       { icon: Building2, label: "Defensoria", path: "/admin/defensoria" },
       { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
@@ -132,24 +127,26 @@ const menuGroups = [
   },
 ];
 
-// Sistema de cores minimalista jurídico
+// Sistema de cores DefesaHub Premium
+// - Primary (Emerald): Elementos principais de navegação
+// - Secondary (Slate): Elementos secundários
 const colorClasses = {
-  emerald: {
-    icon: "text-emerald-600 dark:text-emerald-400",
-    iconActive: "text-emerald-500 dark:text-emerald-400",
-    bg: "bg-zinc-800/50",
-    bgHover: "hover:bg-zinc-800/70",
-    bgActive: "bg-emerald-900/40",
-    border: "border-emerald-600/30",
+  primary: {
+    icon: "text-emerald-500 dark:text-emerald-400",
+    iconActive: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50/40 dark:bg-emerald-950/20",
+    bgHover: "hover:bg-emerald-50/60 dark:hover:bg-emerald-950/30",
+    bgActive: "bg-emerald-100/60 dark:bg-emerald-950/40",
+    border: "border-emerald-200/30 dark:border-emerald-800/20",
     glow: "",
   },
-  slate: {
-    icon: "text-zinc-400",
-    iconActive: "text-emerald-400",
-    bg: "bg-zinc-800/30",
-    bgHover: "hover:bg-zinc-800/50",
-    bgActive: "bg-zinc-700/50",
-    border: "border-zinc-600/30",
+  secondary: {
+    icon: "text-slate-500 dark:text-slate-400",
+    iconActive: "text-slate-700 dark:text-slate-300",
+    bg: "bg-slate-50/60 dark:bg-slate-800/40",
+    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
+    bgActive: "bg-slate-100/80 dark:bg-slate-800/50",
+    border: "border-slate-200/50 dark:border-slate-700/30",
     glow: "",
   },
 };
@@ -207,7 +204,7 @@ function AdminSidebarContent({
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useClerk();
-  const { state, toggleSidebar, setOpen, openMobile, setOpenMobile } = useSidebar();
+  const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -266,53 +263,45 @@ function AdminSidebarContent({
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
-          className="border-r border-zinc-800 bg-zinc-900 shadow-2xl"
+          className="border-r border-border/40 bg-gradient-to-b from-card/95 via-card to-card/90 backdrop-blur-xl shadow-xl"
           disableTransition={isResizing}
         >
-          <SidebarHeader className="h-16 justify-center border-b border-zinc-800">
+          <SidebarHeader className="h-14 justify-center border-b border-border/20">
             <div className="flex items-center gap-3 px-6 transition-all w-full">
               {!isCollapsed && (
                 <div className="flex flex-col">
-                  <span className="text-lg font-bold tracking-tight text-zinc-100">
-                    DefesaHub
+                  <span className="text-xs font-bold tracking-wider uppercase bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
+                    Administração
                   </span>
-                  <span className="text-[10px] font-medium tracking-widest uppercase text-zinc-500">
-                    Gestão Jurídica
-                  </span>
-                </div>
-              )}
-              {isCollapsed && (
-                <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
-                  <Scale className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0 px-3 py-3 overflow-y-auto flex-1">
-            <SidebarMenu className={isCollapsed ? "gap-0.5" : "gap-1"}>
+          <SidebarContent className="gap-0 px-3 py-2 overflow-y-auto flex-1">
+            <SidebarMenu className={isCollapsed ? "gap-0.5" : "gap-2"}>
               {/* Toggle Button */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={toggleSidebar}
                   tooltip={isCollapsed ? "Expandir Menu" : "Recolher Menu"}
-                  className={`${isCollapsed ? "h-9" : "h-10"} hover:bg-zinc-800 transition-all duration-200`}
+                  className={`${isCollapsed ? "h-9" : "h-12"} hover:bg-primary/10 transition-all duration-300`}
                 >
-                  <PanelLeft className="h-5 w-5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
-                  <span className="text-sm font-medium text-zinc-400 group-hover:text-zinc-200 transition-colors">
-                    {isCollapsed ? "Expandir" : "Recolher"}
+                  <PanelLeft className="h-6 w-6 text-[hsl(220_13%_45%)] group-hover:text-primary transition-colors duration-300" />
+                  <span className="text-sm font-medium text-[hsl(220_11%_50%)] group-hover:text-foreground transition-colors duration-300">
+                    {isCollapsed ? "Expandir" : "Recolher Menu"}
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <div className="h-px bg-zinc-800 my-2" />
+              <div className="h-px bg-border/40 my-2" />
 
               {/* Menu Groups */}
               {menuGroups.map((group, groupIndex) => (
                 <div key={group.label}>
                   {!isCollapsed && (
-                    <div className="px-3 py-2 mt-4 mb-1">
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+                    <div className="px-3 py-2 mt-4 mb-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[hsl(220_11%_50%)]">
                         {group.label}
                       </span>
                     </div>
@@ -322,7 +311,7 @@ function AdminSidebarContent({
                     const isActive =
                       pathname === item.path ||
                       (item.path !== "/admin" && pathname.startsWith(item.path + "/"));
-                    const colors = colorClasses[group.color as keyof typeof colorClasses] || colorClasses.slate;
+                    const colors = colorClasses[group.color as keyof typeof colorClasses];
 
                     return (
                       <SidebarMenuItem key={item.path}>
@@ -330,10 +319,10 @@ function AdminSidebarContent({
                           asChild
                           isActive={isActive}
                           tooltip={item.label}
-                          className={`${isCollapsed ? "h-9" : "h-10"} transition-all duration-200 rounded-lg group relative overflow-hidden ${
+                          className={`${isCollapsed ? "h-9" : "h-12"} transition-all duration-300 ease rounded-[14px] group relative overflow-hidden ${
                             isActive
-                              ? `${colors.bgActive} ring-1 ${colors.border}`
-                              : `${colors.bgHover}`
+                              ? `${colors.bgActive} shadow-[0_2px_4px_0_rgba(0,0,0,0.06)] ring-1 ${colors.border}`
+                              : `${colors.bgHover} hover:shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]`
                           }`}
                         >
                           <Link
@@ -345,23 +334,25 @@ function AdminSidebarContent({
                               }
                             }}
                           >
+                            {/* Ícone com destaque quando ativo */}
                             <item.icon
-                              className={`transition-colors duration-200 ${
+                              className={`relative z-10 transition-all duration-300 ease ${
                                 isActive
-                                  ? `${colors.iconActive} h-[18px] w-[18px]`
-                                  : `h-[18px] w-[18px] text-zinc-400 group-hover:text-zinc-200`
+                                  ? `${colors.iconActive} h-[22px] w-[22px]`
+                                  : `h-5 w-5 text-[hsl(220_13%_45%)] group-hover:text-[hsl(220_16%_38%)]`
                               }`}
-                              strokeWidth={isActive ? 2 : 1.5}
+                              strokeWidth={isActive ? 2.5 : 1.75}
                             />
-                            <span className={`text-sm transition-colors duration-200 ${
+                            {/* Texto com hierarquia melhorada */}
+                            <span className={`relative z-10 text-sm transition-colors duration-300 ${
                               isActive 
-                                ? "font-medium text-zinc-100" 
-                                : "font-normal text-zinc-400 group-hover:text-zinc-200"
+                                ? "font-semibold text-foreground" 
+                                : "font-medium text-[hsl(220_11%_50%)] group-hover:text-[hsl(220_16%_38%)]"
                             }`}>
                               {item.label}
                             </span>
                             {isActive && !isCollapsed && (
-                              <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              <div className={`ml-auto w-1.5 h-1.5 rounded-full ${colors.icon}`} />
                             )}
                           </Link>
                         </SidebarMenuButton>
@@ -372,8 +363,8 @@ function AdminSidebarContent({
                   {groupIndex < menuGroups.length - 1 && (
                     <div
                       className={isCollapsed 
-                        ? "h-px mx-2 my-2 bg-zinc-800" 
-                        : "h-px mx-3 my-2 bg-zinc-800/50"
+                        ? "h-[2px] mx-2 my-3 bg-border/50 rounded-full" 
+                        : "h-px mx-3 my-3 bg-border/30"
                       }
                     />
                   )}
@@ -382,22 +373,25 @@ function AdminSidebarContent({
             </SidebarMenu>
           </SidebarContent>
 
-          <SidebarFooter className="p-3 border-t border-zinc-800">
+          <SidebarFooter className="p-3 border-t border-border/40 bg-gradient-to-t from-primary/5 to-transparent">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-zinc-800 transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 group">
-                  <Avatar className="h-9 w-9 border border-zinc-700">
-                    <AvatarFallback className="text-xs font-semibold bg-zinc-800 text-zinc-300">
-                      {getInitials(userName)}
-                    </AvatarFallback>
-                  </Avatar>
+                <button className="flex items-center gap-3 rounded-[14px] px-3 py-3 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 transition-all duration-300 ease w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 group shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] hover:shadow-[0_2px_4px_0_rgba(0,0,0,0.06)] hover:translate-y-[-1px]">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10 blur-lg rounded-full" />
+                    <Avatar className="h-11 w-11 border-2 border-primary/30 shadow-lg relative ring-2 ring-background">
+                      <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-primary/25 to-emerald-500/15 text-primary">
+                        {getInitials(userName)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
                   {!isCollapsed && (
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate leading-none text-zinc-200">
+                      <p className="text-sm font-bold truncate leading-none text-foreground">
                         {userName}
                       </p>
                       {userEmail && (
-                        <p className="text-xs text-zinc-500 truncate mt-1">
+                        <p className="text-xs text-[hsl(220_11%_50%)] truncate mt-1.5 font-medium">
                           {userEmail}
                         </p>
                       )}
@@ -405,17 +399,17 @@ function AdminSidebarContent({
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-zinc-900 border-zinc-800">
+              <DropdownMenuContent align="end" className="w-56 shadow-2xl border-border/40">
                 <DropdownMenuItem
                   onClick={() => router.push("/admin/profile")}
-                  className="cursor-pointer text-zinc-300 hover:text-zinc-100 focus:text-zinc-100"
+                  className="cursor-pointer font-medium"
                 >
                   <User className="mr-2 h-4 w-4" />
                   <span>Meu Perfil</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="cursor-pointer text-red-400 focus:text-red-300"
+                  className="cursor-pointer text-destructive focus:text-destructive font-semibold"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
@@ -426,7 +420,7 @@ function AdminSidebarContent({
         </Sidebar>
 
         <div
-          className={`absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-gradient-to-b hover:from-primary/40 hover:via-accent/30 hover:to-primary/40 transition-all duration-300 ${
+          className={`absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-gradient-to-b hover:from-primary/40 hover:via-emerald-400/30 hover:to-primary/40 transition-all duration-300 ${
             isCollapsed ? "hidden" : ""
           }`}
           onMouseDown={() => {
@@ -439,49 +433,54 @@ function AdminSidebarContent({
 
       <SidebarInset className="ml-0">
         {isMobile && (
-          <div className="flex border-b border-border h-14 items-center justify-between bg-background px-4 sticky top-0 z-40">
+          <div className="flex border-b border-border/40 h-16 items-center justify-between bg-background/95 backdrop-blur-xl px-4 sticky top-0 z-40 shadow-sm">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="h-9 w-9 rounded-lg bg-muted hover:bg-muted/80 transition-colors" />
+              <SidebarTrigger className="h-10 w-10 rounded-xl bg-accent/50 hover:bg-primary/20 transition-colors" />
               <Link href="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
-                  <Scale className="h-4 w-4 text-white" />
+                <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm bg-primary flex items-center justify-center">
+                  <Scale className="h-5 w-5 text-white" />
                 </div>
                 <span className="font-semibold text-sm">
                   {activeMenuItem?.label ?? "DefesaHub"}
                 </span>
               </Link>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <NotificationsPopover />
+              <FontSizeToggle />
               <ThemeToggle />
             </div>
           </div>
         )}
         {!isMobile && (
-          <div className="flex border-b border-border h-16 items-center justify-between bg-card px-6 sticky top-0 z-40">
+          <div className="flex border-b border-border/30 h-[72px] items-center justify-center bg-card/95 backdrop-blur-xl px-6 sticky top-0 z-40 gap-4 shadow-[0_2px_8px_0_rgba(0,0,0,0.04)] relative">
             <Link
               href="/admin"
-              className="flex items-center gap-3 hover:opacity-90 transition-opacity"
+              className="flex items-center gap-3.5 hover:opacity-90 transition-all duration-300 cursor-pointer hover:scale-[1.02]"
             >
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
-                <Scale className="h-5 w-5 text-white" />
+              <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center ring-2 ring-primary/10">
+                <Scale className="h-7 w-7 text-white" />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-bold tracking-tight text-foreground">
+                <span
+                  className="text-2xl font-bold tracking-tight text-foreground"
+                  style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
+                >
                   DefesaHub
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground font-medium">
                   Sistema de Gestão Jurídica
                 </span>
               </div>
             </Link>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 absolute right-6">
               <NotificationsPopover />
+              <FontSizeToggle />
               <ThemeToggle />
             </div>
           </div>
         )}
-        <main className="flex-1 p-6 md:p-8 min-h-screen">{children}</main>
+        <main className="flex-1 p-6 md:p-8 min-h-screen overflow-x-hidden max-w-full">{children}</main>
       </SidebarInset>
     </>
   );

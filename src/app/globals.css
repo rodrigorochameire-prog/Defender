@@ -3,107 +3,132 @@
 @tailwind utilities;
 
 /* ========================================
-   DEFESAHUB - DESIGN SYSTEM v1.0
-   Minimalismo Juridico • Autoridade • Foco
-   The Law Suite - Paleta Sóbria
+   DEFESAHUB - DESIGN SYSTEM v2.0
+   Premium • iOS-Inspired • Elegante
+   Visual inspirado no iOS e adaptado para Defensoria
+   CACHE BUST: 2026-01-17-v1
+   ======================================== */
+
+/* ========================================
+   SISTEMA DE CORES PADRONIZADO
+   - PRIMARY (Emerald): Navegação, botões principais, ícones de abas
+   - SECONDARY (Slate/Navy): Cards de destaque, elementos informativos
+   - FUNCTIONAL: Verde (sucesso), Amarelo (atenção/prazos), Vermelho (urgente/fatal)
    ======================================== */
 
 @layer base {
   :root {
-    /* MODO CLARO - Zinc para fundo, branco para cards */
-    --background: 240 5% 96%; /* Zinc-100 */
-    --foreground: 240 10% 10%; /* Quase preto */
+    /* MODO CLARO - Fundo clean, cards com profundidade sutil */
+    --background: 210 25% 98.5%; /* Fundo off-white suave */
+    --foreground: 222 25% 15%; /* Texto principal escuro */
     --card: 0 0% 100%; /* Branco puro para cards */
-    --card-foreground: 240 10% 10%;
+    --card-foreground: 222 22% 18%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 10%;
+    --popover-foreground: 222 22% 18%;
     
-    /* Primary - Emerald Profundo (Autoridade) */
-    --primary: 158 64% 28%; /* Emerald-700 */
+    /* PRIMARY - Emerald Premium (navegação, botões principais) */
+    --primary: 158 64% 38%; /* Emerald vibrante */
     --primary-foreground: 0 0% 100%;
     
-    /* Neutros elegantes - Slate/Zinc */
-    --secondary: 240 5% 94%;
-    --secondary-foreground: 240 6% 35%;
-    --muted: 240 5% 94%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 240 5% 92%;
-    --accent-foreground: 240 6% 30%;
+    /* SECONDARY - Navy/Slate (cards de destaque, elementos secundários) */
+    --secondary-navy: 215 28% 22%; /* Navy profundo para destaques */
+    --secondary-navy-foreground: 0 0% 100%;
     
-    /* Destructive - Vermelho sóbrio */
-    --destructive: 0 65% 45%;
+    /* Neutros refinados */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 215 20% 40%;
+    --muted: 220 14% 97%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 215 20% 35%;
+    
+    /* Funcionais */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
+    --success: 142 72% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 45 80% 18%;
     
-    --border: 240 6% 88%;
-    --input: 240 6% 90%;
-    --ring: 158 64% 28%;
-    --radius: 0.75rem;
+    /* Status Jurídicos */
+    --status-fatal: 0 65% 45%; /* Vermelho - Prazo fatal */
+    --status-urgente: 25 85% 50%; /* Laranja - Urgente */
+    --status-andamento: 158 50% 35%; /* Verde Musgo - Em andamento */
+    --status-arquivado: 240 4% 46%; /* Cinza - Arquivado */
+    --status-concluido: 158 64% 38%; /* Emerald - Concluído */
     
-    /* Charts - Paleta neutra elegante */
-    --chart-1: 158 64% 28%; /* Emerald */
-    --chart-2: 240 6% 40%; /* Slate */
-    --chart-3: 158 40% 45%; /* Verde musgo */
-    --chart-4: 240 5% 55%; /* Cinza */
-    --chart-5: 0 65% 45%; /* Vermelho sóbrio */
+    --border: 220 16% 90%;
+    --input: 220 14% 95%;
+    --ring: 158 64% 38%;
+    --radius: 1rem; /* 16px - Border-radius iOS-style */
+    
+    /* Charts Premium - Paleta harmonizada */
+    --chart-1: 158 64% 38%; /* Emerald primary */
+    --chart-2: 215 28% 32%; /* Navy */
+    --chart-3: 158 40% 55%; /* Emerald claro */
+    --chart-4: 200 70% 55%; /* Azul vibrante */
+    --chart-5: 215 20% 55%; /* Slate */
 
-    /* Status Colors - Sóbrios */
-    --status-fatal: 0 65% 45%; /* Vermelho Sangue */
-    --status-urgente: 25 85% 50%; /* Laranja */
-    --status-andamento: 158 50% 35%; /* Verde Musgo */
-    --status-arquivado: 240 4% 46%; /* Cinza Chumbo */
-    --status-concluido: 158 64% 28%; /* Emerald */
-
-    /* Sidebar - Escura para contraste */
-    --sidebar-background: 240 10% 12%; /* Zinc-900 */
-    --sidebar-foreground: 240 5% 85%;
-    --sidebar-primary: 158 64% 45%;
+    /* Sidebar Premium */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 22% 28%;
+    --sidebar-primary: 158 64% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 8% 18%;
-    --sidebar-accent-foreground: 240 5% 80%;
-    --sidebar-border: 240 8% 20%;
-    --sidebar-ring: 158 64% 45%;
+    --sidebar-accent: 158 85% 97%;
+    --sidebar-accent-foreground: 158 80% 30%;
+    --sidebar-border: 220 16% 92%;
+    --sidebar-ring: 158 64% 38%;
   }
 
   .dark {
-    /* MODO ESCURO - Profundo e elegante */
-    --background: 240 10% 6%; /* Quase preto */
-    --foreground: 240 5% 92%;
-    --card: 240 10% 9%;
-    --card-foreground: 240 5% 92%;
-    --popover: 240 10% 9%;
-    --popover-foreground: 240 5% 92%;
+    /* MODO ESCURO - Elegante e profundo */
+    --background: 222 25% 8%;
+    --foreground: 220 15% 92%;
+    --card: 222 22% 11%;
+    --card-foreground: 220 15% 92%;
+    --popover: 222 22% 11%;
+    --popover-foreground: 220 15% 92%;
     
-    /* Primary - Emerald luminoso */
+    /* PRIMARY - Emerald luminoso no dark */
     --primary: 158 65% 45%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 240 8% 14%;
-    --secondary-foreground: 240 5% 75%;
-    --muted: 240 8% 14%;
-    --muted-foreground: 240 4% 55%;
-    --accent: 240 8% 16%;
-    --accent-foreground: 240 5% 80%;
+    /* SECONDARY Navy no dark */
+    --secondary-navy: 215 25% 35%;
+    --secondary-navy-foreground: 0 0% 100%;
     
-    --destructive: 0 60% 50%;
+    --secondary: 222 18% 14%;
+    --secondary-foreground: 220 12% 78%;
+    --muted: 222 16% 15%;
+    --muted-foreground: 220 12% 55%;
+    --accent: 222 18% 14%;
+    --accent-foreground: 220 12% 78%;
+    
+    --destructive: 0 68% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 8% 18%;
-    --input: 240 8% 18%;
+    --success: 142 65% 48%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 88% 52%;
+    --warning-foreground: 45 80% 15%;
+    
+    --border: 222 18% 18%;
+    --input: 222 18% 16%;
     --ring: 158 65% 45%;
 
-    /* Sidebar escuro */
-    --sidebar-background: 240 10% 5%;
-    --sidebar-foreground: 240 5% 85%;
+    /* Sidebar Dark */
+    --sidebar-background: 222 25% 7%;
+    --sidebar-foreground: 220 12% 85%;
     --sidebar-primary: 158 65% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 8% 12%;
-    --sidebar-accent-foreground: 240 5% 80%;
-    --sidebar-border: 240 8% 15%;
+    --sidebar-accent: 158 50% 15%;
+    --sidebar-accent-foreground: 158 60% 65%;
+    --sidebar-border: 222 18% 15%;
     --sidebar-ring: 158 65% 45%;
   }
 }
 
 /* ========================================
-   TIPOGRAFIA - Fonte Profissional
+   TIPOGRAFIA - Sistema iOS-Inspired
    ======================================== */
 
 @layer base {
@@ -114,28 +139,49 @@
   html {
     scroll-behavior: smooth;
     font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   body {
     @apply bg-background text-foreground antialiased;
     line-height: 1.6;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     font-weight: 400;
     background-color: hsl(var(--background));
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Hierarquia Tipográfica Jurídica */
-  h1 { @apply text-2xl font-bold tracking-tight text-foreground; }
-  h2 { @apply text-xl font-bold tracking-tight text-foreground; }
-  h3 { @apply text-lg font-semibold text-foreground; }
-  h4 { @apply text-base font-semibold text-foreground; }
-  p { @apply text-base leading-relaxed text-foreground; }
-  span, label { @apply text-sm text-muted-foreground; }
-  small { @apply text-xs text-muted-foreground; }
+  /* Hierarquia Tipográfica iOS-Style */
+  h1 { 
+    @apply text-2xl font-bold tracking-tight text-foreground;
+    letter-spacing: -0.025em;
+  }
+  h2 { 
+    @apply text-xl font-bold tracking-tight text-foreground;
+    letter-spacing: -0.02em;
+  }
+  h3 { 
+    @apply text-lg font-semibold text-foreground;
+    letter-spacing: -0.015em;
+  }
+  h4 { 
+    @apply text-base font-semibold text-foreground;
+    letter-spacing: -0.01em;
+  }
+  p { 
+    @apply text-base leading-relaxed text-foreground;
+  }
+  span, label { 
+    @apply text-sm text-muted-foreground;
+  }
+  small { 
+    @apply text-xs text-muted-foreground;
+  }
 }
 
 /* ========================================
-   ANIMAÇÕES - Sutis e Profissionais
+   ANIMAÇÕES
    ======================================== */
 
 @keyframes fade-in {
@@ -156,20 +202,171 @@
   animation: slide-up 0.3s ease-out;
 }
 
+/* Animação de brilho premium para barras de progresso */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s ease-in-out infinite;
+}
+
+/* Animação de pulso suave */
+@keyframes pulse-soft {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Animação de entrada suave para gráficos */
+@keyframes chart-fade-in {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95);
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
+
+.animate-chart-in {
+  animation: chart-fade-in 0.6s ease-out;
+}
+
 /* ========================================
-   LAYOUT DE PÁGINA
+   CHARTS PREMIUM - VISUAL CONSISTENTE
+   ======================================== */
+
+/* Container premium para gráficos */
+.chart-container-premium {
+  @apply relative rounded-2xl overflow-hidden;
+  background: linear-gradient(135deg, 
+    hsl(210 40% 98%) 0%, 
+    hsl(214 32% 96%) 50%,
+    hsl(216 33% 97%) 100%);
+  padding: 1.5rem;
+  margin: 0.25rem;
+}
+
+.dark .chart-container-premium {
+  background: linear-gradient(135deg, 
+    hsl(220 18% 13%) 0%, 
+    hsl(220 20% 11%) 50%,
+    hsl(220 18% 12%) 100%);
+}
+
+/* Card de infográfico com visual premium */
+.infographic-card {
+  @apply rounded-2xl bg-card overflow-hidden;
+  border: none;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 
+              0 2px 6px 0 rgba(0, 0, 0, 0.03),
+              0 4px 12px 0 rgba(0, 0, 0, 0.02);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.infographic-card:hover {
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.06), 
+              0 8px 24px 0 rgba(0, 0, 0, 0.04),
+              0 16px 32px 0 rgba(0, 0, 0, 0.02);
+  transform: translateY(-2px);
+}
+
+/* ========================================
+   LAYOUT DE PÁGINA - AMPLO E LIMPO
    ======================================== */
 
 .page-container {
   @apply space-y-6 animate-fade-in;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 0;
+}
+
+/* Previne overflow horizontal em todos os containers de página */
+main, 
+[role="main"],
+.dashboard-content {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* ========================================
-   HEADER DE PÁGINA - Sóbrio
+   GLASS CARDS - iOS-INSPIRED
+   ======================================== */
+
+/* Glass Card Base - Efeito translúcido iOS */
+.glass-card {
+  @apply rounded-2xl overflow-hidden;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 
+    0 2px 8px -2px rgba(0, 0, 0, 0.04),
+    0 4px 16px -2px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.glass-card:hover {
+  box-shadow: 
+    0 8px 24px -4px rgba(0, 0, 0, 0.08),
+    0 16px 40px -8px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.dark .glass-card {
+  background: rgba(30, 35, 50, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 2px 8px -2px rgba(0, 0, 0, 0.2),
+    0 4px 16px -2px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.05);
+}
+
+/* Glass Stat Card - Cards de estatísticas iOS */
+.glass-stat {
+  @apply rounded-2xl p-5;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.03),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.glass-stat:hover {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+.dark .glass-stat {
+  background: rgba(30, 35, 50, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .glass-stat:hover {
+  background: rgba(30, 35, 50, 0.78);
+}
+
+/* ========================================
+   HEADER DE PÁGINA - iOS PREMIUM
    ======================================== */
 
 .page-header {
-  @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border/50;
+  @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-8;
 }
 
 .page-header-content {
@@ -177,55 +374,76 @@
 }
 
 .page-header-icon {
-  @apply h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0;
-  background: hsl(var(--primary));
+  @apply h-14 w-14 rounded-2xl flex items-center justify-center flex-shrink-0;
+  background: linear-gradient(145deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.85) 100%);
+  box-shadow: 
+    0 4px 16px -2px hsl(var(--primary) / 0.35),
+    0 2px 6px -1px hsl(var(--primary) / 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .page-header-icon svg {
-  @apply h-5 w-5 text-white;
+  @apply h-6 w-6 text-white;
   stroke-width: 2;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
 }
 
 .page-header-info h1 {
   @apply text-2xl font-bold tracking-tight;
+  letter-spacing: -0.025em;
 }
 
 .page-header-info p {
-  @apply text-sm text-muted-foreground mt-0.5;
+  @apply text-sm text-muted-foreground mt-1;
 }
 
 .page-header-actions {
-  @apply flex items-center gap-2;
+  @apply flex items-center gap-3;
 }
 
 /* ========================================
-   CARDS DE ESTATÍSTICAS - Glassmorphism Sóbrio
+   CARDS DE ESTATÍSTICAS - iOS PREMIUM
    ======================================== */
 
 .stats-grid {
   @apply grid grid-cols-2 lg:grid-cols-4 gap-4;
+  max-width: 100%;
+}
+
+.stats-row {
+  @apply grid grid-cols-2 lg:grid-cols-4 gap-4;
+  max-width: 100%;
 }
 
 .stat-card {
-  @apply rounded-xl p-5 bg-card relative overflow-hidden;
-  border: 1px solid hsl(var(--border) / 0.5);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05),
-              0 1px 2px -1px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, hsl(var(--primary) / 0.03), transparent);
-  pointer-events: none;
+  @apply rounded-2xl p-5;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.02),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .stat-card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08),
-              0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+.dark .stat-card {
+  background: rgba(30, 35, 50, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .stat-card:hover {
+  background: rgba(30, 35, 50, 0.8);
 }
 
 .stat-card-header {
@@ -233,76 +451,279 @@
 }
 
 .stat-card-title {
-  @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+  @apply text-sm font-medium text-muted-foreground;
 }
 
 .stat-card-icon {
+  @apply h-10 w-10 rounded-xl flex items-center justify-center;
+  background: linear-gradient(135deg, hsl(158 64% 38% / 0.1) 0%, hsl(158 64% 38% / 0.05) 100%);
+}
+
+.stat-card-icon svg {
   @apply h-5 w-5;
-  color: hsl(var(--primary));
+  color: hsl(158 64% 38%);
+}
+
+.dark .stat-card-icon {
+  background: linear-gradient(135deg, hsl(158 65% 45% / 0.15) 0%, hsl(158 65% 45% / 0.08) 100%);
+}
+
+.dark .stat-card-icon svg {
+  color: hsl(158 65% 50%);
 }
 
 .stat-card-value {
   @apply text-3xl font-bold tracking-tight text-foreground;
+  letter-spacing: -0.02em;
 }
 
 .stat-card-description {
-  @apply text-xs text-muted-foreground mt-1.5;
+  @apply text-xs text-muted-foreground mt-1;
 }
 
-/* Variantes de Status */
-.stat-card.fatal {
-  border-color: hsl(var(--status-fatal) / 0.3);
-  background: linear-gradient(135deg, hsl(var(--status-fatal) / 0.05), hsl(var(--card)));
+/* Variante com destaque - Fatal/Vermelho (Prazos Urgentes) */
+.stat-card.fatal,
+.stat-card.highlight {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  box-shadow: 
+    0 2px 8px rgba(239, 68, 68, 0.08),
+    0 4px 16px rgba(239, 68, 68, 0.04);
 }
 
-.stat-card.fatal .stat-card-value {
-  color: hsl(var(--status-fatal));
+.dark .stat-card.fatal,
+.dark .stat-card.highlight {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(30, 35, 50, 0.65) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
-.stat-card.urgente {
-  border-color: hsl(var(--status-urgente) / 0.3);
-  background: linear-gradient(135deg, hsl(var(--status-urgente) / 0.05), hsl(var(--card)));
+.stat-card.fatal .stat-card-icon,
+.stat-card.highlight .stat-card-icon {
+  background: linear-gradient(135deg, hsl(0 72% 51%) 0%, hsl(0 65% 45%) 100%);
+  box-shadow: 0 2px 8px hsl(0 72% 50% / 0.3);
 }
 
-.stat-card.urgente .stat-card-value {
-  color: hsl(var(--status-urgente));
+.stat-card.fatal .stat-card-icon svg,
+.stat-card.highlight .stat-card-icon svg {
+  color: white;
 }
 
+/* Variante Urgente - Laranja (Atenção/Prazos Próximos) */
+.stat-card.urgente,
+.stat-card.warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.dark .stat-card.urgente,
+.dark .stat-card.warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(30, 35, 50, 0.65) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.stat-card.urgente .stat-card-icon,
+.stat-card.warning .stat-card-icon {
+  background: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(38 92% 42%) 100%);
+  box-shadow: 0 2px 8px hsl(45 93% 45% / 0.3);
+}
+
+.stat-card.urgente .stat-card-icon svg,
+.stat-card.warning .stat-card-icon svg {
+  color: white;
+}
+
+/* Variante Success - Verde (Concluído/Em Dia) */
+.stat-card.success,
 .stat-card.andamento {
-  border-color: hsl(var(--status-andamento) / 0.3);
-  background: linear-gradient(135deg, hsl(var(--status-andamento) / 0.05), hsl(var(--card)));
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
-.stat-card.andamento .stat-card-value {
-  color: hsl(var(--status-andamento));
+.dark .stat-card.success,
+.dark .stat-card.andamento {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(30, 35, 50, 0.65) 100%);
+}
+
+.stat-card.success .stat-card-icon,
+.stat-card.andamento .stat-card-icon {
+  background: linear-gradient(135deg, hsl(142 72% 42%) 0%, hsl(142 75% 35%) 100%);
+  box-shadow: 0 2px 8px hsl(142 72% 40% / 0.3);
+}
+
+.stat-card.success .stat-card-icon svg,
+.stat-card.andamento .stat-card-icon svg {
+  color: white;
+}
+
+/* Variante Navy (Destaque Informativo) */
+.stat-card.info {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.08) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border: 1px solid rgba(30, 41, 59, 0.15);
+}
+
+.dark .stat-card.info {
+  background: linear-gradient(135deg, rgba(71, 85, 105, 0.18) 0%, rgba(30, 35, 50, 0.65) 100%);
+  border: 1px solid rgba(71, 85, 105, 0.25);
+}
+
+.stat-card.info .stat-card-icon {
+  background: linear-gradient(135deg, hsl(215 28% 22%) 0%, hsl(215 30% 17%) 100%);
+  box-shadow: 0 2px 8px hsl(215 28% 20% / 0.3);
+}
+
+.stat-card.info .stat-card-icon svg {
+  color: white;
 }
 
 /* ========================================
-   SECTION CARDS - Glassmorphism Escuro
+   ÍCONES DE HEADER - SISTEMA PREMIUM iOS
+   ======================================== */
+
+/* Ícone Primário - Emerald (Navegação, Ações Principais) */
+.icon-primary {
+  @apply h-12 w-12 rounded-2xl flex items-center justify-center;
+  background: linear-gradient(145deg, hsl(158 64% 38%) 0%, hsl(158 60% 32%) 100%);
+  box-shadow: 
+    0 4px 12px -2px hsl(158 64% 35% / 0.4),
+    0 2px 4px -1px hsl(158 64% 35% / 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.icon-primary svg {
+  @apply h-5 w-5 text-white;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+}
+
+/* Ícone Secundário - Navy (Destaques Informativos) */
+.icon-secondary {
+  @apply h-12 w-12 rounded-2xl flex items-center justify-center;
+  background: linear-gradient(145deg, hsl(215 30% 24%) 0%, hsl(215 32% 18%) 100%);
+  box-shadow: 
+    0 4px 12px -2px hsl(215 30% 20% / 0.4),
+    0 2px 4px -1px hsl(215 30% 20% / 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.icon-secondary svg {
+  @apply h-5 w-5 text-white;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+}
+
+/* Ícone de Sucesso - Verde */
+.icon-success {
+  @apply h-12 w-12 rounded-2xl flex items-center justify-center;
+  background: linear-gradient(145deg, hsl(142 76% 42%) 0%, hsl(142 72% 36%) 100%);
+  box-shadow: 
+    0 4px 12px -2px hsl(142 72% 40% / 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.icon-success svg {
+  @apply h-5 w-5 text-white;
+}
+
+/* Ícone Fatal - Vermelho */
+.icon-fatal {
+  @apply h-12 w-12 rounded-2xl flex items-center justify-center;
+  background: linear-gradient(145deg, hsl(0 72% 51%) 0%, hsl(0 65% 45%) 100%);
+  box-shadow: 
+    0 4px 12px -2px hsl(0 72% 50% / 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.icon-fatal svg {
+  @apply h-5 w-5 text-white;
+}
+
+/* Ícone Neutro - Sutil */
+.icon-muted {
+  @apply h-12 w-12 rounded-2xl flex items-center justify-center;
+  background: hsl(220 16% 95%);
+  border: 1px solid hsl(220 16% 90%);
+}
+
+.icon-muted svg {
+  @apply h-5 w-5;
+  color: hsl(215 18% 50%);
+}
+
+.dark .icon-muted {
+  background: hsl(222 18% 16%);
+  border: 1px solid hsl(222 18% 22%);
+}
+
+.dark .icon-muted svg {
+  color: hsl(215 15% 60%);
+}
+
+/* ========================================
+   SECTION CARDS - iOS PREMIUM
    ======================================== */
 
 .section-card {
-  @apply rounded-xl bg-card overflow-hidden;
-  border: 1px solid hsl(var(--border) / 0.5);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  @apply rounded-2xl overflow-hidden;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 2px 8px -2px rgba(0, 0, 0, 0.03),
+    0 4px 16px -4px rgba(0, 0, 0, 0.05);
+  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .section-card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+  box-shadow: 
+    0 8px 24px -4px rgba(0, 0, 0, 0.06),
+    0 16px 40px -8px rgba(0, 0, 0, 0.04);
+}
+
+.dark .section-card {
+  background: rgba(30, 35, 50, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .section-card-header {
-  @apply flex items-center justify-between px-6 py-4 border-b border-border/30;
+  @apply flex items-center justify-between px-6 py-5;
+  background: rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.dark .section-card-header {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .section-card-title {
-  @apply flex items-center gap-2.5 text-sm font-semibold text-foreground;
+  @apply flex items-center gap-3 text-base font-semibold text-foreground;
 }
 
+.section-card-title .icon,
 .section-card-title svg {
-  @apply h-4 w-4;
+  @apply h-5 w-5;
+  color: hsl(158 64% 38%);
+}
+
+.section-card-description {
+  @apply text-sm text-muted-foreground mt-0.5;
+}
+
+.section-card-subtitle {
+  @apply text-sm text-muted-foreground;
+}
+
+.section-card-action {
+  @apply text-sm font-semibold flex items-center gap-1.5 transition-all;
   color: hsl(var(--primary));
+}
+
+.section-card-action:hover {
+  opacity: 0.85;
+  transform: translateX(2px);
+}
+
+.section-card-action svg {
+  @apply h-4 w-4;
 }
 
 .section-card-content {
@@ -310,67 +731,88 @@
 }
 
 /* ========================================
-   LISTAS - Minimalistas
+   LISTAS - iOS PREMIUM
    ======================================== */
 
+.list-container {
+  @apply space-y-1;
+}
+
 .list-item {
-  @apply flex items-center gap-4 p-4 rounded-lg cursor-pointer;
-  transition: all 0.2s ease;
+  @apply flex items-center gap-4 p-4 rounded-2xl cursor-pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border: none;
 }
 
 .list-item:hover {
-  background: hsl(var(--accent) / 0.5);
+  background: hsl(var(--muted) / 0.6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transform: translateX(2px);
+}
+
+.list-item:active {
+  background: hsl(var(--muted) / 0.8);
+  transform: translateX(1px);
 }
 
 .list-item-icon {
-  @apply h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0;
-  background: hsl(var(--muted));
+  @apply h-11 w-11 rounded-xl flex items-center justify-center flex-shrink-0;
+  background: linear-gradient(145deg, hsl(158 64% 38% / 0.1) 0%, hsl(158 64% 38% / 0.05) 100%);
+  transition: all 0.3s ease;
 }
 
 .list-item-icon svg {
-  @apply h-4 w-4 text-muted-foreground;
+  @apply h-5 w-5;
+  color: hsl(158 64% 38%);
+}
+
+.list-item:hover .list-item-icon {
+  background: linear-gradient(145deg, hsl(158 64% 38% / 0.15) 0%, hsl(158 64% 38% / 0.08) 100%);
+}
+
+/* Variantes de cor para ícones de lista */
+.list-item-icon.primary {
+  background: linear-gradient(145deg, hsl(158 64% 38% / 0.1) 0%, hsl(158 64% 38% / 0.05) 100%);
+}
+.list-item-icon.primary svg { color: hsl(158 64% 38%); }
+
+.list-item-icon.fatal {
+  background: linear-gradient(145deg, hsl(0 72% 51% / 0.1) 0%, hsl(0 72% 51% / 0.05) 100%);
+}
+.list-item-icon.fatal svg { color: hsl(0 72% 45%); }
+
+.list-item-icon.urgente {
+  background: linear-gradient(145deg, hsl(25 85% 50% / 0.1) 0%, hsl(25 85% 50% / 0.05) 100%);
+}
+.list-item-icon.urgente svg { color: hsl(25 85% 45%); }
+
+.list-item-icon.success {
+  background: linear-gradient(145deg, hsl(142 72% 42% / 0.1) 0%, hsl(142 72% 42% / 0.05) 100%);
+}
+.list-item-icon.success svg { color: hsl(142 72% 38%); }
+
+.list-item-content {
+  @apply flex-1 min-w-0;
 }
 
 .list-item-title {
-  @apply text-sm font-semibold text-foreground;
+  @apply text-sm font-semibold truncate text-foreground;
 }
 
 .list-item-subtitle {
-  @apply text-xs text-muted-foreground;
+  @apply text-xs truncate mt-0.5;
+  color: hsl(215 16% 50%);
 }
 
 /* ========================================
-   BADGES - Sóbrios
+   BADGES - iOS PREMIUM PILLS
    ======================================== */
 
 .badge {
-  @apply inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold;
-  transition: all 0.2s ease;
-}
-
-.badge-fatal {
-  background: hsl(var(--status-fatal) / 0.1);
-  color: hsl(var(--status-fatal));
-}
-
-.badge-urgente {
-  background: hsl(var(--status-urgente) / 0.1);
-  color: hsl(var(--status-urgente));
-}
-
-.badge-andamento {
-  background: hsl(var(--status-andamento) / 0.1);
-  color: hsl(var(--status-andamento));
-}
-
-.badge-arquivado {
-  background: hsl(var(--status-arquivado) / 0.1);
-  color: hsl(var(--status-arquivado));
-}
-
-.badge-concluido {
-  background: hsl(var(--status-concluido) / 0.1);
-  color: hsl(var(--status-concluido));
+  @apply inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold;
+  transition: all 0.25s ease;
+  border: none;
+  letter-spacing: 0.01em;
 }
 
 .badge-neutral {
@@ -378,8 +820,125 @@
   color: hsl(var(--muted-foreground));
 }
 
+.badge-default {
+  background: hsl(220 16% 94%);
+  color: hsl(215 18% 45%);
+}
+
+.dark .badge-default {
+  background: hsl(222 18% 20%);
+  color: hsl(215 15% 65%);
+}
+
+/* Badge Fatal - Vermelho (Prazo Fatal) */
+.badge-fatal {
+  background: hsl(0 70% 96%);
+  color: hsl(0 62% 38%);
+  box-shadow: 0 1px 3px hsl(0 70% 45% / 0.12);
+}
+
+.dark .badge-fatal {
+  background: hsl(0 55% 24% / 0.45);
+  color: hsl(0 65% 65%);
+}
+
+/* Badge Urgente - Laranja */
+.badge-urgente {
+  background: hsl(25 90% 95%);
+  color: hsl(25 80% 35%);
+  box-shadow: 0 1px 3px hsl(25 85% 50% / 0.12);
+}
+
+.dark .badge-urgente {
+  background: hsl(25 70% 25% / 0.4);
+  color: hsl(25 85% 60%);
+}
+
+/* Badge Andamento - Verde */
+.badge-andamento {
+  background: hsl(158 68% 93%);
+  color: hsl(158 62% 28%);
+  box-shadow: 0 1px 3px hsl(158 70% 40% / 0.1);
+}
+
+.dark .badge-andamento {
+  background: hsl(158 50% 22% / 0.45);
+  color: hsl(158 58% 60%);
+}
+
+/* Badge Arquivado - Cinza */
+.badge-arquivado {
+  background: hsl(220 14% 94%);
+  color: hsl(215 18% 45%);
+}
+
+.dark .badge-arquivado {
+  background: hsl(222 18% 20%);
+  color: hsl(215 15% 65%);
+}
+
+/* Badge Concluído - Emerald */
+.badge-concluido {
+  background: hsl(158 68% 93%);
+  color: hsl(158 62% 28%);
+  box-shadow: 0 1px 3px hsl(158 70% 40% / 0.1);
+}
+
+.dark .badge-concluido {
+  background: hsl(158 50% 22% / 0.45);
+  color: hsl(158 58% 60%);
+}
+
+/* Badge Success - Verde */
+.badge-success {
+  background: hsl(142 68% 93%);
+  color: hsl(142 62% 28%);
+  box-shadow: 0 1px 3px hsl(142 70% 40% / 0.1);
+}
+
+.dark .badge-success {
+  background: hsl(142 50% 22% / 0.45);
+  color: hsl(142 58% 60%);
+}
+
+/* Badge Warning - Amarelo */
+.badge-warning {
+  background: hsl(45 88% 93%);
+  color: hsl(45 78% 26%);
+  box-shadow: 0 1px 3px hsl(45 88% 45% / 0.12);
+}
+
+.dark .badge-warning {
+  background: hsl(45 70% 25% / 0.4);
+  color: hsl(45 82% 62%);
+}
+
+/* Badge Error - Vermelho */
+.badge-error {
+  background: hsl(0 72% 95%);
+  color: hsl(0 65% 36%);
+  box-shadow: 0 1px 3px hsl(0 72% 45% / 0.1);
+}
+
+.dark .badge-error {
+  background: hsl(0 60% 24% / 0.45);
+  color: hsl(0 68% 65%);
+}
+
+/* Badge Preso - Vermelho especial */
+.badge-preso {
+  background: hsl(0 72% 95%);
+  color: hsl(0 65% 36%);
+  box-shadow: 0 1px 3px hsl(0 72% 45% / 0.1);
+}
+
+.dark .badge-preso {
+  background: hsl(0 60% 24% / 0.45);
+  color: hsl(0 68% 65%);
+}
+
 /* ========================================
-   KANBAN - Quadro de Tarefas
+   KANBAN - Quadro de Tarefas Premium
    ======================================== */
 
 .kanban-board {
@@ -387,12 +946,25 @@
 }
 
 .kanban-column {
-  @apply flex-shrink-0 w-80 bg-muted/30 rounded-xl p-4;
+  @apply flex-shrink-0 w-80 rounded-2xl p-4;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   min-height: 500px;
 }
 
+.dark .kanban-column {
+  background: rgba(30, 35, 50, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .kanban-column-header {
-  @apply flex items-center justify-between mb-4 pb-3 border-b border-border/50;
+  @apply flex items-center justify-between mb-4 pb-3 border-b;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.dark .kanban-column-header {
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .kanban-column-title {
@@ -400,24 +972,250 @@
 }
 
 .kanban-column-count {
-  @apply text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground;
+  @apply text-xs font-semibold px-2.5 py-1 rounded-full;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
 }
 
 .kanban-card {
-  @apply bg-card p-4 rounded-lg mb-3 cursor-grab active:cursor-grabbing;
-  border: 1px solid hsl(var(--border) / 0.5);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.15s ease;
+  @apply p-4 rounded-xl mb-3 cursor-grab active:cursor-grabbing;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .kanban-card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+}
+
+.dark .kanban-card {
+  background: rgba(30, 35, 50, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .kanban-card.dragging {
   opacity: 0.5;
   transform: rotate(3deg);
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+
+.empty-state {
+  @apply flex flex-col items-center justify-center py-10 text-center;
+}
+
+.empty-state-icon {
+  @apply h-10 w-10 rounded-xl flex items-center justify-center mb-3;
+  background: hsl(var(--muted));
+}
+
+.empty-state-icon svg {
+  @apply h-5 w-5;
+  color: hsl(var(--muted-foreground) / 0.4);
+}
+
+.empty-state-text {
+  @apply text-[0.8125rem] text-muted-foreground;
+}
+
+.empty-state-title {
+  @apply text-[0.8125rem] font-medium text-foreground;
+}
+
+.empty-state-description {
+  @apply text-xs text-muted-foreground mt-1 max-w-[220px];
+}
+
+/* ========================================
+   ACTION CARDS - iOS PREMIUM
+   ======================================== */
+
+.action-grid {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-3;
+}
+
+.action-card {
+  @apply flex flex-col items-center justify-center gap-3 p-5 rounded-2xl cursor-pointer;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.02),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.action-card:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04);
+  transform: translateY(-3px);
+}
+
+.action-card:active {
+  transform: translateY(-1px);
+}
+
+.dark .action-card {
+  background: rgba(30, 35, 50, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .action-card:hover {
+  background: rgba(30, 35, 50, 0.8);
+}
+
+.action-card-icon {
+  @apply h-11 w-11 rounded-xl flex items-center justify-center;
+  background: linear-gradient(145deg, hsl(158 64% 38% / 0.12) 0%, hsl(158 64% 38% / 0.06) 100%);
+}
+
+.action-card-icon svg {
+  @apply h-5 w-5;
+  color: hsl(158 64% 38%);
+}
+
+.dark .action-card-icon {
+  background: linear-gradient(145deg, hsl(158 65% 45% / 0.18) 0%, hsl(158 65% 45% / 0.1) 100%);
+}
+
+.dark .action-card-icon svg {
+  color: hsl(158 65% 50%);
+}
+
+.action-card-label {
+  @apply text-sm font-semibold text-foreground;
+}
+
+/* ========================================
+   BUTTONS - iOS PREMIUM SYSTEM
+   ======================================== */
+
+.btn-sm {
+  @apply h-9 px-4 text-sm font-semibold rounded-xl;
+}
+
+/* Botão Primário - Emerald (Ações Principais) */
+.btn-primary {
+  @apply font-semibold rounded-xl;
+  background: linear-gradient(145deg, hsl(158 64% 38%) 0%, hsl(158 60% 32%) 100%);
+  color: white;
+  box-shadow: 
+    0 2px 8px -2px hsl(158 64% 35% / 0.45),
+    0 1px 3px -1px hsl(158 64% 35% / 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(145deg, hsl(158 64% 33%) 0%, hsl(158 60% 28%) 100%);
+  box-shadow: 
+    0 4px 16px -2px hsl(158 64% 35% / 0.5),
+    0 2px 6px -1px hsl(158 64% 35% / 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 1px 4px -1px hsl(158 64% 35% / 0.4),
+    inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Botão Secundário - Navy (Ações Secundárias) */
+.btn-secondary {
+  @apply font-semibold rounded-xl;
+  background: linear-gradient(145deg, hsl(215 30% 24%) 0%, hsl(215 32% 18%) 100%);
+  color: white;
+  box-shadow: 
+    0 2px 8px -2px hsl(215 30% 20% / 0.45),
+    0 1px 3px -1px hsl(215 30% 20% / 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(145deg, hsl(215 30% 20%) 0%, hsl(215 32% 14%) 100%);
+  box-shadow: 
+    0 4px 16px -2px hsl(215 30% 18% / 0.5),
+    0 2px 6px -1px hsl(215 30% 18% / 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.dark .btn-secondary {
+  background: linear-gradient(145deg, hsl(215 22% 38%) 0%, hsl(215 24% 30%) 100%);
+}
+
+.dark .btn-secondary:hover {
+  background: linear-gradient(145deg, hsl(215 22% 42%) 0%, hsl(215 24% 34%) 100%);
+}
+
+/* Botão de Sucesso - Verde */
+.btn-success {
+  @apply font-semibold rounded-xl;
+  background: linear-gradient(145deg, hsl(142 76% 42%) 0%, hsl(142 72% 36%) 100%);
+  color: white;
+  box-shadow: 
+    0 2px 8px -2px hsl(142 72% 40% / 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.btn-success:hover {
+  background: linear-gradient(145deg, hsl(142 76% 38%) 0%, hsl(142 72% 32%) 100%);
+  box-shadow: 0 4px 16px -2px hsl(142 72% 40% / 0.5);
+  transform: translateY(-1px);
+}
+
+/* Botão Fatal - Vermelho */
+.btn-fatal {
+  @apply font-semibold rounded-xl;
+  background: linear-gradient(145deg, hsl(0 72% 51%) 0%, hsl(0 65% 45%) 100%);
+  color: white;
+  box-shadow: 
+    0 2px 8px -2px hsl(0 72% 50% / 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.btn-fatal:hover {
+  background: linear-gradient(145deg, hsl(0 72% 46%) 0%, hsl(0 65% 40%) 100%);
+  box-shadow: 0 4px 16px -2px hsl(0 72% 50% / 0.5);
+  transform: translateY(-1px);
+}
+
+/* Botão Outline - iOS Style */
+.btn-outline {
+  @apply font-semibold rounded-xl;
+  border: 1.5px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  background: transparent;
+  transition: all 0.25s ease;
+}
+
+.btn-outline:hover {
+  background: hsl(var(--muted) / 0.6);
+  border-color: hsl(var(--border) / 0.7);
+}
+
+/* Botão Ghost - Mínimo */
+.btn-ghost {
+  @apply font-medium rounded-xl;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.25s ease;
+}
+
+.btn-ghost:hover {
+  background: hsl(var(--muted) / 0.6);
+  color: hsl(var(--foreground));
 }
 
 /* ========================================
@@ -429,7 +1227,8 @@
 }
 
 .timeline-line {
-  @apply absolute left-4 top-0 bottom-0 w-0.5 bg-border;
+  @apply absolute left-4 top-0 bottom-0 w-0.5;
+  background: hsl(var(--border));
 }
 
 .timeline-item {
@@ -437,270 +1236,95 @@
 }
 
 .timeline-dot {
-  @apply absolute left-2.5 w-3 h-3 rounded-full bg-primary ring-4 ring-background;
+  @apply absolute left-2.5 w-3 h-3 rounded-full ring-4 ring-background;
+  background: hsl(var(--primary));
 }
 
 .timeline-dot.active {
-  @apply bg-primary ring-primary/20;
+  background: hsl(var(--primary));
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.2);
 }
 
 .timeline-dot.completed {
-  @apply bg-primary/50;
+  background: hsl(var(--primary) / 0.5);
 }
 
 .timeline-dot.pending {
-  @apply bg-muted-foreground/30;
-}
-
-.timeline-content {
-  @apply bg-card p-4 rounded-lg border border-border/50;
-}
-
-/* ========================================
-   BARRA DE PROGRESSO PROCESSUAL
-   ======================================== */
-
-.progress-bar {
-  @apply flex items-center gap-0;
-}
-
-.progress-step {
-  @apply flex-1 relative;
-}
-
-.progress-step-line {
-  @apply h-1 bg-muted;
-}
-
-.progress-step-line.active {
-  @apply bg-primary;
-}
-
-.progress-step-line.completed {
-  @apply bg-primary;
-}
-
-.progress-step-dot {
-  @apply absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-muted border-2 border-background;
-}
-
-.progress-step-dot.active {
-  @apply bg-primary ring-4 ring-primary/20;
-}
-
-.progress-step-dot.completed {
-  @apply bg-primary;
-}
-
-.progress-step-label {
-  @apply text-xs text-muted-foreground text-center mt-3;
-}
-
-.progress-step-label.active {
-  @apply text-primary font-semibold;
-}
-
-/* ========================================
-   CALCULADORA DE PENA
-   ======================================== */
-
-.calc-progress-ring {
-  @apply relative w-40 h-40 mx-auto;
-}
-
-.calc-progress-ring svg {
-  transform: rotate(-90deg);
-}
-
-.calc-progress-ring .track {
-  stroke: hsl(var(--muted));
-}
-
-.calc-progress-ring .progress {
-  stroke: hsl(var(--primary));
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.5s ease;
-}
-
-.calc-progress-ring .value {
-  @apply absolute inset-0 flex flex-col items-center justify-center;
-}
-
-/* ========================================
-   COCKPIT DO JÚRI
-   ======================================== */
-
-.jury-seat {
-  @apply relative w-16 h-16 rounded-full flex items-center justify-center cursor-pointer;
-  background: hsl(var(--muted));
-  border: 2px solid hsl(var(--border));
-  transition: all 0.2s ease;
-}
-
-.jury-seat:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
-}
-
-.jury-seat.favorable {
-  background: hsl(var(--status-andamento) / 0.2);
-  border-color: hsl(var(--status-andamento));
-}
-
-.jury-seat.unfavorable {
-  background: hsl(var(--status-fatal) / 0.2);
-  border-color: hsl(var(--status-fatal));
-}
-
-.jury-seat.neutral {
-  background: hsl(var(--muted));
-  border-color: hsl(var(--border));
-}
-
-.jury-seat-number {
-  @apply text-lg font-bold text-foreground;
-}
-
-/* ========================================
-   EMPTY STATE
-   ======================================== */
-
-.empty-state {
-  @apply flex flex-col items-center justify-center py-16 text-center;
-}
-
-.empty-state-icon {
-  @apply h-16 w-16 rounded-2xl flex items-center justify-center mb-4;
-  background: hsl(var(--muted));
-}
-
-.empty-state-icon svg {
-  @apply h-8 w-8 text-muted-foreground;
-}
-
-.empty-state-title {
-  @apply text-lg font-semibold text-foreground mb-2;
-}
-
-.empty-state-description {
-  @apply text-sm text-muted-foreground max-w-sm;
-}
-
-/* ========================================
-   BUTTONS - Sóbrios
-   ======================================== */
-
-.btn-primary {
-  @apply bg-primary text-primary-foreground hover:bg-primary/90;
-}
-
-.btn-secondary {
-  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
-}
-
-.btn-ghost {
-  @apply hover:bg-accent hover:text-accent-foreground;
-}
-
-.btn-destructive {
-  @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
-}
-
-/* ========================================
-   SCROLLBAR - Minimalista
-   ======================================== */
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.2);
-  border-radius: 100px;
-}
-
-::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.3);
 }
 
-/* Sidebar - Scrollbar invisível */
-[data-sidebar="content"] {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.timeline-content {
+  @apply rounded-xl p-4;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid hsl(var(--border) / 0.5);
 }
 
-[data-sidebar="content"]::-webkit-scrollbar {
-  display: none;
-}
-
-/* ========================================
-   FOCUS - Acessibilidade
-   ======================================== */
-
-*:focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
+.dark .timeline-content {
+  background: rgba(30, 35, 50, 0.6);
 }
 
 /* ========================================
-   TRANSITIONS
+   PROGRESS BAR PREMIUM
    ======================================== */
 
-a, button {
-  transition: all 0.15s ease;
+.progress-bar-premium {
+  @apply h-2 rounded-full overflow-hidden relative;
+  background: linear-gradient(to right, 
+    hsl(220 14% 93%) 0%, 
+    hsl(220 14% 96%) 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-/* ========================================
-   REDUCED MOTION
-   ======================================== */
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+.dark .progress-bar-premium {
+  background: linear-gradient(to right, 
+    hsl(220 15% 20%) 0%, 
+    hsl(220 15% 18%) 100%);
 }
 
-/* ========================================
-   GLASSMORPHISM CARDS
-   ======================================== */
-
-.glass-card {
-  @apply rounded-xl bg-card/80 backdrop-blur-md;
-  border: 1px solid hsl(var(--border) / 0.3);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
-              0 2px 4px -2px rgba(0, 0, 0, 0.05);
+.progress-bar-premium .progress-fill {
+  @apply h-full rounded-full transition-all duration-700;
+  position: relative;
+  overflow: hidden;
 }
 
-.glass-card-dark {
-  @apply rounded-xl backdrop-blur-md;
-  background: hsl(240 10% 6% / 0.8);
-  border: 1px solid hsl(240 8% 20% / 0.5);
+.progress-bar-premium .progress-fill.positive {
+  background: linear-gradient(to right, 
+    hsl(158 64% 38%) 0%, 
+    hsl(158 60% 32%) 100%);
 }
 
-/* ========================================
-   DATA TABLE
-   ======================================== */
-
-.data-table {
-  @apply w-full;
+.progress-bar-premium .progress-fill.warning {
+  background: linear-gradient(to right, 
+    hsl(38 92% 55%) 0%, 
+    hsl(25 95% 55%) 100%);
 }
 
-.data-table th {
-  @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left px-4 py-3 bg-muted/50;
+.progress-bar-premium .progress-fill.fatal {
+  background: linear-gradient(to right, 
+    hsl(0 72% 51%) 0%, 
+    hsl(0 65% 45%) 100%);
 }
 
-.data-table td {
-  @apply px-4 py-3 border-b border-border/30;
+/* Animação de brilho na barra de progresso */
+.progress-bar-premium .progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: progress-shimmer 2s infinite;
 }
 
-.data-table tr:hover {
-  @apply bg-accent/30;
+@keyframes progress-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
 /* ========================================
@@ -721,16 +1345,16 @@ a, button {
 }
 
 .priority-dot.fatal {
-  background: hsl(var(--status-fatal));
-  box-shadow: 0 0 8px hsl(var(--status-fatal) / 0.5);
+  background: hsl(0 72% 51%);
+  box-shadow: 0 0 8px hsl(0 72% 51% / 0.5);
 }
 
 .priority-dot.urgente {
-  background: hsl(var(--status-urgente));
+  background: hsl(25 85% 50%);
 }
 
 .priority-dot.alta {
-  background: hsl(var(--status-urgente) / 0.7);
+  background: hsl(25 85% 50% / 0.7);
 }
 
 .priority-dot.normal {
@@ -742,41 +1366,268 @@ a, button {
 }
 
 /* ========================================
-   INTEGRATION STATUS
+   GRID LAYOUTS - AMPLOS E RESPONSIVOS
    ======================================== */
 
-.integration-status {
-  @apply flex items-center gap-2 text-xs;
+.content-grid {
+  @apply grid gap-6 lg:grid-cols-2;
+  max-width: 100%;
 }
 
-.integration-status-dot {
-  @apply w-2 h-2 rounded-full;
+.content-grid-3 {
+  @apply grid gap-6 md:grid-cols-2 lg:grid-cols-3;
+  max-width: 100%;
 }
 
-.integration-status-dot.connected {
-  @apply bg-green-500;
+.content-grid-4 {
+  @apply grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
+  max-width: 100%;
 }
 
-.integration-status-dot.disconnected {
-  @apply bg-muted-foreground;
-}
-
-.integration-status-dot.error {
-  @apply bg-destructive;
+/* Previne overflow em cards dentro de grids */
+.content-grid > *,
+.content-grid-3 > *,
+.content-grid-4 > *,
+.stats-grid > *,
+.stats-row > * {
+  min-width: 0;
 }
 
 /* ========================================
-   OVERRIDE FINAL - RADIX UI
+   RESPONSIVIDADE - AJUSTES MÓVEIS
    ======================================== */
 
+@media (max-width: 640px) {
+  .stats-grid,
+  .stats-row {
+    gap: 0.75rem;
+  }
+  
+  .stat-card {
+    @apply p-4;
+  }
+  
+  .stat-card-value {
+    @apply text-2xl;
+  }
+  
+  .section-card-header {
+    @apply px-4 py-4;
+  }
+  
+  .section-card-content {
+    @apply p-4;
+  }
+  
+  .page-header-icon {
+    @apply h-10 w-10;
+  }
+  
+  .page-header-info h1 {
+    @apply text-xl;
+  }
+  
+  .glass-stat {
+    @apply p-4;
+  }
+  
+  .glass-content {
+    @apply p-4;
+  }
+}
+
+/* Ajustes tablet */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .stats-grid,
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Ajustes desktop */
+@media (max-width: 1024px) {
+  .content-grid,
+  .content-grid-3,
+  .content-grid-4 {
+    @apply gap-4;
+  }
+}
+
+/* ========================================
+   SCROLLBAR
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.15);
+  border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.25);
+}
+
+/* Sidebar - Scrollbar invisível (mantém função de scroll) */
+[data-sidebar="content"] {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+[data-sidebar="content"]::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
+/* Scrollbar Hide - Para tabs e elementos horizontais */
+.scrollbar-hide {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
+/* ========================================
+   FOCUS
+   ======================================== */
+
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.5);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   TRANSITIONS
+   ======================================== */
+
+a, button {
+  transition: all 0.3s ease;
+}
+
+/* Transições suaves em elementos interativos */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: ease;
+  transition-duration: 0.3s;
+}
+
+/* Exceções para elementos que não devem ter transição */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================
+   MODO FONTE GRANDE
+   ======================================== */
+
+html.font-large {
+  font-size: 17px;
+}
+
+html.font-large h1 {
+  @apply text-3xl;
+}
+
+html.font-large h2 {
+  @apply text-2xl;
+}
+
+html.font-large h3 {
+  @apply text-xl;
+}
+
+html.font-large h4 {
+  @apply text-lg;
+}
+
+html.font-large p {
+  @apply text-base;
+}
+
+html.font-large .stat-card-value {
+  @apply text-3xl;
+}
+
+html.font-large .section-card-title {
+  @apply text-base;
+}
+
+html.font-large .list-item-title {
+  @apply text-base;
+}
+
+html.font-large .badge {
+  @apply text-sm px-3 py-1;
+}
+
+/* ========================================
+   DATA TABLE - Premium
+   ======================================== */
+
+.data-table {
+  @apply w-full;
+}
+
+.data-table th {
+  @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left px-4 py-3;
+  background: hsl(var(--muted) / 0.5);
+}
+
+.data-table td {
+  @apply px-4 py-3;
+  border-bottom: 1px solid hsl(var(--border) / 0.3);
+}
+
+.data-table tr:hover {
+  background: hsl(var(--accent) / 0.3);
+}
+
+/* ========================================
+   OVERRIDE FINAL - RADIX UI SEM ANIMAÇÕES
+   ======================================== */
+
+/* Desabilita COMPLETAMENTE qualquer animação/transição do Radix */
 [data-radix-tooltip-content],
 [data-radix-popover-content],
 [data-radix-dropdown-menu-content],
-[data-radix-select-content] {
+[data-radix-select-content],
+[data-radix-popper-content-wrapper],
+[data-radix-popper-content-wrapper] > * {
   animation: none !important;
+  animation-name: none !important;
+  animation-duration: 0s !important;
   transition: none !important;
+  transition-property: none !important;
+  transition-duration: 0s !important;
+  -webkit-animation: none !important;
+  -webkit-transition: none !important;
 }
 
+/* Garante opacidade total - aparece instantaneamente */
 [data-radix-tooltip-content][data-state="open"],
 [data-radix-popover-content][data-state="open"] {
   opacity: 1 !important;
