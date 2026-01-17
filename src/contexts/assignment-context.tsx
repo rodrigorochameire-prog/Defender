@@ -54,6 +54,18 @@ export interface AssignmentMenuItem {
   badge?: string; // Para contadores
 }
 
+// Menu fixo que aparece em TODOS os workspaces
+export const FIXED_MENU_ITEMS: AssignmentMenuItem[] = [
+  { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
+];
+
+// Menu de sistema (fixo, no final)
+export const SYSTEM_MENU_ITEMS: AssignmentMenuItem[] = [
+  { label: "WhatsApp", path: "/admin/whatsapp", icon: "MessageCircle" },
+  { label: "Notificações", path: "/admin/notifications", icon: "Bell" },
+  { label: "Configurações", path: "/admin/settings", icon: "Settings" },
+];
+
 // Configurações de cada atribuição
 // Paletas:
 // - Júri Camaçari: Verde (principal) + brancos, pretos, cinzas
@@ -94,7 +106,6 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     sidebarDividerDark: "hsl(160, 18%, 16%)",
     features: ["plenarios", "jurados", "memoriais", "quesitos"],
     menuItems: [
-      { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
       { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
       { label: "Processos", path: "/admin/processos", icon: "Scale" },
       { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
@@ -134,7 +145,6 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     sidebarDividerDark: "hsl(45, 15%, 16%)",
     features: ["medidas_protetivas", "custodia", "flagrante", "risco"],
     menuItems: [
-      { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
       { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
       { label: "Processos", path: "/admin/processos", icon: "Scale" },
       { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
@@ -175,7 +185,6 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     sidebarDividerDark: "hsl(210, 16%, 16%)",
     features: ["progressao", "livramento", "remicao", "indulto", "saida_temporaria"],
     menuItems: [
-      { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
       { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
       { label: "Processos", path: "/admin/processos", icon: "Scale" },
       { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
@@ -216,7 +225,6 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     sidebarDividerDark: "hsl(0, 14%, 16%)",
     features: ["kanban", "prazos", "multicomarca"],
     menuItems: [
-      { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
       { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
       { label: "Processos", path: "/admin/processos", icon: "Scale" },
       { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
@@ -256,7 +264,6 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     sidebarDividerDark: "hsl(25, 16%, 16%)",
     features: ["plenarios_avancado", "banco_jurados", "estatisticas", "teses"],
     menuItems: [
-      { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
       { label: "Próximos Plenários", path: "/admin/juri", icon: "Gavel" },
       { label: "Banco de Jurados", path: "/admin/jurados", icon: "UserCheck" },
       { label: "Estatísticas", path: "/admin/relatorios", icon: "BarChart3" },
@@ -295,7 +302,6 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     sidebarDividerDark: "hsl(270, 14%, 16%)",
     features: ["kanban", "prazos", "multicomarca", "civel", "familia"],
     menuItems: [
-      { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
       { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
       { label: "Processos", path: "/admin/processos", icon: "Scale" },
       { label: "Demandas", path: "/admin/demandas", icon: "Clock" },

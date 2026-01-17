@@ -59,7 +59,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeToggle } from "@/components/font-size-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
 import { AssignmentSwitcher } from "@/components/layout/assignment-switcher";
-import { useAssignment } from "@/contexts/assignment-context";
+import { useAssignment, FIXED_MENU_ITEMS, SYSTEM_MENU_ITEMS } from "@/contexts/assignment-context";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -98,13 +98,6 @@ const iconMap: Record<string, React.ElementType> = {
   Award,
   TrendingUp,
 };
-
-// Menu secundário fixo (sempre visível)
-const secondaryMenuItems = [
-  { icon: "MessageCircle", label: "WhatsApp", path: "/admin/whatsapp" },
-  { icon: "Bell", label: "Notificações", path: "/admin/notifications" },
-  { icon: "Settings", label: "Configurações", path: "/admin/settings" },
-];
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
 const DEFAULT_WIDTH = 280;
@@ -169,9 +162,12 @@ function AdminSidebarContent({
   const { config, currentAssignment } = useAssignment();
 
   // Menu dinâmico baseado na atribuição
-  const menuItems = config.menuItems;
+  const workspaceMenuItems = config.menuItems;
+  
+  // Combina menus: Fixo (Dashboard) + Específico do Workspace + Sistema
+  const allMenuItems = [...FIXED_MENU_ITEMS, ...workspaceMenuItems, ...SYSTEM_MENU_ITEMS];
 
-  const activeMenuItem = menuItems.find(
+  const activeMenuItem = allMenuItems.find(
     (item) =>
       pathname === item.path ||
       (item.path !== "/admin" && pathname.startsWith(item.path + "/"))
@@ -261,6 +257,69 @@ function AdminSidebarContent({
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
+              {/* ======= DASHBOARD (Painel Central - Fixo) ======= */}
+              {FIXED_MENU_ITEMS.map((item) => {
+                const Icon = iconMap[item.icon] || LayoutDashboard;
+                const isActive = pathname === item.path;
+
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.label}
+                      className={cn(
+                        "h-12 transition-all duration-200 rounded-xl group relative",
+                        isActive ? "shadow-md" : "hover:shadow-sm"
+                      )}
+                      style={{
+                        background: isActive ? config.sidebarActiveBg : undefined,
+                        boxShadow: isActive ? `0 0 0 2px ${config.sidebarActiveRing}` : undefined,
+                      }}
+                    >
+                      <Link
+                        href={item.path}
+                        prefetch={true}
+                        onClick={() => {
+                          if (isMobile && openMobile) {
+                            setOpenMobile(false);
+                          }
+                        }}
+                      >
+                        <Icon
+                          className={cn(
+                            "transition-all duration-200",
+                            isActive ? "h-6 w-6" : "h-[22px] w-[22px]"
+                          )}
+                          style={{
+                            color: isActive ? config.accentColor : config.sidebarTextMuted,
+                          }}
+                          strokeWidth={isActive ? 2.2 : 1.8}
+                        />
+                        <span
+                          className={cn(
+                            "text-[14px] transition-colors duration-200",
+                            isActive ? "font-bold text-foreground" : "font-semibold"
+                          )}
+                          style={{
+                            color: isActive ? undefined : config.sidebarTextMuted,
+                          }}
+                        >
+                          {item.label}
+                        </span>
+                        {isActive && !isCollapsed && (
+                          <div
+                            className="ml-auto w-2 h-2 rounded-full"
+                            style={{ backgroundColor: config.accentColor }}
+                          />
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+
+              {/* Separador após Dashboard */}
               <div 
                 className="h-[2px] my-3 mx-1 rounded-full"
                 style={{
@@ -268,7 +327,7 @@ function AdminSidebarContent({
                 }}
               />
 
-              {/* Label da atribuição */}
+              {/* ======= MENU ESPECÍFICO DO WORKSPACE ======= */}
               {!isCollapsed && (
                 <div className="px-3 py-2 mb-1">
                   <span 
@@ -280,8 +339,7 @@ function AdminSidebarContent({
                 </div>
               )}
 
-              {/* Menu Principal Dinâmico */}
-              {menuItems.map((item) => {
+              {workspaceMenuItems.map((item) => {
                 const Icon = iconMap[item.icon] || Briefcase;
                 const isActive =
                   pathname === item.path ||
@@ -346,7 +404,7 @@ function AdminSidebarContent({
                 );
               })}
 
-              {/* Separador */}
+              {/* Separador antes do Sistema */}
               <div 
                 className="h-[2px] my-3 mx-1 rounded-full"
                 style={{
@@ -354,7 +412,7 @@ function AdminSidebarContent({
                 }}
               />
 
-              {/* Menu Secundário (fixo) */}
+              {/* ======= SISTEMA (WhatsApp, Notificações, Configurações) ======= */}
               {!isCollapsed && (
                 <div className="px-3 py-2 mb-1">
                   <span 
@@ -366,9 +424,9 @@ function AdminSidebarContent({
                 </div>
               )}
 
-              {secondaryMenuItems.map((item) => {
+              {SYSTEM_MENU_ITEMS.map((item) => {
                 const Icon = iconMap[item.icon] || Settings;
-                const isActive = pathname.startsWith(item.path);
+                const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
 
                 return (
                   <SidebarMenuItem key={item.path}>
