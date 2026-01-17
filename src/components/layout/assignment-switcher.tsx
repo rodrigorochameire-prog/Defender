@@ -72,12 +72,12 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
         >
           {/* Ícone com cor da atribuição */}
           <div
-            className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105"
+            className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105"
             style={{
               background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
             }}
           >
-            <Icon className="h-5 w-5 text-white" />
+            <Icon className="h-[22px] w-[22px] text-white" />
           </div>
 
           {/* Nome e descrição */}

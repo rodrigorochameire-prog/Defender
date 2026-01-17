@@ -229,9 +229,9 @@ function AdminSidebarContent({
           }}
           disableTransition={isResizing}
         >
-          {/* Header com Switcher de Atribuição - mesma altura do header principal (h-16) */}
+          {/* Header com Switcher de Atribuição - mesma altura do header principal */}
           <SidebarHeader 
-            className="border-b h-16 flex items-center px-3"
+            className="border-b h-[72px] flex items-center px-3"
             style={{
               background: `var(--sidebar-header-bg, ${config.sidebarHeaderBg})`,
               borderColor: `var(--sidebar-divider, ${config.sidebarDivider})`,
@@ -608,7 +608,7 @@ function AdminSidebarContent({
         {!isMobile && (
           <div
             className={cn(
-              "flex border-b h-16 items-center justify-center backdrop-blur-xl px-6 sticky top-0 z-40 relative",
+              "flex border-b h-[72px] items-center justify-center backdrop-blur-xl px-6 sticky top-0 z-40 relative",
               "border-b-[hsl(155,15%,92%)] dark:border-b-[hsl(160,10%,16%)]"
             )}
             style={{
@@ -620,12 +620,12 @@ function AdminSidebarContent({
               className="flex items-center gap-3 hover:opacity-90 transition-opacity duration-200"
             >
               <div
-                className="relative w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shadow-lg ring-1"
+                className="relative w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-lg ring-1"
                 style={{
                   background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
                 }}
               >
-                <Scale className="h-5 w-5 text-white" />
+                <Scale className="h-6 w-6 text-white" />
               </div>
               <div className="flex flex-col">
                 <span
