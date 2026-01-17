@@ -95,6 +95,7 @@ interface Demanda {
   dataIntimacao?: string;
   dataConclusao?: string;
   status: string;
+  prisao: string; // Situação prisional
   prioridade: string;
   providencias: string | null;
   area: string;
@@ -117,22 +118,29 @@ const COMARCA_OPTIONS = [
   { value: "SALVADOR", label: "Salvador" },
 ];
 
-// Status disponíveis - Baseado no fluxo real da Defensoria
+// Status disponíveis - Baseado na planilha VVD Júri
 const STATUS_OPTIONS = [
-  { value: "1_FATAL", label: "FATAL", color: "bg-black", textColor: "text-black", description: "Prazo fatal imediato" },
-  { value: "2_ATENDER", label: "Atender", color: "bg-red-600", textColor: "text-red-700", description: "Precisa de atenção urgente" },
-  { value: "3_ANALISAR", label: "Analisar", color: "bg-orange-500", textColor: "text-orange-700", description: "Aguardando análise" },
-  { value: "4_MONITORAR", label: "Monitorar", color: "bg-blue-500", textColor: "text-blue-700", description: "Acompanhando andamento" },
-  { value: "5_FILA", label: "Em Fila", color: "bg-amber-500", textColor: "text-amber-700", description: "Na fila de trabalho" },
-  { value: "6_ELABORANDO", label: "Elaborando", color: "bg-purple-500", textColor: "text-purple-700", description: "Em elaboração" },
-  { value: "6_REVISAO", label: "Revisão", color: "bg-violet-500", textColor: "text-violet-700", description: "Em revisão" },
-  { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Peça protocolada" },
-  { value: "7_CIENCIA", label: "Ciência", color: "bg-teal-500", textColor: "text-teal-700", description: "Tomada ciência" },
-  { value: "7_SEM_ATUACAO", label: "Sem Atuação", color: "bg-slate-400", textColor: "text-slate-600", description: "Não requer atuação" },
-  { value: "8_AGUARDANDO", label: "Aguardando", color: "bg-cyan-500", textColor: "text-cyan-700", description: "Aguardando decisão/resposta" },
-  { value: "9_SUSPENSO", label: "Suspenso", color: "bg-gray-500", textColor: "text-gray-700", description: "Processo suspenso" },
-  { value: "CONCLUIDO", label: "Concluído", color: "bg-green-600", textColor: "text-green-700", description: "Finalizado" },
-  { value: "ARQUIVADO", label: "Arquivado", color: "bg-gray-400", textColor: "text-gray-600", description: "Arquivado" },
+  { value: "2_ATENDER", label: "2 - Atender", color: "bg-red-600", textColor: "text-red-700", description: "Precisa de atenção urgente" },
+  { value: "2_BUSCAR", label: "2 - Buscar", color: "bg-red-500", textColor: "text-red-600", description: "Buscar informações/documentos" },
+  { value: "2_ELABORAR", label: "2 - Elaborar", color: "bg-orange-500", textColor: "text-orange-700", description: "Elaborar peça" },
+  { value: "2_RELATORIO", label: "2 - Relatório", color: "bg-orange-400", textColor: "text-orange-600", description: "Analisar/fazer relatório" },
+  { value: "3_PROTOCOLAR", label: "3 - Protocolar", color: "bg-yellow-500", textColor: "text-yellow-700", description: "Pronto para protocolar" },
+  { value: "4_EMILLY", label: "4 - Emilly", color: "bg-pink-500", textColor: "text-pink-700", description: "Com Emilly" },
+  { value: "4_MONITORAR", label: "4 - Monitorar", color: "bg-blue-500", textColor: "text-blue-700", description: "Acompanhando andamento" },
+  { value: "5_FILA", label: "5 - Fila", color: "bg-amber-500", textColor: "text-amber-700", description: "Na fila de trabalho" },
+  { value: "7_PROTOCOLADO", label: "7 - Protocolado", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Peça protocolada" },
+];
+
+// Situação Prisional - Baseado na planilha VVD
+const PRISAO_OPTIONS = [
+  { value: "", label: "(Não informado)", color: "bg-slate-300" },
+  { value: "CADEIA_PUBLICA", label: "Cadeia Pública", color: "bg-red-600" },
+  { value: "COP", label: "COP", color: "bg-red-700" },
+  { value: "PENITENCIARIA", label: "Penitenciária", color: "bg-red-800" },
+  { value: "HOSPITAL", label: "Hospital de Custódia", color: "bg-purple-600" },
+  { value: "DOMICILIAR", label: "Domiciliar", color: "bg-orange-500" },
+  { value: "MONITORADO", label: "Monitorado", color: "bg-amber-500" },
+  { value: "SOLTO", label: "Solto", color: "bg-green-500" },
 ];
 
 // Prioridades
@@ -156,253 +164,411 @@ const AREA_OPTIONS = [
   { value: "FAZENDA_PUBLICA", label: "Fazenda Pública", icon: Scale, color: "indigo" },
 ];
 
-// Tipos de Ato - Expandido com atos comuns na prática forense
+// Tipos de Ato - Baseado na planilha VVD Júri
 const TIPO_ATO_OPTIONS = [
-  { value: "manifestacao", label: "Manifestação", group: "Petições" },
   { value: "resposta_acusacao", label: "Resposta à Acusação", group: "Defesa" },
+  { value: "diligencias_422", label: "Diligências do 422", group: "Defesa" },
   { value: "alegacoes_finais", label: "Alegações Finais", group: "Defesa" },
   { value: "memoriais", label: "Memoriais", group: "Defesa" },
-  { value: "defesa_previa", label: "Defesa Prévia", group: "Defesa" },
+  { value: "razoes_apelacao", label: "Razões de Apelação", group: "Recursos" },
   { value: "contrarrazoes", label: "Contrarrazões", group: "Recursos" },
-  { value: "recurso", label: "Recurso", group: "Recursos" },
   { value: "apelacao", label: "Apelação", group: "Recursos" },
+  { value: "rese", label: "RESE", group: "Recursos" },
   { value: "agravo", label: "Agravo", group: "Recursos" },
   { value: "embargos", label: "Embargos", group: "Recursos" },
-  { value: "rese", label: "RESE", group: "Recursos" },
-  { value: "habeas_corpus", label: "Habeas Corpus", group: "Ações Autônomas" },
-  { value: "revisao_criminal", label: "Revisão Criminal", group: "Ações Autônomas" },
+  { value: "habeas_corpus", label: "Habeas Corpus", group: "Ações" },
+  { value: "revogacao_prisao", label: "Revogação da Prisão Preventiva", group: "Ações" },
+  { value: "relaxamento", label: "Relaxamento de Prisão", group: "Ações" },
+  { value: "liberdade_provisoria", label: "Liberdade Provisória", group: "Ações" },
+  { value: "peticao_intermediaria", label: "Petição Intermediária", group: "Petições" },
+  { value: "oficio", label: "Ofício", group: "Petições" },
   { value: "peticao", label: "Petição Simples", group: "Petições" },
-  { value: "pedido_progressao", label: "Progressão de Regime", group: "Execução Penal" },
-  { value: "pedido_livramento", label: "Livramento Condicional", group: "Execução Penal" },
-  { value: "pedido_indulto", label: "Indulto/Comutação", group: "Execução Penal" },
-  { value: "pedido_remicao", label: "Remição de Pena", group: "Execução Penal" },
-  { value: "pedido_saida", label: "Saída Temporária", group: "Execução Penal" },
-  { value: "audiencia", label: "Audiência", group: "Atos" },
-  { value: "audiencia_custodia", label: "Audiência de Custódia", group: "Atos" },
-  { value: "audiencia_instrucao", label: "AIJ", group: "Atos" },
-  { value: "sessao_juri", label: "Sessão do Júri", group: "Júri" },
-  { value: "julgamento", label: "Julgamento", group: "Atos" },
-  { value: "prazo", label: "Prazo", group: "Outros" },
-  { value: "diligencia", label: "Diligência", group: "Outros" },
-  { value: "carga", label: "Carga/Vista", group: "Outros" },
+  { value: "atualizacao_endereco", label: "Atualização de Endereço", group: "Diligências" },
+  { value: "ciencia", label: "Ciência", group: "Outros" },
+  { value: "ciencia_revogacao", label: "Ciência Revogação Prisão", group: "Outros" },
   { value: "outro", label: "Outro", group: "Outros" },
 ];
 
-// Dados mockados ampliados com comarca e vara
+// Dados importados da planilha VVD Júri
 const mockDemandas: Demanda[] = [
   { 
     id: 1, 
-    assistido: "Diego Bonfim Almeida",
-    assistidoId: 1,
-    processo: "8012906-74.2025.8.05.0039",
-    processoId: 1,
+    assistido: "Jailson do Nascimento Versoza",
+    processo: "8015678-10.2025.8.05.0039",
     ato: "Resposta à Acusação",
     tipoAto: "resposta_acusacao",
-    prazo: "2026-01-17",
-    dataEntrada: "2026-01-10",
-    dataIntimacao: "2026-01-08",
-    status: "1_FATAL",
+    prazo: "",
+    dataEntrada: "",
+    status: "2_ATENDER",
+    prisao: "CADEIA_PUBLICA",
     prioridade: "REU_PRESO",
-    providencias: "Requerer diligências, verificar câmeras de segurança do local",
+    providencias: null,
     area: "JURI",
-    comarca: "CANDEIAS",
-    vara: "1ª Vara Criminal",
     reuPreso: true,
-    defensor: "Dr. Rodrigo",
-    observacoes: "Caso complexo, réu nega autoria. Verificar câmeras.",
   },
   { 
     id: 2, 
-    assistido: "Maria Silva Santos",
-    processo: "0001234-56.2025.8.05.0039",
-    ato: "Alegações Finais",
-    tipoAto: "alegacoes_finais",
-    prazo: "2026-01-18",
-    dataEntrada: "2026-01-08",
-    dataIntimacao: "2026-01-05",
-    status: "5_FILA",
-    prioridade: "ALTA",
-    providencias: "Analisar provas, preparar tese de absolvição por legítima defesa",
+    assistido: "Nailton Gonçalves dos Santos",
+    processo: "8009582-13.2024.8.05.0039",
+    ato: "Diligências do 422",
+    tipoAto: "diligencias_422",
+    prazo: "",
+    dataEntrada: "",
+    status: "2_ATENDER",
+    prisao: "",
+    prioridade: "URGENTE",
+    providencias: null,
     area: "JURI",
-    comarca: "CANDEIAS",
-    vara: "1ª Vara Criminal",
     reuPreso: false,
-    defensor: "Dra. Juliane",
   },
   { 
     id: 3, 
-    assistido: "José Carlos Oliveira",
-    processo: "0005678-90.2025.8.05.0039",
-    ato: "Agravo em Execução",
-    tipoAto: "agravo",
-    prazo: "2026-01-20",
-    dataEntrada: "2026-01-05",
-    dataIntimacao: "2026-01-03",
-    status: "8_AGUARDANDO",
-    prioridade: "NORMAL",
-    providencias: "Aguardando decisão do agravo, verificar publicação",
-    area: "EXECUCAO_PENAL",
-    comarca: "DIAS_DAVILA",
-    vara: "Vara de Execuções Penais",
-    reuPreso: true,
-    defensor: "Dr. Marcos",
-  },
-  { 
-    id: 4, 
-    assistido: "Ana Paula Costa",
-    processo: "0009012-34.2025.8.05.0039",
-    ato: "Pedido de Relaxamento",
-    tipoAto: "habeas_corpus",
-    prazo: "2026-01-17",
-    dataEntrada: "2026-01-12",
-    dataIntimacao: "2026-01-10",
-    status: "2_ATENDER",
-    prioridade: "URGENTE",
-    providencias: "Prisão ilegal, prazo de 30 dias expirado. URGENTE!",
-    area: "VIOLENCIA_DOMESTICA",
-    comarca: "CANDEIAS",
-    vara: "Juizado de Violência Doméstica",
-    reuPreso: true,
-    defensor: "Dr. Rodrigo",
-  },
-  { 
-    id: 5, 
-    assistido: "Roberto Ferreira Lima",
-    processo: "0003456-78.2025.8.05.0039",
-    ato: "Memoriais",
-    tipoAto: "memoriais",
-    prazo: "2026-01-20",
-    dataEntrada: "2026-01-10",
-    dataConclusao: "2026-01-16",
-    status: "7_PROTOCOLADO",
+    assistido: "José Raimundo Ramalho dos Santos",
+    processo: "0000704-32.2010.8.05.0039",
+    ato: "Atualização de endereço",
+    tipoAto: "atualizacao_endereco",
+    prazo: "",
+    dataEntrada: "2025-09-25",
+    status: "2_BUSCAR",
+    prisao: "",
     prioridade: "NORMAL",
     providencias: null,
     area: "JURI",
-    comarca: "CANDEIAS",
-    vara: "1ª Vara Criminal",
     reuPreso: false,
-    defensor: "Dr. Rodrigo",
+  },
+  { 
+    id: 4, 
+    assistido: "Vanderlon dos Santos Vanderlei",
+    processo: "0301546-94.2014.8.05.0039",
+    ato: "Ofício",
+    tipoAto: "oficio",
+    prazo: "",
+    dataEntrada: "2025-11-14",
+    status: "2_ELABORAR",
+    prisao: "SOLTO",
+    prioridade: "NORMAL",
+    providencias: "Solicitar exame médico",
+    area: "JURI",
+    reuPreso: false,
+    observacoes: "Agendado para sexta 11 hrs",
+  },
+  { 
+    id: 5, 
+    assistido: "Diego Bonfim Almeida",
+    processo: "8012906-74.2025.8.05.0039",
+    ato: "Ofício",
+    tipoAto: "oficio",
+    prazo: "",
+    dataEntrada: "2025-11-28",
+    status: "2_ELABORAR",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: "Requerer diligências para verificar atuação policial (câmeras de monitoramento). Juntar notícias sobre o fato indicando armas apreendidas.",
+    area: "JURI",
+    reuPreso: false,
   },
   { 
     id: 6, 
-    assistido: "Carlos Eduardo Silva",
-    processo: "0007890-12.2025.8.05.0039",
-    ato: "Revisão Criminal",
-    tipoAto: "revisao_criminal",
-    prazo: "2026-01-25",
-    dataEntrada: "2026-01-02",
-    status: "6_ELABORANDO",
+    assistido: "José Fabrício Cardoso de França",
+    processo: "8013962-79.2024.8.05.0039",
+    ato: "Petição intermediária",
+    tipoAto: "peticao_intermediaria",
+    prazo: "",
+    dataEntrada: "2025-09-09",
+    status: "2_ELABORAR",
+    prisao: "",
     prioridade: "NORMAL",
-    providencias: "Estudar processo, identificar erros processuais e novas provas",
-    area: "SUBSTITUICAO",
-    comarca: "SALVADOR",
-    vara: "Câmara Criminal",
+    providencias: "Pensar que diligências podem ser requeridas na defesa de José Fabrício",
+    area: "JURI",
     reuPreso: false,
-    defensor: "Dra. Juliane",
   },
   { 
     id: 7, 
-    assistido: "Marcos Antonio Pereira",
-    processo: "0002345-67.2025.8.05.0039",
-    ato: "Progressão de Regime",
-    tipoAto: "pedido_progressao",
-    prazo: "2026-01-19",
-    dataEntrada: "2026-01-11",
-    status: "5_FILA",
-    prioridade: "ALTA",
-    providencias: "Verificar atestado de comportamento carcerário. Juntar documentos.",
-    area: "EXECUCAO_PENAL",
-    comarca: "DIAS_DAVILA",
-    vara: "Vara de Execuções Penais",
-    reuPreso: true,
-    defensor: "Dr. Marcos",
+    assistido: "Clementino Oliveira Santos",
+    processo: "0006337-97.2005.8.05.0039",
+    ato: "Petição intermediária",
+    tipoAto: "peticao_intermediaria",
+    prazo: "",
+    dataEntrada: "2025-11-07",
+    status: "2_ELABORAR",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: "Informar que o assistido informou ter advogado, e que foi efetivamente citado em 07 de novembro, tendo prazo de 10 dias para apresentar RA mediante seu advogado",
+    area: "JURI",
+    reuPreso: false,
   },
   { 
     id: 8, 
-    assistido: "Fernanda Oliveira Santos",
-    processo: "0008765-43.2025.8.05.0039",
-    ato: "Habeas Corpus",
-    tipoAto: "habeas_corpus",
-    prazo: "2026-01-17",
-    dataEntrada: "2026-01-15",
-    status: "2_ATENDER",
-    prioridade: "URGENTE",
-    providencias: "HC liberatório - constrangimento ilegal por excesso de prazo. FAZER HOJE!",
+    assistido: "Jefferson Monteiro dos Santos",
+    processo: "8008977-04.2023.8.05.0039",
+    ato: "RESE",
+    tipoAto: "rese",
+    prazo: "",
+    dataEntrada: "",
+    status: "2_ELABORAR",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: null,
     area: "JURI",
-    comarca: "CANDEIAS",
-    vara: "1ª Vara Criminal",
-    reuPreso: true,
-    defensor: "Dr. Rodrigo",
+    reuPreso: false,
   },
   { 
     id: 9, 
-    assistido: "Lucas Almeida Costa",
-    processo: "0004321-98.2025.8.05.0039",
-    ato: "Contrarrazões de Apelação",
-    tipoAto: "contrarrazoes",
-    prazo: "2026-01-22",
-    dataEntrada: "2026-01-13",
-    status: "3_ANALISAR",
+    assistido: "André Francisco Fernandes de Jesus",
+    processo: "8013727-15.2024.8.05.0039",
+    ato: "",
+    tipoAto: "outro",
+    prazo: "",
+    dataEntrada: "",
+    status: "2_RELATORIO",
+    prisao: "",
     prioridade: "NORMAL",
-    providencias: "Analisar razões do MP e preparar contrarrazões. Tese: insuficiência de provas.",
+    providencias: "Analisar processo - MP atualizou endereços das testemunhas",
     area: "JURI",
-    comarca: "CANDEIAS",
-    vara: "1ª Vara Criminal",
     reuPreso: false,
-    defensor: "Dra. Juliane",
   },
   { 
     id: 10, 
-    assistido: "Pedro Henrique Souza",
-    processo: "0006543-21.2025.8.05.0039",
-    ato: "Livramento Condicional",
-    tipoAto: "pedido_livramento",
-    prazo: "2026-01-24",
-    dataEntrada: "2026-01-14",
-    status: "8_AGUARDANDO",
+    assistido: "Marcos André",
+    processo: "",
+    ato: "Apelação",
+    tipoAto: "apelacao",
+    prazo: "",
+    dataEntrada: "",
+    status: "3_PROTOCOLAR",
+    prisao: "",
     prioridade: "NORMAL",
-    providencias: "Aguardando parecer do MP. Requisitos preenchidos.",
-    area: "EXECUCAO_PENAL",
-    comarca: "DIAS_DAVILA",
-    vara: "Vara de Execuções Penais",
-    reuPreso: true,
-    defensor: "Dr. Marcos",
+    providencias: null,
+    area: "JURI",
+    reuPreso: false,
   },
   { 
     id: 11, 
-    assistido: "Antônio José Ribeiro",
-    processo: "0001122-33.2025.8.05.0039",
-    ato: "Audiência de Instrução",
-    tipoAto: "audiencia_instrucao",
-    prazo: "2026-01-21",
-    dataEntrada: "2026-01-10",
-    status: "4_MONITORAR",
-    prioridade: "ALTA",
-    providencias: "Preparar rol de testemunhas. Confirmar presença do réu.",
+    assistido: "Cleber",
+    processo: "8017821-74.2022.8.05.0039",
+    ato: "Razões de apelação",
+    tipoAto: "razoes_apelacao",
+    prazo: "2025-12-10",
+    dataEntrada: "2025-11-24",
+    status: "4_EMILLY",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: "Atualizar endereços de testemunhas",
     area: "JURI",
-    comarca: "CANDEIAS",
-    vara: "1ª Vara Criminal",
-    reuPreso: true,
-    defensor: "Dr. Rodrigo",
-    observacoes: "Réu detido no Conjunto Penal de Simões Filho",
+    reuPreso: false,
   },
   { 
     id: 12, 
-    assistido: "Sandra Regina Matos",
-    processo: "0002233-44.2025.8.05.0039",
-    ato: "Sessão do Júri",
-    tipoAto: "sessao_juri",
-    prazo: "2026-01-28",
-    dataEntrada: "2026-01-05",
-    status: "6_REVISAO",
+    assistido: "Marcos Gomes dos Santos",
+    processo: "8006117-59.2025.8.05.0039",
+    ato: "Habeas Corpus",
+    tipoAto: "habeas_corpus",
+    prazo: "",
+    dataEntrada: "2025-11-27",
+    status: "4_EMILLY",
+    prisao: "",
     prioridade: "ALTA",
-    providencias: "Revisar tese de defesa. Preparar quesitos. Reunir com assistido.",
+    providencias: "Coleta antecipada designada - impugnar com HC, pois o fato é recente e não houve tentativa de localização do endereço",
     area: "JURI",
-    comarca: "CANDEIAS",
-    vara: "1ª Vara Criminal",
     reuPreso: false,
-    defensor: "Dra. Juliane",
-    observacoes: "Tese principal: legítima defesa. Subsidiária: desclassificação.",
+  },
+  { 
+    id: 13, 
+    assistido: "João Victor Moura Ramos",
+    processo: "8013687-96.2025.8.05.0039",
+    ato: "Ciência revogação prisão",
+    tipoAto: "ciencia_revogacao",
+    prazo: "",
+    dataEntrada: "2025-11-09",
+    status: "4_MONITORAR",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: "Hospital Juliano Moreira indicou não ter leito em hospital geral",
+    area: "JURI",
+    reuPreso: false,
+  },
+  { 
+    id: 14, 
+    assistido: "Elias Oliveira Santos",
+    processo: "0011054-45.2011.8.05.0039",
+    ato: "Outro",
+    tipoAto: "outro",
+    prazo: "",
+    dataEntrada: "2025-05-10",
+    status: "4_MONITORAR",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: "Juntar relatório atualizado do réu. Enviada mensagem a filha Luzinete para que ela informe situação médica atual de Elias. Filha Elane atendida, afirmou que Elias já não está mais internado, mas que teve membro amputado.",
+    area: "JURI",
+    reuPreso: false,
+  },
+  { 
+    id: 15, 
+    assistido: "Weverton de Jesus Pereira (corréus)",
+    processo: "8009626-32.2024.8.05.0039",
+    ato: "Petição intermediária",
+    tipoAto: "peticao_intermediaria",
+    prazo: "",
+    dataEntrada: "2025-09-19",
+    status: "4_MONITORAR",
+    prisao: "",
+    prioridade: "ALTA",
+    providencias: "Buscar unidade para atender o assistido. Elaborar RA. Requerer recambiamento do réu para Bahia. Buscar familiares de Weverton.",
+    area: "JURI",
+    reuPreso: true,
+  },
+  { 
+    id: 16, 
+    assistido: "Rafael Costa Araújo",
+    processo: "8006656-59.2024.8.05.0039",
+    ato: "Revogação da prisão preventiva",
+    tipoAto: "revogacao_prisao",
+    prazo: "",
+    dataEntrada: "2025-07-08",
+    status: "5_FILA",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: null,
+    area: "JURI",
+    reuPreso: false,
+  },
+  { 
+    id: 17, 
+    assistido: "Marcus Vinicius Morais Oliveira",
+    processo: "0500281-63.2020.8.05.0039",
+    ato: "Revogação da prisão preventiva",
+    tipoAto: "revogacao_prisao",
+    prazo: "",
+    dataEntrada: "",
+    status: "5_FILA",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: null,
+    area: "JURI",
+    reuPreso: false,
+  },
+  { 
+    id: 18, 
+    assistido: "Fernando Barbosa dos Reis",
+    processo: "8012906-74.2025.8.05.0039",
+    ato: "Resposta à Acusação",
+    tipoAto: "resposta_acusacao",
+    prazo: "2025-12-17",
+    dataEntrada: "2025-11-17",
+    status: "7_PROTOCOLADO",
+    prisao: "COP",
+    prioridade: "REU_PRESO",
+    providencias: null,
+    area: "JURI",
+    reuPreso: true,
+  },
+  { 
+    id: 19, 
+    assistido: "Joalison Neves Santos",
+    processo: "8014445-75.2025.8.05.0039",
+    ato: "Resposta à Acusação",
+    tipoAto: "resposta_acusacao",
+    prazo: "",
+    dataEntrada: "",
+    status: "7_PROTOCOLADO",
+    prisao: "CADEIA_PUBLICA",
+    prioridade: "REU_PRESO",
+    providencias: null,
+    area: "JURI",
+    reuPreso: true,
+    observacoes: "Agendado sexta 09 hrs",
+  },
+  { 
+    id: 20, 
+    assistido: "Diego Bonfim Almeida",
+    processo: "8012906-74.2025.8.05.0039",
+    ato: "Resposta à Acusação",
+    tipoAto: "resposta_acusacao",
+    prazo: "",
+    dataEntrada: "2025-11-28",
+    status: "7_PROTOCOLADO",
+    prisao: "CADEIA_PUBLICA",
+    prioridade: "REU_PRESO",
+    providencias: "Requerer diligências para verificar atuação policial (câmeras de monitoramento). Juntar notícias sobre o fato indicando armas apreendidas.",
+    area: "JURI",
+    reuPreso: true,
+  },
+  { 
+    id: 21, 
+    assistido: "Alexandre dos Reis Bispo",
+    processo: "8008136-38.2025.8.05.0039",
+    ato: "Resposta à Acusação",
+    tipoAto: "resposta_acusacao",
+    prazo: "2025-12-13",
+    dataEntrada: "2025-11-13",
+    status: "7_PROTOCOLADO",
+    prisao: "CADEIA_PUBLICA",
+    prioridade: "REU_PRESO",
+    providencias: null,
+    area: "JURI",
+    reuPreso: true,
+    observacoes: "Agendado sexta 09 hrs",
+  },
+  { 
+    id: 22, 
+    assistido: "Adenilson da Silva",
+    processo: "8003969-75.2025.8.05.0039",
+    ato: "Diligências do 422",
+    tipoAto: "diligencias_422",
+    prazo: "2025-12-04",
+    dataEntrada: "2025-11-14",
+    status: "7_PROTOCOLADO",
+    prisao: "CADEIA_PUBLICA",
+    prioridade: "REU_PRESO",
+    providencias: "Tuberculose - requerer atendimento médico para averiguar saúde de Adenilson",
+    area: "JURI",
+    reuPreso: true,
+    observacoes: "Agendado sexta 11 hrs",
+  },
+  { 
+    id: 23, 
+    assistido: "Breno Conceição dos Santos",
+    processo: "8012452-94.2025.8.05.0039",
+    ato: "Resposta à Acusação",
+    tipoAto: "resposta_acusacao",
+    prazo: "",
+    dataEntrada: "",
+    status: "7_PROTOCOLADO",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: null,
+    area: "JURI",
+    reuPreso: false,
+  },
+  { 
+    id: 24, 
+    assistido: "Reidson da Cruz Barros",
+    processo: "8012452-94.2025.8.05.0039",
+    ato: "Resposta à Acusação",
+    tipoAto: "resposta_acusacao",
+    prazo: "",
+    dataEntrada: "",
+    status: "7_PROTOCOLADO",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: null,
+    area: "JURI",
+    reuPreso: false,
+  },
+  { 
+    id: 25, 
+    assistido: "Leandro de Jesus Santos",
+    processo: "0506924-08.2018.8.05.0039",
+    ato: "Razões de apelação",
+    tipoAto: "razoes_apelacao",
+    prazo: "",
+    dataEntrada: "",
+    status: "7_PROTOCOLADO",
+    prisao: "",
+    prioridade: "NORMAL",
+    providencias: null,
+    area: "JURI",
+    reuPreso: false,
   },
 ];
 
@@ -509,11 +675,12 @@ function DemandaModal({
       assistido: "",
       processo: "",
       ato: "",
-      tipoAto: "manifestacao",
-      prazo: format(addDays(new Date(), 15), "yyyy-MM-dd"),
+      tipoAto: "resposta_acusacao",
+      prazo: "",
       dataEntrada: format(new Date(), "yyyy-MM-dd"),
       dataIntimacao: "",
       status: "5_FILA",
+      prisao: "",
       prioridade: "NORMAL",
       providencias: "",
       area: "JURI",
@@ -702,21 +869,47 @@ function DemandaModal({
             </div>
           </div>
 
-          {/* Réu Preso */}
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
-            <Checkbox
-              id="reuPreso"
-              checked={formData.reuPreso}
-              onCheckedChange={(checked) => setFormData({ ...formData, reuPreso: checked as boolean })}
-            />
-            <div className="flex-1">
-              <Label htmlFor="reuPreso" className="text-red-700 dark:text-red-400 font-semibold cursor-pointer">
-                <Lock className="h-4 w-4 inline mr-2" />
-                Réu Preso
-              </Label>
-              <p className="text-xs text-red-600 dark:text-red-500 mt-0.5">
-                Marque se o assistido está preso (prioridade máxima)
-              </p>
+          {/* Situação Prisional */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Situação Prisional</Label>
+              <Select value={formData.prisao || ""} onValueChange={(v) => {
+                setFormData({ 
+                  ...formData, 
+                  prisao: v,
+                  reuPreso: v === "CADEIA_PUBLICA" || v === "COP" || v === "PENITENCIARIA"
+                });
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRISAO_OPTIONS.map((p) => (
+                    <SelectItem key={p.value} value={p.value || "none"}>
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-2 h-2 rounded-full", p.color)} />
+                        {p.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
+              <Checkbox
+                id="reuPreso"
+                checked={formData.reuPreso}
+                onCheckedChange={(checked) => setFormData({ ...formData, reuPreso: checked as boolean })}
+              />
+              <div className="flex-1">
+                <Label htmlFor="reuPreso" className="text-red-700 dark:text-red-400 font-semibold cursor-pointer">
+                  <Lock className="h-4 w-4 inline mr-2" />
+                  Réu Preso
+                </Label>
+                <p className="text-xs text-red-600 dark:text-red-500 mt-0.5">
+                  Prioridade máxima
+                </p>
+              </div>
             </div>
           </div>
 
@@ -783,20 +976,21 @@ export default function DemandasPage() {
     return unique.sort();
   }, [demandas]);
 
-  // Colunas visíveis
+  // Colunas visíveis - baseado na planilha VVD
   const [visibleColumns, setVisibleColumns] = useState({
-    prazo: true,
+    status: true,
+    prisao: true,
+    dataEntrada: true,
     assistido: true,
     processo: true,
     ato: true,
-    tipoAto: false,
-    area: true,
-    comarca: false,
-    status: true,
-    prioridade: true,
+    prazo: true,
     providencias: true,
-    defensor: true,
-    dataEntrada: false,
+    tipoAto: false,
+    area: false,
+    comarca: false,
+    prioridade: false,
+    defensor: false,
     dataIntimacao: false,
     observacoes: false,
   });
@@ -849,17 +1043,20 @@ export default function DemandasPage() {
     return result;
   }, [demandas, searchTerm, statusFilter, areaFilter, prioridadeFilter, comarcaFilter, defensorFilter, reuPresoFilter, sortField, sortOrder]);
 
-  // Estatísticas
+  // Estatísticas baseadas nos status da planilha VVD
   const stats = useMemo(() => ({
     total: demandas.length,
-    fatal: demandas.filter(d => d.status === "1_FATAL").length,
-    atender: demandas.filter(d => d.status === "2_ATENDER" || d.status === "3_ANALISAR").length,
-    fila: demandas.filter(d => d.status === "5_FILA" || d.status === "6_ELABORANDO" || d.status === "6_REVISAO").length,
-    monitorar: demandas.filter(d => d.status === "4_MONITORAR" || d.status === "8_AGUARDANDO").length,
-    protocolado: demandas.filter(d => d.status === "7_PROTOCOLADO" || d.status === "7_CIENCIA" || d.status === "CONCLUIDO").length,
-    reuPreso: demandas.filter(d => d.reuPreso).length,
-    vencidos: demandas.filter(d => isPast(parseISO(d.prazo)) && !isToday(parseISO(d.prazo)) && !["7_PROTOCOLADO", "7_CIENCIA", "7_SEM_ATUACAO", "CONCLUIDO", "ARQUIVADO"].includes(d.status)).length,
-    hoje: demandas.filter(d => isToday(parseISO(d.prazo))).length,
+    atender: demandas.filter(d => d.status === "2_ATENDER").length,
+    buscar: demandas.filter(d => d.status === "2_BUSCAR").length,
+    elaborar: demandas.filter(d => d.status === "2_ELABORAR" || d.status === "2_RELATORIO").length,
+    protocolar: demandas.filter(d => d.status === "3_PROTOCOLAR").length,
+    emilly: demandas.filter(d => d.status === "4_EMILLY").length,
+    monitorar: demandas.filter(d => d.status === "4_MONITORAR").length,
+    fila: demandas.filter(d => d.status === "5_FILA").length,
+    protocolado: demandas.filter(d => d.status === "7_PROTOCOLADO").length,
+    reuPreso: demandas.filter(d => d.reuPreso || d.prisao === "CADEIA_PUBLICA" || d.prisao === "COP" || d.prisao === "PENITENCIARIA").length,
+    vencidos: demandas.filter(d => d.prazo && isPast(parseISO(d.prazo)) && !isToday(parseISO(d.prazo)) && d.status !== "7_PROTOCOLADO").length,
+    hoje: demandas.filter(d => d.prazo && isToday(parseISO(d.prazo))).length,
   }), [demandas]);
 
   // Handlers
@@ -931,8 +1128,8 @@ export default function DemandasPage() {
         </div>
       </div>
 
-      {/* Stats Cards Premium */}
-      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-9">
+      {/* Stats Cards - Baseado na planilha VVD */}
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-10">
         <Card className="stat-card">
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
@@ -945,24 +1142,12 @@ export default function DemandasPage() {
           </CardContent>
         </Card>
 
-        <Card className={cn("stat-card", stats.fatal > 0 && "border-black bg-black/5 dark:bg-black/20")}>
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={cn("text-xl font-bold", stats.fatal > 0 && "text-black dark:text-white")}>{stats.fatal}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">FATAL</p>
-              </div>
-              <AlertTriangle className={cn("h-4 w-4", stats.fatal > 0 ? "text-black dark:text-white animate-pulse" : "text-muted-foreground")} />
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="stat-card fatal">
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xl font-bold text-red-600">{stats.reuPreso}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Réu Preso</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Preso</p>
               </div>
               <Lock className="h-4 w-4 text-red-500" />
             </div>
@@ -985,10 +1170,10 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-orange-600">{stats.hoje}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Hoje</p>
+                <p className="text-xl font-bold text-orange-600">{stats.elaborar}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Elaborar</p>
               </div>
-              <Timer className="h-4 w-4 text-orange-500" />
+              <Edit className="h-4 w-4 text-orange-500" />
             </div>
           </CardContent>
         </Card>
@@ -997,10 +1182,22 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-amber-600">{stats.fila}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Em Fila</p>
+                <p className="text-xl font-bold text-yellow-600">{stats.protocolar}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Protocolar</p>
               </div>
-              <Clock className="h-4 w-4 text-amber-500" />
+              <ArrowUpRight className="h-4 w-4 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="stat-card">
+          <CardContent className="pt-3 pb-2 px-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xl font-bold text-pink-600">{stats.emilly}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Emilly</p>
+              </div>
+              <User className="h-4 w-4 text-pink-500" />
             </div>
           </CardContent>
         </Card>
@@ -1010,9 +1207,21 @@ export default function DemandasPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xl font-bold text-blue-600">{stats.monitorar}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Aguardando</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Monitorar</p>
               </div>
               <Eye className="h-4 w-4 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="stat-card">
+          <CardContent className="pt-3 pb-2 px-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xl font-bold text-amber-600">{stats.fila}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Fila</p>
+              </div>
+              <Clock className="h-4 w-4 text-amber-500" />
             </div>
           </CardContent>
         </Card>
@@ -1022,7 +1231,7 @@ export default function DemandasPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xl font-bold text-emerald-600">{stats.protocolado}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Concluído</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Protocolado</p>
               </div>
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
             </div>
@@ -1184,14 +1393,17 @@ export default function DemandasPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/30">
-                      {visibleColumns.prazo && (
-                        <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => handleSort("prazo")}>
+                      {/* Ordem: Status, Prisão, Data, Assistido, Autos, Ato, Prazo, Providências */}
+                      {visibleColumns.status && (
+                        <TableHead className="w-[120px] cursor-pointer hover:bg-muted/50" onClick={() => handleSort("status")}>
                           <div className="flex items-center gap-1">
-                            Prazo
-                            {sortField === "prazo" && (sortOrder === "asc" ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />)}
+                            Status
+                            {sortField === "status" && (sortOrder === "asc" ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />)}
                           </div>
                         </TableHead>
                       )}
+                      {visibleColumns.prisao && <TableHead className="w-[100px]">Prisão</TableHead>}
+                      {visibleColumns.dataEntrada && <TableHead className="w-[80px]">Data</TableHead>}
                       {visibleColumns.assistido && (
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("assistido")}>
                           <div className="flex items-center gap-1">
@@ -1200,8 +1412,17 @@ export default function DemandasPage() {
                           </div>
                         </TableHead>
                       )}
-                      {visibleColumns.processo && <TableHead>Processo</TableHead>}
+                      {visibleColumns.processo && <TableHead>Autos</TableHead>}
                       {visibleColumns.ato && <TableHead>Ato</TableHead>}
+                      {visibleColumns.prazo && (
+                        <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => handleSort("prazo")}>
+                          <div className="flex items-center gap-1">
+                            Prazo
+                            {sortField === "prazo" && (sortOrder === "asc" ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />)}
+                          </div>
+                        </TableHead>
+                      )}
+                      {visibleColumns.providencias && <TableHead className="min-w-[200px]">Providências</TableHead>}
                       {visibleColumns.tipoAto && <TableHead>Tipo</TableHead>}
                       {visibleColumns.area && (
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("area")}>
@@ -1219,18 +1440,8 @@ export default function DemandasPage() {
                           </div>
                         </TableHead>
                       )}
-                      {visibleColumns.status && (
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("status")}>
-                          <div className="flex items-center gap-1">
-                            Status
-                            {sortField === "status" && (sortOrder === "asc" ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />)}
-                          </div>
-                        </TableHead>
-                      )}
                       {visibleColumns.prioridade && <TableHead>Prioridade</TableHead>}
-                      {visibleColumns.providencias && <TableHead className="max-w-[200px]">Providências</TableHead>}
                       {visibleColumns.defensor && <TableHead>Defensor</TableHead>}
-                      {visibleColumns.dataEntrada && <TableHead>Entrada</TableHead>}
                       {visibleColumns.dataIntimacao && <TableHead>Intimação</TableHead>}
                       {visibleColumns.observacoes && <TableHead className="max-w-[150px]">Obs</TableHead>}
                       <TableHead className="w-[50px] text-right">Ações</TableHead>
@@ -1249,30 +1460,94 @@ export default function DemandasPage() {
                             prazoInfo.urgent && !demanda.reuPreso && "bg-orange-50/30 dark:bg-orange-950/10"
                           )}
                         >
-                          {visibleColumns.prazo && (
+                          {/* Ordem: Status, Prisão, Data, Assistido, Autos, Ato, Prazo, Providências */}
+                          {visibleColumns.status && (
                             <TableCell>
-                              <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-lg w-fit", prazoInfo.className)}>
-                                <PrazoIcon className="h-3.5 w-3.5" />
-                                <span className="text-xs font-semibold">{prazoInfo.text}</span>
-                              </div>
+                              <Select
+                                value={demanda.status}
+                                onValueChange={(v) => handleUpdateStatus(demanda.id, v)}
+                              >
+                                <SelectTrigger className="h-7 w-[130px] text-xs">
+                                  <StatusBadge status={demanda.status} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {STATUS_OPTIONS.map((s) => (
+                                    <SelectItem key={s.value} value={s.value}>
+                                      <div className="flex items-center gap-2">
+                                        <div className={cn("w-2 h-2 rounded-full", s.color)} />
+                                        {s.label}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          )}
+                          {visibleColumns.prisao && (
+                            <TableCell>
+                              {demanda.prisao ? (
+                                <Badge 
+                                  className={cn(
+                                    "text-[10px] font-medium",
+                                    demanda.prisao === "CADEIA_PUBLICA" && "bg-red-600 text-white",
+                                    demanda.prisao === "COP" && "bg-red-700 text-white",
+                                    demanda.prisao === "PENITENCIARIA" && "bg-red-800 text-white",
+                                    demanda.prisao === "SOLTO" && "bg-green-500 text-white",
+                                    demanda.prisao === "DOMICILIAR" && "bg-orange-500 text-white",
+                                    demanda.prisao === "MONITORADO" && "bg-amber-500 text-white",
+                                  )}
+                                >
+                                  {PRISAO_OPTIONS.find(p => p.value === demanda.prisao)?.label || demanda.prisao}
+                                </Badge>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                          )}
+                          {visibleColumns.dataEntrada && (
+                            <TableCell>
+                              <span className="text-xs text-muted-foreground">
+                                {demanda.dataEntrada ? format(parseISO(demanda.dataEntrada), "dd/MM/yy", { locale: ptBR }) : "-"}
+                              </span>
                             </TableCell>
                           )}
                           {visibleColumns.assistido && (
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {demanda.reuPreso && <Lock className="h-3.5 w-3.5 text-red-500" />}
-                                <span className="font-medium">{demanda.assistido}</span>
+                                {(demanda.reuPreso || demanda.prisao === "CADEIA_PUBLICA" || demanda.prisao === "COP") && (
+                                  <Lock className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                                )}
+                                <span className="font-medium text-sm">{demanda.assistido}</span>
                               </div>
                             </TableCell>
                           )}
                           {visibleColumns.processo && (
                             <TableCell>
-                              <span className="font-mono text-xs text-muted-foreground">{demanda.processo}</span>
+                              <span className="font-mono text-xs text-muted-foreground">{demanda.processo || "-"}</span>
                             </TableCell>
                           )}
                           {visibleColumns.ato && (
                             <TableCell>
-                              <span className="font-medium">{demanda.ato}</span>
+                              <span className="font-medium text-sm">{demanda.ato || "-"}</span>
+                            </TableCell>
+                          )}
+                          {visibleColumns.prazo && (
+                            <TableCell>
+                              {demanda.prazo ? (
+                                <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-lg w-fit", prazoInfo.className)}>
+                                  <PrazoIcon className="h-3.5 w-3.5" />
+                                  <span className="text-xs font-semibold">{prazoInfo.text}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                          )}
+                          {visibleColumns.providencias && (
+                            <TableCell className="min-w-[200px] max-w-[300px]">
+                              <p className="text-xs text-muted-foreground line-clamp-2" title={demanda.providencias || ""}>
+                                {demanda.providencias || "-"}
+                              </p>
                             </TableCell>
                           )}
                           {visibleColumns.tipoAto && (
@@ -1292,48 +1567,14 @@ export default function DemandasPage() {
                               </span>
                             </TableCell>
                           )}
-                          {visibleColumns.status && (
-                            <TableCell>
-                              <Select
-                                value={demanda.status}
-                                onValueChange={(v) => handleUpdateStatus(demanda.id, v)}
-                              >
-                                <SelectTrigger className="h-7 w-[120px] text-xs">
-                                  <StatusBadge status={demanda.status} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {STATUS_OPTIONS.map((s) => (
-                                    <SelectItem key={s.value} value={s.value}>
-                                      <div className="flex items-center gap-2">
-                                        <div className={cn("w-2 h-2 rounded-full", s.color)} />
-                                        {s.label}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                          )}
                           {visibleColumns.prioridade && (
                             <TableCell>
                               <PrioridadeBadge prioridade={demanda.prioridade} reuPreso={demanda.reuPreso} />
                             </TableCell>
                           )}
-                          {visibleColumns.providencias && (
-                            <TableCell className="max-w-[200px]">
-                              <p className="text-xs text-muted-foreground truncate">{demanda.providencias || "-"}</p>
-                            </TableCell>
-                          )}
                           {visibleColumns.defensor && (
                             <TableCell>
                               <span className="text-sm">{demanda.defensor || "-"}</span>
-                            </TableCell>
-                          )}
-                          {visibleColumns.dataEntrada && (
-                            <TableCell>
-                              <span className="text-xs text-muted-foreground">
-                                {demanda.dataEntrada ? format(parseISO(demanda.dataEntrada), "dd/MM", { locale: ptBR }) : "-"}
-                              </span>
                             </TableCell>
                           )}
                           {visibleColumns.dataIntimacao && (
