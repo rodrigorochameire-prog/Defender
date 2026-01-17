@@ -1035,7 +1035,7 @@ export default function DemandasPage() {
   
   // Lista de defensores para filtro
   const defensores = useMemo(() => {
-    const unique = [...new Set(demandas.map(d => d.defensor).filter(Boolean))];
+    const unique = Array.from(new Set(demandas.map(d => d.defensor).filter(Boolean)));
     return unique.sort();
   }, [demandas]);
 
