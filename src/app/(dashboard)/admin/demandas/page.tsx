@@ -649,7 +649,18 @@ function getAreaConfig(area: string) {
 }
 
 function getPrazoInfo(prazoStr: string) {
+  // Retorna valor padrão se não há prazo
+  if (!prazoStr || prazoStr.trim() === "") {
+    return { text: "-", className: "text-muted-foreground", icon: Calendar, urgent: false };
+  }
+  
   const prazo = parseISO(prazoStr);
+  
+  // Verifica se a data é válida
+  if (isNaN(prazo.getTime())) {
+    return { text: "-", className: "text-muted-foreground", icon: Calendar, urgent: false };
+  }
+  
   const hoje = new Date();
   const dias = differenceInDays(prazo, hoje);
   
