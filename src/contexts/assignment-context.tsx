@@ -7,7 +7,8 @@ export type Assignment =
   | "JURI_CAMACARI"      // Vara do Júri Camaçari
   | "VVD_CAMACARI"       // Violência Doméstica
   | "EXECUCAO_PENAL"     // Execução Penal
-  | "SUBSTITUICAO"       // Substituições Gerais
+  | "SUBSTITUICAO"       // Substituição Criminal
+  | "SUBSTITUICAO_CIVEL" // Substituições Não Penais (Cível, Família, etc.)
   | "GRUPO_JURI";        // Grupo Especial do Júri
 
 // Configuração visual e funcional de cada atribuição
@@ -37,6 +38,13 @@ export interface AssignmentMenuItem {
 }
 
 // Configurações de cada atribuição
+// Paletas:
+// - Júri Camaçari: Verde (principal) + brancos, pretos, cinzas
+// - VVD: Amarelo + brancos, pretos, cinzas
+// - Execução Penal: Azul + brancos, pretos, cinzas
+// - Grupo Júri: Laranja + brancos, pretos, cinzas
+// - Substituição Criminal: Vermelho + brancos, pretos, cinzas
+
 export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
   JURI_CAMACARI: {
     id: "JURI_CAMACARI",
@@ -44,11 +52,12 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     shortName: "Júri Camaçari",
     description: "Processos do Tribunal do Júri da Comarca de Camaçari",
     icon: "Gavel",
-    accentColor: "hsl(0, 55%, 50%)",
-    accentColorLight: "hsl(0, 55%, 95%)",
-    accentColorDark: "hsl(0, 50%, 35%)",
-    bgGradient: "from-rose-50/50 to-slate-50",
-    borderColor: "border-rose-200/60",
+    // Paleta Verde (principal da aplicação)
+    accentColor: "hsl(158, 55%, 42%)",
+    accentColorLight: "hsl(158, 45%, 94%)",
+    accentColorDark: "hsl(158, 50%, 32%)",
+    bgGradient: "from-emerald-50/50 to-slate-50",
+    borderColor: "border-emerald-200/60",
     features: ["plenarios", "jurados", "memoriais", "quesitos"],
     menuItems: [
       { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
@@ -66,11 +75,12 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     shortName: "VVD Camaçari",
     description: "Vara de Violência Doméstica e Familiar",
     icon: "Shield",
-    accentColor: "hsl(280, 50%, 55%)",
-    accentColorLight: "hsl(280, 50%, 95%)",
-    accentColorDark: "hsl(280, 45%, 40%)",
-    bgGradient: "from-violet-50/50 to-slate-50",
-    borderColor: "border-violet-200/60",
+    // Paleta Amarelo/Dourado
+    accentColor: "hsl(45, 85%, 48%)",
+    accentColorLight: "hsl(45, 80%, 94%)",
+    accentColorDark: "hsl(45, 80%, 38%)",
+    bgGradient: "from-amber-50/50 to-slate-50",
+    borderColor: "border-amber-200/60",
     features: ["medidas_protetivas", "custodia", "flagrante", "risco"],
     menuItems: [
       { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
@@ -89,11 +99,12 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     shortName: "Exec. Penal",
     description: "Vara de Execução Penal - Benefícios e Incidentes",
     icon: "Lock",
-    accentColor: "hsl(25, 85%, 55%)",
-    accentColorLight: "hsl(25, 80%, 95%)",
-    accentColorDark: "hsl(25, 80%, 40%)",
-    bgGradient: "from-orange-50/50 to-slate-50",
-    borderColor: "border-orange-200/60",
+    // Paleta Azul
+    accentColor: "hsl(210, 65%, 50%)",
+    accentColorLight: "hsl(210, 60%, 94%)",
+    accentColorDark: "hsl(210, 60%, 38%)",
+    bgGradient: "from-blue-50/50 to-slate-50",
+    borderColor: "border-blue-200/60",
     features: ["progressao", "livramento", "remicao", "indulto", "saida_temporaria"],
     menuItems: [
       { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
@@ -108,15 +119,16 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
   },
   SUBSTITUICAO: {
     id: "SUBSTITUICAO",
-    name: "Substituições",
-    shortName: "Substituições",
-    description: "Atuação em substituição e outras comarcas",
+    name: "Substituição Criminal",
+    shortName: "Subst. Criminal",
+    description: "Atuação em substituição na área criminal",
     icon: "RefreshCw",
-    accentColor: "hsl(210, 60%, 50%)",
-    accentColorLight: "hsl(210, 60%, 95%)",
-    accentColorDark: "hsl(210, 55%, 38%)",
-    bgGradient: "from-blue-50/50 to-slate-50",
-    borderColor: "border-blue-200/60",
+    // Paleta Vermelho
+    accentColor: "hsl(0, 65%, 50%)",
+    accentColorLight: "hsl(0, 60%, 94%)",
+    accentColorDark: "hsl(0, 60%, 38%)",
+    bgGradient: "from-red-50/50 to-slate-50",
+    borderColor: "border-red-200/60",
     features: ["kanban", "prazos", "multicomarca"],
     menuItems: [
       { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
@@ -134,11 +146,12 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     shortName: "Grupo Júri",
     description: "Atuação em plenários pelo Estado da Bahia",
     icon: "Award",
-    accentColor: "hsl(350, 55%, 50%)",
-    accentColorLight: "hsl(350, 55%, 95%)",
-    accentColorDark: "hsl(350, 50%, 38%)",
-    bgGradient: "from-red-50/50 to-slate-50",
-    borderColor: "border-red-200/60",
+    // Paleta Laranja
+    accentColor: "hsl(25, 85%, 52%)",
+    accentColorLight: "hsl(25, 80%, 94%)",
+    accentColorDark: "hsl(25, 80%, 40%)",
+    bgGradient: "from-orange-50/50 to-slate-50",
+    borderColor: "border-orange-200/60",
     features: ["plenarios_avancado", "banco_jurados", "estatisticas", "teses"],
     menuItems: [
       { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
@@ -146,6 +159,30 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
       { label: "Banco de Jurados", path: "/admin/jurados", icon: "UserCheck" },
       { label: "Estatísticas", path: "/admin/relatorios", icon: "BarChart3" },
       { label: "Banco de Teses", path: "/admin/templates", icon: "FileText" },
+      { label: "Calendário", path: "/admin/calendar", icon: "Calendar" },
+    ],
+  },
+  SUBSTITUICAO_CIVEL: {
+    id: "SUBSTITUICAO_CIVEL",
+    name: "Substituição Não Penal",
+    shortName: "Subst. Cível",
+    description: "Atuação em substituição nas áreas cível, família e outras",
+    icon: "Scale",
+    // Paleta Roxo
+    accentColor: "hsl(270, 55%, 55%)",
+    accentColorLight: "hsl(270, 50%, 94%)",
+    accentColorDark: "hsl(270, 50%, 42%)",
+    bgGradient: "from-violet-50/50 to-slate-50",
+    borderColor: "border-violet-200/60",
+    features: ["kanban", "prazos", "multicomarca", "civel", "familia"],
+    menuItems: [
+      { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
+      { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
+      { label: "Processos", path: "/admin/processos", icon: "Scale" },
+      { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
+      { label: "Kanban", path: "/admin/kanban", icon: "Target" },
+      { label: "Audiências", path: "/admin/audiencias", icon: "Briefcase" },
+      { label: "Documentos", path: "/admin/documentos", icon: "FileText" },
       { label: "Calendário", path: "/admin/calendar", icon: "Calendar" },
     ],
   },

@@ -22,7 +22,8 @@ export const atribuicaoEnum = pgEnum("atribuicao", [
   "JURI_CAMACARI",      // Vara do Júri Camaçari (Processual + Plenário Local)
   "VVD_CAMACARI",       // Violência Doméstica
   "EXECUCAO_PENAL",     // Execução Penal
-  "SUBSTITUICAO",       // Cumulativa / Outras Comarcas
+  "SUBSTITUICAO",       // Substituição Criminal
+  "SUBSTITUICAO_CIVEL", // Substituição Não Penal (Cível, Família, etc.)
   "GRUPO_JURI",         // Grupo Especial de Atuação (Apenas Plenários pelo Estado)
 ]);
 
