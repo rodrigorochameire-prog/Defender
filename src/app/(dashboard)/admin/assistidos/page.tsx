@@ -70,6 +70,7 @@ import {
   Info,
   CircleDot,
   Circle,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -136,6 +137,7 @@ const mockAssistidos = [
     ],
     interrogatorioRealizado: false,
     observacoesProcesso: "Réu nega autoria. Alega que estava em legítima defesa após ser atacado primeiro.",
+    estrategiaDefesaAtual: "Focar na produção de prova testemunhal que comprove a agressão prévia da vítima. Solicitar perícia nas imagens de câmera de segurança do bar. Preparar quesitação para tese de legítima defesa.",
   },
   { 
     id: 2, 
@@ -179,6 +181,7 @@ const mockAssistidos = [
     ],
     interrogatorioRealizado: true,
     observacoesProcesso: "Instrução encerrada. Aguardando prazo para alegações finais.",
+    estrategiaDefesaAtual: "Alegações finais por memoriais. Enfatizar histórico de agressões sofridas pela assistida e laudo pericial que comprova lesões antigas. Requerer absolvição por legítima defesa.",
   },
   { 
     id: 3, 
@@ -219,6 +222,7 @@ const mockAssistidos = [
     testemunhasArroladas: [],
     interrogatorioRealizado: true,
     observacoesProcesso: "Condenado em 1º grau. Cumpre pena. Aguardando progressão de regime (2/5 cumprido).",
+    estrategiaDefesaAtual: "Acompanhar cálculo de pena na VEP. Preparar pedido de progressão para regime semiaberto (data prevista: Março/2026). Verificar remição por trabalho e estudo.",
   },
   { 
     id: 4, 
@@ -262,6 +266,7 @@ const mockAssistidos = [
     ],
     interrogatorioRealizado: false,
     observacoesProcesso: "Monitoramento eletrônico há 3 meses. Pedido de revogação em andamento.",
+    estrategiaDefesaAtual: "Insistir no pedido de revogação do monitoramento (bom comportamento). Na instrução, demonstrar atipicidade da conduta - discussão verbal sem ameaça grave.",
   },
   { 
     id: 5, 
@@ -305,6 +310,7 @@ const mockAssistidos = [
     ],
     interrogatorioRealizado: true,
     observacoesProcesso: "Pronúncia mantida. Plenário designado. Prisão domiciliar por saúde.",
+    estrategiaDefesaAtual: "Preparar sustentação oral para plenário. Focar em culpa consciente vs. dolo eventual. Estudar perfil dos jurados. Preparar testemunha de defesa (passageiro) para depor novamente em plenário.",
   },
   { 
     id: 6, 
@@ -345,6 +351,7 @@ const mockAssistidos = [
     testemunhasArroladas: [],
     interrogatorioRealizado: false,
     observacoesProcesso: "Preso em flagrante. Excesso de prazo na conclusão do IP. HC impetrado.",
+    estrategiaDefesaAtual: "Prioridade: obter liberdade via HC por excesso de prazo. Subsidiariamente, questionar validade do reconhecimento fotográfico (súmula 52 SDJE). Preparar defesa para eventual denúncia.",
   },
 ];
 
@@ -670,6 +677,17 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                     Tese da Defesa
                   </p>
                   <p className="text-[11px] text-primary/80 font-medium leading-relaxed">{assistido.teseDaDefesa}</p>
+                </div>
+              )}
+
+              {/* Estratégia de Defesa Atual */}
+              {assistido.estrategiaDefesaAtual && (
+                <div className="space-y-1 p-2 rounded-lg bg-violet-50/80 dark:bg-violet-900/20 border border-violet-200/50 dark:border-violet-800/30">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-400 flex items-center gap-1">
+                    <Target className="h-3 w-3" />
+                    Estratégia Atual
+                  </p>
+                  <p className="text-[11px] text-violet-900/80 dark:text-violet-200/80 leading-relaxed">{assistido.estrategiaDefesaAtual}</p>
                 </div>
               )}
 
