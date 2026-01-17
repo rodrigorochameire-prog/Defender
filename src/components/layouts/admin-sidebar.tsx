@@ -221,7 +221,7 @@ function AdminSidebarContent({
         <Sidebar
           collapsible="icon"
           className={cn(
-            "border-r-2 backdrop-blur-xl shadow-[2px_0_12px_-4px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_12px_-4px_rgba(0,0,0,0.3)]"
+            "border-r backdrop-blur-xl shadow-[1px_0_8px_-4px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_8px_-4px_rgba(0,0,0,0.2)]"
           )}
           style={{
             background: `var(--sidebar-bg, ${config.sidebarBg})`,
@@ -231,7 +231,7 @@ function AdminSidebarContent({
         >
           {/* Header com Switcher de Atribuição - mesma altura do header principal (h-16) */}
           <SidebarHeader 
-            className="border-b-2 h-16 flex items-center px-3"
+            className="border-b h-16 flex items-center px-3"
             style={{
               background: `var(--sidebar-header-bg, ${config.sidebarHeaderBg})`,
               borderColor: `var(--sidebar-divider, ${config.sidebarDivider})`,
@@ -488,7 +488,7 @@ function AdminSidebarContent({
 
           {/* Footer */}
           <SidebarFooter 
-            className="p-3 border-t-2"
+            className="p-3 border-t"
             style={{
               borderColor: config.sidebarDivider,
               background: `linear-gradient(to top, ${config.sidebarHover}, transparent)`,
@@ -609,7 +609,7 @@ function AdminSidebarContent({
           <div
             className={cn(
               "flex border-b h-16 items-center justify-center backdrop-blur-xl px-6 sticky top-0 z-40 relative",
-              "border-b-[hsl(155,15%,90%)] dark:border-b-[hsl(160,10%,18%)]"
+              "border-b-[hsl(155,15%,92%)] dark:border-b-[hsl(160,10%,16%)]"
             )}
             style={{
               background: `linear-gradient(135deg, ${config.accentColorLight} 0%, hsl(155, 15%, 99%) 100%)`,
