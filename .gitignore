@@ -43,3 +43,4 @@ drizzle/meta/
 
 # Testing
 coverage/
+.env*.local

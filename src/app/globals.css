@@ -3,107 +3,107 @@
 @tailwind utilities;
 
 /* ========================================
-   TETECARE - DESIGN SYSTEM v6.1
-   Sofisticado • Equilibrado • Limpo
-   CACHE BUST: 2026-01-08-v3
+   DEFESAHUB - DESIGN SYSTEM v1.0
+   Minimalismo Juridico • Autoridade • Foco
+   The Law Suite - Paleta Sóbria
    ======================================== */
-
-/* ========================================
-   LOGO - Azul Escuro e Profundo
-   ======================================== */
-
-/* Ajusta o azul da logo para um tom mais escuro preservando outras cores */
-img[src*="tetecare-logo"] {
-  filter: saturate(1.2) contrast(1.08) hue-rotate(8deg);
-}
 
 @layer base {
   :root {
-    /* MODO CLARO - Off-white para fundo, branco puro para cards */
-    --background: 210 20% 98%; /* #F8FAFC - Off-white sofisticado */
-    --foreground: 220 22% 18%; /* Texto principal mais escuro */
+    /* MODO CLARO - Zinc para fundo, branco para cards */
+    --background: 240 5% 96%; /* Zinc-100 */
+    --foreground: 240 10% 10%; /* Quase preto */
     --card: 0 0% 100%; /* Branco puro para cards */
-    --card-foreground: 220 20% 20%;
+    --card-foreground: 240 10% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 20%;
+    --popover-foreground: 240 10% 10%;
     
-    /* Primary - Laranja sofisticado */
-    --primary: 24 80% 52%;
+    /* Primary - Emerald Profundo (Autoridade) */
+    --primary: 158 64% 28%; /* Emerald-700 */
     --primary-foreground: 0 0% 100%;
     
-    /* Neutros elegantes - Azul profundo (Slate/Navy) para inativos */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 16% 42%; /* Azul slate mais profundo */
-    --muted: 220 13% 96%;
-    --muted-foreground: 220 11% 50%; /* Textos secundários mais definidos */
-    --accent: 220 14% 96%;
-    --accent-foreground: 220 16% 38%; /* Azul slate para elementos inativos */
+    /* Neutros elegantes - Slate/Zinc */
+    --secondary: 240 5% 94%;
+    --secondary-foreground: 240 6% 35%;
+    --muted: 240 5% 94%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 92%;
+    --accent-foreground: 240 6% 30%;
     
-    --destructive: 0 70% 50%;
+    /* Destructive - Vermelho sóbrio */
+    --destructive: 0 65% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%; /* Borda mais suave */
-    --input: 220 14% 94%;
-    --ring: 24 80% 52%;
-    --radius: 0.875rem; /* 14px - Border-radius padronizado */
     
-    /* Charts - Paleta harmonizada (laranja + azul) */
-    --chart-1: 24 80% 52%;
-    --chart-2: 200 70% 50%;
-    --chart-3: 24 70% 65%;
-    --chart-4: 200 60% 60%;
-    --chart-5: 220 15% 50%;
+    --border: 240 6% 88%;
+    --input: 240 6% 90%;
+    --ring: 158 64% 28%;
+    --radius: 0.75rem;
+    
+    /* Charts - Paleta neutra elegante */
+    --chart-1: 158 64% 28%; /* Emerald */
+    --chart-2: 240 6% 40%; /* Slate */
+    --chart-3: 158 40% 45%; /* Verde musgo */
+    --chart-4: 240 5% 55%; /* Cinza */
+    --chart-5: 0 65% 45%; /* Vermelho sóbrio */
 
-    /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 20% 25%;
-    --sidebar-primary: 24 80% 52%;
+    /* Status Colors - Sóbrios */
+    --status-fatal: 0 65% 45%; /* Vermelho Sangue */
+    --status-urgente: 25 85% 50%; /* Laranja */
+    --status-andamento: 158 50% 35%; /* Verde Musgo */
+    --status-arquivado: 240 4% 46%; /* Cinza Chumbo */
+    --status-concluido: 158 64% 28%; /* Emerald */
+
+    /* Sidebar - Escura para contraste */
+    --sidebar-background: 240 10% 12%; /* Zinc-900 */
+    --sidebar-foreground: 240 5% 85%;
+    --sidebar-primary: 158 64% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 220 15% 35%;
-    --sidebar-border: 220 14% 92%;
-    --sidebar-ring: 24 80% 52%;
+    --sidebar-accent: 240 8% 18%;
+    --sidebar-accent-foreground: 240 5% 80%;
+    --sidebar-border: 240 8% 20%;
+    --sidebar-ring: 158 64% 45%;
   }
 
   .dark {
-    /* MODO ESCURO - Elegante, profundo */
-    --background: 220 20% 10%;
-    --foreground: 220 12% 92%;
-    --card: 220 18% 13%;
-    --card-foreground: 220 12% 92%;
-    --popover: 220 18% 13%;
-    --popover-foreground: 220 12% 92%;
+    /* MODO ESCURO - Profundo e elegante */
+    --background: 240 10% 6%; /* Quase preto */
+    --foreground: 240 5% 92%;
+    --card: 240 10% 9%;
+    --card-foreground: 240 5% 92%;
+    --popover: 240 10% 9%;
+    --popover-foreground: 240 5% 92%;
     
-    /* Primary - Laranja luminoso */
-    --primary: 24 85% 55%;
+    /* Primary - Emerald luminoso */
+    --primary: 158 65% 45%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 220 15% 16%;
-    --secondary-foreground: 220 10% 80%;
-    --muted: 220 14% 17%;
-    --muted-foreground: 220 10% 55%;
-    --accent: 220 15% 16%;
-    --accent-foreground: 220 10% 80%;
+    --secondary: 240 8% 14%;
+    --secondary-foreground: 240 5% 75%;
+    --muted: 240 8% 14%;
+    --muted-foreground: 240 4% 55%;
+    --accent: 240 8% 16%;
+    --accent-foreground: 240 5% 80%;
     
-    --destructive: 0 65% 55%;
+    --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 24 85% 55%;
+    --border: 240 8% 18%;
+    --input: 240 8% 18%;
+    --ring: 158 65% 45%;
 
     /* Sidebar escuro */
-    --sidebar-background: 220 20% 9%;
-    --sidebar-foreground: 220 12% 88%;
-    --sidebar-primary: 24 85% 55%;
+    --sidebar-background: 240 10% 5%;
+    --sidebar-foreground: 240 5% 85%;
+    --sidebar-primary: 158 65% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 14%;
-    --sidebar-accent-foreground: 220 10% 80%;
-    --sidebar-border: 220 15% 17%;
-    --sidebar-ring: 24 85% 55%;
+    --sidebar-accent: 240 8% 12%;
+    --sidebar-accent-foreground: 240 5% 80%;
+    --sidebar-border: 240 8% 15%;
+    --sidebar-ring: 158 65% 45%;
   }
 }
 
 /* ========================================
-   TIPOGRAFIA - Fonte Grande Padrão
+   TIPOGRAFIA - Fonte Profissional
    ======================================== */
 
 @layer base {
@@ -113,18 +113,18 @@ img[src*="tetecare-logo"] {
   
   html {
     scroll-behavior: smooth;
-    font-size: 17px;
+    font-size: 16px;
   }
   
   body {
     @apply bg-background text-foreground antialiased;
-    line-height: 1.65;
+    line-height: 1.6;
     letter-spacing: -0.01em;
     font-weight: 400;
     background-color: hsl(var(--background));
   }
 
-  /* Hierarquia Tipográfica Melhorada */
+  /* Hierarquia Tipográfica Jurídica */
   h1 { @apply text-2xl font-bold tracking-tight text-foreground; }
   h2 { @apply text-xl font-bold tracking-tight text-foreground; }
   h3 { @apply text-lg font-semibold text-foreground; }
@@ -135,7 +135,7 @@ img[src*="tetecare-logo"] {
 }
 
 /* ========================================
-   ANIMAÇÕES
+   ANIMAÇÕES - Sutis e Profissionais
    ======================================== */
 
 @keyframes fade-in {
@@ -143,8 +143,17 @@ img[src*="tetecare-logo"] {
   to { opacity: 1; }
 }
 
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
 }
 
 /* ========================================
@@ -152,37 +161,37 @@ img[src*="tetecare-logo"] {
    ======================================== */
 
 .page-container {
-  @apply space-y-5 animate-fade-in;
+  @apply space-y-6 animate-fade-in;
 }
 
 /* ========================================
-   HEADER DE PÁGINA
+   HEADER DE PÁGINA - Sóbrio
    ======================================== */
 
 .page-header {
-  @apply flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-border/50;
+  @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border/50;
 }
 
 .page-header-content {
-  @apply flex items-center gap-3.5;
+  @apply flex items-center gap-4;
 }
 
 .page-header-icon {
-  @apply h-11 w-11 rounded-xl flex items-center justify-center flex-shrink-0;
+  @apply h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0;
   background: hsl(var(--primary));
 }
 
 .page-header-icon svg {
   @apply h-5 w-5 text-white;
-  stroke-width: 2.25;
-  }
+  stroke-width: 2;
+}
 
 .page-header-info h1 {
-  @apply text-xl font-bold tracking-tight;
+  @apply text-2xl font-bold tracking-tight;
 }
 
 .page-header-info p {
-  @apply text-[0.8125rem] text-muted-foreground mt-0.5;
+  @apply text-sm text-muted-foreground mt-0.5;
 }
 
 .page-header-actions {
@@ -190,115 +199,97 @@ img[src*="tetecare-logo"] {
 }
 
 /* ========================================
-   CARDS DE ESTATÍSTICAS
+   CARDS DE ESTATÍSTICAS - Glassmorphism Sóbrio
    ======================================== */
 
 .stats-grid {
-  @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
-  }
-
-.stats-row {
-  @apply grid grid-cols-2 lg:grid-cols-4 gap-3;
+  @apply grid grid-cols-2 lg:grid-cols-4 gap-4;
 }
 
 .stat-card {
-  @apply rounded-[14px] p-5 bg-card;
-  border: none;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 
-              0 1px 3px 0 rgba(0, 0, 0, 0.05),
-              0 2px 6px 0 rgba(0, 0, 0, 0.02);
-  transition: all 0.3s ease;
+  @apply rounded-xl p-5 bg-card relative overflow-hidden;
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05),
+              0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.03), transparent);
+  pointer-events: none;
 }
 
 .stat-card:hover {
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.06), 
-              0 2px 4px 0 rgba(0, 0, 0, 0.08),
-              0 8px 16px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08),
+              0 2px 4px -2px rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
 }
 
 .stat-card-header {
-  @apply flex items-center justify-between mb-2;
-}
-
-.stat-card-header .title {
-  @apply text-xs font-semibold uppercase tracking-wide text-muted-foreground;
-}
-
-.stat-card-header .icon {
-  @apply h-4 w-4 opacity-70;
+  @apply flex items-center justify-between mb-3;
 }
 
 .stat-card-title {
-  @apply text-xs font-semibold uppercase tracking-wide text-muted-foreground;
+  @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground;
 }
 
 .stat-card-icon {
-  @apply h-4 w-4;
+  @apply h-5 w-5;
   color: hsl(var(--primary));
 }
 
-.stat-card-icon.primary { color: hsl(var(--primary)); }
-.stat-card-icon.blue { color: hsl(200 65% 50%); }
-.stat-card-icon.green { color: hsl(var(--primary)); }
-.stat-card-icon.amber { color: hsl(var(--primary)); }
-.stat-card-icon.muted { color: hsl(var(--muted-foreground)); }
-
 .stat-card-value {
-  @apply text-2xl font-bold tracking-tight text-foreground;
+  @apply text-3xl font-bold tracking-tight text-foreground;
 }
 
 .stat-card-description {
-  @apply text-xs text-muted-foreground mt-1;
+  @apply text-xs text-muted-foreground mt-1.5;
 }
 
-/* Variante Alert */
-.stat-card.alert {
-  border-color: hsl(45 80% 75% / 0.5);
-  background: hsl(45 90% 98%);
+/* Variantes de Status */
+.stat-card.fatal {
+  border-color: hsl(var(--status-fatal) / 0.3);
+  background: linear-gradient(135deg, hsl(var(--status-fatal) / 0.05), hsl(var(--card)));
 }
 
-.dark .stat-card.alert {
-  border-color: hsl(45 60% 35% / 0.3);
-  background: hsl(45 35% 10%);
-  }
-
-/* Variante com destaque */
-.stat-card.highlight {
-  border-color: hsl(45 93% 70% / 0.5);
-  background: hsl(45 93% 97%);
+.stat-card.fatal .stat-card-value {
+  color: hsl(var(--status-fatal));
 }
 
-.dark .stat-card.highlight {
-  border-color: hsl(45 70% 40% / 0.3);
-  background: hsl(45 30% 12%);
+.stat-card.urgente {
+  border-color: hsl(var(--status-urgente) / 0.3);
+  background: linear-gradient(135deg, hsl(var(--status-urgente) / 0.05), hsl(var(--card)));
 }
 
-.stat-card.highlight .stat-card-value {
-  color: hsl(45 80% 35%);
-  }
+.stat-card.urgente .stat-card-value {
+  color: hsl(var(--status-urgente));
+}
 
-.dark .stat-card.highlight .stat-card-value {
-  color: hsl(45 85% 55%);
+.stat-card.andamento {
+  border-color: hsl(var(--status-andamento) / 0.3);
+  background: linear-gradient(135deg, hsl(var(--status-andamento) / 0.05), hsl(var(--card)));
+}
+
+.stat-card.andamento .stat-card-value {
+  color: hsl(var(--status-andamento));
 }
 
 /* ========================================
-   SECTION CARDS
+   SECTION CARDS - Glassmorphism Escuro
    ======================================== */
 
 .section-card {
-  @apply rounded-[14px] bg-card overflow-hidden;
-  border: none;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 
-              0 1px 3px 0 rgba(0, 0, 0, 0.05),
-              0 2px 6px 0 rgba(0, 0, 0, 0.02);
-  transition: all 0.3s ease;
+  @apply rounded-xl bg-card overflow-hidden;
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 }
 
 .section-card:hover {
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.06), 
-              0 2px 4px 0 rgba(0, 0, 0, 0.08),
-              0 8px 16px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
 
 .section-card-header {
@@ -306,34 +297,12 @@ img[src*="tetecare-logo"] {
 }
 
 .section-card-title {
-  @apply flex items-center gap-2 text-sm font-semibold text-foreground;
+  @apply flex items-center gap-2.5 text-sm font-semibold text-foreground;
 }
 
-.section-card-title .icon,
 .section-card-title svg {
   @apply h-4 w-4;
   color: hsl(var(--primary));
-}
-
-.section-card-description {
-  @apply text-xs text-muted-foreground;
-}
-
-.section-card-subtitle {
-  @apply text-xs text-muted-foreground;
-}
-
-.section-card-action {
-  @apply text-xs font-semibold flex items-center gap-1 transition-colors;
-  color: hsl(var(--primary));
-}
-
-.section-card-action:hover {
-  opacity: 0.8;
-  }
-
-.section-card-action svg {
-  @apply h-3 w-3;
 }
 
 .section-card-content {
@@ -341,70 +310,67 @@ img[src*="tetecare-logo"] {
 }
 
 /* ========================================
-   LISTAS
+   LISTAS - Minimalistas
    ======================================== */
 
-.list-container {
-  @apply space-y-0.5;
-}
-
 .list-item {
-  @apply flex items-center gap-4 p-4 rounded-[14px] cursor-pointer;
-  transition: all 0.3s ease;
-  border: none;
+  @apply flex items-center gap-4 p-4 rounded-lg cursor-pointer;
+  transition: all 0.2s ease;
 }
 
 .list-item:hover {
-  background: hsl(var(--muted) / 0.5);
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04), 
-              0 1px 2px 0 rgba(0, 0, 0, 0.02);
-  transform: translateY(-1px);
+  background: hsl(var(--accent) / 0.5);
 }
 
 .list-item-icon {
-  @apply h-10 w-10 rounded-[14px] flex items-center justify-center flex-shrink-0;
-  background: hsl(220 14% 96%); /* Slate-100 */
-  transition: all 0.3s ease;
+  @apply h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0;
+  background: hsl(var(--muted));
 }
 
 .list-item-icon svg {
-  @apply h-4 w-4;
-  color: hsl(215 16% 47%); /* Slate-500 - Cinza neutro */
-}
-
-.list-item:hover .list-item-icon {
-  background: hsl(220 14% 93%);
-}
-
-/* Todos os ícones de lista agora são neutros (cinza) */
-.list-item-icon.primary { background: hsl(220 14% 96%); }
-.list-item-icon.primary svg { color: hsl(215 16% 47%); }
-
-.list-item-icon.blue { background: hsl(220 14% 96%); }
-.list-item-icon.blue svg { color: hsl(215 16% 47%); }
-
-.list-item-content {
-  @apply flex-1 min-w-0;
+  @apply h-4 w-4 text-muted-foreground;
 }
 
 .list-item-title {
-  @apply text-sm font-bold truncate text-foreground;
+  @apply text-sm font-semibold text-foreground;
 }
 
 .list-item-subtitle {
-  @apply text-xs truncate;
-  color: hsl(220 11% 50%); /* Texto secundário com cor mais definida */
+  @apply text-xs text-muted-foreground;
 }
 
 /* ========================================
-   BADGES
+   BADGES - Sóbrios
    ======================================== */
 
 .badge {
-  @apply inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold;
-  transition: all 0.3s ease;
-  border: none;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  @apply inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold;
+  transition: all 0.2s ease;
+}
+
+.badge-fatal {
+  background: hsl(var(--status-fatal) / 0.1);
+  color: hsl(var(--status-fatal));
+}
+
+.badge-urgente {
+  background: hsl(var(--status-urgente) / 0.1);
+  color: hsl(var(--status-urgente));
+}
+
+.badge-andamento {
+  background: hsl(var(--status-andamento) / 0.1);
+  color: hsl(var(--status-andamento));
+}
+
+.badge-arquivado {
+  background: hsl(var(--status-arquivado) / 0.1);
+  color: hsl(var(--status-arquivado));
+}
+
+.badge-concluido {
+  background: hsl(var(--status-concluido) / 0.1);
+  color: hsl(var(--status-concluido));
 }
 
 .badge-neutral {
@@ -412,90 +378,187 @@ img[src*="tetecare-logo"] {
   color: hsl(var(--muted-foreground));
 }
 
-.badge-default {
+/* ========================================
+   KANBAN - Quadro de Tarefas
+   ======================================== */
+
+.kanban-board {
+  @apply flex gap-4 overflow-x-auto pb-4;
+}
+
+.kanban-column {
+  @apply flex-shrink-0 w-80 bg-muted/30 rounded-xl p-4;
+  min-height: 500px;
+}
+
+.kanban-column-header {
+  @apply flex items-center justify-between mb-4 pb-3 border-b border-border/50;
+}
+
+.kanban-column-title {
+  @apply text-sm font-bold text-foreground;
+}
+
+.kanban-column-count {
+  @apply text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground;
+}
+
+.kanban-card {
+  @apply bg-card p-4 rounded-lg mb-3 cursor-grab active:cursor-grabbing;
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+}
+
+.kanban-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.kanban-card.dragging {
+  opacity: 0.5;
+  transform: rotate(3deg);
+}
+
+/* ========================================
+   TIMELINE PROCESSUAL
+   ======================================== */
+
+.timeline {
+  @apply relative;
+}
+
+.timeline-line {
+  @apply absolute left-4 top-0 bottom-0 w-0.5 bg-border;
+}
+
+.timeline-item {
+  @apply relative pl-10 pb-8;
+}
+
+.timeline-dot {
+  @apply absolute left-2.5 w-3 h-3 rounded-full bg-primary ring-4 ring-background;
+}
+
+.timeline-dot.active {
+  @apply bg-primary ring-primary/20;
+}
+
+.timeline-dot.completed {
+  @apply bg-primary/50;
+}
+
+.timeline-dot.pending {
+  @apply bg-muted-foreground/30;
+}
+
+.timeline-content {
+  @apply bg-card p-4 rounded-lg border border-border/50;
+}
+
+/* ========================================
+   BARRA DE PROGRESSO PROCESSUAL
+   ======================================== */
+
+.progress-bar {
+  @apply flex items-center gap-0;
+}
+
+.progress-step {
+  @apply flex-1 relative;
+}
+
+.progress-step-line {
+  @apply h-1 bg-muted;
+}
+
+.progress-step-line.active {
+  @apply bg-primary;
+}
+
+.progress-step-line.completed {
+  @apply bg-primary;
+}
+
+.progress-step-dot {
+  @apply absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-muted border-2 border-background;
+}
+
+.progress-step-dot.active {
+  @apply bg-primary ring-4 ring-primary/20;
+}
+
+.progress-step-dot.completed {
+  @apply bg-primary;
+}
+
+.progress-step-label {
+  @apply text-xs text-muted-foreground text-center mt-3;
+}
+
+.progress-step-label.active {
+  @apply text-primary font-semibold;
+}
+
+/* ========================================
+   CALCULADORA DE PENA
+   ======================================== */
+
+.calc-progress-ring {
+  @apply relative w-40 h-40 mx-auto;
+}
+
+.calc-progress-ring svg {
+  transform: rotate(-90deg);
+}
+
+.calc-progress-ring .track {
+  stroke: hsl(var(--muted));
+}
+
+.calc-progress-ring .progress {
+  stroke: hsl(var(--primary));
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.calc-progress-ring .value {
+  @apply absolute inset-0 flex flex-col items-center justify-center;
+}
+
+/* ========================================
+   COCKPIT DO JÚRI
+   ======================================== */
+
+.jury-seat {
+  @apply relative w-16 h-16 rounded-full flex items-center justify-center cursor-pointer;
   background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
+  border: 2px solid hsl(var(--border));
+  transition: all 0.2s ease;
 }
 
-.badge-primary {
-  background: hsl(var(--primary) / 0.1);
-  color: hsl(var(--primary));
+.jury-seat:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
 }
 
-.badge-green {
-  background: hsl(142 65% 96%);
-  color: hsl(142 58% 32%);
-  box-shadow: 0 1px 2px 0 rgba(34, 197, 94, 0.12);
+.jury-seat.favorable {
+  background: hsl(var(--status-andamento) / 0.2);
+  border-color: hsl(var(--status-andamento));
 }
 
-.dark .badge-green {
-  background: hsl(142 50% 25% / 0.4);
-  color: hsl(142 55% 62%);
+.jury-seat.unfavorable {
+  background: hsl(var(--status-fatal) / 0.2);
+  border-color: hsl(var(--status-fatal));
 }
 
-.badge-blue {
-  background: hsl(200 60% 94%);
-  color: hsl(200 55% 42%);
+.jury-seat.neutral {
+  background: hsl(var(--muted));
+  border-color: hsl(var(--border));
 }
 
-.dark .badge-blue {
-  background: hsl(200 45% 22% / 0.4);
-  color: hsl(200 50% 62%);
-}
-
-.badge-amber {
-  background: hsl(24 85% 96%);
-  color: hsl(24 75% 35%);
-  box-shadow: 0 1px 2px 0 rgba(234, 179, 8, 0.12);
-}
-
-.dark .badge-amber {
-  background: hsl(24 75% 30% / 0.35);
-  color: hsl(24 80% 58%);
-}
-
-.badge-rose {
-  background: hsl(0 65% 97%);
-  color: hsl(0 58% 40%);
-  box-shadow: 0 1px 2px 0 rgba(239, 68, 68, 0.12);
-}
-
-.dark .badge-rose {
-  background: hsl(0 50% 25% / 0.4);
-  color: hsl(0 60% 65%);
-}
-
-.badge-success {
-  background: hsl(142 60% 94%);
-  color: hsl(142 55% 28%);
-  box-shadow: 0 1px 2px 0 rgba(34, 197, 94, 0.08);
-}
-
-.dark .badge-success {
-  background: hsl(142 45% 22% / 0.4);
-  color: hsl(142 55% 58%);
-}
-
-.badge-warning {
-  background: hsl(45 85% 94%);
-  color: hsl(45 70% 30%);
-  box-shadow: 0 1px 2px 0 rgba(234, 179, 8, 0.08);
-}
-
-.dark .badge-warning {
-  background: hsl(45 75% 30% / 0.35);
-  color: hsl(45 80% 62%);
-}
-
-.badge-error {
-  background: hsl(0 70% 96%);
-  color: hsl(0 60% 38%);
-  box-shadow: 0 1px 2px 0 rgba(239, 68, 68, 0.08);
-}
-
-.dark .badge-error {
-  background: hsl(0 72% 51% / 0.2);
-  color: hsl(0 72% 65%);
+.jury-seat-number {
+  @apply text-lg font-bold text-foreground;
 }
 
 /* ========================================
@@ -503,264 +566,53 @@ img[src*="tetecare-logo"] {
    ======================================== */
 
 .empty-state {
-  @apply flex flex-col items-center justify-center py-10 text-center;
+  @apply flex flex-col items-center justify-center py-16 text-center;
 }
 
 .empty-state-icon {
-  @apply h-10 w-10 rounded-xl flex items-center justify-center mb-3;
+  @apply h-16 w-16 rounded-2xl flex items-center justify-center mb-4;
   background: hsl(var(--muted));
 }
 
 .empty-state-icon svg {
-  @apply h-5 w-5;
-  color: hsl(var(--muted-foreground) / 0.4);
-  }
-
-.empty-state-text {
-  @apply text-[0.8125rem] text-muted-foreground;
+  @apply h-8 w-8 text-muted-foreground;
 }
 
 .empty-state-title {
-  @apply text-[0.8125rem] font-medium text-foreground;
+  @apply text-lg font-semibold text-foreground mb-2;
 }
 
 .empty-state-description {
-  @apply text-xs text-muted-foreground mt-1 max-w-[220px];
+  @apply text-sm text-muted-foreground max-w-sm;
 }
 
 /* ========================================
-   ACTION CARDS
+   BUTTONS - Sóbrios
    ======================================== */
-
-.action-grid {
-  @apply grid grid-cols-2 md:grid-cols-4 gap-2;
-}
-
-.action-card {
-  @apply flex items-center gap-4 p-4 rounded-[14px] cursor-pointer;
-  border: none;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 
-              0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  background: hsl(var(--card));
-}
-
-.action-card:hover {
-  background: hsl(var(--muted) / 0.4);
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.06), 
-              0 2px 4px 0 rgba(0, 0, 0, 0.08),
-              0 8px 16px 0 rgba(0, 0, 0, 0.04);
-  transform: translateY(-2px);
-}
-
-.action-card-icon {
-  @apply h-8 w-8 rounded-md flex items-center justify-center;
-  background: hsl(var(--primary) / 0.1);
-  }
-
-.action-card-icon svg {
-  @apply h-4 w-4;
-  color: hsl(var(--primary));
-}
-
-.action-card-label {
-  @apply text-xs font-medium text-foreground;
-}
-
-/* ========================================
-   TOOLBAR / FILTROS
-   ======================================== */
-
-.toolbar {
-  @apply flex items-center justify-between gap-4 flex-wrap;
-}
-
-.toolbar-left {
-  @apply flex items-center gap-2 flex-wrap;
-  }
-
-.toolbar-right {
-  @apply flex items-center gap-2;
-}
-
-.search-input {
-  @apply relative;
-}
-
-.search-input svg {
-  @apply absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground;
-}
-
-.search-input input {
-  @apply pl-9;
-}
-
-.view-toggle {
-  @apply flex items-center border rounded-md p-0.5;
-  border-color: hsl(var(--border));
-}
-
-.view-toggle button {
-  @apply h-7 w-7 p-0;
-}
-
-/* ========================================
-   TABS
-   ======================================== */
-
-.tabs-list {
-  @apply flex flex-wrap gap-1;
-}
-
-.tab-trigger {
-  @apply px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-colors;
-  color: hsl(var(--muted-foreground));
-}
-
-.tab-trigger:hover {
-  background: hsl(var(--muted) / 0.5);
-}
-
-.tab-trigger.active {
-  background: hsl(var(--primary));
-  color: white;
-}
-
-/* ========================================
-   ALERT BOX
-   ======================================== */
-
-.alert-box {
-  @apply flex items-center gap-3 p-3 rounded-lg border;
-}
-
-.alert-box.warning {
-  border-color: hsl(45 93% 70% / 0.5);
-  background: hsl(45 93% 97%);
-}
-
-.dark .alert-box.warning {
-  border-color: hsl(45 70% 40% / 0.3);
-  background: hsl(45 30% 12%);
-}
-
-.alert-box.error {
-  border-color: hsl(0 72% 70% / 0.5);
-  background: hsl(0 72% 97%);
-}
-
-.dark .alert-box.error {
-  border-color: hsl(0 60% 40% / 0.3);
-  background: hsl(0 30% 12%);
-}
-
-.alert-box-icon {
-  @apply h-8 w-8 rounded-md flex items-center justify-center flex-shrink-0;
-}
-
-.alert-box.warning .alert-box-icon {
-  background: hsl(45 93% 90%);
-}
-.alert-box.warning .alert-box-icon svg {
-  color: hsl(45 80% 35%);
-}
-
-.dark .alert-box.warning .alert-box-icon {
-  background: hsl(45 60% 20%);
-}
-.dark .alert-box.warning .alert-box-icon svg {
-  color: hsl(45 85% 55%);
-}
-
-.alert-box.error .alert-box-icon {
-  background: hsl(0 72% 90%);
-}
-.alert-box.error .alert-box-icon svg {
-  color: hsl(0 72% 45%);
-}
-
-.dark .alert-box.error .alert-box-icon {
-  background: hsl(0 50% 20%);
-}
-.dark .alert-box.error .alert-box-icon svg {
-  color: hsl(0 70% 60%);
-}
-
-.alert-box-content h4 {
-  @apply text-sm font-medium;
-}
-
-.alert-box.warning .alert-box-content h4 {
-  color: hsl(45 80% 30%);
-  }
-
-.dark .alert-box.warning .alert-box-content h4 {
-  color: hsl(45 85% 60%);
-}
-
-.alert-box.error .alert-box-content h4 {
-  color: hsl(0 72% 40%);
-}
-
-.dark .alert-box.error .alert-box-content h4 {
-  color: hsl(0 70% 65%);
-}
-
-.alert-box-content p {
-  @apply text-xs mt-0.5;
-  color: hsl(var(--muted-foreground));
-}
-
-/* ========================================
-   GRID LAYOUTS
-   ======================================== */
-
-.content-grid {
-  @apply grid gap-4 lg:grid-cols-2;
-}
-
-.content-grid-3 {
-  @apply grid gap-4 md:grid-cols-2 lg:grid-cols-3;
-}
-
-.content-grid-4 {
-  @apply grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
-}
-
-/* ========================================
-   BUTTONS
-   ======================================== */
-
-.btn-sm {
-  @apply h-8 px-3 text-xs font-medium rounded-md;
-}
 
 .btn-primary {
-  background: hsl(var(--primary));
-  color: white;
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
 }
 
-.btn-primary:hover {
-  opacity: 0.9;
+.btn-secondary {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
 }
 
-.btn-outline {
-  @apply border;
-  border-color: hsl(var(--border));
-  color: hsl(var(--foreground));
+.btn-ghost {
+  @apply hover:bg-accent hover:text-accent-foreground;
 }
 
-.btn-outline:hover {
-  background: hsl(var(--muted) / 0.5);
+.btn-destructive {
+  @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
 }
 
 /* ========================================
-   SCROLLBAR
+   SCROLLBAR - Minimalista
    ======================================== */
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -768,30 +620,30 @@ img[src*="tetecare-logo"] {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.15);
+  background: hsl(var(--muted-foreground) / 0.2);
   border-radius: 100px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.25);
+  background: hsl(var(--muted-foreground) / 0.3);
 }
 
-/* Sidebar - Scrollbar invisível (mantém função de scroll) */
+/* Sidebar - Scrollbar invisível */
 [data-sidebar="content"] {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 [data-sidebar="content"]::-webkit-scrollbar {
-  display: none; /* Chrome/Safari/Opera */
+  display: none;
 }
 
 /* ========================================
-   FOCUS
+   FOCUS - Acessibilidade
    ======================================== */
 
 *:focus-visible {
-  outline: 2px solid hsl(var(--primary) / 0.5);
+  outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
 
@@ -800,27 +652,8 @@ img[src*="tetecare-logo"] {
    ======================================== */
 
 a, button {
-  transition: all 0.3s ease;
+  transition: all 0.15s ease;
 }
-
-/* Transições suaves em elementos interativos */
-* {
-  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-  transition-timing-function: ease;
-  transition-duration: 0.3s;
-}
-
-/* Exceções para elementos que não devem ter transição */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-textarea,
-select {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* (Removido overrides de animação do Radix para não afetar posicionamento) */
 
 /* ========================================
    REDUCED MOTION
@@ -834,86 +667,116 @@ select {
 }
 
 /* ========================================
-   MODO FONTE GRANDE
+   GLASSMORPHISM CARDS
    ======================================== */
 
-html.font-large {
-  font-size: 17px;
+.glass-card {
+  @apply rounded-xl bg-card/80 backdrop-blur-md;
+  border: 1px solid hsl(var(--border) / 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+              0 2px 4px -2px rgba(0, 0, 0, 0.05);
 }
 
-html.font-large h1 {
-  @apply text-3xl;
-}
-
-html.font-large h2 {
-  @apply text-2xl;
-}
-
-html.font-large h3 {
-  @apply text-xl;
-}
-
-html.font-large h4 {
-  @apply text-lg;
-}
-
-html.font-large p {
-  @apply text-base;
-}
-
-html.font-large .stat-card-value {
-  @apply text-3xl;
-}
-
-html.font-large .section-card-title {
-  @apply text-base;
-}
-
-html.font-large .list-item-title {
-  @apply text-base;
-}
-
-/* Tamanhos de fonte aumentados para cards de pets no modo fonte grande */
-html.font-large .pet-card-name {
-  @apply text-lg;
-}
-
-html.font-large .pet-card-breed {
-  @apply text-base;
-}
-
-html.font-large .pet-card-credits {
-  @apply text-base;
-}
-
-html.font-large .badge {
-  @apply text-sm px-3 py-1;
+.glass-card-dark {
+  @apply rounded-xl backdrop-blur-md;
+  background: hsl(240 10% 6% / 0.8);
+  border: 1px solid hsl(240 8% 20% / 0.5);
 }
 
 /* ========================================
-   OVERRIDE FINAL - RADIX UI SEM ANIMAÇÕES
-   FORA DE @layer - MÁXIMA PRIORIDADE  
-   CACHE BUST v8 - ESTADO ESTÁVEL
+   DATA TABLE
    ======================================== */
 
-/* Desabilita COMPLETAMENTE qualquer animação/transição do Radix */
+.data-table {
+  @apply w-full;
+}
+
+.data-table th {
+  @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left px-4 py-3 bg-muted/50;
+}
+
+.data-table td {
+  @apply px-4 py-3 border-b border-border/30;
+}
+
+.data-table tr:hover {
+  @apply bg-accent/30;
+}
+
+/* ========================================
+   PROCESSO NUMBER - Monospace
+   ======================================== */
+
+.processo-numero {
+  @apply font-mono text-xs text-muted-foreground;
+  letter-spacing: 0.02em;
+}
+
+/* ========================================
+   PRIORITY INDICATORS
+   ======================================== */
+
+.priority-dot {
+  @apply w-2 h-2 rounded-full;
+}
+
+.priority-dot.fatal {
+  background: hsl(var(--status-fatal));
+  box-shadow: 0 0 8px hsl(var(--status-fatal) / 0.5);
+}
+
+.priority-dot.urgente {
+  background: hsl(var(--status-urgente));
+}
+
+.priority-dot.alta {
+  background: hsl(var(--status-urgente) / 0.7);
+}
+
+.priority-dot.normal {
+  background: hsl(var(--muted-foreground));
+}
+
+.priority-dot.baixa {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* ========================================
+   INTEGRATION STATUS
+   ======================================== */
+
+.integration-status {
+  @apply flex items-center gap-2 text-xs;
+}
+
+.integration-status-dot {
+  @apply w-2 h-2 rounded-full;
+}
+
+.integration-status-dot.connected {
+  @apply bg-green-500;
+}
+
+.integration-status-dot.disconnected {
+  @apply bg-muted-foreground;
+}
+
+.integration-status-dot.error {
+  @apply bg-destructive;
+}
+
+/* ========================================
+   OVERRIDE FINAL - RADIX UI
+   ======================================== */
+
 [data-radix-tooltip-content],
 [data-radix-popover-content],
 [data-radix-dropdown-menu-content],
-[data-radix-select-content],
-[data-radix-popper-content-wrapper],
-[data-radix-popper-content-wrapper] > * {
+[data-radix-select-content] {
   animation: none !important;
-  animation-name: none !important;
-  animation-duration: 0s !important;
   transition: none !important;
-  transition-property: none !important;
-  transition-duration: 0s !important;
-  -webkit-animation: none !important;
-  -webkit-transition: none !important;
 }
 
-/* Garante opacidade total - aparece instantaneamente */
 [data-radix-tooltip-content][data-state="open"],
 [data-radix-popover-content][data-state="open"] {
   opacity: 1 !important;

@@ -1,40 +1,26 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { 
   Users, 
   Calendar, 
-  AlertCircle, 
-  Clock, 
-  Activity, 
-  Plus,
-  BarChart3,
-  PieChart,
-  Download,
-  Eye,
   AlertTriangle,
+  Clock, 
+  Plus,
   ChevronRight,
   Scale,
   Gavel,
   FileText,
   Timer,
   Target,
-  TrendingUp,
   Briefcase,
-  UserCheck,
   AlertOctagon,
   CheckCircle2,
+  ArrowUpRight,
+  BarChart3,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -45,344 +31,288 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart as RechartsPie,
+  PieChart,
   Pie,
   Cell,
-  Legend,
-  Area,
-  AreaChart
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
 } from "recharts";
 
-// Cores neutras para gráficos
-const NEUTRAL_COLORS = ["#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"];
+// Cores sóbrias do design system
+const COLORS = {
+  fatal: "hsl(0, 65%, 45%)",
+  urgente: "hsl(25, 85%, 50%)",
+  andamento: "hsl(158, 50%, 35%)",
+  arquivado: "hsl(240, 4%, 46%)",
+  primary: "hsl(158, 64%, 28%)",
+};
 
 // Dados mockados para demonstração
 const mockStats = {
-  totalAssistidos: 156,
   reusPresos: 42,
-  totalProcessos: 287,
   prazosHoje: 8,
-  prazosUrgentes: 15,
+  prazosSemana: 23,
   audienciasHoje: 3,
-  jurisSemana: 2,
+  jurisMes: 4,
+  demandas: {
+    fila: 45,
+    atender: 28,
+    monitorar: 15,
+    protocolado: 67,
+  },
+  totalAssistidos: 156,
+  totalProcessos: 287,
 };
 
 const mockPrazosUrgentes = [
-  { id: 1, assistido: "Diego Bonfim Almeida", processo: "8012906-74.2025.8.05.0039", ato: "Resposta à Acusação", prazo: "Hoje", prioridade: "REU_PRESO" },
-  { id: 2, assistido: "Maria Silva Santos", processo: "0001234-56.2025.8.05.0039", ato: "Alegações Finais", prazo: "Amanhã", prioridade: "URGENTE" },
-  { id: 3, assistido: "José Carlos Oliveira", processo: "0005678-90.2025.8.05.0039", ato: "Memoriais", prazo: "Em 2 dias", prioridade: "ALTA" },
-  { id: 4, assistido: "Ana Paula Costa", processo: "0009012-34.2025.8.05.0039", ato: "Recurso", prazo: "Em 3 dias", prioridade: "NORMAL" },
+  { id: 1, assistido: "Diego Bonfim Almeida", processo: "8012906-74.2025.8.05.0039", ato: "Resposta à Acusação", prazo: "Hoje", prioridade: "REU_PRESO", diasRestantes: 0 },
+  { id: 2, assistido: "Maria Silva Santos", processo: "0001234-56.2025.8.05.0039", ato: "Alegações Finais", prazo: "Amanhã", prioridade: "URGENTE", diasRestantes: 1 },
+  { id: 3, assistido: "José Carlos Oliveira", processo: "0005678-90.2025.8.05.0039", ato: "Memoriais", prazo: "Em 2 dias", prioridade: "ALTA", diasRestantes: 2 },
+  { id: 4, assistido: "Ana Paula Costa", processo: "0009012-34.2025.8.05.0039", ato: "Recurso em Sentido Estrito", prazo: "Em 3 dias", prioridade: "NORMAL", diasRestantes: 3 },
 ];
 
 const mockAudienciasHoje = [
-  { id: 1, hora: "09:00", assistido: "Carlos Eduardo", tipo: "Instrução", vara: "1ª Vara Criminal" },
-  { id: 2, hora: "14:00", assistido: "Maria Fernanda", tipo: "Custódia", vara: "CEAC" },
-  { id: 3, hora: "16:00", assistido: "Pedro Henrique", tipo: "Conciliação", vara: "Juizado Especial" },
+  { id: 1, hora: "09:00", assistido: "Carlos Eduardo Lima", tipo: "Instrução", vara: "1ª Vara Criminal" },
+  { id: 2, hora: "14:00", assistido: "Maria Fernanda Souza", tipo: "Custódia", vara: "CEAC" },
+  { id: 3, hora: "16:00", assistido: "Pedro Henrique Alves", tipo: "Justificação", vara: "VEC" },
 ];
 
-const mockJurisSemana = [
-  { id: 1, data: "17/01", assistido: "Roberto Silva", defensor: "Dr. Rodrigo", sala: "Plenário 1" },
-  { id: 2, data: "19/01", assistido: "Marcos Souza", defensor: "Dra. Juliane", sala: "Plenário 2" },
-];
-
-const mockDemandasPorStatus = [
-  { name: "Fila", value: 45, color: "#94a3b8" },
-  { name: "Atender", value: 28, color: "#f97316" },
-  { name: "Monitorar", value: 15, color: "#eab308" },
-  { name: "Protocolado", value: 67, color: "#22c55e" },
+const mockJurisMes = [
+  { id: 1, data: "17/01", assistido: "Roberto Silva", crime: "Art. 121 §2º", defensor: "Dr. Rodrigo" },
+  { id: 2, data: "19/01", assistido: "Marcos Souza", crime: "Art. 121 c/c 14, II", defensor: "Dra. Juliane" },
+  { id: 3, data: "24/01", assistido: "João Pedro Costa", crime: "Art. 121", defensor: "Dr. Rodrigo" },
+  { id: 4, data: "31/01", assistido: "Lucas Oliveira", crime: "Art. 121 §2º, I", defensor: "Dr. Marcos" },
 ];
 
 const mockDemandasPorArea = [
-  { name: "Júri", value: 32 },
-  { name: "Exec. Penal", value: 45 },
-  { name: "Viol. Dom.", value: 28 },
-  { name: "Substituição", value: 18 },
-  { name: "Curadoria", value: 12 },
+  { area: "Júri", value: 32 },
+  { area: "Exec. Penal", value: 45 },
+  { area: "VVD", value: 28 },
+  { area: "Substituição", value: 18 },
+  { area: "Curadoria", value: 12 },
+  { area: "Família", value: 8 },
 ];
 
-const mockAtividadeSemanal = [
-  { dia: "Seg", protocolados: 12, recebidos: 8 },
-  { dia: "Ter", protocolados: 15, recebidos: 10 },
-  { dia: "Qua", protocolados: 8, recebidos: 14 },
-  { dia: "Qui", protocolados: 18, recebidos: 6 },
-  { dia: "Sex", protocolados: 22, recebidos: 9 },
+const mockFunilPrazos = [
+  { name: "Aberto", value: 45, fill: "hsl(240, 4%, 65%)" },
+  { name: "Elaborando", value: 28, fill: "hsl(25, 70%, 55%)" },
+  { name: "Revisão", value: 15, fill: "hsl(158, 50%, 45%)" },
+  { name: "Protocolado", value: 67, fill: "hsl(158, 64%, 28%)" },
 ];
 
-function getPrioridadeBadge(prioridade: string) {
-  const configs: Record<string, { variant: "default" | "destructive" | "secondary" | "outline", label: string }> = {
-    REU_PRESO: { variant: "destructive", label: "RÉU PRESO" },
-    URGENTE: { variant: "destructive", label: "URGENTE" },
-    ALTA: { variant: "default", label: "ALTA" },
-    NORMAL: { variant: "secondary", label: "NORMAL" },
-    BAIXA: { variant: "outline", label: "BAIXA" },
-  };
-  const config = configs[prioridade] || configs.NORMAL;
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+function getPrioridadeStyle(prioridade: string) {
+  switch (prioridade) {
+    case "REU_PRESO":
+      return { bg: "bg-red-50 dark:bg-red-950/50", text: "text-red-700 dark:text-red-400", dot: "bg-red-500", label: "RÉU PRESO" };
+    case "URGENTE":
+      return { bg: "bg-orange-50 dark:bg-orange-950/50", text: "text-orange-700 dark:text-orange-400", dot: "bg-orange-500", label: "URGENTE" };
+    case "ALTA":
+      return { bg: "bg-amber-50 dark:bg-amber-950/50", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-500", label: "ALTA" };
+    default:
+      return { bg: "bg-zinc-50 dark:bg-zinc-900", text: "text-zinc-600 dark:text-zinc-400", dot: "bg-zinc-400", label: "NORMAL" };
+  }
 }
 
-export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [period, setPeriod] = useState("week");
+export default function SalaDeGuerra() {
+  const [activeView, setActiveView] = useState<"overview" | "analytics">("overview");
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header - Minimalista */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Visão geral da Defensoria e gestão de processos
+          <h1 className="text-2xl font-bold tracking-tight">Sala de Guerra</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Hoje</SelectItem>
-              <SelectItem value="week">Semana</SelectItem>
-              <SelectItem value="month">Mês</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon">
-            <Download className="h-4 w-4" />
+          <Button
+            variant={activeView === "overview" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveView("overview")}
+          >
+            Visão Geral
+          </Button>
+          <Button
+            variant={activeView === "analytics" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveView("analytics")}
+          >
+            Análises
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/50">
-          <TabsTrigger value="overview" className="gap-2">
-            <Eye className="h-4 w-4" />
-            Visão Geral
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Análises
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="gap-2">
-            <Activity className="h-4 w-4" />
-            Atividade
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Tab: Visão Geral */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Cards de Status Urgente */}
-          <div className="grid gap-3 md:grid-cols-4">
-            <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
-              <CardContent className="pt-4">
+      {activeView === "overview" ? (
+        <>
+          {/* Cards de Alerta - Prioridade Zero */}
+          <div className="grid gap-4 md:grid-cols-4">
+            {/* Réus Presos */}
+            <Card className="stat-card fatal">
+              <CardContent className="pt-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-3xl font-bold text-red-700 dark:text-red-300">
-                      {mockStats.prazosHoje}
-                    </p>
-                    <p className="text-sm text-red-600 dark:text-red-400">Prazos Hoje</p>
+                    <p className="text-4xl font-bold">{mockStats.reusPresos}</p>
+                    <p className="text-sm font-medium mt-1">Réus Presos</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Prioridade máxima</p>
                   </div>
-                  <Timer className="h-8 w-8 text-red-500 opacity-50" />
+                  <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <AlertOctagon className="h-6 w-6 text-red-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800">
-              <CardContent className="pt-4">
+            {/* Prazos Hoje */}
+            <Card className="stat-card urgente">
+              <CardContent className="pt-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-3xl font-bold text-orange-700 dark:text-orange-300">
-                      {mockStats.prazosUrgentes}
-                    </p>
-                    <p className="text-sm text-orange-600 dark:text-orange-400">Prazos Urgentes</p>
+                    <p className="text-4xl font-bold">{mockStats.prazosHoje}</p>
+                    <p className="text-sm font-medium mt-1">Prazos Hoje</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{mockStats.prazosSemana} na semana</p>
                   </div>
-                  <AlertTriangle className="h-8 w-8 text-orange-500 opacity-50" />
+                  <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                    <Timer className="h-6 w-6 text-orange-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-              <CardContent className="pt-4">
+            {/* Audiências Hoje */}
+            <Card className="stat-card">
+              <CardContent className="pt-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
-                      {mockStats.audienciasHoje}
-                    </p>
-                    <p className="text-sm text-blue-600 dark:text-blue-400">Audiências Hoje</p>
+                    <p className="text-4xl font-bold">{mockStats.audienciasHoje}</p>
+                    <p className="text-sm font-medium mt-1">Audiências Hoje</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Compromissos agendados</p>
                   </div>
-                  <Briefcase className="h-8 w-8 text-blue-500 opacity-50" />
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <Briefcase className="h-6 w-6 text-blue-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
-              <CardContent className="pt-4">
+            {/* Júris do Mês */}
+            <Card className="stat-card">
+              <CardContent className="pt-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
-                      {mockStats.jurisSemana}
-                    </p>
-                    <p className="text-sm text-purple-600 dark:text-purple-400">Júris na Semana</p>
+                    <p className="text-4xl font-bold">{mockStats.jurisMes}</p>
+                    <p className="text-sm font-medium mt-1">Júris no Mês</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Sessões plenárias</p>
                   </div>
-                  <Gavel className="h-8 w-8 text-purple-500 opacity-50" />
+                  <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <Gavel className="h-6 w-6 text-purple-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Stats Cards Principais */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Assistidos</CardTitle>
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <Users className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{mockStats.totalAssistidos}</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Cadastrados no sistema
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Réus Presos</CardTitle>
-                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                  <AlertOctagon className="h-5 w-5 text-red-600 dark:text-red-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-red-600">{mockStats.reusPresos}</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Prioridade máxima
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Processos</CardTitle>
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <Scale className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{mockStats.totalProcessos}</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Processos ativos
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Demandas em Fila</CardTitle>
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <FileText className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">45</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Aguardando análise
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Prazos Urgentes e Audiências */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Prazos Urgentes */}
-            <Card className="shadow-sm border-red-200 dark:border-red-900">
-              <CardHeader className="pb-4">
+          {/* Seção Principal */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Prazos Urgentes - 2 colunas */}
+            <Card className="lg:col-span-2 section-card">
+              <CardHeader className="pb-4 border-b border-border/30">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                    <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
                       <Timer className="h-5 w-5 text-red-600" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Prazos Urgentes</CardTitle>
-                      <CardDescription className="mt-1">
-                        Demandas com prazo próximo
+                      <CardTitle className="text-base">Prazos Urgentes</CardTitle>
+                      <CardDescription className="mt-0.5">
+                        Demandas que exigem atenção imediata
                       </CardDescription>
                     </div>
                   </div>
                   <Link href="/admin/prazos">
-                    <Button variant="outline" size="sm">Ver todos</Button>
+                    <Button variant="ghost" size="sm" className="gap-1">
+                      Ver todos
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Button>
                   </Link>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {mockPrazosUrgentes.map((prazo) => (
-                    <Link key={prazo.id} href={`/admin/demandas/${prazo.id}`}>
-                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{prazo.assistido}</p>
-                          <p className="text-xs text-muted-foreground truncate">{prazo.ato}</p>
-                          <p className="text-xs text-muted-foreground font-mono">{prazo.processo}</p>
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  {mockPrazosUrgentes.map((prazo) => {
+                    const style = getPrioridadeStyle(prazo.prioridade);
+                    return (
+                      <Link key={prazo.id} href={`/admin/demandas/${prazo.id}`}>
+                        <div className={`flex items-center gap-4 p-4 rounded-xl ${style.bg} hover:opacity-90 transition-all cursor-pointer`}>
+                          <div className={`w-1.5 h-12 rounded-full ${style.dot}`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold truncate">{prazo.assistido}</p>
+                              <Badge variant="outline" className={`text-[10px] font-semibold ${style.text}`}>
+                                {style.label}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground truncate">{prazo.ato}</p>
+                            <p className="text-xs font-mono text-muted-foreground mt-0.5">{prazo.processo}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-sm font-bold ${prazo.diasRestantes === 0 ? "text-red-600" : "text-muted-foreground"}`}>
+                              {prazo.prazo}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          <span className="text-sm font-medium text-red-600">{prazo.prazo}</span>
-                          {getPrioridadeBadge(prazo.prioridade)}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
 
             {/* Audiências de Hoje */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-4">
+            <Card className="section-card">
+              <CardHeader className="pb-4 border-b border-border/30">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                       <Briefcase className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Audiências de Hoje</CardTitle>
-                      <CardDescription className="mt-1">
-                        Compromissos agendados
+                      <CardTitle className="text-base">Audiências Hoje</CardTitle>
+                      <CardDescription className="mt-0.5">
+                        {mockAudienciasHoje.length} compromissos
                       </CardDescription>
                     </div>
                   </div>
-                  <Link href="/admin/audiencias">
-                    <Button variant="outline" size="sm">Ver todas</Button>
-                  </Link>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
                 {mockAudienciasHoje.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
-                      <Briefcase className="h-12 w-12 text-slate-400" />
-                    </div>
-                    <p className="text-lg font-medium text-muted-foreground mb-2">Sem audiências hoje</p>
-                    <p className="text-sm text-muted-foreground max-w-sm">
-                      Não há audiências agendadas para hoje
-                    </p>
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Briefcase className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                    <p className="text-sm text-muted-foreground">Sem audiências hoje</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {mockAudienciasHoje.map((audiencia) => (
-                      <Link key={audiencia.id} href={`/admin/audiencias/${audiencia.id}`}>
-                        <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer">
-                          <div className="flex items-center gap-3">
-                            <div className="text-center">
-                              <p className="text-lg font-bold text-primary">{audiencia.hora}</p>
-                            </div>
-                            <div>
-                              <p className="font-medium">{audiencia.assistido}</p>
-                              <p className="text-xs text-muted-foreground">{audiencia.vara}</p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary">{audiencia.tipo}</Badge>
+                      <div
+                        key={audiencia.id}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                      >
+                        <div className="text-center min-w-[50px]">
+                          <p className="text-lg font-bold text-primary">{audiencia.hora}</p>
                         </div>
-                      </Link>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{audiencia.assistido}</p>
+                          <p className="text-xs text-muted-foreground truncate">{audiencia.vara}</p>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {audiencia.tipo}
+                        </Badge>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -390,317 +320,230 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          {/* Júris da Semana */}
-          {mockJurisSemana.length > 0 && (
-            <Card className="shadow-sm border-purple-200 dark:border-purple-900">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                      <Gavel className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Sessões do Júri</CardTitle>
-                      <CardDescription className="mt-1">
-                        Plenários agendados esta semana
-                      </CardDescription>
-                    </div>
+          {/* Júris do Mês */}
+          <Card className="section-card">
+            <CardHeader className="pb-4 border-b border-border/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <Gavel className="h-5 w-5 text-purple-600" />
                   </div>
-                  <Link href="/admin/juri">
-                    <Button variant="outline" size="sm">Ver todos</Button>
-                  </Link>
+                  <div>
+                    <CardTitle className="text-base">Sessões do Júri</CardTitle>
+                    <CardDescription className="mt-0.5">
+                      Plenários agendados para este mês
+                    </CardDescription>
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {mockJurisSemana.map((juri) => (
-                    <Link key={juri.id} href={`/admin/juri/${juri.id}`}>
-                      <div className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer bg-purple-50/50 dark:bg-purple-950/20">
-                        <div className="flex items-center gap-4">
-                          <div className="text-center bg-purple-100 dark:bg-purple-900/50 rounded-lg px-3 py-2">
-                            <p className="text-lg font-bold text-purple-600">{juri.data}</p>
-                          </div>
-                          <div>
-                            <p className="font-medium">{juri.assistido}</p>
-                            <p className="text-xs text-muted-foreground">{juri.defensor} • {juri.sala}</p>
-                          </div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Ações Rápidas */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Ações Rápidas</CardTitle>
-              <CardDescription>
-                Acesso rápido às funcionalidades principais
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Link href="/admin/assistidos/novo">
-                  <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
-                    <Users className="h-6 w-6" />
-                    <span>Novo Assistido</span>
-                  </Button>
-                </Link>
-                <Link href="/admin/demandas/nova">
-                  <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
-                    <FileText className="h-6 w-6" />
-                    <span>Nova Demanda</span>
-                  </Button>
-                </Link>
-                <Link href="/admin/calendar">
-                  <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
-                    <Calendar className="h-6 w-6" />
-                    <span>Calendário</span>
-                  </Button>
-                </Link>
-                <Link href="/admin/kanban">
-                  <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
-                    <Target className="h-6 w-6" />
-                    <span>Kanban</span>
+                <Link href="/admin/juri">
+                  <Button variant="ghost" size="sm" className="gap-1">
+                    Ver todos
+                    <ArrowUpRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                {mockJurisMes.map((juri) => (
+                  <Link key={juri.id} href={`/admin/juri/${juri.id}`}>
+                    <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/50 hover:border-purple-300 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="text-center bg-purple-100 dark:bg-purple-900/50 rounded-lg px-3 py-1.5">
+                          <p className="text-lg font-bold text-purple-600">{juri.data}</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                      </div>
+                      <p className="font-semibold text-sm">{juri.assistido}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{juri.crime}</p>
+                      <p className="text-xs text-muted-foreground">{juri.defensor}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* Tab: Análises */}
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Demandas por Status */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <PieChart className="h-5 w-5" />
-                  Demandas por Status
-                </CardTitle>
-                <CardDescription>Distribuição atual das demandas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPie>
-                      <Pie
-                        data={mockDemandasPorStatus}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={2}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                        labelLine={false}
-                      >
-                        {mockDemandasPorStatus.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </RechartsPie>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Demandas por Área */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Demandas por Área
-                </CardTitle>
-                <CardDescription>Distribuição por área de atuação</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mockDemandasPorArea} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis type="number" stroke="#94a3b8" fontSize={12} />
-                      <YAxis 
-                        type="category" 
-                        dataKey="name" 
-                        width={80} 
-                        stroke="#94a3b8" 
-                        fontSize={12}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'white', 
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px'
-                        }} 
-                      />
-                      <Bar dataKey="value" fill="#64748b" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Ações Rápidas */}
+          <div className="grid gap-3 md:grid-cols-4">
+            <Link href="/admin/assistidos/novo">
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-primary hover:text-primary-foreground transition-colors">
+                <Users className="h-5 w-5" />
+                <span className="text-sm font-medium">Novo Assistido</span>
+              </Button>
+            </Link>
+            <Link href="/admin/demandas/nova">
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-primary hover:text-primary-foreground transition-colors">
+                <FileText className="h-5 w-5" />
+                <span className="text-sm font-medium">Nova Demanda</span>
+              </Button>
+            </Link>
+            <Link href="/admin/kanban">
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-primary hover:text-primary-foreground transition-colors">
+                <Target className="h-5 w-5" />
+                <span className="text-sm font-medium">Kanban</span>
+              </Button>
+            </Link>
+            <Link href="/admin/calendar">
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-primary hover:text-primary-foreground transition-colors">
+                <Calendar className="h-5 w-5" />
+                <span className="text-sm font-medium">Calendário</span>
+              </Button>
+            </Link>
           </div>
-
-          {/* Atividade Semanal */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Atividade Semanal
+        </>
+      ) : (
+        /* Analytics View */
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Radar de Carga */}
+          <Card className="section-card">
+            <CardHeader className="pb-4 border-b border-border/30">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                Radar de Carga
               </CardTitle>
-              <CardDescription>Demandas protocoladas vs recebidas</CardDescription>
+              <CardDescription>Distribuição por área de atuação</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={mockAtividadeSemanal}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="dia" stroke="#94a3b8" fontSize={12} />
-                    <YAxis stroke="#94a3b8" fontSize={12} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px'
-                      }} 
+                  <RadarChart data={mockDemandasPorArea}>
+                    <PolarGrid stroke="hsl(240, 6%, 88%)" />
+                    <PolarAngleAxis
+                      dataKey="area"
+                      tick={{ fill: "hsl(240, 4%, 46%)", fontSize: 12 }}
                     />
-                    <Legend />
-                    <Area 
-                      type="monotone" 
-                      dataKey="protocolados" 
-                      name="Protocolados"
-                      stroke="#22c55e" 
-                      fill="#22c55e" 
+                    <PolarRadiusAxis
+                      angle={30}
+                      domain={[0, "auto"]}
+                      tick={{ fill: "hsl(240, 4%, 46%)", fontSize: 10 }}
+                    />
+                    <Radar
+                      name="Demandas"
+                      dataKey="value"
+                      stroke="hsl(158, 64%, 28%)"
+                      fill="hsl(158, 64%, 28%)"
                       fillOpacity={0.3}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="recebidos" 
-                      name="Recebidos"
-                      stroke="#f97316" 
-                      fill="#f97316" 
-                      fillOpacity={0.3}
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "white",
+                        border: "1px solid hsl(240, 6%, 88%)",
+                        borderRadius: "8px",
+                      }}
                     />
-                  </AreaChart>
+                  </RadarChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* Tab: Atividade */}
-        <TabsContent value="activity" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Resumo de Atividades */}
-            <Card className="shadow-sm lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg">Resumo de Atividades</CardTitle>
-                <CardDescription>Visão consolidada do período</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Demandas Concluídas</p>
-                        <p className="text-sm text-muted-foreground">Esta semana</p>
-                      </div>
-                    </div>
-                    <span className="text-2xl font-bold text-green-600">67</span>
+          {/* Funil de Prazos */}
+          <Card className="section-card">
+            <CardHeader className="pb-4 border-b border-border/30">
+              <CardTitle className="text-base flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Funil de Prazos
+              </CardTitle>
+              <CardDescription>Status das demandas em andamento</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={mockFunilPrazos}
+                    layout="vertical"
+                    margin={{ left: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(240, 6%, 88%)" horizontal={false} />
+                    <XAxis type="number" stroke="hsl(240, 4%, 46%)" fontSize={12} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={80}
+                      stroke="hsl(240, 4%, 46%)"
+                      fontSize={12}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "white",
+                        border: "1px solid hsl(240, 6%, 88%)",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                      {mockFunilPrazos.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Indicadores de Performance */}
+          <Card className="section-card lg:col-span-2">
+            <CardHeader className="pb-4 border-b border-border/30">
+              <CardTitle className="text-base">Indicadores de Performance</CardTitle>
+              <CardDescription>Métricas de eficiência operacional</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="grid gap-6 md:grid-cols-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Taxa de Cumprimento</span>
+                    <span className="font-semibold text-emerald-600">94%</span>
                   </div>
-                  
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                        <Briefcase className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Audiências Realizadas</p>
-                        <p className="text-sm text-muted-foreground">Esta semana</p>
-                      </div>
-                    </div>
-                    <span className="text-2xl font-bold">12</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                        <UserCheck className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Atendimentos</p>
-                        <p className="text-sm text-muted-foreground">Esta semana</p>
-                      </div>
-                    </div>
-                    <span className="text-2xl font-bold">28</span>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "94%" }} />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Indicadores */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg">Indicadores</CardTitle>
-                <CardDescription>Métricas de performance</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Taxa de Cumprimento</span>
-                      <span className="font-medium text-green-600">94%</span>
-                    </div>
-                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-green-500 rounded-full transition-all"
-                        style={{ width: '94%' }}
-                      />
-                    </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Prazos em Dia</span>
+                    <span className="font-semibold">87%</span>
                   </div>
-                  
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Prazos em Dia</span>
-                      <span className="font-medium">87%</span>
-                    </div>
-                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-500 rounded-full transition-all"
-                        style={{ width: '87%' }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Atendimentos Realizados</span>
-                      <span className="font-medium">78%</span>
-                    </div>
-                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-purple-500 rounded-full transition-all"
-                        style={{ width: '78%' }}
-                      />
-                    </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: "87%" }} />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Atendimentos Realizados</span>
+                    <span className="font-semibold">78%</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full" style={{ width: "78%" }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid gap-4 md:grid-cols-4 mt-6 pt-6 border-t border-border/30">
+                <div className="text-center p-4 rounded-lg bg-muted/30">
+                  <p className="text-3xl font-bold">{mockStats.totalAssistidos}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Assistidos</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-muted/30">
+                  <p className="text-3xl font-bold">{mockStats.totalProcessos}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Processos</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-muted/30">
+                  <p className="text-3xl font-bold">{mockStats.demandas.protocolado}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Protocolados (mês)</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-muted/30">
+                  <p className="text-3xl font-bold text-emerald-600">94%</p>
+                  <p className="text-sm text-muted-foreground mt-1">Eficiência</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

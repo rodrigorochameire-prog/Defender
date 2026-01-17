@@ -768,6 +768,80 @@ export type CalculoPena = typeof calculosPena.$inferSelect;
 export type InsertCalculoPena = typeof calculosPena.$inferInsert;
 
 // ==========================================
+// JURADOS (Banco de Dados do Júri)
+// ==========================================
+
+export const jurados = pgTable("jurados", {
+  id: serial("id").primaryKey(),
+  nome: text("nome").notNull(),
+  profissao: varchar("profissao", { length: 100 }),
+  escolaridade: varchar("escolaridade", { length: 50 }),
+  idade: integer("idade"),
+  bairro: varchar("bairro", { length: 100 }),
+  
+  // Estatísticas de votação
+  totalSessoes: integer("total_sessoes").default(0),
+  votosCondenacao: integer("votos_condenacao").default(0),
+  votosAbsolvicao: integer("votos_absolvicao").default(0),
+  votosDesclassificacao: integer("votos_desclassificacao").default(0),
+  
+  // Perfil comportamental
+  perfilTendencia: varchar("perfil_tendencia", { length: 30 }), // 'condenatorio' | 'absolutorio' | 'neutro' | 'desconhecido'
+  observacoes: text("observacoes"),
+  
+  // Histórico de anotações em JSON
+  historicoNotas: text("historico_notas"), // JSON com observações por sessão
+  
+  // Status
+  ativo: boolean("ativo").default(true),
+  
+  // Metadados
+  createdById: integer("created_by_id")
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("jurados_nome_idx").on(table.nome),
+  index("jurados_perfil_idx").on(table.perfilTendencia),
+  index("jurados_ativo_idx").on(table.ativo),
+]);
+
+export type Jurado = typeof jurados.$inferSelect;
+export type InsertJurado = typeof jurados.$inferInsert;
+
+// ==========================================
+// CONSELHO DO JÚRI (Composição por Sessão)
+// ==========================================
+
+export const conselhoJuri = pgTable("conselho_juri", {
+  id: serial("id").primaryKey(),
+  sessaoId: integer("sessao_id")
+    .notNull()
+    .references(() => sessoesJuri.id, { onDelete: "cascade" }),
+  juradoId: integer("jurado_id")
+    .notNull()
+    .references(() => jurados.id, { onDelete: "cascade" }),
+  
+  // Posição no conselho (1-7)
+  posicao: integer("posicao"),
+  
+  // Voto registrado após sessão
+  voto: varchar("voto", { length: 30 }), // 'condenacao' | 'absolvicao' | 'desclassificacao' | null
+  
+  // Anotações durante a sessão
+  anotacoes: text("anotacoes"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("conselho_juri_sessao_idx").on(table.sessaoId),
+  index("conselho_juri_jurado_idx").on(table.juradoId),
+]);
+
+export type ConselhoJuri = typeof conselhoJuri.$inferSelect;
+export type InsertConselhoJuri = typeof conselhoJuri.$inferInsert;
+
+// ==========================================
 // ATENDIMENTOS
 // ==========================================
 
@@ -923,4 +997,14 @@ export const atendimentosRelations = relations(atendimentos, ({ one }) => ({
 
 export const bancoPecasRelations = relations(bancoPecas, ({ one }) => ({
   createdBy: one(users, { fields: [bancoPecas.createdById], references: [users.id] }),
+}));
+
+export const juradosRelations = relations(jurados, ({ one, many }) => ({
+  createdBy: one(users, { fields: [jurados.createdById], references: [users.id] }),
+  conselhos: many(conselhoJuri),
+}));
+
+export const conselhoJuriRelations = relations(conselhoJuri, ({ one }) => ({
+  sessao: one(sessoesJuri, { fields: [conselhoJuri.sessaoId], references: [sessoesJuri.id] }),
+  jurado: one(jurados, { fields: [conselhoJuri.juradoId], references: [jurados.id] }),
 }));
