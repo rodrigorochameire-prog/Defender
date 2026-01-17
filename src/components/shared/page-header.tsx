@@ -57,11 +57,7 @@ export function PageHeader({
             </Link>
           </Button>
         )}
-        {icon && (
-          <div className="page-header-icon">
-            <icon.render className="h-6 w-6" />
-          </div>
-        )}
+        {icon && <PageIcon icon={icon} size="md" variant="primary" />}
         <div className="page-header-info">
           <h1>{title}</h1>
           {description && <p>{description}</p>}
