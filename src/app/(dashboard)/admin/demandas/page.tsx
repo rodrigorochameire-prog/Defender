@@ -1720,7 +1720,7 @@ export default function DemandasPage() {
               </p>
               <p>
                 <span className="font-semibold text-red-600">{stats.reuPreso}</span> réus presos •{" "}
-                <span className="font-semibold text-orange-600">{stats.atender + stats.hoje}</span> urgentes
+                <span className="font-semibold text-orange-600">{stats.urgente + stats.hoje}</span> urgentes
               </p>
             </div>
           )}
