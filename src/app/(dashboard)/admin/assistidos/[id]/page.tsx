@@ -24,6 +24,15 @@ import {
   CheckCircle2,
   Gavel,
   MoreHorizontal,
+  Brain,
+  Globe,
+  Search,
+  ExternalLink,
+  Facebook,
+  Instagram,
+  Newspaper,
+  Database,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -297,22 +306,26 @@ export default function AssistidoDetailPage() {
 
       {/* Tabs com conteúdo */}
       <Tabs defaultValue="processos" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="processos" className="gap-2">
             <Scale className="h-4 w-4" />
-            Processos
+            <span className="hidden sm:inline">Processos</span>
           </TabsTrigger>
           <TabsTrigger value="demandas" className="gap-2">
             <Clock className="h-4 w-4" />
-            Demandas
+            <span className="hidden sm:inline">Demandas</span>
+          </TabsTrigger>
+          <TabsTrigger value="inteligencia" className="gap-2">
+            <Brain className="h-4 w-4" />
+            <span className="hidden sm:inline">Inteligência</span>
           </TabsTrigger>
           <TabsTrigger value="atendimentos" className="gap-2">
             <User className="h-4 w-4" />
-            Atendimentos
+            <span className="hidden sm:inline">Atendimentos</span>
           </TabsTrigger>
           <TabsTrigger value="documentos" className="gap-2">
             <FileText className="h-4 w-4" />
-            Documentos
+            <span className="hidden sm:inline">Documentos</span>
           </TabsTrigger>
         </TabsList>
 
@@ -404,6 +417,180 @@ export default function AssistidoDetailPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="inteligencia" className="space-y-4">
+          {/* Header da Inteligência */}
+          <Card className="border-violet-200 dark:border-violet-800/30 bg-gradient-to-br from-violet-50/50 to-white dark:from-violet-950/20 dark:to-background">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-lg">
+                    <Brain className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Inteligência Defensiva</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Ferramentas OSINT e investigação para {assistido.nome.split(' ')[0]}
+                    </p>
+                  </div>
+                </div>
+                <Link href={`/admin/inteligencia?assistido=${id}`}>
+                  <Button variant="outline" className="gap-2 text-violet-600 border-violet-200 hover:bg-violet-50">
+                    <Target className="h-4 w-4" />
+                    Central Completa
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+          </Card>
+
+          {/* Busca Rápida */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Search className="h-5 w-5 text-violet-600" />
+                Busca Rápida por Nome
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <a
+                  href={`https://www.google.com/search?q="${encodeURIComponent(assistido.nome)}"`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
+                >
+                  <Globe className="h-5 w-5 text-blue-600" />
+                  <span className="text-sm font-medium">Google</span>
+                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+                <a
+                  href={`https://www.facebook.com/search/top?q=${encodeURIComponent(assistido.nome)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
+                >
+                  <Facebook className="h-5 w-5 text-blue-700" />
+                  <span className="text-sm font-medium">Facebook</span>
+                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+                <a
+                  href={`https://www.instagram.com/${encodeURIComponent(assistido.nome.toLowerCase().replace(/ /g, ''))}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
+                >
+                  <Instagram className="h-5 w-5 text-pink-600" />
+                  <span className="text-sm font-medium">Instagram</span>
+                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+                <a
+                  href={`https://news.google.com/search?q=${encodeURIComponent(assistido.nome)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
+                >
+                  <Newspaper className="h-5 w-5 text-slate-600" />
+                  <span className="text-sm font-medium">Notícias</span>
+                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Consultas Processuais */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Scale className="h-5 w-5 text-violet-600" />
+                Consultas Processuais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <a
+                  href={`https://www.escavador.com/busca?q=${encodeURIComponent(assistido.nome)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
+                >
+                  <Database className="h-5 w-5 text-violet-600" />
+                  <span className="text-sm font-medium">Escavador</span>
+                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+                <a
+                  href={`https://www.jusbrasil.com.br/busca?q=${encodeURIComponent(assistido.nome)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
+                >
+                  <Scale className="h-5 w-5 text-slate-700" />
+                  <span className="text-sm font-medium">JusBrasil</span>
+                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+                <a
+                  href="https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
+                >
+                  <Gavel className="h-5 w-5 text-slate-700" />
+                  <span className="text-sm font-medium">TJBA PJe</span>
+                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Dados para Investigação */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Database className="h-5 w-5 text-violet-600" />
+                Dados para Investigação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-muted/30 space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identificação</p>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{assistido.nome}</span></p>
+                    <p><span className="text-muted-foreground">CPF:</span> <span className="font-mono">{assistido.cpf}</span></p>
+                    <p><span className="text-muted-foreground">RG:</span> <span className="font-mono">{assistido.rg}</span></p>
+                    <p><span className="text-muted-foreground">Nascimento:</span> {assistido.dataNascimento && format(parseISO(assistido.dataNascimento), "dd/MM/yyyy")}</p>
+                    <p><span className="text-muted-foreground">Mãe:</span> {assistido.nomeMae}</p>
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl bg-muted/30 space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Contato e Localização</p>
+                  <div className="space-y-1 text-sm">
+                    {assistido.telefone && (
+                      <p><span className="text-muted-foreground">Telefone:</span> <span className="font-mono">{assistido.telefone}</span></p>
+                    )}
+                    {assistido.telefoneContato && (
+                      <p><span className="text-muted-foreground">Contato:</span> <span className="font-mono">{assistido.telefoneContato}</span> ({assistido.nomeContato})</p>
+                    )}
+                    {assistido.endereco && (
+                      <p><span className="text-muted-foreground">Endereço:</span> {assistido.endereco}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Link para Central Completa */}
+          <div className="flex justify-center pt-4">
+            <Link href={`/admin/inteligencia?assistido=${id}`}>
+              <Button size="lg" className="gap-2 bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 shadow-lg">
+                <Brain className="h-5 w-5" />
+                Acessar Central de Inteligência Completa
+                <ExternalLink className="h-4 w-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
         </TabsContent>
 
         <TabsContent value="atendimentos" className="space-y-4">

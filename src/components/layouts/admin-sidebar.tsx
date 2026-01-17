@@ -33,6 +33,7 @@ import {
   RefreshCw,
   Award,
   TrendingUp,
+  Brain,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -97,6 +98,7 @@ const iconMap: Record<string, React.ElementType> = {
   RefreshCw,
   Award,
   TrendingUp,
+  Brain,
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
