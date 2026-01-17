@@ -139,86 +139,86 @@ const COMARCA_OPTIONS = [
   { value: "SALVADOR", label: "Salvador" },
 ];
 
-// Status disponíveis - Baseado na planilha VVD Júri (COMPLETO)
+// Status disponíveis - Baseado na planilha VVD Júri (COMPLETO) - Cores iOS 26.2
 const STATUS_OPTIONS = [
-  // Grupo 1 - Urgente (vermelho)
-  { value: "1_URGENTE", label: "1 - Urgente", color: "bg-red-600", textColor: "text-red-700", description: "Prazo crítico/urgente" },
-  // Grupo 2 - Trabalho pendente (amarelo)
-  { value: "2_RELATORIO", label: "2 - Relatório", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Analisar/fazer relatório" },
-  { value: "2_ANALISAR", label: "2 - Analisar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Analisar processo" },
-  { value: "2_ATENDER", label: "2 - Atender", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Atender assistido" },
-  { value: "2_BUSCAR", label: "2 - Buscar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Buscar informações" },
-  { value: "2_INVESTIGAR", label: "2 - Investigar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Investigar caso" },
-  { value: "2_ELABORAR", label: "2 - Elaborar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Elaborar peça" },
-  { value: "2_ELABORANDO", label: "2 - Elaborando", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Em elaboração" },
-  { value: "2_REVISAR", label: "2 - Revisar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Revisar peça" },
-  { value: "2_REVISANDO", label: "2 - Revisando", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Em revisão" },
-  // Grupo 3 - Protocolar (laranja)
-  { value: "3_PROTOCOLAR", label: "3 - Protocolar", color: "bg-orange-500", textColor: "text-orange-700", description: "Pronto para protocolar" },
-  // Grupo 4 - Pessoas/Monitorar (azul claro)
-  { value: "4_AMANDA", label: "4 - Amanda", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Com Amanda" },
-  { value: "4_ESTAGIO_TARISSA", label: "4 - Estágio - Tarissa", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Com Tarissa (estágio)" },
-  { value: "4_EMILLY", label: "4 - Emilly", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Com Emilly" },
-  { value: "4_MONITORAR", label: "4 - Monitorar", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Monitorando andamento" },
-  // Grupo 5 - Fila (azul)
-  { value: "5_FILA", label: "5 - Fila", color: "bg-blue-500", textColor: "text-blue-700", description: "Na fila de trabalho" },
-  // Grupo 6 - Pendências externas (azul escuro)
-  { value: "6_DOCUMENTOS", label: "6 - Documentos", color: "bg-blue-700", textColor: "text-blue-800", description: "Aguardando documentos" },
-  { value: "6_TESTEMUNHAS", label: "6 - Testemunhas", color: "bg-blue-700", textColor: "text-blue-800", description: "Aguardando testemunhas" },
-  // Grupo 7 - Concluído (verde)
-  { value: "7_PROTOCOLADO", label: "7 - Protocolado", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Peça protocolada" },
-  { value: "7_SIGAD", label: "7 - Sigad", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Registrado no Sigad" },
-  { value: "7_CIENCIA", label: "7 - Ciência", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Ciência tomada" },
-  { value: "7_RESOLVIDO", label: "7 - Resolvido", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Caso resolvido" },
-  { value: "7_CONSTITUIU_ADVOGADO", label: "7 - Constituiu advogado", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Constituiu advogado particular" },
-  { value: "7_SEM_ATUACAO", label: "7 - Sem atuação", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Sem necessidade de atuação" },
+  // Grupo 1 - Urgente (rosa suave)
+  { value: "1_URGENTE", label: "Urgente", color: "bg-rose-400/80", textColor: "text-rose-700", description: "Prazo crítico/urgente", group: "Urgente" },
+  // Grupo 2 - Trabalho pendente (âmbar suave)
+  { value: "2_RELATORIO", label: "Relatório", color: "bg-amber-300/80", textColor: "text-amber-700", description: "Analisar/fazer relatório", group: "Trabalho" },
+  { value: "2_ANALISAR", label: "Analisar", color: "bg-amber-300/80", textColor: "text-amber-700", description: "Analisar processo", group: "Trabalho" },
+  { value: "2_ATENDER", label: "Atender", color: "bg-amber-300/80", textColor: "text-amber-700", description: "Atender assistido", group: "Trabalho" },
+  { value: "2_BUSCAR", label: "Buscar", color: "bg-amber-300/80", textColor: "text-amber-700", description: "Buscar informações", group: "Trabalho" },
+  { value: "2_INVESTIGAR", label: "Investigar", color: "bg-amber-300/80", textColor: "text-amber-700", description: "Investigar caso", group: "Trabalho" },
+  { value: "2_ELABORAR", label: "Elaborar", color: "bg-amber-300/80", textColor: "text-amber-700", description: "Elaborar peça", group: "Trabalho" },
+  { value: "2_ELABORANDO", label: "Elaborando", color: "bg-amber-300/80", textColor: "text-amber-700", description: "Em elaboração", group: "Trabalho" },
+  { value: "2_REVISAR", label: "Revisar", color: "bg-amber-300/80", textColor: "text-amber-700", description: "Revisar peça", group: "Trabalho" },
+  { value: "2_REVISANDO", label: "Revisando", color: "bg-amber-300/80", textColor: "text-amber-700", description: "Em revisão", group: "Trabalho" },
+  // Grupo 3 - Protocolar (laranja suave)
+  { value: "3_PROTOCOLAR", label: "Protocolar", color: "bg-orange-400/70", textColor: "text-orange-700", description: "Pronto para protocolar", group: "Protocolar" },
+  // Grupo 4 - Pessoas/Monitorar (ciano suave)
+  { value: "4_AMANDA", label: "Amanda", color: "bg-sky-300/70", textColor: "text-sky-700", description: "Com Amanda", group: "Monitorar" },
+  { value: "4_ESTAGIO_TARISSA", label: "Estágio - Tarissa", color: "bg-sky-300/70", textColor: "text-sky-700", description: "Com Tarissa (estágio)", group: "Monitorar" },
+  { value: "4_EMILLY", label: "Emilly", color: "bg-sky-300/70", textColor: "text-sky-700", description: "Com Emilly", group: "Monitorar" },
+  { value: "4_MONITORAR", label: "Monitorar", color: "bg-sky-300/70", textColor: "text-sky-700", description: "Monitorando andamento", group: "Monitorar" },
+  // Grupo 5 - Fila (índigo suave)
+  { value: "5_FILA", label: "Fila", color: "bg-indigo-300/70", textColor: "text-indigo-700", description: "Na fila de trabalho", group: "Fila" },
+  // Grupo 6 - Pendências externas (azul suave)
+  { value: "6_DOCUMENTOS", label: "Documentos", color: "bg-blue-300/60", textColor: "text-blue-700", description: "Aguardando documentos", group: "Aguardando" },
+  { value: "6_TESTEMUNHAS", label: "Testemunhas", color: "bg-blue-300/60", textColor: "text-blue-700", description: "Aguardando testemunhas", group: "Aguardando" },
+  // Grupo 7 - Concluído (verde suave)
+  { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-emerald-400/70", textColor: "text-emerald-700", description: "Peça protocolada", group: "Concluído" },
+  { value: "7_SIGAD", label: "Sigad", color: "bg-emerald-400/70", textColor: "text-emerald-700", description: "Registrado no Sigad", group: "Concluído" },
+  { value: "7_CIENCIA", label: "Ciência", color: "bg-emerald-400/70", textColor: "text-emerald-700", description: "Ciência tomada", group: "Concluído" },
+  { value: "7_RESOLVIDO", label: "Resolvido", color: "bg-emerald-400/70", textColor: "text-emerald-700", description: "Caso resolvido", group: "Concluído" },
+  { value: "7_CONSTITUIU_ADVOGADO", label: "Constituiu advogado", color: "bg-emerald-400/70", textColor: "text-emerald-700", description: "Constituiu advogado particular", group: "Concluído" },
+  { value: "7_SEM_ATUACAO", label: "Sem atuação", color: "bg-emerald-400/70", textColor: "text-emerald-700", description: "Sem necessidade de atuação", group: "Concluído" },
 ];
 
-// Situação Prisional / Unidades - Baseado na planilha VVD (COMPLETO)
+// Situação Prisional / Unidades - Baseado na planilha VVD (COMPLETO) - Cores iOS 26.2
 const PRISAO_OPTIONS = [
   // Solto
-  { value: "", label: "(Não informado)", color: "bg-slate-300" },
-  { value: "SOLTO", label: "Solto", color: "bg-green-500" },
+  { value: "NAO_INFORMADO", label: "(Não informado)", color: "bg-slate-300/60", group: "Geral" },
+  { value: "SOLTO", label: "Solto", color: "bg-emerald-400/70", group: "Geral" },
   // Bahia - Região Metropolitana
-  { value: "CADEIA_PUBLICA", label: "Cadeia Pública", color: "bg-red-600" },
-  { value: "CPMS", label: "CPMS - Simões Filho", color: "bg-red-600" },
-  { value: "COP", label: "COP - Centro de Obs. Penal", color: "bg-red-700" },
-  { value: "PRESIDIO_SSA", label: "Presídio Salvador", color: "bg-red-600" },
-  { value: "PLB", label: "PLB - Lemos Brito", color: "bg-red-600" },
+  { value: "CADEIA_PUBLICA", label: "Cadeia Pública", color: "bg-rose-400/70", group: "BA - Metropolitana" },
+  { value: "CPMS", label: "CPMS - Simões Filho", color: "bg-rose-400/70", group: "BA - Metropolitana" },
+  { value: "COP", label: "COP - Centro de Obs. Penal", color: "bg-rose-400/70", group: "BA - Metropolitana" },
+  { value: "PRESIDIO_SSA", label: "Presídio Salvador", color: "bg-rose-400/70", group: "BA - Metropolitana" },
+  { value: "PLB", label: "PLB - Lemos Brito", color: "bg-rose-400/70", group: "BA - Metropolitana" },
   // Bahia - Interior
-  { value: "CP_FEIRA", label: "CP Feira de Santana", color: "bg-red-600" },
-  { value: "CP_ITABUNA", label: "CP Itabuna", color: "bg-red-600" },
-  { value: "CP_VC", label: "CP Vitória da Conquista", color: "bg-red-600" },
-  { value: "CP_JEQUIE", label: "CP Jequié", color: "bg-red-600" },
-  { value: "CP_ILHEUS", label: "CP Ilhéus", color: "bg-red-600" },
-  { value: "CP_BARREIRAS", label: "CP Barreiras", color: "bg-red-600" },
-  { value: "CP_JUAZEIRO", label: "CP Juazeiro", color: "bg-red-600" },
-  { value: "CP_TEIXEIRA", label: "CP Teixeira de Freitas", color: "bg-red-600" },
-  { value: "CP_EUNAPOLIS", label: "CP Eunápolis", color: "bg-red-600" },
-  { value: "CP_VALENCA", label: "CP Valença", color: "bg-red-600" },
-  { value: "CP_ALAGOINHAS", label: "CP Alagoinhas", color: "bg-red-600" },
-  { value: "CP_SERRINHA", label: "CP Serrinha", color: "bg-red-600" },
-  { value: "CP_IRECE", label: "CP Irecê", color: "bg-red-600" },
+  { value: "CP_FEIRA", label: "CP Feira de Santana", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_ITABUNA", label: "CP Itabuna", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_VC", label: "CP Vitória da Conquista", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_JEQUIE", label: "CP Jequié", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_ILHEUS", label: "CP Ilhéus", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_BARREIRAS", label: "CP Barreiras", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_JUAZEIRO", label: "CP Juazeiro", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_TEIXEIRA", label: "CP Teixeira de Freitas", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_EUNAPOLIS", label: "CP Eunápolis", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_VALENCA", label: "CP Valença", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_ALAGOINHAS", label: "CP Alagoinhas", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_SERRINHA", label: "CP Serrinha", color: "bg-rose-300/70", group: "BA - Interior" },
+  { value: "CP_IRECE", label: "CP Irecê", color: "bg-rose-300/70", group: "BA - Interior" },
   // Outros estados
-  { value: "CPT_IV_PINHEIROS_SP", label: "CPT IV Pinheiros-SP", color: "bg-purple-600" },
-  { value: "CDP_BELEM_SP", label: "CDP Belém-SP", color: "bg-purple-600" },
-  { value: "PSM_MACEIO", label: "PSM Maceió", color: "bg-purple-600" },
-  { value: "SC_JARAGUA_SUL", label: "SC - Presídio Jaraguá do Sul", color: "bg-purple-600" },
-  { value: "SP_PRESIDENTE_VENCESLAU", label: "SP - Presidente Venceslau II", color: "bg-purple-600" },
-  { value: "MG_EXTREMA", label: "MG - Presídio de Extrema", color: "bg-purple-600" },
+  { value: "CPT_IV_PINHEIROS_SP", label: "CPT IV Pinheiros-SP", color: "bg-violet-300/60", group: "Outros Estados" },
+  { value: "CDP_BELEM_SP", label: "CDP Belém-SP", color: "bg-violet-300/60", group: "Outros Estados" },
+  { value: "PSM_MACEIO", label: "PSM Maceió", color: "bg-violet-300/60", group: "Outros Estados" },
+  { value: "SC_JARAGUA_SUL", label: "SC - Presídio Jaraguá do Sul", color: "bg-violet-300/60", group: "Outros Estados" },
+  { value: "SP_PRESIDENTE_VENCESLAU", label: "SP - Presidente Venceslau II", color: "bg-violet-300/60", group: "Outros Estados" },
+  { value: "MG_EXTREMA", label: "MG - Presídio de Extrema", color: "bg-violet-300/60", group: "Outros Estados" },
   // Especiais
-  { value: "HOSPITAL_CUSTODIA", label: "Hospital de Custódia", color: "bg-amber-600" },
-  { value: "DOMICILIAR", label: "Prisão Domiciliar", color: "bg-orange-500" },
-  { value: "MONITORADO", label: "Monitoramento Eletrônico", color: "bg-amber-500" },
+  { value: "HOSPITAL_CUSTODIA", label: "Hospital de Custódia", color: "bg-amber-400/60", group: "Especial" },
+  { value: "DOMICILIAR", label: "Prisão Domiciliar", color: "bg-orange-300/60", group: "Especial" },
+  { value: "MONITORADO", label: "Monitoramento Eletrônico", color: "bg-amber-300/60", group: "Especial" },
 ];
 
-// Prioridades
+// Prioridades - Cores iOS 26.2
 const PRIORIDADE_OPTIONS = [
-  { value: "REU_PRESO", label: "Réu Preso", color: "bg-red-700" },
-  { value: "URGENTE", label: "Urgente", color: "bg-red-500" },
-  { value: "ALTA", label: "Alta", color: "bg-orange-500" },
-  { value: "NORMAL", label: "Normal", color: "bg-slate-400" },
-  { value: "BAIXA", label: "Baixa", color: "bg-slate-300" },
+  { value: "REU_PRESO", label: "Réu Preso", color: "bg-rose-400/80" },
+  { value: "URGENTE", label: "Urgente", color: "bg-rose-300/80" },
+  { value: "ALTA", label: "Alta", color: "bg-orange-300/70" },
+  { value: "NORMAL", label: "Normal", color: "bg-slate-300/60" },
+  { value: "BAIXA", label: "Baixa", color: "bg-slate-200/50" },
 ];
 
 // Áreas
@@ -233,12 +233,12 @@ const AREA_OPTIONS = [
   { value: "FAZENDA_PUBLICA", label: "Fazenda Pública", icon: Scale, color: "indigo" },
 ];
 
-// Tipos de Ato - Baseado na planilha VVD Júri (COMPLETO)
+// Tipos de Ato - Baseado na planilha VVD Júri (COMPLETO) - Cores iOS 26.2
 const TIPO_ATO_OPTIONS = [
   // Defesa - Primeira fase
-  { value: "resposta_acusacao", label: "Resposta à Acusação", group: "Defesa", color: "bg-blue-100" },
-  { value: "diligencias_422", label: "Diligências do 422", group: "Defesa", color: "bg-blue-100" },
-  { value: "alegacoes_finais", label: "Alegações finais", group: "Defesa", color: "bg-green-100" },
+  { value: "resposta_acusacao", label: "Resposta à Acusação", group: "Defesa", color: "bg-blue-100/60" },
+  { value: "diligencias_422", label: "Diligências do 422", group: "Defesa", color: "bg-blue-100/60" },
+  { value: "alegacoes_finais", label: "Alegações finais", group: "Defesa", color: "bg-emerald-100/60" },
   // Recursos
   { value: "apelacao", label: "Apelação", group: "Recursos", color: "bg-orange-100" },
   { value: "contrarrazoes_apelacao", label: "Contrarrazões de apelação", group: "Recursos", color: "bg-yellow-100" },
