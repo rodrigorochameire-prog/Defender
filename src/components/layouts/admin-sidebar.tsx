@@ -223,31 +223,33 @@ function AdminSidebarContent({
         <Sidebar
           collapsible="icon"
           className={cn(
-            "border-r border-[hsl(155_15%_90%)] dark:border-[hsl(160_12%_14%)]",
-            "bg-[hsl(155_15%_98%)] dark:bg-[hsl(160_15%_5%)] backdrop-blur-xl"
+            "border-r-2 border-[hsl(158_25%_85%)] dark:border-[hsl(160_20%_18%)]",
+            "bg-gradient-to-b from-[hsl(155_20%_97%)] via-[hsl(155_18%_96%)] to-[hsl(158_22%_94%)] dark:from-[hsl(160_18%_7%)] dark:via-[hsl(160_16%_6%)] dark:to-[hsl(158_20%_8%)]",
+            "backdrop-blur-xl shadow-[2px_0_12px_-4px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_12px_-4px_rgba(0,0,0,0.3)]"
           )}
           disableTransition={isResizing}
         >
           {/* Header com Switcher de Atribuição */}
-          <SidebarHeader className="border-b border-[hsl(155_15%_92%)] dark:border-[hsl(160_12%_12%)] py-2">
+          <SidebarHeader className="border-b-2 border-[hsl(158_30%_88%)] dark:border-[hsl(160_18%_15%)] py-3 bg-gradient-to-r from-[hsl(158_35%_94%)] via-[hsl(155_28%_95%)] to-[hsl(158_25%_96%)] dark:from-[hsl(158_25%_10%)] dark:via-[hsl(160_20%_9%)] dark:to-[hsl(158_22%_8%)]">
             <AssignmentSwitcher collapsed={isCollapsed} />
           </SidebarHeader>
 
-          <SidebarContent className="gap-0 px-2.5 py-3 overflow-y-auto flex-1">
-            <SidebarMenu className={isCollapsed ? "gap-0.5" : "gap-1"}>
+          <SidebarContent className="gap-0 px-3 py-4 overflow-y-auto flex-1">
+            <SidebarMenu className={isCollapsed ? "gap-1" : "gap-1.5"}>
               {/* Toggle Button */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={toggleSidebar}
                   tooltip={isCollapsed ? "Expandir" : "Recolher"}
                   className={cn(
-                    "h-10 rounded-xl transition-all duration-200",
-                    "hover:bg-[hsl(158_20%_94%)] dark:hover:bg-[hsl(158_15%_12%)]",
-                    "text-[hsl(160_10%_45%)] dark:text-[hsl(150_8%_55%)]"
+                    "h-11 rounded-xl transition-all duration-200",
+                    "hover:bg-[hsl(158_30%_90%)] dark:hover:bg-[hsl(158_20%_14%)]",
+                    "text-[hsl(160_15%_40%)] dark:text-[hsl(150_12%_60%)]",
+                    "border border-transparent hover:border-[hsl(158_25%_85%)] dark:hover:border-[hsl(158_20%_20%)]"
                   )}
                 >
-                  <PanelLeft className="h-5 w-5" strokeWidth={1.5} />
-                  <span className="text-[13px] font-medium">
+                  <PanelLeft className="h-5 w-5" strokeWidth={1.8} />
+                  <span className="text-[13px] font-semibold">
                     {isCollapsed ? "Expandir" : "Recolher"}
                   </span>
                 </SidebarMenuButton>
@@ -278,14 +280,14 @@ function AdminSidebarContent({
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
-                        "h-10 transition-all duration-200 rounded-xl group relative",
+                        "h-11 transition-all duration-200 rounded-xl group relative",
                         isActive
-                          ? "shadow-sm ring-1"
-                          : "hover:bg-[hsl(155_15%_95%)] dark:hover:bg-[hsl(160_12%_10%)]"
+                          ? "shadow-md ring-2"
+                          : "hover:bg-[hsl(158_25%_93%)] dark:hover:bg-[hsl(160_18%_12%)] hover:shadow-sm"
                       )}
                       style={{
                         backgroundColor: isActive ? config.accentColorLight : undefined,
-                        borderColor: isActive ? config.accentColor + "30" : undefined,
+                        borderColor: isActive ? config.accentColor + "40" : undefined,
                       }}
                     >
                       <Link
@@ -299,22 +301,22 @@ function AdminSidebarContent({
                       >
                         <Icon
                           className={cn(
-                            "transition-colors duration-200",
-                            isActive ? "h-5 w-5" : "h-[18px] w-[18px]"
+                            "transition-all duration-200",
+                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5"
                           )}
                           style={{
                             color: isActive
                               ? config.accentColor
-                              : "hsl(160, 8%, 45%)",
+                              : "hsl(160, 12%, 42%)",
                           }}
-                          strokeWidth={isActive ? 2 : 1.5}
+                          strokeWidth={isActive ? 2.2 : 1.8}
                         />
                         <span
                           className={cn(
                             "text-[13px] transition-colors duration-200",
                             isActive
-                              ? "font-semibold text-foreground"
-                              : "font-medium text-[hsl(160_8%_40%)] dark:text-[hsl(150_6%_60%)]"
+                              ? "font-bold text-foreground"
+                              : "font-semibold text-[hsl(160_12%_35%)] dark:text-[hsl(150_10%_65%)]"
                           )}
                         >
                           {item.label}
@@ -397,14 +399,14 @@ function AdminSidebarContent({
           </SidebarContent>
 
           {/* Footer */}
-          <SidebarFooter className="p-3 border-t border-[hsl(155_15%_92%)] dark:border-[hsl(160_12%_12%)]">
+          <SidebarFooter className="p-3 border-t-2 border-[hsl(158_30%_88%)] dark:border-[hsl(160_18%_15%)] bg-gradient-to-t from-[hsl(158_30%_94%)] via-[hsl(158_25%_95%)] to-transparent dark:from-[hsl(158_20%_9%)] dark:via-[hsl(158_18%_8%)] dark:to-transparent">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-[hsl(158_20%_94%)] dark:hover:bg-[hsl(158_15%_12%)] transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(158_55%_42%)/0.4] group">
+                <button className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-[hsl(158_30%_91%)] dark:hover:bg-[hsl(158_20%_14%)] transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(158_55%_42%)/0.5] group border border-transparent hover:border-[hsl(158_28%_85%)] dark:hover:border-[hsl(158_22%_20%)]">
                   <div className="relative">
                     <Avatar
-                      className="h-10 w-10 border-2 shadow-sm ring-1 ring-white dark:ring-transparent"
-                      style={{ borderColor: config.accentColor + "40" }}
+                      className="h-11 w-11 border-2 shadow-md ring-2 ring-white/80 dark:ring-[hsl(158_20%_12%)]"
+                      style={{ borderColor: config.accentColor + "50" }}
                     >
                       <AvatarFallback
                         className="text-xs font-semibold"
