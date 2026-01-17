@@ -9,6 +9,7 @@ import { assistidosRouter } from "./assistidos";
 import { processosRouter } from "./processos";
 import { demandasRouter } from "./demandas";
 import { juriRouter } from "./juri";
+import { driveRouter } from "./drive";
 
 export const appRouter = router({
   // Autenticação
@@ -40,6 +41,9 @@ export const appRouter = router({
   
   // Integração WhatsApp
   whatsapp: whatsappRouter,
+  
+  // Integração Google Drive
+  drive: driveRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -9,6 +9,7 @@
 
 import { inngest } from "./client";
 import { sendWhatsAppMessage } from "./whatsapp-helper";
+import { syncFolderWithDatabase, getSyncFolders } from "@/lib/services/google-drive";
 
 // ============================================
 // WHATSAPP FUNCTIONS
@@ -217,6 +218,141 @@ export const sendReminderFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// SINCRONIZAÇÃO GOOGLE DRIVE
+// ============================================
+
+/**
+ * Sincronização periódica do Google Drive
+ * Executa a cada 15 minutos para manter os arquivos atualizados
+ */
+export const syncDriveFn = inngest.createFunction(
+  {
+    id: "sync-google-drive",
+    name: "Sync Google Drive Folders",
+    retries: 3,
+  },
+  { cron: "*/15 * * * *" }, // A cada 15 minutos
+  async ({ step }) => {
+    const folders = await step.run("get-sync-folders", async () => {
+      return await getSyncFolders();
+    });
+
+    if (!folders || folders.length === 0) {
+      return { skipped: true, reason: "No folders configured for sync" };
+    }
+
+    const results = [];
+    
+    for (const folder of folders) {
+      const result = await step.run(`sync-folder-${folder.id}`, async () => {
+        try {
+          const syncResult = await syncFolderWithDatabase(folder.driveFolderId);
+          return {
+            folderId: folder.driveFolderId,
+            folderName: folder.name,
+            ...syncResult,
+          };
+        } catch (error) {
+          return {
+            folderId: folder.driveFolderId,
+            folderName: folder.name,
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+        }
+      });
+      
+      results.push(result);
+    }
+
+    return { 
+      success: true, 
+      foldersProcessed: results.length,
+      results 
+    };
+  }
+);
+
+/**
+ * Sincronização manual de uma pasta específica
+ * Triggered por evento customizado
+ */
+export const syncDriveFolderFn = inngest.createFunction(
+  {
+    id: "sync-drive-folder",
+    name: "Sync Specific Drive Folder",
+    retries: 3,
+  },
+  { event: "drive/sync.folder" },
+  async ({ event, step }) => {
+    const { folderId, userId } = event.data;
+    
+    if (!folderId) {
+      return { success: false, error: "No folder ID provided" };
+    }
+    
+    const result = await step.run("sync-folder", async () => {
+      return await syncFolderWithDatabase(folderId, userId);
+    });
+    
+    return result;
+  }
+);
+
+/**
+ * Sincronização completa de todas as pastas (manual)
+ */
+export const syncAllDriveFn = inngest.createFunction(
+  {
+    id: "sync-all-drive",
+    name: "Sync All Drive Folders",
+    retries: 2,
+  },
+  { event: "drive/sync.all" },
+  async ({ event, step }) => {
+    const { userId } = event.data || {};
+    
+    const folders = await step.run("get-sync-folders", async () => {
+      return await getSyncFolders();
+    });
+
+    if (!folders || folders.length === 0) {
+      return { success: false, error: "No folders configured for sync" };
+    }
+
+    const results = [];
+    
+    for (const folder of folders) {
+      const result = await step.run(`sync-folder-${folder.id}`, async () => {
+        try {
+          const syncResult = await syncFolderWithDatabase(folder.driveFolderId, userId);
+          return {
+            folderId: folder.driveFolderId,
+            folderName: folder.name,
+            ...syncResult,
+          };
+        } catch (error) {
+          return {
+            folderId: folder.driveFolderId,
+            folderName: folder.name,
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+        }
+      });
+      
+      results.push(result);
+    }
+
+    return { 
+      success: true, 
+      foldersProcessed: results.length,
+      results 
+    };
+  }
+);
+
 // Exportar todas as funções para o handler
 export const functions = [
   sendWhatsAppMessageFn,
@@ -225,4 +361,7 @@ export const functions = [
   notifyJuriFn,
   notifyMovimentacaoFn,
   sendReminderFn,
+  syncDriveFn,
+  syncDriveFolderFn,
+  syncAllDriveFn,
 ];
