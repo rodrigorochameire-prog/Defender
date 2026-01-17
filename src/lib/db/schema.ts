@@ -1008,3 +1008,157 @@ export const conselhoJuriRelations = relations(conselhoJuri, ({ one }) => ({
   sessao: one(sessoesJuri, { fields: [conselhoJuri.sessaoId], references: [sessoesJuri.id] }),
   jurado: one(jurados, { fields: [conselhoJuri.juradoId], references: [jurados.id] }),
 }));
+
+// ==========================================
+// SINCRONIZAÇÃO GOOGLE DRIVE
+// ==========================================
+
+// Enum para direção de sincronização
+export const syncDirectionEnum = pgEnum("sync_direction", [
+  "bidirectional",
+  "drive_to_app",
+  "app_to_drive",
+]);
+
+// Enum para status de sincronização
+export const syncStatusEnum = pgEnum("sync_status", [
+  "synced",
+  "pending_upload",
+  "pending_download",
+  "conflict",
+  "error",
+]);
+
+// Pastas configuradas para sincronização
+export const driveSyncFolders = pgTable("drive_sync_folders", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  driveFolderId: varchar("drive_folder_id", { length: 100 }).notNull().unique(),
+  driveFolderUrl: text("drive_folder_url"),
+  description: text("description"),
+  syncDirection: varchar("sync_direction", { length: 20 }).default("bidirectional"),
+  isActive: boolean("is_active").default(true).notNull(),
+  lastSyncAt: timestamp("last_sync_at"),
+  syncToken: text("sync_token"),
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("drive_sync_folders_drive_folder_id_idx").on(table.driveFolderId),
+  index("drive_sync_folders_is_active_idx").on(table.isActive),
+]);
+
+export type DriveSyncFolder = typeof driveSyncFolders.$inferSelect;
+export type InsertDriveSyncFolder = typeof driveSyncFolders.$inferInsert;
+
+// Arquivos sincronizados do Drive
+export const driveFiles = pgTable("drive_files", {
+  id: serial("id").primaryKey(),
+  
+  // Identificação Google Drive
+  driveFileId: varchar("drive_file_id", { length: 100 }).notNull().unique(),
+  driveFolderId: varchar("drive_folder_id", { length: 100 }).notNull(),
+  
+  // Metadados do arquivo
+  name: varchar("name", { length: 500 }).notNull(),
+  mimeType: varchar("mime_type", { length: 100 }),
+  fileSize: integer("file_size"),
+  description: text("description"),
+  
+  // Links
+  webViewLink: text("web_view_link"),
+  webContentLink: text("web_content_link"),
+  thumbnailLink: text("thumbnail_link"),
+  iconLink: text("icon_link"),
+  
+  // Status de sincronização
+  syncStatus: varchar("sync_status", { length: 20 }).default("synced"),
+  lastModifiedTime: timestamp("last_modified_time"),
+  lastSyncAt: timestamp("last_sync_at"),
+  localChecksum: varchar("local_checksum", { length: 64 }),
+  driveChecksum: varchar("drive_checksum", { length: 64 }),
+  
+  // Relacionamentos (opcionais)
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
+  documentoId: integer("documento_id").references(() => documentos.id, { onDelete: "set null" }),
+  
+  // Cópia local
+  localFileUrl: text("local_file_url"),
+  localFileKey: text("local_file_key"),
+  
+  // Controle de versão
+  version: integer("version").default(1),
+  isFolder: boolean("is_folder").default(false),
+  parentFileId: integer("parent_file_id"),
+  
+  // Metadados
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("drive_files_drive_folder_id_idx").on(table.driveFolderId),
+  index("drive_files_drive_file_id_idx").on(table.driveFileId),
+  index("drive_files_processo_id_idx").on(table.processoId),
+  index("drive_files_assistido_id_idx").on(table.assistidoId),
+  index("drive_files_sync_status_idx").on(table.syncStatus),
+  index("drive_files_is_folder_idx").on(table.isFolder),
+  index("drive_files_parent_file_id_idx").on(table.parentFileId),
+]);
+
+export type DriveFile = typeof driveFiles.$inferSelect;
+export type InsertDriveFile = typeof driveFiles.$inferInsert;
+
+// Logs de sincronização
+export const driveSyncLogs = pgTable("drive_sync_logs", {
+  id: serial("id").primaryKey(),
+  driveFileId: varchar("drive_file_id", { length: 100 }),
+  action: varchar("action", { length: 50 }).notNull(),
+  status: varchar("status", { length: 20 }).default("success"),
+  details: text("details"),
+  errorMessage: text("error_message"),
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("drive_sync_logs_drive_file_id_idx").on(table.driveFileId),
+  index("drive_sync_logs_created_at_idx").on(table.createdAt),
+  index("drive_sync_logs_action_idx").on(table.action),
+]);
+
+export type DriveSyncLog = typeof driveSyncLogs.$inferSelect;
+export type InsertDriveSyncLog = typeof driveSyncLogs.$inferInsert;
+
+// Webhooks do Drive
+export const driveWebhooks = pgTable("drive_webhooks", {
+  id: serial("id").primaryKey(),
+  channelId: varchar("channel_id", { length: 100 }).notNull().unique(),
+  resourceId: varchar("resource_id", { length: 100 }),
+  folderId: varchar("folder_id", { length: 100 }).notNull(),
+  expiration: timestamp("expiration"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("drive_webhooks_channel_id_idx").on(table.channelId),
+  index("drive_webhooks_folder_id_idx").on(table.folderId),
+  index("drive_webhooks_is_active_idx").on(table.isActive),
+]);
+
+export type DriveWebhook = typeof driveWebhooks.$inferSelect;
+export type InsertDriveWebhook = typeof driveWebhooks.$inferInsert;
+
+// Relações do Drive
+export const driveSyncFoldersRelations = relations(driveSyncFolders, ({ one, many }) => ({
+  createdBy: one(users, { fields: [driveSyncFolders.createdById], references: [users.id] }),
+}));
+
+export const driveFilesRelations = relations(driveFiles, ({ one, many }) => ({
+  processo: one(processos, { fields: [driveFiles.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [driveFiles.assistidoId], references: [assistidos.id] }),
+  documento: one(documentos, { fields: [driveFiles.documentoId], references: [documentos.id] }),
+  createdBy: one(users, { fields: [driveFiles.createdById], references: [users.id] }),
+  parent: one(driveFiles, { fields: [driveFiles.parentFileId], references: [driveFiles.id] }),
+}));
+
+export const driveSyncLogsRelations = relations(driveSyncLogs, ({ one }) => ({
+  user: one(users, { fields: [driveSyncLogs.userId], references: [users.id] }),
+}));
