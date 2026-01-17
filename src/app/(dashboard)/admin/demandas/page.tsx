@@ -177,7 +177,7 @@ const STATUS_OPTIONS: OptionItem[] = [
 // Situação Prisional / Unidades - Cores suaves e premium
 const PRISAO_OPTIONS: OptionItem[] = [
   // Solto / Não informado
-  { value: "", label: "(Não informado)", color: "bg-slate-200", group: "Geral" },
+  { value: "NAO_INFORMADO", label: "(Não informado)", color: "bg-slate-200", group: "Geral" },
   { value: "SOLTO", label: "Solto", color: "bg-emerald-200", group: "Geral" },
   // Bahia - Região Metropolitana (rose suave)
   { value: "CADEIA_PUBLICA", label: "Cadeia Pública", color: "bg-rose-300", group: "RMS" },
@@ -299,7 +299,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "",
     status: "2_ATENDER",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "URGENTE",
     providencias: null,
     area: "JURI",
@@ -314,7 +314,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "2025-09-25",
     status: "2_BUSCAR",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: null,
     area: "JURI",
@@ -345,7 +345,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "2025-11-28",
     status: "2_ELABORAR",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: "Requerer diligências para verificar atuação policial (câmeras de monitoramento). Juntar notícias sobre o fato indicando armas apreendidas.",
     area: "JURI",
@@ -360,7 +360,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "2025-09-09",
     status: "2_ELABORAR",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: "Pensar que diligências podem ser requeridas na defesa de José Fabrício",
     area: "JURI",
@@ -375,7 +375,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "2025-11-07",
     status: "2_ELABORAR",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: "Informar que o assistido informou ter advogado, e que foi efetivamente citado em 07 de novembro, tendo prazo de 10 dias para apresentar RA mediante seu advogado",
     area: "JURI",
@@ -390,7 +390,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "",
     status: "2_ELABORAR",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: null,
     area: "JURI",
@@ -405,7 +405,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "",
     status: "2_RELATORIO",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: "Analisar processo - MP atualizou endereços das testemunhas",
     area: "JURI",
@@ -420,7 +420,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "",
     status: "3_PROTOCOLAR",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: null,
     area: "JURI",
@@ -435,7 +435,7 @@ const mockDemandas: Demanda[] = [
     prazo: "2025-12-10",
     dataEntrada: "2025-11-24",
     status: "4_EMILLY",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: "Atualizar endereços de testemunhas",
     area: "JURI",
@@ -450,7 +450,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "2025-11-27",
     status: "4_EMILLY",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "ALTA",
     providencias: "Coleta antecipada designada - impugnar com HC, pois o fato é recente e não houve tentativa de localização do endereço",
     area: "JURI",
@@ -465,7 +465,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "2025-11-09",
     status: "4_MONITORAR",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: "Hospital Juliano Moreira indicou não ter leito em hospital geral",
     area: "JURI",
@@ -480,7 +480,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "2025-05-10",
     status: "4_MONITORAR",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: "Juntar relatório atualizado do réu. Enviada mensagem a filha Luzinete para que ela informe situação médica atual de Elias. Filha Elane atendida, afirmou que Elias já não está mais internado, mas que teve membro amputado.",
     area: "JURI",
@@ -495,7 +495,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "2025-09-19",
     status: "4_MONITORAR",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "ALTA",
     providencias: "Buscar unidade para atender o assistido. Elaborar RA. Requerer recambiamento do réu para Bahia. Buscar familiares de Weverton.",
     area: "JURI",
@@ -510,7 +510,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "2025-07-08",
     status: "5_FILA",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: null,
     area: "JURI",
@@ -525,7 +525,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "",
     status: "5_FILA",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: null,
     area: "JURI",
@@ -618,7 +618,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "",
     status: "7_PROTOCOLADO",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: null,
     area: "JURI",
@@ -633,7 +633,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "",
     status: "7_PROTOCOLADO",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: null,
     area: "JURI",
@@ -648,7 +648,7 @@ const mockDemandas: Demanda[] = [
     prazo: "",
     dataEntrada: "",
     status: "7_PROTOCOLADO",
-    prisao: "",
+    prisao: "NAO_INFORMADO",
     prioridade: "NORMAL",
     providencias: null,
     area: "JURI",
@@ -787,7 +787,7 @@ function DemandaModal({
       dataEntrada: format(new Date(), "yyyy-MM-dd"),
       dataIntimacao: "",
       status: "5_FILA",
-      prisao: "",
+      prisao: "NAO_INFORMADO",
       prioridade: "NORMAL",
       providencias: "",
       area: "JURI",
@@ -812,7 +812,7 @@ function DemandaModal({
         dataEntrada: format(new Date(), "yyyy-MM-dd"),
         dataIntimacao: "",
         status: "5_FILA",
-        prisao: "",
+        prisao: "NAO_INFORMADO",
         prioridade: "NORMAL",
         providencias: "",
         area: "JURI",
@@ -1057,11 +1057,11 @@ function DemandaModal({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Situação Prisional</Label>
-              <Select value={formData.prisao || ""} onValueChange={(v) => {
+              <Select value={formData.prisao || "NAO_INFORMADO"} onValueChange={(v) => {
                 const isPreso = Boolean(v && v !== "SOLTO" && v !== "" && v !== "none");
                 setFormData({ 
                   ...formData, 
-                  prisao: v === "none" ? "" : v,
+                  prisao: v === "none" ? "NAO_INFORMADO" : v,
                   reuPreso: isPreso
                 });
               }}>
@@ -1598,7 +1598,7 @@ export default function DemandasPage() {
     fila: demandas.filter(d => d.status === "5_FILA").length,
     aguardando: demandas.filter(d => d.status.startsWith("6_")).length, // Documentos, Testemunhas
     concluido: demandas.filter(d => d.status.startsWith("7_")).length, // Todos os concluídos
-    reuPreso: demandas.filter(d => d.reuPreso || (d.prisao && d.prisao !== "SOLTO" && d.prisao !== "")).length,
+    reuPreso: demandas.filter(d => d.reuPreso || (d.prisao && d.prisao !== "SOLTO" && d.prisao !== "NAO_INFORMADO" && d.prisao !== "")).length,
     vencidos: demandas.filter(d => d.prazo && isPast(parseISO(d.prazo)) && !isToday(parseISO(d.prazo)) && !d.status.startsWith("7_")).length,
     hoje: demandas.filter(d => d.prazo && isToday(parseISO(d.prazo))).length,
   }), [demandas]);
@@ -2020,7 +2020,7 @@ export default function DemandasPage() {
                           {visibleColumns.prisao && (
                             <TableCell className="p-1">
                               <SelectWithAdd
-                                value={demanda.prisao || ""}
+                                value={demanda.prisao || "NAO_INFORMADO"}
                                 options={prisaoOptions}
                                 onChange={(v) => {
                                   handleInlineUpdate(demanda.id, "prisao", v);
