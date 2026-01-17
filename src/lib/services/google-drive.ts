@@ -620,7 +620,8 @@ export async function syncFolderWithDatabase(
     }
 
     // Marcar arquivos removidos do Drive
-    for (const [fileId, existing] of existingFilesMap) {
+    const existingEntries = Array.from(existingFilesMap.entries());
+    for (const [fileId, existing] of existingEntries) {
       if (!processedIds.has(fileId)) {
         await db
           .delete(driveFiles)
