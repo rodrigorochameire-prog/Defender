@@ -687,7 +687,7 @@ function AdminSidebarContent({
 
         <main
           className={cn(
-            "flex-1 p-4 md:p-6 lg:p-8 min-h-screen overflow-x-hidden",
+            "flex-1 px-4 py-5 md:px-6 md:py-6 lg:px-8 lg:py-8 min-h-screen overflow-x-hidden",
             "bg-gradient-to-br",
             config.bgGradient
           )}
