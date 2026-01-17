@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -33,6 +35,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { 
   FileText, 
   Plus,
@@ -67,6 +74,9 @@ import {
   SortDesc,
   Columns,
   Settings2,
+  PlusCircle,
+  Palette,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -80,6 +90,17 @@ import {
 import { format, differenceInDays, parseISO, isToday, isTomorrow, isPast, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+
+// Tipos para opções customizáveis
+interface OptionItem {
+  value: string;
+  label: string;
+  color: string;
+  textColor?: string;
+  description?: string;
+  group?: string;
+  isCustom?: boolean;
+}
 
 // Tipos
 interface Demanda {
@@ -736,13 +757,25 @@ function DemandaModal({
   isOpen, 
   onClose, 
   onSave,
-  mode = "edit"
+  mode = "edit",
+  statusOptions = STATUS_OPTIONS,
+  prisaoOptions = PRISAO_OPTIONS,
+  tipoAtoOptions = TIPO_ATO_OPTIONS,
+  onAddStatusOption,
+  onAddPrisaoOption,
+  onAddAtoOption,
 }: { 
   demanda?: Demanda | null; 
   isOpen: boolean; 
   onClose: () => void; 
   onSave: (data: Partial<Demanda>) => void;
   mode?: "create" | "edit";
+  statusOptions?: OptionItem[];
+  prisaoOptions?: OptionItem[];
+  tipoAtoOptions?: OptionItem[];
+  onAddStatusOption?: () => void;
+  onAddPrisaoOption?: () => void;
+  onAddAtoOption?: () => void;
 }) {
   const [formData, setFormData] = useState<Partial<Demanda>>(
     demanda || {
@@ -764,6 +797,32 @@ function DemandaModal({
       observacoes: "",
     }
   );
+
+  // Atualizar formData quando demanda mudar
+  useEffect(() => {
+    if (demanda) {
+      setFormData(demanda);
+    } else {
+      setFormData({
+        assistido: "",
+        processo: "",
+        ato: "",
+        tipoAto: "resposta_acusacao",
+        prazo: "",
+        dataEntrada: format(new Date(), "yyyy-MM-dd"),
+        dataIntimacao: "",
+        status: "5_FILA",
+        prisao: "",
+        prioridade: "NORMAL",
+        providencias: "",
+        area: "JURI",
+        comarca: "CANDEIAS",
+        defensor: "",
+        reuPreso: false,
+        observacoes: "",
+      });
+    }
+  }, [demanda]);
 
   const handleSubmit = () => {
     onSave(formData);
@@ -820,16 +879,44 @@ function DemandaModal({
             </div>
             <div className="space-y-2">
               <Label htmlFor="tipoAto">Tipo de Ato</Label>
-              <Select value={formData.tipoAto} onValueChange={(v) => setFormData({ ...formData, tipoAto: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIPO_ATO_OPTIONS.map((tipo) => (
-                    <SelectItem key={tipo.value} value={tipo.value}>{tipo.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={formData.tipoAto} onValueChange={(v) => {
+                  setFormData({ ...formData, tipoAto: v });
+                  const atoLabel = tipoAtoOptions.find(t => t.value === v)?.label || v;
+                  if (!formData.ato) {
+                    setFormData((prev) => ({ ...prev, ato: atoLabel }));
+                  }
+                }}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tipoAtoOptions.map((tipo) => (
+                      <SelectItem key={tipo.value} value={tipo.value}>
+                        <div className="flex items-center gap-2">
+                          <div className={cn("w-2 h-2 rounded-full", tipo.color)} />
+                          {tipo.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                    {onAddAtoOption && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onAddAtoOption();
+                          }}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-primary hover:bg-muted rounded-sm cursor-pointer"
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                          Adicionar tipo...
+                        </button>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -870,17 +957,40 @@ function DemandaModal({
               <Label>Status</Label>
               <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>
+                    {formData.status && (
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-2 h-2 rounded-full", statusOptions.find(s => s.value === formData.status)?.color)} />
+                        {statusOptions.find(s => s.value === formData.status)?.label}
+                      </div>
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map((status) => (
+                  {statusOptions.map((status) => (
                     <SelectItem key={status.value} value={status.value}>
                       <div className="flex items-center gap-2">
                         <div className={cn("w-2 h-2 rounded-full", status.color)} />
                         {status.label}
+                        {status.isCustom && <Badge variant="outline" className="text-[9px] ml-1">Custom</Badge>}
                       </div>
                     </SelectItem>
                   ))}
+                  {onAddStatusOption && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onAddStatusOption();
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-primary hover:bg-muted rounded-sm cursor-pointer"
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                        Adicionar status...
+                      </button>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -948,24 +1058,48 @@ function DemandaModal({
             <div className="space-y-2">
               <Label>Situação Prisional</Label>
               <Select value={formData.prisao || ""} onValueChange={(v) => {
+                const isPreso = Boolean(v && v !== "SOLTO" && v !== "" && v !== "none");
                 setFormData({ 
                   ...formData, 
-                  prisao: v,
-                  reuPreso: v === "CADEIA_PUBLICA" || v === "COP" || v === "PENITENCIARIA"
+                  prisao: v === "none" ? "" : v,
+                  reuPreso: isPreso
                 });
               }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue placeholder="Selecione...">
+                    {formData.prisao && (
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-2 h-2 rounded-full", prisaoOptions.find(p => p.value === formData.prisao)?.color)} />
+                        {prisaoOptions.find(p => p.value === formData.prisao)?.label}
+                      </div>
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {PRISAO_OPTIONS.map((p) => (
-                    <SelectItem key={p.value} value={p.value || "none"}>
+                  {prisaoOptions.map((p) => (
+                    <SelectItem key={p.value || "empty"} value={p.value || "none"}>
                       <div className="flex items-center gap-2">
                         <div className={cn("w-2 h-2 rounded-full", p.color)} />
                         {p.label}
+                        {p.isCustom && <Badge variant="outline" className="text-[9px] ml-1">Custom</Badge>}
                       </div>
                     </SelectItem>
                   ))}
+                  {onAddPrisaoOption && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onAddPrisaoOption();
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-primary hover:bg-muted rounded-sm cursor-pointer"
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                        Adicionar local...
+                      </button>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -1027,6 +1161,310 @@ function DemandaModal({
   );
 }
 
+// Cores disponíveis para novas opções
+const AVAILABLE_COLORS = [
+  { value: "bg-red-500", label: "Vermelho", preview: "#ef4444" },
+  { value: "bg-red-600", label: "Vermelho Escuro", preview: "#dc2626" },
+  { value: "bg-orange-500", label: "Laranja", preview: "#f97316" },
+  { value: "bg-amber-500", label: "Âmbar", preview: "#f59e0b" },
+  { value: "bg-yellow-400", label: "Amarelo", preview: "#facc15" },
+  { value: "bg-lime-500", label: "Lima", preview: "#84cc16" },
+  { value: "bg-green-500", label: "Verde", preview: "#22c55e" },
+  { value: "bg-emerald-500", label: "Esmeralda", preview: "#10b981" },
+  { value: "bg-teal-500", label: "Teal", preview: "#14b8a6" },
+  { value: "bg-cyan-400", label: "Ciano", preview: "#22d3ee" },
+  { value: "bg-blue-500", label: "Azul", preview: "#3b82f6" },
+  { value: "bg-blue-700", label: "Azul Escuro", preview: "#1d4ed8" },
+  { value: "bg-indigo-500", label: "Índigo", preview: "#6366f1" },
+  { value: "bg-purple-500", label: "Roxo", preview: "#a855f7" },
+  { value: "bg-pink-500", label: "Rosa", preview: "#ec4899" },
+  { value: "bg-slate-400", label: "Cinza", preview: "#94a3b8" },
+];
+
+// Modal para adicionar nova opção
+function AddOptionModal({
+  isOpen,
+  onClose,
+  onAdd,
+  type,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onAdd: (option: OptionItem) => void;
+  type: "status" | "prisao" | "ato";
+}) {
+  const [label, setLabel] = useState("");
+  const [color, setColor] = useState("bg-slate-400");
+  const [group, setGroup] = useState("");
+
+  const typeLabels = {
+    status: "Status",
+    prisao: "Local/Prisão",
+    ato: "Tipo de Ato",
+  };
+
+  const handleSubmit = () => {
+    if (!label.trim()) return;
+    
+    const value = label.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z0-9_]/g, "");
+    onAdd({
+      value: `CUSTOM_${value}`,
+      label: label.trim(),
+      color,
+      textColor: color.includes("yellow") || color.includes("amber") ? "text-black" : "text-white",
+      group: group || "Personalizado",
+      isCustom: true,
+    });
+    
+    setLabel("");
+    setColor("bg-slate-400");
+    setGroup("");
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <PlusCircle className="h-5 w-5 text-primary" />
+            Adicionar {typeLabels[type]}
+          </DialogTitle>
+          <DialogDescription>
+            Crie uma nova opção personalizada para o menu
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="optionLabel">Nome da opção *</Label>
+            <Input
+              id="optionLabel"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder={`Ex: ${type === "status" ? "Em revisão" : type === "prisao" ? "CDP Feira" : "Embargos"}`}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Cor</Label>
+            <div className="grid grid-cols-8 gap-2">
+              {AVAILABLE_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => setColor(c.value)}
+                  className={cn(
+                    "w-8 h-8 rounded-lg transition-all",
+                    c.value,
+                    color === c.value && "ring-2 ring-offset-2 ring-primary"
+                  )}
+                  title={c.label}
+                />
+              ))}
+            </div>
+          </div>
+
+          {type === "status" && (
+            <div className="space-y-2">
+              <Label htmlFor="optionGroup">Grupo (opcional)</Label>
+              <Select value={group} onValueChange={setGroup}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um grupo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 - Urgente</SelectItem>
+                  <SelectItem value="2">2 - Trabalho</SelectItem>
+                  <SelectItem value="3">3 - Protocolar</SelectItem>
+                  <SelectItem value="4">4 - Delegado</SelectItem>
+                  <SelectItem value="5">5 - Fila</SelectItem>
+                  <SelectItem value="6">6 - Aguardando</SelectItem>
+                  <SelectItem value="7">7 - Concluído</SelectItem>
+                  <SelectItem value="custom">Personalizado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="p-3 rounded-lg bg-muted/50 border">
+            <Label className="text-xs text-muted-foreground">Prévia:</Label>
+            <div className="mt-2 flex items-center gap-2">
+              <Badge className={cn(color, "text-white")}>
+                {label || "Nova opção"}
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={!label.trim()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Componente de célula editável inline
+function EditableCell({
+  value,
+  onChange,
+  type = "text",
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  type?: "text" | "date";
+  className?: string;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    setEditValue(value);
+  }, [value]);
+
+  const handleSubmit = () => {
+    onChange(editValue);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSubmit();
+    } else if (e.key === "Escape") {
+      setEditValue(value);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <Input
+        ref={inputRef}
+        type={type}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleSubmit}
+        onKeyDown={handleKeyDown}
+        className={cn("h-7 text-xs", className)}
+      />
+    );
+  }
+
+  return (
+    <div
+      onClick={() => setIsEditing(true)}
+      className={cn(
+        "cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded transition-colors min-h-[24px] flex items-center",
+        className
+      )}
+      title="Clique para editar"
+    >
+      {value || <span className="text-muted-foreground italic">-</span>}
+    </div>
+  );
+}
+
+// Select com opção de adicionar
+function SelectWithAdd({
+  value,
+  options,
+  onChange,
+  onAddOption,
+  placeholder,
+  className,
+  compact = false,
+}: {
+  value: string;
+  options: OptionItem[];
+  onChange: (value: string) => void;
+  onAddOption: () => void;
+  placeholder?: string;
+  className?: string;
+  compact?: boolean;
+}) {
+  // Agrupar opções por grupo
+  const groupedOptions = useMemo(() => {
+    const groups: Record<string, OptionItem[]> = {};
+    options.forEach((opt) => {
+      const group = opt.group || "Outros";
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(opt);
+    });
+    return groups;
+  }, [options]);
+
+  const hasGroups = Object.keys(groupedOptions).length > 1;
+
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className={cn(compact && "h-7 text-xs", className)}>
+        <SelectValue placeholder={placeholder}>
+          {value && (
+            <div className="flex items-center gap-2">
+              <div className={cn("w-2 h-2 rounded-full", options.find(o => o.value === value)?.color)} />
+              <span className="truncate">{options.find(o => o.value === value)?.label || value}</span>
+            </div>
+          )}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {hasGroups ? (
+          Object.entries(groupedOptions).map(([group, opts]) => (
+            <SelectGroup key={group}>
+              <SelectLabel className="text-xs text-muted-foreground">{group}</SelectLabel>
+              {opts.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  <div className="flex items-center gap-2">
+                    <div className={cn("w-2 h-2 rounded-full flex-shrink-0", opt.color)} />
+                    <span>{opt.label}</span>
+                    {opt.isCustom && <Badge variant="outline" className="text-[9px] ml-1">Custom</Badge>}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          ))
+        ) : (
+          options.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              <div className="flex items-center gap-2">
+                <div className={cn("w-2 h-2 rounded-full flex-shrink-0", opt.color)} />
+                <span>{opt.label}</span>
+                {opt.isCustom && <Badge variant="outline" className="text-[9px] ml-1">Custom</Badge>}
+              </div>
+            </SelectItem>
+          ))
+        )}
+        <DropdownMenuSeparator />
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onAddOption();
+          }}
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-primary hover:bg-muted rounded-sm cursor-pointer"
+        >
+          <PlusCircle className="h-4 w-4" />
+          Adicionar opção...
+        </button>
+      </SelectContent>
+    </Select>
+  );
+}
+
 // Componente Principal
 export default function DemandasPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -1043,6 +1481,39 @@ export default function DemandasPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("edit");
   const [demandas, setDemandas] = useState<Demanda[]>(mockDemandas);
+  
+  // Estados para opções customizáveis
+  const [statusOptions, setStatusOptions] = useState<OptionItem[]>(STATUS_OPTIONS);
+  const [prisaoOptions, setPrisaoOptions] = useState<OptionItem[]>(PRISAO_OPTIONS);
+  const [tipoAtoOptions, setTipoAtoOptions] = useState<OptionItem[]>(TIPO_ATO_OPTIONS);
+  
+  // Modal para adicionar opção
+  const [addOptionModal, setAddOptionModal] = useState<{
+    isOpen: boolean;
+    type: "status" | "prisao" | "ato";
+  }>({ isOpen: false, type: "status" });
+
+  // Handler para adicionar nova opção
+  const handleAddOption = useCallback((option: OptionItem) => {
+    switch (addOptionModal.type) {
+      case "status":
+        setStatusOptions((prev) => [...prev, option]);
+        break;
+      case "prisao":
+        setPrisaoOptions((prev) => [...prev, option]);
+        break;
+      case "ato":
+        setTipoAtoOptions((prev) => [...prev, option]);
+        break;
+    }
+  }, [addOptionModal.type]);
+
+  // Handler para atualizar campo inline
+  const handleInlineUpdate = useCallback((id: number, field: keyof Demanda, value: string | boolean) => {
+    setDemandas((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, [field]: value } : d))
+    );
+  }, []);
   
   // Lista de defensores para filtro
   const defensores = useMemo(() => {
@@ -1528,140 +1999,168 @@ export default function DemandasPage() {
                         <TableRow 
                           key={demanda.id} 
                           className={cn(
-                            "hover:bg-muted/30 transition-colors",
+                            "hover:bg-muted/30 transition-colors group",
                             demanda.reuPreso && "bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/30",
                             prazoInfo.urgent && !demanda.reuPreso && "bg-orange-50/30 dark:bg-orange-950/10"
                           )}
                         >
                           {/* Ordem: Status, Prisão, Data, Assistido, Autos, Ato, Prazo, Providências */}
                           {visibleColumns.status && (
-                            <TableCell>
-                              <Select
+                            <TableCell className="p-1">
+                              <SelectWithAdd
                                 value={demanda.status}
-                                onValueChange={(v) => handleUpdateStatus(demanda.id, v)}
-                              >
-                                <SelectTrigger className="h-7 w-[130px] text-xs">
-                                  <StatusBadge status={demanda.status} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {STATUS_OPTIONS.map((s) => (
-                                    <SelectItem key={s.value} value={s.value}>
-                                      <div className="flex items-center gap-2">
-                                        <div className={cn("w-2 h-2 rounded-full", s.color)} />
-                                        {s.label}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                options={statusOptions}
+                                onChange={(v) => handleInlineUpdate(demanda.id, "status", v)}
+                                onAddOption={() => setAddOptionModal({ isOpen: true, type: "status" })}
+                                compact
+                                className="w-[140px]"
+                              />
                             </TableCell>
                           )}
                           {visibleColumns.prisao && (
-                            <TableCell>
-                              {demanda.prisao ? (
-                                <Badge 
-                                  className={cn(
-                                    "text-[10px] font-medium",
-                                    demanda.prisao === "CADEIA_PUBLICA" && "bg-red-600 text-white",
-                                    demanda.prisao === "COP" && "bg-red-700 text-white",
-                                    demanda.prisao === "PENITENCIARIA" && "bg-red-800 text-white",
-                                    demanda.prisao === "SOLTO" && "bg-green-500 text-white",
-                                    demanda.prisao === "DOMICILIAR" && "bg-orange-500 text-white",
-                                    demanda.prisao === "MONITORADO" && "bg-amber-500 text-white",
-                                  )}
-                                >
-                                  {PRISAO_OPTIONS.find(p => p.value === demanda.prisao)?.label || demanda.prisao}
-                                </Badge>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">-</span>
-                              )}
+                            <TableCell className="p-1">
+                              <SelectWithAdd
+                                value={demanda.prisao || ""}
+                                options={prisaoOptions}
+                                onChange={(v) => {
+                                  handleInlineUpdate(demanda.id, "prisao", v);
+                                  // Auto-update reuPreso
+                                  const isPreso = v && v !== "SOLTO" && v !== "";
+                                  handleInlineUpdate(demanda.id, "reuPreso", isPreso);
+                                }}
+                                onAddOption={() => setAddOptionModal({ isOpen: true, type: "prisao" })}
+                                placeholder="Local"
+                                compact
+                                className="w-[120px]"
+                              />
                             </TableCell>
                           )}
                           {visibleColumns.dataEntrada && (
-                            <TableCell>
-                              <span className="text-xs text-muted-foreground">
-                                {demanda.dataEntrada ? format(parseISO(demanda.dataEntrada), "dd/MM/yy", { locale: ptBR }) : "-"}
-                              </span>
+                            <TableCell className="p-1">
+                              <EditableCell
+                                value={demanda.dataEntrada || ""}
+                                onChange={(v) => handleInlineUpdate(demanda.id, "dataEntrada", v)}
+                                type="date"
+                                className="w-[100px] text-xs"
+                              />
                             </TableCell>
                           )}
                           {visibleColumns.assistido && (
-                            <TableCell>
-                              <div className="flex items-center gap-2">
+                            <TableCell className="p-1">
+                              <div className="flex items-center gap-1">
                                 {(demanda.reuPreso || demanda.prisao === "CADEIA_PUBLICA" || demanda.prisao === "COP") && (
                                   <Lock className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
                                 )}
-                                <span className="font-medium text-sm">{demanda.assistido}</span>
+                                <EditableCell
+                                  value={demanda.assistido}
+                                  onChange={(v) => handleInlineUpdate(demanda.id, "assistido", v)}
+                                  className="font-medium text-sm flex-1"
+                                />
                               </div>
                             </TableCell>
                           )}
                           {visibleColumns.processo && (
-                            <TableCell>
-                              <span className="font-mono text-xs text-muted-foreground">{demanda.processo || "-"}</span>
+                            <TableCell className="p-1">
+                              <EditableCell
+                                value={demanda.processo}
+                                onChange={(v) => handleInlineUpdate(demanda.id, "processo", v)}
+                                className="font-mono text-xs text-muted-foreground"
+                              />
                             </TableCell>
                           )}
                           {visibleColumns.ato && (
-                            <TableCell>
-                              <span className="font-medium text-sm">{demanda.ato || "-"}</span>
+                            <TableCell className="p-1">
+                              <SelectWithAdd
+                                value={demanda.tipoAto}
+                                options={tipoAtoOptions}
+                                onChange={(v) => {
+                                  handleInlineUpdate(demanda.id, "tipoAto", v);
+                                  const atoLabel = tipoAtoOptions.find(t => t.value === v)?.label || v;
+                                  handleInlineUpdate(demanda.id, "ato", atoLabel);
+                                }}
+                                onAddOption={() => setAddOptionModal({ isOpen: true, type: "ato" })}
+                                compact
+                                className="w-[150px]"
+                              />
                             </TableCell>
                           )}
                           {visibleColumns.prazo && (
-                            <TableCell>
-                              {demanda.prazo ? (
-                                <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-lg w-fit", prazoInfo.className)}>
-                                  <PrazoIcon className="h-3.5 w-3.5" />
-                                  <span className="text-xs font-semibold">{prazoInfo.text}</span>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">-</span>
-                              )}
+                            <TableCell className="p-1">
+                              <div className="flex items-center gap-1">
+                                {demanda.prazo && (
+                                  <div className={cn("flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]", prazoInfo.className)}>
+                                    <PrazoIcon className="h-3 w-3" />
+                                    <span className="font-semibold">{prazoInfo.text}</span>
+                                  </div>
+                                )}
+                                <EditableCell
+                                  value={demanda.prazo}
+                                  onChange={(v) => handleInlineUpdate(demanda.id, "prazo", v)}
+                                  type="date"
+                                  className={cn("w-[90px] text-xs", demanda.prazo && "hidden group-hover:block")}
+                                />
+                              </div>
                             </TableCell>
                           )}
                           {visibleColumns.providencias && (
-                            <TableCell className="min-w-[200px] max-w-[300px]">
-                              <p className="text-xs text-muted-foreground line-clamp-2" title={demanda.providencias || ""}>
-                                {demanda.providencias || "-"}
-                              </p>
+                            <TableCell className="p-1 min-w-[200px] max-w-[350px]">
+                              <EditableCell
+                                value={demanda.providencias || ""}
+                                onChange={(v) => handleInlineUpdate(demanda.id, "providencias", v)}
+                                className="text-xs text-muted-foreground"
+                              />
                             </TableCell>
                           )}
                           {visibleColumns.tipoAto && (
-                            <TableCell>
+                            <TableCell className="p-1">
                               <span className="text-xs text-muted-foreground">
-                                {TIPO_ATO_OPTIONS.find(t => t.value === demanda.tipoAto)?.label || demanda.tipoAto}
+                                {tipoAtoOptions.find(t => t.value === demanda.tipoAto)?.label || demanda.tipoAto}
                               </span>
                             </TableCell>
                           )}
                           {visibleColumns.area && (
-                            <TableCell><AreaBadge area={demanda.area} /></TableCell>
+                            <TableCell className="p-1"><AreaBadge area={demanda.area} /></TableCell>
                           )}
                           {visibleColumns.comarca && (
-                            <TableCell>
-                              <span className="text-xs">
-                                {COMARCA_OPTIONS.find(c => c.value === demanda.comarca)?.label || demanda.comarca || "-"}
-                              </span>
+                            <TableCell className="p-1">
+                              <EditableCell
+                                value={demanda.comarca || ""}
+                                onChange={(v) => handleInlineUpdate(demanda.id, "comarca", v)}
+                                className="text-xs"
+                              />
                             </TableCell>
                           )}
                           {visibleColumns.prioridade && (
-                            <TableCell>
+                            <TableCell className="p-1">
                               <PrioridadeBadge prioridade={demanda.prioridade} reuPreso={demanda.reuPreso} />
                             </TableCell>
                           )}
                           {visibleColumns.defensor && (
-                            <TableCell>
-                              <span className="text-sm">{demanda.defensor || "-"}</span>
+                            <TableCell className="p-1">
+                              <EditableCell
+                                value={demanda.defensor || ""}
+                                onChange={(v) => handleInlineUpdate(demanda.id, "defensor", v)}
+                                className="text-sm"
+                              />
                             </TableCell>
                           )}
                           {visibleColumns.dataIntimacao && (
-                            <TableCell>
-                              <span className="text-xs text-muted-foreground">
-                                {demanda.dataIntimacao ? format(parseISO(demanda.dataIntimacao), "dd/MM", { locale: ptBR }) : "-"}
-                              </span>
+                            <TableCell className="p-1">
+                              <EditableCell
+                                value={demanda.dataIntimacao || ""}
+                                onChange={(v) => handleInlineUpdate(demanda.id, "dataIntimacao", v)}
+                                type="date"
+                                className="text-xs"
+                              />
                             </TableCell>
                           )}
                           {visibleColumns.observacoes && (
-                            <TableCell className="max-w-[150px]">
-                              <p className="text-xs text-muted-foreground truncate" title={demanda.observacoes}>
-                                {demanda.observacoes || "-"}
-                              </p>
+                            <TableCell className="p-1 max-w-[200px]">
+                              <EditableCell
+                                value={demanda.observacoes || ""}
+                                onChange={(v) => handleInlineUpdate(demanda.id, "observacoes", v)}
+                                className="text-xs text-muted-foreground"
+                              />
                             </TableCell>
                           )}
                           <TableCell className="text-right">
@@ -1702,6 +2201,20 @@ export default function DemandasPage() {
                         </TableRow>
                       );
                     })}
+                    {/* Linha para adicionar nova demanda */}
+                    <TableRow className="bg-muted/10 hover:bg-muted/20 border-t-2 border-dashed border-primary/20">
+                      <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="p-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleOpenCreate}
+                          className="w-full justify-start gap-2 text-muted-foreground hover:text-primary"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Adicionar nova demanda...
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               </div>
@@ -1919,6 +2432,20 @@ export default function DemandasPage() {
         }}
         onSave={handleSave}
         mode={modalMode}
+        statusOptions={statusOptions}
+        prisaoOptions={prisaoOptions}
+        tipoAtoOptions={tipoAtoOptions}
+        onAddStatusOption={() => setAddOptionModal({ isOpen: true, type: "status" })}
+        onAddPrisaoOption={() => setAddOptionModal({ isOpen: true, type: "prisao" })}
+        onAddAtoOption={() => setAddOptionModal({ isOpen: true, type: "ato" })}
+      />
+
+      {/* Modal de Adicionar Opção */}
+      <AddOptionModal
+        isOpen={addOptionModal.isOpen}
+        onClose={() => setAddOptionModal({ ...addOptionModal, isOpen: false })}
+        onAdd={handleAddOption}
+        type={addOptionModal.type}
       />
     </div>
   );
