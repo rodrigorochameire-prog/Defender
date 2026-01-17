@@ -1,5 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#10b981"/>
-  <path d="M8 10h16v2H8zM8 15h12v2H8zM8 20h14v2H8z" fill="white" opacity="0.9"/>
-  <path d="M22 18l4 4-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Background Shield Shape -->
+  <path d="M16 2L4 7v8c0 7.5 5.1 14.5 12 16 6.9-1.5 12-8.5 12-16V7L16 2z" fill="url(#shieldGradient)" />
+  
+  <!-- Inner Shield Highlight -->
+  <path d="M16 4L6 8.5v6.5c0 6.5 4.3 12.3 10 13.5 5.7-1.2 10-7 10-13.5V8.5L16 4z" fill="url(#innerGradient)" opacity="0.95" />
+  
+  <!-- Balance Scale Symbol -->
+  <g transform="translate(16, 14)">
+    <!-- Center Pillar -->
+    <rect x="-1" y="-2" width="2" height="10" rx="1" fill="white" opacity="0.95"/>
+    
+    <!-- Balance Beam -->
+    <rect x="-8" y="-3" width="16" height="2" rx="1" fill="white" opacity="0.95"/>
+    
+    <!-- Left Pan -->
+    <path d="M-8 0 L-6 0 L-5 4 L-9 4 Z" fill="white" opacity="0.9"/>
+    
+    <!-- Right Pan -->
+    <path d="M8 0 L6 0 L5 4 L9 4 Z" fill="white" opacity="0.9"/>
+    
+    <!-- Top Fulcrum -->
+    <circle cx="0" cy="-4" r="2" fill="white" opacity="0.95"/>
+  </g>
+  
+  <!-- Decorative Stars (representing justice) -->
+  <circle cx="8" cy="9" r="1" fill="white" opacity="0.6"/>
+  <circle cx="24" cy="9" r="1" fill="white" opacity="0.6"/>
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="shieldGradient" x1="16" y1="2" x2="16" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <linearGradient id="innerGradient" x1="16" y1="4" x2="16" y2="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </linearGradient>
+  </defs>
 </svg>

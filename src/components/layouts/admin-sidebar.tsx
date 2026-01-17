@@ -289,7 +289,8 @@ function AdminSidebarContent({
                         <Icon
                           className={cn(
                             "transition-all duration-200",
-                            isActive ? "h-6 w-6" : "h-[22px] w-[22px]"
+                            isActive ? "h-6 w-6" : "h-[22px] w-[22px]",
+                            isCollapsed && "!h-6 !w-6"
                           )}
                           style={{
                             color: isActive ? config.accentColor : config.sidebarTextMuted,
@@ -372,7 +373,8 @@ function AdminSidebarContent({
                         <Icon
                           className={cn(
                             "transition-all duration-200",
-                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5"
+                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5",
+                            isCollapsed && "!h-6 !w-6"
                           )}
                           style={{
                             color: isActive
@@ -454,7 +456,8 @@ function AdminSidebarContent({
                         <Icon
                           className={cn(
                             "transition-all duration-200 flex-shrink-0",
-                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5"
+                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5",
+                            isCollapsed && "!h-6 !w-6"
                           )}
                           style={{
                             color: isActive ? config.accentColor : config.sidebarTextMuted,
@@ -603,7 +606,8 @@ function AdminSidebarContent({
           <div
             className={cn(
               "flex border-b h-16 items-center justify-center backdrop-blur-xl px-6 sticky top-0 z-40 relative",
-              config.borderColor
+              config.borderColor,
+              "dark:border-b-[hsl(160,10%,18%)]"
             )}
             style={{
               background: `linear-gradient(135deg, ${config.accentColorLight} 0%, hsl(155, 15%, 99%) 100%)`,
@@ -646,12 +650,14 @@ function AdminSidebarContent({
 
         <main
           className={cn(
-            "flex-1 p-5 md:p-6 min-h-screen overflow-x-hidden max-w-full",
+            "flex-1 p-4 md:p-6 lg:p-8 min-h-screen overflow-x-hidden",
             "bg-gradient-to-br",
             config.bgGradient
           )}
         >
-          {children}
+          <div className="mx-auto max-w-[1600px] w-full">
+            {children}
+          </div>
         </main>
       </SidebarInset>
     </>
