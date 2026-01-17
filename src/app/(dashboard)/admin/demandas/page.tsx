@@ -118,29 +118,77 @@ const COMARCA_OPTIONS = [
   { value: "SALVADOR", label: "Salvador" },
 ];
 
-// Status disponíveis - Baseado na planilha VVD Júri
+// Status disponíveis - Baseado na planilha VVD Júri (COMPLETO)
 const STATUS_OPTIONS = [
-  { value: "2_ATENDER", label: "2 - Atender", color: "bg-red-600", textColor: "text-red-700", description: "Precisa de atenção urgente" },
-  { value: "2_BUSCAR", label: "2 - Buscar", color: "bg-red-500", textColor: "text-red-600", description: "Buscar informações/documentos" },
-  { value: "2_ELABORAR", label: "2 - Elaborar", color: "bg-orange-500", textColor: "text-orange-700", description: "Elaborar peça" },
-  { value: "2_RELATORIO", label: "2 - Relatório", color: "bg-orange-400", textColor: "text-orange-600", description: "Analisar/fazer relatório" },
-  { value: "3_PROTOCOLAR", label: "3 - Protocolar", color: "bg-yellow-500", textColor: "text-yellow-700", description: "Pronto para protocolar" },
-  { value: "4_EMILLY", label: "4 - Emilly", color: "bg-pink-500", textColor: "text-pink-700", description: "Com Emilly" },
-  { value: "4_MONITORAR", label: "4 - Monitorar", color: "bg-blue-500", textColor: "text-blue-700", description: "Acompanhando andamento" },
-  { value: "5_FILA", label: "5 - Fila", color: "bg-amber-500", textColor: "text-amber-700", description: "Na fila de trabalho" },
+  // Grupo 1 - Urgente (vermelho)
+  { value: "1_URGENTE", label: "1 - Urgente", color: "bg-red-600", textColor: "text-red-700", description: "Prazo crítico/urgente" },
+  // Grupo 2 - Trabalho pendente (amarelo)
+  { value: "2_RELATORIO", label: "2 - Relatório", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Analisar/fazer relatório" },
+  { value: "2_ANALISAR", label: "2 - Analisar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Analisar processo" },
+  { value: "2_ATENDER", label: "2 - Atender", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Atender assistido" },
+  { value: "2_BUSCAR", label: "2 - Buscar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Buscar informações" },
+  { value: "2_INVESTIGAR", label: "2 - Investigar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Investigar caso" },
+  { value: "2_ELABORAR", label: "2 - Elaborar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Elaborar peça" },
+  { value: "2_ELABORANDO", label: "2 - Elaborando", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Em elaboração" },
+  { value: "2_REVISAR", label: "2 - Revisar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Revisar peça" },
+  { value: "2_REVISANDO", label: "2 - Revisando", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Em revisão" },
+  // Grupo 3 - Protocolar (laranja)
+  { value: "3_PROTOCOLAR", label: "3 - Protocolar", color: "bg-orange-500", textColor: "text-orange-700", description: "Pronto para protocolar" },
+  // Grupo 4 - Pessoas/Monitorar (azul claro)
+  { value: "4_AMANDA", label: "4 - Amanda", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Com Amanda" },
+  { value: "4_ESTAGIO_TARISSA", label: "4 - Estágio - Tarissa", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Com Tarissa (estágio)" },
+  { value: "4_EMILLY", label: "4 - Emilly", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Com Emilly" },
+  { value: "4_MONITORAR", label: "4 - Monitorar", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Monitorando andamento" },
+  // Grupo 5 - Fila (azul)
+  { value: "5_FILA", label: "5 - Fila", color: "bg-blue-500", textColor: "text-blue-700", description: "Na fila de trabalho" },
+  // Grupo 6 - Pendências externas (azul escuro)
+  { value: "6_DOCUMENTOS", label: "6 - Documentos", color: "bg-blue-700", textColor: "text-blue-800", description: "Aguardando documentos" },
+  { value: "6_TESTEMUNHAS", label: "6 - Testemunhas", color: "bg-blue-700", textColor: "text-blue-800", description: "Aguardando testemunhas" },
+  // Grupo 7 - Concluído (verde)
   { value: "7_PROTOCOLADO", label: "7 - Protocolado", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Peça protocolada" },
+  { value: "7_SIGAD", label: "7 - Sigad", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Registrado no Sigad" },
+  { value: "7_CIENCIA", label: "7 - Ciência", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Ciência tomada" },
+  { value: "7_RESOLVIDO", label: "7 - Resolvido", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Caso resolvido" },
+  { value: "7_CONSTITUIU_ADVOGADO", label: "7 - Constituiu advogado", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Constituiu advogado particular" },
+  { value: "7_SEM_ATUACAO", label: "7 - Sem atuação", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Sem necessidade de atuação" },
 ];
 
-// Situação Prisional - Baseado na planilha VVD
+// Situação Prisional / Unidades - Baseado na planilha VVD (COMPLETO)
 const PRISAO_OPTIONS = [
+  // Solto
   { value: "", label: "(Não informado)", color: "bg-slate-300" },
-  { value: "CADEIA_PUBLICA", label: "Cadeia Pública", color: "bg-red-600" },
-  { value: "COP", label: "COP", color: "bg-red-700" },
-  { value: "PENITENCIARIA", label: "Penitenciária", color: "bg-red-800" },
-  { value: "HOSPITAL", label: "Hospital de Custódia", color: "bg-purple-600" },
-  { value: "DOMICILIAR", label: "Domiciliar", color: "bg-orange-500" },
-  { value: "MONITORADO", label: "Monitorado", color: "bg-amber-500" },
   { value: "SOLTO", label: "Solto", color: "bg-green-500" },
+  // Bahia - Região Metropolitana
+  { value: "CADEIA_PUBLICA", label: "Cadeia Pública", color: "bg-red-600" },
+  { value: "CPMS", label: "CPMS - Simões Filho", color: "bg-red-600" },
+  { value: "COP", label: "COP - Centro de Obs. Penal", color: "bg-red-700" },
+  { value: "PRESIDIO_SSA", label: "Presídio Salvador", color: "bg-red-600" },
+  { value: "PLB", label: "PLB - Lemos Brito", color: "bg-red-600" },
+  // Bahia - Interior
+  { value: "CP_FEIRA", label: "CP Feira de Santana", color: "bg-red-600" },
+  { value: "CP_ITABUNA", label: "CP Itabuna", color: "bg-red-600" },
+  { value: "CP_VC", label: "CP Vitória da Conquista", color: "bg-red-600" },
+  { value: "CP_JEQUIE", label: "CP Jequié", color: "bg-red-600" },
+  { value: "CP_ILHEUS", label: "CP Ilhéus", color: "bg-red-600" },
+  { value: "CP_BARREIRAS", label: "CP Barreiras", color: "bg-red-600" },
+  { value: "CP_JUAZEIRO", label: "CP Juazeiro", color: "bg-red-600" },
+  { value: "CP_TEIXEIRA", label: "CP Teixeira de Freitas", color: "bg-red-600" },
+  { value: "CP_EUNAPOLIS", label: "CP Eunápolis", color: "bg-red-600" },
+  { value: "CP_VALENCA", label: "CP Valença", color: "bg-red-600" },
+  { value: "CP_ALAGOINHAS", label: "CP Alagoinhas", color: "bg-red-600" },
+  { value: "CP_SERRINHA", label: "CP Serrinha", color: "bg-red-600" },
+  { value: "CP_IRECE", label: "CP Irecê", color: "bg-red-600" },
+  // Outros estados
+  { value: "CPT_IV_PINHEIROS_SP", label: "CPT IV Pinheiros-SP", color: "bg-purple-600" },
+  { value: "CDP_BELEM_SP", label: "CDP Belém-SP", color: "bg-purple-600" },
+  { value: "PSM_MACEIO", label: "PSM Maceió", color: "bg-purple-600" },
+  { value: "SC_JARAGUA_SUL", label: "SC - Presídio Jaraguá do Sul", color: "bg-purple-600" },
+  { value: "SP_PRESIDENTE_VENCESLAU", label: "SP - Presidente Venceslau II", color: "bg-purple-600" },
+  { value: "MG_EXTREMA", label: "MG - Presídio de Extrema", color: "bg-purple-600" },
+  // Especiais
+  { value: "HOSPITAL_CUSTODIA", label: "Hospital de Custódia", color: "bg-amber-600" },
+  { value: "DOMICILIAR", label: "Prisão Domiciliar", color: "bg-orange-500" },
+  { value: "MONITORADO", label: "Monitoramento Eletrônico", color: "bg-amber-500" },
 ];
 
 // Prioridades
@@ -164,29 +212,44 @@ const AREA_OPTIONS = [
   { value: "FAZENDA_PUBLICA", label: "Fazenda Pública", icon: Scale, color: "indigo" },
 ];
 
-// Tipos de Ato - Baseado na planilha VVD Júri
+// Tipos de Ato - Baseado na planilha VVD Júri (COMPLETO)
 const TIPO_ATO_OPTIONS = [
-  { value: "resposta_acusacao", label: "Resposta à Acusação", group: "Defesa" },
-  { value: "diligencias_422", label: "Diligências do 422", group: "Defesa" },
-  { value: "alegacoes_finais", label: "Alegações Finais", group: "Defesa" },
-  { value: "memoriais", label: "Memoriais", group: "Defesa" },
-  { value: "razoes_apelacao", label: "Razões de Apelação", group: "Recursos" },
-  { value: "contrarrazoes", label: "Contrarrazões", group: "Recursos" },
-  { value: "apelacao", label: "Apelação", group: "Recursos" },
-  { value: "rese", label: "RESE", group: "Recursos" },
-  { value: "agravo", label: "Agravo", group: "Recursos" },
-  { value: "embargos", label: "Embargos", group: "Recursos" },
-  { value: "habeas_corpus", label: "Habeas Corpus", group: "Ações" },
-  { value: "revogacao_prisao", label: "Revogação da Prisão Preventiva", group: "Ações" },
-  { value: "relaxamento", label: "Relaxamento de Prisão", group: "Ações" },
-  { value: "liberdade_provisoria", label: "Liberdade Provisória", group: "Ações" },
-  { value: "peticao_intermediaria", label: "Petição Intermediária", group: "Petições" },
-  { value: "oficio", label: "Ofício", group: "Petições" },
-  { value: "peticao", label: "Petição Simples", group: "Petições" },
-  { value: "atualizacao_endereco", label: "Atualização de Endereço", group: "Diligências" },
-  { value: "ciencia", label: "Ciência", group: "Outros" },
-  { value: "ciencia_revogacao", label: "Ciência Revogação Prisão", group: "Outros" },
-  { value: "outro", label: "Outro", group: "Outros" },
+  // Defesa - Primeira fase
+  { value: "resposta_acusacao", label: "Resposta à Acusação", group: "Defesa", color: "bg-blue-100" },
+  { value: "diligencias_422", label: "Diligências do 422", group: "Defesa", color: "bg-blue-100" },
+  { value: "alegacoes_finais", label: "Alegações finais", group: "Defesa", color: "bg-green-100" },
+  // Recursos
+  { value: "apelacao", label: "Apelação", group: "Recursos", color: "bg-orange-100" },
+  { value: "contrarrazoes_apelacao", label: "Contrarrazões de apelação", group: "Recursos", color: "bg-yellow-100" },
+  { value: "razoes_apelacao", label: "Razões de apelação", group: "Recursos", color: "bg-yellow-100" },
+  { value: "rese", label: "RESE", group: "Recursos", color: "bg-green-100" },
+  { value: "razoes_rese", label: "Razões de RESE", group: "Recursos", color: "bg-green-100" },
+  // Ações específicas do Júri
+  { value: "incidente_insanidade", label: "Incidente de insanidade", group: "Júri", color: "bg-purple-100" },
+  { value: "desaforamento", label: "Desaforamento", group: "Júri", color: "bg-pink-100" },
+  // Liberdade
+  { value: "revogacao_prisao", label: "Revogação da prisão preventiva", group: "Liberdade", color: "bg-cyan-100" },
+  { value: "relaxamento_prisao", label: "Relaxamento da prisão preventiva", group: "Liberdade", color: "bg-cyan-100" },
+  { value: "habeas_corpus", label: "Habeas Corpus", group: "Liberdade", color: "bg-teal-100" },
+  // Petições
+  { value: "restituicao_coisa", label: "Restituição de coisa apreendida", group: "Petições", color: "bg-amber-100" },
+  { value: "oficio", label: "Ofício", group: "Petições", color: "bg-amber-100" },
+  { value: "peticao_intermediaria", label: "Petição intermediária", group: "Petições", color: "bg-pink-100" },
+  { value: "prosseguimento_feito", label: "Prosseguimento do feito", group: "Petições", color: "bg-pink-100" },
+  { value: "atualizacao_endereco", label: "Atualização de endereço", group: "Petições", color: "bg-pink-100" },
+  // Ciências (verde claro)
+  { value: "ciencia_habilitacao_dpe", label: "Ciência habilitação DPE", group: "Ciências", color: "bg-emerald-50" },
+  { value: "ciencia_decisao", label: "Ciência de decisão", group: "Ciências", color: "bg-emerald-50" },
+  { value: "ciencia_pronuncia", label: "Ciência da pronúncia", group: "Ciências", color: "bg-emerald-50" },
+  { value: "ciencia_impronuncia", label: "Ciência da impronúncia", group: "Ciências", color: "bg-emerald-50" },
+  { value: "ciencia_absolvicao_sumaria", label: "Ciência da absolvição sumária imprópria", group: "Ciências", color: "bg-emerald-50" },
+  { value: "ciencia_desclassificacao", label: "Ciência desclassificação", group: "Ciências", color: "bg-emerald-50" },
+  { value: "ciencia_prescricao", label: "Ciência da prescrição", group: "Ciências", color: "bg-emerald-50" },
+  { value: "ciencia_laudo_insanidade", label: "Ciência laudo de exame de insanidade", group: "Ciências", color: "bg-emerald-50" },
+  { value: "ciencia_revogacao_prisao", label: "Ciência revogação prisão", group: "Ciências", color: "bg-emerald-50" },
+  { value: "ciencia", label: "Ciência", group: "Ciências", color: "bg-emerald-50" },
+  // Outros
+  { value: "outro", label: "Outro", group: "Outros", color: "bg-slate-100" },
 ];
 
 // Dados importados da planilha VVD Júri
@@ -1043,19 +1106,18 @@ export default function DemandasPage() {
     return result;
   }, [demandas, searchTerm, statusFilter, areaFilter, prioridadeFilter, comarcaFilter, defensorFilter, reuPresoFilter, sortField, sortOrder]);
 
-  // Estatísticas baseadas nos status da planilha VVD
+  // Estatísticas baseadas nos status da planilha VVD (COMPLETO)
   const stats = useMemo(() => ({
     total: demandas.length,
-    atender: demandas.filter(d => d.status === "2_ATENDER").length,
-    buscar: demandas.filter(d => d.status === "2_BUSCAR").length,
-    elaborar: demandas.filter(d => d.status === "2_ELABORAR" || d.status === "2_RELATORIO").length,
+    urgente: demandas.filter(d => d.status === "1_URGENTE").length,
+    trabalho: demandas.filter(d => d.status.startsWith("2_")).length, // Todo grupo 2
     protocolar: demandas.filter(d => d.status === "3_PROTOCOLAR").length,
-    emilly: demandas.filter(d => d.status === "4_EMILLY").length,
-    monitorar: demandas.filter(d => d.status === "4_MONITORAR").length,
+    delegado: demandas.filter(d => d.status.startsWith("4_")).length, // Amanda, Emilly, Tarissa, Monitorar
     fila: demandas.filter(d => d.status === "5_FILA").length,
-    protocolado: demandas.filter(d => d.status === "7_PROTOCOLADO").length,
-    reuPreso: demandas.filter(d => d.reuPreso || d.prisao === "CADEIA_PUBLICA" || d.prisao === "COP" || d.prisao === "PENITENCIARIA").length,
-    vencidos: demandas.filter(d => d.prazo && isPast(parseISO(d.prazo)) && !isToday(parseISO(d.prazo)) && d.status !== "7_PROTOCOLADO").length,
+    aguardando: demandas.filter(d => d.status.startsWith("6_")).length, // Documentos, Testemunhas
+    concluido: demandas.filter(d => d.status.startsWith("7_")).length, // Todos os concluídos
+    reuPreso: demandas.filter(d => d.reuPreso || (d.prisao && d.prisao !== "SOLTO" && d.prisao !== "")).length,
+    vencidos: demandas.filter(d => d.prazo && isPast(parseISO(d.prazo)) && !isToday(parseISO(d.prazo)) && !d.status.startsWith("7_")).length,
     hoje: demandas.filter(d => d.prazo && isToday(parseISO(d.prazo))).length,
   }), [demandas]);
 
@@ -1142,6 +1204,18 @@ export default function DemandasPage() {
           </CardContent>
         </Card>
 
+        <Card className={cn("stat-card", stats.urgente > 0 && "border-red-500 bg-red-50 dark:bg-red-950/30")}>
+          <CardContent className="pt-3 pb-2 px-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={cn("text-xl font-bold", stats.urgente > 0 && "text-red-600")}>{stats.urgente}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Urgente</p>
+              </div>
+              <AlertTriangle className={cn("h-4 w-4", stats.urgente > 0 ? "text-red-500 animate-pulse" : "text-muted-foreground")} />
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="stat-card fatal">
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
@@ -1154,26 +1228,14 @@ export default function DemandasPage() {
           </CardContent>
         </Card>
 
-        <Card className="stat-card fatal">
+        <Card className="stat-card">
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-red-600">{stats.atender}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Atender</p>
+                <p className="text-xl font-bold text-yellow-600">{stats.trabalho}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Trabalho</p>
               </div>
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="stat-card urgente">
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-bold text-orange-600">{stats.elaborar}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Elaborar</p>
-              </div>
-              <Edit className="h-4 w-4 text-orange-500" />
+              <Edit className="h-4 w-4 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
@@ -1182,10 +1244,10 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-yellow-600">{stats.protocolar}</p>
+                <p className="text-xl font-bold text-orange-600">{stats.protocolar}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Protocolar</p>
               </div>
-              <ArrowUpRight className="h-4 w-4 text-yellow-500" />
+              <ArrowUpRight className="h-4 w-4 text-orange-500" />
             </div>
           </CardContent>
         </Card>
@@ -1194,10 +1256,10 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-pink-600">{stats.emilly}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Emilly</p>
+                <p className="text-xl font-bold text-cyan-600">{stats.delegado}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Delegado</p>
               </div>
-              <User className="h-4 w-4 text-pink-500" />
+              <User className="h-4 w-4 text-cyan-500" />
             </div>
           </CardContent>
         </Card>
@@ -1206,22 +1268,22 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-blue-600">{stats.monitorar}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Monitorar</p>
-              </div>
-              <Eye className="h-4 w-4 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="stat-card">
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-bold text-amber-600">{stats.fila}</p>
+                <p className="text-xl font-bold text-blue-600">{stats.fila}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Fila</p>
               </div>
-              <Clock className="h-4 w-4 text-amber-500" />
+              <Clock className="h-4 w-4 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="stat-card">
+          <CardContent className="pt-3 pb-2 px-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xl font-bold text-blue-800">{stats.aguardando}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Aguardando</p>
+              </div>
+              <Eye className="h-4 w-4 text-blue-700" />
             </div>
           </CardContent>
         </Card>
@@ -1230,8 +1292,8 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-emerald-600">{stats.protocolado}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Protocolado</p>
+                <p className="text-xl font-bold text-emerald-600">{stats.concluido}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Concluído</p>
               </div>
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
             </div>
