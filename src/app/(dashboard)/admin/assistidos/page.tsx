@@ -81,7 +81,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getInitials } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { format, differenceInDays, parseISO, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -478,7 +477,6 @@ interface AssistidoCardProps {
 
 function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: AssistidoCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const isMobile = useIsMobile();
   
   const status = statusConfig[assistido.statusPrisional] || statusConfig.SOLTO;
   const fase = faseConfig[assistido.faseProcessual] || faseConfig.INSTRUCAO;
@@ -641,35 +639,20 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 </span>
               )}
             </div>
-            {/* Botão Mais/Menos apenas visível em mobile */}
-            {isMobile && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 px-2 text-[10px]"
-                onClick={() => setIsExpanded(!isExpanded)}
-              >
-                {isExpanded ? "Menos" : "Mais"}
-                {isExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
-              </Button>
-            )}
-            {/* Em desktop, mostrar link direto para o perfil */}
-            {!isMobile && (
-              <Link href={`/admin/assistidos/${assistido.id}`}>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-6 px-2 text-[10px] hover:text-primary"
-                >
-                  Ver <ChevronRight className="h-3 w-3 ml-0.5" />
-                </Button>
-              </Link>
-            )}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 px-2 text-[10px]"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? "Menos" : "Mais"}
+              {isExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
+            </Button>
           </div>
         </div>
 
-        {/* Seção Expandida - Apenas em mobile */}
-        <Collapsible open={isExpanded && isMobile}>
+        {/* Seção Expandida */}
+        <Collapsible open={isExpanded}>
           <CollapsibleContent>
             <div className="px-3 pb-3 space-y-3 border-t border-border/30 pt-3 bg-muted/20">
               {/* Processo */}
@@ -1089,15 +1072,16 @@ export default function AssistidosPage() {
           </CardContent>
         </Card>
       ) : viewMode === "grid" ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-0">
           {filteredAssistidos.map((a) => (
-            <AssistidoCard 
-              key={a.id} 
-              assistido={a} 
-              onPhotoClick={() => handlePhotoClick(a)}
-              isPinned={pinnedIds.has(a.id)}
-              onTogglePin={() => togglePin(a.id)}
-            />
+            <div key={a.id} className="break-inside-avoid mb-4">
+              <AssistidoCard 
+                assistido={a} 
+                onPhotoClick={() => handlePhotoClick(a)}
+                isPinned={pinnedIds.has(a.id)}
+                onTogglePin={() => togglePin(a.id)}
+              />
+            </div>
           ))}
         </div>
       ) : (
