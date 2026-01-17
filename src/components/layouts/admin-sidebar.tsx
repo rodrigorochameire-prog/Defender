@@ -223,14 +223,22 @@ function AdminSidebarContent({
         <Sidebar
           collapsible="icon"
           className={cn(
-            "border-r-2 border-[hsl(158_25%_85%)] dark:border-[hsl(160_20%_18%)]",
-            "bg-gradient-to-b from-[hsl(155_20%_97%)] via-[hsl(155_18%_96%)] to-[hsl(158_22%_94%)] dark:from-[hsl(160_18%_7%)] dark:via-[hsl(160_16%_6%)] dark:to-[hsl(158_20%_8%)]",
-            "backdrop-blur-xl shadow-[2px_0_12px_-4px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_12px_-4px_rgba(0,0,0,0.3)]"
+            "border-r-2 backdrop-blur-xl shadow-[2px_0_12px_-4px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_12px_-4px_rgba(0,0,0,0.3)]"
           )}
+          style={{
+            background: `var(--sidebar-bg, ${config.sidebarBg})`,
+            borderColor: `var(--sidebar-border, ${config.sidebarBorder})`,
+          }}
           disableTransition={isResizing}
         >
           {/* Header com Switcher de Atribuição */}
-          <SidebarHeader className="border-b-2 border-[hsl(158_30%_88%)] dark:border-[hsl(160_18%_15%)] py-3 bg-gradient-to-r from-[hsl(158_35%_94%)] via-[hsl(155_28%_95%)] to-[hsl(158_25%_96%)] dark:from-[hsl(158_25%_10%)] dark:via-[hsl(160_20%_9%)] dark:to-[hsl(158_22%_8%)]">
+          <SidebarHeader 
+            className="border-b-2 py-3"
+            style={{
+              background: `var(--sidebar-header-bg, ${config.sidebarHeaderBg})`,
+              borderColor: `var(--sidebar-divider, ${config.sidebarDivider})`,
+            }}
+          >
             <AssignmentSwitcher collapsed={isCollapsed} />
           </SidebarHeader>
 
@@ -241,12 +249,10 @@ function AdminSidebarContent({
                 <SidebarMenuButton
                   onClick={toggleSidebar}
                   tooltip={isCollapsed ? "Expandir" : "Recolher"}
-                  className={cn(
-                    "h-11 rounded-xl transition-all duration-200",
-                    "hover:bg-[hsl(158_30%_90%)] dark:hover:bg-[hsl(158_20%_14%)]",
-                    "text-[hsl(160_15%_40%)] dark:text-[hsl(150_12%_60%)]",
-                    "border border-transparent hover:border-[hsl(158_25%_85%)] dark:hover:border-[hsl(158_20%_20%)]"
-                  )}
+                  className="h-11 rounded-xl transition-all duration-200 border border-transparent"
+                  style={{
+                    color: `var(--sidebar-text-muted, ${config.sidebarTextMuted})`,
+                  }}
                 >
                   <PanelLeft className="h-5 w-5" strokeWidth={1.8} />
                   <span className="text-[13px] font-semibold">
@@ -255,12 +261,20 @@ function AdminSidebarContent({
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <div className="h-px bg-[hsl(155_15%_90%)] dark:bg-[hsl(160_12%_14%)] my-2 mx-2" />
+              <div 
+                className="h-[2px] my-3 mx-1 rounded-full"
+                style={{
+                  background: `linear-gradient(to right, ${config.sidebarDivider}, transparent)`,
+                }}
+              />
 
               {/* Label da atribuição */}
               {!isCollapsed && (
                 <div className="px-3 py-2 mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[hsl(160_8%_50%)] dark:text-[hsl(150_6%_45%)]">
+                  <span 
+                    className="text-[10px] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: config.accentColor }}
+                  >
                     {config.shortName}
                   </span>
                 </div>
@@ -281,13 +295,11 @@ function AdminSidebarContent({
                       tooltip={item.label}
                       className={cn(
                         "h-11 transition-all duration-200 rounded-xl group relative",
-                        isActive
-                          ? "shadow-md ring-2"
-                          : "hover:bg-[hsl(158_25%_93%)] dark:hover:bg-[hsl(160_18%_12%)] hover:shadow-sm"
+                        isActive ? "shadow-md" : "hover:shadow-sm"
                       )}
                       style={{
-                        backgroundColor: isActive ? config.accentColorLight : undefined,
-                        borderColor: isActive ? config.accentColor + "40" : undefined,
+                        background: isActive ? config.sidebarActiveBg : undefined,
+                        boxShadow: isActive ? `0 0 0 2px ${config.sidebarActiveRing}` : undefined,
                       }}
                     >
                       <Link
@@ -307,17 +319,18 @@ function AdminSidebarContent({
                           style={{
                             color: isActive
                               ? config.accentColor
-                              : "hsl(160, 12%, 42%)",
+                              : config.sidebarTextMuted,
                           }}
                           strokeWidth={isActive ? 2.2 : 1.8}
                         />
                         <span
                           className={cn(
                             "text-[13px] transition-colors duration-200",
-                            isActive
-                              ? "font-bold text-foreground"
-                              : "font-semibold text-[hsl(160_12%_35%)] dark:text-[hsl(150_10%_65%)]"
+                            isActive ? "font-bold text-foreground" : "font-semibold"
                           )}
+                          style={{
+                            color: isActive ? undefined : config.sidebarTextMuted,
+                          }}
                         >
                           {item.label}
                         </span>
@@ -334,12 +347,20 @@ function AdminSidebarContent({
               })}
 
               {/* Separador */}
-              <div className="h-px bg-[hsl(155_15%_92%)] dark:bg-[hsl(160_12%_12%)] my-3 mx-2" />
+              <div 
+                className="h-[2px] my-3 mx-1 rounded-full"
+                style={{
+                  background: `linear-gradient(to right, transparent, ${config.sidebarDivider}, transparent)`,
+                }}
+              />
 
               {/* Menu Secundário (fixo) */}
               {!isCollapsed && (
                 <div className="px-3 py-2 mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[hsl(160_8%_50%)] dark:text-[hsl(150_6%_45%)]">
+                  <span 
+                    className="text-[10px] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: config.sidebarTextMuted }}
+                  >
                     Sistema
                   </span>
                 </div>
@@ -357,10 +378,11 @@ function AdminSidebarContent({
                       tooltip={item.label}
                       className={cn(
                         "h-10 transition-all duration-200 rounded-xl group",
-                        isActive
-                          ? "bg-[hsl(158_35%_92%)] dark:bg-[hsl(158_25%_12%)] shadow-sm"
-                          : "hover:bg-[hsl(155_15%_95%)] dark:hover:bg-[hsl(160_12%_10%)]"
+                        isActive ? "shadow-sm" : ""
                       )}
+                      style={{
+                        background: isActive ? config.sidebarActiveBg : undefined,
+                      }}
                     >
                       <Link
                         href={item.path}
@@ -372,21 +394,20 @@ function AdminSidebarContent({
                         }}
                       >
                         <Icon
-                          className={cn(
-                            "transition-colors duration-200 h-[18px] w-[18px]",
-                            isActive
-                              ? "text-[hsl(158_55%_38%)]"
-                              : "text-[hsl(160_8%_45%)]"
-                          )}
+                          className="transition-colors duration-200 h-[18px] w-[18px]"
+                          style={{
+                            color: isActive ? config.accentColor : config.sidebarTextMuted,
+                          }}
                           strokeWidth={1.5}
                         />
                         <span
                           className={cn(
                             "text-[13px] font-medium transition-colors duration-200",
-                            isActive
-                              ? "text-foreground"
-                              : "text-[hsl(160_8%_40%)] dark:text-[hsl(150_6%_60%)]"
+                            isActive ? "text-foreground" : ""
                           )}
+                          style={{
+                            color: isActive ? undefined : config.sidebarTextMuted,
+                          }}
                         >
                           {item.label}
                         </span>
@@ -399,14 +420,25 @@ function AdminSidebarContent({
           </SidebarContent>
 
           {/* Footer */}
-          <SidebarFooter className="p-3 border-t-2 border-[hsl(158_30%_88%)] dark:border-[hsl(160_18%_15%)] bg-gradient-to-t from-[hsl(158_30%_94%)] via-[hsl(158_25%_95%)] to-transparent dark:from-[hsl(158_20%_9%)] dark:via-[hsl(158_18%_8%)] dark:to-transparent">
+          <SidebarFooter 
+            className="p-3 border-t-2"
+            style={{
+              borderColor: config.sidebarDivider,
+              background: `linear-gradient(to top, ${config.sidebarHover}, transparent)`,
+            }}
+          >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-[hsl(158_30%_91%)] dark:hover:bg-[hsl(158_20%_14%)] transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(158_55%_42%)/0.5] group border border-transparent hover:border-[hsl(158_28%_85%)] dark:hover:border-[hsl(158_22%_20%)]">
+                <button 
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2 group border border-transparent"
+                  style={{
+                    ["--tw-ring-color" as string]: config.accentColor + "60",
+                  }}
+                >
                   <div className="relative">
                     <Avatar
-                      className="h-11 w-11 border-2 shadow-md ring-2 ring-white/80 dark:ring-[hsl(158_20%_12%)]"
-                      style={{ borderColor: config.accentColor + "50" }}
+                      className="h-11 w-11 border-2 shadow-md ring-2 ring-white/80 dark:ring-black/20"
+                      style={{ borderColor: config.accentColor + "60" }}
                     >
                       <AvatarFallback
                         className="text-xs font-semibold"
