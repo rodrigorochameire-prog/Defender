@@ -377,7 +377,7 @@ function AdminSidebarContent({
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
-                        "h-10 transition-all duration-200 rounded-xl group",
+                        "h-11 transition-all duration-200 rounded-xl group",
                         isActive ? "shadow-sm" : ""
                       )}
                       style={{
@@ -394,16 +394,19 @@ function AdminSidebarContent({
                         }}
                       >
                         <Icon
-                          className="transition-colors duration-200 h-[18px] w-[18px]"
+                          className={cn(
+                            "transition-all duration-200 flex-shrink-0",
+                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5"
+                          )}
                           style={{
                             color: isActive ? config.accentColor : config.sidebarTextMuted,
                           }}
-                          strokeWidth={1.5}
+                          strokeWidth={isActive ? 2 : 1.8}
                         />
                         <span
                           className={cn(
-                            "text-[13px] font-medium transition-colors duration-200",
-                            isActive ? "text-foreground" : ""
+                            "text-[13px] font-semibold transition-colors duration-200",
+                            isActive ? "text-foreground font-bold" : ""
                           )}
                           style={{
                             color: isActive ? undefined : config.sidebarTextMuted,
