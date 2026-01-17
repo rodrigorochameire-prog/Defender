@@ -794,7 +794,7 @@ export async function updateFileInDrive(
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": mimeType,
         },
-        body: buffer,
+        body: new Uint8Array(buffer),
       }
     );
 
