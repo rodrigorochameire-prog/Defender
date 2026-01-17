@@ -494,292 +494,251 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
   const testemunhasPendentes = assistido.testemunhasArroladas.filter(t => !t.ouvida).length;
 
   return (
-    <Card className={`group transition-all duration-300 overflow-hidden relative ${
-      isPreso ? "border-l-[3px] border-l-rose-400" : ""
-    } ${isPinned ? "ring-2 ring-amber-400 ring-offset-1" : "hover:shadow-lg"}`}>
-      {isPinned && <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-400 to-amber-500" />}
+    <Card className={`group transition-all duration-200 overflow-hidden ${
+      isPreso ? "border-l-2 border-l-rose-400" : "border"
+    } ${isPinned ? "ring-1 ring-amber-400" : "hover:shadow-md"}`}>
       
-      <CardContent className="p-0">
-        {/* Header Compacto */}
-        <div className={`relative p-3 ${status.bgColor}`}>
-          {/* Pin Button */}
-          <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className={`h-7 w-7 bg-white/80 dark:bg-black/30 backdrop-blur-sm ${isPinned ? "text-amber-500" : "opacity-0 group-hover:opacity-100"} transition-opacity`}
-                    onClick={onTogglePin}
-                  >
-                    {isPinned ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{isPinned ? "Desfixar" : "Fixar"}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
+      <CardContent className="p-4">
+        {/* Header - Avatar + Nome + Ações */}
+        <div className="flex items-start gap-3 mb-3">
+          <Avatar 
+            className={`h-12 w-12 cursor-pointer flex-shrink-0 ${isPreso ? "ring-2 ring-rose-200" : ""}`}
+            onClick={onPhotoClick}
+          >
+            <AvatarImage src={assistido.photoUrl || undefined} className="object-cover" />
+            <AvatarFallback className={`text-sm font-semibold ${status.iconBg} ${status.color}`}>
+              {getInitials(assistido.nome)}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1 min-w-0">
+            <Link href={`/admin/assistidos/${assistido.id}`}>
+              <h3 className="font-semibold text-[13px] hover:text-primary transition-colors line-clamp-1">
+                {assistido.nome}
+              </h3>
+            </Link>
+            {assistido.vulgo && (
+              <p className="text-[10px] text-muted-foreground">&quot;{assistido.vulgo}&quot;</p>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              {idade} anos • {assistido.cidade}
+            </p>
+          </div>
+
+          {/* Ações */}
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={`h-7 w-7 ${isPinned ? "opacity-100 text-amber-500" : ""}`}
+              onClick={onTogglePin}
+            >
+              {isPinned ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 bg-white/80 dark:bg-black/30 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                  <MoreHorizontal className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuContent align="end" className="w-48">
                 <Link href={`/admin/assistidos/${assistido.id}`}>
-                  <DropdownMenuItem className="cursor-pointer"><Eye className="h-4 w-4 mr-2" />Ver Perfil Completo</DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-xs">
+                    <Eye className="h-3.5 w-3.5 mr-2" />Perfil
+                  </DropdownMenuItem>
                 </Link>
-                <Link href={`/admin/assistidos/${assistido.id}/editar`}>
-                  <DropdownMenuItem className="cursor-pointer"><Edit className="h-4 w-4 mr-2" />Editar</DropdownMenuItem>
-                </Link>
-                <DropdownMenuSeparator />
                 <Link href={`/admin/inteligencia?assistido=${assistido.id}`}>
-                  <DropdownMenuItem className="cursor-pointer text-violet-600"><Brain className="h-4 w-4 mr-2" />Investigação Defensiva</DropdownMenuItem>
-                </Link>
-                <DropdownMenuSeparator />
-                <Link href={`/admin/processos?assistido=${assistido.id}`}>
-                  <DropdownMenuItem className="cursor-pointer"><Scale className="h-4 w-4 mr-2" />Ver Processos</DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-xs text-violet-600">
+                    <Brain className="h-3.5 w-3.5 mr-2" />Inteligência
+                  </DropdownMenuItem>
                 </Link>
                 {telefoneDisplay && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer text-emerald-600" onClick={() => window.open(`https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}`, '_blank')}>
-                      <MessageCircle className="h-4 w-4 mr-2" />WhatsApp
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuItem 
+                    className="cursor-pointer text-xs text-emerald-600" 
+                    onClick={() => window.open(`https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}`, '_blank')}
+                  >
+                    <MessageCircle className="h-3.5 w-3.5 mr-2" />WhatsApp
+                  </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
-          {/* Info Principal */}
-          <div className="flex items-center gap-3">
-            <Avatar 
-              className={`h-14 w-14 cursor-pointer transition-transform hover:scale-105 shadow-md ${isPreso ? "ring-2 ring-rose-300 ring-offset-1" : ""}`}
-              onClick={onPhotoClick}
-            >
-              <AvatarImage src={assistido.photoUrl || undefined} className="object-cover" />
-              <AvatarFallback className={`text-base font-semibold ${status.iconBg} ${status.color}`}>{getInitials(assistido.nome)}</AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1 min-w-0">
-              <Link href={`/admin/assistidos/${assistido.id}`}>
-                <h3 className="font-semibold text-sm hover:text-primary transition-colors truncate">{assistido.nome}</h3>
-              </Link>
-              {assistido.vulgo && <p className="text-[10px] text-muted-foreground italic">&quot;{assistido.vulgo}&quot;</p>}
-              <p className="text-xs text-muted-foreground">{idade} anos • {assistido.cidade}</p>
-            </div>
-          </div>
         </div>
 
-        {/* Corpo Compacto */}
-        <div className="p-3 space-y-2">
-          {/* Status + Fase + Área */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Badge variant="outline" className={`${status.color} ${status.borderColor} ${status.bgColor} text-[10px] font-medium py-0.5`}>
-              {status.label}
-              {tempoPreso && <span className="ml-1 opacity-70">• {tempoPreso}</span>}
-            </Badge>
-            <Badge variant="outline" className={`${fase.color} ${fase.bgColor} border-transparent text-[10px] font-medium py-0.5`}>
-              <FaseIcon className="h-3 w-3 mr-1" />
-              {fase.label}
-            </Badge>
-            <Badge variant="outline" className={`${area.color} ${area.bgColor} border-transparent text-[10px] font-medium py-0.5`}>
-              {area.label}
-            </Badge>
-          </div>
+        {/* Badges - Status, Fase, Área */}
+        <div className="flex items-center gap-1.5 flex-wrap mb-3">
+          <Badge variant="outline" className={`${status.color} ${status.bgColor} border-0 text-[10px] px-2 py-0.5`}>
+            {status.label}
+            {tempoPreso && <span className="opacity-70 ml-1">• {tempoPreso}</span>}
+          </Badge>
+          <Badge variant="outline" className={`${fase.color} ${fase.bgColor} border-0 text-[10px] px-2 py-0.5`}>
+            <FaseIcon className="h-3 w-3 mr-1" />
+            {fase.label}
+          </Badge>
+          <Badge variant="outline" className={`${area.color} ${area.bgColor} border-0 text-[10px] px-2 py-0.5`}>
+            {area.label}
+          </Badge>
+        </div>
 
-          {/* Crime */}
-          {assistido.crimePrincipal && (
-            <p className="text-[11px] text-muted-foreground line-clamp-1">
-              <Scale className="h-3 w-3 inline mr-1" />
-              {assistido.crimePrincipal}
-            </p>
+        {/* Crime */}
+        {assistido.crimePrincipal && (
+          <p className="text-[11px] text-muted-foreground mb-3 line-clamp-1">
+            <Scale className="h-3 w-3 inline mr-1 opacity-60" />
+            {assistido.crimePrincipal}
+          </p>
+        )}
+
+        {/* Status de Audiência */}
+        <div className="flex items-center gap-4 text-[10px] mb-3">
+          {assistido.testemunhasArroladas.length > 0 && (
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <UserCheck className="h-3 w-3 text-emerald-500" />
+              {testemunhasOuvidas}/{assistido.testemunhasArroladas.length}
+            </span>
           )}
-
-          {/* Audiências Mini */}
-          <div className="flex items-center gap-3 text-[10px]">
-            {assistido.testemunhasArroladas.length > 0 && (
-              <span className="flex items-center gap-1">
-                <UserCheck className="h-3 w-3 text-emerald-500" />
-                <span className="text-emerald-600">{testemunhasOuvidas}</span>
-                {testemunhasPendentes > 0 && (
-                  <>
-                    <span className="text-muted-foreground">/</span>
-                    <UserX className="h-3 w-3 text-amber-500" />
-                    <span className="text-amber-600">{testemunhasPendentes}</span>
-                  </>
-                )}
-              </span>
-            )}
-            {assistido.interrogatorioRealizado !== undefined && (
-              <span className={`flex items-center gap-1 ${assistido.interrogatorioRealizado ? "text-emerald-600" : "text-amber-600"}`}>
-                <User className="h-3 w-3" />
-                {assistido.interrogatorioRealizado ? "Interrogado" : "Pendente"}
-              </span>
-            )}
-          </div>
-
-          {/* Stats Row */}
-          <div className="flex items-center justify-between text-xs border-t border-border/30 pt-2 mt-2">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Scale className="h-3.5 w-3.5" />
-                <span className="font-medium text-foreground">{assistido.processosAtivos}</span>
-              </span>
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <FileText className="h-3.5 w-3.5" />
-                <span className={`font-medium ${assistido.demandasAbertas > 2 ? "text-amber-600" : "text-foreground"}`}>{assistido.demandasAbertas}</span>
-              </span>
-              {prazoInfo && (
-                <span className={`flex items-center gap-1 ${prazoInfo.color}`}>
-                  <Timer className="h-3.5 w-3.5" />
-                  <span className="font-medium">{prazoInfo.text}</span>
-                </span>
-              )}
-            </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-6 px-2 text-[10px]"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? "Menos" : "Mais"}
-              {isExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
-            </Button>
-          </div>
+          {assistido.interrogatorioRealizado !== undefined && (
+            <span className={`flex items-center gap-1 ${assistido.interrogatorioRealizado ? "text-emerald-600" : "text-amber-600"}`}>
+              <User className="h-3 w-3" />
+              {assistido.interrogatorioRealizado ? "Interrogado" : "Pendente"}
+            </span>
+          )}
         </div>
 
-        {/* Seção Expandida */}
-        <Collapsible open={isExpanded}>
-          <CollapsibleContent>
-            <div className="px-3 pb-3 space-y-3 border-t border-border/30 pt-3 bg-muted/20">
-              {/* Processo */}
-              <div className="space-y-1">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Processo</p>
-                <p className="text-xs font-mono">{assistido.numeroProcesso}</p>
-              </div>
-
-              {/* Resumo do Fato */}
-              {assistido.resumoFato && (
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Resumo do Fato</p>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">{assistido.resumoFato}</p>
-                </div>
-              )}
-
-              {/* Tese da Defesa */}
-              {assistido.teseDaDefesa && (
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
-                    <Gavel className="h-3 w-3" />
-                    Tese da Defesa
-                  </p>
-                  <p className="text-[11px] text-primary/80 font-medium leading-relaxed">{assistido.teseDaDefesa}</p>
-                </div>
-              )}
-
-              {/* Estratégia de Defesa Atual */}
-              {assistido.estrategiaDefesaAtual && (
-                <div className="space-y-1 p-2 rounded-lg bg-violet-50/80 dark:bg-violet-900/20 border border-violet-200/50 dark:border-violet-800/30">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-400 flex items-center gap-1">
-                    <Target className="h-3 w-3" />
-                    Estratégia Atual
-                  </p>
-                  <p className="text-[11px] text-violet-900/80 dark:text-violet-200/80 leading-relaxed">{assistido.estrategiaDefesaAtual}</p>
-                </div>
-              )}
-
-              {/* Audiências */}
-              <div className="space-y-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  Audiências
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {assistido.ultimaAudiencia && (
-                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/30">
-                      <p className="text-[9px] text-muted-foreground uppercase">Última</p>
-                      <p className="text-[11px] font-medium">{format(parseISO(assistido.ultimaAudiencia), "dd/MM/yy")}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{assistido.tipoUltimaAudiencia}</p>
-                    </div>
-                  )}
-                  {assistido.proximaAudiencia && (
-                    <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50">
-                      <p className="text-[9px] text-blue-600 uppercase">Próxima</p>
-                      <p className="text-[11px] font-medium text-blue-700">{format(parseISO(assistido.proximaAudiencia), "dd/MM/yy")}</p>
-                      <p className="text-[10px] text-blue-600/80 truncate">{assistido.tipoProximaAudiencia}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Testemunhas */}
-              {assistido.testemunhasArroladas.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    Testemunhas ({testemunhasOuvidas}/{assistido.testemunhasArroladas.length} ouvidas)
-                  </p>
-                  <div className="space-y-1">
-                    {assistido.testemunhasArroladas.map((test, i) => (
-                      <div key={i} className="flex items-center gap-2 text-[11px]">
-                        {test.ouvida ? (
-                          <CircleDot className="h-3 w-3 text-emerald-500 flex-shrink-0" />
-                        ) : (
-                          <Circle className="h-3 w-3 text-amber-400 flex-shrink-0" />
-                        )}
-                        <span className={test.ouvida ? "text-muted-foreground" : "font-medium"}>{test.nome}</span>
-                        <Badge variant="outline" className="text-[8px] py-0 px-1 h-4">
-                          {test.tipo}
-                        </Badge>
-                        {test.ouvida && test.data && (
-                          <span className="text-[9px] text-muted-foreground ml-auto">
-                            {format(parseISO(test.data), "dd/MM")}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Observações */}
-              {assistido.observacoesProcesso && (
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
-                    <Info className="h-3 w-3" />
-                    Observações
-                  </p>
-                  <p className="text-[11px] text-muted-foreground italic leading-relaxed">{assistido.observacoesProcesso}</p>
-                </div>
-              )}
-
-              {/* Footer expandido */}
-              <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  {assistido.defensor}
-                </span>
-                <div className="flex items-center gap-1">
-                  <Link href={`/admin/inteligencia?assistido=${assistido.id}`}>
-                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2 hover:text-violet-600">
-                      <Brain className="h-3 w-3 mr-1" />
-                      Investigar
-                    </Button>
-                  </Link>
-                  <Link href={`/admin/assistidos/${assistido.id}`}>
-                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2 hover:text-primary">
-                      Perfil <ChevronRight className="h-3 w-3 ml-0.5" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+        {/* Footer - Stats e Expandir */}
+        <div className="flex items-center justify-between text-[10px] pt-2 border-t border-border/40">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Scale className="h-3 w-3" />
+              <span className="font-medium text-foreground">{assistido.processosAtivos}</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <FileText className="h-3 w-3" />
+              <span className={`font-medium ${assistido.demandasAbertas > 2 ? "text-amber-600" : "text-foreground"}`}>
+                {assistido.demandasAbertas}
+              </span>
+            </span>
+            {prazoInfo && (
+              <span className={`flex items-center gap-1 ${prazoInfo.color}`}>
+                <Timer className="h-3 w-3" />
+                {prazoInfo.text}
+              </span>
+            )}
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 px-2 text-[10px] -mr-2"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            Mais
+            {isExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
+          </Button>
+        </div>
       </CardContent>
+
+      {/* Seção Expandida */}
+      <Collapsible open={isExpanded}>
+        <CollapsibleContent>
+          <div className="px-4 py-3 space-y-3 bg-muted/30">
+            {/* Processo */}
+            <div>
+              <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Processo</p>
+              <p className="text-xs font-mono">{assistido.numeroProcesso}</p>
+            </div>
+
+            {/* Resumo do Fato */}
+            {assistido.resumoFato && (
+              <div>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Resumo</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">{assistido.resumoFato}</p>
+              </div>
+            )}
+
+            {/* Tese da Defesa */}
+            {assistido.teseDaDefesa && (
+              <div>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5 flex items-center gap-1">
+                  <Gavel className="h-2.5 w-2.5" />
+                  Tese da Defesa
+                </p>
+                <p className="text-[11px] text-primary/90 font-medium leading-relaxed">{assistido.teseDaDefesa}</p>
+              </div>
+            )}
+
+            {/* Estratégia de Defesa Atual */}
+            {assistido.estrategiaDefesaAtual && (
+              <div className="p-2 rounded bg-violet-50/80 dark:bg-violet-900/20">
+                <p className="text-[9px] font-medium uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-0.5 flex items-center gap-1">
+                  <Target className="h-2.5 w-2.5" />
+                  Estratégia
+                </p>
+                <p className="text-[11px] text-violet-800 dark:text-violet-200 leading-relaxed">{assistido.estrategiaDefesaAtual}</p>
+              </div>
+            )}
+
+            {/* Audiências */}
+            {(assistido.ultimaAudiencia || assistido.proximaAudiencia) && (
+              <div className="grid grid-cols-2 gap-2">
+                {assistido.ultimaAudiencia && (
+                  <div className="p-2 rounded bg-muted/50">
+                    <p className="text-[9px] text-muted-foreground">Última</p>
+                    <p className="text-[11px] font-medium">{format(parseISO(assistido.ultimaAudiencia), "dd/MM/yy")}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{assistido.tipoUltimaAudiencia}</p>
+                  </div>
+                )}
+                {assistido.proximaAudiencia && (
+                  <div className="p-2 rounded bg-blue-50/80 dark:bg-blue-900/20">
+                    <p className="text-[9px] text-blue-600">Próxima</p>
+                    <p className="text-[11px] font-medium text-blue-700 dark:text-blue-400">{format(parseISO(assistido.proximaAudiencia), "dd/MM/yy")}</p>
+                    <p className="text-[10px] text-blue-600/80 truncate">{assistido.tipoProximaAudiencia}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Testemunhas */}
+            {assistido.testemunhasArroladas.length > 0 && (
+              <div>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                  <Users className="h-2.5 w-2.5" />
+                  Testemunhas ({testemunhasOuvidas}/{assistido.testemunhasArroladas.length})
+                </p>
+                <div className="space-y-0.5">
+                  {assistido.testemunhasArroladas.map((test, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[10px]">
+                      {test.ouvida ? (
+                        <CircleDot className="h-2.5 w-2.5 text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <Circle className="h-2.5 w-2.5 text-amber-400 flex-shrink-0" />
+                      )}
+                      <span className={test.ouvida ? "text-muted-foreground" : ""}>{test.nome}</span>
+                      <span className="text-muted-foreground">({test.tipo})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Observações */}
+            {assistido.observacoesProcesso && (
+              <div>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5">Obs</p>
+                <p className="text-[10px] text-muted-foreground italic">{assistido.observacoesProcesso}</p>
+              </div>
+            )}
+
+            {/* Footer expandido */}
+            <div className="flex items-center justify-between pt-2 border-t border-border/30">
+              <span className="text-[10px] text-muted-foreground">{assistido.defensor}</span>
+              <Link href={`/admin/assistidos/${assistido.id}`}>
+                <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2">
+                  Perfil <ChevronRight className="h-3 w-3 ml-0.5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }
@@ -1072,16 +1031,15 @@ export default function AssistidosPage() {
           </CardContent>
         </Card>
       ) : viewMode === "grid" ? (
-        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
           {filteredAssistidos.map((a) => (
-            <div key={a.id} className="break-inside-avoid mb-4">
-              <AssistidoCard 
-                assistido={a} 
-                onPhotoClick={() => handlePhotoClick(a)}
-                isPinned={pinnedIds.has(a.id)}
-                onTogglePin={() => togglePin(a.id)}
-              />
-            </div>
+            <AssistidoCard 
+              key={a.id}
+              assistido={a} 
+              onPhotoClick={() => handlePhotoClick(a)}
+              isPinned={pinnedIds.has(a.id)}
+              onTogglePin={() => togglePin(a.id)}
+            />
           ))}
         </div>
       ) : (
