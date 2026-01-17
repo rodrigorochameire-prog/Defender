@@ -240,22 +240,19 @@ function AdminSidebarContent({
             <AssignmentSwitcher collapsed={isCollapsed} />
           </SidebarHeader>
 
-          <SidebarContent className={cn("gap-0 py-4 overflow-y-auto flex-1", isCollapsed ? "px-2" : "px-3")}>
-            <SidebarMenu className={cn(isCollapsed ? "gap-2 items-center" : "gap-1.5")}>
+          <SidebarContent className="gap-0 px-3 py-4 overflow-y-auto flex-1">
+            <SidebarMenu className="gap-1.5">
               {/* Toggle Button */}
-              <SidebarMenuItem className={isCollapsed ? "flex justify-center" : ""}>
+              <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={toggleSidebar}
                   tooltip={isCollapsed ? "Expandir" : "Recolher"}
-                  className={cn(
-                    "h-11 rounded-xl transition-all duration-200 border border-transparent",
-                    isCollapsed && "!h-12 !w-12 bg-gradient-to-br from-white/60 to-white/30 dark:from-white/10 dark:to-white/5 shadow-sm hover:shadow-md hover:scale-105"
-                  )}
+                  className="h-11 rounded-xl transition-all duration-200"
                   style={{
                     color: `var(--sidebar-text-muted, ${config.sidebarTextMuted})`,
                   }}
                 >
-                  <PanelLeft className={cn("h-5 w-5", isCollapsed && "!h-6 !w-6")} strokeWidth={1.8} />
+                  <PanelLeft className="h-5 w-5" strokeWidth={1.8} />
                   <span className="text-[13px] font-semibold">
                     {isCollapsed ? "Expandir" : "Recolher"}
                   </span>
@@ -268,24 +265,18 @@ function AdminSidebarContent({
                 const isActive = pathname === item.path;
 
                 return (
-                  <SidebarMenuItem key={item.path} className={isCollapsed ? "flex justify-center" : ""}>
+                  <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
                         "h-12 transition-all duration-200 rounded-xl group relative",
-                        isActive ? "shadow-md" : "hover:shadow-sm",
-                        isCollapsed && !isActive && "bg-gradient-to-br from-white/50 to-white/20 dark:from-white/8 dark:to-white/3 hover:from-white/70 hover:to-white/40 dark:hover:from-white/12 dark:hover:to-white/6 hover:scale-105",
-                        isCollapsed && isActive && "!shadow-lg"
+                        isActive ? "shadow-md" : "hover:shadow-sm"
                       )}
                       style={{
-                        background: isActive 
-                          ? isCollapsed 
-                            ? `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`
-                            : config.sidebarActiveBg 
-                          : undefined,
-                        boxShadow: isActive && !isCollapsed ? `0 0 0 2px ${config.sidebarActiveRing}` : undefined,
+                        background: isActive ? config.sidebarActiveBg : undefined,
+                        boxShadow: isActive ? `0 0 0 2px ${config.sidebarActiveRing}` : undefined,
                       }}
                     >
                       <Link
@@ -300,13 +291,10 @@ function AdminSidebarContent({
                         <Icon
                           className={cn(
                             "transition-all duration-200",
-                            isActive ? "h-6 w-6" : "h-[22px] w-[22px]",
-                            isCollapsed && "!h-7 !w-7"
+                            isActive ? "h-6 w-6" : "h-[22px] w-[22px]"
                           )}
                           style={{
-                            color: isActive 
-                              ? isCollapsed ? "#ffffff" : config.accentColor 
-                              : config.sidebarTextMuted,
+                            color: isActive ? config.accentColor : config.sidebarTextMuted,
                           }}
                           strokeWidth={isActive ? 2.2 : 1.8}
                         />
@@ -363,24 +351,18 @@ function AdminSidebarContent({
                   (item.path !== "/admin" && pathname.startsWith(item.path + "/"));
 
                 return (
-                  <SidebarMenuItem key={item.path} className={isCollapsed ? "flex justify-center" : ""}>
+                  <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
                         "h-11 transition-all duration-200 rounded-xl group relative",
-                        isActive ? "shadow-md" : "hover:shadow-sm",
-                        isCollapsed && !isActive && "bg-gradient-to-br from-white/40 to-white/15 dark:from-white/6 dark:to-white/2 hover:from-white/60 hover:to-white/30 dark:hover:from-white/10 dark:hover:to-white/5 hover:scale-105",
-                        isCollapsed && isActive && "!shadow-lg"
+                        isActive ? "shadow-md" : "hover:shadow-sm"
                       )}
                       style={{
-                        background: isActive 
-                          ? isCollapsed 
-                            ? `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`
-                            : config.sidebarActiveBg 
-                          : undefined,
-                        boxShadow: isActive && !isCollapsed ? `0 0 0 2px ${config.sidebarActiveRing}` : undefined,
+                        background: isActive ? config.sidebarActiveBg : undefined,
+                        boxShadow: isActive ? `0 0 0 2px ${config.sidebarActiveRing}` : undefined,
                       }}
                     >
                       <Link
@@ -395,13 +377,10 @@ function AdminSidebarContent({
                         <Icon
                           className={cn(
                             "transition-all duration-200",
-                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5",
-                            isCollapsed && "!h-6 !w-6"
+                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5"
                           )}
                           style={{
-                            color: isActive
-                              ? isCollapsed ? "#ffffff" : config.accentColor
-                              : config.sidebarTextMuted,
+                            color: isActive ? config.accentColor : config.sidebarTextMuted,
                           }}
                           strokeWidth={isActive ? 2.2 : 1.8}
                         />
@@ -456,23 +435,17 @@ function AdminSidebarContent({
                 const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
 
                 return (
-                  <SidebarMenuItem key={item.path} className={isCollapsed ? "flex justify-center" : ""}>
+                  <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
                         "h-11 transition-all duration-200 rounded-xl group",
-                        isActive ? "shadow-sm" : "",
-                        isCollapsed && !isActive && "bg-gradient-to-br from-white/40 to-white/15 dark:from-white/6 dark:to-white/2 hover:from-white/60 hover:to-white/30 dark:hover:from-white/10 dark:hover:to-white/5 hover:scale-105",
-                        isCollapsed && isActive && "!shadow-lg"
+                        isActive ? "shadow-sm" : ""
                       )}
                       style={{
-                        background: isActive 
-                          ? isCollapsed 
-                            ? `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`
-                            : config.sidebarActiveBg 
-                          : undefined,
+                        background: isActive ? config.sidebarActiveBg : undefined,
                       }}
                     >
                       <Link
@@ -487,13 +460,10 @@ function AdminSidebarContent({
                         <Icon
                           className={cn(
                             "transition-all duration-200 flex-shrink-0",
-                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5",
-                            isCollapsed && "!h-6 !w-6"
+                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5"
                           )}
                           style={{
-                            color: isActive 
-                              ? isCollapsed ? "#ffffff" : config.accentColor 
-                              : config.sidebarTextMuted,
+                            color: isActive ? config.accentColor : config.sidebarTextMuted,
                           }}
                           strokeWidth={isActive ? 2 : 1.8}
                         />
@@ -518,7 +488,7 @@ function AdminSidebarContent({
 
           {/* Footer */}
           <SidebarFooter 
-            className={cn("border-t-2", isCollapsed ? "p-2" : "p-3")}
+            className="p-3 border-t-2"
             style={{
               borderColor: config.sidebarDivider,
               background: `linear-gradient(to top, ${config.sidebarHover}, transparent)`,
@@ -527,24 +497,18 @@ function AdminSidebarContent({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button 
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2 group border border-transparent",
-                    isCollapsed ? "justify-center p-2 hover:bg-white/40 dark:hover:bg-white/10" : "px-3 py-3"
-                  )}
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2 group border border-transparent"
                   style={{
                     ["--tw-ring-color" as string]: config.accentColor + "60",
                   }}
                 >
                   <div className="relative">
                     <Avatar
-                      className={cn(
-                        "border-2 shadow-md ring-2 ring-white/80 dark:ring-black/20 transition-all",
-                        isCollapsed ? "h-10 w-10" : "h-11 w-11"
-                      )}
+                      className="h-11 w-11 border-2 shadow-md ring-2 ring-white/80 dark:ring-black/20"
                       style={{ borderColor: config.accentColor + "60" }}
                     >
                       <AvatarFallback
-                        className={cn("font-semibold", isCollapsed ? "text-[10px]" : "text-xs")}
+                        className="text-xs font-semibold"
                         style={{
                           background: config.accentColorLight,
                           color: config.accentColor,
