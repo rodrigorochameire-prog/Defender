@@ -139,84 +139,84 @@ const COMARCA_OPTIONS = [
   { value: "SALVADOR", label: "Salvador" },
 ];
 
-// Status disponíveis - Baseado na planilha VVD Júri (COMPLETO)
-const STATUS_OPTIONS = [
-  // Grupo 1 - Urgente (vermelho)
-  { value: "1_URGENTE", label: "1 - Urgente", color: "bg-red-600", textColor: "text-red-700", description: "Prazo crítico/urgente" },
-  // Grupo 2 - Trabalho pendente (amarelo)
-  { value: "2_RELATORIO", label: "2 - Relatório", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Analisar/fazer relatório" },
-  { value: "2_ANALISAR", label: "2 - Analisar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Analisar processo" },
-  { value: "2_ATENDER", label: "2 - Atender", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Atender assistido" },
-  { value: "2_BUSCAR", label: "2 - Buscar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Buscar informações" },
-  { value: "2_INVESTIGAR", label: "2 - Investigar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Investigar caso" },
-  { value: "2_ELABORAR", label: "2 - Elaborar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Elaborar peça" },
-  { value: "2_ELABORANDO", label: "2 - Elaborando", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Em elaboração" },
-  { value: "2_REVISAR", label: "2 - Revisar", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Revisar peça" },
-  { value: "2_REVISANDO", label: "2 - Revisando", color: "bg-yellow-400", textColor: "text-yellow-700", description: "Em revisão" },
-  // Grupo 3 - Protocolar (laranja)
-  { value: "3_PROTOCOLAR", label: "3 - Protocolar", color: "bg-orange-500", textColor: "text-orange-700", description: "Pronto para protocolar" },
-  // Grupo 4 - Pessoas/Monitorar (azul claro)
-  { value: "4_AMANDA", label: "4 - Amanda", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Com Amanda" },
-  { value: "4_ESTAGIO_TARISSA", label: "4 - Estágio - Tarissa", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Com Tarissa (estágio)" },
-  { value: "4_EMILLY", label: "4 - Emilly", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Com Emilly" },
-  { value: "4_MONITORAR", label: "4 - Monitorar", color: "bg-cyan-400", textColor: "text-cyan-700", description: "Monitorando andamento" },
-  // Grupo 5 - Fila (azul)
-  { value: "5_FILA", label: "5 - Fila", color: "bg-blue-500", textColor: "text-blue-700", description: "Na fila de trabalho" },
-  // Grupo 6 - Pendências externas (azul escuro)
-  { value: "6_DOCUMENTOS", label: "6 - Documentos", color: "bg-blue-700", textColor: "text-blue-800", description: "Aguardando documentos" },
-  { value: "6_TESTEMUNHAS", label: "6 - Testemunhas", color: "bg-blue-700", textColor: "text-blue-800", description: "Aguardando testemunhas" },
-  // Grupo 7 - Concluído (verde)
-  { value: "7_PROTOCOLADO", label: "7 - Protocolado", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Peça protocolada" },
-  { value: "7_SIGAD", label: "7 - Sigad", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Registrado no Sigad" },
-  { value: "7_CIENCIA", label: "7 - Ciência", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Ciência tomada" },
-  { value: "7_RESOLVIDO", label: "7 - Resolvido", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Caso resolvido" },
-  { value: "7_CONSTITUIU_ADVOGADO", label: "7 - Constituiu advogado", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Constituiu advogado particular" },
-  { value: "7_SEM_ATUACAO", label: "7 - Sem atuação", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Sem necessidade de atuação" },
+// Status disponíveis - Cores suaves e premium, agrupados e ordenados
+const STATUS_OPTIONS: OptionItem[] = [
+  // Grupo Urgente (rose suave)
+  { value: "1_URGENTE", label: "Urgente", color: "bg-rose-400", textColor: "text-rose-700", group: "Urgente", description: "Prazo crítico/urgente" },
+  // Grupo Trabalho (amber suave) - ordem alfabética
+  { value: "2_ANALISAR", label: "Analisar", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Analisar processo" },
+  { value: "2_ATENDER", label: "Atender", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Atender assistido" },
+  { value: "2_BUSCAR", label: "Buscar", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Buscar informações" },
+  { value: "2_ELABORANDO", label: "Elaborando", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Em elaboração" },
+  { value: "2_ELABORAR", label: "Elaborar", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Elaborar peça" },
+  { value: "2_INVESTIGAR", label: "Investigar", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Investigar caso" },
+  { value: "2_RELATORIO", label: "Relatório", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Analisar/fazer relatório" },
+  { value: "2_REVISANDO", label: "Revisando", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Em revisão" },
+  { value: "2_REVISAR", label: "Revisar", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Revisar peça" },
+  // Grupo Protocolar (orange suave)
+  { value: "3_PROTOCOLAR", label: "Protocolar", color: "bg-orange-300", textColor: "text-orange-700", group: "Protocolar", description: "Pronto para protocolar" },
+  // Grupo Delegado (sky suave) - ordem alfabética
+  { value: "4_AMANDA", label: "Amanda", color: "bg-sky-300", textColor: "text-sky-700", group: "Delegado", description: "Com Amanda" },
+  { value: "4_EMILLY", label: "Emilly", color: "bg-sky-300", textColor: "text-sky-700", group: "Delegado", description: "Com Emilly" },
+  { value: "4_MONITORAR", label: "Monitorar", color: "bg-sky-300", textColor: "text-sky-700", group: "Delegado", description: "Monitorando andamento" },
+  { value: "4_ESTAGIO_TARISSA", label: "Tarissa (Estágio)", color: "bg-sky-300", textColor: "text-sky-700", group: "Delegado", description: "Com Tarissa (estágio)" },
+  // Grupo Fila (indigo suave)
+  { value: "5_FILA", label: "Fila", color: "bg-indigo-300", textColor: "text-indigo-700", group: "Fila", description: "Na fila de trabalho" },
+  // Grupo Aguardando (slate suave) - ordem alfabética
+  { value: "6_DOCUMENTOS", label: "Documentos", color: "bg-slate-400", textColor: "text-slate-700", group: "Aguardando", description: "Aguardando documentos" },
+  { value: "6_TESTEMUNHAS", label: "Testemunhas", color: "bg-slate-400", textColor: "text-slate-700", group: "Aguardando", description: "Aguardando testemunhas" },
+  // Grupo Concluído (emerald suave) - ordem alfabética
+  { value: "7_CIENCIA", label: "Ciência", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Ciência tomada" },
+  { value: "7_CONSTITUIU_ADVOGADO", label: "Constituiu advogado", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Constituiu advogado particular" },
+  { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Peça protocolada" },
+  { value: "7_RESOLVIDO", label: "Resolvido", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Caso resolvido" },
+  { value: "7_SEM_ATUACAO", label: "Sem atuação", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Sem necessidade de atuação" },
+  { value: "7_SIGAD", label: "Sigad", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Registrado no Sigad" },
 ];
 
-// Situação Prisional / Unidades - Baseado na planilha VVD (COMPLETO)
-const PRISAO_OPTIONS = [
-  // Solto
-  { value: "", label: "(Não informado)", color: "bg-slate-300" },
-  { value: "SOLTO", label: "Solto", color: "bg-green-500" },
-  // Bahia - Região Metropolitana
-  { value: "CADEIA_PUBLICA", label: "Cadeia Pública", color: "bg-red-600" },
-  { value: "CPMS", label: "CPMS - Simões Filho", color: "bg-red-600" },
-  { value: "COP", label: "COP - Centro de Obs. Penal", color: "bg-red-700" },
-  { value: "PRESIDIO_SSA", label: "Presídio Salvador", color: "bg-red-600" },
-  { value: "PLB", label: "PLB - Lemos Brito", color: "bg-red-600" },
-  // Bahia - Interior
-  { value: "CP_FEIRA", label: "CP Feira de Santana", color: "bg-red-600" },
-  { value: "CP_ITABUNA", label: "CP Itabuna", color: "bg-red-600" },
-  { value: "CP_VC", label: "CP Vitória da Conquista", color: "bg-red-600" },
-  { value: "CP_JEQUIE", label: "CP Jequié", color: "bg-red-600" },
-  { value: "CP_ILHEUS", label: "CP Ilhéus", color: "bg-red-600" },
-  { value: "CP_BARREIRAS", label: "CP Barreiras", color: "bg-red-600" },
-  { value: "CP_JUAZEIRO", label: "CP Juazeiro", color: "bg-red-600" },
-  { value: "CP_TEIXEIRA", label: "CP Teixeira de Freitas", color: "bg-red-600" },
-  { value: "CP_EUNAPOLIS", label: "CP Eunápolis", color: "bg-red-600" },
-  { value: "CP_VALENCA", label: "CP Valença", color: "bg-red-600" },
-  { value: "CP_ALAGOINHAS", label: "CP Alagoinhas", color: "bg-red-600" },
-  { value: "CP_SERRINHA", label: "CP Serrinha", color: "bg-red-600" },
-  { value: "CP_IRECE", label: "CP Irecê", color: "bg-red-600" },
-  // Outros estados
-  { value: "CPT_IV_PINHEIROS_SP", label: "CPT IV Pinheiros-SP", color: "bg-purple-600" },
-  { value: "CDP_BELEM_SP", label: "CDP Belém-SP", color: "bg-purple-600" },
-  { value: "PSM_MACEIO", label: "PSM Maceió", color: "bg-purple-600" },
-  { value: "SC_JARAGUA_SUL", label: "SC - Presídio Jaraguá do Sul", color: "bg-purple-600" },
-  { value: "SP_PRESIDENTE_VENCESLAU", label: "SP - Presidente Venceslau II", color: "bg-purple-600" },
-  { value: "MG_EXTREMA", label: "MG - Presídio de Extrema", color: "bg-purple-600" },
-  // Especiais
-  { value: "HOSPITAL_CUSTODIA", label: "Hospital de Custódia", color: "bg-amber-600" },
-  { value: "DOMICILIAR", label: "Prisão Domiciliar", color: "bg-orange-500" },
-  { value: "MONITORADO", label: "Monitoramento Eletrônico", color: "bg-amber-500" },
+// Situação Prisional / Unidades - Cores suaves e premium
+const PRISAO_OPTIONS: OptionItem[] = [
+  // Solto / Não informado
+  { value: "", label: "(Não informado)", color: "bg-slate-200", group: "Geral" },
+  { value: "SOLTO", label: "Solto", color: "bg-emerald-200", group: "Geral" },
+  // Bahia - Região Metropolitana (rose suave)
+  { value: "CADEIA_PUBLICA", label: "Cadeia Pública", color: "bg-rose-300", group: "RMS" },
+  { value: "COP", label: "COP - Centro de Obs. Penal", color: "bg-rose-300", group: "RMS" },
+  { value: "CPMS", label: "CPMS - Simões Filho", color: "bg-rose-300", group: "RMS" },
+  { value: "PLB", label: "PLB - Lemos Brito", color: "bg-rose-300", group: "RMS" },
+  { value: "PRESIDIO_SSA", label: "Presídio Salvador", color: "bg-rose-300", group: "RMS" },
+  // Bahia - Interior (pink suave)
+  { value: "CP_ALAGOINHAS", label: "CP Alagoinhas", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_BARREIRAS", label: "CP Barreiras", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_EUNAPOLIS", label: "CP Eunápolis", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_FEIRA", label: "CP Feira de Santana", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_ILHEUS", label: "CP Ilhéus", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_IRECE", label: "CP Irecê", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_ITABUNA", label: "CP Itabuna", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_JEQUIE", label: "CP Jequié", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_JUAZEIRO", label: "CP Juazeiro", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_SERRINHA", label: "CP Serrinha", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_TEIXEIRA", label: "CP Teixeira de Freitas", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_VALENCA", label: "CP Valença", color: "bg-pink-200", group: "Interior BA" },
+  { value: "CP_VC", label: "CP Vitória da Conquista", color: "bg-pink-200", group: "Interior BA" },
+  // Outros estados (violet suave)
+  { value: "CDP_BELEM_SP", label: "CDP Belém-SP", color: "bg-violet-200", group: "Outros Estados" },
+  { value: "CPT_IV_PINHEIROS_SP", label: "CPT IV Pinheiros-SP", color: "bg-violet-200", group: "Outros Estados" },
+  { value: "MG_EXTREMA", label: "MG - Presídio de Extrema", color: "bg-violet-200", group: "Outros Estados" },
+  { value: "PSM_MACEIO", label: "PSM Maceió", color: "bg-violet-200", group: "Outros Estados" },
+  { value: "SC_JARAGUA_SUL", label: "SC - Presídio Jaraguá do Sul", color: "bg-violet-200", group: "Outros Estados" },
+  { value: "SP_PRESIDENTE_VENCESLAU", label: "SP - Presidente Venceslau II", color: "bg-violet-200", group: "Outros Estados" },
+  // Especiais (amber suave)
+  { value: "DOMICILIAR", label: "Prisão Domiciliar", color: "bg-amber-200", group: "Especiais" },
+  { value: "HOSPITAL_CUSTODIA", label: "Hospital de Custódia", color: "bg-amber-200", group: "Especiais" },
+  { value: "MONITORADO", label: "Monitoramento Eletrônico", color: "bg-amber-200", group: "Especiais" },
 ];
 
-// Prioridades
+// Prioridades - Cores suaves
 const PRIORIDADE_OPTIONS = [
-  { value: "REU_PRESO", label: "Réu Preso", color: "bg-red-700" },
-  { value: "URGENTE", label: "Urgente", color: "bg-red-500" },
-  { value: "ALTA", label: "Alta", color: "bg-orange-500" },
+  { value: "REU_PRESO", label: "Réu Preso", color: "bg-rose-400" },
+  { value: "URGENTE", label: "Urgente", color: "bg-rose-300" },
+  { value: "ALTA", label: "Alta", color: "bg-amber-300" },
   { value: "NORMAL", label: "Normal", color: "bg-slate-400" },
   { value: "BAIXA", label: "Baixa", color: "bg-slate-300" },
 ];
@@ -686,19 +686,19 @@ function getPrazoInfo(prazoStr: string) {
   const dias = differenceInDays(prazo, hoje);
   
   if (isPast(prazo) && !isToday(prazo)) {
-    return { text: `${Math.abs(dias)}d atrasado`, className: "text-red-600 font-bold bg-red-50 dark:bg-red-950/50", icon: AlertTriangle, urgent: true };
+    return { text: `${Math.abs(dias)}d atrasado`, className: "text-rose-600 font-medium bg-rose-50/80 dark:bg-rose-950/30", icon: AlertTriangle, urgent: true };
   }
   if (isToday(prazo)) {
-    return { text: "HOJE", className: "text-red-600 font-bold bg-red-50 dark:bg-red-950/50", icon: Timer, urgent: true };
+    return { text: "HOJE", className: "text-rose-600 font-medium bg-rose-50/80 dark:bg-rose-950/30", icon: Timer, urgent: true };
   }
   if (isTomorrow(prazo)) {
-    return { text: "Amanhã", className: "text-orange-600 font-semibold bg-orange-50 dark:bg-orange-950/50", icon: Clock, urgent: true };
+    return { text: "Amanhã", className: "text-amber-600 font-medium bg-amber-50/80 dark:bg-amber-950/30", icon: Clock, urgent: true };
   }
   if (dias <= 3) {
-    return { text: `${dias}d`, className: "text-orange-500 bg-orange-50 dark:bg-orange-950/30", icon: Clock, urgent: false };
+    return { text: `${dias}d`, className: "text-amber-500 bg-amber-50/60 dark:bg-amber-950/20", icon: Clock, urgent: false };
   }
   if (dias <= 7) {
-    return { text: `${dias}d`, className: "text-amber-600 bg-amber-50 dark:bg-amber-950/30", icon: Calendar, urgent: false };
+    return { text: `${dias}d`, className: "text-sky-600 bg-sky-50/60 dark:bg-sky-950/20", icon: Calendar, urgent: false };
   }
   return { text: format(prazo, "dd/MM", { locale: ptBR }), className: "text-muted-foreground", icon: Calendar, urgent: false };
 }
@@ -1103,18 +1103,18 @@ function DemandaModal({
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/30">
               <Checkbox
                 id="reuPreso"
                 checked={formData.reuPreso}
                 onCheckedChange={(checked) => setFormData({ ...formData, reuPreso: checked as boolean })}
               />
               <div className="flex-1">
-                <Label htmlFor="reuPreso" className="text-red-700 dark:text-red-400 font-semibold cursor-pointer">
+                <Label htmlFor="reuPreso" className="text-rose-700 dark:text-rose-400 font-medium cursor-pointer">
                   <Lock className="h-4 w-4 inline mr-2" />
                   Réu Preso
                 </Label>
-                <p className="text-xs text-red-600 dark:text-red-500 mt-0.5">
+                <p className="text-xs text-rose-600/80 dark:text-rose-400/80 mt-0.5">
                   Prioridade máxima
                 </p>
               </div>
@@ -1686,26 +1686,26 @@ export default function DemandasPage() {
           </CardContent>
         </Card>
 
-        <Card className={cn("stat-card", stats.urgente > 0 && "border-red-500 bg-red-50 dark:bg-red-950/30")}>
+        <Card className={cn("stat-card", stats.urgente > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className={cn("text-xl font-bold", stats.urgente > 0 && "text-red-600")}>{stats.urgente}</p>
+                <p className={cn("text-xl font-semibold", stats.urgente > 0 ? "text-rose-600" : "text-foreground")}>{stats.urgente}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Urgente</p>
               </div>
-              <AlertTriangle className={cn("h-4 w-4", stats.urgente > 0 ? "text-red-500 animate-pulse" : "text-muted-foreground")} />
+              <AlertTriangle className={cn("h-4 w-4", stats.urgente > 0 ? "text-rose-400" : "text-muted-foreground")} />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="stat-card fatal">
+        <Card className={cn("stat-card", stats.reuPreso > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-red-600">{stats.reuPreso}</p>
+                <p className={cn("text-xl font-semibold", stats.reuPreso > 0 ? "text-rose-600" : "text-foreground")}>{stats.reuPreso}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Preso</p>
               </div>
-              <Lock className="h-4 w-4 text-red-500" />
+              <Lock className={cn("h-4 w-4", stats.reuPreso > 0 ? "text-rose-400" : "text-muted-foreground")} />
             </div>
           </CardContent>
         </Card>
@@ -1714,10 +1714,10 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-yellow-600">{stats.trabalho}</p>
+                <p className="text-xl font-semibold text-amber-600">{stats.trabalho}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Trabalho</p>
               </div>
-              <Edit className="h-4 w-4 text-yellow-500" />
+              <Edit className="h-4 w-4 text-amber-400" />
             </div>
           </CardContent>
         </Card>
@@ -1726,10 +1726,10 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-orange-600">{stats.protocolar}</p>
+                <p className="text-xl font-semibold text-orange-500">{stats.protocolar}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Protocolar</p>
               </div>
-              <ArrowUpRight className="h-4 w-4 text-orange-500" />
+              <ArrowUpRight className="h-4 w-4 text-orange-400" />
             </div>
           </CardContent>
         </Card>
@@ -1738,10 +1738,10 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-cyan-600">{stats.delegado}</p>
+                <p className="text-xl font-semibold text-sky-600">{stats.delegado}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Delegado</p>
               </div>
-              <User className="h-4 w-4 text-cyan-500" />
+              <User className="h-4 w-4 text-sky-400" />
             </div>
           </CardContent>
         </Card>
@@ -1750,10 +1750,10 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-blue-600">{stats.fila}</p>
+                <p className="text-xl font-semibold text-indigo-600">{stats.fila}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Fila</p>
               </div>
-              <Clock className="h-4 w-4 text-blue-500" />
+              <Clock className="h-4 w-4 text-indigo-400" />
             </div>
           </CardContent>
         </Card>
@@ -1762,34 +1762,34 @@ export default function DemandasPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-blue-800">{stats.aguardando}</p>
+                <p className="text-xl font-semibold text-slate-600">{stats.aguardando}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Aguardando</p>
               </div>
-              <Eye className="h-4 w-4 text-blue-700" />
+              <Eye className="h-4 w-4 text-slate-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="stat-card success">
+        <Card className="stat-card">
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-emerald-600">{stats.concluido}</p>
+                <p className="text-xl font-semibold text-emerald-600">{stats.concluido}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Concluído</p>
               </div>
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className={cn("stat-card", stats.vencidos > 0 && "fatal")}>
+        <Card className={cn("stat-card", stats.vencidos > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className={cn("text-xl font-bold", stats.vencidos > 0 && "text-red-600")}>{stats.vencidos}</p>
+                <p className={cn("text-xl font-semibold", stats.vencidos > 0 ? "text-rose-600" : "text-foreground")}>{stats.vencidos}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Vencidos</p>
               </div>
-              <AlertTriangle className={cn("h-4 w-4", stats.vencidos > 0 ? "text-red-500" : "text-muted-foreground")} />
+              <AlertTriangle className={cn("h-4 w-4", stats.vencidos > 0 ? "text-rose-400" : "text-muted-foreground")} />
             </div>
           </CardContent>
         </Card>
@@ -1999,9 +1999,9 @@ export default function DemandasPage() {
                         <TableRow 
                           key={demanda.id} 
                           className={cn(
-                            "hover:bg-muted/30 transition-colors group",
-                            demanda.reuPreso && "bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/30",
-                            prazoInfo.urgent && !demanda.reuPreso && "bg-orange-50/30 dark:bg-orange-950/10"
+                            "hover:bg-muted/40 transition-colors group",
+                            demanda.reuPreso && "border-l-2 border-l-rose-300",
+                            prazoInfo.urgent && !demanda.reuPreso && "border-l-2 border-l-amber-300"
                           )}
                         >
                           {/* Ordem: Status, Prisão, Data, Assistido, Autos, Ato, Prazo, Providências */}
@@ -2049,7 +2049,7 @@ export default function DemandasPage() {
                             <TableCell className="p-1">
                               <div className="flex items-center gap-1">
                                 {(demanda.reuPreso || demanda.prisao === "CADEIA_PUBLICA" || demanda.prisao === "COP") && (
-                                  <Lock className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                                  <Lock className="h-3.5 w-3.5 text-rose-400 flex-shrink-0" />
                                 )}
                                 <EditableCell
                                   value={demanda.assistido}
@@ -2243,7 +2243,7 @@ export default function DemandasPage() {
                 <span className="font-semibold text-foreground">{demandas.length}</span> demandas
               </p>
               <p>
-                <span className="font-semibold text-red-600">{stats.reuPreso}</span> réus presos •{" "}
+                <span className="font-semibold text-rose-600">{stats.reuPreso}</span> réus presos •{" "}
                 <span className="font-semibold text-orange-600">{stats.urgente + stats.hoje}</span> urgentes
               </p>
             </div>
@@ -2254,14 +2254,14 @@ export default function DemandasPage() {
         <TabsContent value="kanban" className="mt-0">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {/* Coluna Atender */}
-            <Card className="section-card">
-              <CardHeader className="pb-3 border-b border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20">
+            <Card className="section-card overflow-hidden">
+              <CardHeader className="pb-3 border-b border-amber-100 dark:border-amber-900/30 bg-gradient-to-r from-amber-50/80 to-transparent dark:from-amber-950/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500" />
-                    <CardTitle className="text-sm font-semibold text-red-700 dark:text-red-400">Atender</CardTitle>
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-400">Atender</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-red-600 border-red-300">
+                  <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50/50 text-xs">
                     {demandas.filter(d => d.status === "2_ATENDER").length}
                   </Badge>
                 </div>
@@ -2272,22 +2272,22 @@ export default function DemandasPage() {
                     key={demanda.id}
                     onClick={() => handleOpenEdit(demanda)}
                     className={cn(
-                      "p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md",
+                      "p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
                       demanda.reuPreso 
-                        ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800" 
-                        : "bg-card border-border hover:border-red-300"
+                        ? "border-l-2 border-l-rose-300 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
+                        : "bg-card border-border/60 hover:border-amber-200"
                     )}
                   >
                     {demanda.reuPreso && (
-                      <Badge className="bg-red-700 text-white text-[10px] mb-2">
+                      <Badge className="bg-rose-100 text-rose-700 text-[10px] mb-2 font-medium">
                         <Lock className="h-2.5 w-2.5 mr-1" />
-                        RÉU PRESO
+                        Preso
                       </Badge>
                     )}
-                    <p className="font-semibold text-sm">{demanda.assistido}</p>
+                    <p className="font-medium text-sm">{demanda.assistido}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{demanda.ato}</p>
                     <div className="flex items-center justify-between mt-2">
-                      <span className={cn("text-xs font-semibold", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
+                      <span className={cn("text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
                         {getPrazoInfo(demanda.prazo).text}
                       </span>
                       <AreaBadge area={demanda.area} />
@@ -2298,14 +2298,14 @@ export default function DemandasPage() {
             </Card>
 
             {/* Coluna Em Fila */}
-            <Card className="section-card">
-              <CardHeader className="pb-3 border-b border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20">
+            <Card className="section-card overflow-hidden">
+              <CardHeader className="pb-3 border-b border-indigo-100 dark:border-indigo-900/30 bg-gradient-to-r from-indigo-50/80 to-transparent dark:from-indigo-950/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-amber-500" />
-                    <CardTitle className="text-sm font-semibold text-amber-700 dark:text-amber-400">Em Fila</CardTitle>
+                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
+                    <CardTitle className="text-sm font-medium text-indigo-700 dark:text-indigo-400">Em Fila</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-amber-600 border-amber-300">
+                  <Badge variant="outline" className="text-indigo-600 border-indigo-200 bg-indigo-50/50 text-xs">
                     {demandas.filter(d => d.status === "5_FILA" || d.status === "6_ELABORANDO").length}
                   </Badge>
                 </div>
@@ -2316,22 +2316,22 @@ export default function DemandasPage() {
                     key={demanda.id}
                     onClick={() => handleOpenEdit(demanda)}
                     className={cn(
-                      "p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md",
+                      "p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
                       demanda.reuPreso 
-                        ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800" 
-                        : "bg-card border-border hover:border-amber-300"
+                        ? "border-l-2 border-l-rose-300 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
+                        : "bg-card border-border/60 hover:border-indigo-200"
                     )}
                   >
                     {demanda.reuPreso && (
-                      <Badge className="bg-red-700 text-white text-[10px] mb-2">
+                      <Badge className="bg-rose-100 text-rose-700 text-[10px] mb-2 font-medium">
                         <Lock className="h-2.5 w-2.5 mr-1" />
-                        RÉU PRESO
+                        Preso
                       </Badge>
                     )}
-                    <p className="font-semibold text-sm">{demanda.assistido}</p>
+                    <p className="font-medium text-sm">{demanda.assistido}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{demanda.ato}</p>
                     <div className="flex items-center justify-between mt-2">
-                      <span className={cn("text-xs font-semibold", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
+                      <span className={cn("text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
                         {getPrazoInfo(demanda.prazo).text}
                       </span>
                       <AreaBadge area={demanda.area} />
@@ -2342,14 +2342,14 @@ export default function DemandasPage() {
             </Card>
 
             {/* Coluna Monitorar */}
-            <Card className="section-card">
-              <CardHeader className="pb-3 border-b border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20">
+            <Card className="section-card overflow-hidden">
+              <CardHeader className="pb-3 border-b border-sky-100 dark:border-sky-900/30 bg-gradient-to-r from-sky-50/80 to-transparent dark:from-sky-950/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500" />
-                    <CardTitle className="text-sm font-semibold text-blue-700 dark:text-blue-400">Monitorar</CardTitle>
+                    <div className="w-2.5 h-2.5 rounded-full bg-sky-400" />
+                    <CardTitle className="text-sm font-medium text-sky-700 dark:text-sky-400">Monitorar</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-blue-600 border-blue-300">
+                  <Badge variant="outline" className="text-sky-600 border-sky-200 bg-sky-50/50 text-xs">
                     {demandas.filter(d => d.status === "4_MONITORAR").length}
                   </Badge>
                 </div>
@@ -2360,22 +2360,22 @@ export default function DemandasPage() {
                     key={demanda.id}
                     onClick={() => handleOpenEdit(demanda)}
                     className={cn(
-                      "p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md",
+                      "p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
                       demanda.reuPreso 
-                        ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800" 
-                        : "bg-card border-border hover:border-blue-300"
+                        ? "border-l-2 border-l-rose-300 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
+                        : "bg-card border-border/60 hover:border-sky-200"
                     )}
                   >
                     {demanda.reuPreso && (
-                      <Badge className="bg-red-700 text-white text-[10px] mb-2">
+                      <Badge className="bg-rose-100 text-rose-700 text-[10px] mb-2 font-medium">
                         <Lock className="h-2.5 w-2.5 mr-1" />
-                        RÉU PRESO
+                        Preso
                       </Badge>
                     )}
-                    <p className="font-semibold text-sm">{demanda.assistido}</p>
+                    <p className="font-medium text-sm">{demanda.assistido}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{demanda.ato}</p>
                     <div className="flex items-center justify-between mt-2">
-                      <span className={cn("text-xs font-semibold", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
+                      <span className={cn("text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
                         {getPrazoInfo(demanda.prazo).text}
                       </span>
                       <AreaBadge area={demanda.area} />
@@ -2386,14 +2386,14 @@ export default function DemandasPage() {
             </Card>
 
             {/* Coluna Protocolado */}
-            <Card className="section-card">
-              <CardHeader className="pb-3 border-b border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20">
+            <Card className="section-card overflow-hidden">
+              <CardHeader className="pb-3 border-b border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50/80 to-transparent dark:from-emerald-950/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                    <CardTitle className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Protocolado</CardTitle>
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                    <CardTitle className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Concluído</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-emerald-600 border-emerald-300">
+                  <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50/50 text-xs">
                     {demandas.filter(d => d.status === "7_PROTOCOLADO" || d.status === "7_CIENCIA").length}
                   </Badge>
                 </div>
@@ -2403,12 +2403,12 @@ export default function DemandasPage() {
                   <div
                     key={demanda.id}
                     onClick={() => handleOpenEdit(demanda)}
-                    className="p-3 rounded-xl border bg-card border-border hover:border-emerald-300 cursor-pointer transition-all hover:shadow-md"
+                    className="p-3 rounded-lg border bg-card border-border/60 hover:border-emerald-200 cursor-pointer transition-all hover:shadow-sm"
                   >
-                    <p className="font-semibold text-sm">{demanda.assistido}</p>
+                    <p className="font-medium text-sm">{demanda.assistido}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{demanda.ato}</p>
                     <div className="flex items-center justify-between mt-2">
-                      <Badge className="bg-emerald-500 text-white text-[10px]">
+                      <Badge className="bg-emerald-100 text-emerald-700 text-[10px] font-medium">
                         <CheckCircle2 className="h-2.5 w-2.5 mr-1" />
                         Concluído
                       </Badge>
