@@ -240,38 +240,38 @@ const mockAssistidos = [
   },
 ];
 
-// Configurações
-const statusConfig: Record<string, { label: string; color: string; bgColor: string; priority: number }> = {
-  CADEIA_PUBLICA: { label: "Cadeia Pública", color: "text-red-700 dark:text-red-400", bgColor: "bg-red-50 dark:bg-red-950/30", priority: 1 },
-  PENITENCIARIA: { label: "Penitenciária", color: "text-red-700 dark:text-red-400", bgColor: "bg-red-50 dark:bg-red-950/30", priority: 2 },
-  COP: { label: "COP", color: "text-red-700 dark:text-red-400", bgColor: "bg-red-50 dark:bg-red-950/30", priority: 3 },
-  HOSPITAL_CUSTODIA: { label: "Hosp. Custódia", color: "text-red-700 dark:text-red-400", bgColor: "bg-red-50 dark:bg-red-950/30", priority: 4 },
-  MONITORADO: { label: "Monitorado", color: "text-amber-700 dark:text-amber-400", bgColor: "bg-amber-50 dark:bg-amber-950/30", priority: 5 },
-  DOMICILIAR: { label: "Domiciliar", color: "text-orange-700 dark:text-orange-400", bgColor: "bg-orange-50 dark:bg-orange-950/30", priority: 6 },
-  SOLTO: { label: "Solto", color: "text-emerald-700 dark:text-emerald-400", bgColor: "bg-emerald-50 dark:bg-emerald-950/30", priority: 7 },
+// Configurações - Cores suaves e premium
+const statusConfig: Record<string, { label: string; color: string; bgColor: string; borderColor: string; iconBg: string; priority: number }> = {
+  CADEIA_PUBLICA: { label: "Cadeia Pública", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 1 },
+  PENITENCIARIA: { label: "Penitenciária", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 2 },
+  COP: { label: "COP", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 3 },
+  HOSPITAL_CUSTODIA: { label: "Hosp. Custódia", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 4 },
+  MONITORADO: { label: "Monitorado", color: "text-amber-700 dark:text-amber-300", bgColor: "bg-amber-50/80 dark:bg-amber-950/20", borderColor: "border-amber-200/60 dark:border-amber-800/30", iconBg: "bg-amber-100 dark:bg-amber-900/40", priority: 5 },
+  DOMICILIAR: { label: "Domiciliar", color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-50/80 dark:bg-orange-950/20", borderColor: "border-orange-200/60 dark:border-orange-800/30", iconBg: "bg-orange-100 dark:bg-orange-900/40", priority: 6 },
+  SOLTO: { label: "Solto", color: "text-emerald-700 dark:text-emerald-300", bgColor: "bg-emerald-50/80 dark:bg-emerald-950/20", borderColor: "border-emerald-200/60 dark:border-emerald-800/30", iconBg: "bg-emerald-100 dark:bg-emerald-900/40", priority: 7 },
 };
 
-const areaConfig: Record<string, { label: string; color: string }> = {
-  JURI: { label: "Júri", color: "text-purple-600" },
-  EXECUCAO_PENAL: { label: "EP", color: "text-blue-600" },
-  VIOLENCIA_DOMESTICA: { label: "VVD", color: "text-pink-600" },
-  SUBSTITUICAO: { label: "Sub", color: "text-orange-600" },
-  CURADORIA: { label: "Cur", color: "text-teal-600" },
-  FAMILIA: { label: "Fam", color: "text-rose-600" },
-  CIVEL: { label: "Cív", color: "text-slate-600" },
-  FAZENDA_PUBLICA: { label: "Faz", color: "text-indigo-600" },
+const areaConfig: Record<string, { label: string; labelFull: string; color: string; bgColor: string }> = {
+  JURI: { label: "Júri", labelFull: "Tribunal do Júri", color: "text-violet-600 dark:text-violet-400", bgColor: "bg-violet-50 dark:bg-violet-950/30" },
+  EXECUCAO_PENAL: { label: "EP", labelFull: "Execução Penal", color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-50 dark:bg-blue-950/30" },
+  VIOLENCIA_DOMESTICA: { label: "VVD", labelFull: "Violência Doméstica", color: "text-pink-600 dark:text-pink-400", bgColor: "bg-pink-50 dark:bg-pink-950/30" },
+  SUBSTITUICAO: { label: "Sub", labelFull: "Substituição", color: "text-orange-600 dark:text-orange-400", bgColor: "bg-orange-50 dark:bg-orange-950/30" },
+  CURADORIA: { label: "Cur", labelFull: "Curadoria", color: "text-teal-600 dark:text-teal-400", bgColor: "bg-teal-50 dark:bg-teal-950/30" },
+  FAMILIA: { label: "Fam", labelFull: "Família", color: "text-rose-600 dark:text-rose-400", bgColor: "bg-rose-50 dark:bg-rose-950/30" },
+  CIVEL: { label: "Cív", labelFull: "Cível", color: "text-slate-600 dark:text-slate-400", bgColor: "bg-slate-50 dark:bg-slate-800/30" },
+  FAZENDA_PUBLICA: { label: "Faz", labelFull: "Fazenda Pública", color: "text-indigo-600 dark:text-indigo-400", bgColor: "bg-indigo-50 dark:bg-indigo-950/30" },
 };
 
 function getPrazoInfo(prazoStr: string | null) {
   if (!prazoStr) return null;
   const dias = differenceInDays(parseISO(prazoStr), new Date());
   
-  if (dias < 0) return { text: "Vencido", urgent: true, color: "text-red-600" };
-  if (dias === 0) return { text: "Hoje", urgent: true, color: "text-red-600" };
-  if (dias === 1) return { text: "Amanhã", urgent: true, color: "text-orange-600" };
-  if (dias <= 3) return { text: `${dias}d`, urgent: true, color: "text-orange-500" };
-  if (dias <= 7) return { text: `${dias}d`, urgent: false, color: "text-amber-600" };
-  return { text: `${dias}d`, urgent: false, color: "text-muted-foreground" };
+  if (dias < 0) return { text: "Vencido", urgent: true, color: "text-rose-600", bgColor: "bg-rose-50 dark:bg-rose-950/30" };
+  if (dias === 0) return { text: "Hoje", urgent: true, color: "text-rose-600", bgColor: "bg-rose-50 dark:bg-rose-950/30" };
+  if (dias === 1) return { text: "Amanhã", urgent: true, color: "text-amber-600", bgColor: "bg-amber-50 dark:bg-amber-950/30" };
+  if (dias <= 3) return { text: `${dias}d`, urgent: true, color: "text-amber-500", bgColor: "bg-amber-50/50" };
+  if (dias <= 7) return { text: `${dias}d`, urgent: false, color: "text-sky-600", bgColor: "bg-sky-50/50" };
+  return { text: `${dias}d`, urgent: false, color: "text-muted-foreground", bgColor: "" };
 }
 
 function calcularIdade(dataNascimento: string) {
@@ -402,7 +402,7 @@ function PhotoUploadDialog({ isOpen, onClose, assistidoNome, currentPhoto, onUpl
   );
 }
 
-// Card Clean do Assistido
+// Card Premium do Assistido
 interface AssistidoCardProps {
   assistido: typeof mockAssistidos[0];
   onPhotoClick: () => void;
@@ -410,190 +410,245 @@ interface AssistidoCardProps {
 
 function AssistidoCard({ assistido, onPhotoClick }: AssistidoCardProps) {
   const status = statusConfig[assistido.statusPrisional] || statusConfig.SOLTO;
-  const area = areaConfig[assistido.area] || { label: assistido.area, color: "text-muted-foreground" };
+  const area = areaConfig[assistido.area] || { label: assistido.area, labelFull: assistido.area, color: "text-muted-foreground", bgColor: "bg-muted" };
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
   const idade = calcularIdade(assistido.dataNascimento);
   const tempoPreso = calcularTempoPreso(assistido.dataPrisao);
+  const telefoneDisplay = assistido.telefone || assistido.telefoneContato;
 
   return (
-    <Card className={`group hover:shadow-md transition-shadow ${isPreso ? "border-l-2 border-l-red-500" : ""}`}>
-      <CardContent className="p-4">
-        {/* Header */}
-        <div className="flex items-start gap-3">
-          {/* Avatar com botão de foto */}
-          <div className="relative">
-            <Avatar 
-              className={`h-12 w-12 cursor-pointer transition-opacity hover:opacity-80 ${
-                isPreso ? "ring-2 ring-red-500 ring-offset-1" : ""
-              }`}
-              onClick={onPhotoClick}
-            >
-              <AvatarImage src={assistido.photoUrl || undefined} />
-              <AvatarFallback className={`font-semibold ${
-                isPreso ? "bg-red-100 text-red-700" : "bg-primary/10 text-primary"
-              }`}>
-                {getInitials(assistido.nome)}
-              </AvatarFallback>
-            </Avatar>
-            <button
-              onClick={onPhotoClick}
-              className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Camera className="h-3 w-3" />
-            </button>
+    <Card className={`group hover:shadow-lg transition-all duration-300 overflow-hidden ${
+      isPreso ? "border-l-[3px] border-l-rose-400" : "hover:border-primary/20"
+    }`}>
+      <CardContent className="p-0">
+        {/* Header com foto grande */}
+        <div className={`relative p-4 pb-3 ${status.bgColor}`}>
+          {/* Menu no canto */}
+          <div className="absolute top-2 right-2 z-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 bg-white/80 dark:bg-black/30 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <Link href={`/admin/assistidos/${assistido.id}`}>
+                  <DropdownMenuItem className="cursor-pointer"><Eye className="h-4 w-4 mr-2" />Ver Perfil Completo</DropdownMenuItem>
+                </Link>
+                <Link href={`/admin/assistidos/${assistido.id}/editar`}>
+                  <DropdownMenuItem className="cursor-pointer"><Edit className="h-4 w-4 mr-2" />Editar Cadastro</DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator />
+                <Link href={`/admin/processos?assistido=${assistido.id}`}>
+                  <DropdownMenuItem className="cursor-pointer"><Scale className="h-4 w-4 mr-2" />Ver Processos</DropdownMenuItem>
+                </Link>
+                <Link href={`/admin/demandas?assistido=${assistido.id}`}>
+                  <DropdownMenuItem className="cursor-pointer"><FileText className="h-4 w-4 mr-2" />Ver Demandas</DropdownMenuItem>
+                </Link>
+                {telefoneDisplay && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="cursor-pointer text-emerald-600"
+                      onClick={() => window.open(`https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}`, '_blank')}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />Enviar WhatsApp
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <Link href={`/admin/assistidos/${assistido.id}`}>
-              <h3 className="font-medium text-sm hover:text-primary transition-colors truncate">
+
+          {/* Avatar grande centralizado */}
+          <div className="flex flex-col items-center">
+            <div className="relative mb-3">
+              <Avatar 
+                className={`h-20 w-20 cursor-pointer transition-all hover:scale-105 shadow-md ${
+                  isPreso ? "ring-[3px] ring-rose-300 ring-offset-2" : "ring-2 ring-white/50 dark:ring-black/20"
+                }`}
+                onClick={onPhotoClick}
+              >
+                <AvatarImage src={assistido.photoUrl || undefined} className="object-cover" />
+                <AvatarFallback className={`text-xl font-semibold ${status.iconBg} ${status.color}`}>
+                  {getInitials(assistido.nome)}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                onClick={onPhotoClick}
+                className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-white dark:bg-slate-800 shadow-md border border-border/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
+              >
+                <Camera className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </div>
+            
+            {/* Nome e idade */}
+            <Link href={`/admin/assistidos/${assistido.id}`} className="text-center">
+              <h3 className="font-semibold text-sm hover:text-primary transition-colors line-clamp-1 px-2">
                 {assistido.nome}
               </h3>
             </Link>
-            <p className="text-xs text-muted-foreground">
-              {idade} anos • <span className={area.color}>{area.label}</span>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {idade} anos • {assistido.naturalidade?.split('/')[0]}
             </p>
           </div>
-          
-          {/* Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <Link href={`/admin/assistidos/${assistido.id}`}>
-                <DropdownMenuItem><Eye className="h-4 w-4 mr-2" />Ver Perfil</DropdownMenuItem>
-              </Link>
-              <Link href={`/admin/assistidos/${assistido.id}/editar`}>
-                <DropdownMenuItem><Edit className="h-4 w-4 mr-2" />Editar</DropdownMenuItem>
-              </Link>
-              <DropdownMenuSeparator />
-              <Link href={`/admin/processos?assistido=${assistido.id}`}>
-                <DropdownMenuItem><Scale className="h-4 w-4 mr-2" />Processos</DropdownMenuItem>
-              </Link>
-              <Link href={`/admin/demandas?assistido=${assistido.id}`}>
-                <DropdownMenuItem><FileText className="h-4 w-4 mr-2" />Demandas</DropdownMenuItem>
-              </Link>
-              {(assistido.telefone || assistido.telefoneContato) && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => window.open(`https://wa.me/55${(assistido.telefone || assistido.telefoneContato)?.replace(/\D/g, '')}`, '_blank')}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />WhatsApp
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
 
-        {/* Status Badge */}
-        <div className={`mt-3 px-2.5 py-1.5 rounded-lg ${status.bgColor}`}>
-          <div className="flex items-center justify-between">
-            <span className={`text-xs font-medium ${status.color}`}>
+        {/* Corpo do card */}
+        <div className="p-4 pt-3 space-y-3">
+          {/* Status e Área */}
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant="outline" 
+              className={`flex-1 justify-center py-1 ${status.color} ${status.borderColor} ${status.bgColor} font-medium text-[11px]`}
+            >
               {status.label}
-            </span>
-            {tempoPreso && (
-              <span className={`text-[10px] ${status.color} opacity-75`}>
-                {tempoPreso}
-              </span>
-            )}
+              {tempoPreso && <span className="ml-1 opacity-70">• {tempoPreso}</span>}
+            </Badge>
+            <Badge 
+              variant="outline" 
+              className={`${area.color} ${area.bgColor} border-transparent font-medium text-[11px] px-2`}
+            >
+              {area.label}
+            </Badge>
           </div>
-          {assistido.unidadePrisional && (
-            <p className={`text-[10px] ${status.color} opacity-75 truncate mt-0.5`}>
-              {assistido.unidadePrisional}
-            </p>
-          )}
-        </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-4 mt-3 text-xs">
-          <div className="flex items-center gap-1">
-            <Scale className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-medium">{assistido.processosAtivos}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className={`font-medium ${assistido.demandasAbertas > 2 ? "text-amber-600" : ""}`}>
-              {assistido.demandasAbertas}
-            </span>
-          </div>
-          {prazoInfo && (
-            <div className={`flex items-center gap-1 ml-auto ${prazoInfo.color}`}>
-              <Timer className="h-3.5 w-3.5" />
-              <span className="font-medium">{prazoInfo.text}</span>
+          {/* Unidade Prisional */}
+          {assistido.unidadePrisional && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="truncate">{assistido.unidadePrisional}</span>
             </div>
           )}
-        </div>
 
-        {/* Próximo Prazo */}
-        {assistido.atoProximoPrazo && (
-          <p className="text-[11px] text-muted-foreground mt-2 truncate">
-            {assistido.atoProximoPrazo}
-          </p>
-        )}
+          {/* Contato */}
+          {telefoneDisplay && (
+            <div className="flex items-center gap-2 text-xs">
+              <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              <span className="text-muted-foreground">{telefoneDisplay}</span>
+              {assistido.nomeContato && (
+                <span className="text-[10px] text-muted-foreground/70">({assistido.nomeContato})</span>
+              )}
+            </div>
+          )}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
-          <span className="text-[10px] text-muted-foreground">
-            {assistido.defensor}
-          </span>
-          <Link href={`/admin/assistidos/${assistido.id}`}>
-            <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2">
-              Detalhes <ChevronRight className="h-3 w-3 ml-0.5" />
-            </Button>
-          </Link>
+          {/* Estatísticas */}
+          <div className="grid grid-cols-3 gap-2 py-2">
+            <div className="text-center p-2 rounded-lg bg-muted/30">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <Scale className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="font-semibold text-sm">{assistido.processosAtivos}</span>
+              </div>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Processos</p>
+            </div>
+            <div className="text-center p-2 rounded-lg bg-muted/30">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className={`font-semibold text-sm ${assistido.demandasAbertas > 2 ? "text-amber-600" : ""}`}>
+                  {assistido.demandasAbertas}
+                </span>
+              </div>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Demandas</p>
+            </div>
+            <div className={`text-center p-2 rounded-lg ${prazoInfo?.bgColor || "bg-muted/30"}`}>
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                <Timer className={`h-3.5 w-3.5 ${prazoInfo?.color || "text-muted-foreground"}`} />
+                <span className={`font-semibold text-sm ${prazoInfo?.color || "text-muted-foreground"}`}>
+                  {prazoInfo?.text || "-"}
+                </span>
+              </div>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Prazo</p>
+            </div>
+          </div>
+
+          {/* Próximo Ato */}
+          {assistido.atoProximoPrazo && (
+            <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/20 border border-border/30">
+              <AlertTriangle className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${prazoInfo?.urgent ? prazoInfo.color : "text-muted-foreground"}`} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-medium truncate">{assistido.atoProximoPrazo}</p>
+                {assistido.proximoPrazo && (
+                  <p className="text-[10px] text-muted-foreground">
+                    {format(parseISO(assistido.proximoPrazo), "dd/MM/yyyy", { locale: ptBR })}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-2 border-t border-border/30">
+            <div className="flex items-center gap-1.5">
+              <User className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground">{assistido.defensor}</span>
+            </div>
+            <Link href={`/admin/assistidos/${assistido.id}`}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary">
+                Ver perfil <ChevronRight className="h-3 w-3 ml-0.5" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-// Row para Lista
+// Row para Lista - Visual Premium
 function AssistidoRow({ assistido, onPhotoClick }: AssistidoCardProps) {
   const status = statusConfig[assistido.statusPrisional] || statusConfig.SOLTO;
-  const area = areaConfig[assistido.area] || { label: assistido.area, color: "text-muted-foreground" };
+  const area = areaConfig[assistido.area] || { label: assistido.area, labelFull: assistido.area, color: "text-muted-foreground", bgColor: "bg-muted" };
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
+  const idade = calcularIdade(assistido.dataNascimento);
 
   return (
-    <TableRow className={isPreso ? "bg-red-50/50 dark:bg-red-950/10" : ""}>
-      <TableCell>
+    <TableRow className={`group transition-colors ${isPreso ? "border-l-2 border-l-rose-300" : ""}`}>
+      <TableCell className="py-3">
         <div className="flex items-center gap-3">
-          <div className="relative group/avatar">
+          <div className="relative">
             <Avatar 
-              className={`h-9 w-9 cursor-pointer ${isPreso ? "ring-2 ring-red-500" : ""}`}
+              className={`h-10 w-10 cursor-pointer transition-transform hover:scale-105 ${
+                isPreso ? "ring-2 ring-rose-300 ring-offset-1" : ""
+              }`}
               onClick={onPhotoClick}
             >
-              <AvatarImage src={assistido.photoUrl || undefined} />
-              <AvatarFallback className={`text-xs font-semibold ${isPreso ? "bg-red-100 text-red-700" : "bg-primary/10 text-primary"}`}>
+              <AvatarImage src={assistido.photoUrl || undefined} className="object-cover" />
+              <AvatarFallback className={`text-xs font-semibold ${status.iconBg} ${status.color}`}>
                 {getInitials(assistido.nome)}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer" onClick={onPhotoClick}>
-              <Camera className="h-3.5 w-3.5 text-white" />
-            </div>
+            <button 
+              className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" 
+              onClick={onPhotoClick}
+            >
+              <Camera className="h-4 w-4 text-white" />
+            </button>
           </div>
           <div>
             <Link href={`/admin/assistidos/${assistido.id}`} className="hover:text-primary transition-colors">
               <p className="font-medium text-sm">{assistido.nome}</p>
             </Link>
-            {assistido.unidadePrisional && (
-              <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{assistido.unidadePrisional}</p>
-            )}
+            <p className="text-[11px] text-muted-foreground">
+              {idade} anos
+              {assistido.unidadePrisional && (
+                <span className="ml-1">• {assistido.unidadePrisional}</span>
+              )}
+            </p>
           </div>
         </div>
       </TableCell>
-      <TableCell className="font-mono text-xs">{assistido.cpf}</TableCell>
+      <TableCell className="font-mono text-xs text-muted-foreground">{assistido.cpf}</TableCell>
       <TableCell>
-        <span className={`text-xs font-medium ${status.color}`}>{status.label}</span>
+        <Badge variant="outline" className={`${status.color} ${status.borderColor} ${status.bgColor} text-[10px] font-medium`}>
+          {status.label}
+        </Badge>
       </TableCell>
       <TableCell>
-        <span className={`text-xs font-medium ${area.color}`}>{area.label}</span>
+        <Badge variant="outline" className={`${area.color} ${area.bgColor} border-transparent text-[10px] font-medium`}>
+          {area.label}
+        </Badge>
       </TableCell>
       <TableCell className="text-center">
         <span className="text-sm font-medium">{assistido.processosAtivos}</span>
@@ -605,7 +660,9 @@ function AssistidoRow({ assistido, onPhotoClick }: AssistidoCardProps) {
       </TableCell>
       <TableCell>
         {prazoInfo ? (
-          <span className={`text-xs font-medium ${prazoInfo.color}`}>{prazoInfo.text}</span>
+          <Badge variant="outline" className={`${prazoInfo.color} ${prazoInfo.bgColor} border-transparent text-[10px] font-medium`}>
+            {prazoInfo.text}
+          </Badge>
         ) : (
           <span className="text-xs text-muted-foreground">-</span>
         )}
@@ -613,16 +670,16 @@ function AssistidoRow({ assistido, onPhotoClick }: AssistidoCardProps) {
       <TableCell className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7">
+            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <Link href={`/admin/assistidos/${assistido.id}`}>
-              <DropdownMenuItem><Eye className="h-4 w-4 mr-2" />Ver</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer"><Eye className="h-4 w-4 mr-2" />Ver Perfil</DropdownMenuItem>
             </Link>
             <Link href={`/admin/assistidos/${assistido.id}/editar`}>
-              <DropdownMenuItem><Edit className="h-4 w-4 mr-2" />Editar</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer"><Edit className="h-4 w-4 mr-2" />Editar</DropdownMenuItem>
             </Link>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -708,36 +765,60 @@ export default function AssistidosPage() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-4 gap-3">
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-card border">
-          <Users className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="text-xl font-bold">{stats.total}</p>
-            <p className="text-[10px] text-muted-foreground">Total</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50">
-          <AlertOctagon className="h-5 w-5 text-red-600" />
-          <div>
-            <p className="text-xl font-bold text-red-600">{stats.presos}</p>
-            <p className="text-[10px] text-muted-foreground">Presos</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50">
-          <Timer className="h-5 w-5 text-amber-600" />
-          <div>
-            <p className="text-xl font-bold text-amber-600">{stats.monitorados}</p>
-            <p className="text-[10px] text-muted-foreground">Monitorados</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          <div>
-            <p className="text-xl font-bold text-emerald-600">{stats.soltos}</p>
-            <p className="text-[10px] text-muted-foreground">Soltos</p>
-          </div>
-        </div>
+      {/* Quick Stats - Visual Premium */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold">{stats.total}</p>
+                <p className="text-xs text-muted-foreground">Total Cadastrados</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center">
+                <Users className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-rose-200/50 dark:border-rose-800/30 bg-gradient-to-br from-rose-50/50 to-transparent dark:from-rose-950/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold text-rose-600">{stats.presos}</p>
+                <p className="text-xs text-muted-foreground">Presos</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center">
+                <AlertOctagon className="h-5 w-5 text-rose-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-amber-200/50 dark:border-amber-800/30 bg-gradient-to-br from-amber-50/50 to-transparent dark:from-amber-950/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold text-amber-600">{stats.monitorados}</p>
+                <p className="text-xs text-muted-foreground">Monitorados</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                <Timer className="h-5 w-5 text-amber-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-emerald-200/50 dark:border-emerald-800/30 bg-gradient-to-br from-emerald-50/50 to-transparent dark:from-emerald-950/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold text-emerald-600">{stats.soltos}</p>
+                <p className="text-xs text-muted-foreground">Soltos</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Toolbar */}
