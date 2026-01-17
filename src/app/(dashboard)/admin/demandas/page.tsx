@@ -85,32 +85,54 @@ import { cn } from "@/lib/utils";
 interface Demanda {
   id: number;
   assistido: string;
+  assistidoId?: number;
   processo: string;
+  processoId?: number;
   ato: string;
   tipoAto: string;
   prazo: string;
   dataEntrada: string;
   dataIntimacao?: string;
+  dataConclusao?: string;
   status: string;
   prioridade: string;
   providencias: string | null;
   area: string;
+  comarca?: string;
+  vara?: string;
   reuPreso: boolean;
   defensor?: string;
+  defensorId?: number;
   observacoes?: string;
+  googleCalendarEventId?: string;
 }
 
-// Status disponíveis
+// Comarcas disponíveis
+const COMARCA_OPTIONS = [
+  { value: "CAMACARI", label: "Camaçari" },
+  { value: "CANDEIAS", label: "Candeias" },
+  { value: "DIAS_DAVILA", label: "Dias D'Ávila" },
+  { value: "SIMOES_FILHO", label: "Simões Filho" },
+  { value: "LAURO_DE_FREITAS", label: "Lauro de Freitas" },
+  { value: "SALVADOR", label: "Salvador" },
+];
+
+// Status disponíveis - Baseado no fluxo real da Defensoria
 const STATUS_OPTIONS = [
-  { value: "2_ATENDER", label: "Atender", color: "bg-red-500", textColor: "text-red-700" },
-  { value: "4_MONITORAR", label: "Monitorar", color: "bg-blue-500", textColor: "text-blue-700" },
-  { value: "5_FILA", label: "Em Fila", color: "bg-amber-500", textColor: "text-amber-700" },
-  { value: "6_ELABORANDO", label: "Elaborando", color: "bg-purple-500", textColor: "text-purple-700" },
-  { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-emerald-500", textColor: "text-emerald-700" },
-  { value: "7_CIENCIA", label: "Ciência", color: "bg-teal-500", textColor: "text-teal-700" },
-  { value: "7_SEM_ATUACAO", label: "Sem Atuação", color: "bg-slate-400", textColor: "text-slate-600" },
-  { value: "CONCLUIDO", label: "Concluído", color: "bg-green-600", textColor: "text-green-700" },
-  { value: "ARQUIVADO", label: "Arquivado", color: "bg-gray-400", textColor: "text-gray-600" },
+  { value: "1_FATAL", label: "FATAL", color: "bg-black", textColor: "text-black", description: "Prazo fatal imediato" },
+  { value: "2_ATENDER", label: "Atender", color: "bg-red-600", textColor: "text-red-700", description: "Precisa de atenção urgente" },
+  { value: "3_ANALISAR", label: "Analisar", color: "bg-orange-500", textColor: "text-orange-700", description: "Aguardando análise" },
+  { value: "4_MONITORAR", label: "Monitorar", color: "bg-blue-500", textColor: "text-blue-700", description: "Acompanhando andamento" },
+  { value: "5_FILA", label: "Em Fila", color: "bg-amber-500", textColor: "text-amber-700", description: "Na fila de trabalho" },
+  { value: "6_ELABORANDO", label: "Elaborando", color: "bg-purple-500", textColor: "text-purple-700", description: "Em elaboração" },
+  { value: "6_REVISAO", label: "Revisão", color: "bg-violet-500", textColor: "text-violet-700", description: "Em revisão" },
+  { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-emerald-500", textColor: "text-emerald-700", description: "Peça protocolada" },
+  { value: "7_CIENCIA", label: "Ciência", color: "bg-teal-500", textColor: "text-teal-700", description: "Tomada ciência" },
+  { value: "7_SEM_ATUACAO", label: "Sem Atuação", color: "bg-slate-400", textColor: "text-slate-600", description: "Não requer atuação" },
+  { value: "8_AGUARDANDO", label: "Aguardando", color: "bg-cyan-500", textColor: "text-cyan-700", description: "Aguardando decisão/resposta" },
+  { value: "9_SUSPENSO", label: "Suspenso", color: "bg-gray-500", textColor: "text-gray-700", description: "Processo suspenso" },
+  { value: "CONCLUIDO", label: "Concluído", color: "bg-green-600", textColor: "text-green-700", description: "Finalizado" },
+  { value: "ARQUIVADO", label: "Arquivado", color: "bg-gray-400", textColor: "text-gray-600", description: "Arquivado" },
 ];
 
 // Prioridades
@@ -134,42 +156,67 @@ const AREA_OPTIONS = [
   { value: "FAZENDA_PUBLICA", label: "Fazenda Pública", icon: Scale, color: "indigo" },
 ];
 
-// Tipos de Ato
+// Tipos de Ato - Expandido com atos comuns na prática forense
 const TIPO_ATO_OPTIONS = [
-  { value: "manifestacao", label: "Manifestação" },
-  { value: "recurso", label: "Recurso" },
-  { value: "peticao", label: "Petição" },
-  { value: "audiencia", label: "Audiência" },
-  { value: "julgamento", label: "Julgamento" },
-  { value: "prazo", label: "Prazo" },
-  { value: "diligencia", label: "Diligência" },
+  { value: "manifestacao", label: "Manifestação", group: "Petições" },
+  { value: "resposta_acusacao", label: "Resposta à Acusação", group: "Defesa" },
+  { value: "alegacoes_finais", label: "Alegações Finais", group: "Defesa" },
+  { value: "memoriais", label: "Memoriais", group: "Defesa" },
+  { value: "defesa_previa", label: "Defesa Prévia", group: "Defesa" },
+  { value: "contrarrazoes", label: "Contrarrazões", group: "Recursos" },
+  { value: "recurso", label: "Recurso", group: "Recursos" },
+  { value: "apelacao", label: "Apelação", group: "Recursos" },
+  { value: "agravo", label: "Agravo", group: "Recursos" },
+  { value: "embargos", label: "Embargos", group: "Recursos" },
+  { value: "rese", label: "RESE", group: "Recursos" },
+  { value: "habeas_corpus", label: "Habeas Corpus", group: "Ações Autônomas" },
+  { value: "revisao_criminal", label: "Revisão Criminal", group: "Ações Autônomas" },
+  { value: "peticao", label: "Petição Simples", group: "Petições" },
+  { value: "pedido_progressao", label: "Progressão de Regime", group: "Execução Penal" },
+  { value: "pedido_livramento", label: "Livramento Condicional", group: "Execução Penal" },
+  { value: "pedido_indulto", label: "Indulto/Comutação", group: "Execução Penal" },
+  { value: "pedido_remicao", label: "Remição de Pena", group: "Execução Penal" },
+  { value: "pedido_saida", label: "Saída Temporária", group: "Execução Penal" },
+  { value: "audiencia", label: "Audiência", group: "Atos" },
+  { value: "audiencia_custodia", label: "Audiência de Custódia", group: "Atos" },
+  { value: "audiencia_instrucao", label: "AIJ", group: "Atos" },
+  { value: "sessao_juri", label: "Sessão do Júri", group: "Júri" },
+  { value: "julgamento", label: "Julgamento", group: "Atos" },
+  { value: "prazo", label: "Prazo", group: "Outros" },
+  { value: "diligencia", label: "Diligência", group: "Outros" },
+  { value: "carga", label: "Carga/Vista", group: "Outros" },
+  { value: "outro", label: "Outro", group: "Outros" },
 ];
 
-// Dados mockados ampliados
+// Dados mockados ampliados com comarca e vara
 const mockDemandas: Demanda[] = [
   { 
     id: 1, 
     assistido: "Diego Bonfim Almeida",
+    assistidoId: 1,
     processo: "8012906-74.2025.8.05.0039",
+    processoId: 1,
     ato: "Resposta à Acusação",
-    tipoAto: "manifestacao",
+    tipoAto: "resposta_acusacao",
     prazo: "2026-01-17",
     dataEntrada: "2026-01-10",
     dataIntimacao: "2026-01-08",
-    status: "2_ATENDER",
+    status: "1_FATAL",
     prioridade: "REU_PRESO",
     providencias: "Requerer diligências, verificar câmeras de segurança do local",
     area: "JURI",
+    comarca: "CANDEIAS",
+    vara: "1ª Vara Criminal",
     reuPreso: true,
     defensor: "Dr. Rodrigo",
-    observacoes: "Caso complexo, réu nega autoria",
+    observacoes: "Caso complexo, réu nega autoria. Verificar câmeras.",
   },
   { 
     id: 2, 
     assistido: "Maria Silva Santos",
     processo: "0001234-56.2025.8.05.0039",
     ato: "Alegações Finais",
-    tipoAto: "manifestacao",
+    tipoAto: "alegacoes_finais",
     prazo: "2026-01-18",
     dataEntrada: "2026-01-08",
     dataIntimacao: "2026-01-05",
@@ -177,6 +224,8 @@ const mockDemandas: Demanda[] = [
     prioridade: "ALTA",
     providencias: "Analisar provas, preparar tese de absolvição por legítima defesa",
     area: "JURI",
+    comarca: "CANDEIAS",
+    vara: "1ª Vara Criminal",
     reuPreso: false,
     defensor: "Dra. Juliane",
   },
@@ -185,14 +234,16 @@ const mockDemandas: Demanda[] = [
     assistido: "José Carlos Oliveira",
     processo: "0005678-90.2025.8.05.0039",
     ato: "Agravo em Execução",
-    tipoAto: "recurso",
+    tipoAto: "agravo",
     prazo: "2026-01-20",
     dataEntrada: "2026-01-05",
     dataIntimacao: "2026-01-03",
-    status: "4_MONITORAR",
+    status: "8_AGUARDANDO",
     prioridade: "NORMAL",
     providencias: "Aguardando decisão do agravo, verificar publicação",
     area: "EXECUCAO_PENAL",
+    comarca: "DIAS_DAVILA",
+    vara: "Vara de Execuções Penais",
     reuPreso: true,
     defensor: "Dr. Marcos",
   },
@@ -201,14 +252,16 @@ const mockDemandas: Demanda[] = [
     assistido: "Ana Paula Costa",
     processo: "0009012-34.2025.8.05.0039",
     ato: "Pedido de Relaxamento",
-    tipoAto: "peticao",
+    tipoAto: "habeas_corpus",
     prazo: "2026-01-17",
     dataEntrada: "2026-01-12",
     dataIntimacao: "2026-01-10",
     status: "2_ATENDER",
     prioridade: "URGENTE",
-    providencias: "Prisão ilegal, prazo de 30 dias expirado",
+    providencias: "Prisão ilegal, prazo de 30 dias expirado. URGENTE!",
     area: "VIOLENCIA_DOMESTICA",
+    comarca: "CANDEIAS",
+    vara: "Juizado de Violência Doméstica",
     reuPreso: true,
     defensor: "Dr. Rodrigo",
   },
@@ -217,13 +270,16 @@ const mockDemandas: Demanda[] = [
     assistido: "Roberto Ferreira Lima",
     processo: "0003456-78.2025.8.05.0039",
     ato: "Memoriais",
-    tipoAto: "manifestacao",
+    tipoAto: "memoriais",
     prazo: "2026-01-20",
     dataEntrada: "2026-01-10",
+    dataConclusao: "2026-01-16",
     status: "7_PROTOCOLADO",
     prioridade: "NORMAL",
     providencias: null,
     area: "JURI",
+    comarca: "CANDEIAS",
+    vara: "1ª Vara Criminal",
     reuPreso: false,
     defensor: "Dr. Rodrigo",
   },
@@ -232,13 +288,15 @@ const mockDemandas: Demanda[] = [
     assistido: "Carlos Eduardo Silva",
     processo: "0007890-12.2025.8.05.0039",
     ato: "Revisão Criminal",
-    tipoAto: "recurso",
+    tipoAto: "revisao_criminal",
     prazo: "2026-01-25",
     dataEntrada: "2026-01-02",
     status: "6_ELABORANDO",
     prioridade: "NORMAL",
     providencias: "Estudar processo, identificar erros processuais e novas provas",
     area: "SUBSTITUICAO",
+    comarca: "SALVADOR",
+    vara: "Câmara Criminal",
     reuPreso: false,
     defensor: "Dra. Juliane",
   },
@@ -247,13 +305,15 @@ const mockDemandas: Demanda[] = [
     assistido: "Marcos Antonio Pereira",
     processo: "0002345-67.2025.8.05.0039",
     ato: "Progressão de Regime",
-    tipoAto: "peticao",
+    tipoAto: "pedido_progressao",
     prazo: "2026-01-19",
     dataEntrada: "2026-01-11",
     status: "5_FILA",
     prioridade: "ALTA",
-    providencias: "Verificar atestado de comportamento carcerário",
+    providencias: "Verificar atestado de comportamento carcerário. Juntar documentos.",
     area: "EXECUCAO_PENAL",
+    comarca: "DIAS_DAVILA",
+    vara: "Vara de Execuções Penais",
     reuPreso: true,
     defensor: "Dr. Marcos",
   },
@@ -262,13 +322,15 @@ const mockDemandas: Demanda[] = [
     assistido: "Fernanda Oliveira Santos",
     processo: "0008765-43.2025.8.05.0039",
     ato: "Habeas Corpus",
-    tipoAto: "peticao",
+    tipoAto: "habeas_corpus",
     prazo: "2026-01-17",
     dataEntrada: "2026-01-15",
     status: "2_ATENDER",
     prioridade: "URGENTE",
-    providencias: "HC liberatório - constrangimento ilegal por excesso de prazo",
+    providencias: "HC liberatório - constrangimento ilegal por excesso de prazo. FAZER HOJE!",
     area: "JURI",
+    comarca: "CANDEIAS",
+    vara: "1ª Vara Criminal",
     reuPreso: true,
     defensor: "Dr. Rodrigo",
   },
@@ -277,13 +339,15 @@ const mockDemandas: Demanda[] = [
     assistido: "Lucas Almeida Costa",
     processo: "0004321-98.2025.8.05.0039",
     ato: "Contrarrazões de Apelação",
-    tipoAto: "manifestacao",
+    tipoAto: "contrarrazoes",
     prazo: "2026-01-22",
     dataEntrada: "2026-01-13",
-    status: "5_FILA",
+    status: "3_ANALISAR",
     prioridade: "NORMAL",
-    providencias: "Analisar razões do MP e preparar contrarrazões",
+    providencias: "Analisar razões do MP e preparar contrarrazões. Tese: insuficiência de provas.",
     area: "JURI",
+    comarca: "CANDEIAS",
+    vara: "1ª Vara Criminal",
     reuPreso: false,
     defensor: "Dra. Juliane",
   },
@@ -292,15 +356,53 @@ const mockDemandas: Demanda[] = [
     assistido: "Pedro Henrique Souza",
     processo: "0006543-21.2025.8.05.0039",
     ato: "Livramento Condicional",
-    tipoAto: "peticao",
+    tipoAto: "pedido_livramento",
     prazo: "2026-01-24",
     dataEntrada: "2026-01-14",
-    status: "4_MONITORAR",
+    status: "8_AGUARDANDO",
     prioridade: "NORMAL",
-    providencias: "Aguardando parecer do MP",
+    providencias: "Aguardando parecer do MP. Requisitos preenchidos.",
     area: "EXECUCAO_PENAL",
+    comarca: "DIAS_DAVILA",
+    vara: "Vara de Execuções Penais",
     reuPreso: true,
     defensor: "Dr. Marcos",
+  },
+  { 
+    id: 11, 
+    assistido: "Antônio José Ribeiro",
+    processo: "0001122-33.2025.8.05.0039",
+    ato: "Audiência de Instrução",
+    tipoAto: "audiencia_instrucao",
+    prazo: "2026-01-21",
+    dataEntrada: "2026-01-10",
+    status: "4_MONITORAR",
+    prioridade: "ALTA",
+    providencias: "Preparar rol de testemunhas. Confirmar presença do réu.",
+    area: "JURI",
+    comarca: "CANDEIAS",
+    vara: "1ª Vara Criminal",
+    reuPreso: true,
+    defensor: "Dr. Rodrigo",
+    observacoes: "Réu detido no Conjunto Penal de Simões Filho",
+  },
+  { 
+    id: 12, 
+    assistido: "Sandra Regina Matos",
+    processo: "0002233-44.2025.8.05.0039",
+    ato: "Sessão do Júri",
+    tipoAto: "sessao_juri",
+    prazo: "2026-01-28",
+    dataEntrada: "2026-01-05",
+    status: "6_REVISAO",
+    prioridade: "ALTA",
+    providencias: "Revisar tese de defesa. Preparar quesitos. Reunir com assistido.",
+    area: "JURI",
+    comarca: "CANDEIAS",
+    vara: "1ª Vara Criminal",
+    reuPreso: false,
+    defensor: "Dra. Juliane",
+    observacoes: "Tese principal: legítima defesa. Subsidiária: desclassificação.",
   },
 ];
 
@@ -410,11 +512,15 @@ function DemandaModal({
       tipoAto: "manifestacao",
       prazo: format(addDays(new Date(), 15), "yyyy-MM-dd"),
       dataEntrada: format(new Date(), "yyyy-MM-dd"),
+      dataIntimacao: "",
       status: "5_FILA",
       prioridade: "NORMAL",
       providencias: "",
       area: "JURI",
+      comarca: "CANDEIAS",
+      defensor: "",
       reuPreso: false,
+      observacoes: "",
     }
   );
 
@@ -570,6 +676,32 @@ function DemandaModal({
             </div>
           </div>
 
+          {/* Comarca e Defensor */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Comarca</Label>
+              <Select value={formData.comarca || ""} onValueChange={(v) => setFormData({ ...formData, comarca: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a comarca" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMARCA_OPTIONS.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="defensor">Defensor</Label>
+              <Input
+                id="defensor"
+                value={formData.defensor || ""}
+                onChange={(e) => setFormData({ ...formData, defensor: e.target.value })}
+                placeholder="Nome do defensor"
+              />
+            </div>
+          </div>
+
           {/* Réu Preso */}
           <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
             <Checkbox
@@ -634,14 +766,22 @@ export default function DemandasPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [areaFilter, setAreaFilter] = useState("all");
   const [prioridadeFilter, setPrioridadeFilter] = useState("all");
+  const [comarcaFilter, setComarcaFilter] = useState("all");
+  const [defensorFilter, setDefensorFilter] = useState("all");
   const [reuPresoFilter, setReuPresoFilter] = useState<boolean | null>(null);
   const [activeView, setActiveView] = useState<"table" | "kanban" | "timeline">("table");
-  const [sortField, setSortField] = useState<"prazo" | "assistido" | "area" | "status">("prazo");
+  const [sortField, setSortField] = useState<"prazo" | "assistido" | "area" | "status" | "comarca">("prazo");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedDemanda, setSelectedDemanda] = useState<Demanda | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("edit");
   const [demandas, setDemandas] = useState<Demanda[]>(mockDemandas);
+  
+  // Lista de defensores para filtro
+  const defensores = useMemo(() => {
+    const unique = [...new Set(demandas.map(d => d.defensor).filter(Boolean))];
+    return unique.sort();
+  }, [demandas]);
 
   // Colunas visíveis
   const [visibleColumns, setVisibleColumns] = useState({
@@ -649,12 +789,16 @@ export default function DemandasPage() {
     assistido: true,
     processo: true,
     ato: true,
+    tipoAto: false,
     area: true,
+    comarca: false,
     status: true,
     prioridade: true,
     providencias: true,
-    defensor: false,
+    defensor: true,
     dataEntrada: false,
+    dataIntimacao: false,
+    observacoes: false,
   });
 
   // Filtrar e ordenar demandas
@@ -664,12 +808,15 @@ export default function DemandasPage() {
         demanda.assistido.toLowerCase().includes(searchTerm.toLowerCase()) ||
         demanda.processo.includes(searchTerm) ||
         demanda.ato.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (demanda.providencias?.toLowerCase().includes(searchTerm.toLowerCase()));
+        (demanda.providencias?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (demanda.observacoes?.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesStatus = statusFilter === "all" || demanda.status === statusFilter;
       const matchesArea = areaFilter === "all" || demanda.area === areaFilter;
       const matchesPrioridade = prioridadeFilter === "all" || demanda.prioridade === prioridadeFilter;
+      const matchesComarca = comarcaFilter === "all" || demanda.comarca === comarcaFilter;
+      const matchesDefensor = defensorFilter === "all" || demanda.defensor === defensorFilter;
       const matchesReuPreso = reuPresoFilter === null || demanda.reuPreso === reuPresoFilter;
-      return matchesSearch && matchesStatus && matchesArea && matchesPrioridade && matchesReuPreso;
+      return matchesSearch && matchesStatus && matchesArea && matchesPrioridade && matchesComarca && matchesDefensor && matchesReuPreso;
     });
 
     // Ordenar
@@ -692,22 +839,26 @@ export default function DemandasPage() {
         case "status":
           comparison = a.status.localeCompare(b.status);
           break;
+        case "comarca":
+          comparison = (a.comarca || "").localeCompare(b.comarca || "");
+          break;
       }
       return sortOrder === "asc" ? comparison : -comparison;
     });
 
     return result;
-  }, [demandas, searchTerm, statusFilter, areaFilter, prioridadeFilter, reuPresoFilter, sortField, sortOrder]);
+  }, [demandas, searchTerm, statusFilter, areaFilter, prioridadeFilter, comarcaFilter, defensorFilter, reuPresoFilter, sortField, sortOrder]);
 
   // Estatísticas
   const stats = useMemo(() => ({
     total: demandas.length,
-    atender: demandas.filter(d => d.status === "2_ATENDER").length,
-    fila: demandas.filter(d => d.status === "5_FILA" || d.status === "6_ELABORANDO").length,
-    monitorar: demandas.filter(d => d.status === "4_MONITORAR").length,
-    protocolado: demandas.filter(d => d.status === "7_PROTOCOLADO" || d.status === "7_CIENCIA").length,
+    fatal: demandas.filter(d => d.status === "1_FATAL").length,
+    atender: demandas.filter(d => d.status === "2_ATENDER" || d.status === "3_ANALISAR").length,
+    fila: demandas.filter(d => d.status === "5_FILA" || d.status === "6_ELABORANDO" || d.status === "6_REVISAO").length,
+    monitorar: demandas.filter(d => d.status === "4_MONITORAR" || d.status === "8_AGUARDANDO").length,
+    protocolado: demandas.filter(d => d.status === "7_PROTOCOLADO" || d.status === "7_CIENCIA" || d.status === "CONCLUIDO").length,
     reuPreso: demandas.filter(d => d.reuPreso).length,
-    vencidos: demandas.filter(d => isPast(parseISO(d.prazo)) && !isToday(parseISO(d.prazo)) && !["7_PROTOCOLADO", "CONCLUIDO", "ARQUIVADO"].includes(d.status)).length,
+    vencidos: demandas.filter(d => isPast(parseISO(d.prazo)) && !isToday(parseISO(d.prazo)) && !["7_PROTOCOLADO", "7_CIENCIA", "7_SEM_ATUACAO", "CONCLUIDO", "ARQUIVADO"].includes(d.status)).length,
     hoje: demandas.filter(d => isToday(parseISO(d.prazo))).length,
   }), [demandas]);
 
@@ -781,101 +932,111 @@ export default function DemandasPage() {
       </div>
 
       {/* Stats Cards Premium */}
-      <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-8">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-9">
         <Card className="stat-card">
-          <CardContent className="pt-4 pb-3">
+          <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-xl font-bold">{stats.total}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</p>
               </div>
-              <div className="stat-card-icon">
-                <FileText />
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={cn("stat-card", stats.fatal > 0 && "border-black bg-black/5 dark:bg-black/20")}>
+          <CardContent className="pt-3 pb-2 px-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={cn("text-xl font-bold", stats.fatal > 0 && "text-black dark:text-white")}>{stats.fatal}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">FATAL</p>
               </div>
+              <AlertTriangle className={cn("h-4 w-4", stats.fatal > 0 ? "text-black dark:text-white animate-pulse" : "text-muted-foreground")} />
             </div>
           </CardContent>
         </Card>
 
         <Card className="stat-card fatal">
-          <CardContent className="pt-4 pb-3">
+          <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-red-600">{stats.reuPreso}</p>
-                <p className="text-xs text-muted-foreground">Réu Preso</p>
+                <p className="text-xl font-bold text-red-600">{stats.reuPreso}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Réu Preso</p>
               </div>
-              <Lock className="h-5 w-5 text-red-500" />
+              <Lock className="h-4 w-4 text-red-500" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="stat-card fatal">
-          <CardContent className="pt-4 pb-3">
+          <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-red-600">{stats.atender}</p>
-                <p className="text-xs text-muted-foreground">Atender</p>
+                <p className="text-xl font-bold text-red-600">{stats.atender}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Atender</p>
               </div>
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <AlertTriangle className="h-4 w-4 text-red-500" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="stat-card urgente">
-          <CardContent className="pt-4 pb-3">
+          <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-orange-600">{stats.hoje}</p>
-                <p className="text-xs text-muted-foreground">Hoje</p>
+                <p className="text-xl font-bold text-orange-600">{stats.hoje}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Hoje</p>
               </div>
-              <Timer className="h-5 w-5 text-orange-500" />
+              <Timer className="h-4 w-4 text-orange-500" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="stat-card">
-          <CardContent className="pt-4 pb-3">
+          <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">{stats.fila}</p>
-                <p className="text-xs text-muted-foreground">Em Fila</p>
+                <p className="text-xl font-bold text-amber-600">{stats.fila}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Em Fila</p>
               </div>
-              <Clock className="h-5 w-5 text-amber-500" />
+              <Clock className="h-4 w-4 text-amber-500" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="stat-card">
-          <CardContent className="pt-4 pb-3">
+          <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">{stats.monitorar}</p>
-                <p className="text-xs text-muted-foreground">Monitorar</p>
+                <p className="text-xl font-bold text-blue-600">{stats.monitorar}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Aguardando</p>
               </div>
-              <Eye className="h-5 w-5 text-blue-500" />
+              <Eye className="h-4 w-4 text-blue-500" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="stat-card success">
-          <CardContent className="pt-4 pb-3">
+          <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-emerald-600">{stats.protocolado}</p>
-                <p className="text-xs text-muted-foreground">Protocolado</p>
+                <p className="text-xl font-bold text-emerald-600">{stats.protocolado}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Concluído</p>
               </div>
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
             </div>
           </CardContent>
         </Card>
 
         <Card className={cn("stat-card", stats.vencidos > 0 && "fatal")}>
-          <CardContent className="pt-4 pb-3">
+          <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className={cn("text-2xl font-bold", stats.vencidos > 0 && "text-red-600")}>{stats.vencidos}</p>
-                <p className="text-xs text-muted-foreground">Vencidos</p>
+                <p className={cn("text-xl font-bold", stats.vencidos > 0 && "text-red-600")}>{stats.vencidos}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Vencidos</p>
               </div>
-              <AlertTriangle className={cn("h-5 w-5", stats.vencidos > 0 ? "text-red-500" : "text-muted-foreground")} />
+              <AlertTriangle className={cn("h-4 w-4", stats.vencidos > 0 ? "text-red-500" : "text-muted-foreground")} />
             </div>
           </CardContent>
         </Card>
@@ -914,13 +1075,37 @@ export default function DemandasPage() {
             </Select>
 
             <Select value={areaFilter} onValueChange={setAreaFilter}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Área" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas Áreas</SelectItem>
                 {AREA_OPTIONS.map((a) => (
                   <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={comarcaFilter} onValueChange={setComarcaFilter}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Comarca" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas Comarcas</SelectItem>
+                {COMARCA_OPTIONS.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={defensorFilter} onValueChange={setDefensorFilter}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Defensor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Defensores</SelectItem>
+                {defensores.map((d) => (
+                  <SelectItem key={d} value={d!}>{d}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -932,10 +1117,10 @@ export default function DemandasPage() {
               className="gap-1"
             >
               <Lock className="h-3 w-3" />
-              Réu Preso
+              Preso
             </Button>
 
-            {(statusFilter !== "all" || areaFilter !== "all" || reuPresoFilter !== null || searchTerm) && (
+            {(statusFilter !== "all" || areaFilter !== "all" || comarcaFilter !== "all" || defensorFilter !== "all" || reuPresoFilter !== null || searchTerm) && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -943,6 +1128,8 @@ export default function DemandasPage() {
                   setSearchTerm("");
                   setStatusFilter("all");
                   setAreaFilter("all");
+                  setComarcaFilter("all");
+                  setDefensorFilter("all");
                   setReuPresoFilter(null);
                 }}
                 className="gap-1 text-muted-foreground"
@@ -1015,11 +1202,20 @@ export default function DemandasPage() {
                       )}
                       {visibleColumns.processo && <TableHead>Processo</TableHead>}
                       {visibleColumns.ato && <TableHead>Ato</TableHead>}
+                      {visibleColumns.tipoAto && <TableHead>Tipo</TableHead>}
                       {visibleColumns.area && (
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("area")}>
                           <div className="flex items-center gap-1">
                             Área
                             {sortField === "area" && (sortOrder === "asc" ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />)}
+                          </div>
+                        </TableHead>
+                      )}
+                      {visibleColumns.comarca && (
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("comarca")}>
+                          <div className="flex items-center gap-1">
+                            Comarca
+                            {sortField === "comarca" && (sortOrder === "asc" ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />)}
                           </div>
                         </TableHead>
                       )}
@@ -1035,6 +1231,8 @@ export default function DemandasPage() {
                       {visibleColumns.providencias && <TableHead className="max-w-[200px]">Providências</TableHead>}
                       {visibleColumns.defensor && <TableHead>Defensor</TableHead>}
                       {visibleColumns.dataEntrada && <TableHead>Entrada</TableHead>}
+                      {visibleColumns.dataIntimacao && <TableHead>Intimação</TableHead>}
+                      {visibleColumns.observacoes && <TableHead className="max-w-[150px]">Obs</TableHead>}
                       <TableHead className="w-[50px] text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1077,8 +1275,22 @@ export default function DemandasPage() {
                               <span className="font-medium">{demanda.ato}</span>
                             </TableCell>
                           )}
+                          {visibleColumns.tipoAto && (
+                            <TableCell>
+                              <span className="text-xs text-muted-foreground">
+                                {TIPO_ATO_OPTIONS.find(t => t.value === demanda.tipoAto)?.label || demanda.tipoAto}
+                              </span>
+                            </TableCell>
+                          )}
                           {visibleColumns.area && (
                             <TableCell><AreaBadge area={demanda.area} /></TableCell>
+                          )}
+                          {visibleColumns.comarca && (
+                            <TableCell>
+                              <span className="text-xs">
+                                {COMARCA_OPTIONS.find(c => c.value === demanda.comarca)?.label || demanda.comarca || "-"}
+                              </span>
+                            </TableCell>
                           )}
                           {visibleColumns.status && (
                             <TableCell>
@@ -1122,6 +1334,20 @@ export default function DemandasPage() {
                               <span className="text-xs text-muted-foreground">
                                 {demanda.dataEntrada ? format(parseISO(demanda.dataEntrada), "dd/MM", { locale: ptBR }) : "-"}
                               </span>
+                            </TableCell>
+                          )}
+                          {visibleColumns.dataIntimacao && (
+                            <TableCell>
+                              <span className="text-xs text-muted-foreground">
+                                {demanda.dataIntimacao ? format(parseISO(demanda.dataIntimacao), "dd/MM", { locale: ptBR }) : "-"}
+                              </span>
+                            </TableCell>
+                          )}
+                          {visibleColumns.observacoes && (
+                            <TableCell className="max-w-[150px]">
+                              <p className="text-xs text-muted-foreground truncate" title={demanda.observacoes}>
+                                {demanda.observacoes || "-"}
+                              </p>
                             </TableCell>
                           )}
                           <TableCell className="text-right">
