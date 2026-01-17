@@ -21,6 +21,11 @@ import {
   CheckCircle2,
   ArrowUpRight,
   BarChart3,
+  Shield,
+  Lock,
+  Award,
+  TrendingUp,
+  Calculator,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -40,15 +45,19 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
 } from "recharts";
+import { useAssignment } from "@/contexts/assignment-context";
 
-// Cores iOS 26.2 Design System
-const COLORS = {
-  fatal: "hsl(350, 55%, 60%)",      // Rosa suave
-  urgente: "hsl(35, 75%, 55%)",     // Âmbar suave
-  andamento: "hsl(158, 50%, 45%)",  // Verde suave
-  arquivado: "hsl(160, 8%, 55%)",   // Cinza esverdeado
-  primary: "hsl(158, 55%, 42%)",    // Verde principal
-};
+// Cores dinâmicas baseadas na atribuição
+function useAssignmentColors() {
+  const { config } = useAssignment();
+  return {
+    fatal: config.accentColor,
+    urgente: "hsl(35, 75%, 55%)",
+    andamento: "hsl(158, 50%, 45%)",
+    arquivado: "hsl(160, 8%, 55%)",
+    primary: config.accentColor,
+  };
+}
 
 // Dados mockados para demonstração
 const mockStats = {
@@ -116,24 +125,67 @@ function getPrioridadeStyle(prioridade: string) {
   }
 }
 
+// Títulos específicos por atribuição
+const DASHBOARD_TITLES: Record<string, { title: string; subtitle: string }> = {
+  JURI_CAMACARI: {
+    title: "Painel do Júri",
+    subtitle: "Gestão de processos e plenários da Vara do Júri de Camaçari",
+  },
+  VVD_CAMACARI: {
+    title: "Central VVD",
+    subtitle: "Violência Doméstica - Proteção e celeridade",
+  },
+  EXECUCAO_PENAL: {
+    title: "Painel de Execução",
+    subtitle: "Benefícios, progressões e incidentes",
+  },
+  SUBSTITUICAO: {
+    title: "Central de Demandas",
+    subtitle: "Gestão de substituições e prazos",
+  },
+  GRUPO_JURI: {
+    title: "Grupo Especial do Júri",
+    subtitle: "Plenários pelo Estado da Bahia",
+  },
+};
+
 export default function SalaDeGuerra() {
   const [activeView, setActiveView] = useState<"overview" | "analytics">("overview");
+  const { currentAssignment, config } = useAssignment();
+  
+  const dashboardInfo = DASHBOARD_TITLES[currentAssignment] || DASHBOARD_TITLES.SUBSTITUICAO;
 
   return (
     <div className="space-y-6">
-      {/* Header - Minimalista */}
+      {/* Header - Dinâmico por atribuição */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Sala de Guerra</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-          </p>
+        <div className="flex items-center gap-4">
+          <div 
+            className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg"
+            style={{
+              background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
+            }}
+          >
+            <BarChart3 className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{dashboardInfo.title}</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              {dashboardInfo.subtitle}
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant={activeView === "overview" ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveView("overview")}
+            style={{
+              backgroundColor: activeView === "overview" ? config.accentColor : undefined,
+            }}
           >
             Visão Geral
           </Button>
@@ -141,6 +193,9 @@ export default function SalaDeGuerra() {
             variant={activeView === "analytics" ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveView("analytics")}
+            style={{
+              backgroundColor: activeView === "analytics" ? config.accentColor : undefined,
+            }}
           >
             Análises
           </Button>
