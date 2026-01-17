@@ -8,10 +8,11 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-[14px] bg-card text-card-foreground",
-      "shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_1px_3px_0_rgba(0,0,0,0.05),0_2px_6px_0_rgba(0,0,0,0.02)]",
+      "rounded-2xl bg-card text-card-foreground",
+      "border border-[hsl(155_15%_92%)] dark:border-[hsl(160_12%_14%)]",
+      "shadow-[0_1px_3px_0_rgba(0,0,0,0.02),0_2px_8px_0_rgba(0,0,0,0.04)]",
       "transition-all duration-300 ease",
-      "hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.06),0_2px_4px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.04)]",
+      "hover:shadow-[0_4px_16px_0_rgba(0,0,0,0.06),0_2px_6px_0_rgba(0,0,0,0.04)]",
       className
     )}
     {...props}
@@ -38,7 +39,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "text-2xl font-bold leading-none tracking-tight text-foreground",
+      "text-xl font-semibold leading-none tracking-tight text-foreground",
       className
     )}
     {...props}
@@ -52,7 +53,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm leading-relaxed", "text-[hsl(220_11%_50%)]", className)}
+    className={cn("text-sm leading-relaxed text-muted-foreground", className)}
     {...props}
   />
 ));
