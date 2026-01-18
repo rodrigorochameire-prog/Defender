@@ -71,7 +71,12 @@ import {
   CircleDot,
   Circle,
   Target,
+  Lock,
+  Unlock,
+  AlertCircle,
+  Copy,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -467,7 +472,11 @@ function PhotoUploadDialog({ isOpen, onClose, assistidoNome, currentPhoto, onUpl
   );
 }
 
-// Card Expandível do Assistido - Design Premium
+// ========================================
+// CARD DO ASSISTIDO - DESIGN SUÍÇO
+// Poluição Visual Zero • Cores Funcionais
+// ========================================
+
 interface AssistidoCardProps {
   assistido: typeof mockAssistidos[0];
   onPhotoClick: () => void;
@@ -477,473 +486,433 @@ interface AssistidoCardProps {
 
 function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: AssistidoCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
   
-  const status = statusConfig[assistido.statusPrisional] || statusConfig.SOLTO;
-  const fase = faseConfig[assistido.faseProcessual] || faseConfig.INSTRUCAO;
-  const area = areaConfig[assistido.area] || { label: assistido.area, labelFull: assistido.area, color: "text-muted-foreground", bgColor: "bg-muted" };
+  // Lógica Semântica: Determina se réu está preso
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
+  const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
+  
+  // Prazo urgente (≤ 3 dias)
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
-  const idade = calcularIdade(assistido.dataNascimento);
-  const tempoPreso = calcularTempoPreso(assistido.dataPrisao);
+  const prazoUrgente = prazoInfo && prazoInfo.urgent;
+  
+  // Telefone para contato
   const telefoneDisplay = assistido.telefone || assistido.telefoneContato;
   
-  const FaseIcon = fase.icon;
-  
-  // Contagem de testemunhas
-  const testemunhasOuvidas = assistido.testemunhasArroladas.filter(t => t.ouvida).length;
-  const totalTestemunhas = assistido.testemunhasArroladas.length;
+  // Copiar número do processo
+  const handleCopyProcesso = () => {
+    navigator.clipboard.writeText(assistido.numeroProcesso);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Cor da borda lateral - ÚNICA cor estrutural do card
+  const statusBorderColor = isPreso 
+    ? "border-l-rose-600 dark:border-l-rose-500" 
+    : "border-l-emerald-600 dark:border-l-emerald-500";
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <Card 
-        className={`
-          group relative overflow-hidden transition-all duration-300 ease-out
-          bg-gradient-to-br from-background to-muted/20
-          hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20
-          ${isPreso ? "border-l-[3px] border-l-rose-400" : "border border-border/50"} 
-          ${isPinned ? "ring-2 ring-amber-400/50 ring-offset-1 ring-offset-background" : ""}
-        `}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {/* Gradient overlay on hover */}
-        <div className={`absolute inset-0 bg-gradient-to-t from-primary/[0.02] to-transparent transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`} />
+    <Card className={cn(
+      // Base: Fundo limpo, sem gradientes
+      "group relative flex flex-col justify-between overflow-hidden transition-all duration-200",
+      "bg-white dark:bg-zinc-950",
+      "border border-zinc-200 dark:border-zinc-800",
+      "hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md",
+      // Borda lateral colorida - única cor estrutural
+      "border-l-[3px]", statusBorderColor,
+      // Fixado
+      isPinned && "ring-1 ring-amber-400/60 dark:ring-amber-500/40"
+    )}>
+      
+      <div className="p-4 space-y-3">
         
-        <CardContent className="p-5 relative">
-          {/* Header Row */}
-          <div className="flex items-start gap-4 mb-4">
-            {/* Avatar with status indicator */}
-            <div className="relative">
-              <Avatar 
-                className={`
-                  h-14 w-14 cursor-pointer transition-transform duration-200 
-                  ${isHovered ? "scale-105" : "scale-100"}
-                  ${isPreso ? "ring-2 ring-rose-200 dark:ring-rose-800" : "ring-1 ring-border/50"}
-                `}
-                onClick={onPhotoClick}
-              >
-                <AvatarImage src={assistido.photoUrl || undefined} className="object-cover" />
-                <AvatarFallback 
-                  className={`text-base font-semibold bg-gradient-to-br ${
-                    isPreso 
-                      ? "from-rose-100 to-rose-50 text-rose-700 dark:from-rose-900/50 dark:to-rose-950/50 dark:text-rose-300" 
-                      : "from-slate-100 to-slate-50 text-slate-600 dark:from-slate-800 dark:to-slate-900 dark:text-slate-300"
-                  }`}
-                >
-                  {getInitials(assistido.nome)}
-                </AvatarFallback>
-              </Avatar>
-              
-              {/* Status dot */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className={`
-                    absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-background
-                    ${isPreso ? "bg-rose-500" : assistido.statusPrisional === "MONITORADO" ? "bg-amber-500" : assistido.statusPrisional === "DOMICILIAR" ? "bg-orange-500" : "bg-emerald-500"}
-                  `} />
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p className="font-medium">{status.label}</p>
-                  {tempoPreso && <p className="text-xs text-muted-foreground">{tempoPreso} preso</p>}
-                </TooltipContent>
-              </Tooltip>
-            </div>
+        {/* 1. TOPO: Identidade e Status Prisional */}
+        <div className="flex justify-between items-start">
+          <div className="space-y-1.5 flex-1 min-w-0">
+            {/* Nome - Sans-serif para leitura rápida */}
+            <Link href={`/admin/assistidos/${assistido.id}`}>
+              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-base leading-tight hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors line-clamp-1">
+                {assistido.nome}
+              </h3>
+            </Link>
             
-            {/* Name and basic info */}
-            <div className="flex-1 min-w-0 space-y-1">
-              <Link href={`/admin/assistidos/${assistido.id}`}>
-                <h3 className="font-semibold text-sm leading-tight hover:text-primary transition-colors line-clamp-1">
-                  {assistido.nome}
-                </h3>
-              </Link>
-              {assistido.vulgo && (
-                <p className="text-xs text-muted-foreground/80 italic">&ldquo;{assistido.vulgo}&rdquo;</p>
-              )}
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <span>{idade} anos</span>
-                <span className="text-muted-foreground/40">•</span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3 opacity-60" />
-                  {assistido.cidade}
-                </span>
-              </p>
-            </div>
-
-            {/* Action buttons */}
-            <div className={`flex items-center gap-1 transition-opacity duration-200 ${isHovered || isPinned ? "opacity-100" : "opacity-0"}`}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className={`h-8 w-8 rounded-lg ${isPinned ? "text-amber-500 bg-amber-50 dark:bg-amber-950/30" : "hover:bg-muted"}`}
-                    onClick={onTogglePin}
-                  >
-                    {isPinned ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{isPinned ? "Remover fixação" : "Fixar card"}</TooltipContent>
-              </Tooltip>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-muted">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <Link href={`/admin/assistidos/${assistido.id}`}>
-                    <DropdownMenuItem className="cursor-pointer gap-2">
-                      <Eye className="h-4 w-4" />
-                      Ver Perfil Completo
-                    </DropdownMenuItem>
-                  </Link>
-                  <Link href={`/admin/inteligencia?assistido=${assistido.id}`}>
-                    <DropdownMenuItem className="cursor-pointer gap-2 text-violet-600">
-                      <Brain className="h-4 w-4" />
-                      Análise de Inteligência
-                    </DropdownMenuItem>
-                  </Link>
-                  <DropdownMenuSeparator />
-                  {telefoneDisplay && (
-                    <DropdownMenuItem 
-                      className="cursor-pointer gap-2 text-emerald-600" 
-                      onClick={() => window.open(`https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}`, '_blank')}
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      Contato WhatsApp
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-
-          {/* Tags row - clean and minimal */}
-          <div className="flex items-center gap-2 flex-wrap mb-4">
-            <Tooltip>
-              <TooltipTrigger>
-                <Badge 
-                  variant="secondary" 
-                  className={`
-                    font-medium text-[11px] px-2.5 py-0.5 rounded-full
-                    ${fase.bgColor} ${fase.color} border-0 shadow-sm
-                  `}
-                >
-                  {fase.label}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>Fase Processual: {fase.label}</TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger>
+            {/* Badges Minimalistas */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {isPreso ? (
                 <Badge 
                   variant="outline" 
-                  className={`
-                    font-medium text-[11px] px-2.5 py-0.5 rounded-full
-                    ${area.bgColor} ${area.color} border-0
-                  `}
+                  className="rounded-md px-1.5 py-0 text-[10px] uppercase font-medium border-rose-200 text-rose-700 bg-rose-50 dark:bg-rose-950/20 dark:border-rose-800 dark:text-rose-400"
                 >
-                  {area.label}
+                  <Lock className="w-3 h-3 mr-1" /> Réu Preso
                 </Badge>
-              </TooltipTrigger>
-              <TooltipContent>Área: {area.labelFull}</TooltipContent>
-            </Tooltip>
+              ) : (
+                <Badge 
+                  variant="outline" 
+                  className="rounded-md px-1.5 py-0 text-[10px] uppercase font-medium border-emerald-200 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 dark:text-emerald-400"
+                >
+                  <Unlock className="w-3 h-3 mr-1" /> Solto
+                </Badge>
+              )}
+
+              {/* Local de prisão */}
+              {assistido.unidadePrisional && (
+                <span className="flex items-center text-[10px] text-zinc-500 dark:text-zinc-400 truncate max-w-[140px]">
+                  <MapPin className="w-3 h-3 mr-1 flex-shrink-0" /> 
+                  {assistido.unidadePrisional}
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Crime - clean presentation */}
+          {/* Ações - Visíveis apenas no Hover */}
+          <div className="flex items-center gap-0.5">
+            <Button 
+              size="icon" 
+              variant="ghost" 
+              className={cn(
+                "h-7 w-7 transition-opacity",
+                isPinned 
+                  ? "text-amber-500 opacity-100" 
+                  : "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 opacity-0 group-hover:opacity-100"
+              )}
+              onClick={onTogglePin}
+            >
+              {isPinned ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-7 w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <Link href={`/admin/assistidos/${assistido.id}`}>
+                  <DropdownMenuItem className="cursor-pointer text-sm">
+                    <Eye className="h-4 w-4 mr-2" />Perfil Completo
+                  </DropdownMenuItem>
+                </Link>
+                <Link href={`/admin/inteligencia?assistido=${assistido.id}`}>
+                  <DropdownMenuItem className="cursor-pointer text-sm">
+                    <Brain className="h-4 w-4 mr-2" />Inteligência
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator />
+                {telefoneDisplay && (
+                  <DropdownMenuItem 
+                    className="cursor-pointer text-sm" 
+                    onClick={() => window.open(`https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}`, '_blank')}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />WhatsApp
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* 2. MEIO: Dados Técnicos (Contraste de Fontes) */}
+        <div className="py-2.5 border-t border-dashed border-zinc-100 dark:border-zinc-800/50 space-y-2">
+          
+          {/* Tipificação - Fonte Serifada = Documento Jurídico */}
           {assistido.crimePrincipal && (
-            <div className="mb-4 p-3 rounded-lg bg-muted/40 border border-border/30">
-              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+            <div className="flex items-start gap-2">
+              <Gavel className="w-3.5 h-3.5 text-zinc-400 mt-0.5 flex-shrink-0" />
+              <span className="text-sm font-legal text-zinc-700 dark:text-zinc-300 line-clamp-2">
                 {assistido.crimePrincipal}
-              </p>
+              </span>
             </div>
           )}
 
-          {/* Metrics row - clean icons with tooltips */}
-          <div className="flex items-center justify-between py-3 border-t border-border/30">
-            <div className="flex items-center gap-4">
-              {/* Processos */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-default">
-                    <Scale className="h-3.5 w-3.5" />
-                    <span className="text-sm font-semibold text-foreground">{assistido.processosAtivos}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>{assistido.processosAtivos} processo(s) ativo(s)</TooltipContent>
-              </Tooltip>
-
-              {/* Demandas */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className={`flex items-center gap-1.5 transition-colors cursor-default ${assistido.demandasAbertas > 2 ? "text-amber-600" : "text-muted-foreground hover:text-foreground"}`}>
-                    <FileText className="h-3.5 w-3.5" />
-                    <span className="text-sm font-semibold">{assistido.demandasAbertas}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>{assistido.demandasAbertas} demanda(s) aberta(s)</TooltipContent>
-              </Tooltip>
-
-              {/* Testemunhas */}
-              {totalTestemunhas > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-default">
-                      <UserCheck className="h-3.5 w-3.5" />
-                      <span className="text-sm">
-                        <span className="font-semibold text-emerald-600">{testemunhasOuvidas}</span>
-                        <span className="text-muted-foreground">/{totalTestemunhas}</span>
-                      </span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>{testemunhasOuvidas} de {totalTestemunhas} testemunhas ouvidas</TooltipContent>
-                </Tooltip>
-              )}
-
-              {/* Interrogatório */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className={`flex items-center gap-1.5 cursor-default ${assistido.interrogatorioRealizado ? "text-emerald-600" : "text-amber-500"}`}>
-                    <User className="h-3.5 w-3.5" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Interrogatório: {assistido.interrogatorioRealizado ? "Realizado" : "Pendente"}
-                </TooltipContent>
-              </Tooltip>
+          {/* Número do Processo - Fonte Mono = Precisão */}
+          <div 
+            className="flex items-center justify-between group/copy cursor-pointer"
+            onClick={handleCopyProcesso}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-data text-zinc-500 dark:text-zinc-400 tracking-tight">
+                {assistido.numeroProcesso}
+              </span>
+              <Copy className={cn(
+                "w-3 h-3 transition-all",
+                copied 
+                  ? "text-emerald-500" 
+                  : "text-zinc-300 dark:text-zinc-600 opacity-0 group-hover/copy:opacity-100"
+              )} />
             </div>
-
-            {/* Prazo indicator */}
-            {prazoInfo && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className={`
-                    flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold
-                    ${prazoInfo.urgent 
-                      ? "bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400" 
-                      : "bg-muted text-muted-foreground"
-                    }
-                  `}>
-                    <Timer className="h-3 w-3" />
-                    {prazoInfo.text}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="font-medium">Próximo prazo</p>
-                  <p className="text-xs text-muted-foreground">{assistido.atoProximoPrazo}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
           </div>
+        </div>
 
-          {/* Expand button */}
+      </div>
+
+      {/* 3. RODAPÉ: Prazo / Ação */}
+      <div className={cn(
+        "px-4 py-2.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between",
+        "bg-zinc-50/50 dark:bg-zinc-900/50"
+      )}>
+        
+        {/* Lógica de Urgência no Prazo */}
+        {prazoInfo ? (
+          <div className="flex items-center gap-2">
+            <Clock className={cn(
+              "w-3.5 h-3.5",
+              prazoUrgente ? "text-rose-600 dark:text-rose-500" : "text-zinc-400"
+            )} />
+            <span className={cn(
+              "text-xs font-medium",
+              prazoUrgente 
+                ? "text-rose-700 dark:text-rose-400" 
+                : "text-zinc-600 dark:text-zinc-400"
+            )}>
+              {assistido.atoProximoPrazo} 
+              <span className="opacity-70 ml-1">• {prazoInfo.text}</span>
+            </span>
+          </div>
+        ) : (
+          <span className="text-xs text-zinc-400 italic">Sem prazos pendentes</span>
+        )}
+
+        {/* Indicadores de Risco */}
+        <div className="flex items-center gap-1.5">
+          {isMonitorado && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <AlertCircle className="w-4 h-4 text-amber-500 dark:text-amber-600" />
+                </TooltipTrigger>
+                <TooltipContent>Monitoramento Eletrônico</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
+          {/* Botão expandir discreto */}
           <Button 
+            size="icon"
             variant="ghost" 
-            size="sm" 
-            className={`
-              w-full mt-2 h-8 text-xs font-medium rounded-lg
-              ${isExpanded ? "bg-muted/60" : "hover:bg-muted/60"}
-              transition-all duration-200
-            `}
+            className="h-6 w-6 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
             onClick={() => setIsExpanded(!isExpanded)}
           >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="h-3.5 w-3.5 mr-1.5" />
-                Recolher
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-3.5 w-3.5 mr-1.5" />
-                Ver detalhes
-              </>
-            )}
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
-        </CardContent>
+        </div>
+      </div>
 
-        {/* Expanded Section */}
-        <Collapsible open={isExpanded}>
-          <CollapsibleContent>
-            <div className="px-5 py-4 space-y-4 bg-gradient-to-b from-muted/30 to-muted/10 border-t border-border/30">
-              {/* Processo */}
+      {/* SEÇÃO EXPANDIDA - Mantém filosofia monocromática */}
+      <Collapsible open={isExpanded}>
+        <CollapsibleContent>
+          <div className="px-4 py-3 space-y-3 bg-zinc-50/80 dark:bg-zinc-900/80 border-t border-zinc-100 dark:border-zinc-800">
+            
+            {/* Resumo do Fato */}
+            {assistido.resumoFato && (
               <div className="space-y-1">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Processo</p>
-                <p className="text-sm font-mono text-foreground/90">{assistido.numeroProcesso}</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">Resumo do Fato</p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{assistido.resumoFato}</p>
               </div>
+            )}
 
-              {/* Resumo do Fato */}
-              {assistido.resumoFato && (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Resumo do Fato</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{assistido.resumoFato}</p>
+            {/* Tese da Defesa - Destaque sutil */}
+            {assistido.teseDaDefesa && (
+              <div className="space-y-1 p-2.5 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center gap-1.5">
+                  <Gavel className="h-3 w-3 text-zinc-500" />
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Tese da Defesa</p>
                 </div>
-              )}
+                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed">{assistido.teseDaDefesa}</p>
+              </div>
+            )}
 
-              {/* Tese da Defesa */}
-              {assistido.teseDaDefesa && (
-                <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Gavel className="h-3.5 w-3.5 text-primary" />
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Tese da Defesa</p>
-                  </div>
-                  <p className="text-sm font-medium text-primary/90 leading-relaxed">{assistido.teseDaDefesa}</p>
+            {/* Estratégia */}
+            {assistido.estrategiaDefesaAtual && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <Target className="h-3 w-3 text-zinc-400" />
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">Estratégia</p>
                 </div>
-              )}
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{assistido.estrategiaDefesaAtual}</p>
+              </div>
+            )}
 
-              {/* Estratégia */}
-              {assistido.estrategiaDefesaAtual && (
-                <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-200/50 dark:border-violet-800/30">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Target className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">Estratégia Atual</p>
-                  </div>
-                  <p className="text-sm text-violet-800 dark:text-violet-200 leading-relaxed">{assistido.estrategiaDefesaAtual}</p>
-                </div>
-              )}
-
-              {/* Audiências Grid */}
-              {(assistido.ultimaAudiencia || assistido.proximaAudiencia) && (
-                <div className="grid grid-cols-2 gap-3">
-                  {assistido.ultimaAudiencia && (
-                    <div className="p-3 rounded-lg bg-muted/50 border border-border/30">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Última Audiência</p>
-                      <p className="text-sm font-semibold">{format(parseISO(assistido.ultimaAudiencia), "dd/MM/yy")}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{assistido.tipoUltimaAudiencia}</p>
-                    </div>
-                  )}
-                  {assistido.proximaAudiencia && (
-                    <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-800/30">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">Próxima</p>
-                      <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">{format(parseISO(assistido.proximaAudiencia), "dd/MM/yy")}</p>
-                      <p className="text-xs text-blue-600/80 dark:text-blue-400/80 mt-0.5 line-clamp-1">{assistido.tipoProximaAudiencia}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Testemunhas */}
-              {assistido.testemunhasArroladas.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Testemunhas ({testemunhasOuvidas}/{totalTestemunhas})
+            {/* Audiências - Grid simples */}
+            {(assistido.ultimaAudiencia || assistido.proximaAudiencia) && (
+              <div className="grid grid-cols-2 gap-2">
+                {assistido.ultimaAudiencia && (
+                  <div className="p-2 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+                    <p className="text-[9px] uppercase text-zinc-400 mb-0.5">Última</p>
+                    <p className="text-sm font-data font-medium text-zinc-700 dark:text-zinc-300">
+                      {format(parseISO(assistido.ultimaAudiencia), "dd/MM/yy")}
                     </p>
+                    <p className="text-[10px] text-zinc-500 truncate">{assistido.tipoUltimaAudiencia}</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {assistido.testemunhasArroladas.map((test, i) => (
-                      <div 
-                        key={i} 
-                        className={`
-                          flex items-center gap-2 text-xs p-2 rounded-md
-                          ${test.ouvida ? "bg-emerald-50/50 dark:bg-emerald-950/20" : "bg-amber-50/50 dark:bg-amber-950/20"}
-                        `}
-                      >
-                        {test.ouvida ? (
-                          <CheckCircle2 className="h-3 w-3 text-emerald-500 flex-shrink-0" />
-                        ) : (
-                          <Circle className="h-3 w-3 text-amber-400 flex-shrink-0" />
-                        )}
-                        <span className="truncate">{test.nome}</span>
-                      </div>
-                    ))}
+                )}
+                {assistido.proximaAudiencia && (
+                  <div className="p-2 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+                    <p className="text-[9px] uppercase text-zinc-400 mb-0.5">Próxima</p>
+                    <p className="text-sm font-data font-medium text-zinc-700 dark:text-zinc-300">
+                      {format(parseISO(assistido.proximaAudiencia), "dd/MM/yy")}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 truncate">{assistido.tipoProximaAudiencia}</p>
                   </div>
-                </div>
-              )}
-
-              {/* Observações */}
-              {assistido.observacoesProcesso && (
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Observações</p>
-                  <p className="text-xs text-muted-foreground italic leading-relaxed">{assistido.observacoesProcesso}</p>
-                </div>
-              )}
-
-              {/* Footer */}
-              <div className="flex items-center justify-between pt-3 border-t border-border/30">
-                <span className="text-xs text-muted-foreground font-medium">{assistido.defensor}</span>
-                <Link href={`/admin/assistidos/${assistido.id}`}>
-                  <Button variant="default" size="sm" className="h-8 text-xs gap-1.5 rounded-lg">
-                    Ver Perfil
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
+                )}
               </div>
+            )}
+
+            {/* Testemunhas - Indicador simples */}
+            {assistido.testemunhasArroladas.length > 0 && (
+              <div className="flex items-center gap-3 text-xs text-zinc-500">
+                <div className="flex items-center gap-1">
+                  <UserCheck className="h-3 w-3" />
+                  <span>
+                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                      {assistido.testemunhasArroladas.filter(t => t.ouvida).length}
+                    </span>
+                    /{assistido.testemunhasArroladas.length} testemunhas
+                  </span>
+                </div>
+                <span className="text-zinc-300 dark:text-zinc-700">|</span>
+                <div className="flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  <span className={assistido.interrogatorioRealizado ? "text-emerald-600" : "text-amber-600"}>
+                    {assistido.interrogatorioRealizado ? "Interrogado" : "Pendente"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Footer com Defensor */}
+            <div className="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-zinc-800">
+              <span className="text-[11px] text-zinc-400">{assistido.defensor}</span>
+              <Link href={`/admin/assistidos/${assistido.id}`}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                >
+                  Ver Perfil <ChevronRight className="h-3 w-3 ml-1" />
+                </Button>
+              </Link>
             </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-    </TooltipProvider>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   );
 }
 
-// Row para Lista
+// ========================================
+// ROW DO ASSISTIDO - DESIGN SUÍÇO (Lista)
+// ========================================
+
 function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: AssistidoCardProps) {
-  const status = statusConfig[assistido.statusPrisional] || statusConfig.SOLTO;
-  const fase = faseConfig[assistido.faseProcessual] || faseConfig.INSTRUCAO;
-  const area = areaConfig[assistido.area] || { label: assistido.area, color: "text-muted-foreground", bgColor: "bg-muted" };
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
-  const idade = calcularIdade(assistido.dataNascimento);
+  const prazoUrgente = prazoInfo && prazoInfo.urgent;
   const testemunhasOuvidas = assistido.testemunhasArroladas.filter(t => t.ouvida).length;
   const totalTestemunhas = assistido.testemunhasArroladas.length;
 
   return (
-    <TableRow className={`group transition-colors ${isPreso ? "border-l-2 border-l-rose-300" : ""} ${isPinned ? "bg-amber-50/50 dark:bg-amber-950/10" : ""}`}>
+    <TableRow className={cn(
+      "group transition-colors",
+      // Borda lateral semântica
+      isPreso ? "border-l-[3px] border-l-rose-500" : "border-l-[3px] border-l-emerald-500",
+      isPinned && "bg-amber-50/30 dark:bg-amber-950/10"
+    )}>
+      {/* Nome */}
       <TableCell className="py-3">
         <div className="flex items-center gap-3">
-          <Avatar className={`h-9 w-9 cursor-pointer ${isPreso ? "ring-2 ring-rose-300" : ""}`} onClick={onPhotoClick}>
-            <AvatarImage src={assistido.photoUrl || undefined} />
-            <AvatarFallback className={`text-xs font-semibold ${status.iconBg} ${status.color}`}>{getInitials(assistido.nome)}</AvatarFallback>
-          </Avatar>
-          <div>
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <Link href={`/admin/assistidos/${assistido.id}`} className="hover:text-primary">
-                <p className="font-medium text-sm">{assistido.nome}</p>
+              <Link href={`/admin/assistidos/${assistido.id}`} className="hover:text-zinc-600 dark:hover:text-zinc-300">
+                <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">{assistido.nome}</p>
               </Link>
-              {isPinned && <BookmarkCheck className="h-3.5 w-3.5 text-amber-500" />}
+              {isPinned && <BookmarkCheck className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
             </div>
-            <p className="text-[11px] text-muted-foreground">{idade} anos • {assistido.cidade}</p>
           </div>
         </div>
       </TableCell>
+
+      {/* Status - Badge minimalista */}
       <TableCell>
-        <Badge variant="outline" className={`${fase.color} ${fase.bgColor} border-transparent text-[10px]`}>{fase.label}</Badge>
+        {isPreso ? (
+          <Badge variant="outline" className="rounded-md px-1.5 py-0 text-[10px] uppercase font-medium border-rose-200 text-rose-700 bg-rose-50 dark:bg-rose-950/20 dark:border-rose-800 dark:text-rose-400">
+            <Lock className="w-3 h-3 mr-1" /> Preso
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="rounded-md px-1.5 py-0 text-[10px] uppercase font-medium border-emerald-200 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 dark:text-emerald-400">
+            <Unlock className="w-3 h-3 mr-1" /> Solto
+          </Badge>
+        )}
       </TableCell>
-      <TableCell className="max-w-[150px]">
-        <p className="text-xs truncate">{assistido.crimePrincipal || "-"}</p>
+
+      {/* Crime - Fonte serifada */}
+      <TableCell className="max-w-[180px]">
+        <p className="text-xs font-legal text-zinc-600 dark:text-zinc-400 truncate">
+          {assistido.crimePrincipal || "-"}
+        </p>
       </TableCell>
-      <TableCell>
-        <Badge variant="outline" className={`${status.color} ${status.borderColor} ${status.bgColor} text-[10px]`}>{status.label}</Badge>
+
+      {/* Processo - Fonte mono */}
+      <TableCell className="max-w-[200px]">
+        <p className="text-xs font-data text-zinc-500 dark:text-zinc-400 truncate">
+          {assistido.numeroProcesso}
+        </p>
       </TableCell>
+
+      {/* Testemunhas */}
       <TableCell className="text-center">
         {totalTestemunhas > 0 ? (
-          <span className="text-xs">
-            <span className="text-emerald-600 font-medium">{testemunhasOuvidas}</span>
-            <span className="text-muted-foreground">/{totalTestemunhas}</span>
+          <span className="text-xs text-zinc-500">
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">{testemunhasOuvidas}</span>
+            /{totalTestemunhas}
           </span>
-        ) : "-"}
+        ) : (
+          <span className="text-zinc-300 dark:text-zinc-700">-</span>
+        )}
       </TableCell>
+
+      {/* Interrogatório */}
       <TableCell className="text-center">
-        <span className={`text-xs ${assistido.interrogatorioRealizado ? "text-emerald-600" : "text-amber-600"}`}>
+        <span className={cn(
+          "text-xs font-medium",
+          assistido.interrogatorioRealizado ? "text-emerald-600" : "text-amber-500"
+        )}>
           {assistido.interrogatorioRealizado ? "✓" : "○"}
         </span>
       </TableCell>
+
+      {/* Prazo */}
       <TableCell>
         {prazoInfo ? (
-          <Badge variant="outline" className={`${prazoInfo.color} ${prazoInfo.bgColor} border-transparent text-[10px]`}>{prazoInfo.text}</Badge>
-        ) : "-"}
+          <span className={cn(
+            "text-xs font-medium",
+            prazoUrgente ? "text-rose-600 dark:text-rose-400" : "text-zinc-500"
+          )}>
+            {prazoInfo.text}
+          </span>
+        ) : (
+          <span className="text-zinc-300 dark:text-zinc-700">-</span>
+        )}
       </TableCell>
+
+      {/* Ações */}
       <TableCell className="text-right">
-        <div className="flex items-center justify-end gap-1">
-          <Button variant="ghost" size="icon" className={`h-7 w-7 ${isPinned ? "text-amber-500" : "opacity-0 group-hover:opacity-100"}`} onClick={onTogglePin}>
+        <div className="flex items-center justify-end gap-0.5">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={cn(
+              "h-7 w-7 transition-opacity",
+              isPinned ? "text-amber-500 opacity-100" : "text-zinc-400 opacity-0 group-hover:opacity-100"
+            )} 
+            onClick={onTogglePin}
+          >
             {isPinned ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
           </Button>
           <Link href={`/admin/assistidos/${assistido.id}`}>
-            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity">
               <Eye className="h-4 w-4" />
             </Button>
           </Link>

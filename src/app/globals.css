@@ -157,6 +157,25 @@
   span, label { 
     @apply text-sm text-muted-foreground;
   }
+
+  /* ========================================
+     TIPOGRAFIA JURÍDICA - Design Suíço
+     Serif para tipificações, Mono para dados
+     ======================================== */
+  
+  /* Fonte serifada para tipificações jurídicas (crimes, artigos) */
+  .font-legal {
+    font-family: 'Georgia', 'Times New Roman', 'Palatino Linotype', serif;
+    font-style: italic;
+    letter-spacing: 0.01em;
+  }
+  
+  /* Fonte mono para dados técnicos (CNJ, datas, CPF) */
+  .font-data {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
   small { 
     @apply text-xs text-muted-foreground;
   }
