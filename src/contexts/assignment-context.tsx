@@ -57,6 +57,8 @@ export interface AssignmentMenuItem {
 // Menu fixo que aparece em TODOS os workspaces
 export const FIXED_MENU_ITEMS: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
+  { label: "Casos Ativos", path: "/admin/casos", icon: "Briefcase" },
+  { label: "Agenda", path: "/admin/audiencias", icon: "Calendar" },
 ];
 
 // Menu de sistema (fixo, no final)
