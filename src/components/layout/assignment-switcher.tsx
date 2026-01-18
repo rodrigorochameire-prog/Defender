@@ -74,15 +74,14 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
           {/* Ícone com cor da atribuição */}
           <div
             className={cn(
-              "rounded-xl flex items-center justify-center shrink-0 shadow-lg transition-all group-hover:scale-105 group-hover:shadow-xl",
-              collapsed ? "h-11 w-11" : "h-10 w-10"
+              "rounded-lg flex items-center justify-center shrink-0 shadow-md transition-all",
+              collapsed ? "h-9 w-9" : "h-9 w-9"
             )}
             style={{
               background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
-              boxShadow: `0 4px 12px -2px ${config.accentColor}40`,
             }}
           >
-            <Icon className={cn("text-white", collapsed ? "h-6 w-6" : "h-5 w-5")} />
+            <Icon className={cn("text-white", collapsed ? "h-5 w-5" : "h-[18px] w-[18px]")} />
           </div>
 
           {/* Nome e descrição */}
