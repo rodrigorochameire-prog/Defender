@@ -577,28 +577,36 @@ function AdminSidebarContent({
         {isMobile && (
           <div
             className={cn(
-              "flex border-b h-14 items-center justify-between backdrop-blur-xl px-4 sticky top-0 z-40",
+              "flex border-b h-16 items-center justify-between backdrop-blur-xl px-4 sticky top-0 z-40",
               config.borderColor
             )}
             style={{ background: config.accentColorLight }}
           >
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="h-9 w-9 rounded-xl bg-white/80 dark:bg-[hsl(160_12%_12%)] transition-colors" />
-              <Link href="/admin" className="flex items-center gap-2">
+              <SidebarTrigger className="h-10 w-10 rounded-xl bg-white/80 dark:bg-[hsl(160_12%_12%)] transition-colors" />
+              <Link href="/admin" className="flex items-center gap-2.5">
                 <div
-                  className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shadow-sm"
+                  className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-md"
                   style={{
                     background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
                   }}
                 >
-                  <Scale className="h-4 w-4 text-white" />
+                  {/* Shield with Sword Icon */}
+                  <svg viewBox="0 0 32 32" fill="none" className="w-5 h-5">
+                    <g transform="translate(16, 15)">
+                      <path d="M0 -8 L1.5 -6 L1 4 L0 5 L-1 4 L-1.5 -6 Z" fill="white" fillOpacity="0.95"/>
+                      <rect x="-4" y="3" width="8" height="2" rx="0.5" fill="white" fillOpacity="0.9"/>
+                      <rect x="-0.75" y="5" width="1.5" height="4" rx="0.5" fill="white" fillOpacity="0.85"/>
+                      <circle cx="0" cy="10" r="1.2" fill="white" fillOpacity="0.85"/>
+                    </g>
+                  </svg>
                 </div>
-                <span className="font-semibold text-[13px] text-foreground">
+                <span className="font-semibold text-sm text-foreground">
                   {activeMenuItem?.label ?? config.shortName}
                 </span>
               </Link>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <NotificationsPopover />
               <FontSizeToggle />
               <ThemeToggle />
@@ -610,7 +618,7 @@ function AdminSidebarContent({
         {!isMobile && (
           <div
             className={cn(
-              "flex border-b h-16 items-center justify-center backdrop-blur-xl px-6 sticky top-0 z-40 relative",
+              "flex border-b h-20 items-center justify-center backdrop-blur-xl px-8 sticky top-0 z-40 relative",
               config.borderColor,
               "dark:border-b-[hsl(160,10%,18%)]"
             )}
@@ -620,32 +628,41 @@ function AdminSidebarContent({
           >
             <Link
               href="/admin"
-              className="flex items-center gap-3 hover:opacity-90 transition-opacity duration-200"
+              className="flex items-center gap-4 hover:opacity-90 transition-opacity duration-200"
             >
               <div
-                className="relative w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shadow-lg ring-1"
+                className="relative w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center shadow-xl ring-2 ring-white/20"
                 style={{
                   background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
                 }}
               >
-                <Scale className="h-5 w-5 text-white" />
+                {/* Shield with Sword Icon */}
+                <svg viewBox="0 0 32 32" fill="none" className="w-8 h-8">
+                  <path d="M16 4L6 8.5v6.5c0 6.5 4.3 12.3 10 13.5 5.7-1.2 10-7 10-13.5V8.5L16 4z" fill="white" fillOpacity="0.15" />
+                  <g transform="translate(16, 15)">
+                    <path d="M0 -8 L1.5 -6 L1 4 L0 5 L-1 4 L-1.5 -6 Z" fill="white" fillOpacity="0.95"/>
+                    <rect x="-4" y="3" width="8" height="2" rx="0.5" fill="white" fillOpacity="0.9"/>
+                    <rect x="-0.75" y="5" width="1.5" height="4" rx="0.5" fill="white" fillOpacity="0.85"/>
+                    <circle cx="0" cy="10" r="1.2" fill="white" fillOpacity="0.85"/>
+                  </g>
+                </svg>
               </div>
               <div className="flex flex-col">
                 <span
-                  className="text-xl font-bold tracking-tight text-foreground"
+                  className="text-2xl font-bold tracking-tight text-foreground"
                   style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
                 >
                   DefesaHub
                 </span>
                 <span
-                  className="text-[10px] font-medium tracking-wide"
+                  className="text-xs font-semibold tracking-wide"
                   style={{ color: config.accentColor }}
                 >
                   {config.shortName}
                 </span>
               </div>
             </Link>
-            <div className="flex items-center gap-1.5 absolute right-6">
+            <div className="flex items-center gap-2 absolute right-8">
               <NotificationsPopover />
               <FontSizeToggle />
               <ThemeToggle />

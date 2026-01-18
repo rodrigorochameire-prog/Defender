@@ -26,6 +26,8 @@ import {
   Award,
   TrendingUp,
   Calculator,
+  Layers,
+  Building2,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -45,7 +47,13 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
 } from "recharts";
-import { useAssignment } from "@/contexts/assignment-context";
+import { useAssignment, ASSIGNMENT_CONFIGS, Assignment } from "@/contexts/assignment-context";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Cores dinâmicas baseadas na atribuição
 function useAssignmentColors() {
@@ -149,40 +157,79 @@ const DASHBOARD_TITLES: Record<string, { title: string; subtitle: string }> = {
   },
 };
 
+// Modo de visualização do dashboard
+type DashboardMode = "all_workspaces" | "current_workspace";
+
 export default function SalaDeGuerra() {
   const [activeView, setActiveView] = useState<"overview" | "analytics">("overview");
+  const [dashboardMode, setDashboardMode] = useState<DashboardMode>("current_workspace");
   const { currentAssignment, config } = useAssignment();
   
-  const dashboardInfo = DASHBOARD_TITLES[currentAssignment] || DASHBOARD_TITLES.SUBSTITUICAO;
+  const dashboardInfo = dashboardMode === "all_workspaces" 
+    ? { title: "Central de Gestão", subtitle: "Visão integrada de todos os workspaces" }
+    : (DASHBOARD_TITLES[currentAssignment] || DASHBOARD_TITLES.SUBSTITUICAO);
 
   return (
+    <TooltipProvider>
     <div className="space-y-6">
-      {/* Header - Dinâmico por atribuição */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div 
-            className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{
-              background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
-            }}
-          >
-            <BarChart3 className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{dashboardInfo.title}</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">
-              {dashboardInfo.subtitle}
-            </p>
-            <p className="text-xs text-muted-foreground/70 mt-1">
-              {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-            </p>
-          </div>
+      {/* Mode Selector - Todos vs Específico */}
+      <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/40">
+        <div className="flex items-center gap-2 p-1 bg-muted/50 rounded-xl">
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={dashboardMode === "all_workspaces" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setDashboardMode("all_workspaces")}
+                className={`gap-2 rounded-lg transition-all ${
+                  dashboardMode === "all_workspaces" 
+                    ? "shadow-md" 
+                    : "hover:bg-background/80"
+                }`}
+                style={{
+                  backgroundColor: dashboardMode === "all_workspaces" ? config.accentColor : undefined,
+                }}
+              >
+                <Layers className="h-4 w-4" />
+                <span className="hidden sm:inline">Central Integrada</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Gestão unificada de todos os workspaces</p>
+            </TooltipContent>
+          </UITooltip>
+          
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={dashboardMode === "current_workspace" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setDashboardMode("current_workspace")}
+                className={`gap-2 rounded-lg transition-all ${
+                  dashboardMode === "current_workspace" 
+                    ? "shadow-md" 
+                    : "hover:bg-background/80"
+                }`}
+                style={{
+                  backgroundColor: dashboardMode === "current_workspace" ? config.accentColor : undefined,
+                }}
+              >
+                <Building2 className="h-4 w-4" />
+                <span className="hidden sm:inline">{config.shortName}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Painel do workspace atual: {config.name}</p>
+            </TooltipContent>
+          </UITooltip>
         </div>
+        
         <div className="flex items-center gap-2">
           <Button
             variant={activeView === "overview" ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveView("overview")}
+            className="rounded-lg"
             style={{
               backgroundColor: activeView === "overview" ? config.accentColor : undefined,
             }}
@@ -193,12 +240,45 @@ export default function SalaDeGuerra() {
             variant={activeView === "analytics" ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveView("analytics")}
+            className="rounded-lg"
             style={{
               backgroundColor: activeView === "analytics" ? config.accentColor : undefined,
             }}
           >
             Análises
           </Button>
+        </div>
+      </div>
+
+      {/* Header - Dinâmico por atribuição */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div 
+            className={`h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg transition-all ${
+              dashboardMode === "all_workspaces" ? "ring-2 ring-offset-2 ring-offset-background" : ""
+            }`}
+            style={{
+              background: dashboardMode === "all_workspaces" 
+                ? `linear-gradient(145deg, hsl(158, 55%, 42%), hsl(158, 50%, 32%))`
+                : `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
+              ["--tw-ring-color" as string]: config.accentColor,
+            }}
+          >
+            {dashboardMode === "all_workspaces" ? (
+              <Layers className="h-8 w-8 text-white" />
+            ) : (
+              <BarChart3 className="h-8 w-8 text-white" />
+            )}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{dashboardInfo.title}</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              {dashboardInfo.subtitle}
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -600,5 +680,6 @@ export default function SalaDeGuerra() {
         </div>
       )}
     </div>
+    </TooltipProvider>
   );
 }
