@@ -158,6 +158,9 @@ export const assistidos = pgTable("assistidos", {
   // Defensor responsável
   defensorId: integer("defensor_id").references(() => users.id),
   
+  // Caso (Case-Centric)
+  casoId: integer("caso_id"),
+  
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -168,6 +171,7 @@ export const assistidos = pgTable("assistidos", {
   index("assistidos_status_prisional_idx").on(table.statusPrisional),
   index("assistidos_defensor_id_idx").on(table.defensorId),
   index("assistidos_deleted_at_idx").on(table.deletedAt),
+  index("assistidos_caso_id_idx").on(table.casoId),
 ]);
 
 export type Assistido = typeof assistidos.$inferSelect;
@@ -223,6 +227,9 @@ export const processos = pgTable("processos", {
   linkDrive: text("link_drive"), // Link para pasta no Google Drive
   driveFolderId: text("drive_folder_id"), // ID da pasta no Drive
   
+  // Caso (Case-Centric)
+  casoId: integer("caso_id"),
+  
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -236,6 +243,7 @@ export const processos = pgTable("processos", {
   index("processos_defensor_id_idx").on(table.defensorId),
   index("processos_situacao_idx").on(table.situacao),
   index("processos_deleted_at_idx").on(table.deletedAt),
+  index("processos_caso_id_idx").on(table.casoId),
 ]);
 
 export type Processo = typeof processos.$inferSelect;
@@ -280,6 +288,9 @@ export const demandas = pgTable("demandas", {
   // Integração Google Calendar
   googleCalendarEventId: text("google_calendar_event_id"), // ID do evento no Google Calendar
   
+  // Caso (Case-Centric)
+  casoId: integer("caso_id"),
+  
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -293,6 +304,7 @@ export const demandas = pgTable("demandas", {
   index("demandas_defensor_id_idx").on(table.defensorId),
   index("demandas_reu_preso_idx").on(table.reuPreso),
   index("demandas_deleted_at_idx").on(table.deletedAt),
+  index("demandas_caso_id_idx").on(table.casoId),
 ]);
 
 export type Demanda = typeof demandas.$inferSelect;
@@ -351,10 +363,18 @@ export const audiencias = pgTable("audiencias", {
     .notNull()
     .references(() => processos.id, { onDelete: "cascade" }),
   
+  // Case-Centric
+  casoId: integer("caso_id"),
+  assistidoId: integer("assistido_id"),
+  
   // Detalhes
   dataAudiencia: timestamp("data_audiencia").notNull(),
   tipo: varchar("tipo", { length: 50 }).notNull(), // 'instrucao' | 'conciliacao' | 'justificacao' | 'custodia' | 'admonicao'
   local: text("local"),
+  titulo: text("titulo"),
+  descricao: text("descricao"),
+  sala: varchar("sala", { length: 50 }),
+  horario: varchar("horario", { length: 10 }),
   
   // Participantes
   defensorId: integer("defensor_id").references(() => users.id),
@@ -370,6 +390,20 @@ export const audiencias = pgTable("audiencias", {
   // Observações
   observacoes: text("observacoes"),
   
+  // Anotações com versionamento
+  anotacoes: text("anotacoes"),
+  anotacoesVersao: integer("anotacoes_versao").default(1),
+  
+  // Resumo da defesa (puxado da Teoria do Caso)
+  resumoDefesa: text("resumo_defesa"),
+  
+  // Integração Google Calendar
+  googleCalendarEventId: text("google_calendar_event_id"),
+  
+  // Geração de tarefas pós-audiência
+  gerarPrazoApos: boolean("gerar_prazo_apos").default(false),
+  prazoGeradoId: integer("prazo_gerado_id"),
+  
   // Metadados
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -379,6 +413,9 @@ export const audiencias = pgTable("audiencias", {
   index("audiencias_defensor_id_idx").on(table.defensorId),
   index("audiencias_status_idx").on(table.status),
   index("audiencias_tipo_idx").on(table.tipo),
+  index("audiencias_caso_id_idx").on(table.casoId),
+  index("audiencias_assistido_id_idx").on(table.assistidoId),
+  index("audiencias_google_event_idx").on(table.googleCalendarEventId),
 ]);
 
 export type Audiencia = typeof audiencias.$inferSelect;
