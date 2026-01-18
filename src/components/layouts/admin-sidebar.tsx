@@ -33,7 +33,6 @@ import {
   RefreshCw,
   Award,
   TrendingUp,
-  Brain,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -98,7 +97,6 @@ const iconMap: Record<string, React.ElementType> = {
   RefreshCw,
   Award,
   TrendingUp,
-  Brain,
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
@@ -221,7 +219,7 @@ function AdminSidebarContent({
         <Sidebar
           collapsible="icon"
           className={cn(
-            "border-r backdrop-blur-xl shadow-[1px_0_8px_-4px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_8px_-4px_rgba(0,0,0,0.2)]"
+            "border-r-2 backdrop-blur-xl shadow-[2px_0_12px_-4px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_12px_-4px_rgba(0,0,0,0.3)]"
           )}
           style={{
             background: `var(--sidebar-bg, ${config.sidebarBg})`,
@@ -229,9 +227,9 @@ function AdminSidebarContent({
           }}
           disableTransition={isResizing}
         >
-          {/* Header com Switcher de Atribuição - mesma altura do header principal */}
+          {/* Header com Switcher de Atribuição */}
           <SidebarHeader 
-            className="border-b h-[72px] flex items-center px-3"
+            className="border-b-2 py-3"
             style={{
               background: `var(--sidebar-header-bg, ${config.sidebarHeaderBg})`,
               borderColor: `var(--sidebar-divider, ${config.sidebarDivider})`,
@@ -240,20 +238,20 @@ function AdminSidebarContent({
             <AssignmentSwitcher collapsed={isCollapsed} />
           </SidebarHeader>
 
-          <SidebarContent className="gap-0 px-3 py-4 overflow-y-auto flex-1">
-            <SidebarMenu className="gap-1.5">
+          <SidebarContent className="gap-0 py-3 px-2 overflow-y-auto flex-1">
+            <SidebarMenu className="gap-1">
               {/* Toggle Button */}
-              <SidebarMenuItem>
+              <SidebarMenuItem className={isCollapsed ? "flex justify-center" : ""}>
                 <SidebarMenuButton
                   onClick={toggleSidebar}
                   tooltip={isCollapsed ? "Expandir" : "Recolher"}
-                  className="h-11 rounded-xl transition-all duration-200"
+                  className="h-10 rounded-lg transition-all duration-200"
                   style={{
                     color: `var(--sidebar-text-muted, ${config.sidebarTextMuted})`,
                   }}
                 >
-                  <PanelLeft className="h-5 w-5" strokeWidth={1.8} />
-                  <span className="text-[13px] font-semibold">
+                  <PanelLeft className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                  <span className="text-[13px] font-medium">
                     {isCollapsed ? "Expandir" : "Recolher"}
                   </span>
                 </SidebarMenuButton>
@@ -271,12 +269,12 @@ function AdminSidebarContent({
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
-                        "h-12 transition-all duration-200 rounded-xl group relative",
-                        isActive ? "shadow-md" : "hover:shadow-sm"
+                        "h-11 transition-all duration-200 rounded-lg",
+                        isActive && "shadow-sm"
                       )}
                       style={{
                         background: isActive ? config.sidebarActiveBg : undefined,
-                        boxShadow: isActive ? `0 0 0 2px ${config.sidebarActiveRing}` : undefined,
+                        boxShadow: isActive ? `0 0 0 1.5px ${config.sidebarActiveRing}` : undefined,
                       }}
                     >
                       <Link
@@ -291,12 +289,12 @@ function AdminSidebarContent({
                         <Icon
                           className={cn(
                             "transition-all duration-200",
-                            isActive ? "h-6 w-6" : "h-[22px] w-[22px]"
+                            isActive ? "h-5 w-5" : "h-[18px] w-[18px]"
                           )}
                           style={{
                             color: isActive ? config.accentColor : config.sidebarTextMuted,
                           }}
-                          strokeWidth={isActive ? 2.2 : 1.8}
+                          strokeWidth={isActive ? 2 : 1.8}
                         />
                         <span
                           className={cn(
@@ -357,12 +355,12 @@ function AdminSidebarContent({
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
-                        "h-11 transition-all duration-200 rounded-xl group relative",
-                        isActive ? "shadow-md" : "hover:shadow-sm"
+                        "h-10 transition-all duration-200 rounded-lg",
+                        isActive && "shadow-sm"
                       )}
                       style={{
                         background: isActive ? config.sidebarActiveBg : undefined,
-                        boxShadow: isActive ? `0 0 0 2px ${config.sidebarActiveRing}` : undefined,
+                        boxShadow: isActive ? `0 0 0 1.5px ${config.sidebarActiveRing}` : undefined,
                       }}
                     >
                       <Link
@@ -377,17 +375,17 @@ function AdminSidebarContent({
                         <Icon
                           className={cn(
                             "transition-all duration-200",
-                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5"
+                            isActive ? "h-[18px] w-[18px]" : "h-4 w-4"
                           )}
                           style={{
                             color: isActive ? config.accentColor : config.sidebarTextMuted,
                           }}
-                          strokeWidth={isActive ? 2.2 : 1.8}
+                          strokeWidth={isActive ? 2 : 1.8}
                         />
                         <span
                           className={cn(
                             "text-[13px] transition-colors duration-200",
-                            isActive ? "font-bold text-foreground" : "font-semibold"
+                            isActive ? "font-semibold text-foreground" : "font-medium"
                           )}
                           style={{
                             color: isActive ? undefined : config.sidebarTextMuted,
@@ -397,7 +395,7 @@ function AdminSidebarContent({
                         </span>
                         {isActive && !isCollapsed && (
                           <div
-                            className="ml-auto w-1.5 h-1.5 rounded-full"
+                            className="ml-auto w-1 h-1 rounded-full"
                             style={{ backgroundColor: config.accentColor }}
                           />
                         )}
@@ -441,8 +439,8 @@ function AdminSidebarContent({
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
-                        "h-11 transition-all duration-200 rounded-xl group",
-                        isActive ? "shadow-sm" : ""
+                        "h-10 transition-all duration-200 rounded-lg",
+                        isActive && "shadow-sm"
                       )}
                       style={{
                         background: isActive ? config.sidebarActiveBg : undefined,
@@ -460,7 +458,7 @@ function AdminSidebarContent({
                         <Icon
                           className={cn(
                             "transition-all duration-200 flex-shrink-0",
-                            isActive ? "h-[22px] w-[22px]" : "h-5 w-5"
+                            isActive ? "h-[18px] w-[18px]" : "h-4 w-4"
                           )}
                           style={{
                             color: isActive ? config.accentColor : config.sidebarTextMuted,
@@ -469,8 +467,8 @@ function AdminSidebarContent({
                         />
                         <span
                           className={cn(
-                            "text-[13px] font-semibold transition-colors duration-200",
-                            isActive ? "text-foreground font-bold" : ""
+                            "text-[13px] transition-colors duration-200",
+                            isActive ? "text-foreground font-semibold" : "font-medium"
                           )}
                           style={{
                             color: isActive ? undefined : config.sidebarTextMuted,
@@ -488,7 +486,7 @@ function AdminSidebarContent({
 
           {/* Footer */}
           <SidebarFooter 
-            className="p-3 border-t"
+            className={cn("border-t-2", isCollapsed ? "p-2" : "p-3")}
             style={{
               borderColor: config.sidebarDivider,
               background: `linear-gradient(to top, ${config.sidebarHover}, transparent)`,
@@ -497,27 +495,31 @@ function AdminSidebarContent({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button 
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2 group border border-transparent"
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2",
+                    isCollapsed ? "justify-center p-1.5" : "px-2 py-2"
+                  )}
                   style={{
                     ["--tw-ring-color" as string]: config.accentColor + "60",
                   }}
                 >
-                  <div className="relative">
-                    <Avatar
-                      className="h-11 w-11 border-2 shadow-md ring-2 ring-white/80 dark:ring-black/20"
-                      style={{ borderColor: config.accentColor + "60" }}
+                  <Avatar
+                    className={cn(
+                      "border shadow-sm transition-all",
+                      isCollapsed ? "h-8 w-8" : "h-9 w-9"
+                    )}
+                    style={{ borderColor: config.accentColor + "40" }}
+                  >
+                    <AvatarFallback
+                      className="text-[10px] font-semibold"
+                      style={{
+                        background: config.accentColorLight,
+                        color: config.accentColor,
+                      }}
                     >
-                      <AvatarFallback
-                        className="text-xs font-semibold"
-                        style={{
-                          background: config.accentColorLight,
-                          color: config.accentColor,
-                        }}
-                      >
-                        {getInitials(userName)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
+                      {getInitials(userName)}
+                    </AvatarFallback>
+                  </Avatar>
                   {!isCollapsed && (
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-semibold truncate text-[hsl(160_15%_20%)] dark:text-[hsl(150_10%_88%)]">
@@ -604,12 +606,13 @@ function AdminSidebarContent({
           </div>
         )}
 
-        {/* Desktop Header - encaixa com a sidebar */}
+        {/* Desktop Header */}
         {!isMobile && (
           <div
             className={cn(
-              "flex border-b h-[72px] items-center justify-center backdrop-blur-xl px-6 sticky top-0 z-40 relative",
-              "border-b-[hsl(155,15%,92%)] dark:border-b-[hsl(160,10%,16%)]"
+              "flex border-b h-16 items-center justify-center backdrop-blur-xl px-6 sticky top-0 z-40 relative",
+              config.borderColor,
+              "dark:border-b-[hsl(160,10%,18%)]"
             )}
             style={{
               background: `linear-gradient(135deg, ${config.accentColorLight} 0%, hsl(155, 15%, 99%) 100%)`,
@@ -620,12 +623,12 @@ function AdminSidebarContent({
               className="flex items-center gap-3 hover:opacity-90 transition-opacity duration-200"
             >
               <div
-                className="relative w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-lg ring-1"
+                className="relative w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shadow-lg ring-1"
                 style={{
                   background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
                 }}
               >
-                <Scale className="h-6 w-6 text-white" />
+                <Scale className="h-5 w-5 text-white" />
               </div>
               <div className="flex flex-col">
                 <span
@@ -652,7 +655,7 @@ function AdminSidebarContent({
 
         <main
           className={cn(
-            "flex-1 px-4 py-5 md:px-6 md:py-6 lg:px-8 lg:py-8 min-h-screen overflow-x-hidden",
+            "flex-1 p-4 md:p-6 lg:p-8 min-h-screen overflow-x-hidden",
             "bg-gradient-to-br",
             config.bgGradient
           )}

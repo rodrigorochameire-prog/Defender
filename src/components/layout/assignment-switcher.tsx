@@ -61,10 +61,11 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
+            "w-full flex items-center gap-3 rounded-xl transition-all duration-200",
             "hover:bg-[var(--assignment-accent-light)] dark:hover:bg-[hsl(160_12%_12%)]",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--assignment-accent)]/40",
-            "group cursor-pointer"
+            "group cursor-pointer",
+            collapsed ? "justify-center p-2" : "px-3 py-2.5"
           )}
           style={{
             background: open ? "var(--assignment-accent-light)" : undefined,
@@ -72,12 +73,15 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
         >
           {/* Ícone com cor da atribuição */}
           <div
-            className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105"
+            className={cn(
+              "rounded-lg flex items-center justify-center shrink-0 shadow-md transition-all",
+              collapsed ? "h-9 w-9" : "h-9 w-9"
+            )}
             style={{
               background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
             }}
           >
-            <Icon className="h-[22px] w-[22px] text-white" />
+            <Icon className={cn("text-white", collapsed ? "h-5 w-5" : "h-[18px] w-[18px]")} />
           </div>
 
           {/* Nome e descrição */}
