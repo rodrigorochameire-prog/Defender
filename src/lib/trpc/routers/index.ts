@@ -10,6 +10,7 @@ import { processosRouter } from "./processos";
 import { demandasRouter } from "./demandas";
 import { juriRouter } from "./juri";
 import { driveRouter } from "./drive";
+import { casosRouter } from "./casos";
 
 export const appRouter = router({
   // Autenticação
@@ -17,6 +18,9 @@ export const appRouter = router({
   
   // Gestão de usuários
   users: usersRouter,
+  
+  // Casos (Entidade Mestre - Case-Centric)
+  casos: casosRouter,
   
   // Assistidos (pessoas atendidas pela Defensoria)
   assistidos: assistidosRouter,

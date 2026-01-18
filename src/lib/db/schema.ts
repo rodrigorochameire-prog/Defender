@@ -158,6 +158,9 @@ export const assistidos = pgTable("assistidos", {
   // Defensor responsável
   defensorId: integer("defensor_id").references(() => users.id),
   
+  // Caso (Case-Centric)
+  casoId: integer("caso_id"),
+  
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -168,6 +171,7 @@ export const assistidos = pgTable("assistidos", {
   index("assistidos_status_prisional_idx").on(table.statusPrisional),
   index("assistidos_defensor_id_idx").on(table.defensorId),
   index("assistidos_deleted_at_idx").on(table.deletedAt),
+  index("assistidos_caso_id_idx").on(table.casoId),
 ]);
 
 export type Assistido = typeof assistidos.$inferSelect;
@@ -223,6 +227,9 @@ export const processos = pgTable("processos", {
   linkDrive: text("link_drive"), // Link para pasta no Google Drive
   driveFolderId: text("drive_folder_id"), // ID da pasta no Drive
   
+  // Caso (Case-Centric)
+  casoId: integer("caso_id"),
+  
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -236,6 +243,7 @@ export const processos = pgTable("processos", {
   index("processos_defensor_id_idx").on(table.defensorId),
   index("processos_situacao_idx").on(table.situacao),
   index("processos_deleted_at_idx").on(table.deletedAt),
+  index("processos_caso_id_idx").on(table.casoId),
 ]);
 
 export type Processo = typeof processos.$inferSelect;
@@ -280,6 +288,9 @@ export const demandas = pgTable("demandas", {
   // Integração Google Calendar
   googleCalendarEventId: text("google_calendar_event_id"), // ID do evento no Google Calendar
   
+  // Caso (Case-Centric)
+  casoId: integer("caso_id"),
+  
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -293,6 +304,7 @@ export const demandas = pgTable("demandas", {
   index("demandas_defensor_id_idx").on(table.defensorId),
   index("demandas_reu_preso_idx").on(table.reuPreso),
   index("demandas_deleted_at_idx").on(table.deletedAt),
+  index("demandas_caso_id_idx").on(table.casoId),
 ]);
 
 export type Demanda = typeof demandas.$inferSelect;
@@ -351,10 +363,18 @@ export const audiencias = pgTable("audiencias", {
     .notNull()
     .references(() => processos.id, { onDelete: "cascade" }),
   
+  // Case-Centric
+  casoId: integer("caso_id"),
+  assistidoId: integer("assistido_id"),
+  
   // Detalhes
   dataAudiencia: timestamp("data_audiencia").notNull(),
   tipo: varchar("tipo", { length: 50 }).notNull(), // 'instrucao' | 'conciliacao' | 'justificacao' | 'custodia' | 'admonicao'
   local: text("local"),
+  titulo: text("titulo"),
+  descricao: text("descricao"),
+  sala: varchar("sala", { length: 50 }),
+  horario: varchar("horario", { length: 10 }),
   
   // Participantes
   defensorId: integer("defensor_id").references(() => users.id),
@@ -370,6 +390,20 @@ export const audiencias = pgTable("audiencias", {
   // Observações
   observacoes: text("observacoes"),
   
+  // Anotações com versionamento
+  anotacoes: text("anotacoes"),
+  anotacoesVersao: integer("anotacoes_versao").default(1),
+  
+  // Resumo da defesa (puxado da Teoria do Caso)
+  resumoDefesa: text("resumo_defesa"),
+  
+  // Integração Google Calendar
+  googleCalendarEventId: text("google_calendar_event_id"),
+  
+  // Geração de tarefas pós-audiência
+  gerarPrazoApos: boolean("gerar_prazo_apos").default(false),
+  prazoGeradoId: integer("prazo_gerado_id"),
+  
   // Metadados
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -379,6 +413,9 @@ export const audiencias = pgTable("audiencias", {
   index("audiencias_defensor_id_idx").on(table.defensorId),
   index("audiencias_status_idx").on(table.status),
   index("audiencias_tipo_idx").on(table.tipo),
+  index("audiencias_caso_id_idx").on(table.casoId),
+  index("audiencias_assistido_id_idx").on(table.assistidoId),
+  index("audiencias_google_event_idx").on(table.googleCalendarEventId),
 ]);
 
 export type Audiencia = typeof audiencias.$inferSelect;
@@ -997,6 +1034,171 @@ export type Atendimento = typeof atendimentos.$inferSelect;
 export type InsertAtendimento = typeof atendimentos.$inferInsert;
 
 // ==========================================
+// CASOS (Entidade Mestre - Case-Centric)
+// ==========================================
+
+export const statusCasoEnum = pgEnum("status_caso", [
+  "ATIVO",
+  "SUSPENSO",
+  "ARQUIVADO",
+]);
+
+export const faseCasoEnum = pgEnum("fase_caso", [
+  "INQUERITO",
+  "INSTRUCAO",
+  "PLENARIO",
+  "RECURSO",
+  "EXECUCAO",
+  "ARQUIVADO",
+]);
+
+export const tipoAudienciaEnum = pgEnum("tipo_audiencia", [
+  "INSTRUCAO",
+  "CUSTODIA",
+  "CONCILIACAO",
+  "JUSTIFICACAO",
+  "ADMONICAO",
+  "UNA",
+  "PLENARIO_JURI",
+  "CONTINUACAO",
+  "OUTRA",
+]);
+
+export const statusAudienciaEnum = pgEnum("status_audiencia", [
+  "A_DESIGNAR",
+  "DESIGNADA",
+  "REALIZADA",
+  "AGUARDANDO_ATA",
+  "CONCLUIDA",
+  "ADIADA",
+  "CANCELADA",
+]);
+
+export const casos = pgTable("casos", {
+  id: serial("id").primaryKey(),
+  
+  // Identificação do Caso
+  titulo: text("titulo").notNull(),              // ex: "Homicídio - Operação Reuso"
+  codigo: varchar("codigo", { length: 50 }),     // Código interno opcional
+  
+  // Atribuição/Workspace
+  atribuicao: atribuicaoEnum("atribuicao").notNull().default("SUBSTITUICAO"),
+  
+  // Teoria do Caso (Tripé da Defesa)
+  teoriaFatos: text("teoria_fatos"),             // Narrativa defensiva dos fatos
+  teoriaProvas: text("teoria_provas"),           // Evidências que corroboram a tese
+  teoriaDireito: text("teoria_direito"),         // Teses jurídicas e fundamentação
+  
+  // Tags para conexões inteligentes (JSON array)
+  tags: text("tags"),                            // ex: ["NulidadeBusca", "LegitimaDefesa"]
+  
+  // Status
+  status: varchar("status", { length: 30 }).default("ativo"), // 'ativo' | 'arquivado' | 'suspenso'
+  fase: varchar("fase", { length: 50 }),         // 'inquerito' | 'instrucao' | 'plenario' | 'recurso' | 'execucao'
+  
+  // Prioridade
+  prioridade: prioridadeEnum("prioridade").default("NORMAL"),
+  
+  // Defensor responsável
+  defensorId: integer("defensor_id").references(() => users.id),
+  
+  // Caso conexo (self-referencing) - será configurado via SQL
+  casoConexoId: integer("caso_conexo_id"),
+  
+  // Observações gerais
+  observacoes: text("observacoes"),
+  
+  // Links externos
+  linkDrive: text("link_drive"),                 // Pasta no Google Drive
+  
+  // Soft delete
+  deletedAt: timestamp("deleted_at"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("casos_titulo_idx").on(table.titulo),
+  index("casos_atribuicao_idx").on(table.atribuicao),
+  index("casos_status_idx").on(table.status),
+  index("casos_defensor_id_idx").on(table.defensorId),
+  index("casos_deleted_at_idx").on(table.deletedAt),
+]);
+
+export type Caso = typeof casos.$inferSelect;
+export type InsertCaso = typeof casos.$inferInsert;
+
+// ==========================================
+// TAGS DE CASOS (Para sugestões inteligentes)
+// ==========================================
+
+export const casoTags = pgTable("caso_tags", {
+  id: serial("id").primaryKey(),
+  
+  nome: varchar("nome", { length: 100 }).notNull().unique(),  // ex: 'NulidadeBusca', 'LegitimaDefesa'
+  descricao: text("descricao"),
+  cor: varchar("cor", { length: 20 }).default("slate"),       // Para UI
+  
+  // Contagem de uso (para ranking)
+  usoCount: integer("uso_count").default(0),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("caso_tags_nome_idx").on(table.nome),
+  index("caso_tags_uso_idx").on(table.usoCount),
+]);
+
+export type CasoTag = typeof casoTags.$inferSelect;
+export type InsertCasoTag = typeof casoTags.$inferInsert;
+
+// ==========================================
+// CONEXÕES ENTRE CASOS
+// ==========================================
+
+export const casosConexos = pgTable("casos_conexos", {
+  id: serial("id").primaryKey(),
+  
+  casoOrigemId: integer("caso_origem_id").notNull().references(() => casos.id, { onDelete: "cascade" }),
+  casoDestinoId: integer("caso_destino_id").notNull().references(() => casos.id, { onDelete: "cascade" }),
+  
+  tipoConexao: varchar("tipo_conexao", { length: 50 }),  // 'coautoria' | 'fato_conexo' | 'tese_similar' | 'mesmo_evento'
+  descricao: text("descricao"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("casos_conexos_origem_idx").on(table.casoOrigemId),
+  index("casos_conexos_destino_idx").on(table.casoDestinoId),
+]);
+
+export type CasoConexo = typeof casosConexos.$inferSelect;
+export type InsertCasoConexo = typeof casosConexos.$inferInsert;
+
+// ==========================================
+// HISTÓRICO DE ANOTAÇÕES DE AUDIÊNCIA
+// ==========================================
+
+export const audienciasHistorico = pgTable("audiencias_historico", {
+  id: serial("id").primaryKey(),
+  audienciaId: integer("audiencia_id").notNull().references(() => audiencias.id, { onDelete: "cascade" }),
+  
+  // Versão
+  versao: integer("versao").notNull(),
+  anotacoes: text("anotacoes").notNull(),
+  
+  // Quem editou
+  editadoPorId: integer("editado_por_id").references(() => users.id),
+  
+  // Quando
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("audiencias_hist_audiencia_idx").on(table.audienciaId),
+  index("audiencias_hist_versao_idx").on(table.versao),
+]);
+
+export type AudienciaHistorico = typeof audienciasHistorico.$inferSelect;
+export type InsertAudienciaHistorico = typeof audienciasHistorico.$inferInsert;
+
+// ==========================================
 // RELAÇÕES
 // ==========================================
 
@@ -1008,6 +1210,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   audiencias: many(audiencias),
   notifications: many(notifications),
   atendimentos: many(atendimentos),
+  casos: many(casos),
 }));
 
 export const assistidosRelations = relations(assistidos, ({ one, many }) => ({
@@ -1121,6 +1324,30 @@ export const juradosRelations = relations(jurados, ({ one, many }) => ({
 export const conselhoJuriRelations = relations(conselhoJuri, ({ one }) => ({
   sessao: one(sessoesJuri, { fields: [conselhoJuri.sessaoId], references: [sessoesJuri.id] }),
   jurado: one(jurados, { fields: [conselhoJuri.juradoId], references: [jurados.id] }),
+}));
+
+// ==========================================
+// RELAÇÕES: Case-Centric
+// ==========================================
+
+export const casosRelations = relations(casos, ({ one, many }) => ({
+  defensor: one(users, { fields: [casos.defensorId], references: [users.id] }),
+  casoConexo: one(casos, { fields: [casos.casoConexoId], references: [casos.id] }),
+  assistidos: many(assistidos),
+  processos: many(processos),
+  demandas: many(demandas),
+  audiencias: many(audiencias),
+  conexoesOrigem: many(casosConexos),
+}));
+
+export const casosConexosRelations = relations(casosConexos, ({ one }) => ({
+  casoOrigem: one(casos, { fields: [casosConexos.casoOrigemId], references: [casos.id] }),
+  casoDestino: one(casos, { fields: [casosConexos.casoDestinoId], references: [casos.id] }),
+}));
+
+export const audienciasHistoricoRelations = relations(audienciasHistorico, ({ one }) => ({
+  audiencia: one(audiencias, { fields: [audienciasHistorico.audienciaId], references: [audiencias.id] }),
+  editadoPor: one(users, { fields: [audienciasHistorico.editadoPorId], references: [users.id] }),
 }));
 
 // ==========================================
