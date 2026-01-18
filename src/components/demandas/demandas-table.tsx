@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Popover,
   PopoverContent,
@@ -60,7 +61,7 @@ import {
   Target,
   ChevronRight,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import Link from "next/link";
 
 // ========================================
@@ -150,6 +151,7 @@ interface Demanda {
   id: number;
   assistido: string;
   assistidoId?: number;
+  assistidoFoto?: string | null; // URL da foto do assistido
   processo: string;
   tipoAto: string;
   ato: string;
@@ -173,6 +175,8 @@ interface DemandasTableProps {
 
 // ========================================
 // COMPONENTE: Calculadora de Prazos Penais
+// Com prerrogativa de prazo em DOBRO para Defensores Públicos
+// Fundamento: Art. 44, I, LC 80/94 e Art. 186 CPC (subsidiário)
 // ========================================
 
 function CalculadoraPrazos({ 
@@ -183,26 +187,39 @@ function CalculadoraPrazos({
   onCalculate: (dataFatal: Date) => void;
 }) {
   const [dataExpedicao, setDataExpedicao] = useState<string>("");
+  const [prazoEmDobro, setPrazoEmDobro] = useState<boolean>(true); // Padrão: ativado para DP
   const [dataFatalCalculada, setDataFatalCalculada] = useState<Date | null>(null);
+  const [detalhesCalculo, setDetalhesCalculo] = useState<{
+    dataCiencia: Date;
+    prazoSimples: number;
+    prazoDobrado: number;
+  } | null>(null);
 
   const calcularPrazoFatal = () => {
     if (!dataExpedicao) return;
     
     const dataExp = parseISO(dataExpedicao);
     
-    // 1. Prazo de Leitura (10 dias corridos no PJe)
-    let dataCiencia = addDays(dataExp, 10);
+    // 1. Prazo de Leitura (10 dias corridos no PJe/Projudi)
+    const dataCiencia = addDays(dataExp, 10);
     
-    // 2. Adicionar Prazo Processual
+    // 2. Prazo Processual base
     const prazoInfo = PRAZOS_LEGAIS[tipoAto] || { dias: 5, descricao: "Prazo padrão" };
-    let dataFatal = addDays(dataCiencia, prazoInfo.dias);
+    const prazoSimples = prazoInfo.dias;
     
-    // 3. Ajuste de fim de semana (prorroga para próximo dia útil)
+    // 3. Aplicar prazo em DOBRO se for Defensor Público (Art. 44, I, LC 80/94)
+    const prazoDobrado = prazoEmDobro ? prazoSimples * 2 : prazoSimples;
+    
+    // 4. Calcular data fatal
+    let dataFatal = addDays(dataCiencia, prazoDobrado);
+    
+    // 5. Ajuste de fim de semana (prorroga para próximo dia útil)
     while (isWeekend(dataFatal)) {
       dataFatal = addDays(dataFatal, 1);
     }
     
     setDataFatalCalculada(dataFatal);
+    setDetalhesCalculo({ dataCiencia, prazoSimples, prazoDobrado });
     onCalculate(dataFatal);
   };
 
@@ -213,15 +230,16 @@ function CalculadoraPrazos({
       <div className="flex items-center gap-2">
         <Calculator className="h-4 w-4 text-zinc-500" />
         <h4 className="font-semibold text-zinc-900 dark:text-white">
-          Calculadora Penal
+          Calculadora Penal - DP
         </h4>
       </div>
       
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Soma +10 dias (leitura PJe) + prazo legal do ato.
+        +10 dias (leitura) + prazo legal × 2 (Defensor Público)
       </p>
       
       <div className="space-y-3">
+        {/* Data de Expedição */}
         <div className="space-y-1.5">
           <Label className="text-xs font-medium">Data de Expedição</Label>
           <Input
@@ -232,33 +250,94 @@ function CalculadoraPrazos({
           />
         </div>
         
-        <div className="flex items-center justify-between text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-900 p-2 rounded-md">
-          <span>Prazo do ato:</span>
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">
-            {prazoInfo.dias} dias ({prazoInfo.descricao})
+        {/* Toggle Prazo em Dobro */}
+        <div 
+          className={cn(
+            "flex items-center justify-between p-2.5 rounded-md border cursor-pointer transition-colors",
+            prazoEmDobro 
+              ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800" 
+              : "bg-zinc-50 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800"
+          )}
+          onClick={() => setPrazoEmDobro(!prazoEmDobro)}
+        >
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-colors",
+              prazoEmDobro 
+                ? "bg-emerald-500 border-emerald-500" 
+                : "border-zinc-300 dark:border-zinc-600"
+            )}>
+              {prazoEmDobro && <Check className="h-3 w-3 text-white" />}
+            </div>
+            <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              Prazo em Dobro (DP)
+            </span>
+          </div>
+          <span className="text-[10px] text-zinc-500">
+            Art. 44, I, LC 80/94
           </span>
+        </div>
+        
+        {/* Info do Prazo */}
+        <div className="space-y-1.5 p-2 bg-zinc-50 dark:bg-zinc-900 rounded-md">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-zinc-500">Prazo legal:</span>
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+              {prazoInfo.dias} dias
+            </span>
+          </div>
+          {prazoEmDobro && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-emerald-600 dark:text-emerald-400">Com dobro (DP):</span>
+              <span className="font-bold text-emerald-700 dark:text-emerald-300">
+                {prazoInfo.dias * 2} dias
+              </span>
+            </div>
+          )}
+          <p className="text-[10px] text-zinc-400 mt-1">
+            {prazoInfo.descricao}
+          </p>
         </div>
         
         <Button 
           onClick={calcularPrazoFatal} 
-          className="w-full h-8 text-xs"
+          className="w-full h-9 text-xs font-medium"
           disabled={!dataExpedicao}
         >
+          <Calculator className="h-3.5 w-3.5 mr-1.5" />
           Calcular Prazo Fatal
         </Button>
       </div>
       
-      {dataFatalCalculada && (
-        <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/20 p-3 border border-emerald-100 dark:border-emerald-800">
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">
-            Prazo Fatal Estimado
-          </span>
-          <div className="text-lg font-bold text-emerald-700 dark:text-emerald-300 font-data">
-            {format(dataFatalCalculada, "dd 'de' MMMM", { locale: ptBR })}
+      {/* Resultado */}
+      {dataFatalCalculada && detalhesCalculo && (
+        <div className="space-y-2">
+          {/* Data Fatal */}
+          <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/20 p-3 border border-emerald-200 dark:border-emerald-800">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">
+                Prazo Fatal
+              </span>
+              {prazoEmDobro && (
+                <Badge className="bg-emerald-500 text-white text-[9px] h-4 px-1.5">
+                  ×2 DP
+                </Badge>
+              )}
+            </div>
+            <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300 font-data mt-1">
+              {format(dataFatalCalculada, "dd/MM/yyyy")}
+            </div>
+            <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
+              {format(dataFatalCalculada, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+            </p>
           </div>
-          <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 mt-1">
-            {format(dataFatalCalculada, "EEEE", { locale: ptBR })}
-          </p>
+          
+          {/* Detalhes do Cálculo */}
+          <div className="text-[10px] text-zinc-500 space-y-0.5 p-2 bg-zinc-50 dark:bg-zinc-900 rounded-md">
+            <p>📅 Expedição: {dataExpedicao}</p>
+            <p>📖 Ciência (10d): {format(detalhesCalculo.dataCiencia, "dd/MM/yyyy")}</p>
+            <p>⏱️ Prazo: {detalhesCalculo.prazoSimples}d {prazoEmDobro && `× 2 = ${detalhesCalculo.prazoDobrado}d`}</p>
+          </div>
         </div>
       )}
     </div>
@@ -350,25 +429,51 @@ function DemandaSidePeek({
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
         <SheetHeader className="space-y-4 pb-4 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <SheetTitle className="text-lg font-semibold text-zinc-900 dark:text-white">
-                {demanda.assistido}
-              </SheetTitle>
-              <SheetDescription className="text-sm font-data text-zinc-500">
-                {demanda.processo}
-              </SheetDescription>
-            </div>
+          <div className="flex items-start gap-4">
+            {/* Foto do Assistido - Maior na Side Peek */}
+            <Avatar className={cn(
+              "h-16 w-16 flex-shrink-0 border-2",
+              isPreso 
+                ? "border-rose-300 dark:border-rose-700" 
+                : "border-emerald-300 dark:border-emerald-700"
+            )}>
+              <AvatarImage 
+                src={demanda.assistidoFoto || undefined} 
+                alt={demanda.assistido}
+                className="object-cover"
+              />
+              <AvatarFallback className={cn(
+                "text-lg font-semibold",
+                isPreso 
+                  ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
+                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+              )}>
+                {getInitials(demanda.assistido)}
+              </AvatarFallback>
+            </Avatar>
             
-            {isPreso ? (
-              <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border-0">
-                <Lock className="w-3 h-3 mr-1" /> Preso
-              </Badge>
-            ) : (
-              <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-0">
-                <Unlock className="w-3 h-3 mr-1" /> Solto
-              </Badge>
-            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-1 min-w-0">
+                  <SheetTitle className="text-lg font-semibold text-zinc-900 dark:text-white truncate">
+                    {demanda.assistido}
+                  </SheetTitle>
+                  <SheetDescription className="text-sm font-data text-zinc-500 truncate">
+                    {demanda.processo}
+                  </SheetDescription>
+                </div>
+                
+                {isPreso ? (
+                  <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border-0 flex-shrink-0">
+                    <Lock className="w-3 h-3 mr-1" /> Preso
+                  </Badge>
+                ) : (
+                  <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-0 flex-shrink-0">
+                    <Unlock className="w-3 h-3 mr-1" /> Solto
+                  </Badge>
+                )}
+              </div>
+            </div>
           </div>
         </SheetHeader>
         
@@ -610,27 +715,52 @@ export function DemandasTable({
                     </Badge>
                   </TableCell>
 
-                  {/* Assistido e Autos */}
+                  {/* Assistido e Autos - Com Foto */}
                   <TableCell className="py-3">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
-                          {demanda.assistido}
-                        </span>
-                        {isPreso && (
-                          <Lock className="h-3 w-3 text-rose-500" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {demanda.area === "JURI" && (
-                          <FaseJuriBadge fase={demanda.fase || "INSTRUCAO"} />
-                        )}
-                        <span className="text-xs font-data text-zinc-500 dark:text-zinc-400">
-                          {demanda.processo.length > 25 
-                            ? demanda.processo.slice(0, 22) + "..." 
-                            : demanda.processo
-                          }
-                        </span>
+                    <div className="flex items-center gap-3">
+                      {/* Foto do Assistido */}
+                      <Avatar className={cn(
+                        "h-10 w-10 flex-shrink-0 border-2",
+                        isPreso 
+                          ? "border-rose-300 dark:border-rose-700" 
+                          : "border-zinc-200 dark:border-zinc-700"
+                      )}>
+                        <AvatarImage 
+                          src={demanda.assistidoFoto || undefined} 
+                          alt={demanda.assistido}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className={cn(
+                          "text-xs font-semibold",
+                          isPreso 
+                            ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
+                            : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                        )}>
+                          {getInitials(demanda.assistido)}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      {/* Nome e Processo */}
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                            {demanda.assistido}
+                          </span>
+                          {isPreso && (
+                            <Lock className="h-3 w-3 text-rose-500 flex-shrink-0" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {demanda.area === "JURI" && (
+                            <FaseJuriBadge fase={demanda.fase || "INSTRUCAO"} />
+                          )}
+                          <span className="text-xs font-data text-zinc-500 dark:text-zinc-400 truncate">
+                            {demanda.processo.length > 22 
+                              ? demanda.processo.slice(0, 19) + "..." 
+                              : demanda.processo
+                            }
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </TableCell>
