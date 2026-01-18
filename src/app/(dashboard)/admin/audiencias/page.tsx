@@ -213,10 +213,8 @@ export default function AudienciasPage() {
   const { currentAssignment } = useAssignment();
   
   // Filtrar por workspace se necessário
-  const audiencias = useMemo(() => {
-    // Em produção, buscar do banco via tRPC
-    return MOCK_AUDIENCIAS;
-  }, [currentAssignment]);
+  // Em produção, buscar do banco via tRPC com filtro por currentAssignment
+  const audiencias = MOCK_AUDIENCIAS;
 
   // Estatísticas
   const stats = useMemo(() => {

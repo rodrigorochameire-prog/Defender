@@ -260,7 +260,7 @@ function AudienciaCard({
         {audiencia.resumoDefesa && !compact && (
           <div className="mt-2 pt-2 border-t border-dashed border-zinc-100 dark:border-zinc-800">
             <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 italic">
-              "{audiencia.resumoDefesa}"
+              &ldquo;{audiencia.resumoDefesa}&rdquo;
             </p>
           </div>
         )}
@@ -557,7 +557,7 @@ function AudienciaSidePeek({
                 Resumo da Defesa
               </label>
               <p className="text-sm text-amber-800 dark:text-amber-300 mt-1 italic">
-                "{audiencia.resumoDefesa}"
+                &ldquo;{audiencia.resumoDefesa}&rdquo;
               </p>
             </div>
           )}
