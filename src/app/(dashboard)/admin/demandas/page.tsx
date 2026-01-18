@@ -77,6 +77,8 @@ import {
   PlusCircle,
   Palette,
   Check,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -139,39 +141,39 @@ const COMARCA_OPTIONS = [
   { value: "SALVADOR", label: "Salvador" },
 ];
 
-// Status disponíveis - Cores suaves e premium, agrupados e ordenados
+// Status disponíveis - Estilo Notion com cores de fundo vibrantes
 const STATUS_OPTIONS: OptionItem[] = [
-  // Grupo Urgente (rose suave)
-  { value: "1_URGENTE", label: "Urgente", color: "bg-rose-400", textColor: "text-rose-700", group: "Urgente", description: "Prazo crítico/urgente" },
-  // Grupo Trabalho (amber suave) - ordem alfabética
-  { value: "2_ANALISAR", label: "Analisar", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Analisar processo" },
-  { value: "2_ATENDER", label: "Atender", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Atender assistido" },
-  { value: "2_BUSCAR", label: "Buscar", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Buscar informações" },
-  { value: "2_ELABORANDO", label: "Elaborando", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Em elaboração" },
-  { value: "2_ELABORAR", label: "Elaborar", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Elaborar peça" },
-  { value: "2_INVESTIGAR", label: "Investigar", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Investigar caso" },
-  { value: "2_RELATORIO", label: "Relatório", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Analisar/fazer relatório" },
-  { value: "2_REVISANDO", label: "Revisando", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Em revisão" },
-  { value: "2_REVISAR", label: "Revisar", color: "bg-amber-300", textColor: "text-amber-700", group: "Trabalho", description: "Revisar peça" },
-  // Grupo Protocolar (orange suave)
-  { value: "3_PROTOCOLAR", label: "Protocolar", color: "bg-orange-300", textColor: "text-orange-700", group: "Protocolar", description: "Pronto para protocolar" },
-  // Grupo Delegado (sky suave) - ordem alfabética
-  { value: "4_AMANDA", label: "Amanda", color: "bg-sky-300", textColor: "text-sky-700", group: "Delegado", description: "Com Amanda" },
-  { value: "4_EMILLY", label: "Emilly", color: "bg-sky-300", textColor: "text-sky-700", group: "Delegado", description: "Com Emilly" },
-  { value: "4_MONITORAR", label: "Monitorar", color: "bg-sky-300", textColor: "text-sky-700", group: "Delegado", description: "Monitorando andamento" },
-  { value: "4_ESTAGIO_TARISSA", label: "Tarissa (Estágio)", color: "bg-sky-300", textColor: "text-sky-700", group: "Delegado", description: "Com Tarissa (estágio)" },
-  // Grupo Fila (indigo suave)
-  { value: "5_FILA", label: "Fila", color: "bg-indigo-300", textColor: "text-indigo-700", group: "Fila", description: "Na fila de trabalho" },
-  // Grupo Aguardando (slate suave) - ordem alfabética
-  { value: "6_DOCUMENTOS", label: "Documentos", color: "bg-slate-400", textColor: "text-slate-700", group: "Aguardando", description: "Aguardando documentos" },
-  { value: "6_TESTEMUNHAS", label: "Testemunhas", color: "bg-slate-400", textColor: "text-slate-700", group: "Aguardando", description: "Aguardando testemunhas" },
-  // Grupo Concluído (emerald suave) - ordem alfabética
-  { value: "7_CIENCIA", label: "Ciência", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Ciência tomada" },
-  { value: "7_CONSTITUIU_ADVOGADO", label: "Constituiu advogado", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Constituiu advogado particular" },
-  { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Peça protocolada" },
-  { value: "7_RESOLVIDO", label: "Resolvido", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Caso resolvido" },
-  { value: "7_SEM_ATUACAO", label: "Sem atuação", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Sem necessidade de atuação" },
-  { value: "7_SIGAD", label: "Sigad", color: "bg-emerald-300", textColor: "text-emerald-700", group: "Concluído", description: "Registrado no Sigad" },
+  // Grupo Urgente (vermelho intenso)
+  { value: "1_URGENTE", label: "Urgente", color: "bg-red-500", textColor: "text-white", group: "Urgente", description: "Prazo crítico/urgente" },
+  // Grupo Trabalho (amarelo vibrante) - ordem alfabética
+  { value: "2_ANALISAR", label: "Analisar", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Analisar processo" },
+  { value: "2_ATENDER", label: "Atender", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Atender assistido" },
+  { value: "2_BUSCAR", label: "Buscar", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Buscar informações" },
+  { value: "2_ELABORANDO", label: "Elaborando", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Em elaboração" },
+  { value: "2_ELABORAR", label: "Elaborar", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Elaborar peça" },
+  { value: "2_INVESTIGAR", label: "Investigar", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Investigar caso" },
+  { value: "2_RELATORIO", label: "Relatório", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Analisar/fazer relatório" },
+  { value: "2_REVISANDO", label: "Revisando", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Em revisão" },
+  { value: "2_REVISAR", label: "Revisar", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Revisar peça" },
+  // Grupo Protocolar (laranja vibrante)
+  { value: "3_PROTOCOLAR", label: "Protocolar", color: "bg-orange-500", textColor: "text-white", group: "Protocolar", description: "Pronto para protocolar" },
+  // Grupo Delegado (azul vibrante) - ordem alfabética
+  { value: "4_AMANDA", label: "Amanda", color: "bg-sky-500", textColor: "text-white", group: "Delegado", description: "Com Amanda" },
+  { value: "4_EMILLY", label: "Emilly", color: "bg-sky-500", textColor: "text-white", group: "Delegado", description: "Com Emilly" },
+  { value: "4_MONITORAR", label: "Monitorar", color: "bg-sky-500", textColor: "text-white", group: "Delegado", description: "Monitorando andamento" },
+  { value: "4_ESTAGIO_TARISSA", label: "Tarissa (Estágio)", color: "bg-sky-500", textColor: "text-white", group: "Delegado", description: "Com Tarissa (estágio)" },
+  // Grupo Fila (roxo vibrante)
+  { value: "5_FILA", label: "Fila", color: "bg-violet-500", textColor: "text-white", group: "Fila", description: "Na fila de trabalho" },
+  // Grupo Aguardando (cinza escuro) - ordem alfabética
+  { value: "6_DOCUMENTOS", label: "Documentos", color: "bg-slate-500", textColor: "text-white", group: "Aguardando", description: "Aguardando documentos" },
+  { value: "6_TESTEMUNHAS", label: "Testemunhas", color: "bg-slate-500", textColor: "text-white", group: "Aguardando", description: "Aguardando testemunhas" },
+  // Grupo Concluído (verde vibrante) - ordem alfabética
+  { value: "7_CIENCIA", label: "Ciência", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Ciência tomada" },
+  { value: "7_CONSTITUIU_ADVOGADO", label: "Constituiu advogado", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Constituiu advogado particular" },
+  { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Peça protocolada" },
+  { value: "7_RESOLVIDO", label: "Resolvido", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Caso resolvido" },
+  { value: "7_SEM_ATUACAO", label: "Sem atuação", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Sem necessidade de atuação" },
+  { value: "7_SIGAD", label: "Sigad", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Registrado no Sigad" },
 ];
 
 // Situação Prisional / Unidades - Cores suaves e premium
@@ -1378,7 +1380,7 @@ function EditableCell({
   );
 }
 
-// Select com opção de adicionar
+// Select com opção de adicionar - Estilo Notion Premium
 function SelectWithAdd({
   value,
   options,
@@ -1387,6 +1389,7 @@ function SelectWithAdd({
   placeholder,
   className,
   compact = false,
+  notionStyle = false, // Novo: estilo com fundo preenchido
 }: {
   value: string;
   options: OptionItem[];
@@ -1395,6 +1398,7 @@ function SelectWithAdd({
   placeholder?: string;
   className?: string;
   compact?: boolean;
+  notionStyle?: boolean;
 }) {
   // Agrupar opções por grupo
   const groupedOptions = useMemo(() => {
@@ -1408,16 +1412,39 @@ function SelectWithAdd({
   }, [options]);
 
   const hasGroups = Object.keys(groupedOptions).length > 1;
+  const selectedOption = options.find(o => o.value === value);
 
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className={cn(compact && "h-7 text-xs", className)}>
+      <SelectTrigger 
+        className={cn(
+          compact && "h-8 text-xs border-0 shadow-none",
+          notionStyle && selectedOption && "border-0 shadow-none hover:opacity-90 transition-opacity",
+          className
+        )}
+        style={notionStyle && selectedOption ? {
+          backgroundColor: "transparent",
+          padding: 0,
+        } : undefined}
+      >
         <SelectValue placeholder={placeholder}>
-          {value && (
-            <div className="flex items-center gap-2">
-              <div className={cn("w-2 h-2 rounded-full", options.find(o => o.value === value)?.color)} />
-              <span className="truncate">{options.find(o => o.value === value)?.label || value}</span>
-            </div>
+          {value && selectedOption && (
+            notionStyle ? (
+              <div 
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium text-xs shadow-sm",
+                  selectedOption.color,
+                  selectedOption.textColor || "text-white"
+                )}
+              >
+                <span className="truncate">{selectedOption.label}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className={cn("w-2.5 h-2.5 rounded-full shadow-sm", selectedOption.color)} />
+                <span className="truncate font-medium">{selectedOption.label}</span>
+              </div>
+            )
           )}
         </SelectValue>
       </SelectTrigger>
@@ -1659,10 +1686,22 @@ export default function DemandasPage() {
           </div>
         </div>
         <div className="page-header-actions">
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" title="Exportar">
             <Download className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon">
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            title="Sincronizar com Notion"
+            onClick={() => {
+              // TODO: Implementar sync com Notion
+              alert("Sincronização com Notion em desenvolvimento.\n\nConfigure NOTION_API_KEY e NOTION_DATABASE_ID no .env");
+            }}
+          >
+            <ExternalLink className="h-4 w-4" />
+            <span className="hidden sm:inline">Notion</span>
+          </Button>
+          <Button variant="outline" size="icon" title="Atualizar">
             <RefreshCw className="h-4 w-4" />
           </Button>
           <Button onClick={handleOpenCreate} className="gap-2">
@@ -1929,14 +1968,14 @@ export default function DemandasPage() {
           </div>
         </div>
 
-        {/* Visualização em Tabela */}
+        {/* Visualização em Tabela - Premium Notion Style */}
         <TabsContent value="table" className="mt-0">
-          <Card className="section-card">
+          <Card className="section-card overflow-hidden border-0 shadow-lg">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="notion-table">
                   <TableHeader>
-                    <TableRow className="bg-muted/30">
+                    <TableRow className="bg-slate-50 dark:bg-slate-900/50 border-b-2 border-slate-200 dark:border-slate-700">
                       {/* Ordem: Status, Prisão, Data, Assistido, Autos, Ato, Prazo, Providências */}
                       {visibleColumns.status && (
                         <TableHead className="w-[120px] cursor-pointer hover:bg-muted/50" onClick={() => handleSort("status")}>
@@ -1999,21 +2038,22 @@ export default function DemandasPage() {
                         <TableRow 
                           key={demanda.id} 
                           className={cn(
-                            "hover:bg-muted/40 transition-colors group",
-                            demanda.reuPreso && "border-l-2 border-l-rose-300",
-                            prazoInfo.urgent && !demanda.reuPreso && "border-l-2 border-l-amber-300"
+                            "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-150 group border-b border-slate-100 dark:border-slate-800",
+                            demanda.reuPreso && "border-l-4 border-l-rose-500 bg-rose-50/30 dark:bg-rose-950/10",
+                            prazoInfo.urgent && !demanda.reuPreso && "border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-950/10"
                           )}
                         >
                           {/* Ordem: Status, Prisão, Data, Assistido, Autos, Ato, Prazo, Providências */}
                           {visibleColumns.status && (
-                            <TableCell className="p-1">
+                            <TableCell className="p-2">
                               <SelectWithAdd
                                 value={demanda.status}
                                 options={statusOptions}
                                 onChange={(v) => handleInlineUpdate(demanda.id, "status", v)}
                                 onAddOption={() => setAddOptionModal({ isOpen: true, type: "status" })}
                                 compact
-                                className="w-[140px]"
+                                notionStyle
+                                className="w-[150px]"
                               />
                             </TableCell>
                           )}

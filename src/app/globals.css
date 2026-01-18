@@ -757,3 +757,77 @@ html.font-large {
 [data-radix-popover-content][data-state="open"] {
   opacity: 1 !important;
 }
+
+/* ========================================
+   NOTION-STYLE TABLE - PREMIUM
+   Tabela limpa, moderna e fácil de ler
+   ======================================== */
+
+.notion-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.notion-table th {
+  @apply text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400;
+  @apply py-3 px-3;
+  @apply bg-slate-50/80 dark:bg-slate-900/50;
+  @apply first:rounded-tl-lg last:rounded-tr-lg;
+}
+
+.notion-table td {
+  @apply py-2.5 px-3;
+  @apply text-sm;
+  @apply border-b border-slate-100 dark:border-slate-800;
+}
+
+.notion-table tbody tr {
+  @apply transition-colors duration-100;
+}
+
+.notion-table tbody tr:hover {
+  @apply bg-slate-50/70 dark:bg-slate-800/30;
+}
+
+.notion-table tbody tr:last-child td {
+  @apply border-b-0;
+}
+
+/* Status Badge Notion Style */
+.notion-status-badge {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold text-xs;
+  @apply shadow-sm transition-all duration-150 hover:shadow-md hover:scale-[1.02];
+}
+
+/* Priority indicators */
+.notion-table tbody tr.priority-high {
+  @apply border-l-4 border-l-rose-500 bg-rose-50/40 dark:bg-rose-950/20;
+}
+
+.notion-table tbody tr.priority-urgent {
+  @apply border-l-4 border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20;
+}
+
+/* Prazo badges */
+.prazo-vencido {
+  @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300;
+  @apply font-bold animate-pulse;
+}
+
+.prazo-hoje {
+  @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300;
+  @apply font-bold;
+}
+
+.prazo-amanha {
+  @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300;
+  @apply font-semibold;
+}
+
+.prazo-semana {
+  @apply bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300;
+}
+
+.prazo-normal {
+  @apply bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400;
+}
