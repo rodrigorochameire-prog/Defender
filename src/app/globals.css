@@ -176,6 +176,49 @@
     letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
   }
+
+  /* ========================================
+     DARK MODE PREMIUM - Design Suíço
+     Elegante, confortável e sofisticado
+     ======================================== */
+  
+  /* Cards no dark mode com brilho sutil nas bordas */
+  .dark .card-swiss {
+    background: linear-gradient(180deg, hsl(160, 10%, 10%) 0%, hsl(160, 8%, 8%) 100%);
+    border-color: hsl(160, 10%, 16%);
+  }
+  
+  .dark .card-swiss:hover {
+    border-color: hsl(160, 12%, 22%);
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Texto com leve brilho no dark para melhor legibilidade */
+  .dark h1, .dark h2, .dark h3 {
+    text-shadow: 0 0 40px rgba(255, 255, 255, 0.03);
+  }
+  
+  /* Bordas semânticas mais vibrantes no dark */
+  .dark .border-l-rose-500 {
+    border-left-color: hsl(0, 70%, 55%);
+  }
+  
+  .dark .border-l-emerald-500 {
+    border-left-color: hsl(158, 65%, 48%);
+  }
+  
+  /* Badges mais legíveis no dark */
+  .dark [class*="bg-rose-50"] {
+    background-color: hsl(0, 50%, 12%);
+  }
+  
+  .dark [class*="bg-emerald-50"] {
+    background-color: hsl(158, 40%, 12%);
+  }
+  
+  .dark [class*="bg-amber-50"] {
+    background-color: hsl(45, 50%, 12%);
+  }
   small { 
     @apply text-xs text-muted-foreground;
   }
