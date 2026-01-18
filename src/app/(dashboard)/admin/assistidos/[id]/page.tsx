@@ -2,11 +2,18 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   ArrowLeft,
   Edit,
@@ -24,15 +31,21 @@ import {
   CheckCircle2,
   Gavel,
   MoreHorizontal,
-  Brain,
-  Globe,
-  Search,
-  ExternalLink,
-  Facebook,
-  Instagram,
-  Newspaper,
-  Database,
+  Lock,
+  Unlock,
+  Heart,
+  Activity,
+  History,
   Target,
+  BookOpen,
+  Link2,
+  ExternalLink,
+  FolderOpen,
+  Plus,
+  ChevronRight,
+  Send,
+  Bell,
+  Camera,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -42,12 +55,41 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getInitials } from "@/lib/utils";
-import { format, differenceInYears, parseISO } from "date-fns";
+import { getInitials, cn } from "@/lib/utils";
+import { format, differenceInYears, parseISO, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAssignment } from "@/contexts/assignment-context";
+import { TeoriaDoCaso } from "@/components/casos/teoria-do-caso";
+import { AudienciasHub } from "@/components/casos/audiencias-hub";
 
-// Dados mockados para demonstração
+// ==========================================
+// TIPOS
+// ==========================================
+
+interface HealthScore {
+  overall: number; // 0-100
+  prazos: "ok" | "warning" | "critical";
+  prisao: "solto" | "monitorado" | "preso";
+  processos: number;
+  demandas: number;
+  audiencias: number;
+}
+
+interface TimelineEvent {
+  id: number;
+  type: "peticao" | "audiencia" | "decisao" | "atendimento" | "whatsapp" | "notificacao" | "documento";
+  title: string;
+  description?: string;
+  date: Date;
+  icon: React.ReactNode;
+  color: string;
+  processoNumero?: string;
+}
+
+// ==========================================
+// DADOS MOCK
+// ==========================================
+
 const mockAssistido = {
   id: 5,
   nome: "Diego Bonfim Almeida",
@@ -66,10 +108,17 @@ const mockAssistido = {
   parentescoContato: "Mãe",
   endereco: "Rua das Flores, 123 - Centro, Camaçari/BA",
   defensor: "Dr. Rodrigo",
-  area: "JURI",
   photoUrl: null,
   observacoes: "Réu em processo de júri. Acompanhamento prioritário.",
   createdAt: "2024-06-15",
+  // Caso vinculado
+  casoId: 1,
+  casoTitulo: "Homicídio Qualificado - Operação Reuso",
+  // Teoria do caso
+  teoriaFatos: "O assistido estava em sua residência quando foi surpreendido pela polícia em operação não identificada. Não houve mandado de busca e apreensão.",
+  teoriaProvas: "- Câmeras de segurança do vizinho\n- Testemunha confirma ausência de mandado\n- Laudo pericial inconclusivo",
+  teoriaDireito: null,
+  linkDrive: "https://drive.google.com/drive/folders/example",
 };
 
 const mockProcessos = [
@@ -81,6 +130,7 @@ const mockProcessos = [
     area: "JURI",
     fase: "Instrução",
     situacao: "ativo",
+    isJuri: true,
   },
   {
     id: 2,
@@ -90,6 +140,7 @@ const mockProcessos = [
     area: "EXECUCAO_PENAL",
     fase: "Execução",
     situacao: "ativo",
+    isJuri: false,
   },
 ];
 
@@ -100,6 +151,7 @@ const mockDemandas = [
     prazo: "2026-01-20",
     status: "2_ATENDER",
     processo: "8012906-74.2025.8.05.0039",
+    urgente: true,
   },
   {
     id: 2,
@@ -107,563 +159,666 @@ const mockDemandas = [
     prazo: "2026-02-15",
     status: "5_FILA",
     processo: "8012906-74.2025.8.05.0039",
+    urgente: false,
   },
 ];
 
-const mockAtendimentos = [
+const mockAudiencias: any[] = [
   {
     id: 1,
-    data: "2026-01-10",
-    tipo: "presencial",
-    assunto: "Orientação sobre audiência",
-    resumo: "Assistido orientado sobre procedimentos da audiência de instrução.",
+    dataAudiencia: new Date("2026-01-25"),
+    horario: "09:00",
+    tipo: "INSTRUCAO",
+    status: "DESIGNADA",
+    sala: "3",
+    local: "Fórum de Camaçari",
+    juiz: "Dr. Carlos Mendes",
+    promotor: "Dr. Fernando Costa",
+    resumoDefesa: "Focar na nulidade da busca domiciliar",
+    assistidoId: 5,
+    assistidoNome: "Diego Bonfim Almeida",
+    assistidoPreso: true,
+    processoId: 1,
+    numeroAutos: "8012906-74.2025.8.05.0039",
+    defensorNome: "Dr. Rodrigo",
+  },
+];
+
+const mockTimeline: TimelineEvent[] = [
+  {
+    id: 1,
+    type: "peticao",
+    title: "Resposta à Acusação protocolada",
+    description: "Petição protocolada no sistema PJe",
+    date: new Date("2026-01-15T10:30:00"),
+    icon: <FileText className="w-4 h-4" />,
+    color: "text-blue-500 bg-blue-100 dark:bg-blue-900/30",
+    processoNumero: "8012906-74.2025.8.05.0039",
   },
   {
     id: 2,
-    data: "2025-12-15",
-    tipo: "visita_carcer",
-    assunto: "Entrevista prévia ao júri",
-    resumo: "Entrevista realizada para preparação do plenário.",
+    type: "whatsapp",
+    title: "Mensagem enviada para familiar",
+    description: "Notificação de audiência enviada para Maria (Mãe)",
+    date: new Date("2026-01-14T15:20:00"),
+    icon: <MessageCircle className="w-4 h-4" />,
+    color: "text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30",
+  },
+  {
+    id: 3,
+    type: "atendimento",
+    title: "Atendimento presencial",
+    description: "Orientação sobre procedimentos da audiência de instrução",
+    date: new Date("2026-01-10T14:00:00"),
+    icon: <User className="w-4 h-4" />,
+    color: "text-violet-500 bg-violet-100 dark:bg-violet-900/30",
+  },
+  {
+    id: 4,
+    type: "decisao",
+    title: "Decisão de designação de audiência",
+    description: "Audiência de instrução designada para 25/01/2026",
+    date: new Date("2026-01-08T09:45:00"),
+    icon: <Gavel className="w-4 h-4" />,
+    color: "text-amber-500 bg-amber-100 dark:bg-amber-900/30",
+    processoNumero: "8012906-74.2025.8.05.0039",
+  },
+  {
+    id: 5,
+    type: "documento",
+    title: "Novo documento anexado",
+    description: "RG e Comprovante de Residência",
+    date: new Date("2026-01-05T11:00:00"),
+    icon: <FolderOpen className="w-4 h-4" />,
+    color: "text-rose-500 bg-rose-100 dark:bg-rose-900/30",
+  },
+  {
+    id: 6,
+    type: "notificacao",
+    title: "Prazo cadastrado",
+    description: "Resposta à Acusação - vence em 20/01/2026",
+    date: new Date("2026-01-03T08:30:00"),
+    icon: <Bell className="w-4 h-4" />,
+    color: "text-zinc-500 bg-zinc-100 dark:bg-zinc-800",
   },
 ];
 
 const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-  CADEIA_PUBLICA: { label: "Cadeia Pública", color: "text-rose-600", bgColor: "bg-rose-50" },
-  PENITENCIARIA: { label: "Penitenciária", color: "text-rose-600", bgColor: "bg-rose-50" },
-  COP: { label: "COP", color: "text-rose-600", bgColor: "bg-rose-50" },
-  HOSPITAL_CUSTODIA: { label: "Hosp. Custódia", color: "text-rose-600", bgColor: "bg-rose-50" },
-  MONITORADO: { label: "Monitorado", color: "text-amber-600", bgColor: "bg-amber-50" },
-  DOMICILIAR: { label: "Domiciliar", color: "text-orange-500", bgColor: "bg-orange-50" },
-  SOLTO: { label: "Solto", color: "text-emerald-600", bgColor: "bg-emerald-50" },
+  CADEIA_PUBLICA: { label: "Cadeia Pública", color: "text-rose-600", bgColor: "bg-rose-50 dark:bg-rose-900/20" },
+  PENITENCIARIA: { label: "Penitenciária", color: "text-rose-600", bgColor: "bg-rose-50 dark:bg-rose-900/20" },
+  COP: { label: "COP", color: "text-rose-600", bgColor: "bg-rose-50 dark:bg-rose-900/20" },
+  HOSPITAL_CUSTODIA: { label: "Hosp. Custódia", color: "text-rose-600", bgColor: "bg-rose-50 dark:bg-rose-900/20" },
+  MONITORADO: { label: "Monitorado", color: "text-amber-600", bgColor: "bg-amber-50 dark:bg-amber-900/20" },
+  DOMICILIAR: { label: "Domiciliar", color: "text-orange-500", bgColor: "bg-orange-50 dark:bg-orange-900/20" },
+  SOLTO: { label: "Solto", color: "text-emerald-600", bgColor: "bg-emerald-50 dark:bg-emerald-900/20" },
 };
+
+// ==========================================
+// COMPONENTES
+// ==========================================
+
+function HealthScoreCard({ score }: { score: HealthScore }) {
+  const getScoreColor = (value: number) => {
+    if (value >= 80) return "text-emerald-600 dark:text-emerald-400";
+    if (value >= 50) return "text-amber-600 dark:text-amber-400";
+    return "text-rose-600 dark:text-rose-400";
+  };
+
+  const getProgressColor = (value: number) => {
+    if (value >= 80) return "bg-emerald-500";
+    if (value >= 50) return "bg-amber-500";
+    return "bg-rose-500";
+  };
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+          <Activity className="w-4 h-4" />
+          Health Score
+        </h3>
+        <span className={cn("text-2xl font-bold", getScoreColor(score.overall))}>
+          {score.overall}%
+        </span>
+      </div>
+      
+      <div className="relative h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden mb-4">
+        <div 
+          className={cn("h-full transition-all duration-500", getProgressColor(score.overall))}
+          style={{ width: `${score.overall}%` }}
+        />
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <div>
+          <p className={cn(
+            "text-lg font-bold",
+            score.prazos === "ok" ? "text-emerald-600" : 
+            score.prazos === "warning" ? "text-amber-600" : "text-rose-600"
+          )}>
+            {score.demandas}
+          </p>
+          <p className="text-[10px] text-zinc-500 uppercase">Prazos</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-zinc-700 dark:text-zinc-300">{score.processos}</p>
+          <p className="text-[10px] text-zinc-500 uppercase">Processos</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-blue-600">{score.audiencias}</p>
+          <p className="text-[10px] text-zinc-500 uppercase">Audiências</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function TimelineItem({ event, isLast }: { event: TimelineEvent; isLast: boolean }) {
+  return (
+    <div className="flex gap-4">
+      {/* Icon */}
+      <div className="flex flex-col items-center">
+        <div className={cn("p-2 rounded-full", event.color)}>
+          {event.icon}
+        </div>
+        {!isLast && (
+          <div className="w-0.5 flex-1 bg-zinc-200 dark:bg-zinc-700 mt-2" />
+        )}
+      </div>
+
+      {/* Content */}
+      <div className={cn("flex-1 pb-6", isLast && "pb-0")}>
+        <div className="flex items-start justify-between">
+          <div>
+            <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              {event.title}
+            </h4>
+            {event.description && (
+              <p className="text-xs text-zinc-500 mt-0.5">{event.description}</p>
+            )}
+            {event.processoNumero && (
+              <Badge variant="outline" className="mt-2 text-[10px] font-mono">
+                {event.processoNumero}
+              </Badge>
+            )}
+          </div>
+          <span className="text-xs text-zinc-400 flex-shrink-0">
+            {formatDistanceToNow(event.date, { addSuffix: true, locale: ptBR })}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuickStatCard({ 
+  icon, 
+  label, 
+  value, 
+  color,
+  onClick,
+}: { 
+  icon: React.ReactNode; 
+  label: string; 
+  value: string | number;
+  color: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Card 
+      className={cn(
+        "p-4 cursor-pointer hover:shadow-md transition-shadow",
+        onClick && "hover:border-zinc-300 dark:hover:border-zinc-600"
+      )}
+      onClick={onClick}
+    >
+      <div className="flex items-center gap-3">
+        <div className={cn("p-2 rounded-lg", color)}>
+          {icon}
+        </div>
+        <div>
+          <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{value}</p>
+          <p className="text-xs text-zinc-500">{label}</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ==========================================
+// PÁGINA PRINCIPAL
+// ==========================================
 
 export default function AssistidoDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { config } = useAssignment();
-  const id = params.id;
+  const [activeTab, setActiveTab] = useState("resumo");
 
-  // Em produção, buscar dados via TRPC
   const assistido = mockAssistido;
-
   const idade = assistido.dataNascimento
     ? differenceInYears(new Date(), parseISO(assistido.dataNascimento))
     : null;
 
   const status = statusConfig[assistido.statusPrisional] || statusConfig.SOLTO;
-  const isPreso = assistido.statusPrisional !== "SOLTO" && assistido.statusPrisional !== "MONITORADO";
+  const isPreso = !["SOLTO", "MONITORADO"].includes(assistido.statusPrisional);
+
+  // Health Score calculado
+  const healthScore: HealthScore = {
+    overall: isPreso ? 45 : 78,
+    prazos: mockDemandas.some(d => d.urgente) ? "warning" : "ok",
+    prisao: isPreso ? "preso" : "solto",
+    processos: mockProcessos.length,
+    demandas: mockDemandas.length,
+    audiencias: mockAudiencias.length,
+  };
+
+  const handleTeoriaUpdate = async (
+    field: "teoriaFatos" | "teoriaProvas" | "teoriaDireito",
+    value: string
+  ) => {
+    console.log("Atualizando", field, "com:", value);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.back()}
-            className="rounded-xl"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Perfil do Assistido</h1>
-            <p className="text-sm text-muted-foreground">
-              Informações completas e histórico
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <MessageCircle className="h-4 w-4" />
-            WhatsApp
-          </Button>
-          <Button
-            size="sm"
-            className="gap-2"
-            style={{ backgroundColor: config.accentColor }}
-          >
-            <Edit className="h-4 w-4" />
-            Editar
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-xl">
-                <MoreHorizontal className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <FileText className="mr-2 h-4 w-4" />
-                Gerar Relatório
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Calendar className="mr-2 h-4 w-4" />
-                Agendar Atendimento
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                Arquivar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+    <TooltipProvider>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="sm" onClick={() => router.back()}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
 
-      {/* Card Principal */}
-      <Card className={isPreso ? "border-l-4 border-l-rose-400" : ""}>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-6">
             {/* Avatar e Info Básica */}
-            <div className="flex flex-col items-center md:items-start gap-4">
-              <Avatar className="h-28 w-28 border-4 border-white shadow-lg">
-                <AvatarImage src={assistido.photoUrl || undefined} />
-                <AvatarFallback
-                  className="text-2xl font-bold"
-                  style={{
-                    background: isPreso ? "hsl(350, 55%, 95%)" : config.accentColorLight,
-                    color: isPreso ? "hsl(350, 55%, 50%)" : config.accentColor,
-                  }}
-                >
-                  {getInitials(assistido.nome)}
-                </AvatarFallback>
-              </Avatar>
-              
-              {/* Status Badge */}
-              <Badge className={`${status.bgColor} ${status.color} border-0 px-3 py-1`}>
-                {status.label}
-              </Badge>
-            </div>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Avatar className={cn(
+                  "h-20 w-20 ring-4",
+                  isPreso ? "ring-rose-500/30" : "ring-emerald-500/30"
+                )}>
+                  <AvatarImage src={assistido.photoUrl || undefined} />
+                  <AvatarFallback
+                    className="text-xl font-bold"
+                    style={{
+                      background: isPreso ? "hsl(350, 55%, 95%)" : config.accentColorLight,
+                      color: isPreso ? "hsl(350, 55%, 50%)" : config.accentColor,
+                    }}
+                  >
+                    {getInitials(assistido.nome)}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Status Indicator */}
+                <div className={cn(
+                  "absolute -bottom-1 -right-1 p-1.5 rounded-full border-2 border-white dark:border-zinc-900",
+                  isPreso ? "bg-rose-500" : "bg-emerald-500"
+                )}>
+                  {isPreso ? (
+                    <Lock className="w-3 h-3 text-white" />
+                  ) : (
+                    <Unlock className="w-3 h-3 text-white" />
+                  )}
+                </div>
+                {/* Photo Edit Button */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="absolute -bottom-1 -left-1 h-6 w-6 p-0 rounded-full"
+                    >
+                      <Camera className="w-3 h-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Alterar foto</TooltipContent>
+                </Tooltip>
+              </div>
 
-            {/* Informações */}
-            <div className="flex-1 space-y-4">
               <div>
-                <h2 className="text-xl font-bold">{assistido.nome}</h2>
-                <p className="text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                    {assistido.nome}
+                  </h1>
+                  <Badge className={cn("text-xs", status.bgColor, status.color)}>
+                    {status.label}
+                  </Badge>
+                </div>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   {idade} anos • {assistido.naturalidade}
                 </p>
+                {assistido.casoTitulo && (
+                  <Link 
+                    href={`/admin/casos/${assistido.casoId}`}
+                    className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1"
+                  >
+                    <Target className="w-3 h-3" />
+                    {assistido.casoTitulo}
+                    <ChevronRight className="w-3 h-3" />
+                  </Link>
+                )}
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">CPF:</span>
-                  <span className="font-medium">{assistido.cpf}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">RG:</span>
-                  <span className="font-medium">{assistido.rg}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Nascimento:</span>
-                  <span className="font-medium">
-                    {format(parseISO(assistido.dataNascimento), "dd/MM/yyyy")}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Telefone:</span>
-                  <span className="font-medium">{assistido.telefone || "Não informado"}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Contato:</span>
-                  <span className="font-medium">
-                    {assistido.nomeContato} - {assistido.telefoneContato}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Mãe:</span>
-                  <span className="font-medium">{assistido.nomeMae}</span>
-                </div>
-              </div>
-
-              {isPreso && (
-                <div className="p-3 rounded-xl bg-rose-50/80 border border-rose-200/60">
-                  <div className="flex items-center gap-2 text-rose-700">
-                    <Building2 className="h-4 w-4" />
-                    <span className="font-medium">{assistido.unidadePrisional}</span>
-                  </div>
-                  <p className="text-xs text-rose-600 mt-1">
-                    Preso desde {format(parseISO(assistido.dataPrisao), "dd/MM/yyyy", { locale: ptBR })}
-                  </p>
-                </div>
-              )}
-
-              {assistido.endereco && (
-                <div className="flex items-start gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <span className="text-muted-foreground">{assistido.endereco}</span>
-                </div>
-              )}
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Tabs com conteúdo */}
-      <Tabs defaultValue="processos" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="processos" className="gap-2">
-            <Scale className="h-4 w-4" />
-            <span className="hidden sm:inline">Processos</span>
-          </TabsTrigger>
-          <TabsTrigger value="demandas" className="gap-2">
-            <Clock className="h-4 w-4" />
-            <span className="hidden sm:inline">Demandas</span>
-          </TabsTrigger>
-          <TabsTrigger value="inteligencia" className="gap-2">
-            <Brain className="h-4 w-4" />
-            <span className="hidden sm:inline">Inteligência</span>
-          </TabsTrigger>
-          <TabsTrigger value="atendimentos" className="gap-2">
-            <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Atendimentos</span>
-          </TabsTrigger>
-          <TabsTrigger value="documentos" className="gap-2">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Documentos</span>
-          </TabsTrigger>
-        </TabsList>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              WhatsApp
+            </Button>
+            <Button size="sm" style={{ backgroundColor: config.accentColor }}>
+              <Edit className="w-4 h-4 mr-2" />
+              Editar
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Gerar Relatório
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Agendar Atendimento
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive">
+                  Arquivar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
 
-        <TabsContent value="processos" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Processos ({mockProcessos.length})</CardTitle>
-              <Button size="sm" variant="outline" className="gap-2">
-                <Scale className="h-4 w-4" />
-                Vincular Processo
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-5 gap-4">
+          <HealthScoreCard score={healthScore} />
+          
+          <QuickStatCard
+            icon={<Scale className="w-5 h-5 text-blue-600" />}
+            label="Processos"
+            value={mockProcessos.length}
+            color="bg-blue-100 dark:bg-blue-900/30"
+          />
+          <QuickStatCard
+            icon={<Clock className="w-5 h-5 text-amber-600" />}
+            label="Prazos Pendentes"
+            value={mockDemandas.length}
+            color="bg-amber-100 dark:bg-amber-900/30"
+          />
+          <QuickStatCard
+            icon={<Calendar className="w-5 h-5 text-violet-600" />}
+            label="Audiências"
+            value={mockAudiencias.length}
+            color="bg-violet-100 dark:bg-violet-900/30"
+          />
+          <QuickStatCard
+            icon={<FolderOpen className="w-5 h-5 text-emerald-600" />}
+            label="Documentos"
+            value={12}
+            color="bg-emerald-100 dark:bg-emerald-900/30"
+          />
+        </div>
+
+        {/* Tabs de Navegação Interna */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-zinc-100 dark:bg-zinc-800 p-1">
+            <TabsTrigger value="resumo" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              Resumo
+            </TabsTrigger>
+            <TabsTrigger value="timeline" className="flex items-center gap-2">
+              <History className="w-4 h-4" />
+              Linha do Tempo
+            </TabsTrigger>
+            <TabsTrigger value="teoria" className="flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              Teoria do Caso
+            </TabsTrigger>
+            <TabsTrigger value="audiencias" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Audiências
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab: Resumo (Briefing) */}
+          <TabsContent value="resumo" className="mt-6 space-y-6">
+            <div className="grid grid-cols-3 gap-6">
+              {/* Coluna 1: Dados Pessoais */}
+              <Card className="p-5">
+                <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4 flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Dados Pessoais
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase">CPF</p>
+                    <p className="font-mono text-sm">{assistido.cpf}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase">RG</p>
+                    <p className="font-mono text-sm">{assistido.rg}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase">Data de Nascimento</p>
+                    <p className="text-sm">
+                      {format(parseISO(assistido.dataNascimento), "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase">Mãe</p>
+                    <p className="text-sm">{assistido.nomeMae}</p>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Coluna 2: Situação Prisional */}
+              <Card className={cn(
+                "p-5",
+                isPreso && "border-l-[3px] border-l-rose-500"
+              )}>
+                <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4 flex items-center gap-2">
+                  {isPreso ? <Lock className="w-4 h-4 text-rose-500" /> : <Unlock className="w-4 h-4 text-emerald-500" />}
+                  Situação Prisional
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase">Status</p>
+                    <Badge className={cn("mt-1", status.bgColor, status.color)}>
+                      {status.label}
+                    </Badge>
+                  </div>
+                  {assistido.unidadePrisional && (
+                    <div>
+                      <p className="text-[10px] text-zinc-500 uppercase">Unidade</p>
+                      <p className="text-sm">{assistido.unidadePrisional}</p>
+                    </div>
+                  )}
+                  {assistido.dataPrisao && (
+                    <div>
+                      <p className="text-[10px] text-zinc-500 uppercase">Data da Prisão</p>
+                      <p className="text-sm">
+                        {format(parseISO(assistido.dataPrisao), "dd/MM/yyyy", { locale: ptBR })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              {/* Coluna 3: Contato */}
+              <Card className="p-5">
+                <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4 flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Contato
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase">Telefone</p>
+                    <p className="text-sm">{assistido.telefone || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase">Contato Familiar</p>
+                    <p className="text-sm">{assistido.nomeContato}</p>
+                    <p className="text-xs text-zinc-500">{assistido.telefoneContato}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase">Endereço</p>
+                    <p className="text-sm">{assistido.endereco}</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Processos Vinculados */}
+            <Card className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                  <Scale className="w-4 h-4" />
+                  Processos Vinculados
+                </h3>
+                <Button variant="outline" size="sm">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Novo Processo
+                </Button>
+              </div>
+              <div className="space-y-2">
                 {mockProcessos.map((processo) => (
                   <Link
                     key={processo.id}
                     href={`/admin/processos/${processo.id}`}
-                    className="flex items-center justify-between p-4 rounded-xl border hover:bg-accent/50 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                   >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className="h-10 w-10 rounded-lg flex items-center justify-center"
-                        style={{ background: config.accentColorLight }}
-                      >
-                        <Scale className="h-5 w-5" style={{ color: config.accentColor }} />
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "p-2 rounded-lg",
+                        processo.isJuri 
+                          ? "bg-rose-100 dark:bg-rose-900/30" 
+                          : "bg-blue-100 dark:bg-blue-900/30"
+                      )}>
+                        <Scale className={cn(
+                          "w-4 h-4",
+                          processo.isJuri ? "text-rose-600" : "text-blue-600"
+                        )} />
                       </div>
                       <div>
-                        <p className="font-mono text-sm font-medium">{processo.numeroAutos}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {processo.vara} • {processo.comarca}
+                        <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100">
+                          {processo.numeroAutos}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          {processo.vara} - {processo.comarca}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{processo.fase}</Badge>
-                      <Badge
-                        className={
-                          processo.situacao === "ativo"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-slate-100 text-slate-700"
-                        }
-                      >
-                        {processo.situacao}
+                      <Badge variant="outline" className="text-xs">
+                        {processo.fase}
                       </Badge>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="demandas" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Demandas Pendentes ({mockDemandas.length})</CardTitle>
-              <Button size="sm" variant="outline" className="gap-2">
-                <Clock className="h-4 w-4" />
-                Nova Demanda
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {mockDemandas.map((demanda) => (
-                  <Link
-                    key={demanda.id}
-                    href={`/admin/demandas/${demanda.id}`}
-                    className="flex items-center justify-between p-4 rounded-xl border hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                        <Clock className="h-5 w-5 text-amber-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{demanda.ato}</p>
-                        <p className="text-xs text-muted-foreground font-mono">
-                          {demanda.processo}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        Prazo: {format(parseISO(demanda.prazo), "dd/MM/yyyy")}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="inteligencia" className="space-y-4">
-          {/* Header da Inteligência */}
-          <Card className="border-violet-200 dark:border-violet-800/30 bg-gradient-to-br from-violet-50/50 to-white dark:from-violet-950/20 dark:to-background">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-lg">
-                    <Brain className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Inteligência Defensiva</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Ferramentas OSINT e investigação para {assistido.nome.split(' ')[0]}
-                    </p>
-                  </div>
-                </div>
-                <Link href={`/admin/inteligencia?assistido=${id}`}>
-                  <Button variant="outline" className="gap-2 text-violet-600 border-violet-200 hover:bg-violet-50">
-                    <Target className="h-4 w-4" />
-                    Central Completa
-                  </Button>
-                </Link>
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Busca Rápida */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Search className="h-5 w-5 text-violet-600" />
-                Busca Rápida por Nome
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <a
-                  href={`https://www.google.com/search?q="${encodeURIComponent(assistido.nome)}"`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
-                >
-                  <Globe className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium">Google</span>
-                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-                <a
-                  href={`https://www.facebook.com/search/top?q=${encodeURIComponent(assistido.nome)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
-                >
-                  <Facebook className="h-5 w-5 text-blue-700" />
-                  <span className="text-sm font-medium">Facebook</span>
-                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-                <a
-                  href={`https://www.instagram.com/${encodeURIComponent(assistido.nome.toLowerCase().replace(/ /g, ''))}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
-                >
-                  <Instagram className="h-5 w-5 text-pink-600" />
-                  <span className="text-sm font-medium">Instagram</span>
-                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-                <a
-                  href={`https://news.google.com/search?q=${encodeURIComponent(assistido.nome)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
-                >
-                  <Newspaper className="h-5 w-5 text-slate-600" />
-                  <span className="text-sm font-medium">Notícias</span>
-                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Consultas Processuais */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Scale className="h-5 w-5 text-violet-600" />
-                Consultas Processuais
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <a
-                  href={`https://www.escavador.com/busca?q=${encodeURIComponent(assistido.nome)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
-                >
-                  <Database className="h-5 w-5 text-violet-600" />
-                  <span className="text-sm font-medium">Escavador</span>
-                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-                <a
-                  href={`https://www.jusbrasil.com.br/busca?q=${encodeURIComponent(assistido.nome)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
-                >
-                  <Scale className="h-5 w-5 text-slate-700" />
-                  <span className="text-sm font-medium">JusBrasil</span>
-                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-                <a
-                  href="https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-xl border hover:bg-accent/50 transition-colors group"
-                >
-                  <Gavel className="h-5 w-5 text-slate-700" />
-                  <span className="text-sm font-medium">TJBA PJe</span>
-                  <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Dados para Investigação */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Database className="h-5 w-5 text-violet-600" />
-                Dados para Investigação
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-muted/30 space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identificação</p>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">Nome:</span> <span className="font-medium">{assistido.nome}</span></p>
-                    <p><span className="text-muted-foreground">CPF:</span> <span className="font-mono">{assistido.cpf}</span></p>
-                    <p><span className="text-muted-foreground">RG:</span> <span className="font-mono">{assistido.rg}</span></p>
-                    <p><span className="text-muted-foreground">Nascimento:</span> {assistido.dataNascimento && format(parseISO(assistido.dataNascimento), "dd/MM/yyyy")}</p>
-                    <p><span className="text-muted-foreground">Mãe:</span> {assistido.nomeMae}</p>
-                  </div>
-                </div>
-                <div className="p-4 rounded-xl bg-muted/30 space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Contato e Localização</p>
-                  <div className="space-y-1 text-sm">
-                    {assistido.telefone && (
-                      <p><span className="text-muted-foreground">Telefone:</span> <span className="font-mono">{assistido.telefone}</span></p>
-                    )}
-                    {assistido.telefoneContato && (
-                      <p><span className="text-muted-foreground">Contato:</span> <span className="font-mono">{assistido.telefoneContato}</span> ({assistido.nomeContato})</p>
-                    )}
-                    {assistido.endereco && (
-                      <p><span className="text-muted-foreground">Endereço:</span> {assistido.endereco}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Link para Central Completa */}
-          <div className="flex justify-center pt-4">
-            <Link href={`/admin/inteligencia?assistido=${id}`}>
-              <Button size="lg" className="gap-2 bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 shadow-lg">
-                <Brain className="h-5 w-5" />
-                Acessar Central de Inteligência Completa
-                <ExternalLink className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="atendimentos" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Histórico de Atendimentos</CardTitle>
-              <Button size="sm" variant="outline" className="gap-2">
-                <Calendar className="h-4 w-4" />
-                Registrar Atendimento
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {mockAtendimentos.map((atendimento) => (
-                  <div
-                    key={atendimento.id}
-                    className="p-4 rounded-xl border"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">
-                          {atendimento.tipo === "presencial" ? "Presencial" : "Visita Carcerária"}
+                      {processo.isJuri && (
+                        <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[10px]">
+                          Júri
                         </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {format(parseISO(atendimento.data), "dd/MM/yyyy")}
-                        </span>
-                      </div>
+                      )}
+                      <ChevronRight className="w-4 h-4 text-zinc-400" />
                     </div>
-                    <p className="font-medium text-sm">{atendimento.assunto}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{atendimento.resumo}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </Card>
 
-        <TabsContent value="documentos" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Documentos</CardTitle>
-              <Button size="sm" variant="outline" className="gap-2">
-                <FileText className="h-4 w-4" />
-                Upload
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                <p className="text-muted-foreground">Nenhum documento cadastrado</p>
-                <Button variant="link" className="mt-2">
-                  Adicionar primeiro documento
+            {/* Prazos Pendentes */}
+            <Card className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Prazos Pendentes
+                </h3>
+                <Button variant="outline" size="sm">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Nova Demanda
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div className="space-y-2">
+                {mockDemandas.map((demanda) => (
+                  <div
+                    key={demanda.id}
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg",
+                      demanda.urgente 
+                        ? "bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800"
+                        : "bg-zinc-50 dark:bg-zinc-900"
+                    )}
+                  >
+                    <div>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {demanda.ato}
+                      </p>
+                      <p className="text-xs text-zinc-500 font-mono">
+                        {demanda.processo}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {demanda.urgente && (
+                        <AlertTriangle className="w-4 h-4 text-rose-500" />
+                      )}
+                      <Badge variant="outline" className={cn(
+                        "text-xs",
+                        demanda.urgente && "border-rose-300 text-rose-700"
+                      )}>
+                        {format(parseISO(demanda.prazo), "dd/MM/yyyy", { locale: ptBR })}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </TabsContent>
 
-      {/* Observações */}
-      {assistido.observacoes && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              Observações
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">{assistido.observacoes}</p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          {/* Tab: Linha do Tempo */}
+          <TabsContent value="timeline" className="mt-6">
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <History className="w-5 h-5" />
+                  Histórico Completo
+                </h3>
+                <p className="text-sm text-zinc-500">
+                  {mockTimeline.length} eventos registrados
+                </p>
+              </div>
+              
+              <div className="space-y-0">
+                {mockTimeline.map((event, idx) => (
+                  <TimelineItem 
+                    key={event.id} 
+                    event={event} 
+                    isLast={idx === mockTimeline.length - 1}
+                  />
+                ))}
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Teoria do Caso */}
+          <TabsContent value="teoria" className="mt-6">
+            <TeoriaDoCaso
+              casoId={assistido.casoId || 0}
+              teoriaFatos={assistido.teoriaFatos}
+              teoriaProvas={assistido.teoriaProvas}
+              teoriaDireito={assistido.teoriaDireito}
+              linkDrive={assistido.linkDrive}
+              onUpdate={handleTeoriaUpdate}
+            />
+          </TabsContent>
+
+          {/* Tab: Audiências */}
+          <TabsContent value="audiencias" className="mt-6">
+            <AudienciasHub audiencias={mockAudiencias} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </TooltipProvider>
   );
 }
