@@ -425,10 +425,8 @@ export default function CasosPage() {
 
   const filteredCasos = useMemo(() => {
     return MOCK_CASOS.filter((caso) => {
-      // Filtro por workspace
-      const matchesWorkspace = 
-        currentAssignment === "all" || 
-        caso.atribuicao === currentAssignment;
+      // Filtro por workspace (sempre true em mock, em produção filtrar por atribuição)
+      const matchesWorkspace = caso.atribuicao === currentAssignment || true;
 
       // Filtro por busca
       const matchesSearch =

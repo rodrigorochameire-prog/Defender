@@ -80,27 +80,25 @@ export const casosRouter = router({
         search: z.string().optional(),
         limit: z.number().min(1).max(100).default(50),
         offset: z.number().default(0),
-      }).optional()
+      })
     )
     .query(async ({ input }) => {
-      const filters = input || {};
-      
       const conditions = [isNull(casos.deletedAt)];
       
-      if (filters.atribuicao) {
-        conditions.push(eq(casos.atribuicao, filters.atribuicao as any));
+      if (input.atribuicao) {
+        conditions.push(eq(casos.atribuicao, input.atribuicao as any));
       }
       
-      if (filters.status) {
-        conditions.push(eq(casos.status, filters.status));
+      if (input.status) {
+        conditions.push(eq(casos.status, input.status));
       }
       
-      if (filters.fase) {
-        conditions.push(eq(casos.fase, filters.fase));
+      if (input.fase) {
+        conditions.push(eq(casos.fase, input.fase));
       }
       
-      if (filters.search) {
-        conditions.push(ilike(casos.titulo, `%${filters.search}%`));
+      if (input.search) {
+        conditions.push(ilike(casos.titulo, `%${input.search}%`));
       }
 
       const result = await db
@@ -123,8 +121,8 @@ export const casosRouter = router({
         .from(casos)
         .where(and(...conditions))
         .orderBy(desc(casos.createdAt))
-        .limit(filters.limit)
-        .offset(filters.offset);
+        .limit(input.limit)
+        .offset(input.offset);
 
       // Buscar contagens de assistidos, processos e demandas para cada caso
       // Em uma implementação real, isso seria feito com subqueries ou views
