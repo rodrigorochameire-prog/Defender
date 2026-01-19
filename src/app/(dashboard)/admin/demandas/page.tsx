@@ -2722,39 +2722,70 @@ export default function DemandasPage() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[350px] sm:max-h-none overflow-y-auto">
-                {demandas.filter(d => d.status === "2_ATENDER").map((demanda) => (
-                  <div
-                    key={demanda.id}
-                    onClick={() => handleOpenEdit(demanda)}
-                    className={cn(
-                      "p-2 sm:p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
-                      demanda.reuPreso 
-                        ? "border-l-2 border-l-rose-300 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
-                        : "bg-card border-border/60 hover:border-amber-200"
-                    )}
-                  >
-                    {demanda.reuPreso && (
-                      <Badge className="bg-rose-100 text-rose-700 text-[9px] sm:text-[10px] mb-1.5 sm:mb-2 font-medium">
-                        <Lock className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-0.5 sm:mr-1" />
-                        Preso
-                      </Badge>
-                    )}
-                    <p className="font-medium text-xs sm:text-sm line-clamp-1">{demanda.assistido}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{demanda.ato}</p>
-                    <div className="flex items-center justify-between mt-1.5 sm:mt-2">
-                      <span className={cn("text-[10px] sm:text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
-                        {getPrazoInfo(demanda.prazo).text}
-                      </span>
-                      <AreaBadge area={demanda.area} />
+              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[400px] overflow-y-auto">
+                {demandas.filter(d => d.status === "2_ATENDER").map((demanda) => {
+                  const prazoInfo = getPrazoInfo(demanda.prazo);
+                  const tipoAtoConfig = tipoAtoOptions.find(t => t.value === demanda.tipoAto);
+                  return (
+                    <div
+                      key={demanda.id}
+                      onClick={() => handleOpenEdit(demanda)}
+                      className={cn(
+                        "p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md",
+                        demanda.reuPreso 
+                          ? "border-l-3 border-l-rose-500 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
+                          : "bg-card border-border/60 hover:border-amber-300"
+                      )}
+                    >
+                      {/* Badges */}
+                      <div className="flex items-center gap-1 flex-wrap mb-1.5">
+                        {demanda.reuPreso && (
+                          <Badge className="bg-rose-600 text-white text-[8px] px-1 py-0 h-4">
+                            <Lock className="h-2 w-2 mr-0.5" />
+                            PRESO
+                          </Badge>
+                        )}
+                        {tipoAtoConfig && (
+                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                            {tipoAtoConfig.label}
+                          </Badge>
+                        )}
+                      </div>
+                      {/* Assistido */}
+                      <p className="font-semibold text-xs sm:text-sm line-clamp-1 text-zinc-900 dark:text-zinc-100">{demanda.assistido}</p>
+                      {/* Ato */}
+                      <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
+                      {/* Processo */}
+                      {demanda.processo && (
+                        <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                          {demanda.processo}
+                        </p>
+                      )}
+                      {/* Prazo */}
+                      <div className={cn(
+                        "flex items-center gap-1 mt-2 text-[10px] sm:text-xs px-1.5 py-0.5 rounded w-fit",
+                        prazoInfo.urgent 
+                          ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 font-medium" 
+                          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                      )}>
+                        <Clock className="h-2.5 w-2.5" />
+                        {demanda.prazo ? format(parseISO(demanda.prazo), "dd/MM/yy", { locale: ptBR }) : "Sem prazo"}
+                        {prazoInfo.urgent && <span className="font-bold">({prazoInfo.text})</span>}
+                      </div>
+                      {/* Providências preview */}
+                      {demanda.providencias && (
+                        <p className="text-[9px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
+                          {demanda.providencias}
+                        </p>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
 
             {/* Coluna Em Fila */}
-            <Card className="section-card overflow-hidden w-[280px] sm:w-auto flex-shrink-0">
+            <Card className="section-card overflow-hidden w-[300px] sm:w-auto flex-shrink-0">
               <CardHeader className="p-2.5 sm:pb-3 border-b border-indigo-100 dark:border-indigo-900/30 bg-gradient-to-r from-indigo-50/80 to-transparent dark:from-indigo-950/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 sm:gap-2">
@@ -2762,43 +2793,74 @@ export default function DemandasPage() {
                     <CardTitle className="text-xs sm:text-sm font-medium text-indigo-700 dark:text-indigo-400">Em Fila</CardTitle>
                   </div>
                   <Badge variant="outline" className="text-indigo-600 border-indigo-200 bg-indigo-50/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                    {demandas.filter(d => d.status === "5_FILA" || d.status === "6_ELABORANDO").length}
+                    {demandas.filter(d => d.status === "5_FILA" || d.status === "2_ELABORANDO").length}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[350px] sm:max-h-none overflow-y-auto">
-                {demandas.filter(d => d.status === "5_FILA" || d.status === "6_ELABORANDO").map((demanda) => (
-                  <div
-                    key={demanda.id}
-                    onClick={() => handleOpenEdit(demanda)}
-                    className={cn(
-                      "p-2 sm:p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
-                      demanda.reuPreso 
-                        ? "border-l-2 border-l-rose-300 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
-                        : "bg-card border-border/60 hover:border-indigo-200"
-                    )}
-                  >
-                    {demanda.reuPreso && (
-                      <Badge className="bg-rose-100 text-rose-700 text-[9px] sm:text-[10px] mb-1.5 sm:mb-2 font-medium">
-                        <Lock className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-0.5 sm:mr-1" />
-                        Preso
-                      </Badge>
-                    )}
-                    <p className="font-medium text-xs sm:text-sm line-clamp-1">{demanda.assistido}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{demanda.ato}</p>
-                    <div className="flex items-center justify-between mt-1.5 sm:mt-2">
-                      <span className={cn("text-[10px] sm:text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
-                        {getPrazoInfo(demanda.prazo).text}
-                      </span>
-                      <AreaBadge area={demanda.area} />
+              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[400px] overflow-y-auto">
+                {demandas.filter(d => d.status === "5_FILA" || d.status === "2_ELABORANDO").map((demanda) => {
+                  const prazoInfo = getPrazoInfo(demanda.prazo);
+                  const tipoAtoConfig = tipoAtoOptions.find(t => t.value === demanda.tipoAto);
+                  return (
+                    <div
+                      key={demanda.id}
+                      onClick={() => handleOpenEdit(demanda)}
+                      className={cn(
+                        "p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md",
+                        demanda.reuPreso 
+                          ? "border-l-3 border-l-rose-500 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
+                          : "bg-card border-border/60 hover:border-indigo-300"
+                      )}
+                    >
+                      {/* Badges */}
+                      <div className="flex items-center gap-1 flex-wrap mb-1.5">
+                        {demanda.reuPreso && (
+                          <Badge className="bg-rose-600 text-white text-[8px] px-1 py-0 h-4">
+                            <Lock className="h-2 w-2 mr-0.5" />
+                            PRESO
+                          </Badge>
+                        )}
+                        {tipoAtoConfig && (
+                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                            {tipoAtoConfig.label}
+                          </Badge>
+                        )}
+                      </div>
+                      {/* Assistido */}
+                      <p className="font-semibold text-xs sm:text-sm line-clamp-1 text-zinc-900 dark:text-zinc-100">{demanda.assistido}</p>
+                      {/* Ato */}
+                      <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
+                      {/* Processo */}
+                      {demanda.processo && (
+                        <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                          {demanda.processo}
+                        </p>
+                      )}
+                      {/* Prazo */}
+                      <div className={cn(
+                        "flex items-center gap-1 mt-2 text-[10px] sm:text-xs px-1.5 py-0.5 rounded w-fit",
+                        prazoInfo.urgent 
+                          ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 font-medium" 
+                          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                      )}>
+                        <Clock className="h-2.5 w-2.5" />
+                        {demanda.prazo ? format(parseISO(demanda.prazo), "dd/MM/yy", { locale: ptBR }) : "Sem prazo"}
+                        {prazoInfo.urgent && <span className="font-bold">({prazoInfo.text})</span>}
+                      </div>
+                      {/* Providências preview */}
+                      {demanda.providencias && (
+                        <p className="text-[9px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
+                          {demanda.providencias}
+                        </p>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
 
             {/* Coluna Monitorar */}
-            <Card className="section-card overflow-hidden w-[280px] sm:w-auto flex-shrink-0">
+            <Card className="section-card overflow-hidden w-[300px] sm:w-auto flex-shrink-0">
               <CardHeader className="p-2.5 sm:pb-3 border-b border-sky-100 dark:border-sky-900/30 bg-gradient-to-r from-sky-50/80 to-transparent dark:from-sky-950/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 sm:gap-2">
@@ -2810,39 +2872,70 @@ export default function DemandasPage() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[350px] sm:max-h-none overflow-y-auto">
-                {demandas.filter(d => d.status === "4_MONITORAR").map((demanda) => (
-                  <div
-                    key={demanda.id}
-                    onClick={() => handleOpenEdit(demanda)}
-                    className={cn(
-                      "p-2 sm:p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
-                      demanda.reuPreso 
-                        ? "border-l-2 border-l-rose-300 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
-                        : "bg-card border-border/60 hover:border-sky-200"
-                    )}
-                  >
-                    {demanda.reuPreso && (
-                      <Badge className="bg-rose-100 text-rose-700 text-[9px] sm:text-[10px] mb-1.5 sm:mb-2 font-medium">
-                        <Lock className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-0.5 sm:mr-1" />
-                        Preso
-                      </Badge>
-                    )}
-                    <p className="font-medium text-xs sm:text-sm line-clamp-1">{demanda.assistido}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{demanda.ato}</p>
-                    <div className="flex items-center justify-between mt-1.5 sm:mt-2">
-                      <span className={cn("text-[10px] sm:text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
-                        {getPrazoInfo(demanda.prazo).text}
-                      </span>
-                      <AreaBadge area={demanda.area} />
+              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[400px] overflow-y-auto">
+                {demandas.filter(d => d.status === "4_MONITORAR").map((demanda) => {
+                  const prazoInfo = getPrazoInfo(demanda.prazo);
+                  const tipoAtoConfig = tipoAtoOptions.find(t => t.value === demanda.tipoAto);
+                  return (
+                    <div
+                      key={demanda.id}
+                      onClick={() => handleOpenEdit(demanda)}
+                      className={cn(
+                        "p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md",
+                        demanda.reuPreso 
+                          ? "border-l-3 border-l-rose-500 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
+                          : "bg-card border-border/60 hover:border-sky-300"
+                      )}
+                    >
+                      {/* Badges */}
+                      <div className="flex items-center gap-1 flex-wrap mb-1.5">
+                        {demanda.reuPreso && (
+                          <Badge className="bg-rose-600 text-white text-[8px] px-1 py-0 h-4">
+                            <Lock className="h-2 w-2 mr-0.5" />
+                            PRESO
+                          </Badge>
+                        )}
+                        {tipoAtoConfig && (
+                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                            {tipoAtoConfig.label}
+                          </Badge>
+                        )}
+                      </div>
+                      {/* Assistido */}
+                      <p className="font-semibold text-xs sm:text-sm line-clamp-1 text-zinc-900 dark:text-zinc-100">{demanda.assistido}</p>
+                      {/* Ato */}
+                      <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
+                      {/* Processo */}
+                      {demanda.processo && (
+                        <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                          {demanda.processo}
+                        </p>
+                      )}
+                      {/* Prazo */}
+                      <div className={cn(
+                        "flex items-center gap-1 mt-2 text-[10px] sm:text-xs px-1.5 py-0.5 rounded w-fit",
+                        prazoInfo.urgent 
+                          ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 font-medium" 
+                          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                      )}>
+                        <Clock className="h-2.5 w-2.5" />
+                        {demanda.prazo ? format(parseISO(demanda.prazo), "dd/MM/yy", { locale: ptBR }) : "Sem prazo"}
+                        {prazoInfo.urgent && <span className="font-bold">({prazoInfo.text})</span>}
+                      </div>
+                      {/* Providências preview */}
+                      {demanda.providencias && (
+                        <p className="text-[9px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
+                          {demanda.providencias}
+                        </p>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
 
             {/* Coluna Protocolado */}
-            <Card className="section-card overflow-hidden w-[280px] sm:w-auto flex-shrink-0">
+            <Card className="section-card overflow-hidden w-[300px] sm:w-auto flex-shrink-0">
               <CardHeader className="p-2.5 sm:pb-3 border-b border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50/80 to-transparent dark:from-emerald-950/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 sm:gap-2">
@@ -2850,28 +2943,45 @@ export default function DemandasPage() {
                     <CardTitle className="text-xs sm:text-sm font-medium text-emerald-700 dark:text-emerald-400">Concluído</CardTitle>
                   </div>
                   <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                    {demandas.filter(d => d.status === "7_PROTOCOLADO" || d.status === "7_CIENCIA").length}
+                    {demandas.filter(d => d.status.startsWith("7_")).length}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[350px] sm:max-h-none overflow-y-auto">
-                {demandas.filter(d => d.status === "7_PROTOCOLADO" || d.status === "7_CIENCIA").map((demanda) => (
-                  <div
-                    key={demanda.id}
-                    onClick={() => handleOpenEdit(demanda)}
-                    className="p-2 sm:p-3 rounded-lg border bg-card border-border/60 hover:border-emerald-200 cursor-pointer transition-all hover:shadow-sm"
-                  >
-                    <p className="font-medium text-xs sm:text-sm line-clamp-1">{demanda.assistido}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{demanda.ato}</p>
-                    <div className="flex items-center justify-between mt-1.5 sm:mt-2">
-                      <Badge className="bg-emerald-100 text-emerald-700 text-[9px] sm:text-[10px] font-medium">
-                        <CheckCircle2 className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-0.5 sm:mr-1" />
-                        Concluído
-                      </Badge>
-                      <AreaBadge area={demanda.area} />
+              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[400px] overflow-y-auto">
+                {demandas.filter(d => d.status.startsWith("7_")).map((demanda) => {
+                  const tipoAtoConfig = tipoAtoOptions.find(t => t.value === demanda.tipoAto);
+                  const statusConfig = getStatusConfig(demanda.status);
+                  return (
+                    <div
+                      key={demanda.id}
+                      onClick={() => handleOpenEdit(demanda)}
+                      className="p-2.5 sm:p-3 rounded-lg border bg-card border-border/60 hover:border-emerald-300 cursor-pointer transition-all hover:shadow-md"
+                    >
+                      {/* Badges */}
+                      <div className="flex items-center gap-1 flex-wrap mb-1.5">
+                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 text-[8px] px-1 py-0 h-4">
+                          <CheckCircle2 className="h-2 w-2 mr-0.5" />
+                          {statusConfig.label}
+                        </Badge>
+                        {tipoAtoConfig && (
+                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                            {tipoAtoConfig.label}
+                          </Badge>
+                        )}
+                      </div>
+                      {/* Assistido */}
+                      <p className="font-semibold text-xs sm:text-sm line-clamp-1 text-zinc-900 dark:text-zinc-100">{demanda.assistido}</p>
+                      {/* Ato */}
+                      <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
+                      {/* Processo */}
+                      {demanda.processo && (
+                        <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                          {demanda.processo}
+                        </p>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
             </div>
