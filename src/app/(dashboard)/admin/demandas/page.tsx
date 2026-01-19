@@ -2034,13 +2034,36 @@ export default function DemandasPage() {
               const tipoAtoConfig = tipoAtoOptions.find(t => t.value === demanda.tipoAto);
               const comarcaConfig = COMARCA_OPTIONS.find(c => c.value === demanda.comarca);
               
+              // Cor da borda baseada no status
+              const getBorderColor = (status: string) => {
+                if (status.startsWith("1_")) return "border-l-red-500"; // Urgente
+                if (status.startsWith("2_")) return "border-l-amber-400"; // Trabalho
+                if (status.startsWith("3_")) return "border-l-orange-500"; // Protocolar
+                if (status.startsWith("4_")) return "border-l-sky-500"; // Delegado
+                if (status.startsWith("5_")) return "border-l-violet-500"; // Fila
+                if (status.startsWith("6_")) return "border-l-slate-500"; // Aguardando
+                if (status.startsWith("7_")) return "border-l-emerald-500"; // Concluído
+                return "border-l-zinc-300";
+              };
+
+              const getBgGradient = (status: string) => {
+                if (status.startsWith("1_")) return "bg-gradient-to-r from-red-50/40 to-transparent dark:from-red-950/20";
+                if (status.startsWith("2_")) return "bg-gradient-to-r from-amber-50/40 to-transparent dark:from-amber-950/20";
+                if (status.startsWith("3_")) return "bg-gradient-to-r from-orange-50/40 to-transparent dark:from-orange-950/20";
+                if (status.startsWith("4_")) return "bg-gradient-to-r from-sky-50/40 to-transparent dark:from-sky-950/20";
+                if (status.startsWith("5_")) return "bg-gradient-to-r from-violet-50/40 to-transparent dark:from-violet-950/20";
+                if (status.startsWith("6_")) return "bg-gradient-to-r from-slate-50/40 to-transparent dark:from-slate-950/20";
+                if (status.startsWith("7_")) return "bg-gradient-to-r from-emerald-50/40 to-transparent dark:from-emerald-950/20";
+                return "";
+              };
+
               return (
                 <Collapsible key={demanda.id} className="group">
                   <Card 
                     className={cn(
-                      "overflow-hidden transition-all duration-200 hover:shadow-lg",
-                      demanda.reuPreso && "border-l-4 border-l-rose-500 bg-gradient-to-r from-rose-50/30 to-transparent dark:from-rose-950/20",
-                      prazoInfo.urgent && !demanda.reuPreso && "border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50/30 to-transparent dark:from-amber-950/20"
+                      "overflow-hidden transition-all duration-200 hover:shadow-lg border-l-4",
+                      getBorderColor(demanda.status),
+                      getBgGradient(demanda.status)
                     )}
                   >
                     {/* HEADER - Sempre visível */}
@@ -2057,12 +2080,6 @@ export default function DemandasPage() {
                           <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 h-5", statusConfig.color, statusConfig.textColor || "text-white")}>
                             {statusConfig.label}
                           </Badge>
-                          {prazoInfo.urgent && (
-                            <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 h-5", prazoInfo.className)}>
-                              <PrazoIcon className="h-2.5 w-2.5 mr-0.5" />
-                              {prazoInfo.text}
-                            </Badge>
-                          )}
                         </div>
                         
                         <div className="flex items-center gap-1">
@@ -2112,34 +2129,51 @@ export default function DemandasPage() {
                         {demanda.assistido}
                       </h3>
 
-                      {/* Linha 3: Ato Processual */}
-                      <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 line-clamp-1">
-                        {demanda.ato || tipoAtoConfig?.label || "Sem ato definido"}
-                      </p>
+                      {/* Linha 3: Tipo de Ato + Ato Processual */}
+                      <div className="flex items-center gap-2 mb-2">
+                        {tipoAtoConfig && (
+                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1.5 py-0 h-5 bg-zinc-100 dark:bg-zinc-800">
+                            {tipoAtoConfig.label}
+                          </Badge>
+                        )}
+                        <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 font-medium line-clamp-1 flex-1">
+                          {demanda.ato || "Sem ato definido"}
+                        </p>
+                      </div>
 
-                      {/* Linha 4: Grid de Metadados Essenciais */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px] sm:text-xs">
-                        {/* Processo */}
-                        <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
+                      {/* Linha 4: Processo completo */}
+                      {demanda.processo && (
+                        <div className="flex items-center gap-1.5 mb-2 text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400">
                           <Scale className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate font-mono">
-                            {demanda.processo 
-                              ? (demanda.processo.length > 20 ? `...${demanda.processo.slice(-15)}` : demanda.processo)
-                              : "Sem processo"
-                            }
-                          </span>
+                          <span className="font-mono">{demanda.processo}</span>
                         </div>
+                      )}
 
-                        {/* Prazo */}
-                        <div className={cn("flex items-center gap-1", prazoInfo.urgent ? prazoInfo.className.split(" ")[0] : "text-zinc-600 dark:text-zinc-400")}>
-                          <Clock className="h-3 w-3 flex-shrink-0" />
+                      {/* Linha 5: Prazo com data final destacada */}
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className={cn(
+                          "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs sm:text-sm font-medium",
+                          prazoInfo.urgent 
+                            ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400" 
+                            : demanda.prazo 
+                              ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                              : "bg-zinc-50 text-zinc-400 dark:bg-zinc-900 dark:text-zinc-500"
+                        )}>
+                          <Clock className="h-3.5 w-3.5" />
                           <span>
                             {demanda.prazo 
-                              ? format(parseISO(demanda.prazo), "dd/MM/yy", { locale: ptBR })
-                              : "Sem prazo"
+                              ? `Prazo: ${format(parseISO(demanda.prazo), "dd/MM/yyyy", { locale: ptBR })}`
+                              : "Sem prazo definido"
                             }
                           </span>
+                          {prazoInfo.urgent && demanda.prazo && (
+                            <span className="text-[10px] font-bold ml-1">({prazoInfo.text})</span>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Linha 6: Grid de Metadados */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px] sm:text-xs">
 
                         {/* Local/Comarca */}
                         <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
