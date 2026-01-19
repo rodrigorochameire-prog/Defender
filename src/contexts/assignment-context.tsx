@@ -205,6 +205,7 @@ const CIVEL_MODULES: MenuSection[] = [
 export const CONTEXT_MENU_ITEMS: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
   { label: "Casos Ativos", path: "/admin/casos", icon: "Briefcase" },
+  { label: "Demandas", path: "/admin/demandas", icon: "FileText" },
   { label: "Agenda", path: "/admin/audiencias", icon: "Calendar" },
 ];
 
