@@ -291,63 +291,65 @@ function ProcessoCard({ processo }: { processo: Processo }) {
         "border-l-[4px]",
         processo.assistido.preso ? "border-l-rose-500" : "border-l-emerald-500"
       )}>
-        <div className="p-4 space-y-3">
-          {/* Cabeçalho */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0 space-y-2">
+        {/* Cabeçalho - Mobile Optimized */}
+        <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
+          <div className="flex items-start justify-between gap-2 sm:gap-3">
+            <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
               {/* Badges */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge className={cn("text-[10px]", areaConfig.bg, areaConfig.color)}>
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 py-0", areaConfig.bg, areaConfig.color)}>
                   {areaConfig.icon} {areaConfig.label}
                 </Badge>
                 
                 {processo.isJuri && (
-                  <Badge className="text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
-                    <Gavel className="w-3 h-3 mr-1" /> Júri
+                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                    <Gavel className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" /> Júri
                   </Badge>
                 )}
 
                 {prazoUrgente && diasPrazo !== null && (
-                  <Badge className="text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                    <AlertTriangle className="w-3 h-3 mr-1" />
+                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                     {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : `${diasPrazo}d`}
                   </Badge>
                 )}
               </div>
 
               {/* Número do Processo (Mono) */}
-              <div className="flex items-center gap-2 group/copy" onClick={handleCopy}>
-                <span className="font-mono text-sm text-zinc-900 dark:text-zinc-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  {processo.numeroAutos}
+              <div className="flex items-center gap-1.5 sm:gap-2 group/copy" onClick={handleCopy}>
+                <span className="font-mono text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <span className="hidden sm:inline">{processo.numeroAutos}</span>
+                  <span className="sm:hidden">{processo.numeroAutos.split('.')[0]}...</span>
                 </span>
                 {copied ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
                 ) : (
-                  <Copy className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600 opacity-0 group-hover/copy:opacity-100 transition-opacity cursor-pointer" />
+                  <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-300 dark:text-zinc-600 sm:opacity-0 sm:group-hover/copy:opacity-100 transition-opacity cursor-pointer" />
                 )}
               </div>
 
               {/* Assunto (Serifado) */}
-              <p className="font-legal text-sm text-zinc-600 dark:text-zinc-400 line-clamp-1">
+              <p className="font-legal text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 sm:line-clamp-1">
                 {processo.assunto}
               </p>
 
               {/* Localização */}
-              <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
                 <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {processo.vara} • {processo.comarca}
+                  <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
+                  <span className="truncate max-w-[120px] sm:max-w-none">{processo.vara}</span>
+                  <span className="hidden sm:inline">• {processo.comarca}</span>
                 </span>
               </div>
             </div>
 
-            {/* Ações */}
-            <div className="flex items-start gap-1">
+            {/* Ações - Sempre visíveis no mobile */}
+            <div className="flex items-start gap-0.5 sm:gap-1 flex-shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href={`/admin/processos/${processo.id}`}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Eye className="w-4 h-4" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </Button>
                   </Link>
                 </TooltipTrigger>
@@ -356,23 +358,23 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreHorizontal className="w-4 h-4" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <MoreHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <Link href={`/admin/processos/${processo.id}`}>
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem className="cursor-pointer text-sm">
                       <Eye className="w-4 h-4 mr-2" /> Ver Detalhes
                     </DropdownMenuItem>
                   </Link>
                   <Link href={`/admin/demandas?processo=${processo.id}`}>
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem className="cursor-pointer text-sm">
                       <FileText className="w-4 h-4 mr-2" /> Ver Demandas
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer">
+                  <DropdownMenuItem className="cursor-pointer text-sm">
                     <ExternalLink className="w-4 h-4 mr-2" /> Consultar no TJ
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -380,15 +382,15 @@ function ProcessoCard({ processo }: { processo: Processo }) {
             </div>
           </div>
 
-          {/* Assistido */}
-          <div className="flex items-center gap-3 py-2 border-t border-dashed border-zinc-100 dark:border-zinc-800/50">
+          {/* Assistido - Mobile Optimized */}
+          <div className="flex items-center gap-2 sm:gap-3 py-2 border-t border-dashed border-zinc-100 dark:border-zinc-800/50">
             <Avatar className={cn(
-              "w-9 h-9 ring-2",
+              "w-7 h-7 sm:w-9 sm:h-9 ring-2",
               processo.assistido.preso ? "ring-rose-500/50" : "ring-emerald-500/50"
             )}>
               <AvatarImage src={processo.assistido.foto || undefined} />
               <AvatarFallback className={cn(
-                "text-xs font-bold",
+                "text-[10px] sm:text-xs font-bold",
                 processo.assistido.preso
                   ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
                   : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400"
@@ -399,37 +401,37 @@ function ProcessoCard({ processo }: { processo: Processo }) {
             
             <div className="flex-1 min-w-0">
               <Link href={`/admin/assistidos/${processo.assistido.id}`}>
-                <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                <p className="font-medium text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   {processo.assistido.nome}
                 </p>
               </Link>
               <div className="flex items-center gap-1">
                 {processo.assistido.preso ? (
                   <>
-                    <Lock className="w-3 h-3 text-rose-500" />
-                    <span className="text-[10px] text-rose-600 dark:text-rose-400 truncate max-w-[150px]">
+                    <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-rose-500" />
+                    <span className="text-[9px] sm:text-[10px] text-rose-600 dark:text-rose-400 truncate max-w-[100px] sm:max-w-[150px]">
                       {processo.assistido.localPrisao || "Preso"}
                     </span>
                   </>
                 ) : (
                   <>
-                    <Unlock className="w-3 h-3 text-emerald-500" />
-                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400">Solto</span>
+                    <Unlock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-500" />
+                    <span className="text-[9px] sm:text-[10px] text-emerald-600 dark:text-emerald-400">Solto</span>
                   </>
                 )}
               </div>
             </div>
 
-            {/* Contadores */}
-            <div className="flex items-center gap-2">
+            {/* Contadores - Mobile Optimized */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               {processo.demandasAbertas > 0 && (
                 <Tooltip>
                   <TooltipTrigger>
                     <Badge variant="outline" className={cn(
-                      "text-[10px] font-mono",
+                      "text-[9px] sm:text-[10px] font-mono px-1.5 py-0",
                       processo.demandasAbertas > 0 ? "border-amber-200 text-amber-600 dark:border-amber-800 dark:text-amber-400" : ""
                     )}>
-                      <Clock className="w-3 h-3 mr-1" />
+                      <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                       {processo.demandasAbertas}
                     </Badge>
                   </TooltipTrigger>
@@ -437,37 +439,37 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 </Tooltip>
               )}
               
-              <Badge className={cn("text-[10px]", situacaoConfig.bg, situacaoConfig.color)}>
+              <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 py-0", situacaoConfig.bg, situacaoConfig.color)}>
                 {situacaoConfig.label}
               </Badge>
             </div>
           </div>
         </div>
 
-        {/* Conteúdo Expansível */}
+        {/* Conteúdo Expansível - Mobile Optimized */}
         <CollapsibleContent>
-          <div className="px-4 pb-4 pt-0 space-y-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
+          <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 space-y-2.5 sm:space-y-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
             {/* Próximo Prazo */}
             {processo.proximoPrazo && (
               <div className={cn(
-                "flex items-center gap-3 p-3 rounded-lg",
+                "flex items-start sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg mt-2.5 sm:mt-3",
                 prazoUrgente
                   ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
                   : "bg-zinc-100 dark:bg-zinc-800"
               )}>
                 <Clock className={cn(
-                  "w-4 h-4",
+                  "w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 sm:mt-0",
                   prazoUrgente ? "text-amber-600 dark:text-amber-400" : "text-zinc-500"
                 )} />
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className={cn(
-                    "text-xs font-medium",
+                    "text-[10px] sm:text-xs font-medium",
                     prazoUrgente ? "text-amber-700 dark:text-amber-400" : "text-zinc-700 dark:text-zinc-300"
                   )}>
                     {processo.atoProximoPrazo}
                   </p>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
-                    {format(processo.proximoPrazo, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-400">
+                    {format(processo.proximoPrazo, "dd/MM/yyyy", { locale: ptBR })}
                   </p>
                 </div>
               </div>
@@ -476,13 +478,13 @@ function ProcessoCard({ processo }: { processo: Processo }) {
             {/* Caso Vinculado */}
             {processo.casoId && processo.casoTitulo && (
               <Link href={`/admin/casos/${processo.casoId}`}>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
-                  <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
+                  <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-indigo-700 dark:text-indigo-400 truncate">
+                    <p className="text-[10px] sm:text-xs font-medium text-indigo-700 dark:text-indigo-400 truncate">
                       {processo.casoTitulo}
                     </p>
-                    <p className="text-[10px] text-indigo-600/70 dark:text-indigo-400/70">
+                    <p className="text-[9px] sm:text-[10px] text-indigo-600/70 dark:text-indigo-400/70">
                       Vinculado ao caso
                     </p>
                   </div>
@@ -492,13 +494,13 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
             {/* Último Evento */}
             {processo.ultimoEvento && (
-              <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>
+              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                <span className="truncate">
                   {processo.ultimoEvento}
                   {processo.dataUltimoEvento && (
                     <span className="ml-1 font-mono">
-                      ({format(processo.dataUltimoEvento, "dd/MM/yy")})
+                      ({format(processo.dataUltimoEvento, "dd/MM")})
                     </span>
                   )}
                 </span>
@@ -507,8 +509,8 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
             {/* Defensor */}
             {processo.defensorNome && (
-              <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                <Users className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+                <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
                 <span>{processo.defensorNome}</span>
               </div>
             )}
@@ -517,9 +519,9 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
         {/* Trigger de Expansão */}
         <CollapsibleTrigger asChild>
-          <div className="flex justify-center py-1.5 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-t border-zinc-100 dark:border-zinc-800">
-            <div className="flex items-center gap-1 text-xs text-zinc-400">
-              {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          <div className="flex justify-center py-1.5 sm:py-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-zinc-400">
+              {isOpen ? <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </div>
           </div>
         </CollapsibleTrigger>
@@ -663,170 +665,188 @@ export default function ProcessosPage() {
 
   return (
     <TooltipProvider>
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30">
-              <Scale className="w-6 h-6 text-blue-700 dark:text-blue-400" />
+      <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+        {/* Header - Mobile Optimized */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex-shrink-0">
+              <Scale className="w-5 h-5 sm:w-6 sm:h-6 text-blue-700 dark:text-blue-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                 Processos
               </h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
                 Gerenciamento integrado • {stats.total} processos ativos
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="h-9 w-9">
               <Download className="w-4 h-4" />
             </Button>
             <Link href="/admin/processos/novo">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Processo
+              <Button className="bg-blue-600 hover:bg-blue-700 h-9 text-sm">
+                <Plus className="w-4 h-4 mr-1.5" />
+                <span className="hidden sm:inline">Novo Processo</span>
+                <span className="sm:hidden">Novo</span>
               </Button>
             </Link>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card className="p-4 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 border-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Scale className="w-5 h-5 text-zinc-500" />
+        {/* Stats Cards - Mobile Optimized */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 border-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
-                <p className="text-xs text-zinc-500">Total</p>
+                <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
+                <p className="text-[10px] sm:text-xs text-zinc-500">Total</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-900/20 border-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Gavel className="w-5 h-5 text-rose-500" />
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-900/20 border-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Gavel className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.juri}</p>
-                <p className="text-xs text-rose-600 dark:text-rose-400">Júri</p>
+                <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.juri}</p>
+                <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Júri</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 border-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Clock className="w-5 h-5 text-amber-500" />
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 border-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.comDemandas}</p>
-                <p className="text-xs text-amber-600 dark:text-amber-400">Com Demandas</p>
+                <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.comDemandas}</p>
+                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Demandas</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-4 bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-950/30 dark:to-pink-900/20 border-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Lock className="w-5 h-5 text-rose-500" />
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-950/30 dark:to-pink-900/20 border-0 hidden sm:block">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
-                <p className="text-xs text-rose-600 dark:text-rose-400">Réu Preso</p>
+                <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
+                <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Réu Preso</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Building2 className="w-5 h-5 text-blue-500" />
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-0 hidden lg:block">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.comarcas}</p>
-                <p className="text-xs text-blue-600 dark:text-blue-400">Comarcas</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.comarcas}</p>
+                <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Comarcas</p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <Input
-              placeholder="Buscar por número, assistido ou assunto..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white dark:bg-zinc-950"
-            />
+        {/* Filters - Mobile Optimized */}
+        <div className="flex flex-col gap-2 sm:gap-3">
+          {/* Search + View Toggle */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Input
+                placeholder="Buscar por número, assistido..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white dark:bg-zinc-950 h-9 text-sm"
+              />
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg flex-shrink-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                    className={cn(
+                      "h-7 w-7 p-0 rounded-md",
+                      viewMode === "grid" 
+                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                        : "text-zinc-500"
+                    )}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Modo Grade</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                    className={cn(
+                      "h-7 w-7 p-0 rounded-md",
+                      viewMode === "list" 
+                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                        : "text-zinc-500"
+                    )}
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Modo Lista</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
 
-          <Select value={areaFilter} onValueChange={setAreaFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Área" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas Áreas</SelectItem>
-              {Object.entries(AREA_CONFIGS).map(([key, config]) => (
-                <SelectItem key={key} value={key}>
-                  {config.icon} {config.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Filter Row - Horizontal scroll on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <Select value={areaFilter} onValueChange={setAreaFilter}>
+              <SelectTrigger className="w-[120px] sm:w-[180px] h-8 text-xs flex-shrink-0">
+                <SelectValue placeholder="Área" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas Áreas</SelectItem>
+                {Object.entries(AREA_CONFIGS).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>
+                    {config.icon} {config.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Situação" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="ativo">Ativos</SelectItem>
-              <SelectItem value="suspenso">Suspensos</SelectItem>
-              <SelectItem value="arquivado">Arquivados</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="flex items-center gap-1 ml-auto">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className={viewMode === "grid" ? "bg-zinc-900 dark:bg-zinc-100" : ""}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Modo Grade</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={viewMode === "list" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className={viewMode === "list" ? "bg-zinc-900 dark:bg-zinc-100" : ""}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Modo Lista</TooltipContent>
-            </Tooltip>
+            <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
+              <SelectTrigger className="w-[100px] sm:w-[140px] h-8 text-xs flex-shrink-0">
+                <SelectValue placeholder="Situação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="ativo">Ativos</SelectItem>
+                <SelectItem value="suspenso">Suspensos</SelectItem>
+                <SelectItem value="arquivado">Arquivados</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* Content */}
+        {/* Content - Mobile Optimized */}
         {viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 px-1 sm:px-0">
             {filteredProcessos.map((processo) => (
               <ProcessoCard key={processo.id} processo={processo} />
             ))}

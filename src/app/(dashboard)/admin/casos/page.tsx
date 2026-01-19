@@ -64,6 +64,15 @@ import {
   Target,
   Gavel,
   Sparkles,
+  Shield,
+  Swords,
+  User,
+  UserCheck,
+  UserX,
+  FileSearch,
+  Microscope,
+  CircleDot,
+  Circle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -103,6 +112,29 @@ interface Audiencia {
   local?: string;
 }
 
+interface Testemunha {
+  id: number;
+  nome: string;
+  tipo: "defesa" | "acusacao" | "informante";
+  ouvida: boolean;
+  dataOitiva?: Date | null;
+}
+
+interface Prova {
+  id: number;
+  tipo: "documental" | "pericial" | "testemunhal" | "material";
+  descricao: string;
+  status: "juntada" | "pendente" | "requerida" | "indeferida";
+}
+
+interface Laudo {
+  id: number;
+  tipo: string;
+  descricao: string;
+  data?: Date | null;
+  favoravel?: boolean | null;
+}
+
 interface Caso {
   id: number;
   titulo: string;
@@ -111,7 +143,7 @@ interface Caso {
   comarca: string;
   vara?: string | null;
   dataInicio: Date;
-  fase: number; // 0-100 (progresso)
+  fase: number;
   faseNome: string;
   status: "ativo" | "suspenso" | "arquivado";
   prioridade: string;
@@ -120,9 +152,18 @@ interface Caso {
   processos: Processo[];
   demandasPendentes: Demanda[];
   proximaAudiencia?: Audiencia | null;
-  // Teoria do Caso
+  // Teoria do Caso - Expandida
   teoriaResumo?: string | null;
   teoriaCompleta: boolean;
+  teseAcusacao?: string | null;
+  versaoReu?: string | null;
+  investigacaoDefensiva?: string | null;
+  // Testemunhas
+  testemunhas?: Testemunha[];
+  interrogatorioRealizado?: boolean;
+  // Provas e Laudos
+  provas?: Prova[];
+  laudos?: Laudo[];
   // Links
   linkDrive?: string | null;
   // Meta
@@ -187,7 +228,7 @@ const FASES_CASO = {
 
 const FASE_LABELS = ["Inquérito", "Instrução", "Plenário", "Recurso", "Execução"];
 
-// Dados de exemplo mais completos
+// Dados de exemplo completos com informações jurídicas ricas
 const MOCK_CASOS: Caso[] = [
   {
     id: 1,
@@ -221,6 +262,28 @@ const MOCK_CASOS: Caso[] = [
     },
     teoriaResumo: "Legítima defesa. Réu agiu para proteger sua vida após ser atacado com faca pela vítima.",
     teoriaCompleta: false,
+    teseAcusacao: "Homicídio qualificado por motivo fútil e meio cruel. Réu teria desferido múltiplas facadas na vítima após discussão por dívida de jogo.",
+    versaoReu: "Estava no bar quando a vítima chegou armada com faca exigindo dinheiro. Tentou sair mas foi atacado. Na luta, conseguiu tomar a faca e se defendeu. Não tinha intenção de matar.",
+    investigacaoDefensiva: "Localizar câmeras do bar (solicitado ao Google). Ouvir testemunha Carlos (ex-dono do bar). Verificar antecedentes violentos da vítima.",
+    testemunhas: [
+      { id: 1, nome: "Maria Silva", tipo: "defesa", ouvida: true, dataOitiva: new Date("2026-01-10") },
+      { id: 2, nome: "Pedro Santos (garçom)", tipo: "defesa", ouvida: false, dataOitiva: null },
+      { id: 3, nome: "José Oliveira (vítima 2)", tipo: "acusacao", ouvida: true, dataOitiva: new Date("2026-01-10") },
+      { id: 4, nome: "Ana Costa", tipo: "acusacao", ouvida: false, dataOitiva: null },
+      { id: 5, nome: "Carlos (dono do bar)", tipo: "informante", ouvida: false, dataOitiva: null },
+    ],
+    interrogatorioRealizado: false,
+    provas: [
+      { id: 1, tipo: "documental", descricao: "Boletim de ocorrência", status: "juntada" },
+      { id: 2, tipo: "pericial", descricao: "Laudo necroscópico", status: "juntada" },
+      { id: 3, tipo: "material", descricao: "Faca apreendida", status: "juntada" },
+      { id: 4, tipo: "documental", descricao: "Imagens de câmera", status: "requerida" },
+      { id: 5, tipo: "pericial", descricao: "Exame de DNA na faca", status: "pendente" },
+    ],
+    laudos: [
+      { id: 1, tipo: "Necroscópico", descricao: "IML - causa mortis", data: new Date("2025-01-12"), favoravel: null },
+      { id: 2, tipo: "Local", descricao: "Perícia no bar", data: new Date("2025-01-11"), favoravel: true },
+    ],
     linkDrive: "https://drive.google.com/drive/folders/example",
     defensorNome: "Dr. Rodrigo Rocha",
     tags: ["LegitimaDefesa", "ExcessoPrazo", "NulidadeBusca"],
@@ -249,6 +312,20 @@ const MOCK_CASOS: Caso[] = [
     proximaAudiencia: null,
     teoriaResumo: "Porte para uso pessoal. Quantidade incompatível com tráfico e ausência de prova de comercialização.",
     teoriaCompleta: true,
+    teseAcusacao: "Tráfico de drogas. Réu encontrado com 50g de maconha em porções individuais, balança de precisão e dinheiro trocado.",
+    versaoReu: "Usuário de maconha há 10 anos. Comprou quantidade maior para consumo mensal. Balança era para pesar as porções do próprio consumo.",
+    testemunhas: [
+      { id: 1, nome: "PM condutor", tipo: "acusacao", ouvida: true, dataOitiva: new Date("2025-12-01") },
+      { id: 2, nome: "Mãe do réu", tipo: "defesa", ouvida: true, dataOitiva: new Date("2025-12-01") },
+    ],
+    interrogatorioRealizado: true,
+    provas: [
+      { id: 1, tipo: "material", descricao: "Droga apreendida", status: "juntada" },
+      { id: 2, tipo: "documental", descricao: "Laudo toxicológico do réu", status: "juntada" },
+    ],
+    laudos: [
+      { id: 1, tipo: "Toxicológico", descricao: "Confirmação de uso", data: new Date("2025-02-10"), favoravel: true },
+    ],
     linkDrive: null,
     defensorNome: "Dra. Maria Oliveira",
     tags: ["FlagranteForjado", "ProvaIlicita"],
@@ -282,6 +359,24 @@ const MOCK_CASOS: Caso[] = [
     },
     teoriaResumo: "Desclassificação para roubo simples. Ausência de prova da intenção de matar.",
     teoriaCompleta: true,
+    teseAcusacao: "Latrocínio tentado. Réu teria efetuado disparo contra vítima durante roubo a posto de gasolina.",
+    versaoReu: "Admite o roubo mas nega ter atirado. Diz que a arma disparou acidentalmente quando frentista tentou tomá-la.",
+    investigacaoDefensiva: "Perícia independente na arma. Verificar se vítima tem treinamento em armas.",
+    testemunhas: [
+      { id: 1, nome: "Frentista (vítima)", tipo: "acusacao", ouvida: true, dataOitiva: new Date("2025-09-15") },
+      { id: 2, nome: "Cliente do posto", tipo: "acusacao", ouvida: true, dataOitiva: new Date("2025-09-15") },
+      { id: 3, nome: "Perito balística", tipo: "informante", ouvida: true, dataOitiva: new Date("2025-10-01") },
+    ],
+    interrogatorioRealizado: true,
+    provas: [
+      { id: 1, tipo: "material", descricao: "Arma apreendida", status: "juntada" },
+      { id: 2, tipo: "pericial", descricao: "Laudo balístico", status: "juntada" },
+      { id: 3, tipo: "documental", descricao: "Imagens de câmera", status: "juntada" },
+    ],
+    laudos: [
+      { id: 1, tipo: "Balístico", descricao: "Análise do disparo", data: new Date("2025-01-20"), favoravel: false },
+      { id: 2, tipo: "Médico", descricao: "Lesões na vítima", data: new Date("2024-12-01"), favoravel: null },
+    ],
     linkDrive: "https://drive.google.com/drive/folders/example2",
     defensorNome: "Dr. Rodrigo Rocha",
     tags: ["Desclassificacao", "RubroQuesito"],
@@ -315,6 +410,20 @@ const MOCK_CASOS: Caso[] = [
     },
     teoriaResumo: "Atipicidade da conduta. Discussão verbal sem violência física comprovada.",
     teoriaCompleta: false,
+    teseAcusacao: "Lesão corporal no contexto doméstico. Vítima apresentou hematomas supostamente causados pela ré.",
+    versaoReu: "Discussão verbal após descobrir traição. Não houve contato físico. Hematomas são de queda anterior.",
+    testemunhas: [
+      { id: 1, nome: "Vizinha Clara", tipo: "defesa", ouvida: false, dataOitiva: null },
+      { id: 2, nome: "Ex-companheiro (vítima)", tipo: "acusacao", ouvida: false, dataOitiva: null },
+    ],
+    interrogatorioRealizado: false,
+    provas: [
+      { id: 1, tipo: "documental", descricao: "Laudo de corpo de delito", status: "juntada" },
+      { id: 2, tipo: "documental", descricao: "Prontuário médico anterior", status: "requerida" },
+    ],
+    laudos: [
+      { id: 1, tipo: "Corpo delito", descricao: "Exame na vítima", data: new Date("2025-06-11"), favoravel: false },
+    ],
     linkDrive: null,
     defensorNome: "Dra. Juliane Costa",
     tags: ["MPU", "Atipicidade"],
@@ -343,6 +452,15 @@ const MOCK_CASOS: Caso[] = [
     proximaAudiencia: null,
     teoriaResumo: "Cumprimento de 2/5 da pena. Bom comportamento atestado. Apto para progressão ao semiaberto.",
     teoriaCompleta: true,
+    versaoReu: "Trabalhando na faxina do pavilhão. Estudando para concluir ensino médio. Família aguarda retorno.",
+    provas: [
+      { id: 1, tipo: "documental", descricao: "Atestado de comportamento", status: "juntada" },
+      { id: 2, tipo: "documental", descricao: "Certificado de curso", status: "juntada" },
+      { id: 3, tipo: "documental", descricao: "Carta de emprego", status: "pendente" },
+    ],
+    laudos: [
+      { id: 1, tipo: "Psicossocial", descricao: "Avaliação para progressão", data: new Date("2026-01-05"), favoravel: true },
+    ],
     linkDrive: "https://drive.google.com/drive/folders/example3",
     defensorNome: "Dr. Rodrigo Rocha",
     tags: ["Progressao", "Remicao", "BomComportamento"],
@@ -383,17 +501,17 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
         hasReuPreso && "ring-1 ring-rose-200 dark:ring-rose-900/50"
       )}>
         
-        {/* CAMADA A: CABEÇALHO */}
-        <div className="p-5 space-y-4">
+        {/* CAMADA A: CABEÇALHO - MOBILE OPTIMIZED */}
+        <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
           {/* Topo */}
-          <div className="flex justify-between items-start gap-4">
-            <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex justify-between items-start gap-2 sm:gap-4">
+            <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
               {/* Badges de Status */}
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <Badge 
                   variant="secondary" 
                   className={cn(
-                    "text-[10px] font-mono tracking-wider uppercase",
+                    "text-[9px] sm:text-[10px] font-mono tracking-wider uppercase px-1.5 py-0",
                     themeColors.bg, themeColors.text
                   )}
                 >
@@ -401,25 +519,25 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                 </Badge>
                 
                 {caso.codigo && (
-                  <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">
+                  <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 dark:text-zinc-500 hidden sm:inline">
                     {caso.codigo}
                   </span>
                 )}
 
                 {hasAudienciaHoje && (
                   <span className="flex items-center gap-1">
-                    <span className="relative flex h-2.5 w-2.5">
+                    <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-rose-500" />
                     </span>
-                    <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">
+                    <span className="text-[9px] sm:text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">
                       Hoje
                     </span>
                   </span>
                 )}
 
                 {hasAudienciaAmanha && !hasAudienciaHoje && (
-                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px]">
+                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[9px] sm:text-[10px] px-1.5 py-0">
                     Amanhã
                   </Badge>
                 )}
@@ -427,7 +545,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                 {hasReuPreso && (
                   <Tooltip>
                     <TooltipTrigger>
-                      <Lock className="w-3.5 h-3.5 text-rose-500" />
+                      <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500" />
                     </TooltipTrigger>
                     <TooltipContent>Réu Preso</TooltipContent>
                   </Tooltip>
@@ -436,7 +554,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                 {caso.teoriaCompleta && (
                   <Tooltip>
                     <TooltipTrigger>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                      <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
                     </TooltipTrigger>
                     <TooltipContent>Teoria do Caso Completa</TooltipContent>
                   </Tooltip>
@@ -445,18 +563,18 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
 
               {/* Título (Serifada) */}
               <Link href={`/admin/casos/${caso.id}`}>
-                <h3 className="font-serif text-lg font-medium text-zinc-900 dark:text-zinc-100 leading-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
+                <h3 className="font-serif text-base sm:text-lg font-medium text-zinc-900 dark:text-zinc-100 leading-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer line-clamp-2">
                   {caso.titulo}
                 </h3>
               </Link>
 
               {/* Meta-dados */}
-              <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+              <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium flex-wrap">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="flex items-center gap-1.5 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span className="truncate max-w-[150px]">
+                    <span className="flex items-center gap-1 sm:gap-1.5 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+                      <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                      <span className="truncate max-w-[100px] sm:max-w-[150px]">
                         {caso.vara ? `${caso.vara}` : caso.comarca}
                       </span>
                     </span>
@@ -464,22 +582,22 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                   <TooltipContent>{caso.vara} - {caso.comarca}</TooltipContent>
                 </Tooltip>
 
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>Há {tempoDecorrido}</span>
+                <span className="flex items-center gap-1 sm:gap-1.5">
+                  <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                  <span className="hidden sm:inline">Há </span><span>{tempoDecorrido}</span>
                 </span>
 
                 {caso.defensorNome && (
                   <span className="flex items-center gap-1.5 hidden sm:flex">
-                    <Users className="w-3.5 h-3.5" />
+                    <Users className="w-3.5 h-3.5 flex-shrink-0" />
                     <span className="truncate max-w-[100px]">{caso.defensorNome}</span>
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Ações Rápidas */}
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Ações Rápidas - Sempre visíveis no mobile */}
+            <div className="flex gap-0.5 sm:gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href={`/admin/casos/${caso.id}`}>
@@ -510,21 +628,21 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
             </div>
           </div>
 
-          {/* CAMADA B: CONEXÕES */}
-          <div className="flex items-center justify-between py-3 border-t border-zinc-100 dark:border-zinc-800/50">
+          {/* CAMADA B: CONEXÕES - MOBILE OPTIMIZED */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 sm:py-3 gap-2 sm:gap-0 border-t border-zinc-100 dark:border-zinc-800/50">
             {/* Assistidos (Avatares) */}
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-2.5">
-                {caso.assistidos.slice(0, 4).map((assistido) => (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex -space-x-2">
+                {caso.assistidos.slice(0, 3).map((assistido) => (
                   <Tooltip key={assistido.id}>
                     <TooltipTrigger asChild>
                       <Avatar className={cn(
-                        "h-9 w-9 border-2 border-white dark:border-zinc-950 transition-transform hover:scale-110 hover:z-10",
+                        "h-7 w-7 sm:h-9 sm:w-9 border-2 border-white dark:border-zinc-950 transition-transform hover:scale-110 hover:z-10",
                         assistido.preso && "ring-2 ring-rose-500"
                       )}>
                         <AvatarImage src={assistido.foto || undefined} />
                         <AvatarFallback className={cn(
-                          "text-xs font-bold",
+                          "text-[10px] sm:text-xs font-bold",
                           assistido.preso 
                             ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
                             : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
@@ -545,29 +663,29 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                     </TooltipContent>
                   </Tooltip>
                 ))}
-                {caso.assistidos.length > 4 && (
-                  <div className="h-9 w-9 rounded-full border-2 border-white dark:border-zinc-950 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-500">
-                    +{caso.assistidos.length - 4}
+                {caso.assistidos.length > 3 && (
+                  <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-full border-2 border-white dark:border-zinc-950 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-zinc-500">
+                    +{caso.assistidos.length - 3}
                   </div>
                 )}
               </div>
               
               {caso.assistidos.length === 1 && (
-                <span className="text-sm text-zinc-600 dark:text-zinc-400 font-medium truncate max-w-[120px]">
+                <span className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium truncate max-w-[120px] sm:max-w-none">
                   {caso.assistidos[0].nome}
                 </span>
               )}
             </div>
 
-            {/* Badges de Processos (Clicáveis) */}
-            <div className="flex items-center gap-2">
+            {/* Badges de Processos - Scroll horizontal no mobile */}
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide">
               {caso.processos.slice(0, 2).map((processo) => (
                 <Tooltip key={processo.id}>
                   <TooltipTrigger asChild>
                     <Badge
                       variant="outline"
                       className={cn(
-                        "font-mono text-[10px] cursor-pointer transition-colors",
+                        "font-mono text-[9px] sm:text-[10px] cursor-pointer transition-colors flex-shrink-0 px-1.5 py-0",
                         "border-zinc-200 dark:border-zinc-800 text-zinc-500",
                         "hover:border-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300",
                         copiedCNJ === processo.numeroAutos && "border-emerald-500 text-emerald-600"
@@ -576,12 +694,13 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                     >
                       {copiedCNJ === processo.numeroAutos ? (
                         <span className="flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Copiado
+                          <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> OK
                         </span>
                       ) : (
                         <>
-                          {processo.isJuri && <Gavel className="w-3 h-3 mr-1" />}
-                          {processo.numeroAutos.split('.')[0]}...
+                          {processo.isJuri && <Gavel className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />}
+                          <span className="hidden sm:inline">{processo.numeroAutos.split('.')[0]}...</span>
+                          <span className="sm:hidden">{processo.numeroAutos.split('-')[0]}</span>
                         </>
                       )}
                     </Badge>
@@ -595,14 +714,15 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                 </Tooltip>
               ))}
               {caso.processos.length > 2 && (
-                <span className="text-xs text-zinc-400">+{caso.processos.length - 2}</span>
+                <span className="text-[10px] sm:text-xs text-zinc-400 flex-shrink-0">+{caso.processos.length - 2}</span>
               )}
             </div>
           </div>
 
-          {/* Barra de Progresso */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-[9px] uppercase font-bold text-zinc-400 dark:text-zinc-500 tracking-widest">
+          {/* Barra de Progresso - Responsiva */}
+          <div className="space-y-1">
+            {/* Labels no desktop */}
+            <div className="hidden sm:flex justify-between text-[9px] uppercase font-bold text-zinc-400 dark:text-zinc-500 tracking-widest">
               {FASE_LABELS.map((label, idx) => (
                 <span 
                   key={label}
@@ -614,24 +734,179 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                 </span>
               ))}
             </div>
+            {/* No mobile, mostra só a fase atual */}
+            <div className="flex sm:hidden items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
+              <span className="font-medium">{FASES_CASO[caso.faseNome as keyof typeof FASES_CASO]?.label || caso.faseNome}</span>
+              <span className="font-mono">{caso.fase}%</span>
+            </div>
             <Progress 
               value={caso.fase} 
-              className="h-1.5 bg-zinc-100 dark:bg-zinc-800" 
+              className="h-1 sm:h-1.5 bg-zinc-100 dark:bg-zinc-800" 
             />
           </div>
         </div>
 
-        {/* CAMADA C: GAVETA EXPANSÍVEL */}
+        {/* CAMADA C: GAVETA EXPANSÍVEL - DESIGN SUÍÇO EXPANDIDO */}
         <CollapsibleContent>
-          <div className="px-5 pb-5 space-y-4 border-t border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/30 dark:to-zinc-950">
-            {/* Teoria do Caso */}
+          <div className="px-3 sm:px-5 pb-4 sm:pb-5 space-y-3 sm:space-y-4 border-t border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/30 dark:to-zinc-950">
+            
+            {/* Teoria da Defesa */}
             {caso.teoriaResumo && (
-              <div className="mt-4 space-y-2">
-                <h4 className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2">
-                  <Scale className="w-3 h-3" /> Teoria da Defesa
+              <div className="mt-3 sm:mt-4 p-3 rounded-lg bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <Shield className="w-3 h-3" /> Teoria da Defesa
                 </h4>
-                <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed font-serif italic">
+                <p className="text-xs sm:text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed font-serif italic">
                   &ldquo;{caso.teoriaResumo}&rdquo;
+                </p>
+              </div>
+            )}
+
+            {/* Tese da Acusação */}
+            {caso.teseAcusacao && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-rose-50/80 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/20 border border-rose-100 dark:border-rose-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-rose-600 dark:text-rose-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <Swords className="w-3 h-3" /> Tese da Acusação
+                </h4>
+                <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 leading-relaxed">
+                  {caso.teseAcusacao}
+                </p>
+              </div>
+            )}
+
+            {/* Versão do Réu */}
+            {caso.versaoReu && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-blue-50/80 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border border-blue-100 dark:border-blue-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <User className="w-3 h-3" /> Versão do Réu
+                </h4>
+                <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                  {caso.versaoReu}
+                </p>
+              </div>
+            )}
+
+            {/* Testemunhas */}
+            {caso.testemunhas && caso.testemunhas.length > 0 && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
+                  <Users className="w-3 h-3" /> 
+                  Testemunhas ({caso.testemunhas.filter(t => t.ouvida).length}/{caso.testemunhas.length})
+                </h4>
+                
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[9px] sm:text-[10px] font-medium">
+                    <UserCheck className="w-2.5 h-2.5" />
+                    {caso.testemunhas.filter(t => t.ouvida).length} ouvidas
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[9px] sm:text-[10px] font-medium">
+                    <UserX className="w-2.5 h-2.5" />
+                    {caso.testemunhas.filter(t => !t.ouvida).length} pendentes
+                  </span>
+                  {caso.interrogatorioRealizado !== undefined && (
+                    <span className={cn(
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium",
+                      caso.interrogatorioRealizado 
+                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                        : "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                    )}>
+                      <User className="w-2.5 h-2.5" />
+                      {caso.interrogatorioRealizado ? "Interrogado" : "Interrog. Pendente"}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1 max-h-[100px] overflow-y-auto">
+                  {caso.testemunhas.slice(0, 4).map((testemunha) => (
+                    <div
+                      key={testemunha.id}
+                      className={cn(
+                        "flex items-center justify-between py-1 px-2 rounded text-[10px] sm:text-xs",
+                        testemunha.ouvida 
+                          ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
+                          : "bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {testemunha.ouvida ? (
+                          <CircleDot className="w-2.5 h-2.5 flex-shrink-0" />
+                        ) : (
+                          <Circle className="w-2.5 h-2.5 flex-shrink-0" />
+                        )}
+                        <span className="font-medium truncate">{testemunha.nome}</span>
+                      </div>
+                      <Badge variant="outline" className={cn(
+                        "text-[8px] px-1 py-0 ml-1",
+                        testemunha.tipo === "defesa" && "border-emerald-200 text-emerald-600",
+                        testemunha.tipo === "acusacao" && "border-rose-200 text-rose-600"
+                      )}>
+                        {testemunha.tipo === "defesa" ? "DEF" : testemunha.tipo === "acusacao" ? "ACUS" : "INFO"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Provas e Laudos */}
+            {((caso.provas && caso.provas.length > 0) || (caso.laudos && caso.laudos.length > 0)) && (
+              <div className="grid grid-cols-2 gap-2">
+                {caso.provas && caso.provas.length > 0 && (
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <FileSearch className="w-3 h-3 text-zinc-400" />
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-zinc-500">Provas</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold font-mono text-zinc-700 dark:text-zinc-300">
+                        {caso.provas.filter(p => p.status === "juntada").length}
+                      </span>
+                      <span className="text-[10px] text-zinc-400">/{caso.provas.length}</span>
+                    </div>
+                    {caso.provas.filter(p => p.status === "pendente" || p.status === "requerida").length > 0 && (
+                      <Badge className="text-[8px] px-1 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 mt-1">
+                        {caso.provas.filter(p => p.status === "pendente" || p.status === "requerida").length} pendentes
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                {caso.laudos && caso.laudos.length > 0 && (
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Microscope className="w-3 h-3 text-zinc-400" />
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-zinc-500">Laudos</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold font-mono text-zinc-700 dark:text-zinc-300">
+                        {caso.laudos.length}
+                      </span>
+                    </div>
+                    <div className="flex gap-1 mt-1">
+                      {caso.laudos.filter(l => l.favoravel === true).length > 0 && (
+                        <Badge className="text-[8px] px-1 py-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                          ✓{caso.laudos.filter(l => l.favoravel === true).length}
+                        </Badge>
+                      )}
+                      {caso.laudos.filter(l => l.favoravel === false).length > 0 && (
+                        <Badge className="text-[8px] px-1 py-0 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                          ✗{caso.laudos.filter(l => l.favoravel === false).length}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Investigação Defensiva */}
+            {caso.investigacaoDefensiva && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-violet-50/80 to-violet-100/50 dark:from-violet-950/30 dark:to-violet-900/20 border border-violet-100 dark:border-violet-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-violet-600 dark:text-violet-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <FileSearch className="w-3 h-3" /> Investigação Defensiva
+                </h4>
+                <p className="text-xs sm:text-sm text-violet-700 dark:text-violet-300 leading-relaxed">
+                  {caso.investigacaoDefensiva}
                 </p>
               </div>
             )}
@@ -639,28 +914,30 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
             {/* Próxima Audiência */}
             {caso.proximaAudiencia && (
               <div className={cn(
-                "flex items-center gap-3 p-3 rounded-lg border",
+                "flex items-start sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border",
                 hasAudienciaHoje 
                   ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800"
                   : "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
               )}>
                 <AlertTriangle className={cn(
-                  "w-5 h-5 flex-shrink-0",
+                  "w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5 sm:mt-0",
                   hasAudienciaHoje ? "text-rose-600 dark:text-rose-400" : "text-amber-600 dark:text-amber-400"
                 )} />
                 <div className="flex-1 min-w-0">
                   <span className={cn(
-                    "text-xs font-bold",
+                    "text-[10px] sm:text-xs font-bold block",
                     hasAudienciaHoje ? "text-rose-700 dark:text-rose-400" : "text-amber-700 dark:text-amber-400"
                   )}>
                     Próxima Audiência
                   </span>
                   <p className={cn(
-                    "text-xs truncate",
+                    "text-[10px] sm:text-xs",
                     hasAudienciaHoje ? "text-rose-600 dark:text-rose-500" : "text-amber-600 dark:text-amber-500"
                   )}>
-                    {caso.proximaAudiencia.tipo} • {format(caso.proximaAudiencia.data, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                    {caso.proximaAudiencia.local && ` • ${caso.proximaAudiencia.local}`}
+                    <span className="font-medium">{caso.proximaAudiencia.tipo}</span>
+                    <span className="hidden sm:inline"> • </span>
+                    <br className="sm:hidden" />
+                    <span className="font-mono">{format(caso.proximaAudiencia.data, "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
                   </p>
                 </div>
               </div>
@@ -668,39 +945,46 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
 
             {/* Prazos Pendentes */}
             {caso.demandasPendentes.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
                   <Clock className="w-3 h-3" /> Próximos Prazos ({caso.demandasPendentes.length})
                 </h4>
-                <div className="space-y-1.5">
-                  {caso.demandasPendentes.slice(0, 3).map((demanda) => (
-                    <div
-                      key={demanda.id}
-                      className={cn(
-                        "flex items-center justify-between py-1.5 px-2 rounded text-xs",
-                        demanda.urgente 
-                          ? "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400"
-                          : "bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                      )}
-                    >
-                      <span className="font-medium truncate max-w-[200px]">{demanda.ato}</span>
-                      <span className="font-mono text-[10px]">
-                        {format(demanda.prazo, "dd/MM", { locale: ptBR })}
-                      </span>
-                    </div>
-                  ))}
+                <div className="space-y-1">
+                  {caso.demandasPendentes.slice(0, 3).map((demanda) => {
+                    const dias = differenceInDays(demanda.prazo, new Date());
+                    const isUrgente = dias <= 3;
+                    return (
+                      <div
+                        key={demanda.id}
+                        className={cn(
+                          "flex items-center justify-between py-1.5 px-2 rounded text-[10px] sm:text-xs",
+                          isUrgente 
+                            ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                            : "bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400"
+                        )}
+                      >
+                        <span className="font-medium truncate max-w-[150px] sm:max-w-[200px]">{demanda.ato}</span>
+                        <span className={cn(
+                          "font-mono text-[9px] sm:text-[10px] flex-shrink-0 ml-2",
+                          isUrgente && "font-bold"
+                        )}>
+                          {dias === 0 ? "HOJE" : dias === 1 ? "Amanhã" : format(demanda.prazo, "dd/MM", { locale: ptBR })}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* Tags */}
             {caso.tags && caso.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-2">
+              <div className="flex flex-wrap gap-1 sm:gap-1.5 pt-1 sm:pt-2">
                 {caso.tags.map((tag, idx) => (
                   <Badge 
                     key={idx} 
                     variant="outline" 
-                    className="text-[10px] px-2 py-0.5 border-dashed border-zinc-300 dark:border-zinc-700"
+                    className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 border-dashed border-zinc-300 dark:border-zinc-700"
                   >
                     #{tag}
                   </Badge>
@@ -709,24 +993,26 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
             )}
 
             {/* Ações */}
-            <div className="grid grid-cols-3 gap-2 pt-2">
-              <Link href={`/admin/casos/${caso.id}`}>
-                <Button variant="outline" className="w-full h-9 text-xs border-zinc-200 dark:border-zinc-700">
-                  <Target className="w-3.5 h-3.5 mr-2 text-zinc-400" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2 pt-2">
+              <Link href={`/admin/casos/${caso.id}`} className="col-span-2 sm:col-span-1">
+                <Button variant="outline" className="w-full h-8 sm:h-9 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-700">
+                  <Target className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-2 text-zinc-400" />
                   Ver Caso
                 </Button>
               </Link>
               {caso.linkDrive && (
-                <a href={caso.linkDrive} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="w-full h-9 text-xs border-zinc-200 dark:border-zinc-700">
-                    <FolderOpen className="w-3.5 h-3.5 mr-2 text-zinc-400" />
-                    Drive
+                <a href={caso.linkDrive} target="_blank" rel="noopener noreferrer" className="col-span-1">
+                  <Button variant="outline" className="w-full h-8 sm:h-9 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-700">
+                    <FolderOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-2 text-zinc-400" />
+                    <span className="hidden sm:inline">Drive</span>
+                    <span className="sm:hidden">📁</span>
                   </Button>
                 </a>
               )}
-              <Button variant="outline" className="h-9 text-xs border-zinc-200 dark:border-zinc-700">
-                <MessageCircle className="w-3.5 h-3.5 mr-2 text-zinc-400" />
-                Contato
+              <Button variant="outline" className="col-span-1 h-8 sm:h-9 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-700">
+                <MessageCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-2 text-zinc-400" />
+                <span className="hidden sm:inline">Contato</span>
+                <span className="sm:hidden">💬</span>
               </Button>
             </div>
           </div>

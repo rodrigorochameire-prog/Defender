@@ -992,3 +992,248 @@ html.font-large {
 .prazo-normal {
   @apply bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400;
 }
+
+/* ========================================
+   MOBILE-FIRST REFINEMENTS - Design Suíço
+   Padronização para telas pequenas
+   ======================================== */
+
+/* Container principal mobile */
+@media (max-width: 640px) {
+  /* Reset padding em containers de página */
+  .page-container {
+    @apply px-3 py-3;
+  }
+  
+  /* Stats cards menores no mobile */
+  .stats-grid-mobile {
+    @apply grid grid-cols-2 gap-2;
+  }
+  
+  .stats-grid-mobile .stat-card {
+    @apply p-3;
+  }
+  
+  .stats-grid-mobile .stat-card p:first-child {
+    @apply text-lg font-bold;
+  }
+  
+  .stats-grid-mobile .stat-card p:last-child {
+    @apply text-[10px];
+  }
+  
+  /* Filtros horizontais scrolláveis */
+  .filters-row-mobile {
+    @apply flex gap-2 overflow-x-auto pb-2 -mx-3 px-3;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .filters-row-mobile::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .filters-row-mobile > * {
+    @apply flex-shrink-0;
+  }
+  
+  /* Cards grid mobile */
+  .cards-grid-mobile {
+    @apply grid grid-cols-1 gap-3;
+  }
+  
+  /* View toggle compacto */
+  .view-toggle-mobile {
+    @apply flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg;
+  }
+  
+  .view-toggle-mobile button {
+    @apply h-7 w-7 p-0 rounded-md;
+  }
+}
+
+/* ========================================
+   CASE CARD EXPANDED - Swiss Design
+   Seções expandidas com informações ricas
+   ======================================== */
+
+/* Seção de testemunhas */
+.case-witnesses {
+  @apply p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800;
+}
+
+.witness-item {
+  @apply flex items-center justify-between py-1.5 px-2 rounded text-xs;
+}
+
+.witness-item.heard {
+  @apply bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400;
+}
+
+.witness-item.pending {
+  @apply bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400;
+}
+
+/* Seção de provas */
+.case-evidence-grid {
+  @apply grid grid-cols-2 gap-2;
+}
+
+@media (max-width: 640px) {
+  .case-evidence-grid {
+    @apply grid-cols-1;
+  }
+}
+
+.evidence-card {
+  @apply p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800;
+}
+
+.evidence-card .evidence-count {
+  @apply text-xl font-bold font-mono;
+}
+
+.evidence-card .evidence-label {
+  @apply text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500;
+}
+
+/* Seção da tese da acusação */
+.prosecution-theory {
+  @apply p-2.5 rounded-lg bg-gradient-to-br from-rose-50/80 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/20 border border-rose-100 dark:border-rose-900/50;
+}
+
+/* Seção da versão do réu */
+.defendant-version {
+  @apply p-2.5 rounded-lg bg-gradient-to-br from-blue-50/80 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border border-blue-100 dark:border-blue-900/50;
+}
+
+/* Seção da investigação defensiva */
+.defensive-investigation {
+  @apply p-2.5 rounded-lg bg-gradient-to-br from-violet-50/80 to-violet-100/50 dark:from-violet-950/30 dark:to-violet-900/20 border border-violet-100 dark:border-violet-900/50;
+}
+
+/* Progress pills para fase do caso */
+.phase-progress {
+  @apply flex items-center gap-1 overflow-x-auto pb-1;
+  scrollbar-width: none;
+}
+
+.phase-progress::-webkit-scrollbar {
+  display: none;
+}
+
+.phase-pill {
+  @apply px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider whitespace-nowrap flex-shrink-0;
+}
+
+.phase-pill.active {
+  @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400;
+}
+
+.phase-pill.completed {
+  @apply bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400;
+}
+
+.phase-pill.pending {
+  @apply bg-zinc-100 text-zinc-400 dark:bg-zinc-900 dark:text-zinc-500;
+}
+
+/* ========================================
+   MOBILE CARDS ENHANCEMENTS
+   Ajustes finos para cards no mobile
+   ======================================== */
+
+@media (max-width: 640px) {
+  /* Avatar menor no mobile */
+  .card-avatar-mobile {
+    @apply h-10 w-10;
+  }
+  
+  /* Badge menor no mobile */
+  .card-badge-mobile {
+    @apply text-[9px] px-1.5 py-0;
+  }
+  
+  /* Título menor no mobile */
+  .card-title-mobile {
+    @apply text-sm leading-tight;
+  }
+  
+  /* Meta info menor no mobile */
+  .card-meta-mobile {
+    @apply text-[10px];
+  }
+  
+  /* Ações sempre visíveis no mobile */
+  .card-actions-mobile {
+    @apply opacity-100;
+  }
+  
+  /* Collapsible trigger mais largo no mobile */
+  .collapsible-trigger-mobile {
+    @apply py-2;
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES - Design Suíço
+   Classes utilitárias para componentes
+   ======================================== */
+
+/* Scrollbar hidden utility */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch-friendly button */
+.touch-target {
+  @apply min-h-[44px] min-w-[44px];
+}
+
+/* Truncate multiline */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Status indicators */
+.status-dot {
+  @apply w-2 h-2 rounded-full;
+}
+
+.status-dot.danger { @apply bg-rose-500; }
+.status-dot.warning { @apply bg-amber-500; }
+.status-dot.success { @apply bg-emerald-500; }
+.status-dot.info { @apply bg-blue-500; }
+.status-dot.muted { @apply bg-zinc-400; }
+
+/* Pulse animation for urgent items */
+.pulse-urgent {
+  animation: pulse-urgent 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

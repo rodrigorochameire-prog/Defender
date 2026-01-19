@@ -36,6 +36,16 @@ import {
   Target,
   Gavel,
   Eye,
+  User,
+  UserCheck,
+  UserX,
+  FileSearch,
+  Shield,
+  Swords,
+  Microscope,
+  ScrollText,
+  CircleDot,
+  Circle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow, differenceInDays, isToday, isTomorrow } from "date-fns";
@@ -74,6 +84,32 @@ interface Audiencia {
   local?: string;
 }
 
+// Testemunha
+interface Testemunha {
+  id: number;
+  nome: string;
+  tipo: "defesa" | "acusacao" | "informante";
+  ouvida: boolean;
+  dataOitiva?: Date | null;
+}
+
+// Prova
+interface Prova {
+  id: number;
+  tipo: "documental" | "pericial" | "testemunhal" | "material";
+  descricao: string;
+  status: "juntada" | "pendente" | "requerida" | "indeferida";
+}
+
+// Laudo
+interface Laudo {
+  id: number;
+  tipo: string;
+  descricao: string;
+  data?: Date | null;
+  favoravel?: boolean | null;
+}
+
 export interface CaseCardProps {
   id: number;
   titulo: string;
@@ -91,9 +127,18 @@ export interface CaseCardProps {
   processos: Processo[];
   demandasPendentes: Demanda[];
   proximaAudiencia?: Audiencia | null;
-  // Teoria do Caso
+  // Teoria do Caso - Expandida
   teoriaResumo?: string | null;
-  teoriaCompleta: boolean; // Se tem Fatos + Provas + Direito
+  teoriaCompleta: boolean;
+  teseAcusacao?: string | null;
+  versaoReu?: string | null;
+  investigacaoDefensiva?: string | null;
+  // Testemunhas
+  testemunhas?: Testemunha[];
+  interrogatorioRealizado?: boolean;
+  // Provas e Laudos
+  provas?: Prova[];
+  laudos?: Laudo[];
   // Links
   linkDrive?: string | null;
   // Meta
@@ -463,15 +508,19 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
         </div>
 
         {/* ==========================================
-            CAMADA C: GAVETA EXPANSÍVEL
+            CAMADA C: GAVETA EXPANSÍVEL - DESIGN SUÍÇO
+            Organização em containers com informações ricas
             ========================================== */}
         <CollapsibleContent>
           <div className="px-3 sm:px-5 pb-4 sm:pb-5 space-y-3 sm:space-y-4 border-t border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/30 dark:to-zinc-950">
-            {/* Teoria do Caso (Resumo) - Container destacado */}
+            
+            {/* ========================================
+                SEÇÃO 1: TEORIA DA DEFESA (Principal)
+                ======================================== */}
             {data.teoriaResumo && (
               <div className="mt-3 sm:mt-4 p-3 rounded-lg bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
                 <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider flex items-center gap-2 mb-1.5">
-                  <Scale className="w-3 h-3" /> Teoria da Defesa
+                  <Shield className="w-3 h-3" /> Teoria da Defesa
                 </h4>
                 <p className="text-xs sm:text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed font-serif italic">
                   &ldquo;{data.teoriaResumo}&rdquo;
@@ -479,7 +528,197 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
               </div>
             )}
 
-            {/* Próxima Audiência - Card de alerta */}
+            {/* ========================================
+                SEÇÃO 2: TESE DA ACUSAÇÃO (Oposição)
+                ======================================== */}
+            {data.teseAcusacao && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-rose-50/80 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/20 border border-rose-100 dark:border-rose-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-rose-600 dark:text-rose-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <Swords className="w-3 h-3" /> Tese da Acusação
+                </h4>
+                <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 leading-relaxed">
+                  {data.teseAcusacao}
+                </p>
+              </div>
+            )}
+
+            {/* ========================================
+                SEÇÃO 3: VERSÃO DO RÉU NO ATENDIMENTO
+                ======================================== */}
+            {data.versaoReu && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-blue-50/80 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border border-blue-100 dark:border-blue-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <User className="w-3 h-3" /> Versão do Réu
+                </h4>
+                <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                  {data.versaoReu}
+                </p>
+              </div>
+            )}
+
+            {/* ========================================
+                SEÇÃO 4: TESTEMUNHAS - Grid de status
+                ======================================== */}
+            {data.testemunhas && data.testemunhas.length > 0 && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
+                  <Users className="w-3 h-3" /> 
+                  Testemunhas ({data.testemunhas.filter(t => t.ouvida).length}/{data.testemunhas.length})
+                </h4>
+                
+                {/* Pills de status */}
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[9px] sm:text-[10px] font-medium">
+                    <UserCheck className="w-2.5 h-2.5" />
+                    {data.testemunhas.filter(t => t.ouvida).length} ouvidas
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[9px] sm:text-[10px] font-medium">
+                    <UserX className="w-2.5 h-2.5" />
+                    {data.testemunhas.filter(t => !t.ouvida).length} pendentes
+                  </span>
+                  {data.interrogatorioRealizado !== undefined && (
+                    <span className={cn(
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium",
+                      data.interrogatorioRealizado 
+                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                        : "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                    )}>
+                      <User className="w-2.5 h-2.5" />
+                      {data.interrogatorioRealizado ? "Interrogado" : "Interrog. Pendente"}
+                    </span>
+                  )}
+                </div>
+
+                {/* Lista de testemunhas */}
+                <div className="space-y-1 max-h-[120px] overflow-y-auto">
+                  {data.testemunhas.slice(0, 5).map((testemunha) => (
+                    <div
+                      key={testemunha.id}
+                      className={cn(
+                        "flex items-center justify-between py-1.5 px-2 rounded text-[10px] sm:text-xs",
+                        testemunha.ouvida 
+                          ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
+                          : "bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {testemunha.ouvida ? (
+                          <CircleDot className="w-3 h-3 flex-shrink-0" />
+                        ) : (
+                          <Circle className="w-3 h-3 flex-shrink-0" />
+                        )}
+                        <span className="font-medium truncate">{testemunha.nome}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <Badge variant="outline" className={cn(
+                          "text-[8px] px-1 py-0",
+                          testemunha.tipo === "defesa" && "border-emerald-200 text-emerald-600 dark:border-emerald-800 dark:text-emerald-400",
+                          testemunha.tipo === "acusacao" && "border-rose-200 text-rose-600 dark:border-rose-800 dark:text-rose-400",
+                          testemunha.tipo === "informante" && "border-zinc-200 text-zinc-500 dark:border-zinc-700"
+                        )}>
+                          {testemunha.tipo === "defesa" ? "DEF" : testemunha.tipo === "acusacao" ? "ACUS" : "INFO"}
+                        </Badge>
+                        {testemunha.dataOitiva && (
+                          <span className="font-mono text-[9px] text-zinc-400">
+                            {format(testemunha.dataOitiva, "dd/MM")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {data.testemunhas.length > 5 && (
+                    <p className="text-[10px] text-zinc-400 text-center py-1">
+                      +{data.testemunhas.length - 5} mais
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ========================================
+                SEÇÃO 5: PROVAS E LAUDOS - Grid de cards
+                ======================================== */}
+            {((data.provas && data.provas.length > 0) || (data.laudos && data.laudos.length > 0)) && (
+              <div className="grid grid-cols-2 gap-2">
+                {/* Provas Documentais */}
+                {data.provas && data.provas.length > 0 && (
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <FileSearch className="w-3 h-3 text-zinc-400" />
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-zinc-500">Provas</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg sm:text-xl font-bold font-mono text-zinc-700 dark:text-zinc-300">
+                        {data.provas.filter(p => p.status === "juntada").length}
+                      </span>
+                      <span className="text-[10px] text-zinc-400">/{data.provas.length}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {data.provas.filter(p => p.status === "juntada").slice(0, 2).map((prova, idx) => (
+                        <Badge key={idx} variant="outline" className="text-[8px] px-1 py-0 border-zinc-200 dark:border-zinc-700">
+                          {prova.tipo === "documental" ? "📄" : prova.tipo === "pericial" ? "🔬" : prova.tipo === "testemunhal" ? "👥" : "📦"}
+                        </Badge>
+                      ))}
+                      {data.provas.filter(p => p.status === "pendente").length > 0 && (
+                        <Badge className="text-[8px] px-1 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                          {data.provas.filter(p => p.status === "pendente").length} pend.
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Laudos Periciais */}
+                {data.laudos && data.laudos.length > 0 && (
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Microscope className="w-3 h-3 text-zinc-400" />
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-zinc-500">Laudos</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg sm:text-xl font-bold font-mono text-zinc-700 dark:text-zinc-300">
+                        {data.laudos.length}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {data.laudos.filter(l => l.favoravel === true).length > 0 && (
+                        <Badge className="text-[8px] px-1 py-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                          ✓ {data.laudos.filter(l => l.favoravel === true).length} fav.
+                        </Badge>
+                      )}
+                      {data.laudos.filter(l => l.favoravel === false).length > 0 && (
+                        <Badge className="text-[8px] px-1 py-0 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                          ✗ {data.laudos.filter(l => l.favoravel === false).length} desfav.
+                        </Badge>
+                      )}
+                      {data.laudos.filter(l => l.favoravel === null || l.favoravel === undefined).length > 0 && (
+                        <Badge variant="outline" className="text-[8px] px-1 py-0 border-zinc-200 dark:border-zinc-700">
+                          {data.laudos.filter(l => l.favoravel === null || l.favoravel === undefined).length} neutros
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ========================================
+                SEÇÃO 6: INVESTIGAÇÃO DEFENSIVA
+                ======================================== */}
+            {data.investigacaoDefensiva && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-violet-50/80 to-violet-100/50 dark:from-violet-950/30 dark:to-violet-900/20 border border-violet-100 dark:border-violet-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-violet-600 dark:text-violet-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <FileSearch className="w-3 h-3" /> Investigação Defensiva
+                </h4>
+                <p className="text-xs sm:text-sm text-violet-700 dark:text-violet-300 leading-relaxed">
+                  {data.investigacaoDefensiva}
+                </p>
+              </div>
+            )}
+
+            {/* ========================================
+                SEÇÃO 7: PRÓXIMA AUDIÊNCIA - Card de alerta
+                ======================================== */}
             {data.proximaAudiencia && (
               <div className={cn(
                 "flex items-start sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border",
@@ -514,7 +753,9 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
               </div>
             )}
 
-            {/* Prazos Pendentes - Container organizado */}
+            {/* ========================================
+                SEÇÃO 8: PRAZOS PENDENTES
+                ======================================== */}
             {data.demandasPendentes.length > 0 && (
               <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
                 <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
