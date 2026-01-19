@@ -79,7 +79,15 @@ import {
   Check,
   ExternalLink,
   Loader2,
+  MapPin,
+  ArrowUpDown,
+  ChevronRight,
 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -1948,6 +1956,50 @@ export default function DemandasPage() {
               <span className="hidden sm:inline">Preso</span>
             </Button>
 
+            {/* Ordenação */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1 h-8 text-xs flex-shrink-0 px-2 sm:px-3">
+                  <ArrowUpDown className="h-3 w-3" />
+                  <span className="hidden sm:inline">Ordenar</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => { setSortField("prazo"); setSortOrder("asc"); }} className="cursor-pointer">
+                  <Clock className="h-4 w-4 mr-2" />
+                  Prazo (mais próximo)
+                  {sortField === "prazo" && sortOrder === "asc" && <Check className="h-4 w-4 ml-auto" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortField("prazo"); setSortOrder("desc"); }} className="cursor-pointer">
+                  <Clock className="h-4 w-4 mr-2" />
+                  Prazo (mais distante)
+                  {sortField === "prazo" && sortOrder === "desc" && <Check className="h-4 w-4 ml-auto" />}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { setSortField("status"); setSortOrder("asc"); }} className="cursor-pointer">
+                  <Target className="h-4 w-4 mr-2" />
+                  Status (urgente primeiro)
+                  {sortField === "status" && sortOrder === "asc" && <Check className="h-4 w-4 ml-auto" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortField("status"); setSortOrder("desc"); }} className="cursor-pointer">
+                  <Target className="h-4 w-4 mr-2" />
+                  Status (concluído primeiro)
+                  {sortField === "status" && sortOrder === "desc" && <Check className="h-4 w-4 ml-auto" />}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { setSortField("assistido"); setSortOrder("asc"); }} className="cursor-pointer">
+                  <User className="h-4 w-4 mr-2" />
+                  Assistido (A-Z)
+                  {sortField === "assistido" && sortOrder === "asc" && <Check className="h-4 w-4 ml-auto" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setSortField("area"); setSortOrder("asc"); }} className="cursor-pointer">
+                  <Scale className="h-4 w-4 mr-2" />
+                  Área
+                  {sortField === "area" && <Check className="h-4 w-4 ml-auto" />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {(statusFilter !== "all" || areaFilter !== "all" || comarcaFilter !== "all" || defensorFilter !== "all" || reuPresoFilter !== null || searchTerm) && (
               <Button
                 variant="ghost"
@@ -1969,140 +2021,295 @@ export default function DemandasPage() {
           </div>
         </div>
 
-        {/* Visualização em Tabela - Premium Notion Style */}
+        {/* Visualização em Cards - Unificada Mobile/Desktop */}
         <TabsContent value="table" className="mt-0 space-y-3">
-          {/* Mobile Cards View */}
-          <div className="sm:hidden space-y-2 px-1">
+          {/* Grid de Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             {filteredDemandas.map((demanda) => {
               const prazoInfo = getPrazoInfo(demanda.prazo);
               const PrazoIcon = prazoInfo.icon;
               const statusConfig = getStatusConfig(demanda.status);
+              const areaConfig = getAreaConfig(demanda.area);
               const prisaoConfig = prisaoOptions.find(p => p.value === demanda.prisao);
+              const tipoAtoConfig = tipoAtoOptions.find(t => t.value === demanda.tipoAto);
+              const comarcaConfig = COMARCA_OPTIONS.find(c => c.value === demanda.comarca);
               
               return (
-                <Card 
-                  key={demanda.id}
-                  className={cn(
-                    "group overflow-hidden transition-all duration-200 hover:shadow-md",
-                    demanda.reuPreso && "border-l-4 border-l-rose-500 bg-rose-50/20 dark:bg-rose-950/10",
-                    prazoInfo.urgent && !demanda.reuPreso && "border-l-4 border-l-amber-500 bg-amber-50/20 dark:bg-amber-950/10"
-                  )}
-                >
-                  <CardContent className="p-3">
-                    {/* Header Row */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-1">
+                <Collapsible key={demanda.id} className="group">
+                  <Card 
+                    className={cn(
+                      "overflow-hidden transition-all duration-200 hover:shadow-lg",
+                      demanda.reuPreso && "border-l-4 border-l-rose-500 bg-gradient-to-r from-rose-50/30 to-transparent dark:from-rose-950/20",
+                      prazoInfo.urgent && !demanda.reuPreso && "border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50/30 to-transparent dark:from-amber-950/20"
+                    )}
+                  >
+                    {/* HEADER - Sempre visível */}
+                    <CardContent className="p-3 sm:p-4">
+                      {/* Linha 1: Badges de Status e Prioridade */}
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           {demanda.reuPreso && (
-                            <Badge className="bg-rose-600 text-white text-[9px] px-1.5 py-0 h-5 animate-pulse">
+                            <Badge className="bg-rose-600 text-white text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 h-5 animate-pulse">
                               <Lock className="h-2.5 w-2.5 mr-0.5" />
                               PRESO
                             </Badge>
                           )}
-                          <Badge className={cn("text-[9px] px-1.5 py-0 h-5", statusConfig.color, "text-white")}>
+                          <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 h-5", statusConfig.color, statusConfig.textColor || "text-white")}>
                             {statusConfig.label}
                           </Badge>
                           {prazoInfo.urgent && (
-                            <Badge className={cn("text-[9px] px-1.5 py-0 h-5", prazoInfo.className)}>
+                            <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 h-5", prazoInfo.className)}>
                               <PrazoIcon className="h-2.5 w-2.5 mr-0.5" />
                               {prazoInfo.text}
                             </Badge>
                           )}
                         </div>
-                        <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 line-clamp-1">
-                          {demanda.assistido}
-                        </p>
+                        
+                        <div className="flex items-center gap-1">
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8">
+                              <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
+                            </Button>
+                          </CollapsibleTrigger>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleOpenEdit(demanda)} className="cursor-pointer">
+                                <Edit className="h-4 w-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="cursor-pointer">
+                                <Copy className="h-4 w-4 mr-2" />
+                                Duplicar
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleUpdateStatus(demanda.id, "7_PROTOCOLADO")}
+                                className="cursor-pointer text-emerald-600"
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Protocolado
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleDelete(demanda.id)}
+                                className="cursor-pointer text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleOpenEdit(demanda)} className="cursor-pointer">
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer">
-                            <Copy className="h-4 w-4 mr-2" />
-                            Duplicar
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => handleUpdateStatus(demanda.id, "7_PROTOCOLADO")}
-                            className="cursor-pointer text-emerald-600"
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                            Protocolado
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => handleDelete(demanda.id)}
-                            className="cursor-pointer text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
 
-                    {/* Ato e Processo */}
-                    <div className="space-y-1 mb-2">
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-1">
-                        <span className="font-medium">{demanda.ato || "Sem ato definido"}</span>
+                      {/* Linha 2: Assistido */}
+                      <h3 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 mb-1 line-clamp-1">
+                        {demanda.assistido}
+                      </h3>
+
+                      {/* Linha 3: Ato Processual */}
+                      <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 line-clamp-1">
+                        {demanda.ato || tipoAtoConfig?.label || "Sem ato definido"}
                       </p>
-                      {demanda.processo && (
-                        <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono">
-                          {demanda.processo.length > 25 
-                            ? `${demanda.processo.substring(0, 12)}...${demanda.processo.slice(-8)}`
-                            : demanda.processo
-                          }
-                        </p>
-                      )}
-                    </div>
 
-                    {/* Meta Row */}
-                    <div className="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
-                      <div className="flex items-center gap-2">
-                        {demanda.prisao && demanda.prisao !== "NAO_INFORMADO" && demanda.prisao !== "SOLTO" && (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400">
-                            <Lock className="h-2.5 w-2.5" />
-                            {prisaoConfig?.label || demanda.prisao}
+                      {/* Linha 4: Grid de Metadados Essenciais */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px] sm:text-xs">
+                        {/* Processo */}
+                        <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
+                          <Scale className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate font-mono">
+                            {demanda.processo 
+                              ? (demanda.processo.length > 20 ? `...${demanda.processo.slice(-15)}` : demanda.processo)
+                              : "Sem processo"
+                            }
                           </span>
-                        )}
-                        {demanda.dataEntrada && (
-                          <span className="inline-flex items-center gap-0.5">
-                            <Calendar className="h-2.5 w-2.5" />
-                            {format(parseISO(demanda.dataEntrada), "dd/MM", { locale: ptBR })}
+                        </div>
+
+                        {/* Prazo */}
+                        <div className={cn("flex items-center gap-1", prazoInfo.urgent ? prazoInfo.className.split(" ")[0] : "text-zinc-600 dark:text-zinc-400")}>
+                          <Clock className="h-3 w-3 flex-shrink-0" />
+                          <span>
+                            {demanda.prazo 
+                              ? format(parseISO(demanda.prazo), "dd/MM/yy", { locale: ptBR })
+                              : "Sem prazo"
+                            }
                           </span>
+                        </div>
+
+                        {/* Local/Comarca */}
+                        <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{comarcaConfig?.label || demanda.comarca || "Camaçari"}</span>
+                        </div>
+
+                        {/* Data Entrada/Expedição */}
+                        <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
+                          <Calendar className="h-3 w-3 flex-shrink-0" />
+                          <span>
+                            {demanda.dataEntrada 
+                              ? format(parseISO(demanda.dataEntrada), "dd/MM/yy", { locale: ptBR })
+                              : "Sem data"
+                            }
+                          </span>
+                        </div>
+
+                        {/* Área */}
+                        <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
+                          <Gavel className="h-3 w-3 flex-shrink-0" />
+                          <span>{areaConfig.label}</span>
+                        </div>
+
+                        {/* Situação Prisional (se preso) */}
+                        {demanda.reuPreso && prisaoConfig && prisaoConfig.value !== "NAO_INFORMADO" && (
+                          <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                            <Lock className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{prisaoConfig.label}</span>
+                          </div>
                         )}
                       </div>
-                      
-                      {!prazoInfo.urgent && demanda.prazo && (
-                        <span className={cn("inline-flex items-center gap-0.5", prazoInfo.className)}>
-                          <PrazoIcon className="h-2.5 w-2.5" />
-                          {prazoInfo.text}
-                        </span>
-                      )}
-                    </div>
+                    </CardContent>
 
-                    {/* Providências (se houver) */}
-                    {demanda.providencias && (
-                      <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-2">
-                          <span className="font-medium text-zinc-600 dark:text-zinc-300">Providências:</span> {demanda.providencias}
-                        </p>
+                    {/* CONTEÚDO EXPANDIDO */}
+                    <CollapsibleContent>
+                      <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 p-3 sm:p-4 space-y-4">
+                        {/* Providências */}
+                        {demanda.providencias && (
+                          <div className="space-y-1">
+                            <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                              Providências
+                            </p>
+                            <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800/50 rounded-lg p-2 sm:p-3 border border-zinc-100 dark:border-zinc-700">
+                              {demanda.providencias}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Observações */}
+                        {demanda.observacoes && (
+                          <div className="space-y-1">
+                            <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                              Observações
+                            </p>
+                            <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800/50 rounded-lg p-2 sm:p-3 border border-zinc-100 dark:border-zinc-700">
+                              {demanda.observacoes}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Grid de Detalhes */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {/* Número completo do processo */}
+                          {demanda.processo && (
+                            <div className="space-y-1">
+                              <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                                Processo
+                              </p>
+                              <p className="text-xs sm:text-sm font-mono text-zinc-700 dark:text-zinc-300 break-all">
+                                {demanda.processo}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Tipo de Ato */}
+                          <div className="space-y-1">
+                            <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                              Tipo de Ato
+                            </p>
+                            <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
+                              {tipoAtoConfig?.label || demanda.tipoAto || "-"}
+                            </p>
+                          </div>
+
+                          {/* Data Intimação */}
+                          {demanda.dataIntimacao && (
+                            <div className="space-y-1">
+                              <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                                Data Intimação
+                              </p>
+                              <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
+                                {format(parseISO(demanda.dataIntimacao), "dd/MM/yyyy", { locale: ptBR })}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Defensor */}
+                          {demanda.defensor && (
+                            <div className="space-y-1">
+                              <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                                Defensor
+                              </p>
+                              <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
+                                {demanda.defensor}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Vara */}
+                          {demanda.vara && (
+                            <div className="space-y-1">
+                              <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                                Vara
+                              </p>
+                              <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
+                                {demanda.vara}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Ações Rápidas */}
+                        <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs gap-1"
+                            onClick={() => handleOpenEdit(demanda)}
+                          >
+                            <Edit className="h-3 w-3" />
+                            Editar
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs gap-1"
+                            onClick={() => handleUpdateStatus(demanda.id, "3_PROTOCOLAR")}
+                          >
+                            <ArrowUpRight className="h-3 w-3" />
+                            Protocolar
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs gap-1 text-emerald-600 hover:text-emerald-700"
+                            onClick={() => handleUpdateStatus(demanda.id, "7_PROTOCOLADO")}
+                          >
+                            <CheckCircle2 className="h-3 w-3" />
+                            Concluir
+                          </Button>
+                          {demanda.processo && (
+                            <Link href={`/admin/processos?q=${demanda.processo}`}>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                                <ExternalLink className="h-3 w-3" />
+                                Ver Processo
+                              </Button>
+                            </Link>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
               );
             })}
-            
-            {/* Adicionar nova demanda - Mobile */}
+          </div>
+
+          {/* Adicionar nova demanda */}
+          {filteredDemandas.length > 0 && (
             <Button
               variant="outline"
               onClick={handleOpenCreate}
@@ -2111,10 +2318,10 @@ export default function DemandasPage() {
               <Plus className="h-4 w-4" />
               Nova demanda
             </Button>
-          </div>
+          )}
 
-          {/* Desktop Table View */}
-          <Card className="section-card overflow-hidden border-0 shadow-lg hidden sm:block">
+          {/* Tabela escondida para manter a lógica existente */}
+          <Card className="section-card overflow-hidden border-0 shadow-lg hidden">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table className="notion-table">
@@ -2403,32 +2610,19 @@ export default function DemandasPage() {
                 </Table>
               </div>
 
-              {filteredDemandas.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                    <FileText className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-1">Nenhuma demanda encontrada</p>
-                  <p className="text-sm text-muted-foreground">Tente ajustar os filtros ou adicione uma nova demanda</p>
-                  <Button onClick={handleOpenCreate} className="mt-4 gap-2">
-                    <Plus className="h-4 w-4" />
-                    Nova Demanda
-                  </Button>
-                </div>
-              )}
             </CardContent>
           </Card>
 
-          {/* Mobile Empty State */}
+          {/* Empty State Unificado */}
           {filteredDemandas.length === 0 && (
-            <div className="sm:hidden flex flex-col items-center justify-center py-12 text-center px-4">
-              <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center mb-3">
-                <FileText className="h-7 w-7 text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-muted flex items-center justify-center mb-3 sm:mb-4">
+                <FileText className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">Nenhuma demanda</p>
-              <p className="text-xs text-muted-foreground mb-3">Ajuste os filtros ou crie uma nova</p>
-              <Button onClick={handleOpenCreate} size="sm" className="gap-1.5">
-                <Plus className="h-3.5 w-3.5" />
+              <p className="text-sm sm:text-lg font-medium text-muted-foreground mb-1">Nenhuma demanda encontrada</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">Tente ajustar os filtros ou adicione uma nova demanda</p>
+              <Button onClick={handleOpenCreate} className="gap-1.5 sm:gap-2">
+                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Nova Demanda
               </Button>
             </div>
