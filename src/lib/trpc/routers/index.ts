@@ -11,6 +11,7 @@ import { demandasRouter } from "./demandas";
 import { juriRouter } from "./juri";
 import { driveRouter } from "./drive";
 import { casosRouter } from "./casos";
+import { auditLogsRouter } from "./auditLogs";
 
 export const appRouter = router({
   // Autenticação
@@ -48,6 +49,9 @@ export const appRouter = router({
   
   // Integração Google Drive
   drive: driveRouter,
+  
+  // Logs de auditoria
+  auditLogs: auditLogsRouter,
 });
 
 export type AppRouter = typeof appRouter;
