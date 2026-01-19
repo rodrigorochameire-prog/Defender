@@ -9,6 +9,7 @@ import {
   date,
   index,
   uniqueIndex,
+  jsonb,
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -929,6 +930,12 @@ export const jurados = pgTable("jurados", {
   escolaridade: varchar("escolaridade", { length: 50 }),
   idade: integer("idade"),
   bairro: varchar("bairro", { length: 100 }),
+  genero: varchar("genero", { length: 20 }),
+  classeSocial: varchar("classe_social", { length: 30 }),
+  perfilPsicologico: text("perfil_psicologico"),
+  tendenciaVoto: integer("tendencia_voto"), // -10 (condenação) a +10 (absolvição)
+  status: varchar("status", { length: 30 }), // 'aceito' | 'recusado_defesa' | 'recusado_mp' | 'sorteado'
+  sessaoJuriId: integer("sessao_juri_id").references(() => sessoesJuri.id, { onDelete: "set null" }),
   
   // Estatísticas de votação
   totalSessoes: integer("total_sessoes").default(0),
@@ -954,6 +961,9 @@ export const jurados = pgTable("jurados", {
 }, (table) => [
   index("jurados_nome_idx").on(table.nome),
   index("jurados_perfil_idx").on(table.perfilTendencia),
+  index("jurados_sessao_juri_id_idx").on(table.sessaoJuriId),
+  index("jurados_tendencia_voto_idx").on(table.tendenciaVoto),
+  index("jurados_status_idx").on(table.status),
   index("jurados_ativo_idx").on(table.ativo),
 ]);
 
@@ -1129,6 +1139,76 @@ export type Caso = typeof casos.$inferSelect;
 export type InsertCaso = typeof casos.$inferInsert;
 
 // ==========================================
+// JÚRI: TESES DEFENSIVAS (Estratégia)
+// ==========================================
+
+export const tesesDefensivas = pgTable("teses_defensivas", {
+  id: serial("id").primaryKey(),
+  casoId: integer("caso_id").references(() => casos.id, { onDelete: "cascade" }),
+  titulo: text("titulo").notNull(),
+  descricao: text("descricao"),
+  tipo: varchar("tipo", { length: 30 }), // 'principal' | 'subsidiaria'
+  probabilidadeAceitacao: integer("probabilidade_aceitacao"),
+  argumentosChave: jsonb("argumentos_chave").$type<string[]>(),
+  jurisprudenciaRelacionada: jsonb("jurisprudencia_relacionada").$type<string[]>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("teses_defensivas_caso_id_idx").on(table.casoId),
+  index("teses_defensivas_tipo_idx").on(table.tipo),
+  index("teses_defensivas_probabilidade_idx").on(table.probabilidadeAceitacao),
+]);
+
+export type TeseDefensiva = typeof tesesDefensivas.$inferSelect;
+export type InsertTeseDefensiva = typeof tesesDefensivas.$inferInsert;
+
+// ==========================================
+// JÚRI: ANÁLISE COMPARATIVA DE PROVAS
+// ==========================================
+
+export const depoimentosAnalise = pgTable("depoimentos_analise", {
+  id: serial("id").primaryKey(),
+  casoId: integer("caso_id").references(() => casos.id, { onDelete: "cascade" }),
+  testemunhaNome: text("testemunha_nome"),
+  versaoDelegacia: text("versao_delegacia"),
+  versaoJuizo: text("versao_juizo"),
+  contradicoesIdentificadas: text("contradicoes_identificadas"),
+  pontosFracos: text("pontos_fracos"),
+  pontosFortes: text("pontos_fortes"),
+  estrategiaInquiricao: text("estrategia_inquiricao"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("depoimentos_analise_caso_id_idx").on(table.casoId),
+  index("depoimentos_analise_testemunha_idx").on(table.testemunhaNome),
+]);
+
+export type DepoimentoAnalise = typeof depoimentosAnalise.$inferSelect;
+export type InsertDepoimentoAnalise = typeof depoimentosAnalise.$inferInsert;
+
+// ==========================================
+// JÚRI: ROTEIRO DE PLENÁRIO
+// ==========================================
+
+export const roteiroPlenario = pgTable("roteiro_plenario", {
+  id: serial("id").primaryKey(),
+  casoId: integer("caso_id").references(() => casos.id, { onDelete: "cascade" }),
+  ordem: integer("ordem"),
+  fase: varchar("fase", { length: 40 }),
+  conteudo: jsonb("conteudo").$type<Record<string, unknown> | string[]>(),
+  tempoEstimado: integer("tempo_estimado"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("roteiro_plenario_caso_id_idx").on(table.casoId),
+  index("roteiro_plenario_fase_idx").on(table.fase),
+  index("roteiro_plenario_ordem_idx").on(table.ordem),
+]);
+
+export type RoteiroPlenario = typeof roteiroPlenario.$inferSelect;
+export type InsertRoteiroPlenario = typeof roteiroPlenario.$inferInsert;
+
+// ==========================================
 // TAGS DE CASOS (Para sugestões inteligentes)
 // ==========================================
 
@@ -1244,9 +1324,11 @@ export const demandasRelations = relations(demandas, ({ one, many }) => ({
   calendarEvents: many(calendarEvents),
 }));
 
-export const sessoesJuriRelations = relations(sessoesJuri, ({ one }) => ({
+export const sessoesJuriRelations = relations(sessoesJuri, ({ one, many }) => ({
   processo: one(processos, { fields: [sessoesJuri.processoId], references: [processos.id] }),
   defensor: one(users, { fields: [sessoesJuri.defensorId], references: [users.id] }),
+  jurados: many(jurados),
+  conselho: many(conselhoJuri),
 }));
 
 export const audienciasRelations = relations(audiencias, ({ one }) => ({
@@ -1318,6 +1400,7 @@ export const bancoPecasRelations = relations(bancoPecas, ({ one }) => ({
 
 export const juradosRelations = relations(jurados, ({ one, many }) => ({
   createdBy: one(users, { fields: [jurados.createdById], references: [users.id] }),
+  sessaoJuri: one(sessoesJuri, { fields: [jurados.sessaoJuriId], references: [sessoesJuri.id] }),
   conselhos: many(conselhoJuri),
 }));
 
@@ -1337,6 +1420,9 @@ export const casosRelations = relations(casos, ({ one, many }) => ({
   processos: many(processos),
   demandas: many(demandas),
   audiencias: many(audiencias),
+  tesesDefensivas: many(tesesDefensivas),
+  depoimentosAnalise: many(depoimentosAnalise),
+  roteiroPlenario: many(roteiroPlenario),
   conexoesOrigem: many(casosConexos),
 }));
 
@@ -1348,6 +1434,18 @@ export const casosConexosRelations = relations(casosConexos, ({ one }) => ({
 export const audienciasHistoricoRelations = relations(audienciasHistorico, ({ one }) => ({
   audiencia: one(audiencias, { fields: [audienciasHistorico.audienciaId], references: [audiencias.id] }),
   editadoPor: one(users, { fields: [audienciasHistorico.editadoPorId], references: [users.id] }),
+}));
+
+export const tesesDefensivasRelations = relations(tesesDefensivas, ({ one }) => ({
+  caso: one(casos, { fields: [tesesDefensivas.casoId], references: [casos.id] }),
+}));
+
+export const depoimentosAnaliseRelations = relations(depoimentosAnalise, ({ one }) => ({
+  caso: one(casos, { fields: [depoimentosAnalise.casoId], references: [casos.id] }),
+}));
+
+export const roteiroPlenarioRelations = relations(roteiroPlenario, ({ one }) => ({
+  caso: one(casos, { fields: [roteiroPlenario.casoId], references: [casos.id] }),
 }));
 
 // ==========================================
