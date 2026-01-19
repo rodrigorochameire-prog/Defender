@@ -100,6 +100,29 @@ import {
 import { format, differenceInDays, parseISO, isToday, isTomorrow, isPast, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useAssignment, ASSIGNMENT_CONFIGS, type Assignment } from "@/contexts/assignment-context";
+
+// Mapeamento de área para atribuição
+const AREA_TO_ASSIGNMENT: Record<string, Assignment[]> = {
+  JURI: ["JURI_CAMACARI", "GRUPO_JURI"],
+  VVD: ["VVD_CAMACARI"],
+  EXECUCAO: ["EXECUCAO_PENAL"],
+  CRIMINAL: ["SUBSTITUICAO"],
+  CIVEL: ["SUBSTITUICAO_CIVEL"],
+  FAMILIA: ["SUBSTITUICAO_CIVEL"],
+  FAZENDA: ["SUBSTITUICAO_CIVEL"],
+  CONSUMIDOR: ["SUBSTITUICAO_CIVEL"],
+};
+
+// Atribuições disponíveis para o filtro
+const ATRIBUICAO_OPTIONS = [
+  { value: "all", label: "Todas as Atribuições", icon: "📋", color: "bg-zinc-500" },
+  { value: "JURI_CAMACARI", label: "Júri", icon: "🏛️", color: "bg-emerald-500" },
+  { value: "VVD_CAMACARI", label: "Violência Doméstica", icon: "💜", color: "bg-amber-500" },
+  { value: "EXECUCAO_PENAL", label: "Execução Penal", icon: "⛓️", color: "bg-blue-500" },
+  { value: "SUBSTITUICAO", label: "Substituição Criminal", icon: "🔄", color: "bg-orange-500" },
+  { value: "SUBSTITUICAO_CIVEL", label: "Substituição Cível", icon: "⚖️", color: "bg-purple-500" },
+];
 
 // Tipos para opções customizáveis
 interface OptionItem {
@@ -1502,6 +1525,11 @@ function SelectWithAdd({
 
 // Componente Principal
 export default function DemandasPage() {
+  // Atribuição atual do contexto
+  const { currentAssignment } = useAssignment();
+  
+  // Filtro de atribuição local (pode ser diferente do contexto global)
+  const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [areaFilter, setAreaFilter] = useState("all");
@@ -1590,7 +1618,17 @@ export default function DemandasPage() {
       const matchesComarca = comarcaFilter === "all" || demanda.comarca === comarcaFilter;
       const matchesDefensor = defensorFilter === "all" || demanda.defensor === defensorFilter;
       const matchesReuPreso = reuPresoFilter === null || demanda.reuPreso === reuPresoFilter;
-      return matchesSearch && matchesStatus && matchesArea && matchesPrioridade && matchesComarca && matchesDefensor && matchesReuPreso;
+      
+      // Filtro de atribuição
+      let matchesAtribuicao = true;
+      if (atribuicaoFilter !== "all") {
+        const areasForAtribuicao = Object.entries(AREA_TO_ASSIGNMENT)
+          .filter(([_, assignments]) => assignments.includes(atribuicaoFilter as Assignment))
+          .map(([area]) => area);
+        matchesAtribuicao = areasForAtribuicao.includes(demanda.area);
+      }
+      
+      return matchesSearch && matchesStatus && matchesArea && matchesPrioridade && matchesComarca && matchesDefensor && matchesReuPreso && matchesAtribuicao;
     });
 
     // Função para obter prioridade do status
@@ -1647,7 +1685,7 @@ export default function DemandasPage() {
     });
 
     return result;
-  }, [demandas, searchTerm, statusFilter, areaFilter, prioridadeFilter, comarcaFilter, defensorFilter, reuPresoFilter, sortField, sortOrder]);
+  }, [demandas, searchTerm, statusFilter, areaFilter, prioridadeFilter, comarcaFilter, defensorFilter, reuPresoFilter, atribuicaoFilter, sortField, sortOrder]);
 
   // Estatísticas baseadas nos status da planilha VVD (COMPLETO)
   const stats = useMemo(() => ({
@@ -1706,49 +1744,134 @@ export default function DemandasPage() {
     }
   };
 
+  // Configuração visual da atribuição selecionada
+  const selectedAtribuicaoConfig = atribuicaoFilter !== "all" 
+    ? ASSIGNMENT_CONFIGS[atribuicaoFilter as Assignment]
+    : null;
+  
+  const atribuicaoOption = ATRIBUICAO_OPTIONS.find(opt => opt.value === atribuicaoFilter);
+
   return (
     <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Header - Mobile Optimized */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex-shrink-0">
-            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-violet-700 dark:text-violet-400" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-              Demandas
-            </h1>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
-              Gestão de prazos e atos processuais
-            </p>
-          </div>
-        </div>
+      {/* Hero Header - Destaque com gradiente baseado na atribuição */}
+      <Card className={cn(
+        "border-0 shadow-lg overflow-hidden",
+        selectedAtribuicaoConfig ? selectedAtribuicaoConfig.borderColor : "border-violet-200/60",
+        "bg-gradient-to-br",
+        selectedAtribuicaoConfig ? selectedAtribuicaoConfig.bgGradient : "from-violet-50/80 via-purple-50/60 to-slate-50 dark:from-violet-950/30 dark:via-purple-950/20 dark:to-slate-950"
+      )}>
+        <CardContent className="p-4 sm:p-6">
+          {/* Header Principal */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className={cn(
+                "p-3 sm:p-4 rounded-xl shadow-md flex-shrink-0",
+                selectedAtribuicaoConfig 
+                  ? `bg-gradient-to-br ${selectedAtribuicaoConfig.bgGradient}`
+                  : "bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/50 dark:to-purple-900/50"
+              )}>
+                <FileText className={cn(
+                  "w-6 h-6 sm:w-8 sm:h-8",
+                  selectedAtribuicaoConfig ? "text-current" : "text-violet-700 dark:text-violet-400"
+                )} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+                    Demandas
+                  </h1>
+                  {atribuicaoFilter !== "all" && atribuicaoOption && (
+                    <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-0.5 font-medium">
+                      <span className="mr-1">{atribuicaoOption.icon}</span>
+                      {atribuicaoOption.label}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-0.5">
+                  Gestão centralizada de prazos e atos processuais
+                </p>
+              </div>
+            </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <Button variant="outline" size="icon" title="Exportar" className="h-8 w-8 sm:h-9 sm:w-9">
-            <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm hidden sm:flex"
-            title="Sincronizar com Notion"
-            onClick={() => {
-              alert("Sincronização com Notion em desenvolvimento.\n\nConfigure NOTION_API_KEY e NOTION_DATABASE_ID no .env");
-            }}
-          >
-            <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden md:inline">Notion</span>
-          </Button>
-          <Button variant="outline" size="icon" title="Atualizar" className="h-8 w-8 sm:h-9 sm:w-9">
-            <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </Button>
-          <Button onClick={handleOpenCreate} className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm">
-            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Nova Demanda</span>
-            <span className="sm:hidden">Nova</span>
-          </Button>
-        </div>
-      </div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Button variant="outline" size="icon" title="Exportar" className="h-8 w-8 sm:h-9 sm:w-9 bg-white/80 dark:bg-zinc-800/80">
+                <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm hidden sm:flex bg-white/80 dark:bg-zinc-800/80"
+                title="Sincronizar com Notion"
+                onClick={() => {
+                  alert("Sincronização com Notion em desenvolvimento.\n\nConfigure NOTION_API_KEY e NOTION_DATABASE_ID no .env");
+                }}
+              >
+                <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden md:inline">Notion</span>
+              </Button>
+              <Button variant="outline" size="icon" title="Atualizar" className="h-8 w-8 sm:h-9 sm:w-9 bg-white/80 dark:bg-zinc-800/80">
+                <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </Button>
+              <Button onClick={handleOpenCreate} className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm shadow-md">
+                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Nova Demanda</span>
+                <span className="sm:hidden">Nova</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Seletor de Atribuição - Tabs horizontais */}
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex gap-1.5 sm:gap-2 min-w-max pb-1">
+              {ATRIBUICAO_OPTIONS.map((option) => {
+                const isActive = atribuicaoFilter === option.value;
+                const count = option.value === "all" 
+                  ? demandas.length 
+                  : demandas.filter(d => {
+                      const areasForAtribuicao = Object.entries(AREA_TO_ASSIGNMENT)
+                        .filter(([_, assignments]) => assignments.includes(option.value as Assignment))
+                        .map(([area]) => area);
+                      return areasForAtribuicao.includes(d.area);
+                    }).length;
+                
+                return (
+                  <Button
+                    key={option.value}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setAtribuicaoFilter(option.value)}
+                    className={cn(
+                      "gap-1.5 h-8 sm:h-9 text-xs sm:text-sm flex-shrink-0 transition-all duration-200",
+                      isActive 
+                        ? "shadow-md" 
+                        : "bg-white/60 dark:bg-zinc-800/60 hover:bg-white dark:hover:bg-zinc-800",
+                      option.value === "JURI_CAMACARI" && isActive && "bg-emerald-600 hover:bg-emerald-700",
+                      option.value === "VVD_CAMACARI" && isActive && "bg-amber-500 hover:bg-amber-600",
+                      option.value === "EXECUCAO_PENAL" && isActive && "bg-blue-600 hover:bg-blue-700",
+                      option.value === "SUBSTITUICAO" && isActive && "bg-orange-500 hover:bg-orange-600",
+                      option.value === "SUBSTITUICAO_CIVEL" && isActive && "bg-purple-600 hover:bg-purple-700",
+                    )}
+                  >
+                    <span className="text-sm">{option.icon}</span>
+                    <span className="hidden sm:inline">{option.label}</span>
+                    <span className="sm:hidden">{option.label.split(' ')[0]}</span>
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "ml-0.5 h-4 min-w-[1.25rem] px-1 text-[10px] font-semibold",
+                        isActive 
+                          ? "bg-white/20 text-white border-0" 
+                          : "bg-zinc-100 dark:bg-zinc-700"
+                      )}
+                    >
+                      {count}
+                    </Badge>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats Cards - Scroll horizontal no mobile */}
       <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
