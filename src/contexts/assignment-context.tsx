@@ -64,6 +64,9 @@ const JURI_MODULES: MenuSection[] = [
     items: [
       { label: "Banco de Jurados", path: "/admin/jurados", icon: "UserCheck", description: "Perfil e histórico de votações" },
       { label: "Profiler de Jurados", path: "/admin/jurados/profiler", icon: "Brain", description: "Score de empatia e análise", isPremium: true },
+      { label: "Investigação & OSINT", path: "/admin/juri/investigacao", icon: "FileSearch", description: "Kanban de providências" },
+      { label: "Matriz de Provas", path: "/admin/juri/provas", icon: "ClipboardCheck", description: "Contradições e tabela comparativa" },
+      { label: "Teses do Júri", path: "/admin/juri/teses", icon: "Target", description: "Narrativa e teses defensivas" },
       { label: "Banco de Teses", path: "/admin/templates", icon: "FileText", description: "Petições de sucesso" },
       { label: "Laboratório de Oratória", path: "/admin/juri/laboratorio", icon: "Mic", description: "Vídeos e roteiros", isPremium: true },
     ],
@@ -168,6 +171,9 @@ const GRUPO_JURI_MODULES: MenuSection[] = [
     title: "Inteligência Avançada",
     items: [
       { label: "Banco de Jurados", path: "/admin/jurados", icon: "UserCheck" },
+      { label: "Investigação & OSINT", path: "/admin/juri/investigacao", icon: "FileSearch" },
+      { label: "Matriz de Provas", path: "/admin/juri/provas", icon: "ClipboardCheck" },
+      { label: "Teses do Júri", path: "/admin/juri/teses", icon: "Target" },
       { label: "Estatísticas por Juiz", path: "/admin/relatorios/juizes", icon: "BarChart3", isPremium: true },
       { label: "Banco de Teses", path: "/admin/templates", icon: "FileText" },
       { label: "Análise de Desfechos", path: "/admin/relatorios/desfechos", icon: "PieChart", isPremium: true },

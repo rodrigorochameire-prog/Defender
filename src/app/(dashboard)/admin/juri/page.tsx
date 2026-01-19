@@ -51,6 +51,10 @@ import {
   GripVertical,
   ArrowUpRight,
   BarChart3,
+  FileSearch,
+  ClipboardCheck,
+  Target,
+  Mic,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -128,6 +132,45 @@ const mockJurados = [
   { id: 6, nome: "Roberto Almeida", profissao: "Empresário", idade: 58, bairro: "Industrial", totalSessoes: 20, votosCondenacao: 14, votosAbsolvicao: 5, votosDesclassificacao: 1, perfilTendencia: "condenatorio" },
   { id: 7, nome: "Carla Beatriz Moura", profissao: "Psicóloga", idade: 42, bairro: "Centro", totalSessoes: 9, votosCondenacao: 2, votosAbsolvicao: 7, votosDesclassificacao: 0, perfilTendencia: "absolutorio" },
   { id: 8, nome: "Marcos Antonio Reis", profissao: "Engenheiro", idade: 47, bairro: "Boa Vista", totalSessoes: 5, votosCondenacao: 2, votosAbsolvicao: 2, votosDesclassificacao: 1, perfilTendencia: "neutro" },
+];
+
+const ferramentasJuri = [
+  {
+    id: "investigacao",
+    titulo: "Investigação & OSINT",
+    descricao: "Kanban de providências e diligências",
+    href: "/admin/juri/investigacao",
+    icon: FileSearch,
+    accent: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/60",
+    iconColor: "text-emerald-600",
+  },
+  {
+    id: "provas",
+    titulo: "Matriz de Provas",
+    descricao: "Comparador e contradições",
+    href: "/admin/juri/provas",
+    icon: ClipboardCheck,
+    accent: "bg-sky-50 dark:bg-sky-950/20 border-sky-200/60",
+    iconColor: "text-sky-600",
+  },
+  {
+    id: "teses",
+    titulo: "Teses do Júri",
+    descricao: "Narrativa e argumentos",
+    href: "/admin/juri/teses",
+    icon: Target,
+    accent: "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200/60",
+    iconColor: "text-indigo-600",
+  },
+  {
+    id: "laboratorio",
+    titulo: "Laboratório de Oratória",
+    descricao: "Timer e análise de discurso",
+    href: "/admin/juri/laboratorio",
+    icon: Mic,
+    accent: "bg-rose-50 dark:bg-rose-950/20 border-rose-200/60",
+    iconColor: "text-rose-600",
+  },
 ];
 
 function getStatusBadge(status: string) {
@@ -518,6 +561,39 @@ export default function JuriPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Ferramentas Estratégicas */}
+      <Card className="section-card">
+        <CardHeader className="pb-4 border-b border-border/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Ferramentas Estratégicas</CardTitle>
+              <CardDescription>Mapeie provas, teses e oratória do plenário</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {ferramentasJuri.map((ferramenta) => {
+              const Icon = ferramenta.icon;
+              return (
+                <Link key={ferramenta.id} href={ferramenta.href}>
+                  <div className={`rounded-xl border ${ferramenta.accent} p-4 transition-shadow hover:shadow-md`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className={`h-10 w-10 rounded-lg bg-white/70 dark:bg-zinc-900/40 flex items-center justify-center`}>
+                        <Icon className={`h-5 w-5 ${ferramenta.iconColor}`} />
+                      </div>
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-semibold text-sm">{ferramenta.titulo}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">{ferramenta.descricao}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
