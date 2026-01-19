@@ -99,7 +99,7 @@ export default function AdminDocuments() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: documents, isLoading, refetch } = trpc.documents.list.useQuery({
-    category: categoryFilter === "all" ? undefined : categoryFilter,
+    categoria: categoryFilter === "all" ? undefined : categoryFilter,
   });
   const { data: pets } = trpc.pets.list.useQuery();
 
