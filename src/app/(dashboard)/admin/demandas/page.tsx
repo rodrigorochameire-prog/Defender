@@ -167,13 +167,23 @@ const AREA_TO_ASSIGNMENT: Record<string, string[]> = {
 };
 
 // Atribuições disponíveis para o filtro
+// Ícones para cada atribuição (Lucide icons)
+const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
+  all: <LayoutGrid className="w-3.5 h-3.5" />,
+  JURI_CAMACARI: <Gavel className="w-3.5 h-3.5" />,
+  VVD_CAMACARI: <AlertTriangle className="w-3.5 h-3.5" />,
+  EXECUCAO_PENAL: <Lock className="w-3.5 h-3.5" />,
+  SUBSTITUICAO: <Scale className="w-3.5 h-3.5" />,
+  SUBSTITUICAO_CIVEL: <FileText className="w-3.5 h-3.5" />,
+};
+
 const ATRIBUICAO_OPTIONS = [
-  { value: "all", label: "Todas", shortLabel: "Todas", icon: "📋" },
-  { value: "JURI_CAMACARI", label: "Júri", shortLabel: "Júri", icon: "🏛️" },
-  { value: "VVD_CAMACARI", label: "VVD", shortLabel: "VVD", icon: "💜" },
-  { value: "EXECUCAO_PENAL", label: "Exec. Penal", shortLabel: "EP", icon: "⛓️" },
-  { value: "SUBSTITUICAO", label: "Subst. Criminal", shortLabel: "Crim", icon: "🔄" },
-  { value: "SUBSTITUICAO_CIVEL", label: "Subst. Cível", shortLabel: "Cível", icon: "⚖️" },
+  { value: "all", label: "Todas", shortLabel: "Todas" },
+  { value: "JURI_CAMACARI", label: "Júri", shortLabel: "Júri" },
+  { value: "VVD_CAMACARI", label: "VVD", shortLabel: "VVD" },
+  { value: "EXECUCAO_PENAL", label: "Exec. Penal", shortLabel: "EP" },
+  { value: "SUBSTITUICAO", label: "Subst. Criminal", shortLabel: "Crim" },
+  { value: "SUBSTITUICAO_CIVEL", label: "Subst. Cível", shortLabel: "Cível" },
 ];
 
 // Tipos para opções customizáveis
@@ -1864,7 +1874,7 @@ export default function DemandasPage() {
                       : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
                   )}
                 >
-                  <span>{option.icon}</span>
+                  <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
                   <span className="hidden sm:inline">{option.label}</span>
                   <span className="sm:hidden">{option.shortLabel}</span>
                   <span className={cn(

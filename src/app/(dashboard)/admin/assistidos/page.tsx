@@ -133,13 +133,23 @@ const ATRIBUICAO_COLORS: Record<string, {
 };
 
 // Atribuições disponíveis para o filtro
+// Ícones para cada atribuição (Lucide icons)
+const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
+  all: <Users className="w-3.5 h-3.5" />,
+  JURI: <Gavel className="w-3.5 h-3.5" />,
+  VVD: <AlertTriangle className="w-3.5 h-3.5" />,
+  EXECUCAO: <Lock className="w-3.5 h-3.5" />,
+  CRIMINAL: <Scale className="w-3.5 h-3.5" />,
+  CIVEL: <FileText className="w-3.5 h-3.5" />,
+};
+
 const ATRIBUICAO_OPTIONS = [
-  { value: "all", label: "Todas", shortLabel: "Todas", icon: "📋" },
-  { value: "JURI", label: "Júri", shortLabel: "Júri", icon: "🏛️" },
-  { value: "VVD", label: "VVD", shortLabel: "VVD", icon: "💜" },
-  { value: "EXECUCAO", label: "Exec. Penal", shortLabel: "EP", icon: "⛓️" },
-  { value: "CRIMINAL", label: "Subst. Criminal", shortLabel: "Crim", icon: "🔄" },
-  { value: "CIVEL", label: "Subst. Cível", shortLabel: "Cível", icon: "⚖️" },
+  { value: "all", label: "Todas", shortLabel: "Todas" },
+  { value: "JURI", label: "Júri", shortLabel: "Júri" },
+  { value: "VVD", label: "VVD", shortLabel: "VVD" },
+  { value: "EXECUCAO", label: "Exec. Penal", shortLabel: "EP" },
+  { value: "CRIMINAL", label: "Subst. Criminal", shortLabel: "Crim" },
+  { value: "CIVEL", label: "Subst. Cível", shortLabel: "Cível" },
 ];
 import {
   DropdownMenu,
@@ -1155,7 +1165,7 @@ export default function AssistidosPage() {
                       : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
                   )}
                 >
-                  <span>{option.icon}</span>
+                  <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
                   <span className="hidden sm:inline">{option.label}</span>
                   <span className="sm:hidden">{option.shortLabel}</span>
                   <span className={cn(
