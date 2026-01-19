@@ -102,15 +102,15 @@ interface AudienciasHubProps {
 // ==========================================
 
 const TIPOS_AUDIENCIA = {
-  INSTRUCAO: { label: "Instrução", icon: "⚖️", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-  CUSTODIA: { label: "Custódia", icon: "🔒", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
-  CONCILIACAO: { label: "Conciliação", icon: "🤝", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-  JUSTIFICACAO: { label: "Justificação", icon: "📋", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
-  ADMONICAO: { label: "Admonição", icon: "👨‍⚖️", color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400" },
-  UNA: { label: "Una", icon: "📑", color: "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400" },
-  PLENARIO_JURI: { label: "Plenário", icon: "🎭", color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" },
-  CONTINUACAO: { label: "Continuação", icon: "➡️", color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400" },
-  OUTRA: { label: "Outra", icon: "📌", color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400" },
+  INSTRUCAO: { label: "Instrução", icon: "⚖️", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", dotColor: "bg-blue-500" },
+  CUSTODIA: { label: "Custódia", icon: "🔒", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400", dotColor: "bg-red-500" },
+  CONCILIACAO: { label: "Conciliação", icon: "🤝", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400", dotColor: "bg-green-500" },
+  JUSTIFICACAO: { label: "Justificação", icon: "📋", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", dotColor: "bg-amber-500" },
+  ADMONICAO: { label: "Admonição", icon: "👨‍⚖️", color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400", dotColor: "bg-violet-500" },
+  UNA: { label: "Una", icon: "📑", color: "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400", dotColor: "bg-slate-500" },
+  PLENARIO_JURI: { label: "Plenário", icon: "🎭", color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", dotColor: "bg-rose-500" },
+  CONTINUACAO: { label: "Continuação", icon: "➡️", color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400", dotColor: "bg-cyan-500" },
+  OUTRA: { label: "Outra", icon: "📌", color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400", dotColor: "bg-zinc-500" },
 };
 
 const STATUS_AUDIENCIA = {
