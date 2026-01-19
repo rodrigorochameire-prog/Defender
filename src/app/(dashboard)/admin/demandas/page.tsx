@@ -1673,184 +1673,220 @@ export default function DemandasPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header Premium */}
-      <div className="page-header">
-        <div className="page-header-content">
-          <div className="icon-primary">
-            <FileText />
+    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+      {/* Header - Mobile Optimized */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex-shrink-0">
+            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-violet-700 dark:text-violet-400" />
           </div>
-          <div className="page-header-info">
-            <h1>Demandas</h1>
-            <p>Gestão de prazos e atos processuais</p>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              Demandas
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
+              Gestão de prazos e atos processuais
+            </p>
           </div>
         </div>
-        <div className="page-header-actions">
-          <Button variant="outline" size="icon" title="Exportar">
-            <Download className="h-4 w-4" />
+
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Button variant="outline" size="icon" title="Exportar" className="h-8 w-8 sm:h-9 sm:w-9">
+            <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
           <Button 
             variant="outline" 
-            className="gap-2"
+            className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm hidden sm:flex"
             title="Sincronizar com Notion"
             onClick={() => {
-              // TODO: Implementar sync com Notion
               alert("Sincronização com Notion em desenvolvimento.\n\nConfigure NOTION_API_KEY e NOTION_DATABASE_ID no .env");
             }}
           >
-            <ExternalLink className="h-4 w-4" />
-            <span className="hidden sm:inline">Notion</span>
+            <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden md:inline">Notion</span>
           </Button>
-          <Button variant="outline" size="icon" title="Atualizar">
-            <RefreshCw className="h-4 w-4" />
+          <Button variant="outline" size="icon" title="Atualizar" className="h-8 w-8 sm:h-9 sm:w-9">
+            <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
-          <Button onClick={handleOpenCreate} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Demanda
+          <Button onClick={handleOpenCreate} className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm">
+            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Nova Demanda</span>
+            <span className="sm:hidden">Nova</span>
           </Button>
         </div>
       </div>
 
-      {/* Stats Cards - Baseado na planilha VVD */}
-      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-10">
-        <Card className="stat-card">
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-bold">{stats.total}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</p>
+      {/* Stats Cards - Scroll horizontal no mobile */}
+      <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div className="flex sm:grid gap-2 sm:gap-3 sm:grid-cols-5 lg:grid-cols-10 min-w-max sm:min-w-0">
+          {/* Total */}
+          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto">
+            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-lg sm:text-xl font-bold">{stats.total}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Total</p>
+                </div>
+                <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
               </div>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className={cn("stat-card", stats.urgente > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={cn("text-xl font-semibold", stats.urgente > 0 ? "text-rose-600" : "text-foreground")}>{stats.urgente}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Urgente</p>
+          {/* Urgente */}
+          <Card className={cn("stat-card flex-shrink-0 w-[100px] sm:w-auto", stats.urgente > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
+            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className={cn("text-lg sm:text-xl font-semibold", stats.urgente > 0 ? "text-rose-600" : "text-foreground")}>{stats.urgente}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Urgente</p>
+                </div>
+                <AlertTriangle className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0", stats.urgente > 0 ? "text-rose-400" : "text-muted-foreground")} />
               </div>
-              <AlertTriangle className={cn("h-4 w-4", stats.urgente > 0 ? "text-rose-400" : "text-muted-foreground")} />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className={cn("stat-card", stats.reuPreso > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={cn("text-xl font-semibold", stats.reuPreso > 0 ? "text-rose-600" : "text-foreground")}>{stats.reuPreso}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Preso</p>
+          {/* Réu Preso */}
+          <Card className={cn("stat-card flex-shrink-0 w-[100px] sm:w-auto", stats.reuPreso > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
+            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className={cn("text-lg sm:text-xl font-semibold", stats.reuPreso > 0 ? "text-rose-600" : "text-foreground")}>{stats.reuPreso}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Preso</p>
+                </div>
+                <Lock className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0", stats.reuPreso > 0 ? "text-rose-400" : "text-muted-foreground")} />
               </div>
-              <Lock className={cn("h-4 w-4", stats.reuPreso > 0 ? "text-rose-400" : "text-muted-foreground")} />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="stat-card">
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-semibold text-amber-600">{stats.trabalho}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Trabalho</p>
+          {/* Trabalho */}
+          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto">
+            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-lg sm:text-xl font-semibold text-amber-600">{stats.trabalho}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Trabalho</p>
+                </div>
+                <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400 flex-shrink-0" />
               </div>
-              <Edit className="h-4 w-4 text-amber-400" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="stat-card">
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-semibold text-orange-500">{stats.protocolar}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Protocolar</p>
+          {/* Protocolar */}
+          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto">
+            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-lg sm:text-xl font-semibold text-orange-500">{stats.protocolar}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Protocolar</p>
+                </div>
+                <ArrowUpRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-400 flex-shrink-0" />
               </div>
-              <ArrowUpRight className="h-4 w-4 text-orange-400" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="stat-card">
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-semibold text-sky-600">{stats.delegado}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Delegado</p>
+          {/* Delegado - hidden on small mobile */}
+          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto hidden sm:block">
+            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-lg sm:text-xl font-semibold text-sky-600">{stats.delegado}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Delegado</p>
+                </div>
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-400 flex-shrink-0" />
               </div>
-              <User className="h-4 w-4 text-sky-400" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="stat-card">
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-semibold text-indigo-600">{stats.fila}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Fila</p>
+          {/* Fila - hidden on mobile */}
+          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto hidden lg:block">
+            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-lg sm:text-xl font-semibold text-indigo-600">{stats.fila}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Fila</p>
+                </div>
+                <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-indigo-400 flex-shrink-0" />
               </div>
-              <Clock className="h-4 w-4 text-indigo-400" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="stat-card">
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-semibold text-slate-600">{stats.aguardando}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Aguardando</p>
+          {/* Aguardando - hidden on mobile */}
+          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto hidden lg:block">
+            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-lg sm:text-xl font-semibold text-slate-600">{stats.aguardando}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Aguardando</p>
+                </div>
+                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 flex-shrink-0" />
               </div>
-              <Eye className="h-4 w-4 text-slate-400" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="stat-card">
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-semibold text-emerald-600">{stats.concluido}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Concluído</p>
+          {/* Concluído */}
+          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto">
+            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-lg sm:text-xl font-semibold text-emerald-600">{stats.concluido}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Concluído</p>
+                </div>
+                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-400 flex-shrink-0" />
               </div>
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className={cn("stat-card", stats.vencidos > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
-          <CardContent className="pt-3 pb-2 px-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={cn("text-xl font-semibold", stats.vencidos > 0 ? "text-rose-600" : "text-foreground")}>{stats.vencidos}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Vencidos</p>
+          {/* Vencidos */}
+          <Card className={cn("stat-card flex-shrink-0 w-[100px] sm:w-auto", stats.vencidos > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
+            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className={cn("text-lg sm:text-xl font-semibold", stats.vencidos > 0 ? "text-rose-600" : "text-foreground")}>{stats.vencidos}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Vencidos</p>
+                </div>
+                <AlertTriangle className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0", stats.vencidos > 0 ? "text-rose-400" : "text-muted-foreground")} />
               </div>
-              <AlertTriangle className={cn("h-4 w-4", stats.vencidos > 0 ? "text-rose-400" : "text-muted-foreground")} />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Tabs de Visualização */}
-      <Tabs value={activeView} onValueChange={(v) => setActiveView(v as any)} className="space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Filtros */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-[250px]">
+      <Tabs value={activeView} onValueChange={(v) => setActiveView(v as any)} className="space-y-3 sm:space-y-4">
+        <div className="flex flex-col gap-3">
+          {/* Search + View Toggle Row */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar assistido, processo, ato..."
+                placeholder="Buscar assistido, processo..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-9 text-sm"
               />
             </div>
 
+            {/* View Toggle */}
+            <TabsList className="h-9">
+              <TabsTrigger value="table" className="gap-1 h-7 px-2 sm:px-3">
+                <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline text-xs">Lista</span>
+              </TabsTrigger>
+              <TabsTrigger value="kanban" className="gap-1 h-7 px-2 sm:px-3">
+                <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline text-xs">Kanban</span>
+              </TabsTrigger>
+              <TabsTrigger value="timeline" className="gap-1 h-7 px-2 sm:px-3">
+                <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline text-xs">Timeline</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* Filtros - Scroll horizontal no mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-3 px-3 sm:mx-0 sm:px-0">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 text-xs flex-shrink-0">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -1867,7 +1903,7 @@ export default function DemandasPage() {
             </Select>
 
             <Select value={areaFilter} onValueChange={setAreaFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-[100px] sm:w-[130px] h-8 text-xs flex-shrink-0">
                 <SelectValue placeholder="Área" />
               </SelectTrigger>
               <SelectContent>
@@ -1879,7 +1915,7 @@ export default function DemandasPage() {
             </Select>
 
             <Select value={comarcaFilter} onValueChange={setComarcaFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-[100px] sm:w-[130px] h-8 text-xs flex-shrink-0 hidden sm:flex">
                 <SelectValue placeholder="Comarca" />
               </SelectTrigger>
               <SelectContent>
@@ -1891,7 +1927,7 @@ export default function DemandasPage() {
             </Select>
 
             <Select value={defensorFilter} onValueChange={setDefensorFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-[100px] sm:w-[130px] h-8 text-xs flex-shrink-0 hidden md:flex">
                 <SelectValue placeholder="Defensor" />
               </SelectTrigger>
               <SelectContent>
@@ -1906,10 +1942,10 @@ export default function DemandasPage() {
               variant={reuPresoFilter === true ? "destructive" : "outline"}
               size="sm"
               onClick={() => setReuPresoFilter(reuPresoFilter === true ? null : true)}
-              className="gap-1"
+              className="gap-1 h-8 text-xs flex-shrink-0 px-2 sm:px-3"
             >
               <Lock className="h-3 w-3" />
-              Preso
+              <span className="hidden sm:inline">Preso</span>
             </Button>
 
             {(statusFilter !== "all" || areaFilter !== "all" || comarcaFilter !== "all" || defensorFilter !== "all" || reuPresoFilter !== null || searchTerm) && (
@@ -1924,53 +1960,161 @@ export default function DemandasPage() {
                   setDefensorFilter("all");
                   setReuPresoFilter(null);
                 }}
-                className="gap-1 text-muted-foreground"
+                className="gap-1 text-muted-foreground h-8 text-xs flex-shrink-0 px-2"
               >
                 <X className="h-3 w-3" />
-                Limpar
+                <span className="hidden sm:inline">Limpar</span>
               </Button>
             )}
-          </div>
-
-          {/* Controles de Visualização */}
-          <div className="flex items-center gap-2">
-            <TabsList>
-              <TabsTrigger value="table" className="gap-1">
-                <List className="h-4 w-4" />
-                Tabela
-              </TabsTrigger>
-              <TabsTrigger value="kanban" className="gap-1">
-                <LayoutGrid className="h-4 w-4" />
-                Kanban
-              </TabsTrigger>
-            </TabsList>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Columns className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <div className="px-2 py-1.5 text-sm font-semibold">Colunas Visíveis</div>
-                <DropdownMenuSeparator />
-                {Object.entries(visibleColumns).map(([key, value]) => (
-                  <DropdownMenuCheckboxItem
-                    key={key}
-                    checked={value}
-                    onCheckedChange={(checked) => setVisibleColumns({ ...visibleColumns, [key]: checked })}
-                  >
-                    {key.charAt(0).toUpperCase() + key.slice(1)}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
 
         {/* Visualização em Tabela - Premium Notion Style */}
-        <TabsContent value="table" className="mt-0">
-          <Card className="section-card overflow-hidden border-0 shadow-lg">
+        <TabsContent value="table" className="mt-0 space-y-3">
+          {/* Mobile Cards View */}
+          <div className="sm:hidden space-y-2 px-1">
+            {filteredDemandas.map((demanda) => {
+              const prazoInfo = getPrazoInfo(demanda.prazo);
+              const PrazoIcon = prazoInfo.icon;
+              const statusConfig = getStatusConfig(demanda.status);
+              const prisaoConfig = prisaoOptions.find(p => p.value === demanda.prisao);
+              
+              return (
+                <Card 
+                  key={demanda.id}
+                  className={cn(
+                    "group overflow-hidden transition-all duration-200 hover:shadow-md",
+                    demanda.reuPreso && "border-l-4 border-l-rose-500 bg-rose-50/20 dark:bg-rose-950/10",
+                    prazoInfo.urgent && !demanda.reuPreso && "border-l-4 border-l-amber-500 bg-amber-50/20 dark:bg-amber-950/10"
+                  )}
+                >
+                  <CardContent className="p-3">
+                    {/* Header Row */}
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          {demanda.reuPreso && (
+                            <Badge className="bg-rose-600 text-white text-[9px] px-1.5 py-0 h-5 animate-pulse">
+                              <Lock className="h-2.5 w-2.5 mr-0.5" />
+                              PRESO
+                            </Badge>
+                          )}
+                          <Badge className={cn("text-[9px] px-1.5 py-0 h-5", statusConfig.color, "text-white")}>
+                            {statusConfig.label}
+                          </Badge>
+                          {prazoInfo.urgent && (
+                            <Badge className={cn("text-[9px] px-1.5 py-0 h-5", prazoInfo.className)}>
+                              <PrazoIcon className="h-2.5 w-2.5 mr-0.5" />
+                              {prazoInfo.text}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 line-clamp-1">
+                          {demanda.assistido}
+                        </p>
+                      </div>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleOpenEdit(demanda)} className="cursor-pointer">
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleUpdateStatus(demanda.id, "7_PROTOCOLADO")}
+                            className="cursor-pointer text-emerald-600"
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Protocolado
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleDelete(demanda.id)}
+                            className="cursor-pointer text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    {/* Ato e Processo */}
+                    <div className="space-y-1 mb-2">
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-1">
+                        <span className="font-medium">{demanda.ato || "Sem ato definido"}</span>
+                      </p>
+                      {demanda.processo && (
+                        <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-mono">
+                          {demanda.processo.length > 25 
+                            ? `${demanda.processo.substring(0, 12)}...${demanda.processo.slice(-8)}`
+                            : demanda.processo
+                          }
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Meta Row */}
+                    <div className="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
+                      <div className="flex items-center gap-2">
+                        {demanda.prisao && demanda.prisao !== "NAO_INFORMADO" && demanda.prisao !== "SOLTO" && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400">
+                            <Lock className="h-2.5 w-2.5" />
+                            {prisaoConfig?.label || demanda.prisao}
+                          </span>
+                        )}
+                        {demanda.dataEntrada && (
+                          <span className="inline-flex items-center gap-0.5">
+                            <Calendar className="h-2.5 w-2.5" />
+                            {format(parseISO(demanda.dataEntrada), "dd/MM", { locale: ptBR })}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {!prazoInfo.urgent && demanda.prazo && (
+                        <span className={cn("inline-flex items-center gap-0.5", prazoInfo.className)}>
+                          <PrazoIcon className="h-2.5 w-2.5" />
+                          {prazoInfo.text}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Providências (se houver) */}
+                    {demanda.providencias && (
+                      <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                          <span className="font-medium text-zinc-600 dark:text-zinc-300">Providências:</span> {demanda.providencias}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+            
+            {/* Adicionar nova demanda - Mobile */}
+            <Button
+              variant="outline"
+              onClick={handleOpenCreate}
+              className="w-full justify-center gap-2 h-10 border-dashed border-2"
+            >
+              <Plus className="h-4 w-4" />
+              Nova demanda
+            </Button>
+          </div>
+
+          {/* Desktop Table View */}
+          <Card className="section-card overflow-hidden border-0 shadow-lg hidden sm:block">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table className="notion-table">
@@ -2275,15 +2419,30 @@ export default function DemandasPage() {
             </CardContent>
           </Card>
 
+          {/* Mobile Empty State */}
+          {filteredDemandas.length === 0 && (
+            <div className="sm:hidden flex flex-col items-center justify-center py-12 text-center px-4">
+              <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center mb-3">
+                <FileText className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Nenhuma demanda</p>
+              <p className="text-xs text-muted-foreground mb-3">Ajuste os filtros ou crie uma nova</p>
+              <Button onClick={handleOpenCreate} size="sm" className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                Nova Demanda
+              </Button>
+            </div>
+          )}
+
           {/* Contador de resultados */}
           {filteredDemandas.length > 0 && (
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0 text-xs sm:text-sm text-muted-foreground px-1 sm:px-0">
               <p>
-                Mostrando <span className="font-semibold text-foreground">{filteredDemandas.length}</span> de{" "}
-                <span className="font-semibold text-foreground">{demandas.length}</span> demandas
+                <span className="font-semibold text-foreground">{filteredDemandas.length}</span>
+                <span className="hidden sm:inline"> de {demandas.length}</span> demandas
               </p>
-              <p>
-                <span className="font-semibold text-rose-600">{stats.reuPreso}</span> réus presos •{" "}
+              <p className="text-[10px] sm:text-sm">
+                <span className="font-semibold text-rose-600">{stats.reuPreso}</span> presos •{" "}
                 <span className="font-semibold text-orange-600">{stats.urgente + stats.hoje}</span> urgentes
               </p>
             </div>
@@ -2292,42 +2451,44 @@ export default function DemandasPage() {
 
         {/* Visualização Kanban */}
         <TabsContent value="kanban" className="mt-0">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Kanban horizontal scroll no mobile */}
+          <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
+            <div className="flex sm:grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4 min-w-max sm:min-w-0">
             {/* Coluna Atender */}
-            <Card className="section-card overflow-hidden">
-              <CardHeader className="pb-3 border-b border-amber-100 dark:border-amber-900/30 bg-gradient-to-r from-amber-50/80 to-transparent dark:from-amber-950/20">
+            <Card className="section-card overflow-hidden w-[280px] sm:w-auto flex-shrink-0">
+              <CardHeader className="p-2.5 sm:pb-3 border-b border-amber-100 dark:border-amber-900/30 bg-gradient-to-r from-amber-50/80 to-transparent dark:from-amber-950/20">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                    <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-400">Atender</CardTitle>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-400" />
+                    <CardTitle className="text-xs sm:text-sm font-medium text-amber-700 dark:text-amber-400">Atender</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50/50 text-xs">
+                  <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
                     {demandas.filter(d => d.status === "2_ATENDER").length}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-3 space-y-2 min-h-[300px]">
+              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[350px] sm:max-h-none overflow-y-auto">
                 {demandas.filter(d => d.status === "2_ATENDER").map((demanda) => (
                   <div
                     key={demanda.id}
                     onClick={() => handleOpenEdit(demanda)}
                     className={cn(
-                      "p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
+                      "p-2 sm:p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
                       demanda.reuPreso 
                         ? "border-l-2 border-l-rose-300 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
                         : "bg-card border-border/60 hover:border-amber-200"
                     )}
                   >
                     {demanda.reuPreso && (
-                      <Badge className="bg-rose-100 text-rose-700 text-[10px] mb-2 font-medium">
-                        <Lock className="h-2.5 w-2.5 mr-1" />
+                      <Badge className="bg-rose-100 text-rose-700 text-[9px] sm:text-[10px] mb-1.5 sm:mb-2 font-medium">
+                        <Lock className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-0.5 sm:mr-1" />
                         Preso
                       </Badge>
                     )}
-                    <p className="font-medium text-sm">{demanda.assistido}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{demanda.ato}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className={cn("text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
+                    <p className="font-medium text-xs sm:text-sm line-clamp-1">{demanda.assistido}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{demanda.ato}</p>
+                    <div className="flex items-center justify-between mt-1.5 sm:mt-2">
+                      <span className={cn("text-[10px] sm:text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
                         {getPrazoInfo(demanda.prazo).text}
                       </span>
                       <AreaBadge area={demanda.area} />
@@ -2338,40 +2499,40 @@ export default function DemandasPage() {
             </Card>
 
             {/* Coluna Em Fila */}
-            <Card className="section-card overflow-hidden">
-              <CardHeader className="pb-3 border-b border-indigo-100 dark:border-indigo-900/30 bg-gradient-to-r from-indigo-50/80 to-transparent dark:from-indigo-950/20">
+            <Card className="section-card overflow-hidden w-[280px] sm:w-auto flex-shrink-0">
+              <CardHeader className="p-2.5 sm:pb-3 border-b border-indigo-100 dark:border-indigo-900/30 bg-gradient-to-r from-indigo-50/80 to-transparent dark:from-indigo-950/20">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
-                    <CardTitle className="text-sm font-medium text-indigo-700 dark:text-indigo-400">Em Fila</CardTitle>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-indigo-400" />
+                    <CardTitle className="text-xs sm:text-sm font-medium text-indigo-700 dark:text-indigo-400">Em Fila</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-indigo-600 border-indigo-200 bg-indigo-50/50 text-xs">
+                  <Badge variant="outline" className="text-indigo-600 border-indigo-200 bg-indigo-50/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
                     {demandas.filter(d => d.status === "5_FILA" || d.status === "6_ELABORANDO").length}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-3 space-y-2 min-h-[300px]">
+              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[350px] sm:max-h-none overflow-y-auto">
                 {demandas.filter(d => d.status === "5_FILA" || d.status === "6_ELABORANDO").map((demanda) => (
                   <div
                     key={demanda.id}
                     onClick={() => handleOpenEdit(demanda)}
                     className={cn(
-                      "p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
+                      "p-2 sm:p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
                       demanda.reuPreso 
                         ? "border-l-2 border-l-rose-300 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
                         : "bg-card border-border/60 hover:border-indigo-200"
                     )}
                   >
                     {demanda.reuPreso && (
-                      <Badge className="bg-rose-100 text-rose-700 text-[10px] mb-2 font-medium">
-                        <Lock className="h-2.5 w-2.5 mr-1" />
+                      <Badge className="bg-rose-100 text-rose-700 text-[9px] sm:text-[10px] mb-1.5 sm:mb-2 font-medium">
+                        <Lock className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-0.5 sm:mr-1" />
                         Preso
                       </Badge>
                     )}
-                    <p className="font-medium text-sm">{demanda.assistido}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{demanda.ato}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className={cn("text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
+                    <p className="font-medium text-xs sm:text-sm line-clamp-1">{demanda.assistido}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{demanda.ato}</p>
+                    <div className="flex items-center justify-between mt-1.5 sm:mt-2">
+                      <span className={cn("text-[10px] sm:text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
                         {getPrazoInfo(demanda.prazo).text}
                       </span>
                       <AreaBadge area={demanda.area} />
@@ -2382,40 +2543,40 @@ export default function DemandasPage() {
             </Card>
 
             {/* Coluna Monitorar */}
-            <Card className="section-card overflow-hidden">
-              <CardHeader className="pb-3 border-b border-sky-100 dark:border-sky-900/30 bg-gradient-to-r from-sky-50/80 to-transparent dark:from-sky-950/20">
+            <Card className="section-card overflow-hidden w-[280px] sm:w-auto flex-shrink-0">
+              <CardHeader className="p-2.5 sm:pb-3 border-b border-sky-100 dark:border-sky-900/30 bg-gradient-to-r from-sky-50/80 to-transparent dark:from-sky-950/20">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-sky-400" />
-                    <CardTitle className="text-sm font-medium text-sky-700 dark:text-sky-400">Monitorar</CardTitle>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-sky-400" />
+                    <CardTitle className="text-xs sm:text-sm font-medium text-sky-700 dark:text-sky-400">Monitorar</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-sky-600 border-sky-200 bg-sky-50/50 text-xs">
+                  <Badge variant="outline" className="text-sky-600 border-sky-200 bg-sky-50/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
                     {demandas.filter(d => d.status === "4_MONITORAR").length}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-3 space-y-2 min-h-[300px]">
+              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[350px] sm:max-h-none overflow-y-auto">
                 {demandas.filter(d => d.status === "4_MONITORAR").map((demanda) => (
                   <div
                     key={demanda.id}
                     onClick={() => handleOpenEdit(demanda)}
                     className={cn(
-                      "p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
+                      "p-2 sm:p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
                       demanda.reuPreso 
                         ? "border-l-2 border-l-rose-300 bg-card hover:bg-rose-50/30 dark:hover:bg-rose-950/10" 
                         : "bg-card border-border/60 hover:border-sky-200"
                     )}
                   >
                     {demanda.reuPreso && (
-                      <Badge className="bg-rose-100 text-rose-700 text-[10px] mb-2 font-medium">
-                        <Lock className="h-2.5 w-2.5 mr-1" />
+                      <Badge className="bg-rose-100 text-rose-700 text-[9px] sm:text-[10px] mb-1.5 sm:mb-2 font-medium">
+                        <Lock className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-0.5 sm:mr-1" />
                         Preso
                       </Badge>
                     )}
-                    <p className="font-medium text-sm">{demanda.assistido}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{demanda.ato}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className={cn("text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
+                    <p className="font-medium text-xs sm:text-sm line-clamp-1">{demanda.assistido}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{demanda.ato}</p>
+                    <div className="flex items-center justify-between mt-1.5 sm:mt-2">
+                      <span className={cn("text-[10px] sm:text-xs", getPrazoInfo(demanda.prazo).className.split(" ")[0])}>
                         {getPrazoInfo(demanda.prazo).text}
                       </span>
                       <AreaBadge area={demanda.area} />
@@ -2426,30 +2587,30 @@ export default function DemandasPage() {
             </Card>
 
             {/* Coluna Protocolado */}
-            <Card className="section-card overflow-hidden">
-              <CardHeader className="pb-3 border-b border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50/80 to-transparent dark:from-emerald-950/20">
+            <Card className="section-card overflow-hidden w-[280px] sm:w-auto flex-shrink-0">
+              <CardHeader className="p-2.5 sm:pb-3 border-b border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50/80 to-transparent dark:from-emerald-950/20">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                    <CardTitle className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Concluído</CardTitle>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-400" />
+                    <CardTitle className="text-xs sm:text-sm font-medium text-emerald-700 dark:text-emerald-400">Concluído</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50/50 text-xs">
+                  <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
                     {demandas.filter(d => d.status === "7_PROTOCOLADO" || d.status === "7_CIENCIA").length}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-3 space-y-2 min-h-[300px]">
+              <CardContent className="p-2 sm:pt-3 space-y-1.5 sm:space-y-2 min-h-[200px] sm:min-h-[300px] max-h-[350px] sm:max-h-none overflow-y-auto">
                 {demandas.filter(d => d.status === "7_PROTOCOLADO" || d.status === "7_CIENCIA").map((demanda) => (
                   <div
                     key={demanda.id}
                     onClick={() => handleOpenEdit(demanda)}
-                    className="p-3 rounded-lg border bg-card border-border/60 hover:border-emerald-200 cursor-pointer transition-all hover:shadow-sm"
+                    className="p-2 sm:p-3 rounded-lg border bg-card border-border/60 hover:border-emerald-200 cursor-pointer transition-all hover:shadow-sm"
                   >
-                    <p className="font-medium text-sm">{demanda.assistido}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{demanda.ato}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <Badge className="bg-emerald-100 text-emerald-700 text-[10px] font-medium">
-                        <CheckCircle2 className="h-2.5 w-2.5 mr-1" />
+                    <p className="font-medium text-xs sm:text-sm line-clamp-1">{demanda.assistido}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{demanda.ato}</p>
+                    <div className="flex items-center justify-between mt-1.5 sm:mt-2">
+                      <Badge className="bg-emerald-100 text-emerald-700 text-[9px] sm:text-[10px] font-medium">
+                        <CheckCircle2 className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-0.5 sm:mr-1" />
                         Concluído
                       </Badge>
                       <AreaBadge area={demanda.area} />
@@ -2458,6 +2619,7 @@ export default function DemandasPage() {
                 ))}
               </CardContent>
             </Card>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
