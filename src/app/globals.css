@@ -744,6 +744,105 @@ a, button {
 }
 
 /* ========================================
+   MOBILE SPACING - Respiro Visual
+   Evitar elementos colados nas bordas
+   ======================================== */
+
+@media (max-width: 640px) {
+  /* Padding geral em containers principais */
+  .mobile-container,
+  [data-slot="sidebar-inset"] > main {
+    @apply px-3 py-4;
+  }
+  
+  /* Cards com margem adequada no mobile */
+  .mobile-card-spacing {
+    @apply mx-2 mb-3;
+  }
+  
+  /* Grids de cards no mobile */
+  .mobile-cards-grid {
+    @apply gap-3 px-2;
+  }
+  
+  /* Botões de ação no mobile */
+  .mobile-actions {
+    @apply gap-2 px-2;
+  }
+  
+  /* Headers no mobile */
+  .mobile-header {
+    @apply px-3 py-3;
+  }
+  
+  /* Scroll areas com padding */
+  .mobile-scroll-padding {
+    @apply px-3;
+  }
+}
+
+/* ========================================
+   SWISS DESIGN - Card Containers
+   Containers organizados, cores funcionais
+   ======================================== */
+
+/* Container para seções dentro de cards */
+.card-section {
+  @apply p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800;
+}
+
+.card-section-highlight {
+  @apply p-3 rounded-lg bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900/50 dark:to-zinc-800/30 border border-zinc-200 dark:border-zinc-700;
+}
+
+/* Seções coloridas funcionais */
+.card-section-info {
+  @apply p-3 rounded-lg bg-blue-50/80 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50;
+}
+
+.card-section-warning {
+  @apply p-3 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50;
+}
+
+.card-section-danger {
+  @apply p-3 rounded-lg bg-rose-50/80 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50;
+}
+
+.card-section-success {
+  @apply p-3 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50;
+}
+
+/* ========================================
+   SWISS TYPOGRAPHY - Data Display
+   ======================================== */
+
+/* Label superior pequeno */
+.swiss-label {
+  @apply text-[10px] uppercase font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5;
+}
+
+/* Valor principal */
+.swiss-value {
+  @apply text-sm font-medium text-zinc-900 dark:text-zinc-100;
+}
+
+/* Valor mono (números, códigos) */
+.swiss-value-mono {
+  @apply text-sm font-mono font-medium text-zinc-700 dark:text-zinc-300;
+}
+
+/* Grid de informações */
+.swiss-info-grid {
+  @apply grid grid-cols-2 gap-3;
+}
+
+@media (max-width: 640px) {
+  .swiss-info-grid {
+    @apply grid-cols-1 gap-2;
+  }
+}
+
+/* ========================================
    DARK MODE - DESKTOP HEADER
    ======================================== */
 

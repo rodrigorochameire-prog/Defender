@@ -881,181 +881,199 @@ export default function CasosPage() {
 
   return (
     <TooltipProvider>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30">
-              <Briefcase className="w-6 h-6 text-indigo-700 dark:text-indigo-400" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 flex-shrink-0">
+              <Briefcase className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-700 dark:text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                 Casos Ativos
                 <Tooltip>
                   <TooltipTrigger>
-                    <Sparkles className="w-5 h-5 text-amber-500" />
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
                   </TooltipTrigger>
                   <TooltipContent>Gestão Inteligente com Teoria do Caso</TooltipContent>
                 </Tooltip>
               </h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
                 Dossiês expansíveis • Visual suíço • Dados integrados
               </p>
             </div>
           </div>
 
-          <Button className="bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Caso
+          <Button className="bg-indigo-600 hover:bg-indigo-700 h-9 text-sm">
+            <Plus className="w-4 h-4 mr-1.5" />
+            <span className="hidden sm:inline">Novo Caso</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card className="p-4 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 border-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Briefcase className="w-5 h-5 text-zinc-500" />
+        {/* Stats Cards - Responsivo */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 border-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
-                <p className="text-xs text-zinc-500">Total</p>
+                <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
+                <p className="text-[10px] sm:text-xs text-zinc-500">Total</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-900/20 border-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Lock className="w-5 h-5 text-rose-500" />
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-900/20 border-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
-                <p className="text-xs text-rose-600 dark:text-rose-400">Réus Presos</p>
+                <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
+                <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Presos</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 border-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Clock className="w-5 h-5 text-amber-500" />
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 border-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.demandasPendentes}</p>
-                <p className="text-xs text-amber-600 dark:text-amber-400">Demandas</p>
+                <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.demandasPendentes}</p>
+                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Demandas</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Scale className="w-5 h-5 text-emerald-500" />
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-0 hidden sm:block">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.teoriaCompleta}</p>
-                <p className="text-xs text-emerald-600 dark:text-emerald-400">Teoria OK</p>
+                <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.teoriaCompleta}</p>
+                <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">Teoria OK</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Calendar className="w-5 h-5 text-blue-500" />
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-0 hidden lg:block">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.audienciasProximas}</p>
-                <p className="text-xs text-blue-600 dark:text-blue-400">Audiências</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.audienciasProximas}</p>
+                <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Audiências</p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <Input
-              placeholder="Buscar por título, código ou assistido..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white dark:bg-zinc-950"
-            />
+        {/* Filters - Responsivo */}
+        <div className="flex flex-col gap-2 sm:gap-3">
+          {/* Search + View Toggle */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Input
+                placeholder="Buscar por título, código ou assistido..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white dark:bg-zinc-950 h-9 text-sm"
+              />
+            </div>
+            
+            {/* View Toggle */}
+            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg flex-shrink-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                    className={cn(
+                      "h-7 w-7 p-0 rounded-md",
+                      viewMode === "grid" 
+                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                        : "text-zinc-500"
+                    )}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Modo Grade</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                    className={cn(
+                      "h-7 w-7 p-0 rounded-md",
+                      viewMode === "list" 
+                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                        : "text-zinc-500"
+                    )}
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Modo Lista</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
 
-          <Select value={filterAtribuicao} onValueChange={setFilterAtribuicao}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Atribuição" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              {Object.entries(ATRIBUICAO_LABELS).map(([key, label]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Filter Row */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <Select value={filterAtribuicao} onValueChange={setFilterAtribuicao}>
+              <SelectTrigger className="w-[110px] sm:w-[130px] h-8 text-xs flex-shrink-0">
+                <SelectValue placeholder="Atribuição" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {Object.entries(ATRIBUICAO_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={filterFase} onValueChange={setFilterFase}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Fase" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as fases</SelectItem>
-              {Object.entries(FASES_CASO).map(([key, val]) => (
-                <SelectItem key={key} value={key}>
-                  {val.icon} {val.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={filterFase} onValueChange={setFilterFase}>
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 text-xs flex-shrink-0">
+                <SelectValue placeholder="Fase" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas fases</SelectItem>
+                {Object.entries(FASES_CASO).map(([key, val]) => (
+                  <SelectItem key={key} value={key}>
+                    {val.icon} {val.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="ativo">Ativos</SelectItem>
-              <SelectItem value="suspenso">Suspensos</SelectItem>
-              <SelectItem value="arquivado">Arquivados</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="flex items-center gap-1 ml-auto">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className={viewMode === "grid" ? "bg-zinc-900 dark:bg-zinc-100" : ""}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Modo Grade</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={viewMode === "list" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className={viewMode === "list" ? "bg-zinc-900 dark:bg-zinc-100" : ""}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Modo Lista</TooltipContent>
-            </Tooltip>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[100px] sm:w-[120px] h-8 text-xs flex-shrink-0">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="ativo">Ativos</SelectItem>
+                <SelectItem value="suspenso">Suspensos</SelectItem>
+                <SelectItem value="arquivado">Arquivados</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Content */}
         {viewMode === "grid" ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 px-1 sm:px-0">
             {filteredCasos.map((caso) => (
               <CasoCardDossier key={caso.id} caso={caso} />
             ))}

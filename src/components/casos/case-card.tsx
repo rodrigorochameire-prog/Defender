@@ -165,6 +165,12 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
   const hasAudienciaAmanha = data.proximaAudiencia && isTomorrow(data.proximaAudiencia.data);
   const hasReupPreso = data.assistidos.some(a => a.preso);
 
+  // Calcular urgência de prazos
+  const prazoUrgente = data.demandasPendentes.some(d => {
+    const dias = differenceInDays(d.prazo, new Date());
+    return dias <= 3;
+  });
+
   // Tempo decorrido desde início
   const tempoDecorrido = formatDistanceToNow(data.dataInicio, { locale: ptBR });
 
@@ -191,17 +197,17 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
         {/* ==========================================
             CAMADA A: CABEÇALHO (Sempre Visível)
             ========================================== */}
-        <div className="p-5 space-y-4">
+        <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
           {/* Topo: Badge + Título + Ações */}
-          <div className="flex justify-between items-start gap-4">
-            <div className="flex-1 min-w-0 space-y-2">
-              {/* Badges de Status */}
-              <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex justify-between items-start gap-2 sm:gap-4">
+            <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+              {/* Badges de Status - Organizado em linha */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 {/* Badge de Atribuição */}
                 <Badge 
                   variant="secondary" 
                   className={cn(
-                    "text-[10px] font-mono tracking-wider uppercase",
+                    "text-[9px] sm:text-[10px] font-mono tracking-wider uppercase px-1.5 py-0",
                     themeColors.bg, themeColors.text
                   )}
                 >
@@ -210,7 +216,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 
                 {/* Código do Caso */}
                 {data.codigo && (
-                  <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">
+                  <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 dark:text-zinc-500 hidden sm:inline">
                     {data.codigo}
                   </span>
                 )}
@@ -218,27 +224,37 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 {/* Indicador de Audiência Hoje (Pulsante) */}
                 {hasAudienciaHoje && (
                   <span className="flex items-center gap-1">
-                    <span className="relative flex h-2.5 w-2.5">
+                    <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-rose-500" />
                     </span>
-                    <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">
+                    <span className="text-[9px] sm:text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">
                       Hoje
                     </span>
                   </span>
                 )}
 
                 {hasAudienciaAmanha && !hasAudienciaHoje && (
-                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px]">
+                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[9px] sm:text-[10px] px-1.5 py-0">
                     Amanhã
                   </Badge>
+                )}
+
+                {/* Indicador de Prazo Urgente */}
+                {prazoUrgente && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <AlertTriangle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>Prazo Urgente</TooltipContent>
+                  </Tooltip>
                 )}
 
                 {/* Indicador de Réu Preso */}
                 {hasReupPreso && (
                   <Tooltip>
                     <TooltipTrigger>
-                      <Lock className="w-3.5 h-3.5 text-rose-500" />
+                      <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500" />
                     </TooltipTrigger>
                     <TooltipContent>Réu Preso</TooltipContent>
                   </Tooltip>
@@ -248,7 +264,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 {data.teoriaCompleta && (
                   <Tooltip>
                     <TooltipTrigger>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                      <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
                     </TooltipTrigger>
                     <TooltipContent>Teoria do Caso Completa</TooltipContent>
                   </Tooltip>
@@ -257,46 +273,46 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
 
               {/* Título do Caso (Serifada) */}
               <Link href={`/admin/casos/${data.id}`}>
-                <h3 className="font-serif text-lg font-medium text-zinc-900 dark:text-zinc-100 leading-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
+                <h3 className="font-serif text-base sm:text-lg font-medium text-zinc-900 dark:text-zinc-100 leading-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer line-clamp-2">
                   {data.titulo}
                 </h3>
               </Link>
 
-              {/* Meta-dados: Localização e Data */}
-              <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+              {/* Meta-dados: Localização e Data - Responsivo */}
+              <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium flex-wrap">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="flex items-center gap-1.5 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span className="truncate max-w-[150px]">
-                        {data.vara ? `${data.vara} - ${data.comarca}` : data.comarca}
+                    <span className="flex items-center gap-1 sm:gap-1.5 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+                      <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                      <span className="truncate max-w-[100px] sm:max-w-[150px]">
+                        {data.vara ? `${data.vara}` : data.comarca}
                       </span>
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>{data.vara} - {data.comarca}</TooltipContent>
                 </Tooltip>
 
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>Há {tempoDecorrido}</span>
+                <span className="flex items-center gap-1 sm:gap-1.5">
+                  <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                  <span className="hidden sm:inline">Há </span><span>{tempoDecorrido}</span>
                 </span>
 
                 {data.defensorNome && (
-                  <span className="flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5" />
-                    <span className="truncate max-w-[100px]">{data.defensorNome}</span>
+                  <span className="flex items-center gap-1 sm:gap-1.5 hidden sm:flex">
+                    <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                    <span className="truncate max-w-[80px] sm:max-w-[100px]">{data.defensorNome}</span>
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Ações Rápidas */}
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Ações Rápidas - Visíveis sempre no mobile */}
+            <div className="flex gap-0.5 sm:gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href={`/admin/casos/${data.id}`}>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
-                      <Eye className="w-4 h-4" />
+                    <Button size="icon" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+                      <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </Button>
                   </Link>
                 </TooltipTrigger>
@@ -307,8 +323,8 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <a href={data.linkDrive} target="_blank" rel="noopener noreferrer">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
-                        <FolderOpen className="w-4 h-4" />
+                      <Button size="icon" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hidden sm:flex">
+                        <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </Button>
                     </a>
                   </TooltipTrigger>
@@ -316,8 +332,8 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 </Tooltip>
               )}
 
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
-                <MoreHorizontal className="w-4 h-4" />
+              <Button size="icon" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+                <MoreHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             </div>
           </div>
@@ -325,23 +341,23 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
           {/* ==========================================
               CAMADA B: CONEXÕES (Integrado)
               ========================================== */}
-          <div className="flex items-center justify-between py-3 border-t border-zinc-100 dark:border-zinc-800/50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 sm:py-3 gap-2 sm:gap-0 border-t border-zinc-100 dark:border-zinc-800/50">
             {/* Assistidos (Avatares Sobrepostos) */}
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-2.5">
-                {data.assistidos.slice(0, 4).map((assistido) => (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex -space-x-2">
+                {data.assistidos.slice(0, 3).map((assistido) => (
                   <Tooltip key={assistido.id}>
                     <TooltipTrigger asChild>
                       <Avatar
                         className={cn(
-                          "h-9 w-9 border-2 border-white dark:border-zinc-950 transition-transform hover:scale-110 hover:z-10",
+                          "h-7 w-7 sm:h-9 sm:w-9 border-2 border-white dark:border-zinc-950 transition-transform hover:scale-110 hover:z-10",
                           assistido.preso && "ring-2 ring-rose-500"
                         )}
                       >
                         <AvatarImage src={assistido.foto || undefined} />
                         <AvatarFallback
                           className={cn(
-                            "text-xs font-bold",
+                            "text-[10px] sm:text-xs font-bold",
                             assistido.preso 
                               ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
                               : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
@@ -363,29 +379,29 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                     </TooltipContent>
                   </Tooltip>
                 ))}
-                {data.assistidos.length > 4 && (
-                  <div className="h-9 w-9 rounded-full border-2 border-white dark:border-zinc-950 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-500">
-                    +{data.assistidos.length - 4}
+                {data.assistidos.length > 3 && (
+                  <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-full border-2 border-white dark:border-zinc-950 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-zinc-500">
+                    +{data.assistidos.length - 3}
                   </div>
                 )}
               </div>
               
               {data.assistidos.length === 1 && (
-                <span className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">
+                <span className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium truncate max-w-[120px] sm:max-w-none">
                   {data.assistidos[0].nome}
                 </span>
               )}
             </div>
 
-            {/* Badges de Processos (Clicáveis) */}
-            <div className="flex items-center gap-2">
+            {/* Badges de Processos (Clicáveis) - Horizontal scroll no mobile */}
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide">
               {data.processos.slice(0, 2).map((processo) => (
                 <Tooltip key={processo.id}>
                   <TooltipTrigger asChild>
                     <Badge
                       variant="outline"
                       className={cn(
-                        "font-mono text-[10px] cursor-pointer transition-colors",
+                        "font-mono text-[9px] sm:text-[10px] cursor-pointer transition-colors flex-shrink-0 px-1.5 py-0",
                         "border-zinc-200 dark:border-zinc-800 text-zinc-500",
                         "hover:border-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300",
                         copiedCNJ === processo.numeroAutos && "border-emerald-500 text-emerald-600"
@@ -394,12 +410,13 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                     >
                       {copiedCNJ === processo.numeroAutos ? (
                         <span className="flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Copiado
+                          <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> OK
                         </span>
                       ) : (
                         <>
-                          {processo.isJuri && <Gavel className="w-3 h-3 mr-1" />}
-                          {processo.numeroAutos.split('.')[0]}...
+                          {processo.isJuri && <Gavel className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />}
+                          <span className="hidden sm:inline">{processo.numeroAutos.split('.')[0]}...</span>
+                          <span className="sm:hidden">{processo.numeroAutos.split('-')[0]}</span>
                         </>
                       )}
                     </Badge>
@@ -413,14 +430,15 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 </Tooltip>
               ))}
               {data.processos.length > 2 && (
-                <span className="text-xs text-zinc-400">+{data.processos.length - 2}</span>
+                <span className="text-[10px] sm:text-xs text-zinc-400 flex-shrink-0">+{data.processos.length - 2}</span>
               )}
             </div>
           </div>
 
           {/* Barra de Progresso do Caso */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-[9px] uppercase font-bold text-zinc-400 dark:text-zinc-500 tracking-widest">
+          <div className="space-y-1">
+            {/* Labels só no desktop */}
+            <div className="hidden sm:flex justify-between text-[9px] uppercase font-bold text-zinc-400 dark:text-zinc-500 tracking-widest">
               {FASE_LABELS.map((label, idx) => (
                 <span 
                   key={label}
@@ -432,9 +450,14 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 </span>
               ))}
             </div>
+            {/* No mobile, mostra só a fase atual */}
+            <div className="flex sm:hidden items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
+              <span className="font-medium">{data.faseNome}</span>
+              <span className="font-mono">{data.fase}%</span>
+            </div>
             <Progress 
               value={data.fase} 
-              className="h-1.5 bg-zinc-100 dark:bg-zinc-800" 
+              className="h-1 sm:h-1.5 bg-zinc-100 dark:bg-zinc-800" 
             />
           </div>
         </div>
@@ -443,84 +466,96 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
             CAMADA C: GAVETA EXPANSÍVEL
             ========================================== */}
         <CollapsibleContent>
-          <div className="px-5 pb-5 space-y-4 border-t border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/30 dark:to-zinc-950">
-            {/* Teoria do Caso (Resumo) */}
+          <div className="px-3 sm:px-5 pb-4 sm:pb-5 space-y-3 sm:space-y-4 border-t border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/30 dark:to-zinc-950">
+            {/* Teoria do Caso (Resumo) - Container destacado */}
             {data.teoriaResumo && (
-              <div className="mt-4 space-y-2">
-                <h4 className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2">
+              <div className="mt-3 sm:mt-4 p-3 rounded-lg bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider flex items-center gap-2 mb-1.5">
                   <Scale className="w-3 h-3" /> Teoria da Defesa
                 </h4>
-                <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed font-serif italic">
+                <p className="text-xs sm:text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed font-serif italic">
                   &ldquo;{data.teoriaResumo}&rdquo;
                 </p>
               </div>
             )}
 
-            {/* Próxima Audiência */}
+            {/* Próxima Audiência - Card de alerta */}
             {data.proximaAudiencia && (
               <div className={cn(
-                "flex items-center gap-3 p-3 rounded-lg border",
+                "flex items-start sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border",
                 hasAudienciaHoje 
                   ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800"
                   : "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
               )}>
                 <AlertTriangle className={cn(
-                  "w-5 h-5 flex-shrink-0",
+                  "w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5 sm:mt-0",
                   hasAudienciaHoje ? "text-rose-600 dark:text-rose-400" : "text-amber-600 dark:text-amber-400"
                 )} />
                 <div className="flex-1 min-w-0">
                   <span className={cn(
-                    "text-xs font-bold",
+                    "text-[10px] sm:text-xs font-bold block",
                     hasAudienciaHoje ? "text-rose-700 dark:text-rose-400" : "text-amber-700 dark:text-amber-400"
                   )}>
                     Próxima Audiência
                   </span>
                   <p className={cn(
-                    "text-xs truncate",
+                    "text-[10px] sm:text-xs",
                     hasAudienciaHoje ? "text-rose-600 dark:text-rose-500" : "text-amber-600 dark:text-amber-500"
                   )}>
-                    {data.proximaAudiencia.tipo} • {format(data.proximaAudiencia.data, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                    {data.proximaAudiencia.local && ` • ${data.proximaAudiencia.local}`}
+                    <span className="font-medium">{data.proximaAudiencia.tipo}</span>
+                    <span className="hidden sm:inline"> • </span>
+                    <br className="sm:hidden" />
+                    <span className="font-mono">{format(data.proximaAudiencia.data, "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
+                    {data.proximaAudiencia.local && (
+                      <span className="hidden sm:inline truncate"> • {data.proximaAudiencia.local}</span>
+                    )}
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Prazos Pendentes */}
+            {/* Prazos Pendentes - Container organizado */}
             {data.demandasPendentes.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
                   <Clock className="w-3 h-3" /> Próximos Prazos ({data.demandasPendentes.length})
                 </h4>
-                <div className="space-y-1.5">
-                  {data.demandasPendentes.slice(0, 3).map((demanda) => (
-                    <div
-                      key={demanda.id}
-                      className={cn(
-                        "flex items-center justify-between py-1.5 px-2 rounded text-xs",
-                        demanda.urgente 
-                          ? "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400"
-                          : "bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                      )}
-                    >
-                      <span className="font-medium truncate max-w-[200px]">{demanda.ato}</span>
-                      <span className="font-mono text-[10px]">
-                        {format(demanda.prazo, "dd/MM", { locale: ptBR })}
-                      </span>
-                    </div>
-                  ))}
+                <div className="space-y-1">
+                  {data.demandasPendentes.slice(0, 3).map((demanda) => {
+                    const dias = differenceInDays(demanda.prazo, new Date());
+                    const isUrgente = dias <= 3;
+                    return (
+                      <div
+                        key={demanda.id}
+                        className={cn(
+                          "flex items-center justify-between py-1.5 px-2 rounded text-[10px] sm:text-xs",
+                          isUrgente 
+                            ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                            : "bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400"
+                        )}
+                      >
+                        <span className="font-medium truncate max-w-[150px] sm:max-w-[200px]">{demanda.ato}</span>
+                        <span className={cn(
+                          "font-mono text-[9px] sm:text-[10px] flex-shrink-0 ml-2",
+                          isUrgente && "font-bold"
+                        )}>
+                          {dias === 0 ? "HOJE" : dias === 1 ? "Amanhã" : format(demanda.prazo, "dd/MM", { locale: ptBR })}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* Tags */}
             {data.tags && data.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-2">
+              <div className="flex flex-wrap gap-1 sm:gap-1.5 pt-1 sm:pt-2">
                 {data.tags.map((tag, idx) => (
                   <Badge 
                     key={idx} 
                     variant="outline" 
-                    className="text-[10px] px-2 py-0.5 border-dashed border-zinc-300 dark:border-zinc-700"
+                    className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 border-dashed border-zinc-300 dark:border-zinc-700"
                   >
                     #{tag}
                   </Badge>
@@ -528,25 +563,27 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
               </div>
             )}
 
-            {/* Ações de Integração */}
-            <div className="grid grid-cols-3 gap-2 pt-2">
-              <Link href={`/admin/casos/${data.id}`}>
-                <Button variant="outline" className="w-full h-9 text-xs border-zinc-200 dark:border-zinc-700">
-                  <Target className="w-3.5 h-3.5 mr-2 text-zinc-400" />
+            {/* Ações de Integração - Responsivo */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2 pt-2">
+              <Link href={`/admin/casos/${data.id}`} className="col-span-2 sm:col-span-1">
+                <Button variant="outline" className="w-full h-8 sm:h-9 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-700">
+                  <Target className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-2 text-zinc-400" />
                   Ver Caso
                 </Button>
               </Link>
               {data.linkDrive && (
-                <a href={data.linkDrive} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="w-full h-9 text-xs border-zinc-200 dark:border-zinc-700">
-                    <FolderOpen className="w-3.5 h-3.5 mr-2 text-zinc-400" />
-                    Drive
+                <a href={data.linkDrive} target="_blank" rel="noopener noreferrer" className="col-span-1">
+                  <Button variant="outline" className="w-full h-8 sm:h-9 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-700">
+                    <FolderOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-2 text-zinc-400" />
+                    <span className="hidden sm:inline">Drive</span>
+                    <span className="sm:hidden">📁</span>
                   </Button>
                 </a>
               )}
-              <Button variant="outline" className="h-9 text-xs border-zinc-200 dark:border-zinc-700">
-                <MessageCircle className="w-3.5 h-3.5 mr-2 text-zinc-400" />
-                Contato
+              <Button variant="outline" className="col-span-1 h-8 sm:h-9 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-700">
+                <MessageCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-2 text-zinc-400" />
+                <span className="hidden sm:inline">Contato</span>
+                <span className="sm:hidden">💬</span>
               </Button>
             </div>
           </div>
@@ -554,16 +591,16 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
 
         {/* Trigger de Expansão */}
         <CollapsibleTrigger asChild>
-          <div className="flex justify-center py-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-t border-zinc-100 dark:border-zinc-800">
-            <div className="flex items-center gap-1 text-xs text-zinc-400">
+          <div className="flex justify-center py-1.5 sm:py-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-zinc-400">
               {isOpen ? (
                 <>
-                  <ChevronUp className="w-4 h-4" />
+                  <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>Recolher</span>
                 </>
               ) : (
                 <>
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>Ver detalhes</span>
                 </>
               )}

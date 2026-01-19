@@ -474,7 +474,7 @@ function PhotoUploadDialog({ isOpen, onClose, assistidoNome, currentPhoto, onUpl
 
 // ========================================
 // CARD DO ASSISTIDO - DESIGN SUÍÇO
-// Poluição Visual Zero • Cores Funcionais
+// Com Foto • Containers Organizados • Cores Funcionais
 // ========================================
 
 interface AssistidoCardProps {
@@ -524,60 +524,100 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
       isPinned && "ring-1 ring-amber-400/60 dark:ring-amber-500/40"
     )}>
       
-      <div className="p-4 space-y-3">
+      <div className="p-3 sm:p-4 space-y-3">
         
-        {/* 1. TOPO: Identidade e Status Prisional */}
-        <div className="flex justify-between items-start">
-          <div className="space-y-1.5 flex-1 min-w-0">
-            {/* Nome - Sans-serif para leitura rápida */}
+        {/* 1. TOPO: Foto + Identidade + Status */}
+        <div className="flex gap-3 items-start">
+          {/* Avatar com botão de upload */}
+          <div className="relative group/avatar flex-shrink-0">
+            <Avatar 
+              className={cn(
+                "h-12 w-12 sm:h-14 sm:w-14 ring-2 cursor-pointer transition-all hover:scale-105",
+                isPreso ? "ring-rose-400 dark:ring-rose-500" : "ring-emerald-400 dark:ring-emerald-500"
+              )}
+              onClick={onPhotoClick}
+            >
+              <AvatarImage src={assistido.photoUrl || undefined} />
+              <AvatarFallback 
+                className={cn(
+                  "text-sm sm:text-base font-bold",
+                  isPreso 
+                    ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
+                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400"
+                )}
+              >
+                {getInitials(assistido.nome)}
+              </AvatarFallback>
+            </Avatar>
+            {/* Botão de câmera sobreposto */}
+            <button
+              onClick={onPhotoClick}
+              className="absolute -bottom-1 -right-1 h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity shadow-md hover:scale-110"
+            >
+              <Camera className="w-3 h-3" />
+            </button>
+          </div>
+          
+          {/* Info Principal */}
+          <div className="flex-1 min-w-0 space-y-1">
+            {/* Nome */}
             <Link href={`/admin/assistidos/${assistido.id}`}>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-base leading-tight hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors line-clamp-1">
+              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm sm:text-base leading-tight hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors line-clamp-1">
                 {assistido.nome}
               </h3>
             </Link>
             
-            {/* Badges Minimalistas */}
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* Status + Local */}
+            <div className="flex items-center gap-1.5 flex-wrap">
               {isPreso ? (
                 <Badge 
                   variant="outline" 
-                  className="rounded-md px-1.5 py-0 text-[10px] uppercase font-medium border-rose-200 text-rose-700 bg-rose-50 dark:bg-rose-950/20 dark:border-rose-800 dark:text-rose-400"
+                  className="rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-medium border-rose-200 text-rose-700 bg-rose-50 dark:bg-rose-950/20 dark:border-rose-800 dark:text-rose-400"
                 >
-                  <Lock className="w-3 h-3 mr-1" /> Réu Preso
+                  <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Preso
                 </Badge>
               ) : (
                 <Badge 
                   variant="outline" 
-                  className="rounded-md px-1.5 py-0 text-[10px] uppercase font-medium border-emerald-200 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 dark:text-emerald-400"
+                  className="rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-medium border-emerald-200 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 dark:text-emerald-400"
                 >
-                  <Unlock className="w-3 h-3 mr-1" /> Solto
+                  <Unlock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Solto
                 </Badge>
               )}
-
-              {/* Local de prisão */}
-              {assistido.unidadePrisional && (
-                <span className="flex items-center text-[10px] text-zinc-500 dark:text-zinc-400 truncate max-w-[140px]">
-                  <MapPin className="w-3 h-3 mr-1 flex-shrink-0" /> 
-                  {assistido.unidadePrisional}
-                </span>
+              
+              {isMonitorado && (
+                <Badge 
+                  variant="outline" 
+                  className="rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-medium border-amber-200 text-amber-700 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 dark:text-amber-400"
+                >
+                  <AlertCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Monitor.
+                </Badge>
               )}
             </div>
+            
+            {/* Local de prisão - mais compacto */}
+            {assistido.unidadePrisional && (
+              <span className="flex items-center text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 flex-shrink-0" /> 
+                {assistido.unidadePrisional}
+              </span>
+            )}
           </div>
 
-          {/* Ações - Visíveis apenas no Hover */}
-          <div className="flex items-center gap-0.5">
+          {/* Ações */}
+          <div className="flex items-center gap-0.5 flex-shrink-0">
             <Button 
               size="icon" 
               variant="ghost" 
               className={cn(
-                "h-7 w-7 transition-opacity",
+                "h-6 w-6 sm:h-7 sm:w-7 transition-opacity",
                 isPinned 
                   ? "text-amber-500 opacity-100" 
                   : "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 opacity-0 group-hover:opacity-100"
               )}
               onClick={onTogglePin}
             >
-              {isPinned ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+              {isPinned ? <BookmarkCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Bookmark className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </Button>
             
             <DropdownMenu>
@@ -585,12 +625,16 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 <Button 
                   size="icon" 
                   variant="ghost" 
-                  className="h-7 w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-6 w-6 sm:h-7 sm:w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                 >
-                  <MoreHorizontal className="w-4 h-4" />
+                  <MoreHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem className="cursor-pointer text-sm" onClick={onPhotoClick}>
+                  <Camera className="h-4 w-4 mr-2" />Alterar Foto
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <Link href={`/admin/assistidos/${assistido.id}`}>
                   <DropdownMenuItem className="cursor-pointer text-sm">
                     <Eye className="h-4 w-4 mr-2" />Perfil Completo
@@ -615,35 +659,35 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
           </div>
         </div>
 
-        {/* 2. MEIO: Dados Técnicos (Contraste de Fontes) */}
-        <div className="py-2.5 border-t border-dashed border-zinc-100 dark:border-zinc-800/50 space-y-2">
-          
+        {/* 2. CONTAINER: Dados do Processo */}
+        <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 space-y-2">
           {/* Tipificação - Fonte Serifada = Documento Jurídico */}
           {assistido.crimePrincipal && (
             <div className="flex items-start gap-2">
-              <Gavel className="w-3.5 h-3.5 text-zinc-400 mt-0.5 flex-shrink-0" />
-              <span className="text-sm font-legal text-zinc-700 dark:text-zinc-300 line-clamp-2">
+              <Gavel className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-400 mt-0.5 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-legal text-zinc-700 dark:text-zinc-300 line-clamp-2">
                 {assistido.crimePrincipal}
               </span>
             </div>
           )}
 
-          {/* Número do Processo - Fonte Mono = Precisão */}
+          {/* Número do Processo - Clicável para copiar */}
           <div 
-            className="flex items-center justify-between group/copy cursor-pointer"
+            className="flex items-center justify-between group/copy cursor-pointer py-1 px-2 rounded bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800"
             onClick={handleCopyProcesso}
           >
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-data text-zinc-500 dark:text-zinc-400 tracking-tight">
+            <div className="flex items-center gap-1.5">
+              <Scale className="w-3 h-3 text-zinc-400" />
+              <span className="text-[10px] sm:text-xs font-data text-zinc-600 dark:text-zinc-400 tracking-tight">
                 {assistido.numeroProcesso}
               </span>
-              <Copy className={cn(
-                "w-3 h-3 transition-all",
-                copied 
-                  ? "text-emerald-500" 
-                  : "text-zinc-300 dark:text-zinc-600 opacity-0 group-hover/copy:opacity-100"
-              )} />
             </div>
+            <Copy className={cn(
+              "w-3 h-3 transition-all",
+              copied 
+                ? "text-emerald-500" 
+                : "text-zinc-300 dark:text-zinc-600 group-hover/copy:text-zinc-500"
+            )} />
           </div>
         </div>
 
@@ -651,19 +695,19 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
 
       {/* 3. RODAPÉ: Prazo / Ação */}
       <div className={cn(
-        "px-4 py-2.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between",
+        "px-3 sm:px-4 py-2 sm:py-2.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between",
         "bg-zinc-50/50 dark:bg-zinc-900/50"
       )}>
         
         {/* Lógica de Urgência no Prazo */}
         {prazoInfo ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
             <Clock className={cn(
-              "w-3.5 h-3.5",
+              "w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0",
               prazoUrgente ? "text-rose-600 dark:text-rose-500" : "text-zinc-400"
             )} />
             <span className={cn(
-              "text-xs font-medium",
+              "text-[10px] sm:text-xs font-medium truncate",
               prazoUrgente 
                 ? "text-rose-700 dark:text-rose-400" 
                 : "text-zinc-600 dark:text-zinc-400"
@@ -673,125 +717,111 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
             </span>
           </div>
         ) : (
-          <span className="text-xs text-zinc-400 italic">Sem prazos pendentes</span>
+          <span className="text-[10px] sm:text-xs text-zinc-400 italic">Sem prazos</span>
         )}
 
-        {/* Indicadores de Risco */}
-        <div className="flex items-center gap-1.5">
-          {isMonitorado && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <AlertCircle className="w-4 h-4 text-amber-500 dark:text-amber-600" />
-                </TooltipTrigger>
-                <TooltipContent>Monitoramento Eletrônico</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          
-          {/* Botão expandir discreto */}
-          <Button 
-            size="icon"
-            variant="ghost" 
-            className="h-6 w-6 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
-        </div>
+        {/* Botão expandir */}
+        <Button 
+          size="icon"
+          variant="ghost" 
+          className="h-6 w-6 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex-shrink-0"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+        </Button>
       </div>
 
-      {/* SEÇÃO EXPANDIDA - Mantém filosofia monocromática */}
+      {/* SEÇÃO EXPANDIDA - Containers Organizados */}
       <Collapsible open={isExpanded}>
         <CollapsibleContent>
-          <div className="px-4 py-3 space-y-3 bg-zinc-50/80 dark:bg-zinc-900/80 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="px-3 sm:px-4 py-3 space-y-2.5 sm:space-y-3 bg-zinc-50/80 dark:bg-zinc-900/80 border-t border-zinc-100 dark:border-zinc-800">
             
-            {/* Resumo do Fato */}
+            {/* Resumo do Fato - Container */}
             {assistido.resumoFato && (
-              <div className="space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">Resumo do Fato</p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{assistido.resumoFato}</p>
+              <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                <p className="swiss-label">Resumo do Fato</p>
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{assistido.resumoFato}</p>
               </div>
             )}
 
-            {/* Tese da Defesa - Destaque sutil */}
+            {/* Tese da Defesa - Container Destacado (Verde sutil) */}
             {assistido.teseDaDefesa && (
-              <div className="space-y-1 p-2.5 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-                <div className="flex items-center gap-1.5">
-                  <Gavel className="h-3 w-3 text-zinc-500" />
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Tese da Defesa</p>
+              <div className="p-2.5 rounded-lg bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Gavel className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Tese da Defesa</p>
                 </div>
-                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed">{assistido.teseDaDefesa}</p>
+                <p className="text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-200 leading-relaxed italic">&ldquo;{assistido.teseDaDefesa}&rdquo;</p>
               </div>
             )}
 
-            {/* Estratégia */}
+            {/* Estratégia - Container */}
             {assistido.estrategiaDefesaAtual && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5">
+              <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center gap-1.5 mb-1">
                   <Target className="h-3 w-3 text-zinc-400" />
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">Estratégia</p>
+                  <p className="swiss-label">Estratégia Atual</p>
                 </div>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{assistido.estrategiaDefesaAtual}</p>
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{assistido.estrategiaDefesaAtual}</p>
               </div>
             )}
 
-            {/* Audiências - Grid simples */}
+            {/* Audiências - Grid de Cards */}
             {(assistido.ultimaAudiencia || assistido.proximaAudiencia) && (
               <div className="grid grid-cols-2 gap-2">
                 {assistido.ultimaAudiencia && (
-                  <div className="p-2 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-                    <p className="text-[9px] uppercase text-zinc-400 mb-0.5">Última</p>
-                    <p className="text-sm font-data font-medium text-zinc-700 dark:text-zinc-300">
+                  <div className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <p className="text-[8px] sm:text-[9px] uppercase text-zinc-400 font-semibold tracking-wider mb-0.5">Última Audiência</p>
+                    <p className="text-xs sm:text-sm font-data font-semibold text-zinc-700 dark:text-zinc-300">
                       {format(parseISO(assistido.ultimaAudiencia), "dd/MM/yy")}
                     </p>
-                    <p className="text-[10px] text-zinc-500 truncate">{assistido.tipoUltimaAudiencia}</p>
+                    <p className="text-[9px] sm:text-[10px] text-zinc-500 truncate">{assistido.tipoUltimaAudiencia}</p>
                   </div>
                 )}
                 {assistido.proximaAudiencia && (
-                  <div className="p-2 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-                    <p className="text-[9px] uppercase text-zinc-400 mb-0.5">Próxima</p>
-                    <p className="text-sm font-data font-medium text-zinc-700 dark:text-zinc-300">
+                  <div className="p-2 rounded-lg bg-blue-50/80 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50">
+                    <p className="text-[8px] sm:text-[9px] uppercase text-blue-600 dark:text-blue-400 font-semibold tracking-wider mb-0.5">Próxima Audiência</p>
+                    <p className="text-xs sm:text-sm font-data font-semibold text-blue-700 dark:text-blue-300">
                       {format(parseISO(assistido.proximaAudiencia), "dd/MM/yy")}
                     </p>
-                    <p className="text-[10px] text-zinc-500 truncate">{assistido.tipoProximaAudiencia}</p>
+                    <p className="text-[9px] sm:text-[10px] text-blue-600 dark:text-blue-400 truncate">{assistido.tipoProximaAudiencia}</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Testemunhas - Indicador simples */}
+            {/* Testemunhas e Interrogatório - Pills */}
             {assistido.testemunhasArroladas.length > 0 && (
-              <div className="flex items-center gap-3 text-xs text-zinc-500">
-                <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400">
                   <UserCheck className="h-3 w-3" />
-                  <span>
-                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                      {assistido.testemunhasArroladas.filter(t => t.ouvida).length}
-                    </span>
-                    /{assistido.testemunhasArroladas.length} testemunhas
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                    {assistido.testemunhasArroladas.filter(t => t.ouvida).length}
                   </span>
+                  <span>/{assistido.testemunhasArroladas.length} testemunhas</span>
                 </div>
-                <span className="text-zinc-300 dark:text-zinc-700">|</span>
-                <div className="flex items-center gap-1">
+                <div className={cn(
+                  "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs",
+                  assistido.interrogatorioRealizado 
+                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                    : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                )}>
                   <User className="h-3 w-3" />
-                  <span className={assistido.interrogatorioRealizado ? "text-emerald-600" : "text-amber-600"}>
-                    {assistido.interrogatorioRealizado ? "Interrogado" : "Pendente"}
-                  </span>
+                  <span>{assistido.interrogatorioRealizado ? "Interrogado" : "Interrog. Pendente"}</span>
                 </div>
               </div>
             )}
 
             {/* Footer com Defensor */}
             <div className="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-zinc-800">
-              <span className="text-[11px] text-zinc-400">{assistido.defensor}</span>
+              <span className="text-[10px] sm:text-[11px] text-zinc-400">{assistido.defensor}</span>
               <Link href={`/admin/assistidos/${assistido.id}`}>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-7 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                  className="h-6 sm:h-7 text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 px-2"
                 >
-                  Ver Perfil <ChevronRight className="h-3 w-3 ml-1" />
+                  Ver Perfil <ChevronRight className="h-3 w-3 ml-0.5" />
                 </Button>
               </Link>
             </div>
@@ -1137,7 +1167,7 @@ export default function AssistidosPage() {
           </CardContent>
         </Card>
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 px-1 sm:px-0 items-start">
           {filteredAssistidos.map((a) => (
             <AssistidoCard 
               key={a.id}

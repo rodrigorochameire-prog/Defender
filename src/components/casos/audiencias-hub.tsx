@@ -41,6 +41,7 @@ import {
   User,
   FileText,
   ChevronRight,
+  ChevronLeft,
   GripVertical,
   AlertCircle,
   CheckCircle2,
@@ -50,10 +51,12 @@ import {
   ExternalLink,
   Scale,
   Lock,
-  Unlock
+  Unlock,
+  LayoutGrid,
+  CalendarDays
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, isToday, isTomorrow, isPast, differenceInDays, addDays } from "date-fns";
+import { format, isToday, isTomorrow, isPast, differenceInDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 // ==========================================
@@ -270,7 +273,7 @@ function AudienciaCard({
 }
 
 // ==========================================
-// VISUALIZAÇÃO LISTA
+// VISUALIZAÇÃO LISTA - SWISS DESIGN
 // ==========================================
 
 function ListView({ 
@@ -280,97 +283,186 @@ function ListView({
   audiencias: Audiencia[]; 
   onAudienciaClick?: (a: Audiencia) => void;
 }) {
+  // Mobile: Card view, Desktop: Table view
   return (
-    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-zinc-50 dark:bg-zinc-900/50">
-            <TableHead className="w-[120px] text-[10px] uppercase text-zinc-500 font-medium">Data/Hora</TableHead>
-            <TableHead className="text-[10px] uppercase text-zinc-500 font-medium">Tipo</TableHead>
-            <TableHead className="text-[10px] uppercase text-zinc-500 font-medium">Assistido</TableHead>
-            <TableHead className="text-[10px] uppercase text-zinc-500 font-medium">Processo</TableHead>
-            <TableHead className="text-[10px] uppercase text-zinc-500 font-medium">Local</TableHead>
-            <TableHead className="w-[100px] text-[10px] uppercase text-zinc-500 font-medium">Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {audiencias.map((audiencia) => {
-            const tipoConfig = TIPOS_AUDIENCIA[audiencia.tipo as keyof typeof TIPOS_AUDIENCIA] || TIPOS_AUDIENCIA.OUTRA;
-            const statusConfig = STATUS_AUDIENCIA[audiencia.status] || STATUS_AUDIENCIA.A_DESIGNAR;
-            
-            return (
-              <TableRow 
-                key={audiencia.id}
-                className={cn(
-                  "cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors",
-                  audiencia.assistidoPreso && "border-l-[3px] border-l-rose-500"
-                )}
-                onClick={() => onAudienciaClick?.(audiencia)}
-              >
-                <TableCell className="py-3">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-mono text-xs text-zinc-900 dark:text-zinc-100">
-                      {format(audiencia.dataAudiencia, "dd/MM/yy")}
+    <>
+      {/* Desktop Table */}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
+              <TableHead className="w-[100px] text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Data</TableHead>
+              <TableHead className="text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Tipo</TableHead>
+              <TableHead className="text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Assistido</TableHead>
+              <TableHead className="text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Processo</TableHead>
+              <TableHead className="text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Local</TableHead>
+              <TableHead className="w-[100px] text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {audiencias.map((audiencia) => {
+              const tipoConfig = TIPOS_AUDIENCIA[audiencia.tipo as keyof typeof TIPOS_AUDIENCIA] || TIPOS_AUDIENCIA.OUTRA;
+              const statusConfig = STATUS_AUDIENCIA[audiencia.status] || STATUS_AUDIENCIA.A_DESIGNAR;
+              
+              return (
+                <TableRow 
+                  key={audiencia.id}
+                  className={cn(
+                    "cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors",
+                    audiencia.assistidoPreso && "border-l-[3px] border-l-rose-500"
+                  )}
+                  onClick={() => onAudienciaClick?.(audiencia)}
+                >
+                  <TableCell className="py-3">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-mono text-xs text-zinc-900 dark:text-zinc-100 font-medium">
+                        {format(audiencia.dataAudiencia, "dd/MM/yy")}
+                      </span>
+                      {audiencia.horario && (
+                        <span className="text-[10px] text-zinc-500 font-mono">{audiencia.horario}</span>
+                      )}
+                      <DateIndicator date={audiencia.dataAudiencia} />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={cn("text-[10px] px-1.5 py-0", tipoConfig.color)}>
+                      {tipoConfig.icon} {tipoConfig.label}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {audiencia.assistidoNome && (
+                      <div className="flex items-center gap-2">
+                        <Avatar className={cn(
+                          "w-6 h-6 ring-1",
+                          audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
+                        )}>
+                          <AvatarImage src={audiencia.assistidoFoto || undefined} />
+                          <AvatarFallback className="text-[10px] font-medium">
+                            {audiencia.assistidoNome?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate block max-w-[140px] font-medium">
+                            {audiencia.assistidoNome}
+                          </span>
+                          {audiencia.assistidoPreso && (
+                            <span className="text-[10px] text-rose-500 flex items-center gap-0.5">
+                              <Lock className="w-2.5 h-2.5" /> Preso
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono text-[10px] text-zinc-500 truncate max-w-[160px] block">
+                      {audiencia.numeroAutos}
+                    </span>
+                    {audiencia.vara && (
+                      <span className="text-[10px] text-zinc-400">{audiencia.vara}</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {audiencia.local && (
+                      <div className="flex items-center gap-1 text-xs text-zinc-500">
+                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate max-w-[100px]">{audiencia.local}</span>
+                      </div>
+                    )}
+                    {audiencia.sala && (
+                      <span className="text-[10px] text-zinc-400">Sala {audiencia.sala}</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", statusConfig.color)}>
+                      {statusConfig.label}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+        {audiencias.map((audiencia) => {
+          const tipoConfig = TIPOS_AUDIENCIA[audiencia.tipo as keyof typeof TIPOS_AUDIENCIA] || TIPOS_AUDIENCIA.OUTRA;
+          const statusConfig = STATUS_AUDIENCIA[audiencia.status] || STATUS_AUDIENCIA.A_DESIGNAR;
+          
+          return (
+            <div
+              key={audiencia.id}
+              className={cn(
+                "p-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors",
+                audiencia.assistidoPreso && "border-l-[3px] border-l-rose-500"
+              )}
+              onClick={() => onAudienciaClick?.(audiencia)}
+            >
+              {/* Top: Date, Type, Status */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col">
+                    <span className="font-mono text-xs text-zinc-900 dark:text-zinc-100 font-medium">
+                      {format(audiencia.dataAudiencia, "dd/MM")}
                     </span>
                     {audiencia.horario && (
                       <span className="text-[10px] text-zinc-500">{audiencia.horario}</span>
                     )}
-                    <DateIndicator date={audiencia.dataAudiencia} />
                   </div>
-                </TableCell>
-                <TableCell>
-                  <Badge className={cn("text-xs", tipoConfig.color)}>
-                    {tipoConfig.icon} {tipoConfig.label}
+                  <DateIndicator date={audiencia.dataAudiencia} />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Badge className={cn("text-[9px] px-1.5 py-0", tipoConfig.color)}>
+                    {tipoConfig.icon}
                   </Badge>
-                </TableCell>
-                <TableCell>
-                  {audiencia.assistidoNome && (
-                    <div className="flex items-center gap-2">
-                      <Avatar className={cn(
-                        "w-6 h-6 ring-1",
-                        audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
-                      )}>
-                        <AvatarImage src={audiencia.assistidoFoto || undefined} />
-                        <AvatarFallback className="text-[10px]">
-                          {audiencia.assistidoNome?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate max-w-[150px]">
-                        {audiencia.assistidoNome}
-                      </span>
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <span className="font-mono text-xs text-zinc-500 truncate max-w-[180px] block">
-                    {audiencia.numeroAutos}
-                  </span>
-                  {audiencia.vara && (
-                    <span className="text-[10px] text-zinc-400">{audiencia.vara}</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {audiencia.local && (
-                    <div className="flex items-center gap-1 text-xs text-zinc-500">
-                      <MapPin className="w-3 h-3" />
-                      <span className="truncate max-w-[120px]">{audiencia.local}</span>
-                    </div>
-                  )}
-                  {audiencia.sala && (
-                    <span className="text-[10px] text-zinc-400">Sala {audiencia.sala}</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", statusConfig.color)}>
+                  <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", statusConfig.color)}>
                     {statusConfig.label}
                   </Badge>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+                </div>
+              </div>
+
+              {/* Middle: Assistido */}
+              {audiencia.assistidoNome && (
+                <div className="flex items-center gap-2 mb-2">
+                  <Avatar className={cn(
+                    "w-7 h-7 ring-1",
+                    audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
+                  )}>
+                    <AvatarImage src={audiencia.assistidoFoto || undefined} />
+                    <AvatarFallback className="text-[10px] font-medium">
+                      {audiencia.assistidoNome?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm text-zinc-900 dark:text-zinc-100 font-medium block truncate">
+                      {audiencia.assistidoNome}
+                    </span>
+                    <span className="font-mono text-[10px] text-zinc-500 truncate block">
+                      {audiencia.numeroAutos}
+                    </span>
+                  </div>
+                  {audiencia.assistidoPreso && (
+                    <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                  )}
+                </div>
+              )}
+
+              {/* Bottom: Location */}
+              {(audiencia.local || audiencia.sala) && (
+                <div className="flex items-center gap-1 text-[10px] text-zinc-500">
+                  <MapPin className="w-3 h-3" />
+                  <span className="truncate">
+                    {audiencia.local}{audiencia.sala && ` • Sala ${audiencia.sala}`}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
@@ -394,7 +486,7 @@ function KanbanView({
   }, [audiencias]);
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 px-2 sm:px-0">
       {KANBAN_COLUMNS.map((column) => {
         const Icon = column.icon;
         const items = groupedAudiencias[column.id] || [];
@@ -402,7 +494,7 @@ function KanbanView({
         return (
           <div 
             key={column.id}
-            className="flex-shrink-0 w-[300px]"
+            className="flex-shrink-0 w-[260px] sm:w-[300px]"
           >
             {/* Column Header */}
             <div className="flex items-center gap-2 mb-3 px-1">
@@ -439,6 +531,176 @@ function KanbanView({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ==========================================
+// VISUALIZAÇÃO CALENDÁRIO - SWISS DESIGN
+// ==========================================
+
+function CalendarView({
+  audiencias,
+  onAudienciaClick,
+}: {
+  audiencias: Audiencia[];
+  onAudienciaClick?: (a: Audiencia) => void;
+}) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // Get calendar days
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+    
+    return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  }, [currentDate]);
+
+  // Get audiencias for a specific date
+  const getAudienciasForDate = (date: Date) => {
+    return audiencias.filter((a) => isSameDay(a.dataAudiencia, date));
+  };
+
+  // Navigation
+  const goToPrevMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  return (
+    <div className="p-3 sm:p-4">
+      {/* Calendar Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToPrevMonth}
+            className="h-8 w-8"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToToday}
+            className="h-8 px-3 text-xs"
+          >
+            Hoje
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToNextMonth}
+            className="h-8 w-8"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <h3 className="text-base sm:text-lg font-semibold capitalize">
+          {format(currentDate, "MMMM yyyy", { locale: ptBR })}
+        </h3>
+      </div>
+
+      {/* Week Days Header */}
+      <div className="grid grid-cols-7 mb-2">
+        {weekDays.map((day, i) => (
+          <div
+            key={day}
+            className={cn(
+              "text-center font-medium text-[10px] sm:text-xs py-2 uppercase tracking-wider",
+              i === 0 || i === 6 ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
+            )}
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-px bg-zinc-200 dark:bg-zinc-800 rounded-lg overflow-hidden">
+        {calendarDays.map((date, index) => {
+          const dayAudiencias = getAudienciasForDate(date);
+          const isCurrentMonth = isSameMonth(date, currentDate);
+          const isCurrentDay = isToday(date);
+          const hasPreso = dayAudiencias.some((a) => a.assistidoPreso);
+
+          return (
+            <div
+              key={index}
+              className={cn(
+                "min-h-[70px] sm:min-h-[90px] p-1 sm:p-1.5 bg-white dark:bg-zinc-950 transition-colors",
+                isCurrentMonth
+                  ? "hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                  : "bg-zinc-50 dark:bg-zinc-900/50",
+                isCurrentDay && "ring-2 ring-inset ring-blue-500"
+              )}
+            >
+              {/* Date Number */}
+              <div className="flex items-center justify-between mb-1">
+                <span
+                  className={cn(
+                    "text-xs sm:text-sm font-medium w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full",
+                    isCurrentDay && "bg-blue-600 text-white",
+                    !isCurrentMonth && "text-zinc-400"
+                  )}
+                >
+                  {date.getDate()}
+                </span>
+                {hasPreso && (
+                  <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-rose-500" />
+                )}
+              </div>
+
+              {/* Events */}
+              <div className="space-y-0.5">
+                {dayAudiencias.slice(0, 2).map((audiencia) => {
+                  const tipoConfig = TIPOS_AUDIENCIA[audiencia.tipo as keyof typeof TIPOS_AUDIENCIA] || TIPOS_AUDIENCIA.OUTRA;
+                  return (
+                    <div
+                      key={audiencia.id}
+                      className={cn(
+                        "px-1 py-0.5 rounded text-[8px] sm:text-[10px] truncate cursor-pointer transition-colors",
+                        tipoConfig.color
+                      )}
+                      onClick={() => onAudienciaClick?.(audiencia)}
+                    >
+                      <span className="hidden sm:inline">{audiencia.horario ? `${audiencia.horario} ` : ""}</span>
+                      <span className="font-medium">{audiencia.assistidoNome?.split(" ")[0] || tipoConfig.label}</span>
+                    </div>
+                  );
+                })}
+                {dayAudiencias.length > 2 && (
+                  <div className="text-[8px] sm:text-[10px] text-zinc-400 px-1">
+                    +{dayAudiencias.length - 2} mais
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-4 flex flex-wrap gap-2 sm:gap-3 justify-center">
+        {Object.entries(TIPOS_AUDIENCIA).slice(0, 5).map(([key, config]) => (
+          <div key={key} className="flex items-center gap-1">
+            <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full", config.dotColor)} />
+            <span className="text-[9px] sm:text-[10px] text-zinc-500">{config.label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -670,7 +932,7 @@ function AudienciaSidePeek({
 }
 
 // ==========================================
-// COMPONENTE PRINCIPAL
+// COMPONENTE PRINCIPAL - SWISS DESIGN
 // ==========================================
 
 export function AudienciasHub({
@@ -679,7 +941,7 @@ export function AudienciasHub({
   onAudienciaUpdate,
   onCreateTask,
 }: AudienciasHubProps) {
-  const [viewMode, setViewMode] = useState<"lista" | "kanban">("lista");
+  const [viewMode, setViewMode] = useState<"lista" | "kanban" | "calendario">("lista");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterTipo, setFilterTipo] = useState<string>("all");
@@ -701,6 +963,17 @@ export function AudienciasHub({
     });
   }, [audiencias, searchTerm, filterStatus, filterTipo]);
 
+  // Stats
+  const stats = useMemo(() => {
+    const hoje = filteredAudiencias.filter(a => isToday(a.dataAudiencia)).length;
+    const semana = filteredAudiencias.filter(a => {
+      const dias = differenceInDays(a.dataAudiencia, new Date());
+      return dias >= 0 && dias <= 7;
+    }).length;
+    const presos = filteredAudiencias.filter(a => a.assistidoPreso).length;
+    return { hoje, semana, presos };
+  }, [filteredAudiencias]);
+
   const handleAudienciaClick = (audiencia: Audiencia) => {
     setSelectedAudiencia(audiencia);
     setSidePeekOpen(true);
@@ -709,34 +982,50 @@ export function AudienciasHub({
 
   return (
     <TooltipProvider>
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 px-2 sm:px-0">
+        {/* Header - Swiss Design */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30">
-              <CalendarIcon className="w-5 h-5 text-blue-700 dark:text-blue-400" />
+            <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 shadow-sm">
+              <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-700 dark:text-blue-400" />
             </div>
             <div>
-              <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="font-semibold text-lg sm:text-xl text-zinc-900 dark:text-zinc-100">
                 Agenda de Audiências
               </h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {filteredAudiencias.length} audiências encontradas
-              </p>
+              <div className="flex items-center gap-2 sm:gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+                <span>{filteredAudiencias.length} audiências</span>
+                {stats.hoje > 0 && (
+                  <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[10px] px-1.5 py-0">
+                    {stats.hoje} hoje
+                  </Badge>
+                )}
+                {stats.presos > 0 && (
+                  <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                    <Lock className="w-3 h-3" /> {stats.presos} presos
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* View Toggle */}
-          <div className="flex items-center gap-2">
+          {/* View Toggle - Swiss Style */}
+          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={viewMode === "lista" ? "default" : "outline"}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setViewMode("lista")}
-                  className={viewMode === "lista" ? "bg-zinc-900 dark:bg-zinc-100" : ""}
+                  className={cn(
+                    "h-8 px-3 text-xs font-medium rounded-md transition-all",
+                    viewMode === "lista" 
+                      ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                      : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  )}
                 >
-                  <List className="w-4 h-4" />
+                  <List className="w-4 h-4 mr-1.5" />
+                  <span className="hidden sm:inline">Lista</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Modo Lista</TooltipContent>
@@ -744,12 +1033,37 @@ export function AudienciasHub({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={viewMode === "kanban" ? "default" : "outline"}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode("calendario")}
+                  className={cn(
+                    "h-8 px-3 text-xs font-medium rounded-md transition-all",
+                    viewMode === "calendario" 
+                      ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                      : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  )}
+                >
+                  <CalendarDays className="w-4 h-4 mr-1.5" />
+                  <span className="hidden sm:inline">Calendário</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Modo Calendário</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={() => setViewMode("kanban")}
-                  className={viewMode === "kanban" ? "bg-zinc-900 dark:bg-zinc-100" : ""}
+                  className={cn(
+                    "h-8 px-3 text-xs font-medium rounded-md transition-all",
+                    viewMode === "kanban" 
+                      ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                      : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  )}
                 >
-                  <Columns3 className="w-4 h-4" />
+                  <Columns3 className="w-4 h-4 mr-1.5" />
+                  <span className="hidden sm:inline">Kanban</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Modo Kanban</TooltipContent>
@@ -757,59 +1071,72 @@ export function AudienciasHub({
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-md">
+        {/* Filters - Responsive */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <Input
               placeholder="Buscar por assistido, processo ou caso..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white dark:bg-zinc-950"
+              className="pl-10 bg-white dark:bg-zinc-950 h-9 text-sm"
             />
           </div>
 
-          <Select value={filterTipo} onValueChange={setFilterTipo}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os tipos</SelectItem>
-              {Object.entries(TIPOS_AUDIENCIA).map(([key, val]) => (
-                <SelectItem key={key} value={key}>
-                  {val.icon} {val.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={filterTipo} onValueChange={setFilterTipo}>
+              <SelectTrigger className="w-full sm:w-[130px] h-9 text-xs">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                {Object.entries(TIPOS_AUDIENCIA).map(([key, val]) => (
+                  <SelectItem key={key} value={key}>
+                    {val.icon} {val.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              {Object.entries(STATUS_AUDIENCIA).map(([key, val]) => (
-                <SelectItem key={key} value={key}>
-                  {val.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-full sm:w-[130px] h-9 text-xs">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {Object.entries(STATUS_AUDIENCIA).map(([key, val]) => (
+                  <SelectItem key={key} value={key}>
+                    {val.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Content */}
-        {viewMode === "lista" ? (
-          <ListView 
-            audiencias={filteredAudiencias} 
-            onAudienciaClick={handleAudienciaClick}
-          />
-        ) : (
-          <KanbanView 
-            audiencias={filteredAudiencias} 
-            onAudienciaClick={handleAudienciaClick}
-          />
-        )}
+        {/* Content - Card Container */}
+        <Card className="border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          {viewMode === "lista" && (
+            <ListView 
+              audiencias={filteredAudiencias} 
+              onAudienciaClick={handleAudienciaClick}
+            />
+          )}
+          {viewMode === "calendario" && (
+            <CalendarView 
+              audiencias={filteredAudiencias} 
+              onAudienciaClick={handleAudienciaClick}
+            />
+          )}
+          {viewMode === "kanban" && (
+            <div className="p-4 overflow-x-auto">
+              <KanbanView 
+                audiencias={filteredAudiencias} 
+                onAudienciaClick={handleAudienciaClick}
+              />
+            </div>
+          )}
+        </Card>
 
         {/* Empty State */}
         {filteredAudiencias.length === 0 && (
