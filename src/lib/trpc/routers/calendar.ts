@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, calendarEvents, pets, petTutors } from "@/lib/db";
+import { db, calendarEvents, processos, assistidos, demandas } from "@/lib/db";
 import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, calendarEventSchema } from "@/lib/validations";
@@ -50,15 +50,15 @@ function generateRecurrenceOccurrences(
   return occurrences;
 }
 
-// Tipos de eventos disponíveis
+// Tipos de eventos disponíveis para o contexto jurídico
 export const EVENT_TYPES = {
-  checkin: { label: "Check-in", color: "#22c55e" },
-  checkout: { label: "Check-out", color: "#ef4444" },
-  vaccine: { label: "Vacina", color: "#3b82f6" },
-  medication: { label: "Medicamento", color: "#f59e0b" },
-  grooming: { label: "Banho/Tosa", color: "#8b5cf6" },
-  vet: { label: "Veterinário", color: "#ec4899" },
-  training: { label: "Adestramento", color: "#14b8a6" },
+  prazo: { label: "Prazo", color: "#ef4444" },
+  audiencia: { label: "Audiência", color: "#3b82f6" },
+  juri: { label: "Júri", color: "#8b5cf6" },
+  reuniao: { label: "Reunião", color: "#f59e0b" },
+  atendimento: { label: "Atendimento", color: "#22c55e" },
+  visita: { label: "Visita Carcerária", color: "#14b8a6" },
+  lembrete: { label: "Lembrete", color: "#6b7280" },
   custom: { label: "Outro", color: "#6b7280" },
 } as const;
 
@@ -71,7 +71,8 @@ export const calendarRouter = router({
       z.object({
         start: z.string().datetime(),
         end: z.string().datetime(),
-        petId: idSchema.optional(),
+        processoId: idSchema.optional(),
+        assistidoId: idSchema.optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -83,14 +84,18 @@ export const calendarRouter = router({
         let events = await db
           .select({
             event: calendarEvents,
-            pet: {
-              id: pets.id,
-              name: pets.name,
-              species: pets.species,
+            processo: {
+              id: processos.id,
+              numeroAutos: processos.numeroAutos,
+            },
+            assistido: {
+              id: assistidos.id,
+              nome: assistidos.nome,
             },
           })
           .from(calendarEvents)
-          .leftJoin(pets, eq(calendarEvents.petId, pets.id))
+          .leftJoin(processos, eq(calendarEvents.processoId, processos.id))
+          .leftJoin(assistidos, eq(calendarEvents.assistidoId, assistidos.id))
           .where(
             and(
               gte(calendarEvents.eventDate, startDate),
@@ -99,28 +104,20 @@ export const calendarRouter = router({
           )
           .orderBy(calendarEvents.eventDate);
 
-        // Se não for admin, filtrar apenas pets do usuário
-        if (ctx.user.role !== "admin") {
-          const userPetIds = await db
-            .select({ petId: petTutors.petId })
-            .from(petTutors)
-            .where(eq(petTutors.tutorId, ctx.user.id));
-
-          const petIds = new Set(userPetIds.map((p) => p.petId));
-
-          events = events.filter(
-            (e) => e.event.petId === null || petIds.has(e.event.petId)
-          );
+        // Filtrar por processo específico
+        if (input.processoId) {
+          events = events.filter((e) => e.event.processoId === input.processoId);
         }
 
-        // Filtrar por pet específico
-        if (input.petId) {
-          events = events.filter((e) => e.event.petId === input.petId);
+        // Filtrar por assistido específico
+        if (input.assistidoId) {
+          events = events.filter((e) => e.event.assistidoId === input.assistidoId);
         }
 
         return events.map((e) => ({
           ...e.event,
-          pet: e.pet,
+          processo: e.processo,
+          assistido: e.assistido,
           typeInfo: EVENT_TYPES[e.event.eventType as keyof typeof EVENT_TYPES] || EVENT_TYPES.custom,
         }));
       }, "Erro ao listar eventos");
@@ -147,17 +144,21 @@ export const calendarRouter = router({
         const start = startOfMonth(new Date(year, month));
         const end = endOfMonth(new Date(year, month));
 
-        let events = await db
+        const events = await db
           .select({
             event: calendarEvents,
-            pet: {
-              id: pets.id,
-              name: pets.name,
-              species: pets.species,
+            processo: {
+              id: processos.id,
+              numeroAutos: processos.numeroAutos,
+            },
+            assistido: {
+              id: assistidos.id,
+              nome: assistidos.nome,
             },
           })
           .from(calendarEvents)
-          .leftJoin(pets, eq(calendarEvents.petId, pets.id))
+          .leftJoin(processos, eq(calendarEvents.processoId, processos.id))
+          .leftJoin(assistidos, eq(calendarEvents.assistidoId, assistidos.id))
           .where(
             and(
               gte(calendarEvents.eventDate, start),
@@ -166,23 +167,10 @@ export const calendarRouter = router({
           )
           .orderBy(calendarEvents.eventDate);
 
-        // Se não for admin, filtrar apenas pets do usuário
-        if (ctx.user.role !== "admin") {
-          const userPetIds = await db
-            .select({ petId: petTutors.petId })
-            .from(petTutors)
-            .where(eq(petTutors.tutorId, ctx.user.id));
-
-          const petIds = new Set(userPetIds.map((p) => p.petId));
-
-          events = events.filter(
-            (e) => e.event.petId === null || petIds.has(e.event.petId)
-          );
-        }
-
         return events.map((e) => ({
           ...e.event,
-          pet: e.pet,
+          processo: e.processo,
+          assistido: e.assistido,
           typeInfo: EVENT_TYPES[e.event.eventType as keyof typeof EVENT_TYPES] || EVENT_TYPES.custom,
         }));
       }, "Erro ao listar eventos do mês");
@@ -203,31 +191,26 @@ export const calendarRouter = router({
           throw Errors.notFound("Evento");
         }
 
-        // Verificar permissão
-        if (ctx.user.role !== "admin" && event.petId) {
-          const relation = await db.query.petTutors.findFirst({
-            where: and(
-              eq(petTutors.petId, event.petId),
-              eq(petTutors.tutorId, ctx.user.id)
-            ),
+        // Buscar info do processo
+        let processo = null;
+        if (event.processoId) {
+          processo = await db.query.processos.findFirst({
+            where: eq(processos.id, event.processoId),
           });
-
-          if (!relation) {
-            throw Errors.forbidden();
-          }
         }
 
-        // Buscar info do pet
-        let pet = null;
-        if (event.petId) {
-          pet = await db.query.pets.findFirst({
-            where: eq(pets.id, event.petId),
+        // Buscar info do assistido
+        let assistido = null;
+        if (event.assistidoId) {
+          assistido = await db.query.assistidos.findFirst({
+            where: eq(assistidos.id, event.assistidoId),
           });
         }
 
         return {
           ...event,
-          pet,
+          processo,
+          assistido,
           typeInfo: EVENT_TYPES[event.eventType as keyof typeof EVENT_TYPES] || EVENT_TYPES.custom,
         };
       }, "Erro ao buscar evento");
@@ -240,20 +223,6 @@ export const calendarRouter = router({
     .input(calendarEventSchema)
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        // Verificar permissão para o pet
-        if (input.petId && ctx.user.role !== "admin") {
-          const relation = await db.query.petTutors.findFirst({
-            where: and(
-              eq(petTutors.petId, input.petId),
-              eq(petTutors.tutorId, ctx.user.id)
-            ),
-          });
-
-          if (!relation) {
-            throw Errors.forbidden();
-          }
-        }
-
         const eventColor = input.color || EVENT_TYPES[input.eventType as keyof typeof EVENT_TYPES]?.color || EVENT_TYPES.custom.color;
 
         // Criar evento principal
@@ -265,7 +234,9 @@ export const calendarRouter = router({
             eventDate: new Date(input.eventDate),
             endDate: input.endDate ? new Date(input.endDate) : null,
             eventType: input.eventType,
-            petId: input.petId || null,
+            processoId: input.processoId || null,
+            assistidoId: input.assistidoId || null,
+            demandaId: input.demandaId || null,
             isAllDay: input.isAllDay,
             color: eventColor,
             location: input.location || null,
@@ -302,7 +273,9 @@ export const calendarRouter = router({
               eventDate: occurrence,
               endDate: input.endDate ? new Date(occurrence.getTime() + (new Date(input.endDate).getTime() - new Date(input.eventDate).getTime())) : null,
               eventType: input.eventType,
-              petId: input.petId || null,
+              processoId: input.processoId || null,
+              assistidoId: input.assistidoId || null,
+              demandaId: input.demandaId || null,
               isAllDay: input.isAllDay,
               color: eventColor,
               location: input.location || null,
@@ -357,7 +330,9 @@ export const calendarRouter = router({
         if (data.eventDate) updateData.eventDate = new Date(data.eventDate);
         if (data.endDate) updateData.endDate = new Date(data.endDate);
         if (data.eventType) updateData.eventType = data.eventType;
-        if (data.petId !== undefined) updateData.petId = data.petId;
+        if (data.processoId !== undefined) updateData.processoId = data.processoId;
+        if (data.assistidoId !== undefined) updateData.assistidoId = data.assistidoId;
+        if (data.demandaId !== undefined) updateData.demandaId = data.demandaId;
         if (data.isAllDay !== undefined) updateData.isAllDay = data.isAllDay;
         if (data.color) updateData.color = data.color;
         if (data.location !== undefined) updateData.location = data.location;
@@ -421,17 +396,21 @@ export const calendarRouter = router({
       const start = startOfDay(now);
       const end = endOfDay(now);
 
-      let events = await db
+      const events = await db
         .select({
           event: calendarEvents,
-          pet: {
-            id: pets.id,
-            name: pets.name,
-            species: pets.species,
+          processo: {
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+          },
+          assistido: {
+            id: assistidos.id,
+            nome: assistidos.nome,
           },
         })
         .from(calendarEvents)
-        .leftJoin(pets, eq(calendarEvents.petId, pets.id))
+        .leftJoin(processos, eq(calendarEvents.processoId, processos.id))
+        .leftJoin(assistidos, eq(calendarEvents.assistidoId, assistidos.id))
         .where(
           and(
             gte(calendarEvents.eventDate, start),
@@ -440,23 +419,10 @@ export const calendarRouter = router({
         )
         .orderBy(calendarEvents.eventDate);
 
-      // Se não for admin, filtrar apenas pets do usuário
-      if (ctx.user.role !== "admin") {
-        const userPetIds = await db
-          .select({ petId: petTutors.petId })
-          .from(petTutors)
-          .where(eq(petTutors.tutorId, ctx.user.id));
-
-        const petIds = new Set(userPetIds.map((p) => p.petId));
-
-        events = events.filter(
-          (e) => e.event.petId === null || petIds.has(e.event.petId)
-        );
-      }
-
       return events.map((e) => ({
         ...e.event,
-        pet: e.pet,
+        processo: e.processo,
+        assistido: e.assistido,
         typeInfo: EVENT_TYPES[e.event.eventType as keyof typeof EVENT_TYPES] || EVENT_TYPES.custom,
       }));
     }, "Erro ao listar eventos de hoje");

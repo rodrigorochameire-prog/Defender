@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
           email,
           role: isAdmin ? "admin" : "user",
           emailVerified: true,
-          approvalStatus: isAdmin ? "approved" : "pending",
         })
         .returning();
 
@@ -38,12 +37,11 @@ export async function POST(request: NextRequest) {
       console.log("[SyncUser] Novo usuário criado:", email, "- Role:", user.role);
     } else {
       // Se é um admin mas não está como admin no banco, corrigir
-      if (isAdmin && (user.role !== "admin" || user.approvalStatus !== "approved")) {
+      if (isAdmin && user.role !== "admin") {
         const [updated] = await db
           .update(users)
           .set({
             role: "admin",
-            approvalStatus: "approved",
             updatedAt: new Date(),
           })
           .where(eq(users.email, email))
@@ -60,7 +58,6 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       role: user.role,
-      approvalStatus: user.approvalStatus,
     });
   } catch (error) {
     console.error("[SyncUser] Error:", error);

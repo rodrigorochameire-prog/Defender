@@ -1,48 +1,84 @@
 #!/bin/bash
 
 # ===========================================
-# Script para configurar variáveis de ambiente no Vercel
+# Script para configurar variáveis de ambiente na Vercel
+# ===========================================
+# 
+# USO:
+# 1. Faça login na Vercel: vercel login
+# 2. Execute este script: ./scripts/setup-vercel-env.sh
+#
+# OU adicione manualmente no dashboard:
+# https://vercel.com/[seu-time]/[seu-projeto]/settings/environment-variables
 # ===========================================
 
-echo "🔧 Configurando variáveis de ambiente no Vercel..."
+echo "🚀 Configurando variáveis de ambiente na Vercel..."
 echo ""
 
-# Variáveis a serem configuradas
-declare -A ENV_VARS=(
-  ["DATABASE_URL"]="postgresql://postgres:401bFr505*@db.siwapjqndevuwsluncnr.supabase.co:5432/postgres"
-  ["AUTH_SECRET"]="tetecare-v2-super-secret-key-2025-production-ready"
-  ["NEXT_PUBLIC_APP_URL"]="https://tetecare.vercel.app"
-  ["NEXT_PUBLIC_SUPABASE_URL"]="https://siwapjqndevuwsluncnr.supabase.co"
-  ["NEXT_PUBLIC_SUPABASE_ANON_KEY"]="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd2FwanFuZGV2dXdzbHVuY25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1MDcwOTQsImV4cCI6MjA4MjA4MzA5NH0.TZY7Niw2qT-Pp3vMc2l5HO-Pq6dcEGvjKBrxBYQwm_4"
-  ["SUPABASE_SERVICE_ROLE_KEY"]="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd2FwanFuZGV2dXdzbHVuY25yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjUwNzA5NCwiZXhwIjoyMDgyMDgzMDk0fQ.aS2tpEkxHEXZ3mbclUg1ol_DgaJzv3WulcvXokftUmo"
-)
-
-# Verificar se vercel está instalado
-if ! command -v vercel &> /dev/null; then
-    echo "Instalando Vercel CLI..."
-    npm install -g vercel
+# Verificar se está logado
+if ! vercel whoami > /dev/null 2>&1; then
+    echo "❌ Você não está logado na Vercel."
+    echo "   Execute: vercel login"
+    exit 1
 fi
 
-# Verificar login
-echo "Verificando login..."
-if ! vercel whoami &> /dev/null; then
-    echo "Por favor, faça login na Vercel:"
-    vercel login
+echo "✅ Logado como: $(vercel whoami)"
+echo ""
+
+# ===========================================
+# AXIOM (Monitorização)
+# ===========================================
+echo "📊 Configurando Axiom..."
+echo "   Obtenha seu token em: https://app.axiom.co/settings/api-tokens"
+read -p "   AXIOM_TOKEN (deixe vazio para pular): " AXIOM_TOKEN
+
+if [ -n "$AXIOM_TOKEN" ]; then
+    echo "$AXIOM_TOKEN" | vercel env add AXIOM_TOKEN production
+    echo "tetecare" | vercel env add AXIOM_DATASET production
+    echo "   ✅ Axiom configurado!"
+else
+    echo "   ⏭️ Axiom pulado"
 fi
 
-# Link do projeto (se necessário)
-echo "Linkando projeto..."
-vercel link --yes
+echo ""
 
-# Adicionar cada variável
-for key in "${!ENV_VARS[@]}"; do
-    value="${ENV_VARS[$key]}"
-    echo "Adicionando $key..."
-    echo "$value" | vercel env add "$key" production --yes 2>/dev/null || echo "  (já existe ou erro)"
-done
+# ===========================================
+# INNGEST (Filas de Mensagens)
+# ===========================================
+echo "📬 Configurando Inngest..."
+echo "   Obtenha suas chaves em: https://app.inngest.com"
+read -p "   INNGEST_EVENT_KEY: " INNGEST_EVENT_KEY
+read -p "   INNGEST_SIGNING_KEY: " INNGEST_SIGNING_KEY
+
+if [ -n "$INNGEST_EVENT_KEY" ] && [ -n "$INNGEST_SIGNING_KEY" ]; then
+    echo "$INNGEST_EVENT_KEY" | vercel env add INNGEST_EVENT_KEY production
+    echo "$INNGEST_SIGNING_KEY" | vercel env add INNGEST_SIGNING_KEY production
+    echo "   ✅ Inngest configurado!"
+else
+    echo "   ⏭️ Inngest pulado"
+fi
 
 echo ""
-echo "✅ Variáveis configuradas!"
+
+# ===========================================
+# OPENAI (Inteligência Artificial)
+# ===========================================
+echo "🤖 Configurando OpenAI..."
+echo "   Obtenha sua chave em: https://platform.openai.com/api-keys"
+read -p "   OPENAI_API_KEY: " OPENAI_API_KEY
+
+if [ -n "$OPENAI_API_KEY" ]; then
+    echo "$OPENAI_API_KEY" | vercel env add OPENAI_API_KEY production
+    echo "   ✅ OpenAI configurado!"
+else
+    echo "   ⏭️ OpenAI pulado"
+fi
+
 echo ""
-echo "Agora faça um redeploy:"
-echo "  vercel --prod"
+echo "🎉 Configuração concluída!"
+echo ""
+echo "Para verificar as variáveis configuradas:"
+echo "   vercel env ls"
+echo ""
+echo "Para fazer deploy com as novas variáveis:"
+echo "   vercel --prod"

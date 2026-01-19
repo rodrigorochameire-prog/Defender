@@ -191,7 +191,7 @@ function TutorSidebarContent({
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useClerk();
-  const { state, toggleSidebar, setOpen } = useSidebar();
+  const { state, toggleSidebar, setOpen, openMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -316,8 +316,8 @@ function TutorSidebarContent({
                             href={item.path}
                             prefetch={true}
                             onClick={() => {
-                              if (isMobile && state === "expanded") {
-                                setOpen(false);
+                              if (isMobile && openMobile) {
+                                setOpenMobile(false);
                               }
                             }}
                           >

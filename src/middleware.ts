@@ -6,29 +6,30 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/auth-redirect",
+  "/login",
+  "/register",
   "/api/webhooks(.*)",
-  "/api/auth(.*)", // Permitir rotas de auth
+  "/api/auth(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth();
-
-  // Rotas públicas não precisam de autenticação
+  // Permitir rotas públicas sem verificação
   if (isPublicRoute(req)) {
     return NextResponse.next();
   }
 
-  // Se não está autenticado, redirecionar para login
+  // Proteger todas as outras rotas - verificar autenticação
+  const { userId } = await auth();
+
+  // Se não estiver autenticado, redirecionar para sign-in
   if (!userId) {
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("redirect_url", req.url);
     return NextResponse.redirect(signInUrl);
   }
 
-  // IMPORTANTE: NÃO fazer verificação de role aqui
-  // A verificação de permissões é feita nos layouts de admin e tutor
-  // que consultam o banco de dados (fonte de verdade)
-  
+  // Usuário autenticado - permitir acesso
+  // A verificação de role é feita nos layouts (admin/tutor)
   return NextResponse.next();
 });
 

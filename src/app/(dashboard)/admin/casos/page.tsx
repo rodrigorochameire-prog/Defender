@@ -1,0 +1,1512 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Briefcase,
+  Search,
+  Plus,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Scale,
+  Users,
+  FileText,
+  Calendar,
+  Clock,
+  Tag,
+  Filter,
+  LayoutGrid,
+  List,
+  FolderOpen,
+  ExternalLink,
+  AlertCircle,
+  Lock,
+  Unlock,
+  MapPin,
+  Copy,
+  CheckCircle2,
+  AlertTriangle,
+  Eye,
+  MoreHorizontal,
+  MessageCircle,
+  Target,
+  Gavel,
+  Sparkles,
+  Shield,
+  Swords,
+  User,
+  UserCheck,
+  UserX,
+  FileSearch,
+  Microscope,
+  CircleDot,
+  Circle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useAssignment } from "@/contexts/assignment-context";
+import Link from "next/link";
+
+// Cores alinhadas com os workspaces
+const ATRIBUICAO_COLORS: Record<string, { 
+  border: string; 
+  bg: string; 
+  text: string;
+  hoverBg: string;
+  indicator: string;
+}> = {
+  all: { 
+    border: "border-l-zinc-400", 
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-700 dark:text-zinc-300",
+    hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800",
+    indicator: "bg-zinc-600"
+  },
+  JURI_CAMACARI: { 
+    border: "border-l-emerald-600 dark:border-l-emerald-500", 
+    bg: "bg-emerald-100 dark:bg-emerald-900/30",
+    text: "text-emerald-700 dark:text-emerald-400",
+    hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
+    indicator: "bg-emerald-600"
+  },
+  VVD_CAMACARI: { 
+    border: "border-l-violet-600 dark:border-l-violet-500",
+    bg: "bg-violet-100 dark:bg-violet-900/30",
+    text: "text-violet-700 dark:text-violet-400",
+    hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20",
+    indicator: "bg-violet-600"
+  },
+  EXECUCAO_PENAL: { 
+    border: "border-l-blue-600 dark:border-l-blue-500",
+    bg: "bg-blue-100 dark:bg-blue-900/30",
+    text: "text-blue-700 dark:text-blue-400",
+    hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-900/20",
+    indicator: "bg-blue-600"
+  },
+  SUBSTITUICAO: { 
+    border: "border-l-rose-600 dark:border-l-rose-500",
+    bg: "bg-rose-100 dark:bg-rose-900/30",
+    text: "text-rose-700 dark:text-rose-400",
+    hoverBg: "hover:bg-rose-50 dark:hover:bg-rose-900/20",
+    indicator: "bg-rose-600"
+  },
+  GRUPO_JURI: { 
+    border: "border-l-orange-600 dark:border-l-orange-500",
+    bg: "bg-orange-100 dark:bg-orange-900/30",
+    text: "text-orange-700 dark:text-orange-400",
+    hoverBg: "hover:bg-orange-50 dark:hover:bg-orange-900/20",
+    indicator: "bg-orange-600"
+  },
+  SUBSTITUICAO_CIVEL: { 
+    border: "border-l-purple-600 dark:border-l-purple-500",
+    bg: "bg-purple-100 dark:bg-purple-900/30",
+    text: "text-purple-700 dark:text-purple-400",
+    hoverBg: "hover:bg-purple-50 dark:hover:bg-purple-900/20",
+    indicator: "bg-purple-600"
+  },
+};
+
+// Ícones para cada atribuição (Lucide icons)
+const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
+  all: <Briefcase className="w-3.5 h-3.5" />,
+  JURI_CAMACARI: <Gavel className="w-3.5 h-3.5" />,
+  VVD_CAMACARI: <Shield className="w-3.5 h-3.5" />,
+  EXECUCAO_PENAL: <Lock className="w-3.5 h-3.5" />,
+  SUBSTITUICAO: <Scale className="w-3.5 h-3.5" />,
+  GRUPO_JURI: <Users className="w-3.5 h-3.5" />,
+  SUBSTITUICAO_CIVEL: <FileText className="w-3.5 h-3.5" />,
+};
+
+const ATRIBUICAO_OPTIONS = [
+  { value: "all", label: "Todos os Casos", shortLabel: "Todos" },
+  { value: "JURI_CAMACARI", label: "Júri", shortLabel: "Júri" },
+  { value: "VVD_CAMACARI", label: "VVD", shortLabel: "VVD" },
+  { value: "EXECUCAO_PENAL", label: "Exec. Penal", shortLabel: "EP" },
+  { value: "SUBSTITUICAO", label: "Subst. Criminal", shortLabel: "Crim" },
+  { value: "SUBSTITUICAO_CIVEL", label: "Subst. Cível", shortLabel: "Cível" },
+];
+import { format, formatDistanceToNow, isToday, isTomorrow, differenceInDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+// ==========================================
+// TIPOS
+// ==========================================
+
+interface Assistido {
+  id: number;
+  nome: string;
+  foto?: string | null;
+  preso: boolean;
+}
+
+interface Processo {
+  id: number;
+  numeroAutos: string;
+  vara?: string;
+  isJuri?: boolean;
+}
+
+interface Demanda {
+  id: number;
+  ato: string;
+  prazo: Date;
+  urgente: boolean;
+}
+
+interface Audiencia {
+  id: number;
+  data: Date;
+  tipo: string;
+  local?: string;
+}
+
+interface Testemunha {
+  id: number;
+  nome: string;
+  tipo: "defesa" | "acusacao" | "informante";
+  ouvida: boolean;
+  dataOitiva?: Date | null;
+}
+
+interface Prova {
+  id: number;
+  tipo: "documental" | "pericial" | "testemunhal" | "material";
+  descricao: string;
+  status: "juntada" | "pendente" | "requerida" | "indeferida";
+}
+
+interface Laudo {
+  id: number;
+  tipo: string;
+  descricao: string;
+  data?: Date | null;
+  favoravel?: boolean | null;
+}
+
+interface Caso {
+  id: number;
+  titulo: string;
+  codigo?: string | null;
+  atribuicao: string;
+  comarca: string;
+  vara?: string | null;
+  dataInicio: Date;
+  fase: number;
+  faseNome: string;
+  status: "ativo" | "suspenso" | "arquivado";
+  prioridade: string;
+  // Conexões
+  assistidos: Assistido[];
+  processos: Processo[];
+  demandasPendentes: Demanda[];
+  proximaAudiencia?: Audiencia | null;
+  // Teoria do Caso - Expandida
+  teoriaResumo?: string | null;
+  teoriaCompleta: boolean;
+  teseAcusacao?: string | null;
+  versaoReu?: string | null;
+  investigacaoDefensiva?: string | null;
+  // Testemunhas
+  testemunhas?: Testemunha[];
+  interrogatorioRealizado?: boolean;
+  // Provas e Laudos
+  provas?: Prova[];
+  laudos?: Laudo[];
+  // Links
+  linkDrive?: string | null;
+  // Meta
+  defensorNome?: string | null;
+  tags?: string[];
+}
+
+// ==========================================
+// CONSTANTES
+// ==========================================
+
+const ATRIBUICAO_LABELS: Record<string, string> = {
+  JURI_CAMACARI: "Júri",
+  VVD_CAMACARI: "VVD",
+  EXECUCAO_PENAL: "EP",
+  SUBSTITUICAO: "Subst.",
+  GRUPO_JURI: "Grupo Júri",
+  SUBSTITUICAO_CIVEL: "Cível",
+};
+
+const FASES_CASO = {
+  INQUERITO: { label: "Inquérito", color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300", icon: "🔍", progress: 10 },
+  INSTRUCAO: { label: "Instrução", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", icon: "⚖️", progress: 35 },
+  PLENARIO: { label: "Plenário", color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", icon: "🎭", progress: 60 },
+  RECURSO: { label: "Recurso", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", icon: "📤", progress: 80 },
+  EXECUCAO: { label: "Execução", color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400", icon: "⏱️", progress: 90 },
+  ARQUIVADO: { label: "Arquivado", color: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400", icon: "📁", progress: 100 },
+};
+
+const FASE_LABELS = ["Inquérito", "Instrução", "Plenário", "Recurso", "Execução"];
+
+// Dados de exemplo completos com informações jurídicas ricas
+const MOCK_CASOS: Caso[] = [
+  {
+    id: 1,
+    titulo: "Homicídio Qualificado - Operação Reuso",
+    codigo: "CASO-2025-001",
+    atribuicao: "JURI_CAMACARI",
+    comarca: "Camaçari",
+    vara: "1ª Vara do Júri",
+    dataInicio: new Date("2025-01-10"),
+    fase: 35,
+    faseNome: "INSTRUCAO",
+    status: "ativo",
+    prioridade: "REU_PRESO",
+    assistidos: [
+      { id: 1, nome: "José Carlos Santos", preso: true },
+      { id: 2, nome: "Maria Aparecida Silva", preso: false },
+    ],
+    processos: [
+      { id: 1, numeroAutos: "8012906-74.2025.8.05.0039", vara: "1ª Vara", isJuri: true },
+      { id: 2, numeroAutos: "8012907-59.2025.8.05.0039", vara: "1ª Vara", isJuri: true },
+    ],
+    demandasPendentes: [
+      { id: 1, ato: "Resposta à Acusação", prazo: new Date("2026-01-20"), urgente: true },
+      { id: 2, ato: "Rol de Testemunhas", prazo: new Date("2026-01-25"), urgente: false },
+    ],
+    proximaAudiencia: {
+      id: 1,
+      data: new Date("2026-01-22T14:00:00"),
+      tipo: "Instrução e Julgamento",
+      local: "Sala 3 - Fórum de Camaçari",
+    },
+    teoriaResumo: "Legítima defesa. Réu agiu para proteger sua vida após ser atacado com faca pela vítima.",
+    teoriaCompleta: false,
+    teseAcusacao: "Homicídio qualificado por motivo fútil e meio cruel. Réu teria desferido múltiplas facadas na vítima após discussão por dívida de jogo.",
+    versaoReu: "Estava no bar quando a vítima chegou armada com faca exigindo dinheiro. Tentou sair mas foi atacado. Na luta, conseguiu tomar a faca e se defendeu. Não tinha intenção de matar.",
+    investigacaoDefensiva: "Localizar câmeras do bar (solicitado ao Google). Ouvir testemunha Carlos (ex-dono do bar). Verificar antecedentes violentos da vítima.",
+    testemunhas: [
+      { id: 1, nome: "Maria Silva", tipo: "defesa", ouvida: true, dataOitiva: new Date("2026-01-10") },
+      { id: 2, nome: "Pedro Santos (garçom)", tipo: "defesa", ouvida: false, dataOitiva: null },
+      { id: 3, nome: "José Oliveira (vítima 2)", tipo: "acusacao", ouvida: true, dataOitiva: new Date("2026-01-10") },
+      { id: 4, nome: "Ana Costa", tipo: "acusacao", ouvida: false, dataOitiva: null },
+      { id: 5, nome: "Carlos (dono do bar)", tipo: "informante", ouvida: false, dataOitiva: null },
+    ],
+    interrogatorioRealizado: false,
+    provas: [
+      { id: 1, tipo: "documental", descricao: "Boletim de ocorrência", status: "juntada" },
+      { id: 2, tipo: "pericial", descricao: "Laudo necroscópico", status: "juntada" },
+      { id: 3, tipo: "material", descricao: "Faca apreendida", status: "juntada" },
+      { id: 4, tipo: "documental", descricao: "Imagens de câmera", status: "requerida" },
+      { id: 5, tipo: "pericial", descricao: "Exame de DNA na faca", status: "pendente" },
+    ],
+    laudos: [
+      { id: 1, tipo: "Necroscópico", descricao: "IML - causa mortis", data: new Date("2025-01-12"), favoravel: null },
+      { id: 2, tipo: "Local", descricao: "Perícia no bar", data: new Date("2025-01-11"), favoravel: true },
+    ],
+    linkDrive: "https://drive.google.com/drive/folders/example",
+    defensorNome: "Dr. Rodrigo Rocha",
+    tags: ["LegitimaDefesa", "ExcessoPrazo", "NulidadeBusca"],
+  },
+  {
+    id: 2,
+    titulo: "Tráfico de Drogas - Bairro Nova Esperança",
+    codigo: "CASO-2025-002",
+    atribuicao: "SUBSTITUICAO",
+    comarca: "Camaçari",
+    vara: "2ª Vara Criminal",
+    dataInicio: new Date("2025-01-15"),
+    fase: 80,
+    faseNome: "RECURSO",
+    status: "ativo",
+    prioridade: "ALTA",
+    assistidos: [
+      { id: 3, nome: "Pedro Almeida", preso: false },
+    ],
+    processos: [
+      { id: 3, numeroAutos: "0001234-56.2025.8.05.0039" },
+    ],
+    demandasPendentes: [
+      { id: 3, ato: "Razões de Apelação", prazo: new Date("2026-01-28"), urgente: false },
+    ],
+    proximaAudiencia: null,
+    teoriaResumo: "Porte para uso pessoal. Quantidade incompatível com tráfico e ausência de prova de comercialização.",
+    teoriaCompleta: true,
+    teseAcusacao: "Tráfico de drogas. Réu encontrado com 50g de maconha em porções individuais, balança de precisão e dinheiro trocado.",
+    versaoReu: "Usuário de maconha há 10 anos. Comprou quantidade maior para consumo mensal. Balança era para pesar as porções do próprio consumo.",
+    testemunhas: [
+      { id: 1, nome: "PM condutor", tipo: "acusacao", ouvida: true, dataOitiva: new Date("2025-12-01") },
+      { id: 2, nome: "Mãe do réu", tipo: "defesa", ouvida: true, dataOitiva: new Date("2025-12-01") },
+    ],
+    interrogatorioRealizado: true,
+    provas: [
+      { id: 1, tipo: "material", descricao: "Droga apreendida", status: "juntada" },
+      { id: 2, tipo: "documental", descricao: "Laudo toxicológico do réu", status: "juntada" },
+    ],
+    laudos: [
+      { id: 1, tipo: "Toxicológico", descricao: "Confirmação de uso", data: new Date("2025-02-10"), favoravel: true },
+    ],
+    linkDrive: null,
+    defensorNome: "Dra. Maria Oliveira",
+    tags: ["FlagranteForjado", "ProvaIlicita"],
+  },
+  {
+    id: 3,
+    titulo: "Latrocínio Tentado - Posto Central",
+    codigo: "CASO-2025-003",
+    atribuicao: "JURI_CAMACARI",
+    comarca: "Camaçari",
+    vara: "1ª Vara do Júri",
+    dataInicio: new Date("2024-11-20"),
+    fase: 60,
+    faseNome: "PLENARIO",
+    status: "ativo",
+    prioridade: "REU_PRESO",
+    assistidos: [
+      { id: 4, nome: "Marcos Silva", preso: true },
+    ],
+    processos: [
+      { id: 4, numeroAutos: "8002341-90.2025.8.05.0039", isJuri: true },
+    ],
+    demandasPendentes: [
+      { id: 4, ato: "Memoriais", prazo: new Date("2026-02-05"), urgente: false },
+    ],
+    proximaAudiencia: {
+      id: 2,
+      data: new Date("2026-02-15T09:00:00"),
+      tipo: "Plenário do Júri",
+      local: "Plenário - Fórum de Camaçari",
+    },
+    teoriaResumo: "Desclassificação para roubo simples. Ausência de prova da intenção de matar.",
+    teoriaCompleta: true,
+    teseAcusacao: "Latrocínio tentado. Réu teria efetuado disparo contra vítima durante roubo a posto de gasolina.",
+    versaoReu: "Admite o roubo mas nega ter atirado. Diz que a arma disparou acidentalmente quando frentista tentou tomá-la.",
+    investigacaoDefensiva: "Perícia independente na arma. Verificar se vítima tem treinamento em armas.",
+    testemunhas: [
+      { id: 1, nome: "Frentista (vítima)", tipo: "acusacao", ouvida: true, dataOitiva: new Date("2025-09-15") },
+      { id: 2, nome: "Cliente do posto", tipo: "acusacao", ouvida: true, dataOitiva: new Date("2025-09-15") },
+      { id: 3, nome: "Perito balística", tipo: "informante", ouvida: true, dataOitiva: new Date("2025-10-01") },
+    ],
+    interrogatorioRealizado: true,
+    provas: [
+      { id: 1, tipo: "material", descricao: "Arma apreendida", status: "juntada" },
+      { id: 2, tipo: "pericial", descricao: "Laudo balístico", status: "juntada" },
+      { id: 3, tipo: "documental", descricao: "Imagens de câmera", status: "juntada" },
+    ],
+    laudos: [
+      { id: 1, tipo: "Balístico", descricao: "Análise do disparo", data: new Date("2025-01-20"), favoravel: false },
+      { id: 2, tipo: "Médico", descricao: "Lesões na vítima", data: new Date("2024-12-01"), favoravel: null },
+    ],
+    linkDrive: "https://drive.google.com/drive/folders/example2",
+    defensorNome: "Dr. Rodrigo Rocha",
+    tags: ["Desclassificacao", "RubroQuesito"],
+  },
+  {
+    id: 4,
+    titulo: "Agressão em Contexto Doméstico - MPU",
+    codigo: "CASO-2025-004",
+    atribuicao: "VVD_CAMACARI",
+    comarca: "Camaçari",
+    vara: "Vara de VVD",
+    dataInicio: new Date("2025-06-10"),
+    fase: 35,
+    faseNome: "INSTRUCAO",
+    status: "ativo",
+    prioridade: "NORMAL",
+    assistidos: [
+      { id: 5, nome: "Ana Paula Ferreira", preso: false, foto: null },
+    ],
+    processos: [
+      { id: 5, numeroAutos: "0005678-12.2025.8.05.0039" },
+    ],
+    demandasPendentes: [
+      { id: 5, ato: "Revogação de MPU", prazo: new Date("2026-01-30"), urgente: false },
+    ],
+    proximaAudiencia: {
+      id: 3,
+      data: new Date("2026-02-10T10:00:00"),
+      tipo: "Instrução",
+      local: "Sala 5",
+    },
+    teoriaResumo: "Atipicidade da conduta. Discussão verbal sem violência física comprovada.",
+    teoriaCompleta: false,
+    teseAcusacao: "Lesão corporal no contexto doméstico. Vítima apresentou hematomas supostamente causados pela ré.",
+    versaoReu: "Discussão verbal após descobrir traição. Não houve contato físico. Hematomas são de queda anterior.",
+    testemunhas: [
+      { id: 1, nome: "Vizinha Clara", tipo: "defesa", ouvida: false, dataOitiva: null },
+      { id: 2, nome: "Ex-companheiro (vítima)", tipo: "acusacao", ouvida: false, dataOitiva: null },
+    ],
+    interrogatorioRealizado: false,
+    provas: [
+      { id: 1, tipo: "documental", descricao: "Laudo de corpo de delito", status: "juntada" },
+      { id: 2, tipo: "documental", descricao: "Prontuário médico anterior", status: "requerida" },
+    ],
+    laudos: [
+      { id: 1, tipo: "Corpo delito", descricao: "Exame na vítima", data: new Date("2025-06-11"), favoravel: false },
+    ],
+    linkDrive: null,
+    defensorNome: "Dra. Juliane Costa",
+    tags: ["MPU", "Atipicidade"],
+  },
+  {
+    id: 5,
+    titulo: "Progressão de Regime - Trabalho Externo",
+    codigo: "CASO-2025-005",
+    atribuicao: "EXECUCAO_PENAL",
+    comarca: "Camaçari",
+    vara: "VEP",
+    dataInicio: new Date("2023-06-15"),
+    fase: 90,
+    faseNome: "EXECUCAO",
+    status: "ativo",
+    prioridade: "ALTA",
+    assistidos: [
+      { id: 6, nome: "José Carlos Oliveira", preso: true },
+    ],
+    processos: [
+      { id: 6, numeroAutos: "0009999-88.2024.8.05.0039" },
+    ],
+    demandasPendentes: [
+      { id: 6, ato: "Pedido de Progressão", prazo: new Date("2026-02-01"), urgente: true },
+    ],
+    proximaAudiencia: null,
+    teoriaResumo: "Cumprimento de 2/5 da pena. Bom comportamento atestado. Apto para progressão ao semiaberto.",
+    teoriaCompleta: true,
+    versaoReu: "Trabalhando na faxina do pavilhão. Estudando para concluir ensino médio. Família aguarda retorno.",
+    provas: [
+      { id: 1, tipo: "documental", descricao: "Atestado de comportamento", status: "juntada" },
+      { id: 2, tipo: "documental", descricao: "Certificado de curso", status: "juntada" },
+      { id: 3, tipo: "documental", descricao: "Carta de emprego", status: "pendente" },
+    ],
+    laudos: [
+      { id: 1, tipo: "Psicossocial", descricao: "Avaliação para progressão", data: new Date("2026-01-05"), favoravel: true },
+    ],
+    linkDrive: "https://drive.google.com/drive/folders/example3",
+    defensorNome: "Dr. Rodrigo Rocha",
+    tags: ["Progressao", "Remicao", "BomComportamento"],
+  },
+];
+
+// ==========================================
+// COMPONENTE DE CARD SOFISTICADO (DOSSIER)
+// ==========================================
+
+function CasoCardDossier({ caso }: { caso: Caso }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [copiedCNJ, setCopiedCNJ] = useState<string | null>(null);
+
+  const themeColors = ATRIBUICAO_COLORS[caso.atribuicao] || ATRIBUICAO_COLORS.SUBSTITUICAO;
+  const atribuicaoLabel = ATRIBUICAO_LABELS[caso.atribuicao] || caso.atribuicao;
+
+  const hasAudienciaHoje = caso.proximaAudiencia && isToday(caso.proximaAudiencia.data);
+  const hasAudienciaAmanha = caso.proximaAudiencia && isTomorrow(caso.proximaAudiencia.data);
+  const hasReuPreso = caso.assistidos.some(a => a.preso);
+  const tempoDecorrido = formatDistanceToNow(caso.dataInicio, { locale: ptBR });
+
+  const handleCopyCNJ = (cnj: string) => {
+    navigator.clipboard.writeText(cnj);
+    setCopiedCNJ(cnj);
+    setTimeout(() => setCopiedCNJ(null), 2000);
+  };
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
+      <Card className={cn(
+        "group bg-white dark:bg-zinc-950",
+        "border border-zinc-200 dark:border-zinc-800",
+        "transition-all duration-300",
+        "hover:shadow-lg hover:border-zinc-300 dark:hover:border-zinc-700",
+        "border-l-[4px]",
+        themeColors.border,
+        hasReuPreso && "ring-1 ring-rose-200 dark:ring-rose-900/50"
+      )}>
+        
+        {/* CAMADA A: CABEÇALHO - MOBILE OPTIMIZED */}
+        <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
+          {/* Topo */}
+          <div className="flex justify-between items-start gap-2 sm:gap-4">
+            <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+              {/* Badges de Status */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <Badge 
+                  variant="secondary" 
+                  className={cn(
+                    "text-[9px] sm:text-[10px] font-mono tracking-wider uppercase px-1.5 py-0",
+                    themeColors.bg, themeColors.text
+                  )}
+                >
+                  {atribuicaoLabel}
+                </Badge>
+                
+                {caso.codigo && (
+                  <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 dark:text-zinc-500 hidden sm:inline">
+                    {caso.codigo}
+                  </span>
+                )}
+
+                {hasAudienciaHoje && (
+                  <span className="flex items-center gap-1">
+                    <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-rose-500" />
+                    </span>
+                    <span className="text-[9px] sm:text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">
+                      Hoje
+                    </span>
+                  </span>
+                )}
+
+                {hasAudienciaAmanha && !hasAudienciaHoje && (
+                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[9px] sm:text-[10px] px-1.5 py-0">
+                    Amanhã
+                  </Badge>
+                )}
+
+                {hasReuPreso && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>Réu Preso</TooltipContent>
+                  </Tooltip>
+                )}
+
+                {caso.teoriaCompleta && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>Teoria do Caso Completa</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+
+              {/* Título (Serifada) */}
+              <Link href={`/admin/casos/${caso.id}`}>
+                <h3 className="font-serif text-base sm:text-lg font-medium text-zinc-900 dark:text-zinc-100 leading-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer line-clamp-2">
+                  {caso.titulo}
+                </h3>
+              </Link>
+
+              {/* Meta-dados */}
+              <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium flex-wrap">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-1 sm:gap-1.5 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+                      <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                      <span className="truncate max-w-[100px] sm:max-w-[150px]">
+                        {caso.vara ? `${caso.vara}` : caso.comarca}
+                      </span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{caso.vara} - {caso.comarca}</TooltipContent>
+                </Tooltip>
+
+                <span className="flex items-center gap-1 sm:gap-1.5">
+                  <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                  <span className="hidden sm:inline">Há </span><span>{tempoDecorrido}</span>
+                </span>
+
+                {caso.defensorNome && (
+                  <span className="flex items-center gap-1.5 hidden sm:flex">
+                    <Users className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate max-w-[100px]">{caso.defensorNome}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Ações Rápidas - Sempre visíveis no mobile */}
+            <div className="flex gap-0.5 sm:gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={`/admin/casos/${caso.id}`}>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Ver Detalhes</TooltipContent>
+              </Tooltip>
+
+              {caso.linkDrive && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <a href={caso.linkDrive} target="_blank" rel="noopener noreferrer">
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+                        <FolderOpen className="w-4 h-4" />
+                      </Button>
+                    </a>
+                  </TooltipTrigger>
+                  <TooltipContent>Abrir no Drive</TooltipContent>
+                </Tooltip>
+              )}
+
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* CAMADA B: CONEXÕES - MOBILE OPTIMIZED */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 sm:py-3 gap-2 sm:gap-0 border-t border-zinc-100 dark:border-zinc-800/50">
+            {/* Assistidos (Avatares) */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex -space-x-2">
+                {caso.assistidos.slice(0, 3).map((assistido) => (
+                  <Tooltip key={assistido.id}>
+                    <TooltipTrigger asChild>
+                      <Avatar className={cn(
+                        "h-7 w-7 sm:h-9 sm:w-9 border-2 border-white dark:border-zinc-950 transition-transform hover:scale-110 hover:z-10",
+                        assistido.preso && "ring-2 ring-rose-500"
+                      )}>
+                        <AvatarImage src={assistido.foto || undefined} />
+                        <AvatarFallback className={cn(
+                          "text-[10px] sm:text-xs font-bold",
+                          assistido.preso 
+                            ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
+                            : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                        )}>
+                          {assistido.nome.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="text-center">
+                        <p className="font-medium">{assistido.nome}</p>
+                        {assistido.preso && (
+                          <p className="text-rose-400 text-xs flex items-center gap-1 justify-center">
+                            <Lock className="w-3 h-3" /> Preso
+                          </p>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+                {caso.assistidos.length > 3 && (
+                  <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-full border-2 border-white dark:border-zinc-950 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-zinc-500">
+                    +{caso.assistidos.length - 3}
+                  </div>
+                )}
+              </div>
+              
+              {caso.assistidos.length === 1 && (
+                <span className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium truncate max-w-[120px] sm:max-w-none">
+                  {caso.assistidos[0].nome}
+                </span>
+              )}
+            </div>
+
+            {/* Badges de Processos - Scroll horizontal no mobile */}
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide">
+              {caso.processos.slice(0, 2).map((processo) => (
+                <Tooltip key={processo.id}>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "font-mono text-[9px] sm:text-[10px] cursor-pointer transition-colors flex-shrink-0 px-1.5 py-0",
+                        "border-zinc-200 dark:border-zinc-800 text-zinc-500",
+                        "hover:border-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300",
+                        copiedCNJ === processo.numeroAutos && "border-emerald-500 text-emerald-600"
+                      )}
+                      onClick={() => handleCopyCNJ(processo.numeroAutos)}
+                    >
+                      {copiedCNJ === processo.numeroAutos ? (
+                        <span className="flex items-center gap-1">
+                          <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> OK
+                        </span>
+                      ) : (
+                        <>
+                          {processo.isJuri && <Gavel className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />}
+                          <span className="hidden sm:inline">{processo.numeroAutos.split('.')[0]}...</span>
+                          <span className="sm:hidden">{processo.numeroAutos.split('-')[0]}</span>
+                        </>
+                      )}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="flex items-center gap-2">
+                      <Copy className="w-3 h-3" />
+                      <span className="font-mono text-xs">{processo.numeroAutos}</span>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+              {caso.processos.length > 2 && (
+                <span className="text-[10px] sm:text-xs text-zinc-400 flex-shrink-0">+{caso.processos.length - 2}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Barra de Progresso - Responsiva */}
+          <div className="space-y-1">
+            {/* Labels no desktop */}
+            <div className="hidden sm:flex justify-between text-[9px] uppercase font-bold text-zinc-400 dark:text-zinc-500 tracking-widest">
+              {FASE_LABELS.map((label, idx) => (
+                <span 
+                  key={label}
+                  className={cn(
+                    (caso.fase / 100) * (FASE_LABELS.length - 1) >= idx && "text-zinc-600 dark:text-zinc-300"
+                  )}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+            {/* No mobile, mostra só a fase atual */}
+            <div className="flex sm:hidden items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
+              <span className="font-medium">{FASES_CASO[caso.faseNome as keyof typeof FASES_CASO]?.label || caso.faseNome}</span>
+              <span className="font-mono">{caso.fase}%</span>
+            </div>
+            <Progress 
+              value={caso.fase} 
+              className="h-1 sm:h-1.5 bg-zinc-100 dark:bg-zinc-800" 
+            />
+          </div>
+        </div>
+
+        {/* CAMADA C: GAVETA EXPANSÍVEL - DESIGN SUÍÇO EXPANDIDO */}
+        <CollapsibleContent>
+          <div className="px-3 sm:px-5 pb-4 sm:pb-5 space-y-3 sm:space-y-4 border-t border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/30 dark:to-zinc-950">
+            
+            {/* Teoria da Defesa */}
+            {caso.teoriaResumo && (
+              <div className="mt-3 sm:mt-4 p-3 rounded-lg bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <Shield className="w-3 h-3" /> Teoria da Defesa
+                </h4>
+                <p className="text-xs sm:text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed font-serif italic">
+                  &ldquo;{caso.teoriaResumo}&rdquo;
+                </p>
+              </div>
+            )}
+
+            {/* Tese da Acusação */}
+            {caso.teseAcusacao && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-rose-50/80 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/20 border border-rose-100 dark:border-rose-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-rose-600 dark:text-rose-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <Swords className="w-3 h-3" /> Tese da Acusação
+                </h4>
+                <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 leading-relaxed">
+                  {caso.teseAcusacao}
+                </p>
+              </div>
+            )}
+
+            {/* Versão do Réu */}
+            {caso.versaoReu && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-blue-50/80 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border border-blue-100 dark:border-blue-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <User className="w-3 h-3" /> Versão do Réu
+                </h4>
+                <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                  {caso.versaoReu}
+                </p>
+              </div>
+            )}
+
+            {/* Testemunhas */}
+            {caso.testemunhas && caso.testemunhas.length > 0 && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
+                  <Users className="w-3 h-3" /> 
+                  Testemunhas ({caso.testemunhas.filter(t => t.ouvida).length}/{caso.testemunhas.length})
+                </h4>
+                
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[9px] sm:text-[10px] font-medium">
+                    <UserCheck className="w-2.5 h-2.5" />
+                    {caso.testemunhas.filter(t => t.ouvida).length} ouvidas
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[9px] sm:text-[10px] font-medium">
+                    <UserX className="w-2.5 h-2.5" />
+                    {caso.testemunhas.filter(t => !t.ouvida).length} pendentes
+                  </span>
+                  {caso.interrogatorioRealizado !== undefined && (
+                    <span className={cn(
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium",
+                      caso.interrogatorioRealizado 
+                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                        : "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                    )}>
+                      <User className="w-2.5 h-2.5" />
+                      {caso.interrogatorioRealizado ? "Interrogado" : "Interrog. Pendente"}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1 max-h-[100px] overflow-y-auto">
+                  {caso.testemunhas.slice(0, 4).map((testemunha) => (
+                    <div
+                      key={testemunha.id}
+                      className={cn(
+                        "flex items-center justify-between py-1 px-2 rounded text-[10px] sm:text-xs",
+                        testemunha.ouvida 
+                          ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
+                          : "bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {testemunha.ouvida ? (
+                          <CircleDot className="w-2.5 h-2.5 flex-shrink-0" />
+                        ) : (
+                          <Circle className="w-2.5 h-2.5 flex-shrink-0" />
+                        )}
+                        <span className="font-medium truncate">{testemunha.nome}</span>
+                      </div>
+                      <Badge variant="outline" className={cn(
+                        "text-[8px] px-1 py-0 ml-1",
+                        testemunha.tipo === "defesa" && "border-emerald-200 text-emerald-600",
+                        testemunha.tipo === "acusacao" && "border-rose-200 text-rose-600"
+                      )}>
+                        {testemunha.tipo === "defesa" ? "DEF" : testemunha.tipo === "acusacao" ? "ACUS" : "INFO"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Provas e Laudos */}
+            {((caso.provas && caso.provas.length > 0) || (caso.laudos && caso.laudos.length > 0)) && (
+              <div className="grid grid-cols-2 gap-2">
+                {caso.provas && caso.provas.length > 0 && (
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <FileSearch className="w-3 h-3 text-zinc-400" />
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-zinc-500">Provas</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold font-mono text-zinc-700 dark:text-zinc-300">
+                        {caso.provas.filter(p => p.status === "juntada").length}
+                      </span>
+                      <span className="text-[10px] text-zinc-400">/{caso.provas.length}</span>
+                    </div>
+                    {caso.provas.filter(p => p.status === "pendente" || p.status === "requerida").length > 0 && (
+                      <Badge className="text-[8px] px-1 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 mt-1">
+                        {caso.provas.filter(p => p.status === "pendente" || p.status === "requerida").length} pendentes
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                {caso.laudos && caso.laudos.length > 0 && (
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Microscope className="w-3 h-3 text-zinc-400" />
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-zinc-500">Laudos</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold font-mono text-zinc-700 dark:text-zinc-300">
+                        {caso.laudos.length}
+                      </span>
+                    </div>
+                    <div className="flex gap-1 mt-1">
+                      {caso.laudos.filter(l => l.favoravel === true).length > 0 && (
+                        <Badge className="text-[8px] px-1 py-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                          ✓{caso.laudos.filter(l => l.favoravel === true).length}
+                        </Badge>
+                      )}
+                      {caso.laudos.filter(l => l.favoravel === false).length > 0 && (
+                        <Badge className="text-[8px] px-1 py-0 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                          ✗{caso.laudos.filter(l => l.favoravel === false).length}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Investigação Defensiva */}
+            {caso.investigacaoDefensiva && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-violet-50/80 to-violet-100/50 dark:from-violet-950/30 dark:to-violet-900/20 border border-violet-100 dark:border-violet-900/50">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-violet-600 dark:text-violet-400 tracking-wider flex items-center gap-2 mb-1.5">
+                  <FileSearch className="w-3 h-3" /> Investigação Defensiva
+                </h4>
+                <p className="text-xs sm:text-sm text-violet-700 dark:text-violet-300 leading-relaxed">
+                  {caso.investigacaoDefensiva}
+                </p>
+              </div>
+            )}
+
+            {/* Próxima Audiência */}
+            {caso.proximaAudiencia && (
+              <div className={cn(
+                "flex items-start sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border",
+                hasAudienciaHoje 
+                  ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800"
+                  : "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+              )}>
+                <AlertTriangle className={cn(
+                  "w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5 sm:mt-0",
+                  hasAudienciaHoje ? "text-rose-600 dark:text-rose-400" : "text-amber-600 dark:text-amber-400"
+                )} />
+                <div className="flex-1 min-w-0">
+                  <span className={cn(
+                    "text-[10px] sm:text-xs font-bold block",
+                    hasAudienciaHoje ? "text-rose-700 dark:text-rose-400" : "text-amber-700 dark:text-amber-400"
+                  )}>
+                    Próxima Audiência
+                  </span>
+                  <p className={cn(
+                    "text-[10px] sm:text-xs",
+                    hasAudienciaHoje ? "text-rose-600 dark:text-rose-500" : "text-amber-600 dark:text-amber-500"
+                  )}>
+                    <span className="font-medium">{caso.proximaAudiencia.tipo}</span>
+                    <span className="hidden sm:inline"> • </span>
+                    <br className="sm:hidden" />
+                    <span className="font-mono">{format(caso.proximaAudiencia.data, "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Prazos Pendentes */}
+            {caso.demandasPendentes.length > 0 && (
+              <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
+                <h4 className="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
+                  <Clock className="w-3 h-3" /> Próximos Prazos ({caso.demandasPendentes.length})
+                </h4>
+                <div className="space-y-1">
+                  {caso.demandasPendentes.slice(0, 3).map((demanda) => {
+                    const dias = differenceInDays(demanda.prazo, new Date());
+                    const isUrgente = dias <= 3;
+                    return (
+                      <div
+                        key={demanda.id}
+                        className={cn(
+                          "flex items-center justify-between py-1.5 px-2 rounded text-[10px] sm:text-xs",
+                          isUrgente 
+                            ? "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                            : "bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400"
+                        )}
+                      >
+                        <span className="font-medium truncate max-w-[150px] sm:max-w-[200px]">{demanda.ato}</span>
+                        <span className={cn(
+                          "font-mono text-[9px] sm:text-[10px] flex-shrink-0 ml-2",
+                          isUrgente && "font-bold"
+                        )}>
+                          {dias === 0 ? "HOJE" : dias === 1 ? "Amanhã" : format(demanda.prazo, "dd/MM", { locale: ptBR })}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Tags */}
+            {caso.tags && caso.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 sm:gap-1.5 pt-1 sm:pt-2">
+                {caso.tags.map((tag, idx) => (
+                  <Badge 
+                    key={idx} 
+                    variant="outline" 
+                    className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 border-dashed border-zinc-300 dark:border-zinc-700"
+                  >
+                    #{tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* Ações */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2 pt-2">
+              <Link href={`/admin/casos/${caso.id}`} className="col-span-2 sm:col-span-1">
+                <Button variant="outline" className="w-full h-8 sm:h-9 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-700">
+                  <Target className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-2 text-zinc-400" />
+                  Ver Caso
+                </Button>
+              </Link>
+              {caso.linkDrive && (
+                <a href={caso.linkDrive} target="_blank" rel="noopener noreferrer" className="col-span-1">
+                  <Button variant="outline" className="w-full h-8 sm:h-9 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-700">
+                    <FolderOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-2 text-zinc-400" />
+                    <span className="hidden sm:inline">Drive</span>
+                    <span className="sm:hidden">📁</span>
+                  </Button>
+                </a>
+              )}
+              <Button variant="outline" className="col-span-1 h-8 sm:h-9 text-[10px] sm:text-xs border-zinc-200 dark:border-zinc-700">
+                <MessageCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-2 text-zinc-400" />
+                <span className="hidden sm:inline">Contato</span>
+                <span className="sm:hidden">💬</span>
+              </Button>
+            </div>
+          </div>
+        </CollapsibleContent>
+
+        {/* Trigger */}
+        <CollapsibleTrigger asChild>
+          <div className="flex justify-center py-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-1 text-xs text-zinc-400">
+              {isOpen ? (
+                <>
+                  <ChevronUp className="w-4 h-4" />
+                  <span>Recolher</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  <span>Ver detalhes</span>
+                </>
+              )}
+            </div>
+          </div>
+        </CollapsibleTrigger>
+      </Card>
+    </Collapsible>
+  );
+}
+
+// ==========================================
+// COMPONENTE DE LINHA DA TABELA
+// ==========================================
+
+function CasoTableRow({ caso }: { caso: Caso }) {
+  const themeColors = ATRIBUICAO_COLORS[caso.atribuicao] || ATRIBUICAO_COLORS.SUBSTITUICAO;
+  const hasReuPreso = caso.assistidos.some(a => a.preso);
+  const faseConfig = FASES_CASO[caso.faseNome as keyof typeof FASES_CASO] || FASES_CASO.INSTRUCAO;
+
+  return (
+    <TableRow className={cn(
+      "group transition-colors cursor-pointer",
+      hasReuPreso && "border-l-[3px] border-l-rose-500"
+    )}>
+      <TableCell>
+        <Link href={`/admin/casos/${caso.id}`} className="block">
+          <div className="font-serif font-medium text-zinc-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            {caso.titulo}
+          </div>
+          <div className="font-mono text-[10px] text-zinc-400">{caso.codigo}</div>
+        </Link>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          {caso.assistidos.slice(0, 2).map((a) => (
+            <Avatar key={a.id} className={cn(
+              "w-6 h-6 ring-1",
+              a.preso ? "ring-rose-500" : "ring-emerald-500"
+            )}>
+              <AvatarFallback className="text-[10px]">
+                {a.nome.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+          ))}
+          {caso.assistidos.length > 2 && (
+            <span className="text-[10px] text-zinc-400">+{caso.assistidos.length - 2}</span>
+          )}
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge className={cn("text-xs", faseConfig.color)}>
+          {faseConfig.icon} {faseConfig.label}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-center">
+        <span className="font-medium text-zinc-700 dark:text-zinc-300">
+          {caso.processos.length}
+        </span>
+      </TableCell>
+      <TableCell className="text-center">
+        <span className={cn(
+          "font-medium",
+          caso.demandasPendentes.length > 0 
+            ? "text-amber-600 dark:text-amber-400" 
+            : "text-zinc-400"
+        )}>
+          {caso.demandasPendentes.length}
+        </span>
+      </TableCell>
+      <TableCell className="text-center">
+        <span className={cn(
+          "font-medium",
+          caso.teoriaCompleta 
+            ? "text-emerald-600 dark:text-emerald-400" 
+            : "text-zinc-400"
+        )}>
+          {caso.teoriaCompleta ? "✓" : "○"}
+        </span>
+      </TableCell>
+      <TableCell className="text-right">
+        <Link href={`/admin/casos/${caso.id}`}>
+          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <Eye className="w-4 h-4 mr-1" /> Ver
+          </Button>
+        </Link>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// ==========================================
+// PÁGINA PRINCIPAL
+// ==========================================
+
+export default function CasosPage() {
+  const { currentAssignment } = useAssignment();
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterFase, setFilterFase] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterAtribuicao, setFilterAtribuicao] = useState<string>("all");
+
+  const filteredCasos = useMemo(() => {
+    return MOCK_CASOS.filter((caso) => {
+      // Filtro por workspace
+      const matchesWorkspace = filterAtribuicao === "all" || caso.atribuicao === filterAtribuicao;
+
+      // Filtro por busca
+      const matchesSearch =
+        !searchTerm ||
+        caso.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        caso.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        caso.assistidos.some(a => a.nome.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      // Filtro por fase
+      const matchesFase = filterFase === "all" || caso.faseNome === filterFase;
+
+      // Filtro por status
+      const matchesStatus = filterStatus === "all" || caso.status === filterStatus;
+
+      return matchesWorkspace && matchesSearch && matchesFase && matchesStatus;
+    });
+  }, [searchTerm, filterFase, filterStatus, filterAtribuicao]);
+
+  // Estatísticas
+  const stats = useMemo(() => {
+    const total = filteredCasos.length;
+    const reuPreso = filteredCasos.filter(c => c.assistidos.some(a => a.preso)).length;
+    const demandasPendentes = filteredCasos.reduce((acc, c) => acc + c.demandasPendentes.length, 0);
+    const teoriaCompleta = filteredCasos.filter(c => c.teoriaCompleta).length;
+    const audienciasProximas = filteredCasos.filter(c => c.proximaAudiencia).length;
+    return { total, reuPreso, demandasPendentes, teoriaCompleta, audienciasProximas };
+  }, [filteredCasos]);
+
+  // Configuração visual da atribuição selecionada
+  const atribuicaoColors = ATRIBUICAO_COLORS[filterAtribuicao] || ATRIBUICAO_COLORS.all;
+
+  return (
+    <TooltipProvider>
+      <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+        {/* Header - Design Suíço: limpo, estruturado, tipografia clara */}
+        <div className="space-y-4">
+          {/* Linha superior: Título + Ações */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "p-2 sm:p-2.5 rounded-lg flex-shrink-0",
+                atribuicaoColors.bg
+              )}>
+                <Briefcase className={cn("w-5 h-5 sm:w-6 sm:h-6", atribuicaoColors.text)} />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  Casos Ativos
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>Teoria do Caso Integrada</TooltipContent>
+                  </Tooltip>
+                </h1>
+                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                  Dossiês expansíveis com dados integrados
+                </p>
+              </div>
+            </div>
+
+            <Button className="h-8 sm:h-9 text-xs sm:text-sm gap-1.5">
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Novo Caso</span>
+              <span className="sm:hidden">Novo</span>
+            </Button>
+          </div>
+
+          {/* Seletor de Atribuição - Tabs compactos com cores dos workspaces */}
+          <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+            <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
+              {ATRIBUICAO_OPTIONS.map((option) => {
+                const isActive = filterAtribuicao === option.value;
+                const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
+                const count = option.value === "all" 
+                  ? MOCK_CASOS.length 
+                  : MOCK_CASOS.filter(c => c.atribuicao === option.value).length;
+                
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setFilterAtribuicao(option.value)}
+                    className={cn(
+                      "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
+                      isActive 
+                        ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
+                        : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
+                    )}
+                  >
+                    <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
+                    <span className="hidden sm:inline">{option.label}</span>
+                    <span className="sm:hidden">{option.shortLabel}</span>
+                    <span className={cn(
+                      "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
+                      isActive 
+                        ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
+                        : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
+                    )}>
+                      {count}
+                    </span>
+                    {isActive && (
+                      <span className={cn(
+                        "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
+                        optionColors.indicator
+                      )} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards - Responsivo */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 border-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
+              </div>
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
+                <p className="text-[10px] sm:text-xs text-zinc-500">Total</p>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-900/20 border-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
+              </div>
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
+                <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Presos</p>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 border-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.demandasPendentes}</p>
+                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Demandas</p>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-0 hidden sm:block">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.teoriaCompleta}</p>
+                <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">Teoria OK</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-0 hidden lg:block">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.audienciasProximas}</p>
+                <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Audiências</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Filters - Responsivo */}
+        <div className="flex flex-col gap-2 sm:gap-3">
+          {/* Search + View Toggle */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Input
+                placeholder="Buscar por título, código ou assistido..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white dark:bg-zinc-950 h-9 text-sm"
+              />
+            </div>
+            
+            {/* View Toggle */}
+            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg flex-shrink-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                    className={cn(
+                      "h-7 w-7 p-0 rounded-md",
+                      viewMode === "grid" 
+                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                        : "text-zinc-500"
+                    )}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Modo Grade</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                    className={cn(
+                      "h-7 w-7 p-0 rounded-md",
+                      viewMode === "list" 
+                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                        : "text-zinc-500"
+                    )}
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Modo Lista</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+
+          {/* Filter Row */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <Select value={filterAtribuicao} onValueChange={setFilterAtribuicao}>
+              <SelectTrigger className="w-[110px] sm:w-[130px] h-8 text-xs flex-shrink-0">
+                <SelectValue placeholder="Atribuição" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {Object.entries(ATRIBUICAO_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterFase} onValueChange={setFilterFase}>
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 text-xs flex-shrink-0">
+                <SelectValue placeholder="Fase" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas fases</SelectItem>
+                {Object.entries(FASES_CASO).map(([key, val]) => (
+                  <SelectItem key={key} value={key}>
+                    {val.icon} {val.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[100px] sm:w-[120px] h-8 text-xs flex-shrink-0">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="ativo">Ativos</SelectItem>
+                <SelectItem value="suspenso">Suspensos</SelectItem>
+                <SelectItem value="arquivado">Arquivados</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Content */}
+        {viewMode === "grid" ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 px-1 sm:px-0">
+            {filteredCasos.map((caso) => (
+              <CasoCardDossier key={caso.id} caso={caso} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-950">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
+                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Caso</TableHead>
+                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Assistidos</TableHead>
+                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Fase</TableHead>
+                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider text-center">Proc.</TableHead>
+                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider text-center">Dem.</TableHead>
+                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider text-center">Teoria</TableHead>
+                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCasos.map((caso) => (
+                  <CasoTableRow key={caso.id} caso={caso} />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {filteredCasos.length === 0 && (
+          <Card className="border-dashed">
+            <div className="text-center py-16">
+              <div className="mx-auto w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+                <Briefcase className="w-8 h-8 text-zinc-400" />
+              </div>
+              <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                Nenhum caso encontrado
+              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                Crie um novo caso ou ajuste os filtros de busca.
+              </p>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Criar Primeiro Caso
+              </Button>
+            </div>
+          </Card>
+        )}
+      </div>
+    </TooltipProvider>
+  );
+}

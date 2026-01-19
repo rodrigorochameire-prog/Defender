@@ -4,6 +4,9 @@ import { SignUp } from "@clerk/nextjs";
 import { Dog, Heart, Shield, Calendar } from "lucide-react";
 import Image from "next/image";
 
+// Forçar renderização dinâmica para evitar problemas de build
+export const dynamic = "force-dynamic";
+
 const features = [
   { icon: Dog, text: "Gestão completa de pets" },
   { icon: Shield, text: "Controle de vacinas e saúde" },
@@ -23,13 +26,13 @@ export default function SignUpPage() {
           {/* Logo */}
           <div className="mb-8">
             <div className="w-24 h-24 rounded-full bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.08)] flex items-center justify-center">
-              <Image
-                src="/tetecare-logo.png"
-                alt="TeteCare"
+            <Image
+              src="/tetecare-logo.png"
+              alt="TeteCare"
                 width={96}
                 height={96}
                 className="rounded-full"
-              />
+            />
             </div>
           </div>
           
@@ -40,8 +43,8 @@ export default function SignUpPage() {
               Junte-se ao<br />TeteCare
             </h1>
             <p className="text-lg text-[hsl(220_11%_40%)] leading-relaxed font-medium">
-              Crie sua conta e comece a cuidar dos seus pets de forma inteligente
-            </p>
+            Crie sua conta e comece a cuidar dos seus pets de forma inteligente
+          </p>
           </div>
           
           {/* Features */}
@@ -93,10 +96,10 @@ export default function SignUpPage() {
             </div>
 
             {/* Clerk SignUp Component */}
-            <SignUp
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
+          <SignUp
+            appearance={{
+              elements: {
+                rootBox: "w-full",
                   card: "shadow-none border-0 bg-transparent p-0 w-full",
                   formButtonPrimary: "h-12 text-base font-semibold rounded-[14px] bg-blue-600 hover:bg-blue-700 shadow-[0_2px_4px_0_rgba(37,99,235,0.15)] hover:shadow-[0_4px_8px_0_rgba(37,99,235,0.25)] transition-all duration-300",
                   formFieldInput: "h-12 text-base rounded-[14px] bg-background border border-border/40 text-foreground placeholder:text-muted-foreground focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.08)] transition-all duration-300",
@@ -109,13 +112,13 @@ export default function SignUpPage() {
                   footerActionText: "text-[hsl(220_13%_45%)] text-base",
                   identityPreviewText: "text-base font-semibold text-foreground",
                   identityPreviewEditButton: "text-blue-600 hover:text-blue-700 text-sm font-semibold",
-                },
-              }}
-              routing="path"
-              path="/sign-up"
-              signInUrl="/sign-in"
-              fallbackRedirectUrl="/auth-redirect"
-            />
+              },
+            }}
+            routing="path"
+            path="/sign-up"
+            signInUrl="/sign-in"
+            fallbackRedirectUrl="/auth-redirect"
+          />
           </div>
         </div>
       </div>

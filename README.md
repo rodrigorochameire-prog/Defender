@@ -1,345 +1,169 @@
-# 🐾 TeteCare v2
+# DefensorHub
 
-Sistema de gestão de creche para pets, reconstruído do zero com Next.js 14.
+Sistema de Gestão Jurídica para Defensoria Pública.
 
-## ✅ Status do Projeto
+## Sobre o Projeto
 
-**BUILD: ✓ SUCESSO**
-- **70+ arquivos TypeScript/TSX**
-- **18 páginas**
-- **8 tRPC routers**
-- **11 componentes UI**
-- **4 componentes shared**
+O DefensorHub é uma plataforma moderna para gestão de processos, prazos e demandas da Defensoria Pública. Desenvolvido com Next.js, tRPC, Drizzle ORM e Supabase.
 
----
+### Funcionalidades Principais
 
-## 📊 O Que Está Implementado
+- **Gestão de Assistidos**: Cadastro completo com status prisional, contatos e histórico
+- **Controle de Processos**: Organização por área (Júri, Execução Penal, Violência Doméstica, etc.)
+- **Gestão de Demandas**: Controle de prazos com status (Atender, Fila, Monitorar, Protocolado)
+- **Visualização Kanban**: Quadro visual para gestão de demandas
+- **Tribunal do Júri**: Controle de sessões do plenário
+- **Calendário Integrado**: Audiências, júris e prazos em um só lugar
+- **Integração WhatsApp**: Notificações automáticas para assistidos e familiares
+- **Templates de Peças**: Biblioteca de modelos processuais
+- **Calculadoras**: Prescrição, progressão de regime, livramento condicional
 
-### Stack Tecnológico
+## Tecnologias
 
-| Tecnologia | Versão | Status |
-|------------|--------|--------|
-| Next.js | 14.2 | ✅ |
-| React | 18.3 | ✅ |
-| TypeScript | 5.7 | ✅ |
-| Tailwind CSS | 3.4 | ✅ |
-| Drizzle ORM | 0.36 | ✅ |
-| tRPC | 11.0 | ✅ |
-| PostgreSQL | Supabase | ✅ |
+- **Frontend**: Next.js 14, React 18, Tailwind CSS, shadcn/ui
+- **Backend**: tRPC, Drizzle ORM
+- **Banco de Dados**: PostgreSQL (Supabase)
+- **Autenticação**: Clerk
+- **Hospedagem**: Vercel (recomendado)
 
-### Páginas Implementadas
+## Configuração
 
-| Módulo | Páginas | Status |
-|--------|---------|--------|
-| Autenticação | Login, Registro | ✅ |
-| Admin Dashboard | Home, Pets, Tutores, Calendário | ✅ |
-| Tutor Dashboard | Home, Pets (CRUD), Calendário, Reservas, Créditos, Notificações, Perfil | ✅ |
+### 1. Pré-requisitos
 
-### tRPC Routers
+- Node.js 18+
+- PostgreSQL ou conta no Supabase
+- Conta no Clerk (autenticação)
 
-| Router | Endpoints | Status |
-|--------|-----------|--------|
-| `auth` | me, profile, isAuthenticated | ✅ |
-| `pets` | list, byId, myPets, create, update, approve, reject, delete, pending, addCredits, stats | ✅ |
-| `users` | list, tutors, byId, create, update, delete, promoteToAdmin, demoteFromAdmin, stats, updateProfile | ✅ |
-| `calendar` | list, currentMonth, today, byId, create, update, delete, eventTypes | ✅ |
-| `bookings` | myBookings, list, pending, byId, create, approve, reject, cancel, complete, stats | ✅ |
-| `notifications` | list, unreadCount, markAsRead, markAllAsRead, delete, clearRead, send, sendToAll | ✅ |
-| `credits` | packages, allPackages, createPackage, updatePackage, deletePackage, addToPet, removeFromPet, mySummary | ✅ |
-| `stats` | dashboard, myStats, monthlyReport | ✅ |
-
-### Componentes UI (Shadcn/ui)
-
-- Avatar, Badge, Button, Card, Dialog, Input, Label, Select, Separator, Skeleton, Tabs
-
-### Componentes Shared
-
-- ConfirmDialog, EmptyState, Loading (Spinner, Page, Card, Table, Stats), PageHeader
-
-### Segurança Implementada
-
-- ✅ Autenticação JWT com cookies httpOnly
-- ✅ Validação de variáveis de ambiente (Zod)
-- ✅ Tratamento centralizado de erros
-- ✅ Validação de input (Zod schemas)
-- ✅ Rate limiting em memória
-- ✅ Sanitização de strings e objetos
-- ✅ Middlewares de proteção (protectedProcedure, adminProcedure)
-
----
-
-## 🚀 Início Rápido
-
-### 1. Instalar Dependências
+### 2. Instalação
 
 ```bash
-cd tetecare-v2
+# Clonar o repositório
+git clone <url-do-repo>
+cd defensor-hub
+
+# Instalar dependências
 npm install
-```
 
-### 2. Configurar Ambiente
-
-Copie o arquivo `.env.example` para `.env.local` e preencha os valores:
-
-```bash
+# Copiar variáveis de ambiente
 cp .env.example .env.local
 ```
 
-Variáveis necessárias:
+### 3. Configurar Variáveis de Ambiente
+
+Edite o arquivo `.env.local` com suas credenciais:
 
 ```env
-DATABASE_URL="postgresql://user:password@host:5432/database?sslmode=require"
-AUTH_SECRET="sua-chave-secreta-de-32-caracteres-ou-mais"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
+# Banco de Dados
+DATABASE_URL="postgresql://..."
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL="https://xxx.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="..."
+SUPABASE_SERVICE_ROLE_KEY="..."
+
+# Clerk (Autenticação)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_..."
+CLERK_SECRET_KEY="sk_..."
 ```
 
-### 3. Criar/Atualizar Tabelas no Banco
+### 4. Configurar Banco de Dados
 
-**Opção A - Via SQL Editor do Supabase (Recomendado para banco existente):**
-1. Acesse o Dashboard do Supabase
-2. Vá em SQL Editor > New Query
-3. Cole o conteúdo do arquivo `EXECUTAR_NO_SUPABASE.sql`
-4. Execute o script
-
-**Opção B - Via Drizzle (Para banco novo):**
 ```bash
+# Gerar migrations
+npm run db:generate
+
+# Aplicar migrations
 npm run db:push
+
+# Criar usuário admin
+npm run db:create-admin
 ```
 
-### 4. Popular Dados de Teste (Opcional)
-
-```bash
-npm run db:seed
-```
-
-**Credenciais após seed:**
-- **Admin:** `admin@tetecare.com` / `admin123`
-- **Tutor:** `maria@email.com` / `tutor123`
-
-### 5. Executar
-
-```bash
-npm run dev
-```
-
-Acesse: http://localhost:3000
-
----
-
-## 📁 Estrutura do Projeto
-
-```
-tetecare-v2/
-├── src/
-│   ├── app/                      # Páginas (Next.js App Router)
-│   │   ├── (auth)/               # Login, Registro
-│   │   ├── (dashboard)/          # Área protegida
-│   │   │   ├── admin/            # Páginas do admin
-│   │   │   │   ├── page.tsx      # Dashboard
-│   │   │   │   ├── pets/         # Gestão de pets
-│   │   │   │   ├── tutors/       # Gestão de tutores
-│   │   │   │   └── calendar/     # Calendário
-│   │   │   └── tutor/            # Páginas do tutor
-│   │   │       ├── page.tsx      # Dashboard
-│   │   │       ├── pets/         # Meus pets + CRUD
-│   │   │       ├── calendar/     # Meu calendário
-│   │   │       ├── bookings/     # Reservas
-│   │   │       ├── credits/      # Créditos
-│   │   │       ├── notifications/# Notificações
-│   │   │       └── profile/      # Meu perfil
-│   │   └── api/trpc/             # API tRPC
-│   │
-│   ├── components/
-│   │   ├── ui/                   # Componentes base (shadcn)
-│   │   ├── layouts/              # Sidebar, Navigation
-│   │   └── shared/               # Componentes reutilizáveis
-│   │
-│   └── lib/
-│       ├── auth/                 # Autenticação JWT
-│       ├── db/                   # Drizzle Schema
-│       ├── trpc/                 # Routers tRPC (8 routers)
-│       ├── env.ts                # Validação de ambiente
-│       ├── errors.ts             # Tratamento de erros
-│       ├── security.ts           # Rate limiting, sanitização
-│       ├── validations.ts        # Schemas Zod
-│       └── utils.ts              # Helpers
-│
-├── scripts/                      # Scripts de utilidade
-│   ├── seed.ts                   # Popular banco
-│   ├── test-db.ts                # Testar conexão
-│   └── create-admin.ts           # Criar admin
-│
-├── drizzle.config.ts             # Configuração Drizzle
-├── vercel.json                   # Configuração Vercel
-└── package.json
-```
-
----
-
-## 📋 Scripts Disponíveis
+### 5. Executar o Projeto
 
 ```bash
 # Desenvolvimento
-npm run dev              # Servidor de desenvolvimento
+npm run dev
 
-# Build
-npm run build            # Build de produção
-npm run start            # Iniciar produção
-
-# Banco de Dados
-npm run db:push          # Aplicar schema ao banco
-npm run db:generate      # Gerar migrations
-npm run db:studio        # Abrir Drizzle Studio
-npm run db:test          # Testar conexão
-npm run db:seed          # Popular dados
-npm run db:create-admin  # Criar admin
-
-# Qualidade
-npm run lint             # Verificar código
-npm run typecheck        # Verificar tipos
-```
-
----
-
-## 🔐 Autenticação
-
-- **JWT** com cookies httpOnly
-- Sessão válida por **30 dias**
-- **Roles**: `admin` e `user` (tutor)
-- Middleware de proteção de rotas
-
----
-
-## 📊 Schema do Banco de Dados
-
-| Tabela | Descrição |
-|--------|-----------|
-| `users` | Usuários (admin/tutor) |
-| `pets` | Pets cadastrados |
-| `pet_tutors` | Relação N:N pet-tutor |
-| `calendar_events` | Eventos do calendário |
-| `vaccine_library` | Biblioteca de vacinas |
-| `pet_vaccinations` | Vacinações dos pets |
-| `credit_packages` | Pacotes de créditos |
-| `booking_requests` | Solicitações de reserva |
-| `notifications` | Notificações do sistema |
-| `daily_logs` | Logs diários dos pets |
-
----
-
-## 🚀 Deploy na Vercel
-
-### 1. Push para GitHub
-
-```bash
-git init
-git add .
-git commit -m "Initial commit - TeteCare v2"
-git remote add origin https://github.com/seu-usuario/tetecare-v2.git
-git push -u origin main
-```
-
-### 2. Conectar na Vercel
-
-1. Acesse [vercel.com](https://vercel.com)
-2. Importe o repositório
-3. Configure as variáveis de ambiente:
-
-| Variável | Descrição |
-|----------|-----------|
-| `DATABASE_URL` | URL de conexão PostgreSQL |
-| `AUTH_SECRET` | Chave secreta para JWT (mínimo 32 caracteres) |
-| `NEXT_PUBLIC_APP_URL` | URL da aplicação (ex: https://seu-app.vercel.app) |
-
-### 3. Deploy automático!
-
-A Vercel detectará automaticamente que é um projeto Next.js e fará o deploy.
-
-**Região recomendada:** São Paulo (gru1) - já configurado no `vercel.json`
-
----
-
-## 🔧 Funcionalidades Prontas
-
-### Para o Tutor:
-- ✅ Cadastro e login
-- ✅ Dashboard com visão geral
-- ✅ Cadastro e edição de pets
-- ✅ Solicitação de reservas
-- ✅ Visualização do calendário
-- ✅ Sistema de notificações
-- ✅ Gerenciamento de créditos
-- ✅ Edição de perfil
-
-### Para o Admin:
-- ✅ Dashboard com estatísticas
-- ✅ Aprovação/rejeição de pets
-- ✅ Gestão de tutores
-- ✅ Calendário de eventos
-- ✅ Promoção de usuários a admin
-
----
-
-## 🔧 Próximos Passos Sugeridos
-
-### Funcionalidades para Implementar
-
-1. **Pagamentos (Stripe)**
-   - Checkout de créditos
-   - Webhooks de confirmação
-   - Histórico de transações
-
-2. **Upload de Fotos**
-   - Supabase Storage
-   - Galeria de pets
-   - Compressão de imagens
-
-3. **Vacinas e Medicamentos**
-   - CRUD completo
-   - Alertas de vencimento
-   - Upload de documentos
-
-4. **Notificações Push**
-   - Web Push API
-   - Email notifications
-
-5. **Relatórios**
-   - Exportação PDF
-   - Histórico detalhado
-
----
-
-## 🐛 Troubleshooting
-
-### Erro de conexão com banco
-```bash
-npm run db:test
-```
-
-### Erro de build
-```bash
-npm run typecheck
-npm run lint
-```
-
-### Limpar cache
-```bash
-rm -rf .next node_modules
-npm install
+# Produção
 npm run build
+npm run start
 ```
 
-### Verificar estrutura
+## Estrutura do Projeto
+
+```
+src/
+├── app/                    # Páginas Next.js (App Router)
+│   ├── (dashboard)/       # Rotas protegidas
+│   │   └── admin/         # Painel administrativo
+│   │       ├── assistidos/
+│   │       ├── processos/
+│   │       ├── demandas/
+│   │       ├── kanban/
+│   │       ├── juri/
+│   │       └── ...
+│   ├── api/               # API Routes
+│   └── ...
+├── components/            # Componentes React
+│   ├── layouts/          # Sidebars, headers
+│   ├── shared/           # Componentes reutilizáveis
+│   └── ui/               # Componentes shadcn/ui
+├── lib/
+│   ├── db/               # Schema e conexão Drizzle
+│   ├── trpc/             # Configuração tRPC
+│   │   └── routers/      # Routers tRPC
+│   ├── services/         # Serviços (WhatsApp, etc.)
+│   └── ...
+└── ...
+
+scripts/
+├── import-csv.ts          # Importação de dados CSV
+├── create-admin.ts        # Criar usuário admin
+└── seed.ts               # Seed inicial
+```
+
+## Importação de Dados
+
+Para importar dados de planilhas CSV:
+
 ```bash
-find src -name "*.tsx" -o -name "*.ts" | wc -l
+# Importar demandas
+npm run import:csv -- "arquivo.csv" demandas
+
+# Importar sessões do júri
+npm run import:csv -- "arquivo.csv" juri
 ```
 
+## Deploy
+
+### Vercel (Recomendado)
+
+1. Faça push do código para o GitHub
+2. Conecte o repositório na Vercel
+3. Configure as variáveis de ambiente
+4. Deploy automático
+
+### Outras Plataformas
+
+O projeto é compatível com qualquer plataforma que suporte Next.js:
+- Railway
+- Render
+- AWS Amplify
+- Docker
+
+## Contribuição
+
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/nova-funcionalidade`)
+3. Commit suas mudanças (`git commit -m 'feat: adicionar nova funcionalidade'`)
+4. Push para a branch (`git push origin feature/nova-funcionalidade`)
+5. Abra um Pull Request
+
+## Licença
+
+Este projeto é privado e de uso exclusivo da Defensoria Pública.
+
 ---
 
-## 📝 Licença
-
-MIT License
-
----
-
-**Desenvolvido com ❤️ para TeteCare**
+Desenvolvido com ❤️ para a Defensoria Pública

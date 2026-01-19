@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "sonner";
 import { Providers } from "./providers";
 
 const plusJakarta = Plus_Jakarta_Sans({ 
@@ -11,8 +10,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "TeteCare - Gestão de Creche para Pets",
-  description: "Sistema completo de gestão para creche e daycare de pets",
+  title: "DefensorHub - Sistema de Gestão Jurídica",
+  description: "Sistema de gestão de processos, prazos e demandas para Defensoria Pública",
 };
 
 // Script to prevent flash of wrong theme - default to light
@@ -45,7 +44,6 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
-        <Toaster position="top-right" richColors />
       </body>
     </html>
   );

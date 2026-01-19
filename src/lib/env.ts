@@ -21,6 +21,12 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
 
+  // WhatsApp Business API (Meta Cloud API)
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_BUSINESS_ACCOUNT_ID: z.string().optional(),
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: z.string().optional(),
+
   // App
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   NEXT_PUBLIC_APP_URL: z.string().default("http://localhost:3000"),
@@ -62,6 +68,31 @@ export function requireAuthSecret(): string {
     throw new Error("AUTH_SECRET deve ter no mínimo 16 caracteres");
   }
   return env.AUTH_SECRET;
+}
+
+/**
+ * Verifica se WhatsApp Business API está configurada
+ */
+export function isWhatsAppConfigured(): boolean {
+  return !!(env.WHATSAPP_ACCESS_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID);
+}
+
+/**
+ * Retorna configuração do WhatsApp Business API (lança erro se não configurada)
+ */
+export function requireWhatsAppConfig() {
+  if (!env.WHATSAPP_ACCESS_TOKEN) {
+    throw new Error("WHATSAPP_ACCESS_TOKEN não está configurada");
+  }
+  if (!env.WHATSAPP_PHONE_NUMBER_ID) {
+    throw new Error("WHATSAPP_PHONE_NUMBER_ID não está configurada");
+  }
+  return {
+    accessToken: env.WHATSAPP_ACCESS_TOKEN,
+    phoneNumberId: env.WHATSAPP_PHONE_NUMBER_ID,
+    businessAccountId: env.WHATSAPP_BUSINESS_ACCOUNT_ID,
+    webhookVerifyToken: env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
+  };
 }
 
 // Helpers

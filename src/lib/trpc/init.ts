@@ -1,39 +1,84 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { getSession } from "@/lib/auth/session";
-import { toTRPCError } from "@/lib/errors";
+import { toTRPCError, generateRequestId } from "@/lib/errors";
 import type { User } from "@/lib/db/schema";
 
+// ==========================================
+// TIPOS DE ROLES
+// ==========================================
+
 /**
- * Contexto do tRPC
+ * Roles disponíveis no sistema
+ */
+export type UserRole = "admin" | "user";
+
+/**
+ * Status de aprovação
+ */
+export type ApprovalStatus = "pending" | "approved" | "rejected";
+
+// ==========================================
+// CONTEXTO DO TRPC
+// ==========================================
+
+/**
+ * Contexto do tRPC com informações do usuário e request
  */
 export interface TRPCContext {
   user: User | null;
+  requestId: string; // ID único para rastreamento de erros
+}
+
+/**
+ * Contexto autenticado (após passar pelo middleware de auth)
+ */
+export interface AuthenticatedContext extends TRPCContext {
+  user: User;
+}
+
+/**
+ * Contexto de admin (após passar pelo middleware de admin)
+ */
+export interface AdminContext extends AuthenticatedContext {
+  user: User & { role: "admin" };
+}
+
+/**
+ * Contexto de tutor aprovado
+ */
+export interface TutorContext extends AuthenticatedContext {
+  user: User & { approvalStatus: "approved" };
 }
 
 /**
  * Cria o contexto para cada requisição
  */
 export async function createTRPCContext(): Promise<TRPCContext> {
+  const requestId = generateRequestId();
+  
   try {
     const user = await getSession();
-    return { user };
+    return { user, requestId };
   } catch (error) {
-    console.error("Erro ao criar contexto tRPC:", error);
-    return { user: null };
+    console.error(`[${requestId}] Erro ao criar contexto tRPC:`, error);
+    return { user: null, requestId };
   }
 }
 
-/**
- * Inicialização do tRPC
- */
+// ==========================================
+// INICIALIZAÇÃO DO TRPC
+// ==========================================
+
 const t = initTRPC.context<TRPCContext>().create({
   transformer: superjson,
-  errorFormatter({ shape, error }) {
+  errorFormatter({ shape, error, ctx }) {
+    // Incluir requestId no erro para rastreamento
     return {
       ...shape,
       data: {
         ...shape.data,
+        requestId: ctx?.requestId,
         // Em produção, não expor stack trace
         stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       },
@@ -41,42 +86,42 @@ const t = initTRPC.context<TRPCContext>().create({
   },
 });
 
+// ==========================================
+// MIDDLEWARES
+// ==========================================
+
 /**
  * Middleware de tratamento de erros global
+ * Captura e converte todos os erros para TRPCError padronizado
  */
-const errorHandler = t.middleware(async ({ next }) => {
+const errorHandler = t.middleware(async ({ next, ctx }) => {
   try {
     return await next();
   } catch (error) {
-    throw toTRPCError(error);
+    throw toTRPCError(error, ctx.requestId);
   }
 });
 
 /**
  * Middleware de logging (apenas em desenvolvimento)
+ * Registra todas as chamadas com duração
  */
-const logger = t.middleware(async ({ path, type, next }) => {
+const logger = t.middleware(async ({ path, type, next, ctx }) => {
   const start = Date.now();
   const result = await next();
   const durationMs = Date.now() - start;
 
   if (process.env.NODE_ENV === "development") {
-    console.log(`[tRPC] ${type} ${path} - ${durationMs}ms`);
+    const status = result.ok ? "✅" : "❌";
+    console.log(`[tRPC][${ctx.requestId}] ${status} ${type} ${path} - ${durationMs}ms`);
   }
 
   return result;
 });
 
 /**
- * Router e procedures base
- */
-export const router = t.router;
-
-// Procedure pública com logging e tratamento de erros
-export const publicProcedure = t.procedure.use(logger).use(errorHandler);
-
-/**
  * Middleware de autenticação
+ * Verifica se o usuário está logado
  */
 const requireAuth = t.middleware(async ({ ctx, next }) => {
   if (!ctx.user) {
@@ -90,32 +135,159 @@ const requireAuth = t.middleware(async ({ ctx, next }) => {
     ctx: {
       ...ctx,
       user: ctx.user,
-    },
+    } as AuthenticatedContext,
   });
 });
 
 /**
- * Procedure protegida - requer autenticação
- */
-export const protectedProcedure = publicProcedure.use(requireAuth);
-
-/**
  * Middleware de autorização admin
+ * Verifica se o usuário tem role admin
  */
 const requireAdmin = t.middleware(async ({ ctx, next }) => {
-  // Já temos certeza que ctx.user existe porque este middleware
-  // é usado após o requireAuth
-  if ((ctx as { user: User }).user.role !== "admin") {
+  const user = (ctx as AuthenticatedContext).user;
+  
+  if (user.role !== "admin") {
+    // Log de tentativa de acesso não autorizado
+    console.warn(
+      `[${ctx.requestId}] Acesso admin negado para usuário ${user.id} (${user.email})`
+    );
+    
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Acesso negado: requer permissão de administrador",
     });
   }
 
-  return next({ ctx });
+  return next({
+    ctx: ctx as AdminContext,
+  });
 });
 
 /**
- * Procedure de admin - requer role admin
+ * Middleware de tutor aprovado
+ * Verifica se o usuário é um tutor aprovado
  */
-export const adminProcedure = protectedProcedure.use(requireAdmin);
+const requireApprovedTutor = t.middleware(async ({ ctx, next }) => {
+  const user = (ctx as AuthenticatedContext).user;
+  
+  if (user.approvalStatus !== "approved") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Sua conta ainda não foi aprovada. Aguarde a aprovação do administrador.",
+    });
+  }
+
+  return next({
+    ctx: ctx as TutorContext,
+  });
+});
+
+/**
+ * Middleware de rate limiting simples (opcional)
+ * Pode ser expandido com Redis para produção
+ */
+const rateLimiter = t.middleware(async ({ ctx, next, path }) => {
+  // Por enquanto, apenas log. Em produção, implementar com Redis
+  if (process.env.NODE_ENV === "development") {
+    // Pode adicionar lógica de rate limiting aqui
+  }
+  
+  return next();
+});
+
+// ==========================================
+// PROCEDURES
+// ==========================================
+
+export const router = t.router;
+
+/**
+ * Procedure pública
+ * Acessível por qualquer pessoa (logada ou não)
+ */
+export const publicProcedure = t.procedure
+  .use(logger)
+  .use(errorHandler);
+
+/**
+ * Procedure protegida
+ * Requer usuário logado (qualquer role)
+ */
+export const protectedProcedure = publicProcedure
+  .use(requireAuth);
+
+/**
+ * Procedure de tutor
+ * Requer usuário logado E aprovado
+ */
+export const tutorProcedure = protectedProcedure
+  .use(requireApprovedTutor);
+
+/**
+ * Procedure de admin
+ * Requer usuário logado E role admin
+ */
+export const adminProcedure = protectedProcedure
+  .use(requireAdmin);
+
+// ==========================================
+// HELPERS DE AUTORIZAÇÃO
+// ==========================================
+
+/**
+ * Verifica se o usuário é admin
+ */
+export function isAdmin(user: User | null): user is User & { role: "admin" } {
+  return user?.role === "admin";
+}
+
+/**
+ * Verifica se o usuário é tutor aprovado
+ */
+export function isApprovedTutor(user: User | null): user is User & { approvalStatus: "approved" } {
+  return user?.approvalStatus === "approved";
+}
+
+/**
+ * Verifica se o usuário pode acessar dados de um processo específico
+ * Admin pode acessar todos, defensores acessam apenas seus processos
+ */
+export async function canAccessProcesso(
+  user: User,
+  processoId: number,
+  db: any
+): Promise<boolean> {
+  if (user.role === "admin") return true;
+  
+  const { processos } = await import("@/lib/db/schema");
+  const { eq } = await import("drizzle-orm");
+  
+  const processo = await db.query.processos.findFirst({
+    where: eq(processos.id, processoId),
+  });
+  
+  // Defensor pode acessar se for o responsável pelo processo
+  return processo?.defensorId === user.id;
+}
+
+/**
+ * Verifica se o usuário pode acessar dados de um assistido específico
+ * Admin pode acessar todos, defensores acessam apenas seus assistidos
+ */
+export async function canAccessAssistido(
+  user: User,
+  assistidoId: number,
+  db: any
+): Promise<boolean> {
+  if (user.role === "admin") return true;
+  
+  const { assistidos } = await import("@/lib/db/schema");
+  const { eq } = await import("drizzle-orm");
+  
+  const assistido = await db.query.assistidos.findFirst({
+    where: eq(assistidos.id, assistidoId),
+  });
+  
+  // Defensor pode acessar se for o responsável pelo assistido
+  return assistido?.defensorId === user.id;
+}

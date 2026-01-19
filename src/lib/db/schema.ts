@@ -6,12 +6,94 @@ import {
   boolean,
   timestamp,
   integer,
-  jsonb,
+  date,
+  index,
+  uniqueIndex,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // ==========================================
-// USUÁRIOS
+// ENUMS JURÍDICOS
+// ==========================================
+
+// O Coração da Divisão - Atribuições/Workspaces
+export const atribuicaoEnum = pgEnum("atribuicao", [
+  "JURI_CAMACARI",      // Vara do Júri Camaçari (Processual + Plenário Local)
+  "VVD_CAMACARI",       // Violência Doméstica
+  "EXECUCAO_PENAL",     // Execução Penal
+  "SUBSTITUICAO",       // Substituição Criminal
+  "SUBSTITUICAO_CIVEL", // Substituição Não Penal (Cível, Família, etc.)
+  "GRUPO_JURI",         // Grupo Especial de Atuação (Apenas Plenários pelo Estado)
+]);
+
+// Áreas de atuação da Defensoria (compatibilidade)
+export const areaEnum = pgEnum("area", [
+  "JURI",
+  "EXECUCAO_PENAL",
+  "VIOLENCIA_DOMESTICA",
+  "SUBSTITUICAO",
+  "CURADORIA",
+  "FAMILIA",
+  "CIVEL",
+  "FAZENDA_PUBLICA",
+]);
+
+// Status prisional do assistido
+export const statusPrisionalEnum = pgEnum("status_prisional", [
+  "SOLTO",
+  "CADEIA_PUBLICA",
+  "PENITENCIARIA",
+  "COP",
+  "HOSPITAL_CUSTODIA",
+  "DOMICILIAR",
+  "MONITORADO",
+]);
+
+// Status das demandas/prazos
+export const statusDemandaEnum = pgEnum("status_demanda", [
+  "2_ATENDER",
+  "4_MONITORAR",
+  "5_FILA",
+  "7_PROTOCOLADO",
+  "7_CIENCIA",
+  "7_SEM_ATUACAO",
+  "URGENTE",
+  "CONCLUIDO",
+  "ARQUIVADO",
+]);
+
+// Prioridade
+export const prioridadeEnum = pgEnum("prioridade", [
+  "BAIXA",
+  "NORMAL",
+  "ALTA",
+  "URGENTE",
+  "REU_PRESO",
+]);
+
+// Unidade/Comarca de atuação
+export const unidadeEnum = pgEnum("unidade", [
+  "CAMACARI",
+  "CANDEIAS",
+  "DIAS_DAVILA",
+  "SIMOES_FILHO",
+  "LAURO_DE_FREITAS",
+  "SALVADOR",
+]);
+
+// Status do processo
+export const statusProcessoEnum = pgEnum("status_processo", [
+  "FLAGRANTE",
+  "INQUERITO",
+  "INSTRUCAO",
+  "RECURSO",
+  "EXECUCAO",
+  "ARQUIVADO",
+]);
+
+// ==========================================
+// USUÁRIOS (DEFENSORES)
 // ==========================================
 
 export const users = pgTable("users", {
@@ -19,60 +101,432 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash"),
-  role: varchar("role", { length: 20 }).default("user").notNull(), // 'admin' | 'user'
+  role: varchar("role", { length: 20 }).default("defensor").notNull(), // 'admin' | 'defensor' | 'estagiario' | 'servidor'
   phone: text("phone"),
+  oab: varchar("oab", { length: 50 }), // Número da OAB
+  comarca: varchar("comarca", { length: 100 }), // Comarca de atuação
   emailVerified: boolean("email_verified").default(false).notNull(),
-  approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
+  approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(),
+  // Soft delete
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("users_role_idx").on(table.role),
+  index("users_approval_status_idx").on(table.approvalStatus),
+  index("users_deleted_at_idx").on(table.deletedAt),
+  index("users_comarca_idx").on(table.comarca),
+]);
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 // ==========================================
-// PETS
+// ASSISTIDOS (Centro da Aplicação)
 // ==========================================
 
-export const pets = pgTable("pets", {
+export const assistidos = pgTable("assistidos", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  breed: varchar("breed", { length: 100 }),
-  species: varchar("species", { length: 50 }).default("dog").notNull(), // 'dog' | 'cat'
-  birthDate: timestamp("birth_date"),
-  weight: integer("weight"), // em gramas (ex: 32500 = 32.5kg)
+  nome: text("nome").notNull(),
+  cpf: varchar("cpf", { length: 14 }),
+  rg: varchar("rg", { length: 20 }),
+  nomeMae: text("nome_mae"),
+  nomePai: text("nome_pai"),
+  dataNascimento: date("data_nascimento"),
+  naturalidade: varchar("naturalidade", { length: 100 }),
+  nacionalidade: varchar("nacionalidade", { length: 50 }).default("Brasileira"),
+  
+  // Status Prisional
+  statusPrisional: statusPrisionalEnum("status_prisional").default("SOLTO"),
+  localPrisao: text("local_prisao"),
+  unidadePrisional: text("unidade_prisional"),
+  dataPrisao: date("data_prisao"),
+  
+  // Contato
+  telefone: varchar("telefone", { length: 20 }),
+  telefoneContato: varchar("telefone_contato", { length: 20 }),
+  nomeContato: text("nome_contato"),
+  parentescoContato: varchar("parentesco_contato", { length: 50 }),
+  endereco: text("endereco"),
+  
+  // Foto (para identificação)
   photoUrl: text("photo_url"),
-  status: varchar("status", { length: 50 }).default("active").notNull(), // 'active' | 'checked-in' | 'inactive'
-  approvalStatus: varchar("approval_status", { length: 50 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
-  notes: text("notes"),
-  foodBrand: varchar("food_brand", { length: 200 }),
-  foodAmount: integer("food_amount"), // quantidade diária em gramas
-  credits: integer("credits").default(0).notNull(), // créditos de creche
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Defensor responsável
+  defensorId: integer("defensor_id").references(() => users.id),
+  
+  // Caso (Case-Centric)
+  casoId: integer("caso_id"),
+  
+  // Metadados
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("assistidos_nome_idx").on(table.nome),
+  index("assistidos_cpf_idx").on(table.cpf),
+  index("assistidos_status_prisional_idx").on(table.statusPrisional),
+  index("assistidos_defensor_id_idx").on(table.defensorId),
+  index("assistidos_deleted_at_idx").on(table.deletedAt),
+  index("assistidos_caso_id_idx").on(table.casoId),
+]);
 
-export type Pet = typeof pets.$inferSelect;
-export type InsertPet = typeof pets.$inferInsert;
+export type Assistido = typeof assistidos.$inferSelect;
+export type InsertAssistido = typeof assistidos.$inferInsert;
 
 // ==========================================
-// RELAÇÃO PET-TUTOR (N:N)
+// PROCESSOS (Ligados ao Assistido)
 // ==========================================
 
-export const petTutors = pgTable("pet_tutors", {
+export const processos = pgTable("processos", {
   id: serial("id").primaryKey(),
-  petId: integer("pet_id")
+  assistidoId: integer("assistido_id")
     .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  tutorId: integer("tutor_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  isPrimary: boolean("is_primary").default(false).notNull(), // tutor principal
+    .references(() => assistidos.id, { onDelete: "cascade" }),
+  
+  // ATRIBUIÇÃO - O filtro mestre para workspaces
+  atribuicao: atribuicaoEnum("atribuicao").notNull().default("SUBSTITUICAO"),
+  
+  // Identificação do Processo
+  numeroAutos: text("numero_autos").notNull(),
+  numeroAntigo: text("numero_antigo"), // Número antigo (se houver migração)
+  
+  // Localização
+  comarca: varchar("comarca", { length: 100 }),
+  vara: varchar("vara", { length: 100 }),
+  area: areaEnum("area").notNull(),
+  
+  // Detalhes
+  classeProcessual: varchar("classe_processual", { length: 100 }),
+  assunto: text("assunto"),
+  valorCausa: integer("valor_causa"), // em centavos
+  
+  // Partes
+  parteContraria: text("parte_contraria"),
+  advogadoContrario: text("advogado_contrario"),
+  
+  // Status
+  fase: varchar("fase", { length: 50 }), // 'conhecimento' | 'recursal' | 'execucao' | 'arquivado'
+  situacao: varchar("situacao", { length: 50 }).default("ativo"), // 'ativo' | 'suspenso' | 'arquivado' | 'baixado'
+  
+  // Júri (se for processo do Júri)
+  isJuri: boolean("is_juri").default(false),
+  dataSessaoJuri: timestamp("data_sessao_juri"),
+  resultadoJuri: text("resultado_juri"),
+  
+  // Defensor responsável
+  defensorId: integer("defensor_id").references(() => users.id),
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Integração Google Drive
+  linkDrive: text("link_drive"), // Link para pasta no Google Drive
+  driveFolderId: text("drive_folder_id"), // ID da pasta no Drive
+  
+  // Caso (Case-Centric)
+  casoId: integer("caso_id"),
+  
+  // Metadados
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("processos_assistido_id_idx").on(table.assistidoId),
+  index("processos_numero_autos_idx").on(table.numeroAutos),
+  index("processos_comarca_idx").on(table.comarca),
+  index("processos_area_idx").on(table.area),
+  index("processos_is_juri_idx").on(table.isJuri),
+  index("processos_defensor_id_idx").on(table.defensorId),
+  index("processos_situacao_idx").on(table.situacao),
+  index("processos_deleted_at_idx").on(table.deletedAt),
+  index("processos_caso_id_idx").on(table.casoId),
+]);
 
-export type PetTutor = typeof petTutors.$inferSelect;
-export type InsertPetTutor = typeof petTutors.$inferInsert;
+export type Processo = typeof processos.$inferSelect;
+export type InsertProcesso = typeof processos.$inferInsert;
+
+// ==========================================
+// DEMANDAS/PRAZOS (Coração da Gestão)
+// ==========================================
+
+export const demandas = pgTable("demandas", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id")
+    .notNull()
+    .references(() => assistidos.id, { onDelete: "cascade" }),
+  
+  // Identificação da Demanda
+  ato: text("ato").notNull(), // ex: "Resposta à Acusação", "Apelação", "Alegações Finais"
+  tipoAto: varchar("tipo_ato", { length: 50 }), // 'manifestacao' | 'recurso' | 'peticao' | 'audiencia' | 'julgamento'
+  
+  // Datas
+  prazo: date("prazo"), // Prazo fatal
+  dataEntrada: date("data_entrada"), // Data que chegou para você
+  dataIntimacao: date("data_intimacao"), // Data da intimação
+  dataConclusao: timestamp("data_conclusao"), // Quando foi concluído
+  
+  // Status
+  status: statusDemandaEnum("status").default("5_FILA"),
+  prioridade: prioridadeEnum("prioridade").default("NORMAL"),
+  
+  // Providências
+  providencias: text("providencias"), // O que precisa ser feito
+  
+  // Responsável
+  defensorId: integer("defensor_id").references(() => users.id),
+  
+  // Flag de réu preso (prioridade automática)
+  reuPreso: boolean("reu_preso").default(false),
+  
+  // Integração Google Calendar
+  googleCalendarEventId: text("google_calendar_event_id"), // ID do evento no Google Calendar
+  
+  // Caso (Case-Centric)
+  casoId: integer("caso_id"),
+  
+  // Metadados
+  deletedAt: timestamp("deleted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("demandas_processo_id_idx").on(table.processoId),
+  index("demandas_assistido_id_idx").on(table.assistidoId),
+  index("demandas_prazo_idx").on(table.prazo),
+  index("demandas_status_idx").on(table.status),
+  index("demandas_prioridade_idx").on(table.prioridade),
+  index("demandas_defensor_id_idx").on(table.defensorId),
+  index("demandas_reu_preso_idx").on(table.reuPreso),
+  index("demandas_deleted_at_idx").on(table.deletedAt),
+  index("demandas_caso_id_idx").on(table.casoId),
+]);
+
+export type Demanda = typeof demandas.$inferSelect;
+export type InsertDemanda = typeof demandas.$inferInsert;
+
+// ==========================================
+// SESSÕES DO JÚRI (Plenário)
+// ==========================================
+
+export const sessoesJuri = pgTable("sessoes_juri", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  
+  // Detalhes da Sessão
+  dataSessao: timestamp("data_sessao").notNull(),
+  horario: varchar("horario", { length: 10 }),
+  sala: varchar("sala", { length: 50 }),
+  
+  // Participantes
+  defensorId: integer("defensor_id").references(() => users.id),
+  defensorNome: text("defensor_nome"), // Cache para facilitar
+  assistidoNome: text("assistido_nome"), // Cache do nome
+  
+  // Status
+  status: varchar("status", { length: 30 }).default("agendada"), // 'agendada' | 'realizada' | 'adiada' | 'cancelada'
+  
+  // Resultado
+  resultado: text("resultado"), // 'absolvicao' | 'condenacao' | 'desclassificacao' | 'nulidade' | 'redesignado'
+  penaAplicada: text("pena_aplicada"),
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("sessoes_juri_processo_id_idx").on(table.processoId),
+  index("sessoes_juri_data_sessao_idx").on(table.dataSessao),
+  index("sessoes_juri_defensor_id_idx").on(table.defensorId),
+  index("sessoes_juri_status_idx").on(table.status),
+]);
+
+export type SessaoJuri = typeof sessoesJuri.$inferSelect;
+export type InsertSessaoJuri = typeof sessoesJuri.$inferInsert;
+
+// ==========================================
+// AUDIÊNCIAS
+// ==========================================
+
+export const audiencias = pgTable("audiencias", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  
+  // Case-Centric
+  casoId: integer("caso_id"),
+  assistidoId: integer("assistido_id"),
+  
+  // Detalhes
+  dataAudiencia: timestamp("data_audiencia").notNull(),
+  tipo: varchar("tipo", { length: 50 }).notNull(), // 'instrucao' | 'conciliacao' | 'justificacao' | 'custodia' | 'admonicao'
+  local: text("local"),
+  titulo: text("titulo"),
+  descricao: text("descricao"),
+  sala: varchar("sala", { length: 50 }),
+  horario: varchar("horario", { length: 10 }),
+  
+  // Participantes
+  defensorId: integer("defensor_id").references(() => users.id),
+  juiz: text("juiz"),
+  promotor: text("promotor"),
+  
+  // Status
+  status: varchar("status", { length: 30 }).default("agendada"), // 'agendada' | 'realizada' | 'adiada' | 'cancelada'
+  
+  // Resultado
+  resultado: text("resultado"),
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Anotações com versionamento
+  anotacoes: text("anotacoes"),
+  anotacoesVersao: integer("anotacoes_versao").default(1),
+  
+  // Resumo da defesa (puxado da Teoria do Caso)
+  resumoDefesa: text("resumo_defesa"),
+  
+  // Integração Google Calendar
+  googleCalendarEventId: text("google_calendar_event_id"),
+  
+  // Geração de tarefas pós-audiência
+  gerarPrazoApos: boolean("gerar_prazo_apos").default(false),
+  prazoGeradoId: integer("prazo_gerado_id"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("audiencias_processo_id_idx").on(table.processoId),
+  index("audiencias_data_idx").on(table.dataAudiencia),
+  index("audiencias_defensor_id_idx").on(table.defensorId),
+  index("audiencias_status_idx").on(table.status),
+  index("audiencias_tipo_idx").on(table.tipo),
+  index("audiencias_caso_id_idx").on(table.casoId),
+  index("audiencias_assistido_id_idx").on(table.assistidoId),
+  index("audiencias_google_event_idx").on(table.googleCalendarEventId),
+]);
+
+export type Audiencia = typeof audiencias.$inferSelect;
+export type InsertAudiencia = typeof audiencias.$inferInsert;
+
+// ==========================================
+// MOVIMENTAÇÕES PROCESSUAIS
+// ==========================================
+
+export const movimentacoes = pgTable("movimentacoes", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  
+  // Detalhes
+  dataMovimentacao: timestamp("data_movimentacao").notNull(),
+  descricao: text("descricao").notNull(),
+  tipo: varchar("tipo", { length: 50 }), // 'despacho' | 'decisao' | 'sentenca' | 'peticao' | 'intimacao'
+  
+  // Origem
+  origem: varchar("origem", { length: 20 }).default("manual"), // 'manual' | 'push_tj' | 'importacao'
+  
+  // Metadados
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("movimentacoes_processo_id_idx").on(table.processoId),
+  index("movimentacoes_data_idx").on(table.dataMovimentacao),
+  index("movimentacoes_tipo_idx").on(table.tipo),
+]);
+
+export type Movimentacao = typeof movimentacoes.$inferSelect;
+export type InsertMovimentacao = typeof movimentacoes.$inferInsert;
+
+// ==========================================
+// DOCUMENTOS (Peças e Anexos)
+// ==========================================
+
+export const documentos = pgTable("documentos", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
+  demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
+  
+  // Detalhes do documento
+  titulo: text("titulo").notNull(),
+  descricao: text("descricao"),
+  categoria: varchar("categoria", { length: 50 }).notNull(), // 'peca' | 'procuracao' | 'documento_pessoal' | 'comprovante' | 'outro'
+  tipoPeca: varchar("tipo_peca", { length: 100 }), // 'resposta_acusacao' | 'alegacoes_finais' | 'apelacao' | 'agravo' | etc
+  
+  // Arquivo
+  fileUrl: text("file_url").notNull(),
+  fileKey: text("file_key"),
+  fileName: varchar("file_name", { length: 255 }),
+  mimeType: varchar("mime_type", { length: 100 }),
+  fileSize: integer("file_size"),
+  
+  // Template
+  isTemplate: boolean("is_template").default(false), // Se é um modelo reutilizável
+  
+  // Metadados
+  uploadedById: integer("uploaded_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("documentos_processo_id_idx").on(table.processoId),
+  index("documentos_assistido_id_idx").on(table.assistidoId),
+  index("documentos_demanda_id_idx").on(table.demandaId),
+  index("documentos_categoria_idx").on(table.categoria),
+  index("documentos_is_template_idx").on(table.isTemplate),
+]);
+
+export type Documento = typeof documentos.$inferSelect;
+export type InsertDocumento = typeof documentos.$inferInsert;
+
+// ==========================================
+// ANOTAÇÕES (Log de Providências)
+// ==========================================
+
+export const anotacoes = pgTable("anotacoes", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
+  demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
+  
+  // Conteúdo
+  conteudo: text("conteudo").notNull(),
+  tipo: varchar("tipo", { length: 30 }).default("nota"), // 'nota' | 'providencia' | 'lembrete' | 'atendimento'
+  
+  // Prioridade
+  importante: boolean("importante").default(false),
+  
+  // Metadados
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("anotacoes_processo_id_idx").on(table.processoId),
+  index("anotacoes_assistido_id_idx").on(table.assistidoId),
+  index("anotacoes_demanda_id_idx").on(table.demandaId),
+  index("anotacoes_tipo_idx").on(table.tipo),
+  index("anotacoes_importante_idx").on(table.importante),
+]);
+
+export type Anotacao = typeof anotacoes.$inferSelect;
+export type InsertAnotacao = typeof anotacoes.$inferInsert;
 
 // ==========================================
 // EVENTOS DO CALENDÁRIO
@@ -84,123 +538,53 @@ export const calendarEvents = pgTable("calendar_events", {
   description: text("description"),
   eventDate: timestamp("event_date").notNull(),
   endDate: timestamp("end_date"),
-  eventType: varchar("event_type", { length: 100 }).notNull(), // 'checkin', 'vaccine', 'medication', etc.
-  petId: integer("pet_id").references(() => pets.id, { onDelete: "cascade" }),
+  eventType: varchar("event_type", { length: 100 }).notNull(), // 'prazo', 'audiencia', 'juri', 'reuniao', 'atendimento'
+  
+  // Relacionamentos
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
+  demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
+  
   isAllDay: boolean("is_all_day").default(true).notNull(),
   color: varchar("color", { length: 20 }),
-  // Campos adicionais para detalhamento
-  location: varchar("location", { length: 200 }), // Local do evento
-  notes: text("notes"), // Notas adicionais
-  reminderMinutes: integer("reminder_minutes"), // Lembrete X minutos antes
-  priority: varchar("priority", { length: 20 }).default("normal"), // 'low' | 'normal' | 'high' | 'urgent'
+  location: varchar("location", { length: 200 }),
+  notes: text("notes"),
+  
+  // Lembrete
+  reminderMinutes: integer("reminder_minutes"),
+  priority: varchar("priority", { length: 20 }).default("normal"),
   status: varchar("status", { length: 20 }).default("scheduled"), // 'scheduled' | 'completed' | 'cancelled'
-  // Campos para recorrência
+  
+  // Recorrência
   isRecurring: boolean("is_recurring").default(false),
-  recurrenceType: varchar("recurrence_type", { length: 20 }), // 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'
-  recurrenceInterval: integer("recurrence_interval").default(1), // A cada X dias/semanas/meses
-  recurrenceEndDate: timestamp("recurrence_end_date"), // Data final da recorrência
-  recurrenceCount: integer("recurrence_count"), // Número de ocorrências (alternativa a endDate)
-  recurrenceDays: varchar("recurrence_days", { length: 50 }), // Para weekly: "0,1,2,3,4" (Dom-Qui)
-  parentEventId: integer("parent_event_id"), // Referência ao evento pai (para séries)
+  recurrenceType: varchar("recurrence_type", { length: 20 }),
+  recurrenceInterval: integer("recurrence_interval").default(1),
+  recurrenceEndDate: timestamp("recurrence_end_date"),
+  recurrenceCount: integer("recurrence_count"),
+  recurrenceDays: varchar("recurrence_days", { length: 50 }),
+  parentEventId: integer("parent_event_id"),
+  
+  // Soft delete
+  deletedAt: timestamp("deleted_at"),
+  
   // Metadados
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("calendar_events_event_date_idx").on(table.eventDate),
+  index("calendar_events_processo_id_idx").on(table.processoId),
+  index("calendar_events_assistido_id_idx").on(table.assistidoId),
+  index("calendar_events_event_type_idx").on(table.eventType),
+  index("calendar_events_status_idx").on(table.status),
+  index("calendar_events_deleted_at_idx").on(table.deletedAt),
+  index("calendar_events_date_range_idx").on(table.eventDate, table.endDate),
+]);
 
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type InsertCalendarEvent = typeof calendarEvents.$inferInsert;
-
-// ==========================================
-// BIBLIOTECA DE VACINAS
-// ==========================================
-
-export const vaccineLibrary = pgTable("vaccine_library", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 200 }).notNull(),
-  description: text("description"),
-  intervalDays: integer("interval_days"), // intervalo recomendado entre doses
-  dosesRequired: integer("doses_required").default(1),
-  isCommon: boolean("is_common").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type VaccineLibrary = typeof vaccineLibrary.$inferSelect;
-export type InsertVaccineLibrary = typeof vaccineLibrary.$inferInsert;
-
-// ==========================================
-// VACINAÇÕES DO PET
-// ==========================================
-
-export const petVaccinations = pgTable("pet_vaccinations", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  vaccineId: integer("vaccine_id")
-    .notNull()
-    .references(() => vaccineLibrary.id),
-  applicationDate: timestamp("application_date").notNull(),
-  nextDueDate: timestamp("next_due_date"),
-  doseNumber: integer("dose_number").default(1),
-  veterinarian: varchar("veterinarian", { length: 200 }),
-  clinic: varchar("clinic", { length: 200 }),
-  notes: text("notes"),
-  documentUrl: text("document_url"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type PetVaccination = typeof petVaccinations.$inferSelect;
-export type InsertPetVaccination = typeof petVaccinations.$inferInsert;
-
-// ==========================================
-// CRÉDITOS DE CRECHE
-// ==========================================
-
-export const creditPackages = pgTable("credit_packages", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  description: text("description"),
-  credits: integer("credits").notNull(), // número de créditos/dias
-  priceInCents: integer("price_in_cents").notNull(),
-  discountPercent: integer("discount_percent").default(0).notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  displayOrder: integer("display_order").default(0).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type CreditPackage = typeof creditPackages.$inferSelect;
-export type InsertCreditPackage = typeof creditPackages.$inferInsert;
-
-// ==========================================
-// SOLICITAÇÕES DE RESERVA
-// ==========================================
-
-export const bookingRequests = pgTable("booking_requests", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  tutorId: integer("tutor_id")
-    .notNull()
-    .references(() => users.id),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
-  requestType: varchar("request_type", { length: 50 }).default("daycare").notNull(), // 'daycare' | 'hotel' | 'grooming' | 'vet'
-  status: varchar("status", { length: 50 }).default("pending").notNull(), // 'pending' | 'approved' | 'rejected' | 'cancelled' | 'completed'
-  notes: text("notes"),
-  rejectionReason: text("rejection_reason"),
-  adminNotes: text("admin_notes"),
-  approvedById: integer("approved_by_id").references(() => users.id),
-  approvedAt: timestamp("approved_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export type BookingRequest = typeof bookingRequests.$inferSelect;
-export type InsertBookingRequest = typeof bookingRequests.$inferInsert;
 
 // ==========================================
 // NOTIFICAÇÕES
@@ -211,487 +595,1176 @@ export const notifications = pgTable("notifications", {
   userId: integer("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  petId: integer("pet_id").references(() => pets.id, { onDelete: "cascade" }),
-  type: varchar("type", { length: 100 }).notNull(), // 'info' | 'warning' | 'success' | 'error'
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "cascade" }),
+  demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
+  
+  type: varchar("type", { length: 100 }).notNull(), // 'info' | 'warning' | 'success' | 'error' | 'prazo'
   title: varchar("title", { length: 200 }).notNull(),
   message: text("message").notNull(),
   actionUrl: text("action_url"),
   isRead: boolean("is_read").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("notifications_user_id_idx").on(table.userId),
+  index("notifications_is_read_idx").on(table.isRead),
+  index("notifications_user_unread_idx").on(table.userId, table.isRead),
+]);
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
 
 // ==========================================
-// LOGS DIÁRIOS
+// CONFIGURAÇÕES WHATSAPP
 // ==========================================
 
-export const dailyLogs = pgTable("daily_logs", {
+export const whatsappConfig = pgTable("whatsapp_config", {
   id: serial("id").primaryKey(),
-  petId: integer("pet_id")
+  adminId: integer("admin_id")
     .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  logDate: timestamp("log_date").notNull(),
-  source: varchar("source", { length: 50 }).notNull(), // 'daycare' | 'home'
-  mood: varchar("mood", { length: 50 }), // 'happy' | 'calm' | 'anxious' | 'tired'
-  stool: varchar("stool", { length: 50 }), // 'normal' | 'soft' | 'diarrhea' | 'none'
-  appetite: varchar("appetite", { length: 50 }), // 'good' | 'moderate' | 'poor'
-  notes: text("notes"),
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  
+  // Credenciais
+  accessToken: text("access_token"),
+  phoneNumberId: text("phone_number_id"),
+  businessAccountId: text("business_account_id"),
+  webhookVerifyToken: text("webhook_verify_token"),
+  
+  // Informações
+  displayPhoneNumber: text("display_phone_number"),
+  verifiedName: text("verified_name"),
+  qualityRating: varchar("quality_rating", { length: 20 }),
+  
+  // Status
+  isActive: boolean("is_active").default(false).notNull(),
+  lastVerifiedAt: timestamp("last_verified_at"),
+  
+  // Configurações
+  autoNotifyPrazo: boolean("auto_notify_prazo").default(false).notNull(),
+  autoNotifyAudiencia: boolean("auto_notify_audiencia").default(false).notNull(),
+  autoNotifyJuri: boolean("auto_notify_juri").default(false).notNull(),
+  autoNotifyMovimentacao: boolean("auto_notify_movimentacao").default(false).notNull(),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("whatsapp_config_admin_id_idx").on(table.adminId),
+  index("whatsapp_config_is_active_idx").on(table.isActive),
+]);
+
+export type WhatsAppConfig = typeof whatsappConfig.$inferSelect;
+export type InsertWhatsAppConfig = typeof whatsappConfig.$inferInsert;
+
+// ==========================================
+// MENSAGENS WHATSAPP
+// ==========================================
+
+export const whatsappMessages = pgTable("whatsapp_messages", {
+  id: serial("id").primaryKey(),
+  configId: integer("config_id")
+    .notNull()
+    .references(() => whatsappConfig.id, { onDelete: "cascade" }),
+  
+  // Destinatário
+  toPhone: text("to_phone").notNull(),
+  toName: text("to_name"),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
+  
+  // Mensagem
+  messageType: varchar("message_type", { length: 50 }).notNull(),
+  templateName: text("template_name"),
+  content: text("content"),
+  
+  // Status
+  messageId: text("message_id"),
+  status: varchar("status", { length: 20 }).default("pending").notNull(),
+  errorMessage: text("error_message"),
+  
+  // Contexto
+  context: varchar("context", { length: 50 }), // 'prazo' | 'audiencia' | 'juri' | 'movimentacao' | 'manual'
+  sentById: integer("sent_by_id").references(() => users.id, { onDelete: "set null" }),
+  
+  // Timestamps
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("whatsapp_messages_config_id_idx").on(table.configId),
+  index("whatsapp_messages_assistido_id_idx").on(table.assistidoId),
+  index("whatsapp_messages_status_idx").on(table.status),
+  index("whatsapp_messages_context_idx").on(table.context),
+  index("whatsapp_messages_created_at_idx").on(table.createdAt),
+]);
+
+export type WhatsAppMessage = typeof whatsappMessages.$inferSelect;
+export type InsertWhatsAppMessage = typeof whatsappMessages.$inferInsert;
+
+// ==========================================
+// TEMPLATES DE PEÇAS (Modelos)
+// ==========================================
+
+export const pecaTemplates = pgTable("peca_templates", {
+  id: serial("id").primaryKey(),
+  nome: varchar("nome", { length: 200 }).notNull(),
+  descricao: text("descricao"),
+  tipoPeca: varchar("tipo_peca", { length: 100 }).notNull(), // 'resposta_acusacao' | 'alegacoes_finais' | 'relaxamento' | etc
+  area: areaEnum("area"),
+  
+  // Conteúdo
+  conteudo: text("conteudo"), // Conteúdo do template
+  fileUrl: text("file_url"), // Ou link para arquivo
+  
+  // Visibilidade
+  isPublic: boolean("is_public").default(false), // Se pode ser usado por todos
+  
+  // Metadados
   createdById: integer("created_by_id")
     .notNull()
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("peca_templates_tipo_peca_idx").on(table.tipoPeca),
+  index("peca_templates_area_idx").on(table.area),
+  index("peca_templates_is_public_idx").on(table.isPublic),
+]);
 
-export type DailyLog = typeof dailyLogs.$inferSelect;
-export type InsertDailyLog = typeof dailyLogs.$inferInsert;
+export type PecaTemplate = typeof pecaTemplates.$inferSelect;
+export type InsertPecaTemplate = typeof pecaTemplates.$inferInsert;
+
+// ==========================================
+// BANCO DE PEÇAS (Biblioteca Jurídica)
+// ==========================================
+
+export const bancoPecas = pgTable("banco_pecas", {
+  id: serial("id").primaryKey(),
+  titulo: text("titulo").notNull(), // ex: "Relaxamento - Excesso de Prazo"
+  descricao: text("descricao"),
+  
+  // Conteúdo
+  conteudoTexto: text("conteudo_texto"), // Texto completo para busca full-text
+  arquivoUrl: text("arquivo_url"), // URL do arquivo no Supabase Storage ou Drive
+  arquivoKey: text("arquivo_key"), // Key do arquivo no storage
+  
+  // Classificação
+  tipoPeca: varchar("tipo_peca", { length: 100 }).notNull(), // 'resposta_acusacao' | 'alegacoes_finais' | 'relaxamento' | etc
+  area: areaEnum("area"),
+  tags: text("tags"), // JSON array de tags: ["tráfico", "nulidade", "busca domiciliar"]
+  
+  // Resultado
+  sucesso: boolean("sucesso"), // Se a tese foi acolhida (para filtrar as melhores)
+  resultadoDescricao: text("resultado_descricao"),
+  
+  // Referência
+  processoReferencia: text("processo_referencia"), // Número do processo de referência
+  
+  // Visibilidade
+  isPublic: boolean("is_public").default(true), // Se pode ser acessado por todos
+  
+  // Metadados
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("banco_pecas_tipo_peca_idx").on(table.tipoPeca),
+  index("banco_pecas_area_idx").on(table.area),
+  index("banco_pecas_sucesso_idx").on(table.sucesso),
+  index("banco_pecas_is_public_idx").on(table.isPublic),
+]);
+
+export type BancoPeca = typeof bancoPecas.$inferSelect;
+export type InsertBancoPeca = typeof bancoPecas.$inferInsert;
+
+// ==========================================
+// CALCULADORA DE PENA/PRESCRIÇÃO
+// ==========================================
+
+export const calculosPena = pgTable("calculos_pena", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
+  
+  // Tipo de cálculo
+  tipoCalculo: varchar("tipo_calculo", { length: 30 }).notNull(), // 'prescricao' | 'progressao' | 'livramento' | 'remicao'
+  
+  // Dados base
+  penaTotal: integer("pena_total"), // em dias
+  dataInicio: date("data_inicio"),
+  regime: varchar("regime", { length: 20 }), // 'fechado' | 'semiaberto' | 'aberto'
+  
+  // Resultados
+  dataResultado: date("data_resultado"),
+  observacoes: text("observacoes"),
+  
+  // Parâmetros do cálculo
+  parametros: text("parametros"), // JSON com os parâmetros usados
+  
+  // Metadados
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("calculos_pena_processo_id_idx").on(table.processoId),
+  index("calculos_pena_assistido_id_idx").on(table.assistidoId),
+  index("calculos_pena_tipo_idx").on(table.tipoCalculo),
+]);
+
+export type CalculoPena = typeof calculosPena.$inferSelect;
+export type InsertCalculoPena = typeof calculosPena.$inferInsert;
+
+// ==========================================
+// MÓDULO VVD - MEDIDAS PROTETIVAS
+// ==========================================
+
+export const medidasProtetivas = pgTable("medidas_protetivas", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id")
+    .references(() => assistidos.id, { onDelete: "set null" }),
+  
+  // Dados da Medida
+  numeroMedida: varchar("numero_medida", { length: 50 }),
+  tipoMedida: varchar("tipo_medida", { length: 100 }).notNull(), // 'afastamento_lar' | 'proibicao_contato' | 'proibicao_aproximacao' | etc
+  dataDecisao: date("data_decisao"),
+  prazoDias: integer("prazo_dias"), // Prazo em dias
+  dataVencimento: date("data_vencimento"),
+  
+  // Distância mínima (se aplicável)
+  distanciaMetros: integer("distancia_metros"),
+  
+  // Partes
+  nomeVitima: text("nome_vitima"),
+  telefoneVitima: varchar("telefone_vitima", { length: 20 }),
+  
+  // Status
+  status: varchar("status", { length: 30 }).default("ativa"), // 'ativa' | 'expirada' | 'revogada' | 'renovada'
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("medidas_protetivas_processo_id_idx").on(table.processoId),
+  index("medidas_protetivas_status_idx").on(table.status),
+  index("medidas_protetivas_data_vencimento_idx").on(table.dataVencimento),
+]);
+
+export type MedidaProtetiva = typeof medidasProtetivas.$inferSelect;
+export type InsertMedidaProtetiva = typeof medidasProtetivas.$inferInsert;
+
+// ==========================================
+// MÓDULO EP - CÁLCULO SEEU (BENEFÍCIOS)
+// ==========================================
+
+export const calculosSEEU = pgTable("calculos_seeu", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id")
+    .references(() => assistidos.id, { onDelete: "set null" }),
+  
+  // Dados Base
+  dataBase: date("data_base").notNull(), // Data-base do cálculo
+  penaTotal: integer("pena_total").notNull(), // Total em dias
+  regimeInicial: varchar("regime_inicial", { length: 20 }), // 'fechado' | 'semiaberto' | 'aberto'
+  
+  // Frações de progressão
+  fracaoProgressao: varchar("fracao_progressao", { length: 20 }), // '1/6' | '2/5' | '40%' | '50%' | '60%' | '70%'
+  fracaoLivramento: varchar("fracao_livramento", { length: 20 }), // '1/3' | '1/2' | '2/3'
+  
+  // Datas calculadas
+  dataProgressao: date("data_progressao"),
+  dataLivramento: date("data_livramento"),
+  dataTermino: date("data_termino"),
+  dataSaida: date("data_saida"), // Saída temporária
+  
+  // Remição
+  diasRemidos: integer("dias_remidos").default(0),
+  diasTrabalho: integer("dias_trabalho").default(0),
+  diasEstudo: integer("dias_estudo").default(0),
+  
+  // Crime hediondo
+  isHediondo: boolean("is_hediondo").default(false),
+  isPrimario: boolean("is_primario").default(true),
+  
+  // Status do benefício
+  statusProgressao: varchar("status_progressao", { length: 30 }), // 'aguardando' | 'requerido' | 'deferido' | 'indeferido'
+  statusLivramento: varchar("status_livramento", { length: 30 }),
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Metadados
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("calculos_seeu_processo_id_idx").on(table.processoId),
+  index("calculos_seeu_assistido_id_idx").on(table.assistidoId),
+  index("calculos_seeu_data_progressao_idx").on(table.dataProgressao),
+  index("calculos_seeu_data_livramento_idx").on(table.dataLivramento),
+]);
+
+export type CalculoSEEU = typeof calculosSEEU.$inferSelect;
+export type InsertCalculoSEEU = typeof calculosSEEU.$inferInsert;
+
+// ==========================================
+// JURADOS (Banco de Dados do Júri)
+// ==========================================
+
+export const jurados = pgTable("jurados", {
+  id: serial("id").primaryKey(),
+  nome: text("nome").notNull(),
+  profissao: varchar("profissao", { length: 100 }),
+  escolaridade: varchar("escolaridade", { length: 50 }),
+  idade: integer("idade"),
+  bairro: varchar("bairro", { length: 100 }),
+  
+  // Estatísticas de votação
+  totalSessoes: integer("total_sessoes").default(0),
+  votosCondenacao: integer("votos_condenacao").default(0),
+  votosAbsolvicao: integer("votos_absolvicao").default(0),
+  votosDesclassificacao: integer("votos_desclassificacao").default(0),
+  
+  // Perfil comportamental
+  perfilTendencia: varchar("perfil_tendencia", { length: 30 }), // 'condenatorio' | 'absolutorio' | 'neutro' | 'desconhecido'
+  observacoes: text("observacoes"),
+  
+  // Histórico de anotações em JSON
+  historicoNotas: text("historico_notas"), // JSON com observações por sessão
+  
+  // Status
+  ativo: boolean("ativo").default(true),
+  
+  // Metadados
+  createdById: integer("created_by_id")
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("jurados_nome_idx").on(table.nome),
+  index("jurados_perfil_idx").on(table.perfilTendencia),
+  index("jurados_ativo_idx").on(table.ativo),
+]);
+
+export type Jurado = typeof jurados.$inferSelect;
+export type InsertJurado = typeof jurados.$inferInsert;
+
+// ==========================================
+// CONSELHO DO JÚRI (Composição por Sessão)
+// ==========================================
+
+export const conselhoJuri = pgTable("conselho_juri", {
+  id: serial("id").primaryKey(),
+  sessaoId: integer("sessao_id")
+    .notNull()
+    .references(() => sessoesJuri.id, { onDelete: "cascade" }),
+  juradoId: integer("jurado_id")
+    .notNull()
+    .references(() => jurados.id, { onDelete: "cascade" }),
+  
+  // Posição no conselho (1-7)
+  posicao: integer("posicao"),
+  
+  // Voto registrado após sessão
+  voto: varchar("voto", { length: 30 }), // 'condenacao' | 'absolvicao' | 'desclassificacao' | null
+  
+  // Anotações durante a sessão
+  anotacoes: text("anotacoes"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("conselho_juri_sessao_idx").on(table.sessaoId),
+  index("conselho_juri_jurado_idx").on(table.juradoId),
+]);
+
+export type ConselhoJuri = typeof conselhoJuri.$inferSelect;
+export type InsertConselhoJuri = typeof conselhoJuri.$inferInsert;
+
+// ==========================================
+// ATENDIMENTOS
+// ==========================================
+
+export const atendimentos = pgTable("atendimentos", {
+  id: serial("id").primaryKey(),
+  assistidoId: integer("assistido_id")
+    .notNull()
+    .references(() => assistidos.id, { onDelete: "cascade" }),
+  
+  // Detalhes
+  dataAtendimento: timestamp("data_atendimento").notNull(),
+  tipo: varchar("tipo", { length: 30 }).notNull(), // 'presencial' | 'videoconferencia' | 'telefone' | 'visita_carcer'
+  local: text("local"),
+  
+  // Resumo
+  assunto: text("assunto"),
+  resumo: text("resumo"),
+  
+  // Acompanhantes
+  acompanhantes: text("acompanhantes"), // JSON com lista de acompanhantes
+  
+  // Status
+  status: varchar("status", { length: 20 }).default("agendado"), // 'agendado' | 'realizado' | 'cancelado' | 'nao_compareceu'
+  
+  // Metadados
+  atendidoPorId: integer("atendido_por_id")
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("atendimentos_assistido_id_idx").on(table.assistidoId),
+  index("atendimentos_data_idx").on(table.dataAtendimento),
+  index("atendimentos_tipo_idx").on(table.tipo),
+  index("atendimentos_status_idx").on(table.status),
+  index("atendimentos_atendido_por_idx").on(table.atendidoPorId),
+]);
+
+export type Atendimento = typeof atendimentos.$inferSelect;
+export type InsertAtendimento = typeof atendimentos.$inferInsert;
+
+// ==========================================
+// CASOS (Entidade Mestre - Case-Centric)
+// ==========================================
+
+export const statusCasoEnum = pgEnum("status_caso", [
+  "ATIVO",
+  "SUSPENSO",
+  "ARQUIVADO",
+]);
+
+export const faseCasoEnum = pgEnum("fase_caso", [
+  "INQUERITO",
+  "INSTRUCAO",
+  "PLENARIO",
+  "RECURSO",
+  "EXECUCAO",
+  "ARQUIVADO",
+]);
+
+export const tipoAudienciaEnum = pgEnum("tipo_audiencia", [
+  "INSTRUCAO",
+  "CUSTODIA",
+  "CONCILIACAO",
+  "JUSTIFICACAO",
+  "ADMONICAO",
+  "UNA",
+  "PLENARIO_JURI",
+  "CONTINUACAO",
+  "OUTRA",
+]);
+
+export const statusAudienciaEnum = pgEnum("status_audiencia", [
+  "A_DESIGNAR",
+  "DESIGNADA",
+  "REALIZADA",
+  "AGUARDANDO_ATA",
+  "CONCLUIDA",
+  "ADIADA",
+  "CANCELADA",
+]);
+
+export const casos = pgTable("casos", {
+  id: serial("id").primaryKey(),
+  
+  // Identificação do Caso
+  titulo: text("titulo").notNull(),              // ex: "Homicídio - Operação Reuso"
+  codigo: varchar("codigo", { length: 50 }),     // Código interno opcional
+  
+  // Atribuição/Workspace
+  atribuicao: atribuicaoEnum("atribuicao").notNull().default("SUBSTITUICAO"),
+  
+  // Teoria do Caso (Tripé da Defesa)
+  teoriaFatos: text("teoria_fatos"),             // Narrativa defensiva dos fatos
+  teoriaProvas: text("teoria_provas"),           // Evidências que corroboram a tese
+  teoriaDireito: text("teoria_direito"),         // Teses jurídicas e fundamentação
+  
+  // Tags para conexões inteligentes (JSON array)
+  tags: text("tags"),                            // ex: ["NulidadeBusca", "LegitimaDefesa"]
+  
+  // Status
+  status: varchar("status", { length: 30 }).default("ativo"), // 'ativo' | 'arquivado' | 'suspenso'
+  fase: varchar("fase", { length: 50 }),         // 'inquerito' | 'instrucao' | 'plenario' | 'recurso' | 'execucao'
+  
+  // Prioridade
+  prioridade: prioridadeEnum("prioridade").default("NORMAL"),
+  
+  // Defensor responsável
+  defensorId: integer("defensor_id").references(() => users.id),
+  
+  // Caso conexo (self-referencing) - será configurado via SQL
+  casoConexoId: integer("caso_conexo_id"),
+  
+  // Observações gerais
+  observacoes: text("observacoes"),
+  
+  // Links externos
+  linkDrive: text("link_drive"),                 // Pasta no Google Drive
+  
+  // Soft delete
+  deletedAt: timestamp("deleted_at"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("casos_titulo_idx").on(table.titulo),
+  index("casos_atribuicao_idx").on(table.atribuicao),
+  index("casos_status_idx").on(table.status),
+  index("casos_defensor_id_idx").on(table.defensorId),
+  index("casos_deleted_at_idx").on(table.deletedAt),
+]);
+
+export type Caso = typeof casos.$inferSelect;
+export type InsertCaso = typeof casos.$inferInsert;
+
+// ==========================================
+// TAGS DE CASOS (Para sugestões inteligentes)
+// ==========================================
+
+export const casoTags = pgTable("caso_tags", {
+  id: serial("id").primaryKey(),
+  
+  nome: varchar("nome", { length: 100 }).notNull().unique(),  // ex: 'NulidadeBusca', 'LegitimaDefesa'
+  descricao: text("descricao"),
+  cor: varchar("cor", { length: 20 }).default("slate"),       // Para UI
+  
+  // Contagem de uso (para ranking)
+  usoCount: integer("uso_count").default(0),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("caso_tags_nome_idx").on(table.nome),
+  index("caso_tags_uso_idx").on(table.usoCount),
+]);
+
+export type CasoTag = typeof casoTags.$inferSelect;
+export type InsertCasoTag = typeof casoTags.$inferInsert;
+
+// ==========================================
+// CONEXÕES ENTRE CASOS
+// ==========================================
+
+export const casosConexos = pgTable("casos_conexos", {
+  id: serial("id").primaryKey(),
+  
+  casoOrigemId: integer("caso_origem_id").notNull().references(() => casos.id, { onDelete: "cascade" }),
+  casoDestinoId: integer("caso_destino_id").notNull().references(() => casos.id, { onDelete: "cascade" }),
+  
+  tipoConexao: varchar("tipo_conexao", { length: 50 }),  // 'coautoria' | 'fato_conexo' | 'tese_similar' | 'mesmo_evento'
+  descricao: text("descricao"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("casos_conexos_origem_idx").on(table.casoOrigemId),
+  index("casos_conexos_destino_idx").on(table.casoDestinoId),
+]);
+
+export type CasoConexo = typeof casosConexos.$inferSelect;
+export type InsertCasoConexo = typeof casosConexos.$inferInsert;
+
+// ==========================================
+// HISTÓRICO DE ANOTAÇÕES DE AUDIÊNCIA
+// ==========================================
+
+export const audienciasHistorico = pgTable("audiencias_historico", {
+  id: serial("id").primaryKey(),
+  audienciaId: integer("audiencia_id").notNull().references(() => audiencias.id, { onDelete: "cascade" }),
+  
+  // Versão
+  versao: integer("versao").notNull(),
+  anotacoes: text("anotacoes").notNull(),
+  
+  // Quem editou
+  editadoPorId: integer("editado_por_id").references(() => users.id),
+  
+  // Quando
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("audiencias_hist_audiencia_idx").on(table.audienciaId),
+  index("audiencias_hist_versao_idx").on(table.versao),
+]);
+
+export type AudienciaHistorico = typeof audienciasHistorico.$inferSelect;
+export type InsertAudienciaHistorico = typeof audienciasHistorico.$inferInsert;
 
 // ==========================================
 // RELAÇÕES
 // ==========================================
 
 export const usersRelations = relations(users, ({ many }) => ({
-  petTutors: many(petTutors),
+  assistidos: many(assistidos),
+  processos: many(processos),
+  demandas: many(demandas),
+  sessoesJuri: many(sessoesJuri),
+  audiencias: many(audiencias),
   notifications: many(notifications),
-  dailyLogs: many(dailyLogs),
+  atendimentos: many(atendimentos),
+  casos: many(casos),
 }));
 
-export const petsRelations = relations(pets, ({ many }) => ({
-  tutors: many(petTutors),
-  vaccinations: many(petVaccinations),
+export const assistidosRelations = relations(assistidos, ({ one, many }) => ({
+  defensor: one(users, { fields: [assistidos.defensorId], references: [users.id] }),
+  processos: many(processos),
+  demandas: many(demandas),
+  documentos: many(documentos),
+  anotacoes: many(anotacoes),
+  atendimentos: many(atendimentos),
   calendarEvents: many(calendarEvents),
-  bookingRequests: many(bookingRequests),
-  notifications: many(notifications),
-  dailyLogs: many(dailyLogs),
-  foodPlans: many(petFoodPlans),
-  foodInventory: many(petFoodInventory),
-  foodHistory: many(petFoodHistory),
-  treats: many(petTreats),
-  naturalFood: many(petNaturalFood),
 }));
 
-export const petTutorsRelations = relations(petTutors, ({ one }) => ({
-  pet: one(pets, { fields: [petTutors.petId], references: [pets.id] }),
-  tutor: one(users, { fields: [petTutors.tutorId], references: [users.id] }),
+export const processosRelations = relations(processos, ({ one, many }) => ({
+  assistido: one(assistidos, { fields: [processos.assistidoId], references: [assistidos.id] }),
+  defensor: one(users, { fields: [processos.defensorId], references: [users.id] }),
+  demandas: many(demandas),
+  sessoesJuri: many(sessoesJuri),
+  audiencias: many(audiencias),
+  movimentacoes: many(movimentacoes),
+  documentos: many(documentos),
+  anotacoes: many(anotacoes),
+  calendarEvents: many(calendarEvents),
+}));
+
+export const demandasRelations = relations(demandas, ({ one, many }) => ({
+  processo: one(processos, { fields: [demandas.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [demandas.assistidoId], references: [assistidos.id] }),
+  defensor: one(users, { fields: [demandas.defensorId], references: [users.id] }),
+  documentos: many(documentos),
+  anotacoes: many(anotacoes),
+  calendarEvents: many(calendarEvents),
+}));
+
+export const sessoesJuriRelations = relations(sessoesJuri, ({ one }) => ({
+  processo: one(processos, { fields: [sessoesJuri.processoId], references: [processos.id] }),
+  defensor: one(users, { fields: [sessoesJuri.defensorId], references: [users.id] }),
+}));
+
+export const audienciasRelations = relations(audiencias, ({ one }) => ({
+  processo: one(processos, { fields: [audiencias.processoId], references: [processos.id] }),
+  defensor: one(users, { fields: [audiencias.defensorId], references: [users.id] }),
+}));
+
+export const movimentacoesRelations = relations(movimentacoes, ({ one }) => ({
+  processo: one(processos, { fields: [movimentacoes.processoId], references: [processos.id] }),
+  createdBy: one(users, { fields: [movimentacoes.createdById], references: [users.id] }),
+}));
+
+export const documentosRelations = relations(documentos, ({ one }) => ({
+  processo: one(processos, { fields: [documentos.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [documentos.assistidoId], references: [assistidos.id] }),
+  demanda: one(demandas, { fields: [documentos.demandaId], references: [demandas.id] }),
+  uploadedBy: one(users, { fields: [documentos.uploadedById], references: [users.id] }),
+}));
+
+export const anotacoesRelations = relations(anotacoes, ({ one }) => ({
+  processo: one(processos, { fields: [anotacoes.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [anotacoes.assistidoId], references: [assistidos.id] }),
+  demanda: one(demandas, { fields: [anotacoes.demandaId], references: [demandas.id] }),
+  createdBy: one(users, { fields: [anotacoes.createdById], references: [users.id] }),
+}));
+
+export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
+  processo: one(processos, { fields: [calendarEvents.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [calendarEvents.assistidoId], references: [assistidos.id] }),
+  demanda: one(demandas, { fields: [calendarEvents.demandaId], references: [demandas.id] }),
+  createdBy: one(users, { fields: [calendarEvents.createdById], references: [users.id] }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+  processo: one(processos, { fields: [notifications.processoId], references: [processos.id] }),
+  demanda: one(demandas, { fields: [notifications.demandaId], references: [demandas.id] }),
+}));
+
+export const whatsappConfigRelations = relations(whatsappConfig, ({ one, many }) => ({
+  admin: one(users, { fields: [whatsappConfig.adminId], references: [users.id] }),
+  messages: many(whatsappMessages),
+}));
+
+export const whatsappMessagesRelations = relations(whatsappMessages, ({ one }) => ({
+  config: one(whatsappConfig, { fields: [whatsappMessages.configId], references: [whatsappConfig.id] }),
+  assistido: one(assistidos, { fields: [whatsappMessages.assistidoId], references: [assistidos.id] }),
+  sentBy: one(users, { fields: [whatsappMessages.sentById], references: [users.id] }),
+}));
+
+export const pecaTemplatesRelations = relations(pecaTemplates, ({ one }) => ({
+  createdBy: one(users, { fields: [pecaTemplates.createdById], references: [users.id] }),
+}));
+
+export const calculosPenaRelations = relations(calculosPena, ({ one }) => ({
+  processo: one(processos, { fields: [calculosPena.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [calculosPena.assistidoId], references: [assistidos.id] }),
+  createdBy: one(users, { fields: [calculosPena.createdById], references: [users.id] }),
+}));
+
+export const atendimentosRelations = relations(atendimentos, ({ one }) => ({
+  assistido: one(assistidos, { fields: [atendimentos.assistidoId], references: [assistidos.id] }),
+  atendidoPor: one(users, { fields: [atendimentos.atendidoPorId], references: [users.id] }),
+}));
+
+export const bancoPecasRelations = relations(bancoPecas, ({ one }) => ({
+  createdBy: one(users, { fields: [bancoPecas.createdById], references: [users.id] }),
+}));
+
+export const juradosRelations = relations(jurados, ({ one, many }) => ({
+  createdBy: one(users, { fields: [jurados.createdById], references: [users.id] }),
+  conselhos: many(conselhoJuri),
+}));
+
+export const conselhoJuriRelations = relations(conselhoJuri, ({ one }) => ({
+  sessao: one(sessoesJuri, { fields: [conselhoJuri.sessaoId], references: [sessoesJuri.id] }),
+  jurado: one(jurados, { fields: [conselhoJuri.juradoId], references: [jurados.id] }),
 }));
 
 // ==========================================
-// BIBLIOTECA DE MEDICAMENTOS
+// RELAÇÕES: Case-Centric
 // ==========================================
 
-export const medicationLibrary = pgTable("medication_library", {
+export const casosRelations = relations(casos, ({ one, many }) => ({
+  defensor: one(users, { fields: [casos.defensorId], references: [users.id] }),
+  casoConexo: one(casos, { fields: [casos.casoConexoId], references: [casos.id] }),
+  assistidos: many(assistidos),
+  processos: many(processos),
+  demandas: many(demandas),
+  audiencias: many(audiencias),
+  conexoesOrigem: many(casosConexos),
+}));
+
+export const casosConexosRelations = relations(casosConexos, ({ one }) => ({
+  casoOrigem: one(casos, { fields: [casosConexos.casoOrigemId], references: [casos.id] }),
+  casoDestino: one(casos, { fields: [casosConexos.casoDestinoId], references: [casos.id] }),
+}));
+
+export const audienciasHistoricoRelations = relations(audienciasHistorico, ({ one }) => ({
+  audiencia: one(audiencias, { fields: [audienciasHistorico.audienciaId], references: [audiencias.id] }),
+  editadoPor: one(users, { fields: [audienciasHistorico.editadoPorId], references: [users.id] }),
+}));
+
+// ==========================================
+// SINCRONIZAÇÃO GOOGLE DRIVE
+// ==========================================
+
+// Enum para direção de sincronização
+export const syncDirectionEnum = pgEnum("sync_direction", [
+  "bidirectional",
+  "drive_to_app",
+  "app_to_drive",
+]);
+
+// Enum para status de sincronização
+export const syncStatusEnum = pgEnum("sync_status", [
+  "synced",
+  "pending_upload",
+  "pending_download",
+  "conflict",
+  "error",
+]);
+
+// Pastas configuradas para sincronização
+export const driveSyncFolders = pgTable("drive_sync_folders", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 200 }).notNull(),
-  type: varchar("type", { length: 100 }).notNull(), // 'flea' | 'deworming' | 'antibiotic' | 'other'
+  name: varchar("name", { length: 255 }).notNull(),
+  driveFolderId: varchar("drive_folder_id", { length: 100 }).notNull().unique(),
+  driveFolderUrl: text("drive_folder_url"),
   description: text("description"),
-  commonDosage: varchar("common_dosage", { length: 200 }),
-  isCommon: boolean("is_common").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type MedicationLibrary = typeof medicationLibrary.$inferSelect;
-export type InsertMedicationLibrary = typeof medicationLibrary.$inferInsert;
-
-// ==========================================
-// MEDICAMENTOS DO PET
-// ==========================================
-
-export const petMedications = pgTable("pet_medications", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  medicationId: integer("medication_id")
-    .notNull()
-    .references(() => medicationLibrary.id),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date"),
-  dosage: varchar("dosage", { length: 200 }).notNull(),
-  frequency: varchar("frequency", { length: 100 }),
-  administrationTimes: text("administration_times"), // JSON array
-  notes: text("notes"),
+  syncDirection: varchar("sync_direction", { length: 20 }).default("bidirectional"),
   isActive: boolean("is_active").default(true).notNull(),
+  lastSyncAt: timestamp("last_sync_at"),
+  syncToken: text("sync_token"),
+  createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("drive_sync_folders_drive_folder_id_idx").on(table.driveFolderId),
+  index("drive_sync_folders_is_active_idx").on(table.isActive),
+]);
 
-export type PetMedication = typeof petMedications.$inferSelect;
-export type InsertPetMedication = typeof petMedications.$inferInsert;
+export type DriveSyncFolder = typeof driveSyncFolders.$inferSelect;
+export type InsertDriveSyncFolder = typeof driveSyncFolders.$inferInsert;
 
-// ==========================================
-// TRATAMENTOS PREVENTIVOS
-// ==========================================
-
-export const preventiveTreatments = pgTable("preventive_treatments", {
+// Arquivos sincronizados do Drive
+export const driveFiles = pgTable("drive_files", {
   id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  type: varchar("type", { length: 50 }).notNull(), // 'flea' | 'deworming' | 'heartworm'
-  productName: varchar("product_name", { length: 200 }).notNull(),
-  applicationDate: timestamp("application_date").notNull(),
-  nextDueDate: timestamp("next_due_date"),
-  dosage: varchar("dosage", { length: 100 }),
-  notes: text("notes"),
-  createdById: integer("created_by_id")
-    .notNull()
-    .references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type PreventiveTreatment = typeof preventiveTreatments.$inferSelect;
-export type InsertPreventiveTreatment = typeof preventiveTreatments.$inferInsert;
-
-// ==========================================
-// DOCUMENTOS
-// ==========================================
-
-export const documents = pgTable("documents", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  uploadedById: integer("uploaded_by_id")
-    .notNull()
-    .references(() => users.id),
-  title: varchar("title", { length: 200 }).notNull(),
-  description: text("description"),
-  category: varchar("category", { length: 100 }).notNull(), // 'vaccination' | 'exam' | 'prescription' | 'other'
-  fileUrl: text("file_url").notNull(),
-  fileKey: text("file_key"),
-  fileName: varchar("file_name", { length: 255 }),
+  
+  // Identificação Google Drive
+  driveFileId: varchar("drive_file_id", { length: 100 }).notNull().unique(),
+  driveFolderId: varchar("drive_folder_id", { length: 100 }).notNull(),
+  
+  // Metadados do arquivo
+  name: varchar("name", { length: 500 }).notNull(),
   mimeType: varchar("mime_type", { length: 100 }),
   fileSize: integer("file_size"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type Document = typeof documents.$inferSelect;
-export type InsertDocument = typeof documents.$inferInsert;
-
-// ==========================================
-// REGISTROS DE COMPORTAMENTO
-// ==========================================
-
-export const behaviorLogs = pgTable("behavior_logs", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  logDate: timestamp("log_date").notNull(),
-  socialization: varchar("socialization", { length: 50 }), // 'excellent' | 'good' | 'moderate' | 'poor'
-  energy: varchar("energy", { length: 50 }), // 'high' | 'normal' | 'low'
-  obedience: varchar("obedience", { length: 50 }), // 'excellent' | 'good' | 'needs_work'
-  anxiety: varchar("anxiety", { length: 50 }), // 'none' | 'mild' | 'moderate' | 'severe'
-  aggression: varchar("aggression", { length: 50 }), // 'none' | 'mild' | 'moderate' | 'severe'
-  notes: text("notes"),
-  activities: text("activities"), // JSON array
-  createdById: integer("created_by_id")
-    .notNull()
-    .references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type BehaviorLog = typeof behaviorLogs.$inferSelect;
-export type InsertBehaviorLog = typeof behaviorLogs.$inferInsert;
-
-// ==========================================
-// MURAL - POSTS
-// ==========================================
-
-export const wallPosts = pgTable("wall_posts", {
-  id: serial("id").primaryKey(),
-  authorId: integer("author_id")
-    .notNull()
-    .references(() => users.id),
-  petId: integer("pet_id").references(() => pets.id, { onDelete: "cascade" }),
-  content: text("content").notNull(),
-  imageUrl: text("image_url"),
-  visibility: varchar("visibility", { length: 50 }).default("all").notNull(), // 'all' | 'tutors' | 'admin'
-  isPinned: boolean("is_pinned").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export type WallPost = typeof wallPosts.$inferSelect;
-export type InsertWallPost = typeof wallPosts.$inferInsert;
-
-// ==========================================
-// MURAL - COMENTÁRIOS
-// ==========================================
-
-export const wallComments = pgTable("wall_comments", {
-  id: serial("id").primaryKey(),
-  postId: integer("post_id")
-    .notNull()
-    .references(() => wallPosts.id, { onDelete: "cascade" }),
-  authorId: integer("author_id")
-    .notNull()
-    .references(() => users.id),
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type WallComment = typeof wallComments.$inferSelect;
-export type InsertWallComment = typeof wallComments.$inferInsert;
-
-// ==========================================
-// MURAL - CURTIDAS
-// ==========================================
-
-export const wallLikes = pgTable("wall_likes", {
-  id: serial("id").primaryKey(),
-  postId: integer("post_id")
-    .notNull()
-    .references(() => wallPosts.id, { onDelete: "cascade" }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type WallLike = typeof wallLikes.$inferSelect;
-export type InsertWallLike = typeof wallLikes.$inferInsert;
-
-// ==========================================
-// TRANSAÇÕES FINANCEIRAS
-// ==========================================
-
-export const transactions = pgTable("transactions", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id").references(() => pets.id, { onDelete: "set null" }),
-  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
-  type: varchar("type", { length: 50 }).notNull(), // 'credit_purchase' | 'credit_use' | 'refund'
-  amount: integer("amount").notNull(), // em centavos
-  credits: integer("credits"),
   description: text("description"),
-  stripePaymentId: varchar("stripe_payment_id", { length: 200 }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type Transaction = typeof transactions.$inferSelect;
-export type InsertTransaction = typeof transactions.$inferInsert;
-
-// ==========================================
-// TREINAMENTO / ADESTRAMENTO
-// ==========================================
-
-export const trainingLogs = pgTable("training_logs", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  logDate: timestamp("log_date").notNull(),
-  command: varchar("command", { length: 100 }).notNull(), // 'sit' | 'stay' | 'come' | 'down' | 'heel' | custom
-  category: varchar("category", { length: 50 }).notNull(), // 'obedience' | 'socialization' | 'behavior' | 'agility' | 'tricks'
-  status: varchar("status", { length: 50 }).notNull(), // 'learning' | 'practicing' | 'mastered'
-  successRate: integer("success_rate"), // 0-100 porcentagem de sucesso
-  duration: integer("duration"), // duração em minutos
-  treats: integer("treats"), // número de petiscos usados
-  method: varchar("method", { length: 100 }), // 'positive_reinforcement' | 'clicker' | 'lure' | 'capture'
-  notes: text("notes"),
-  videoUrl: text("video_url"),
-  createdById: integer("created_by_id")
-    .notNull()
-    .references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type TrainingLog = typeof trainingLogs.$inferSelect;
-export type InsertTrainingLog = typeof trainingLogs.$inferInsert;
-
-// ==========================================
-// COMANDOS DE TREINAMENTO (BIBLIOTECA)
-// ==========================================
-
-export const trainingCommands = pgTable("training_commands", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  category: varchar("category", { length: 50 }).notNull(),
-  description: text("description"),
-  difficulty: varchar("difficulty", { length: 20 }), // 'easy' | 'medium' | 'hard'
-  steps: text("steps"), // JSON array com passos
-  tips: text("tips"),
-  isDefault: boolean("is_default").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type TrainingCommand = typeof trainingCommands.$inferSelect;
-export type InsertTrainingCommand = typeof trainingCommands.$inferInsert;
-
-// ==========================================
-// PLANO DE ALIMENTAÇÃO DO PET
-// ==========================================
-
-export const petFoodPlans = pgTable("pet_food_plans", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  foodType: varchar("food_type", { length: 50 }).notNull(), // 'dry' | 'wet' | 'natural' | 'mixed'
-  brand: varchar("brand", { length: 200 }).notNull(),
-  productName: varchar("product_name", { length: 200 }),
-  dailyAmount: integer("daily_amount").notNull(), // quantidade diária em gramas
-  portionsPerDay: integer("portions_per_day").default(2).notNull(), // número de porções por dia
-  portionTimes: text("portion_times"), // JSON array de horários ["08:00", "18:00"]
-  notes: text("notes"),
-  isActive: boolean("is_active").default(true).notNull(),
-  startDate: timestamp("start_date").defaultNow().notNull(),
-  endDate: timestamp("end_date"),
-  createdById: integer("created_by_id")
-    .notNull()
-    .references(() => users.id),
+  
+  // Links
+  webViewLink: text("web_view_link"),
+  webContentLink: text("web_content_link"),
+  thumbnailLink: text("thumbnail_link"),
+  iconLink: text("icon_link"),
+  
+  // Status de sincronização
+  syncStatus: varchar("sync_status", { length: 20 }).default("synced"),
+  lastModifiedTime: timestamp("last_modified_time"),
+  lastSyncAt: timestamp("last_sync_at"),
+  localChecksum: varchar("local_checksum", { length: 64 }),
+  driveChecksum: varchar("drive_checksum", { length: 64 }),
+  
+  // Relacionamentos (opcionais)
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
+  documentoId: integer("documento_id").references(() => documentos.id, { onDelete: "set null" }),
+  
+  // Cópia local
+  localFileUrl: text("local_file_url"),
+  localFileKey: text("local_file_key"),
+  
+  // Controle de versão
+  version: integer("version").default(1),
+  isFolder: boolean("is_folder").default(false),
+  parentFileId: integer("parent_file_id"),
+  
+  // Metadados
+  createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("drive_files_drive_folder_id_idx").on(table.driveFolderId),
+  index("drive_files_drive_file_id_idx").on(table.driveFileId),
+  index("drive_files_processo_id_idx").on(table.processoId),
+  index("drive_files_assistido_id_idx").on(table.assistidoId),
+  index("drive_files_sync_status_idx").on(table.syncStatus),
+  index("drive_files_is_folder_idx").on(table.isFolder),
+  index("drive_files_parent_file_id_idx").on(table.parentFileId),
+]);
 
-export type PetFoodPlan = typeof petFoodPlans.$inferSelect;
-export type InsertPetFoodPlan = typeof petFoodPlans.$inferInsert;
+export type DriveFile = typeof driveFiles.$inferSelect;
+export type InsertDriveFile = typeof driveFiles.$inferInsert;
 
-// ==========================================
-// ESTOQUE DE RAÇÃO DO PET
-// ==========================================
-
-export const petFoodInventory = pgTable("pet_food_inventory", {
+// Logs de sincronização
+export const driveSyncLogs = pgTable("drive_sync_logs", {
   id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  brand: varchar("brand", { length: 200 }).notNull(),
-  productName: varchar("product_name", { length: 200 }),
-  quantityReceived: integer("quantity_received").notNull(), // quantidade recebida em gramas
-  quantityRemaining: integer("quantity_remaining").notNull(), // quantidade restante em gramas
-  receivedDate: timestamp("received_date").defaultNow().notNull(),
-  expirationDate: timestamp("expiration_date"),
-  batchNumber: varchar("batch_number", { length: 100 }),
-  notes: text("notes"),
-  createdById: integer("created_by_id")
-    .notNull()
-    .references(() => users.id),
+  driveFileId: varchar("drive_file_id", { length: 100 }),
+  action: varchar("action", { length: 50 }).notNull(),
+  status: varchar("status", { length: 20 }).default("success"),
+  details: text("details"),
+  errorMessage: text("error_message"),
+  userId: integer("user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("drive_sync_logs_drive_file_id_idx").on(table.driveFileId),
+  index("drive_sync_logs_created_at_idx").on(table.createdAt),
+  index("drive_sync_logs_action_idx").on(table.action),
+]);
 
-export type PetFoodInventory = typeof petFoodInventory.$inferSelect;
-export type InsertPetFoodInventory = typeof petFoodInventory.$inferInsert;
+export type DriveSyncLog = typeof driveSyncLogs.$inferSelect;
+export type InsertDriveSyncLog = typeof driveSyncLogs.$inferInsert;
 
-// ==========================================
-// HISTÓRICO DE RAÇÃO DO PET (REAÇÕES)
-// ==========================================
-
-export const petFoodHistory = pgTable("pet_food_history", {
+// Webhooks do Drive
+export const driveWebhooks = pgTable("drive_webhooks", {
   id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  foodPlanId: integer("food_plan_id").references(() => petFoodPlans.id, { onDelete: "set null" }),
-  brand: varchar("brand", { length: 200 }).notNull(),
-  productName: varchar("product_name", { length: 200 }),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date"),
-  // Reações do pet
-  acceptance: varchar("acceptance", { length: 20 }), // 'loved' | 'liked' | 'neutral' | 'disliked' | 'rejected'
-  digestion: varchar("digestion", { length: 20 }), // 'excellent' | 'good' | 'regular' | 'poor'
-  stoolQuality: varchar("stool_quality", { length: 20 }), // 'normal' | 'soft' | 'hard' | 'diarrhea'
-  coatCondition: varchar("coat_condition", { length: 20 }), // 'excellent' | 'good' | 'regular' | 'poor'
-  energyLevel: varchar("energy_level", { length: 20 }), // 'high' | 'normal' | 'low'
-  allergicReaction: boolean("allergic_reaction").default(false),
-  allergicDetails: text("allergic_details"),
-  overallRating: integer("overall_rating"), // 1-5 estrelas
-  notes: text("notes"),
-  createdById: integer("created_by_id")
-    .notNull()
-    .references(() => users.id),
+  channelId: varchar("channel_id", { length: 100 }).notNull().unique(),
+  resourceId: varchar("resource_id", { length: 100 }),
+  folderId: varchar("folder_id", { length: 100 }).notNull(),
+  expiration: timestamp("expiration"),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("drive_webhooks_channel_id_idx").on(table.channelId),
+  index("drive_webhooks_folder_id_idx").on(table.folderId),
+  index("drive_webhooks_is_active_idx").on(table.isActive),
+]);
 
-export type PetFoodHistory = typeof petFoodHistory.$inferSelect;
-export type InsertPetFoodHistory = typeof petFoodHistory.$inferInsert;
+export type DriveWebhook = typeof driveWebhooks.$inferSelect;
+export type InsertDriveWebhook = typeof driveWebhooks.$inferInsert;
 
-// ==========================================
-// PETISCOS E SNACKS
-// ==========================================
-
-export const petTreats = pgTable("pet_treats", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  treatType: varchar("treat_type", { length: 50 }).notNull(), // 'snack' | 'biscuit' | 'natural' | 'supplement' | 'other'
-  name: varchar("name", { length: 200 }).notNull(),
-  brand: varchar("brand", { length: 200 }),
-  purpose: varchar("purpose", { length: 100 }), // 'reward' | 'training' | 'dental' | 'supplement' | 'enrichment'
-  frequency: varchar("frequency", { length: 50 }), // 'daily' | 'weekly' | 'occasionally' | 'training_only'
-  maxPerDay: integer("max_per_day"), // quantidade máxima por dia
-  caloriesPerUnit: integer("calories_per_unit"), // calorias por unidade
-  acceptance: varchar("acceptance", { length: 20 }), // 'loved' | 'liked' | 'neutral' | 'disliked'
-  notes: text("notes"),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdById: integer("created_by_id")
-    .notNull()
-    .references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export type PetTreat = typeof petTreats.$inferSelect;
-export type InsertPetTreat = typeof petTreats.$inferInsert;
-
-// ==========================================
-// ALIMENTAÇÃO NATURAL
-// ==========================================
-
-export const petNaturalFood = pgTable("pet_natural_food", {
-  id: serial("id").primaryKey(),
-  petId: integer("pet_id")
-    .notNull()
-    .references(() => pets.id, { onDelete: "cascade" }),
-  mealType: varchar("meal_type", { length: 50 }).notNull(), // 'barf' | 'cooked' | 'mixed' | 'supplement'
-  name: varchar("name", { length: 200 }).notNull(), // nome da receita/alimento
-  ingredients: text("ingredients"), // JSON array de ingredientes
-  proteinSource: varchar("protein_source", { length: 200 }), // fonte de proteína principal
-  portionSize: integer("portion_size"), // tamanho da porção em gramas
-  frequency: varchar("frequency", { length: 50 }), // 'daily' | 'weekly' | 'occasionally'
-  preparationNotes: text("preparation_notes"),
-  acceptance: varchar("acceptance", { length: 20 }), // 'loved' | 'liked' | 'neutral' | 'disliked'
-  notes: text("notes"),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdById: integer("created_by_id")
-    .notNull()
-    .references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export type PetNaturalFood = typeof petNaturalFood.$inferSelect;
-export type InsertPetNaturalFood = typeof petNaturalFood.$inferInsert;
-
-// ==========================================
-// RELAÇÕES DE ALIMENTAÇÃO
-// ==========================================
-
-export const petFoodPlansRelations = relations(petFoodPlans, ({ one }) => ({
-  pet: one(pets, { fields: [petFoodPlans.petId], references: [pets.id] }),
-  createdBy: one(users, { fields: [petFoodPlans.createdById], references: [users.id] }),
+// Relações do Drive
+export const driveSyncFoldersRelations = relations(driveSyncFolders, ({ one, many }) => ({
+  createdBy: one(users, { fields: [driveSyncFolders.createdById], references: [users.id] }),
 }));
 
-export const petFoodInventoryRelations = relations(petFoodInventory, ({ one }) => ({
-  pet: one(pets, { fields: [petFoodInventory.petId], references: [pets.id] }),
-  createdBy: one(users, { fields: [petFoodInventory.createdById], references: [users.id] }),
+export const driveFilesRelations = relations(driveFiles, ({ one, many }) => ({
+  processo: one(processos, { fields: [driveFiles.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [driveFiles.assistidoId], references: [assistidos.id] }),
+  documento: one(documentos, { fields: [driveFiles.documentoId], references: [documentos.id] }),
+  createdBy: one(users, { fields: [driveFiles.createdById], references: [users.id] }),
+  parent: one(driveFiles, { fields: [driveFiles.parentFileId], references: [driveFiles.id] }),
 }));
 
-export const petFoodHistoryRelations = relations(petFoodHistory, ({ one }) => ({
-  pet: one(pets, { fields: [petFoodHistory.petId], references: [pets.id] }),
-  foodPlan: one(petFoodPlans, { fields: [petFoodHistory.foodPlanId], references: [petFoodPlans.id] }),
-  createdBy: one(users, { fields: [petFoodHistory.createdById], references: [users.id] }),
+export const driveSyncLogsRelations = relations(driveSyncLogs, ({ one }) => ({
+  user: one(users, { fields: [driveSyncLogs.userId], references: [users.id] }),
 }));
 
-export const petTreatsRelations = relations(petTreats, ({ one }) => ({
-  pet: one(pets, { fields: [petTreats.petId], references: [pets.id] }),
-  createdBy: one(users, { fields: [petTreats.createdById], references: [users.id] }),
+// ==========================================
+// PEÇAS PROCESSUAIS ESTRUTURADAS
+// (Denúncia, Pronúncia, Laudos, Atas, etc.)
+// ==========================================
+
+export const tipoPecaProcessualEnum = pgEnum("tipo_peca_processual", [
+  "DENUNCIA",               // Denúncia do MP
+  "QUEIXA_CRIME",          // Queixa-crime
+  "PRONUNCIA",             // Decisão de pronúncia
+  "IMPRONUNCIA",           // Decisão de impronúncia
+  "ABSOLVICAO_SUMARIA",    // Absolvição sumária
+  "SENTENCA",              // Sentença
+  "ACORDAO",               // Acórdão
+  "LAUDO_PERICIAL",        // Laudo pericial
+  "LAUDO_CADAVERICO",      // Laudo cadavérico
+  "LAUDO_PSIQUIATRICO",    // Laudo psiquiátrico
+  "LAUDO_TOXICOLOGICO",    // Laudo toxicológico
+  "ATA_AUDIENCIA",         // Ata de audiência
+  "ATA_INTERROGATORIO",    // Ata de interrogatório
+  "ATA_PLENARIO",          // Ata de plenário
+  "DEPOIMENTO",            // Depoimento/Testemunho
+  "BOLETIM_OCORRENCIA",    // B.O.
+  "AUTO_PRISAO",           // Auto de prisão em flagrante
+  "MANDADO",               // Mandado (busca, prisão, etc.)
+  "DECISAO_INTERLOCUTORIA", // Decisão interlocutória
+  "QUESITOS",              // Quesitos do júri
+  "MEMORIAL",              // Memorial
+  "OUTRO",                 // Outros documentos
+]);
+
+export const pecasProcessuais = pgTable("pecas_processuais", {
+  id: serial("id").primaryKey(),
+  
+  // Relacionamentos
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id")
+    .references(() => assistidos.id, { onDelete: "set null" }),
+  casoId: integer("caso_id")
+    .references(() => casos.id, { onDelete: "set null" }),
+  
+  // Identificação
+  titulo: text("titulo").notNull(),
+  tipoPeca: tipoPecaProcessualEnum("tipo_peca").notNull(),
+  numeroPaginas: integer("numero_paginas"),
+  dataDocumento: date("data_documento"),
+  
+  // Arquivo
+  driveFileId: varchar("drive_file_id", { length: 100 }),
+  arquivoUrl: text("arquivo_url"),
+  arquivoKey: text("arquivo_key"),
+  mimeType: varchar("mime_type", { length: 100 }),
+  fileSize: integer("file_size"),
+  
+  // Conteúdo extraído (para busca e IA)
+  conteudoTexto: text("conteudo_texto"),  // Texto extraído do PDF/documento
+  resumoIA: text("resumo_ia"),             // Resumo gerado por IA
+  pontosCriticos: text("pontos_criticos"), // JSON: pontos importantes identificados por IA
+  
+  // Metadados específicos por tipo de peça (JSON)
+  metadados: text("metadados"), // JSON com dados específicos: autor da peça, juiz, promotor, etc.
+  
+  // Para peças importantes (aparece em destaque)
+  isDestaque: boolean("is_destaque").default(false),
+  
+  // Ordem de exibição
+  ordemExibicao: integer("ordem_exibicao").default(0),
+  
+  // Tags para filtro
+  tags: text("tags"), // JSON array
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Metadados
+  uploadedById: integer("uploaded_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("pecas_processuais_processo_id_idx").on(table.processoId),
+  index("pecas_processuais_assistido_id_idx").on(table.assistidoId),
+  index("pecas_processuais_caso_id_idx").on(table.casoId),
+  index("pecas_processuais_tipo_peca_idx").on(table.tipoPeca),
+  index("pecas_processuais_is_destaque_idx").on(table.isDestaque),
+  index("pecas_processuais_drive_file_id_idx").on(table.driveFileId),
+]);
+
+export type PecaProcessual = typeof pecasProcessuais.$inferSelect;
+export type InsertPecaProcessual = typeof pecasProcessuais.$inferInsert;
+
+// ==========================================
+// ANÁLISES DE IA (GEMINI)
+// Armazena análises estratégicas geradas por IA
+// ==========================================
+
+export const tipoAnaliseIAEnum = pgEnum("tipo_analise_ia", [
+  "RESUMO_CASO",           // Resumo geral do caso
+  "ANALISE_DENUNCIA",      // Análise crítica da denúncia
+  "TESES_DEFENSIVAS",      // Sugestões de teses defensivas
+  "ANALISE_PROVAS",        // Análise das provas
+  "RISCO_CONDENACAO",      // Score de risco
+  "JURISPRUDENCIA",        // Jurisprudência relacionada
+  "ESTRATEGIA_JURI",       // Estratégia para o júri
+  "PERFIL_JURADOS",        // Análise do perfil de jurados
+  "COMPARACAO_CASOS",      // Comparação com casos similares
+  "TIMELINE",              // Linha do tempo dos fatos
+  "PONTOS_FRACOS",         // Pontos fracos da acusação
+  "QUESITACAO",            // Sugestão de quesitos
+  "MEMORIAL_DRAFT",        // Rascunho de memorial
+  "OUTRO",
+]);
+
+export const analisesIA = pgTable("analises_ia", {
+  id: serial("id").primaryKey(),
+  
+  // Relacionamentos
+  processoId: integer("processo_id")
+    .references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id")
+    .references(() => assistidos.id, { onDelete: "cascade" }),
+  casoId: integer("caso_id")
+    .references(() => casos.id, { onDelete: "cascade" }),
+  pecaId: integer("peca_id")
+    .references(() => pecasProcessuais.id, { onDelete: "set null" }),
+  
+  // Tipo de análise
+  tipoAnalise: tipoAnaliseIAEnum("tipo_analise").notNull(),
+  titulo: text("titulo").notNull(),
+  
+  // Prompt e resposta
+  promptUtilizado: text("prompt_utilizado"),
+  conteudo: text("conteudo").notNull(),        // Resposta da IA
+  
+  // Dados estruturados extraídos
+  dadosEstruturados: text("dados_estruturados"), // JSON com dados parseados
+  
+  // Score de confiança (0-100)
+  scoreConfianca: integer("score_confianca"),
+  
+  // Modelo utilizado
+  modeloIA: varchar("modelo_ia", { length: 50 }).default("gemini-pro"),
+  tokensUtilizados: integer("tokens_utilizados"),
+  
+  // Feedback do usuário
+  feedbackPositivo: boolean("feedback_positivo"),
+  feedbackComentario: text("feedback_comentario"),
+  
+  // Status
+  isArquivado: boolean("is_arquivado").default(false),
+  isFavorito: boolean("is_favorito").default(false),
+  
+  // Metadados
+  criadoPorId: integer("criado_por_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("analises_ia_processo_id_idx").on(table.processoId),
+  index("analises_ia_assistido_id_idx").on(table.assistidoId),
+  index("analises_ia_caso_id_idx").on(table.casoId),
+  index("analises_ia_peca_id_idx").on(table.pecaId),
+  index("analises_ia_tipo_analise_idx").on(table.tipoAnalise),
+  index("analises_ia_is_favorito_idx").on(table.isFavorito),
+]);
+
+export type AnaliseIA = typeof analisesIA.$inferSelect;
+export type InsertAnaliseIA = typeof analisesIA.$inferInsert;
+
+// ==========================================
+// TESTEMUNHAS E DEPOIMENTOS
+// Gestão de testemunhas do caso
+// ==========================================
+
+export const tipoTestemunhaEnum = pgEnum("tipo_testemunha", [
+  "DEFESA",
+  "ACUSACAO",
+  "COMUM",
+  "INFORMANTE",
+  "PERITO",
+  "VITIMA",
+]);
+
+export const statusTestemunhaEnum = pgEnum("status_testemunha", [
+  "ARROLADA",
+  "INTIMADA",
+  "OUVIDA",
+  "DESISTIDA",
+  "NAO_LOCALIZADA",
+  "CARTA_PRECATORIA",
+]);
+
+export const testemunhas = pgTable("testemunhas", {
+  id: serial("id").primaryKey(),
+  
+  // Relacionamentos
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+  casoId: integer("caso_id")
+    .references(() => casos.id, { onDelete: "set null" }),
+  audienciaId: integer("audiencia_id")
+    .references(() => audiencias.id, { onDelete: "set null" }),
+  
+  // Identificação
+  nome: text("nome").notNull(),
+  tipo: tipoTestemunhaEnum("tipo").notNull(),
+  status: statusTestemunhaEnum("status").default("ARROLADA"),
+  
+  // Contato
+  telefone: varchar("telefone", { length: 20 }),
+  endereco: text("endereco"),
+  
+  // Depoimento
+  resumoDepoimento: text("resumo_depoimento"),    // Resumo do que disse
+  pontosFavoraveis: text("pontos_favoraveis"),    // JSON: pontos favoráveis à defesa
+  pontosDesfavoraveis: text("pontos_desfavoraveis"), // JSON: pontos desfavoráveis
+  
+  // Perguntas estratégicas
+  perguntasSugeridas: text("perguntas_sugeridas"), // JSON: sugestões de perguntas
+  
+  // Ordem de inquirição
+  ordemInquiricao: integer("ordem_inquiricao"),
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("testemunhas_processo_id_idx").on(table.processoId),
+  index("testemunhas_caso_id_idx").on(table.casoId),
+  index("testemunhas_audiencia_id_idx").on(table.audienciaId),
+  index("testemunhas_tipo_idx").on(table.tipo),
+  index("testemunhas_status_idx").on(table.status),
+]);
+
+export type Testemunha = typeof testemunhas.$inferSelect;
+export type InsertTestemunha = typeof testemunhas.$inferInsert;
+
+// ==========================================
+// RELAÇÕES DAS NOVAS TABELAS
+// ==========================================
+
+export const pecasProcessuaisRelations = relations(pecasProcessuais, ({ one }) => ({
+  processo: one(processos, { fields: [pecasProcessuais.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [pecasProcessuais.assistidoId], references: [assistidos.id] }),
+  caso: one(casos, { fields: [pecasProcessuais.casoId], references: [casos.id] }),
+  uploadedBy: one(users, { fields: [pecasProcessuais.uploadedById], references: [users.id] }),
 }));
 
-export const petNaturalFoodRelations = relations(petNaturalFood, ({ one }) => ({
-  pet: one(pets, { fields: [petNaturalFood.petId], references: [pets.id] }),
-  createdBy: one(users, { fields: [petNaturalFood.createdById], references: [users.id] }),
+export const analisesIARelations = relations(analisesIA, ({ one }) => ({
+  processo: one(processos, { fields: [analisesIA.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [analisesIA.assistidoId], references: [assistidos.id] }),
+  caso: one(casos, { fields: [analisesIA.casoId], references: [casos.id] }),
+  peca: one(pecasProcessuais, { fields: [analisesIA.pecaId], references: [pecasProcessuais.id] }),
+  criadoPor: one(users, { fields: [analisesIA.criadoPorId], references: [users.id] }),
+}));
+
+export const testemunhasRelations = relations(testemunhas, ({ one }) => ({
+  processo: one(processos, { fields: [testemunhas.processoId], references: [processos.id] }),
+  caso: one(casos, { fields: [testemunhas.casoId], references: [casos.id] }),
+  audiencia: one(audiencias, { fields: [testemunhas.audienciaId], references: [audiencias.id] }),
 }));

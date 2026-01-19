@@ -1,8 +1,11 @@
 import { SignIn } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { Dog, Heart, Shield, Calendar } from "lucide-react";
 import Image from "next/image";
+
+// Forçar renderização dinâmica para evitar problemas de build
+export const dynamic = "force-dynamic";
 
 const features = [
   { icon: Dog, text: "Gestão completa de pets" },
@@ -12,17 +15,12 @@ const features = [
 ];
 
 export default async function SignInPage() {
+  // Verificar se já está logado
   const { userId } = await auth();
   
-  // Se já está logado, redirecionar
+  // Se já está logado, redirecionar para auth-redirect
   if (userId) {
-    const user = await currentUser();
-    const role = (user?.publicMetadata as { role?: string })?.role || "tutor";
-    
-    if (role === "admin") {
-      redirect("/admin");
-    }
-    redirect("/tutor");
+    redirect("/auth-redirect");
   }
 
   return (
@@ -127,7 +125,7 @@ export default async function SignInPage() {
               routing="path"
               path="/sign-in"
               signUpUrl="/sign-up"
-              forceRedirectUrl="/auth-redirect"
+              fallbackRedirectUrl="/auth-redirect"
             />
           </div>
         </div>

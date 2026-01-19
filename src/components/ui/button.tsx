@@ -4,25 +4,36 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[14px] text-sm font-semibold ring-offset-background transition-all duration-300 ease focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-semibold ring-offset-background transition-all duration-250 ease focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_4px_8px_0_rgba(24,80%,52%,0.2)] hover:translate-y-[-1px] shadow-[0_2px_4px_0_rgba(24,80%,52%,0.15)]",
+        // Primary - Verde escuro com alto contraste
+        default: "bg-gradient-to-b from-[hsl(158_55%_38%)] to-[hsl(158_55%_32%)] text-white hover:from-[hsl(158_55%_34%)] hover:to-[hsl(158_55%_28%)] hover:shadow-[0_4px_12px_0_hsl(158_55%_35%/0.4)] hover:translate-y-[-1px] shadow-[0_2px_6px_0_hsl(158_55%_35%/0.3)]",
+        // Destructive - Vermelho vibrante
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-[0_4px_8px_0_rgba(239,68,68,0.2)] hover:translate-y-[-1px] shadow-[0_2px_4px_0_rgba(239,68,68,0.15)]",
+          "bg-gradient-to-b from-[hsl(0_72%_50%)] to-[hsl(0_72%_44%)] text-white hover:from-[hsl(0_72%_46%)] hover:to-[hsl(0_72%_40%)] hover:shadow-[0_4px_12px_0_hsl(0_72%_48%/0.4)] hover:translate-y-[-1px] shadow-[0_2px_6px_0_hsl(0_72%_48%/0.3)]",
+        // Outline - Borda visível com texto escuro
         outline:
-          "border border-border/40 bg-background hover:bg-accent hover:text-accent-foreground hover:shadow-[0_2px_4px_0_rgba(0,0,0,0.04)] hover:translate-y-[-1px]",
+          "border-2 border-[hsl(158_35%_75%)] dark:border-[hsl(160_20%_25%)] bg-white dark:bg-[hsl(160_10%_10%)] hover:bg-[hsl(158_30%_96%)] dark:hover:bg-[hsl(160_12%_14%)] hover:border-[hsl(158_45%_55%)] dark:hover:border-[hsl(158_30%_40%)] text-[hsl(160_15%_25%)] dark:text-[hsl(150_10%_85%)] hover:translate-y-[-1px]",
+        // Secondary - Fundo sólido com texto escuro (alto contraste)
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-[0_2px_4px_0_rgba(0,0,0,0.04)] hover:translate-y-[-1px]",
-        ghost: "hover:bg-accent hover:text-accent-foreground hover:shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]",
-        link: "text-primary underline-offset-4 hover:underline hover:text-primary/90",
+          "bg-[hsl(158_40%_92%)] dark:bg-[hsl(160_20%_16%)] text-[hsl(158_45%_28%)] dark:text-[hsl(150_20%_85%)] hover:bg-[hsl(158_45%_88%)] dark:hover:bg-[hsl(160_22%_20%)] hover:translate-y-[-1px] font-semibold border border-[hsl(158_35%_80%)] dark:border-[hsl(160_18%_25%)]",
+        // Ghost - Sutil mas legível
+        ghost: "hover:bg-[hsl(158_25%_94%)] dark:hover:bg-[hsl(160_15%_14%)] text-[hsl(160_12%_38%)] dark:text-[hsl(150_10%_70%)] hover:text-[hsl(160_20%_20%)] dark:hover:text-[hsl(150_12%_88%)]",
+        // Link - Verde vibrante sublinhado
+        link: "text-[hsl(158_60%_35%)] dark:text-[hsl(158_55%_60%)] underline-offset-4 hover:underline font-semibold",
+        // Premium - Dourado/Laranja para ações especiais
+        premium: "bg-gradient-to-b from-[hsl(35_85%_52%)] to-[hsl(35_85%_45%)] text-white hover:from-[hsl(35_85%_48%)] hover:to-[hsl(35_85%_42%)] hover:shadow-[0_4px_12px_0_hsl(35_85%_50%/0.4)] hover:translate-y-[-1px] shadow-[0_2px_6px_0_hsl(35_85%_50%/0.3)]",
+        // Accent - Para botões de destaque em workspaces (como Júri Camaçari)
+        accent: "bg-gradient-to-b from-[hsl(158_50%_42%)] to-[hsl(158_50%_36%)] text-white hover:from-[hsl(158_50%_38%)] hover:to-[hsl(158_50%_32%)] hover:shadow-[0_4px_14px_0_hsl(158_50%_40%/0.45)] hover:translate-y-[-1px] shadow-[0_3px_8px_0_hsl(158_50%_40%/0.35)] font-bold",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-[14px] px-3",
-        lg: "h-11 rounded-[14px] px-8",
-        icon: "h-10 w-10 rounded-[14px]",
+        default: "h-10 px-5 py-2",
+        sm: "h-9 rounded-xl px-4 text-[13px]",
+        lg: "h-12 rounded-2xl px-8 text-base",
+        icon: "h-10 w-10 rounded-xl",
+        xs: "h-8 rounded-lg px-3 text-xs",
       },
     },
     defaultVariants: {

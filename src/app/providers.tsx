@@ -1,23 +1,21 @@
 "use client";
 
-import { ClerkProvider } from "@clerk/nextjs";
-import { ptBR } from "@clerk/localizations";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import superjson from "superjson";
 import { trpc } from "@/lib/trpc/client";
 import { ThemeProvider } from "@/contexts/theme-context";
+import { AssignmentProvider } from "@/contexts/assignment-context";
 import { Toaster } from "sonner";
-import { usePathname } from "next/navigation";
+import { ClerkProvider } from "@clerk/nextjs";
+import { ptBR } from "@clerk/localizations";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") return "";
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
-
-// PageTransition removido - causava interferência com tooltips e movimento indesejado
 
 // Loading spinner minimalista
 function LoadingSpinner() {
@@ -63,21 +61,27 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ClerkProvider localization={ptBR}>
+    <ClerkProvider
+      localization={ptBR}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+    >
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
-            <Suspense fallback={<LoadingSpinner />}>
-              {children}
-            </Suspense>
-            <Toaster 
-              richColors 
-              position="top-right" 
-              toastOptions={{
-                className: "glass",
-                duration: 3000,
-              }}
-            />
+            <AssignmentProvider>
+              <Suspense fallback={<LoadingSpinner />}>
+                {children}
+              </Suspense>
+              <Toaster 
+                richColors 
+                position="top-right" 
+                toastOptions={{
+                  className: "glass",
+                  duration: 3000,
+                }}
+              />
+            </AssignmentProvider>
           </ThemeProvider>
         </QueryClientProvider>
       </trpc.Provider>

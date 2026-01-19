@@ -1,51 +1,62 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, pets, petTutors, documents } from "@/lib/db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { db, documentos, processos, assistidos } from "@/lib/db";
+import { eq, and, desc, sql, or } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
-
 import { getSupabaseAdmin } from "@/lib/supabase/client";
-
-
 
 export const documentsRouter = router({
   /**
-   * Lista documentos de um pet
+   * Lista documentos de um processo
    */
-  byPet: protectedProcedure
+  byProcesso: protectedProcedure
     .input(
       z.object({
-        petId: z.number(),
-        category: z.string().optional(),
+        processoId: z.number(),
+        categoria: z.string().optional(),
       })
     )
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       return safeAsync(async () => {
-        // Verificar acesso ao pet
-        if (ctx.user.role !== "admin") {
-          const relation = await db.query.petTutors.findFirst({
-            where: and(
-              eq(petTutors.petId, input.petId),
-              eq(petTutors.tutorId, ctx.user.id)
-            ),
-          });
+        let conditions = [eq(documentos.processoId, input.processoId)];
 
-          if (!relation) {
-            throw Errors.forbidden();
-          }
-        }
-
-        let conditions = [eq(documents.petId, input.petId)];
-
-        if (input.category) {
-          conditions.push(eq(documents.category, input.category));
+        if (input.categoria) {
+          conditions.push(eq(documentos.categoria, input.categoria));
         }
 
         const result = await db
           .select()
-          .from(documents)
+          .from(documentos)
           .where(and(...conditions))
-          .orderBy(desc(documents.createdAt));
+          .orderBy(desc(documentos.createdAt));
+
+        return result;
+      }, "Erro ao buscar documentos");
+    }),
+
+  /**
+   * Lista documentos de um assistido
+   */
+  byAssistido: protectedProcedure
+    .input(
+      z.object({
+        assistidoId: z.number(),
+        categoria: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        let conditions = [eq(documentos.assistidoId, input.assistidoId)];
+
+        if (input.categoria) {
+          conditions.push(eq(documentos.categoria, input.categoria));
+        }
+
+        const result = await db
+          .select()
+          .from(documentos)
+          .where(and(...conditions))
+          .orderBy(desc(documentos.createdAt));
 
         return result;
       }, "Erro ao buscar documentos");
@@ -57,67 +68,51 @@ export const documentsRouter = router({
   upload: protectedProcedure
     .input(
       z.object({
-        petId: z.number(),
-        title: z.string().min(1).max(200),
-        description: z.string().optional(),
-        category: z.enum([
-          "vaccination", 
-          "exam", 
-          "prescription", 
-          "medical_record", 
-          "preventive",
-          "training",
-          "behavior",
-          "nutrition",
-          "insurance",
-          "identification",
-          "contract",
-          "photo",
-          "other"
+        processoId: z.number().optional(),
+        assistidoId: z.number().optional(),
+        demandaId: z.number().optional(),
+        titulo: z.string().min(1).max(200),
+        descricao: z.string().optional(),
+        categoria: z.enum([
+          "peca",
+          "procuracao",
+          "documento_pessoal",
+          "comprovante",
+          "decisao",
+          "sentenca",
+          "recurso",
+          "outro"
         ]),
+        tipoPeca: z.string().optional(),
         fileUrl: z.string().url(),
         fileName: z.string().optional(),
         mimeType: z.string().optional(),
         fileSize: z.number().optional(),
-        eventDate: z.string().or(z.date()).optional(), // Para integrar com calendário
-        expirationDate: z.string().or(z.date()).optional(), // Data de vencimento
+        isTemplate: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        // Log detalhado para debug
-        console.log('[documents.upload] ctx.user:', JSON.stringify(ctx.user));
-        console.log('[documents.upload] input:', JSON.stringify(input));
-        // Verificar acesso ao pet
-        if (ctx.user.role !== "admin") {
-          const relation = await db.query.petTutors.findFirst({
-            where: and(
-              eq(petTutors.petId, input.petId),
-              eq(petTutors.tutorId, ctx.user.id)
-            ),
-          });
-
-          if (!relation) {
-            throw Errors.forbidden();
-          }
-        }
-
-        const [document] = await db
-          .insert(documents)
+        const [documento] = await db
+          .insert(documentos)
           .values({
-            petId: input.petId,
+            processoId: input.processoId || null,
+            assistidoId: input.assistidoId || null,
+            demandaId: input.demandaId || null,
             uploadedById: ctx.user.id,
-            title: input.title,
-            description: input.description || null,
-            category: input.category,
+            titulo: input.titulo,
+            descricao: input.descricao || null,
+            categoria: input.categoria,
+            tipoPeca: input.tipoPeca || null,
             fileUrl: input.fileUrl,
             fileName: input.fileName || null,
             mimeType: input.mimeType || null,
             fileSize: input.fileSize || null,
+            isTemplate: input.isTemplate || false,
           })
           .returning();
 
-        return document;
+        return documento;
       }, "Erro ao fazer upload do documento");
     }),
 
@@ -128,41 +123,40 @@ export const documentsRouter = router({
     .input(
       z.object({
         id: z.number(),
-        title: z.string().min(1).max(200).optional(),
-        description: z.string().optional(),
-        category: z.enum([
-          "vaccination", 
-          "exam", 
-          "prescription", 
-          "medical_record", 
-          "preventive",
-          "training",
-          "behavior",
-          "nutrition",
-          "insurance",
-          "identification",
-          "contract",
-          "photo",
-          "other"
+        titulo: z.string().min(1).max(200).optional(),
+        descricao: z.string().optional(),
+        categoria: z.enum([
+          "peca",
+          "procuracao",
+          "documento_pessoal",
+          "comprovante",
+          "decisao",
+          "sentenca",
+          "recurso",
+          "outro"
         ]).optional(),
+        tipoPeca: z.string().optional(),
+        isTemplate: z.boolean().optional(),
       })
     )
     .mutation(async ({ input }) => {
       return safeAsync(async () => {
         const { id, ...data } = input;
-        const updateData: Record<string, unknown> = {};
+        const updateData: Record<string, unknown> = { updatedAt: new Date() };
 
-        if (data.title !== undefined) updateData.title = data.title;
-        if (data.description !== undefined) updateData.description = data.description;
-        if (data.category !== undefined) updateData.category = data.category;
+        if (data.titulo !== undefined) updateData.titulo = data.titulo;
+        if (data.descricao !== undefined) updateData.descricao = data.descricao;
+        if (data.categoria !== undefined) updateData.categoria = data.categoria;
+        if (data.tipoPeca !== undefined) updateData.tipoPeca = data.tipoPeca;
+        if (data.isTemplate !== undefined) updateData.isTemplate = data.isTemplate;
 
-        const [document] = await db
-          .update(documents)
+        const [documento] = await db
+          .update(documentos)
           .set(updateData)
-          .where(eq(documents.id, id))
+          .where(eq(documentos.id, id))
           .returning();
 
-        return document;
+        return documento;
       }, "Erro ao atualizar documento");
     }),
 
@@ -174,7 +168,7 @@ export const documentsRouter = router({
     .mutation(async ({ input }) => {
       return safeAsync(async () => {
         // TODO: Remover arquivo do storage
-        await db.delete(documents).where(eq(documents.id, input.id));
+        await db.delete(documentos).where(eq(documentos.id, input.id));
         return { success: true };
       }, "Erro ao remover documento");
     }),
@@ -185,7 +179,8 @@ export const documentsRouter = router({
   list: adminProcedure
     .input(
       z.object({
-        category: z.string().optional(),
+        categoria: z.string().optional(),
+        isTemplate: z.boolean().optional(),
         limit: z.number().default(50),
       }).optional()
     )
@@ -193,26 +188,64 @@ export const documentsRouter = router({
       return safeAsync(async () => {
         let conditions: ReturnType<typeof eq>[] = [];
 
-        if (input?.category) {
-          conditions.push(eq(documents.category, input.category));
+        if (input?.categoria) {
+          conditions.push(eq(documentos.categoria, input.categoria));
+        }
+
+        if (input?.isTemplate !== undefined) {
+          conditions.push(eq(documentos.isTemplate, input.isTemplate));
         }
 
         const result = await db
           .select({
-            document: documents,
-            pet: {
-              id: pets.id,
-              name: pets.name,
+            documento: documentos,
+            processo: {
+              id: processos.id,
+              numeroAutos: processos.numeroAutos,
+            },
+            assistido: {
+              id: assistidos.id,
+              nome: assistidos.nome,
             },
           })
-          .from(documents)
-          .innerJoin(pets, eq(documents.petId, pets.id))
+          .from(documentos)
+          .leftJoin(processos, eq(documentos.processoId, processos.id))
+          .leftJoin(assistidos, eq(documentos.assistidoId, assistidos.id))
           .where(conditions.length > 0 ? and(...conditions) : undefined)
-          .orderBy(desc(documents.createdAt))
+          .orderBy(desc(documentos.createdAt))
           .limit(input?.limit || 50);
 
         return result;
       }, "Erro ao listar documentos");
+    }),
+
+  /**
+   * Lista templates de peças
+   */
+  templates: protectedProcedure
+    .input(
+      z.object({
+        tipoPeca: z.string().optional(),
+        limit: z.number().default(50),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        let conditions = [eq(documentos.isTemplate, true)];
+
+        if (input?.tipoPeca) {
+          conditions.push(eq(documentos.tipoPeca, input.tipoPeca));
+        }
+
+        const result = await db
+          .select()
+          .from(documentos)
+          .where(and(...conditions))
+          .orderBy(desc(documentos.createdAt))
+          .limit(input?.limit || 50);
+
+        return result;
+      }, "Erro ao listar templates");
     }),
 
   /**
@@ -222,55 +255,40 @@ export const documentsRouter = router({
     return safeAsync(async () => {
       const [total] = await db
         .select({ count: sql<number>`count(*)::int` })
-        .from(documents);
+        .from(documentos);
 
-      const [byCategory] = await db
-        .select({
-          category: documents.category,
-          count: sql<number>`count(*)::int`,
-        })
-        .from(documents)
-        .groupBy(documents.category);
+      const [templates] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(documentos)
+        .where(eq(documentos.isTemplate, true));
 
       return {
         total: total?.count || 0,
+        templates: templates?.count || 0,
       };
     }, "Erro ao buscar estatísticas de documentos");
   }),
 
   /**
-   * Gera URL assinada para upload direto ao Storage (usando service key)
+   * Gera URL assinada para upload direto ao Storage
    */
   getUploadUrl: protectedProcedure
     .input(
       z.object({
-        petId: z.number(),
-        category: z.string(),
+        processoId: z.number().optional(),
+        categoria: z.string(),
         fileName: z.string(),
         mimeType: z.string(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       return safeAsync(async () => {
-        // Verificar acesso ao pet
-        if (ctx.user.role !== "admin") {
-          const relation = await db.query.petTutors.findFirst({
-            where: and(
-              eq(petTutors.petId, input.petId),
-              eq(petTutors.tutorId, ctx.user.id)
-            ),
-          });
-
-          if (!relation) {
-            throw Errors.forbidden();
-          }
-        }
-
         const supabase = getSupabaseAdmin();
         
         // Gerar nome único para o arquivo
         const fileExt = input.fileName.split(".").pop()?.toLowerCase() || "bin";
-        const filePath = `pets/${input.petId}/${input.category}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const folder = input.processoId ? `processos/${input.processoId}` : "geral";
+        const filePath = `${folder}/${input.categoria}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
         // Criar URL assinada para upload
         const { data, error } = await supabase.storage
@@ -290,39 +308,26 @@ export const documentsRouter = router({
     }),
 
   /**
-   * Upload de arquivo via servidor (usando service key - sem RLS)
+   * Upload de arquivo via servidor
    */
   uploadFile: protectedProcedure
     .input(
       z.object({
-        petId: z.number(),
-        category: z.string(),
+        processoId: z.number().optional(),
+        categoria: z.string(),
         fileName: z.string(),
         fileBase64: z.string(), // Arquivo em base64
         mimeType: z.string(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       return safeAsync(async () => {
-        // Verificar acesso ao pet
-        if (ctx.user.role !== "admin") {
-          const relation = await db.query.petTutors.findFirst({
-            where: and(
-              eq(petTutors.petId, input.petId),
-              eq(petTutors.tutorId, ctx.user.id)
-            ),
-          });
-
-          if (!relation) {
-            throw Errors.forbidden();
-          }
-        }
-
         const supabase = getSupabaseAdmin();
         
         // Gerar nome único para o arquivo
         const fileExt = input.fileName.split(".").pop()?.toLowerCase() || "bin";
-        const filePath = `pets/${input.petId}/${input.category}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const folder = input.processoId ? `processos/${input.processoId}` : "geral";
+        const filePath = `${folder}/${input.categoria}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
         // Converter base64 para buffer
         const base64Data = input.fileBase64.replace(/^data:[^;]+;base64,/, "");

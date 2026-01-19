@@ -1,35 +1,52 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Dog,
-  Calendar,
   Users,
-  CreditCard,
+  Calendar,
   Bell,
-  Syringe,
   FileText,
   LogOut,
-  Pill,
-  ClipboardList,
-  TrendingUp,
-  MessageSquare,
-  Shield,
   PanelLeft,
-  Heart,
-  Brain,
-  UtensilsCrossed,
-  UserCog,
   User,
-  GraduationCap,
+  MessageCircle,
+  Settings,
+  BarChart3,
+  Scale,
+  Gavel,
+  FileSearch,
+  Clock,
+  AlertTriangle,
+  Calculator,
+  FolderOpen,
+  UserCheck,
+  Building2,
+  Briefcase,
+  Target,
+  ChevronRight,
+  Shield,
+  Lock,
+  RefreshCw,
+  Award,
+  TrendingUp,
+  ChevronDown,
+  Zap,
+  Brain,
+  Mic,
+  Heart,
+  ClipboardCheck,
+  Columns3,
+  History,
+  PieChart,
+  Handshake,
+  CalendarDays,
+  Sparkles,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/utils";
 import {
   Sidebar,
@@ -50,9 +67,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeToggle } from "@/components/font-size-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
+import { AssignmentSwitcher } from "@/components/layout/assignment-switcher";
+import { 
+  useAssignment, 
+  CONTEXT_MENU_ITEMS, 
+  UTILITIES_MENU,
+  type MenuSection,
+  type AssignmentMenuItem,
+} from "@/contexts/assignment-context";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -63,109 +93,50 @@ interface AdminSidebarProps {
   userEmail?: string;
 }
 
-const menuGroups = [
-  {
-    label: "Operacional",
-    color: "blue",
-    items: [
-      { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-      { icon: Dog, label: "Pets", path: "/admin/pets" },
-      { icon: Calendar, label: "Calendário", path: "/admin/calendar" },
-    ],
-  },
-  {
-    label: "Cuidados",
-    color: "red",
-    items: [
-      { icon: Heart, label: "Central de Saúde", path: "/admin/health" },
-      { icon: UtensilsCrossed, label: "Alimentação", path: "/admin/food" },
-      { icon: Brain, label: "Comportamento", path: "/admin/behavior" },
-      { icon: GraduationCap, label: "Treinamento", path: "/admin/training" },
-      { icon: ClipboardList, label: "Logs Diários", path: "/admin/logs" },
-    ],
-  },
-  {
-    label: "Comunicação",
-    color: "orange",
-    items: [
-      { icon: MessageSquare, label: "Mural", path: "/admin/wall" },
-      { icon: FileText, label: "Documentos", path: "/admin/documents" },
-    ],
-  },
-  {
-    label: "Financeiro",
-    color: "green",
-    items: [
-      { icon: TrendingUp, label: "Finanças", path: "/admin/finances" },
-    ],
-  },
-  {
-    label: "Gestão",
-    color: "purple",
-    items: [
-      { icon: Users, label: "Tutores", path: "/admin/tutors" },
-    ],
-  },
-];
-
-// Sistema de cores harmonioso e organizado
-// - Operacional (azul): Dashboard, Pets, Calendário
-// - Cuidados (rosa): Saúde, Alimentação, Comportamento, Treinamento, Logs
-// - Comunicação (laranja): Mural, Documentos  
-// - Financeiro (verde): Finanças
-// - Gestão (slate): Tutores
-const colorClasses = {
-  blue: {
-    icon: "text-blue-500 dark:text-blue-400",
-    iconActive: "text-blue-600 dark:text-blue-400",
-    bg: "bg-blue-50/60 dark:bg-blue-950/40",
-    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
-    bgActive: "bg-blue-50/80 dark:bg-blue-950/50",
-    border: "border-blue-200/50 dark:border-blue-700/30",
-    glow: "",
-  },
-  red: {
-    icon: "text-rose-500 dark:text-rose-400",
-    iconActive: "text-rose-600 dark:text-rose-400",
-    bg: "bg-rose-50/60 dark:bg-rose-950/40",
-    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
-    bgActive: "bg-rose-50/80 dark:bg-rose-950/50",
-    border: "border-rose-200/50 dark:border-rose-700/30",
-    glow: "",
-  },
-  orange: {
-    icon: "text-orange-500 dark:text-orange-400",
-    iconActive: "text-orange-600 dark:text-orange-400",
-    bg: "bg-orange-50/60 dark:bg-orange-950/40",
-    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
-    bgActive: "bg-orange-50/80 dark:bg-orange-950/50",
-    border: "border-orange-200/50 dark:border-orange-700/30",
-    glow: "",
-  },
-  green: {
-    icon: "text-emerald-500 dark:text-emerald-400",
-    iconActive: "text-emerald-600 dark:text-emerald-400",
-    bg: "bg-emerald-50/60 dark:bg-emerald-950/40",
-    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
-    bgActive: "bg-emerald-50/80 dark:bg-emerald-950/50",
-    border: "border-emerald-200/50 dark:border-emerald-700/30",
-    glow: "",
-  },
-  purple: {
-    icon: "text-slate-500 dark:text-slate-400",
-    iconActive: "text-slate-600 dark:text-slate-400",
-    bg: "bg-slate-50/60 dark:bg-slate-800/40",
-    bgHover: "hover:bg-slate-100/60 dark:hover:bg-slate-800/40",
-    bgActive: "bg-slate-100/80 dark:bg-slate-800/50",
-    border: "border-slate-200/50 dark:border-slate-700/30",
-    glow: "",
-  },
+// Mapeamento de ícones
+const iconMap: Record<string, React.ElementType> = {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  Bell,
+  FileText,
+  User,
+  MessageCircle,
+  Settings,
+  BarChart3,
+  Scale,
+  Gavel,
+  FileSearch,
+  Clock,
+  AlertTriangle,
+  Calculator,
+  FolderOpen,
+  UserCheck,
+  Building2,
+  Briefcase,
+  Target,
+  Shield,
+  Lock,
+  RefreshCw,
+  Award,
+  TrendingUp,
+  Zap,
+  Brain,
+  Mic,
+  Heart,
+  ClipboardCheck,
+  Columns3,
+  History,
+  PieChart,
+  Handshake,
+  CalendarDays,
+  Sparkles,
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
-const DEFAULT_WIDTH = 300;
-const MIN_WIDTH = 260;
-const MAX_WIDTH = 420;
+const DEFAULT_WIDTH = 280;
+const MIN_WIDTH = 240;
+const MAX_WIDTH = 380;
 
 export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProps) {
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
@@ -201,6 +172,190 @@ export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProp
   );
 }
 
+// ==========================================
+// COMPONENTE DE ITEM DE MENU
+// ==========================================
+
+function MenuItem({
+  item,
+  isActive,
+  isCollapsed,
+  config,
+  onNavigate,
+}: {
+  item: AssignmentMenuItem;
+  isActive: boolean;
+  isCollapsed: boolean;
+  config: ReturnType<typeof useAssignment>["config"];
+  onNavigate: () => void;
+}) {
+  const Icon = iconMap[item.icon] || Briefcase;
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive}
+        tooltip={item.label}
+        className={cn(
+          "h-10 transition-all duration-200 rounded-lg group/item",
+          isActive && "shadow-sm"
+        )}
+        style={{
+          background: isActive ? config.sidebarActiveBg : undefined,
+          boxShadow: isActive ? `0 0 0 1.5px ${config.sidebarActiveRing}` : undefined,
+        }}
+      >
+        <Link href={item.path} prefetch={true} onClick={onNavigate}>
+          <Icon
+            className={cn(
+              "transition-all duration-200 flex-shrink-0",
+              isActive ? "h-[18px] w-[18px]" : "h-4 w-4"
+            )}
+            style={{
+              color: isActive ? config.accentColor : config.sidebarTextMuted,
+            }}
+            strokeWidth={isActive ? 2 : 1.8}
+          />
+          <span
+            className={cn(
+              "text-[13px] transition-colors duration-200 flex-1",
+              isActive ? "font-semibold text-foreground" : "font-medium"
+            )}
+            style={{
+              color: isActive ? undefined : config.sidebarTextMuted,
+            }}
+          >
+            {item.label}
+          </span>
+          {item.isPremium && !isCollapsed && (
+            <Sparkles className="w-3 h-3 text-amber-500 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+          )}
+          {isActive && !isCollapsed && (
+            <div
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: config.accentColor }}
+            />
+          )}
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+// ==========================================
+// COMPONENTE DE SEÇÃO DE MENU
+// ==========================================
+
+function MenuSectionComponent({
+  section,
+  pathname,
+  isCollapsed,
+  config,
+  onNavigate,
+}: {
+  section: MenuSection;
+  pathname: string;
+  isCollapsed: boolean;
+  config: ReturnType<typeof useAssignment>["config"];
+  onNavigate: () => void;
+}) {
+  const [isOpen, setIsOpen] = useState(section.defaultOpen !== false);
+
+  const hasActiveItem = section.items.some(
+    (item) =>
+      pathname === item.path ||
+      (item.path !== "/admin" && pathname.startsWith(item.path))
+  );
+
+  // Auto-expand se tiver item ativo
+  useEffect(() => {
+    if (hasActiveItem && !isOpen) {
+      setIsOpen(true);
+    }
+  }, [hasActiveItem, isOpen]);
+
+  if (section.collapsible && !isCollapsed) {
+    return (
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <button
+            className={cn(
+              "w-full flex items-center justify-between px-3 py-2 mb-1 rounded-lg transition-colors",
+              "hover:bg-black/5 dark:hover:bg-white/5"
+            )}
+          >
+            <span
+              className="text-[10px] font-bold uppercase tracking-[0.12em]"
+              style={{ color: config.sidebarTextMuted }}
+            >
+              {section.title}
+            </span>
+            <ChevronDown
+              className={cn(
+                "h-3 w-3 transition-transform duration-200",
+                isOpen && "rotate-180"
+              )}
+              style={{ color: config.sidebarTextMuted }}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-0.5">
+          {section.items.map((item) => {
+            const isActive =
+              pathname === item.path ||
+              (item.path !== "/admin" && pathname.startsWith(item.path));
+            return (
+              <MenuItem
+                key={item.path}
+                item={item}
+                isActive={isActive}
+                isCollapsed={isCollapsed}
+                config={config}
+                onNavigate={onNavigate}
+              />
+            );
+          })}
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  }
+
+  return (
+    <div>
+      {!isCollapsed && (
+        <div className="px-3 py-2 mb-1">
+          <span
+            className="text-[10px] font-bold uppercase tracking-[0.12em]"
+            style={{ color: config.accentColor }}
+          >
+            {section.title}
+          </span>
+        </div>
+      )}
+      {section.items.map((item) => {
+        const isActive =
+          pathname === item.path ||
+          (item.path !== "/admin" && pathname.startsWith(item.path));
+        return (
+          <MenuItem
+            key={item.path}
+            item={item}
+            isActive={isActive}
+            isCollapsed={isCollapsed}
+            config={config}
+            onNavigate={onNavigate}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+// ==========================================
+// SIDEBAR CONTENT
+// ==========================================
+
 function AdminSidebarContent({
   children,
   setSidebarWidth,
@@ -215,19 +370,20 @@ function AdminSidebarContent({
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useClerk();
-  const { state, toggleSidebar, setOpen } = useSidebar();
+  const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const activeMenuItem = menuGroups
-    .flatMap((g) => g.items)
-    .find(
-      (item) =>
-        pathname === item.path ||
-        (item.path !== "/admin" && pathname.startsWith(item.path + "/"))
-    );
+  // Contexto de atribuição com módulos
+  const { config, modules } = useAssignment();
+
+  const handleNavigate = () => {
+    if (isMobile && openMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   useEffect(() => {
     if (isCollapsed) {
@@ -265,9 +421,7 @@ function AdminSidebarContent({
   }, [isResizing, setSidebarWidth]);
 
   async function handleLogout() {
-    // Limpa a sessão customizada (cookies)
     await logoutAction();
-    // Faz logout do Clerk e redireciona para a página inicial
     await signOut({ redirectUrl: "/" });
   }
 
@@ -276,131 +430,227 @@ function AdminSidebarContent({
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
-          className="border-r border-border/40 bg-gradient-to-b from-card/95 via-card to-card/90 backdrop-blur-xl shadow-xl"
+          className={cn(
+            "border-r-2 backdrop-blur-xl shadow-[2px_0_12px_-4px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_12px_-4px_rgba(0,0,0,0.3)]"
+          )}
+          style={{
+            background: `var(--sidebar-bg, ${config.sidebarBg})`,
+            borderColor: `var(--sidebar-border, ${config.sidebarBorder})`,
+          }}
           disableTransition={isResizing}
         >
-          <SidebarHeader className="h-14 justify-center border-b border-border/20">
-            <div className="flex items-center gap-3 px-6 transition-all w-full">
-              {!isCollapsed && (
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold tracking-wider uppercase bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    Administração
-                  </span>
-                </div>
-              )}
-            </div>
+          {/* ==========================================
+              BLOCO SUPERIOR: CONTEXTO (Switcher)
+              ========================================== */}
+          <SidebarHeader
+            className="border-b-2 py-3"
+            style={{
+              background: `var(--sidebar-header-bg, ${config.sidebarHeaderBg})`,
+              borderColor: `var(--sidebar-divider, ${config.sidebarDivider})`,
+            }}
+          >
+            <AssignmentSwitcher collapsed={isCollapsed} />
           </SidebarHeader>
 
-          <SidebarContent className="gap-0 px-3 py-2 overflow-y-auto flex-1">
-            <SidebarMenu className={isCollapsed ? "gap-0.5" : "gap-2"}>
+          <SidebarContent className="gap-0 py-3 px-2 overflow-y-auto flex-1">
+            <SidebarMenu className="gap-1">
               {/* Toggle Button */}
-              <SidebarMenuItem>
+              <SidebarMenuItem className={isCollapsed ? "flex justify-center" : ""}>
                 <SidebarMenuButton
                   onClick={toggleSidebar}
-                  tooltip={isCollapsed ? "Expandir Menu" : "Recolher Menu"}
-                  className={`${isCollapsed ? "h-9" : "h-12"} hover:bg-primary/10 transition-all duration-300`}
+                  tooltip={isCollapsed ? "Expandir" : "Recolher"}
+                  className="h-10 rounded-lg transition-all duration-200"
+                  style={{
+                    color: `var(--sidebar-text-muted, ${config.sidebarTextMuted})`,
+                  }}
                 >
-                  <PanelLeft className="h-6 w-6 text-[hsl(220_13%_45%)] group-hover:text-primary transition-colors duration-300" />
-                  <span className="text-sm font-medium text-[hsl(220_11%_50%)] group-hover:text-foreground transition-colors duration-300">
-                    {isCollapsed ? "Expandir" : "Recolher Menu"}
+                  <PanelLeft className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                  <span className="text-[13px] font-medium">
+                    {isCollapsed ? "Expandir" : "Recolher"}
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <div className="h-px bg-border/40 my-2" />
+              {/* ==========================================
+                  BLOCO CONTEXTO: Dashboard, Casos, Agenda
+                  ========================================== */}
+              {!isCollapsed && (
+                <div className="px-3 py-2 mb-1 mt-2">
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-[0.12em] flex items-center gap-1.5"
+                    style={{ color: config.sidebarTextMuted }}
+                  >
+                    <LayoutDashboard className="w-3 h-3" />
+                    Central
+                  </span>
+                </div>
+              )}
 
-              {/* Menu Groups */}
-              {menuGroups.map((group, groupIndex) => (
-                <div key={group.label}>
-                  {!isCollapsed && (
-                    <div className="px-3 py-2 mt-4 mb-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[hsl(220_11%_50%)]">
-                        {group.label}
-                      </span>
-                    </div>
-                  )}
+              {CONTEXT_MENU_ITEMS.map((item) => {
+                const Icon = iconMap[item.icon] || LayoutDashboard;
+                const isActive = pathname === item.path;
 
-                  {group.items.map((item) => {
-                    const isActive =
-                      pathname === item.path ||
-                      (item.path !== "/admin" && pathname.startsWith(item.path + "/"));
-                    const colors = colorClasses[group.color as keyof typeof colorClasses];
-
-                    return (
-                      <SidebarMenuItem key={item.path}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.label}
-                          className={`${isCollapsed ? "h-9" : "h-12"} transition-all duration-300 ease rounded-[14px] group relative overflow-hidden ${
-                            isActive
-                              ? `${colors.bgActive} shadow-[0_2px_4px_0_rgba(0,0,0,0.06)] ring-1 ${colors.border}`
-                              : `${colors.bgHover} hover:shadow-[0_1px_3px_0_rgba(0,0,0,0.04)]`
-                          }`}
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.label}
+                      className={cn(
+                        "h-11 transition-all duration-200 rounded-lg",
+                        isActive && "shadow-sm"
+                      )}
+                      style={{
+                        background: isActive ? config.sidebarActiveBg : undefined,
+                        boxShadow: isActive ? `0 0 0 1.5px ${config.sidebarActiveRing}` : undefined,
+                      }}
+                    >
+                      <Link href={item.path} prefetch={true} onClick={handleNavigate}>
+                        <Icon
+                          className={cn(
+                            "transition-all duration-200",
+                            isActive ? "h-5 w-5" : "h-[18px] w-[18px]"
+                          )}
+                          style={{
+                            color: isActive ? config.accentColor : config.sidebarTextMuted,
+                          }}
+                          strokeWidth={isActive ? 2 : 1.8}
+                        />
+                        <span
+                          className={cn(
+                            "text-[14px] transition-colors duration-200",
+                            isActive ? "font-bold text-foreground" : "font-semibold"
+                          )}
+                          style={{
+                            color: isActive ? undefined : config.sidebarTextMuted,
+                          }}
                         >
-                          <Link
-                            href={item.path}
-                            prefetch={true}
-                            onClick={() => {
-                              if (isMobile && state === "expanded") {
-                                setOpen(false);
-                              }
-                            }}
-                          >
-                            {/* Ícone SEMPRE colorido */}
-                            <item.icon
-                              className={`h-6 w-6 relative z-10 transition-all duration-300 ease ${
-                                isActive
-                                  ? `${colors.iconActive} scale-105`
-                                  : `text-[hsl(220_13%_45%)] group-hover:text-[hsl(220_16%_38%)] group-hover:scale-105`
-                              }`}
-                            />
-                            {/* Texto com hierarquia melhorada */}
-                            <span className={`relative z-10 text-sm transition-colors duration-300 ${
-                              isActive 
-                                ? "font-bold text-foreground" 
-                                : "font-medium text-[hsl(220_11%_50%)] group-hover:text-[hsl(220_16%_38%)]"
-                            }`}>
-                              {item.label}
-                            </span>
-                            {isActive && !isCollapsed && (
-                              <div className={`ml-auto w-1.5 h-1.5 rounded-full ${colors.icon}`} />
-                            )}
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
+                          {item.label}
+                        </span>
+                        {isActive && !isCollapsed && (
+                          <div
+                            className="ml-auto w-2 h-2 rounded-full"
+                            style={{ backgroundColor: config.accentColor }}
+                          />
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
 
-                  {groupIndex < menuGroups.length - 1 && (
-                    <div
-                      className={`h-px bg-border/20 mx-3 ${isCollapsed ? "my-1" : "my-3"}`}
-                    />
+              {/* Separador */}
+              {!isCollapsed && (
+                <div
+                  className="h-[2px] my-3 mx-1 rounded-full"
+                  style={{
+                    background: `linear-gradient(to right, ${config.sidebarDivider}, transparent)`,
+                  }}
+                />
+              )}
+              {isCollapsed && <div className="h-2" />}
+
+              {/* ==========================================
+                  BLOCO CENTRAL: ATUAÇÃO (Módulos Específicos)
+                  ========================================== */}
+              {!isCollapsed && (
+                <div className="px-3 py-2 mb-1">
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-[0.12em] flex items-center gap-1.5"
+                    style={{ color: config.accentColor }}
+                  >
+                    <span>{config.emoji}</span>
+                    {config.shortName}
+                  </span>
+                </div>
+              )}
+
+              {/* Renderizar módulos específicos da especialidade */}
+              {modules.map((section, idx) => (
+                <div key={section.id}>
+                  <MenuSectionComponent
+                    section={section}
+                    pathname={pathname}
+                    isCollapsed={isCollapsed}
+                    config={config}
+                    onNavigate={handleNavigate}
+                  />
+                  {idx < modules.length - 1 && !isCollapsed && (
+                    <div className="h-2" />
                   )}
                 </div>
+              ))}
+
+              {/* Separador antes das Utilidades */}
+              {!isCollapsed && (
+                <div
+                  className="h-[2px] my-3 mx-1 rounded-full"
+                  style={{
+                    background: `linear-gradient(to right, transparent, ${config.sidebarDivider}, transparent)`,
+                  }}
+                />
+              )}
+              {isCollapsed && <div className="h-2" />}
+
+              {/* ==========================================
+                  BLOCO INFERIOR: UTILIDADES
+                  ========================================== */}
+              {UTILITIES_MENU.map((section) => (
+                <MenuSectionComponent
+                  key={section.id}
+                  section={section}
+                  pathname={pathname}
+                  isCollapsed={isCollapsed}
+                  config={config}
+                  onNavigate={handleNavigate}
+                />
               ))}
             </SidebarMenu>
           </SidebarContent>
 
-          <SidebarFooter className="p-3 border-t border-border/40 bg-gradient-to-t from-primary/5 to-transparent">
+          {/* Footer */}
+          <SidebarFooter
+            className={cn("border-t-2", isCollapsed ? "p-2" : "p-3")}
+            style={{
+              borderColor: config.sidebarDivider,
+              background: `linear-gradient(to top, ${config.sidebarHover}, transparent)`,
+            }}
+          >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-[14px] px-3 py-3 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 transition-all duration-300 ease w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 group shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] hover:shadow-[0_2px_4px_0_rgba(0,0,0,0.06)] hover:translate-y-[-1px]">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10 blur-lg rounded-full" />
-                    <Avatar className="h-11 w-11 border-2 border-primary/30 shadow-lg relative ring-2 ring-background">
-                      <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-primary/25 to-accent/15 text-primary">
-                        {getInitials(userName)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
+                <button
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2",
+                    isCollapsed ? "justify-center p-1.5" : "px-2 py-2"
+                  )}
+                  style={{
+                    ["--tw-ring-color" as string]: config.accentColor + "60",
+                  }}
+                >
+                  <Avatar
+                    className={cn(
+                      "border shadow-sm transition-all",
+                      isCollapsed ? "h-8 w-8" : "h-9 w-9"
+                    )}
+                    style={{ borderColor: config.accentColor + "40" }}
+                  >
+                    <AvatarFallback
+                      className="text-[10px] font-semibold"
+                      style={{
+                        background: config.accentColorLight,
+                        color: config.accentColor,
+                      }}
+                    >
+                      {getInitials(userName)}
+                    </AvatarFallback>
+                  </Avatar>
                   {!isCollapsed && (
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold truncate leading-none text-foreground">
+                      <p className="text-[13px] font-semibold truncate text-[hsl(160_15%_20%)] dark:text-[hsl(150_10%_88%)]">
                         {userName}
                       </p>
                       {userEmail && (
-                        <p className="text-xs text-[hsl(220_11%_50%)] truncate mt-1.5 font-medium">
+                        <p className="text-[11px] text-[hsl(160_8%_50%)] dark:text-[hsl(150_6%_50%)] truncate mt-0.5">
                           {userEmail}
                         </p>
                       )}
@@ -408,97 +658,166 @@ function AdminSidebarContent({
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 shadow-2xl border-border/40">
-                <DropdownMenuItem
-                  onClick={() => router.push("/admin/profile")}
-                  className="cursor-pointer font-medium"
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Meu Perfil</span>
+              <DropdownMenuContent
+                align="end"
+                className="w-52 shadow-xl border-[hsl(155_15%_90%)] dark:border-[hsl(160_12%_18%)]"
+              >
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/profile" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    Meu Perfil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configurações
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="cursor-pointer text-destructive focus:text-destructive font-semibold"
+                  className="text-red-600 dark:text-red-400 cursor-pointer"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
+                  Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarFooter>
         </Sidebar>
 
-        <div
-          className={`absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-gradient-to-b hover:from-primary/40 hover:via-accent/30 hover:to-primary/40 transition-all duration-300 ${
-            isCollapsed ? "hidden" : ""
-          }`}
-          onMouseDown={() => {
-            if (isCollapsed) return;
-            setIsResizing(true);
-          }}
-          style={{ zIndex: 50 }}
-        />
+        {/* Resize Handle */}
+        {!isCollapsed && (
+          <div
+            className={cn(
+              "absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-20 transition-colors",
+              "hover:bg-[hsl(158,40%,70%)] dark:hover:bg-[hsl(158,30%,30%)]",
+              isResizing && "bg-[hsl(158,50%,60%)] dark:bg-[hsl(158,40%,40%)]"
+            )}
+            onMouseDown={() => setIsResizing(true)}
+          />
+        )}
       </div>
 
-      <SidebarInset className="ml-0">
-        {isMobile && (
-          <div className="flex border-b border-border/40 h-16 items-center justify-between bg-background/95 backdrop-blur-xl px-4 sticky top-0 z-40 shadow-sm">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="h-10 w-10 rounded-xl bg-accent/50 hover:bg-primary/20 transition-colors" />
-              <Link href="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-9 h-9 rounded-full overflow-hidden shadow-sm bg-white flex items-center justify-center">
-                  <Image
-                    src="/tetecare-logo.png"
-                    alt="Tetê Care"
-                    width={36}
-                    height={36}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <span className="font-semibold text-sm">
-                  {activeMenuItem?.label ?? "Admin"}
-                </span>
-              </Link>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <NotificationsPopover />
-              <FontSizeToggle />
-              <ThemeToggle />
-            </div>
-          </div>
-        )}
-        {!isMobile && (
-          <div className="flex border-b border-border/30 h-14 items-center justify-center bg-card/95 backdrop-blur-xl px-6 sticky top-0 z-40 gap-3 shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] relative">
-            <Link
-              href="/admin"
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-300 cursor-pointer"
+      {/* Main Content */}
+      <SidebarInset className="flex flex-col min-h-screen">
+        {/* Header Desktop */}
+        <header
+          className="hidden md:flex h-20 shrink-0 items-center border-b-2 px-6 backdrop-blur-sm"
+          style={{
+            background: `linear-gradient(to right, ${config.sidebarHeaderBg}, transparent 80%)`,
+            borderColor: config.sidebarBorder,
+          }}
+        >
+          <div className="flex items-center gap-4 flex-1">
+            {/* Logo Icon */}
+            <div
+              className="flex items-center justify-center w-12 h-12 rounded-xl shadow-lg"
+              style={{
+                background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
+              }}
             >
-              <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-lg bg-white flex items-center justify-center">
-                <Image
-                  src="/tetecare-logo.png"
-                  alt="Tetê Care"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <span
-                className="text-xl font-bold tracking-tight text-foreground"
-                style={{ fontFamily: '"Inter", system-ui, sans-serif' }}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 32 32"
+                fill="none"
+                className="w-8 h-8"
               >
-                Tetê Care
-              </span>
-            </Link>
-            <div className="flex items-center gap-1.5 absolute right-6">
-              <NotificationsPopover />
-              <FontSizeToggle />
-              <ThemeToggle />
+                <path
+                  d="M16 4L6 8.5v6.5c0 6.5 4.3 12.3 10 13.5 5.7-1.2 10-7 10-13.5V8.5L16 4z"
+                  fill="white"
+                  opacity="0.95"
+                />
+                <g transform="translate(16, 15)">
+                  <path
+                    d="M0 -8 L1.5 -6 L1 4 L0 5 L-1 4 L-1.5 -6 Z"
+                    fill={config.accentColor}
+                    opacity="0.9"
+                  />
+                  <rect
+                    x="-4"
+                    y="3"
+                    width="8"
+                    height="2"
+                    rx="0.5"
+                    fill={config.accentColor}
+                    opacity="0.85"
+                  />
+                  <rect
+                    x="-0.75"
+                    y="5"
+                    width="1.5"
+                    height="4"
+                    rx="0.5"
+                    fill={config.accentColor}
+                    opacity="0.8"
+                  />
+                </g>
+              </svg>
+            </div>
+
+            <div>
+              <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                DefesaHub
+              </h1>
+              <p
+                className="text-xs font-medium"
+                style={{ color: config.sidebarTextMuted }}
+              >
+                {config.name}
+              </p>
             </div>
           </div>
-        )}
-        <main className="flex-1 p-6 md:p-8 min-h-screen">{children}</main>
+
+          <div className="flex items-center gap-3">
+            <FontSizeToggle />
+            <ThemeToggle />
+            <NotificationsPopover />
+          </div>
+        </header>
+
+        {/* Header Mobile */}
+        <header
+          className="md:hidden flex h-16 shrink-0 items-center border-b-2 px-4 gap-3"
+          style={{
+            background: config.sidebarHeaderBg,
+            borderColor: config.sidebarBorder,
+          }}
+        >
+          <SidebarTrigger className="h-9 w-9" />
+          <div className="flex items-center gap-3 flex-1">
+            <div
+              className="flex items-center justify-center w-9 h-9 rounded-lg shadow"
+              style={{
+                background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 32 32"
+                fill="none"
+                className="w-6 h-6"
+              >
+                <path
+                  d="M16 4L6 8.5v6.5c0 6.5 4.3 12.3 10 13.5 5.7-1.2 10-7 10-13.5V8.5L16 4z"
+                  fill="white"
+                  opacity="0.95"
+                />
+              </svg>
+            </div>
+            <span className="font-bold text-zinc-900 dark:text-zinc-100">
+              DefesaHub
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <NotificationsPopover />
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 overflow-auto">{children}</main>
       </SidebarInset>
     </>
   );
 }
-

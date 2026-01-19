@@ -1,20 +1,20 @@
 import { redirect } from "next/navigation";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { LandingPage } from "@/components/landing-page";
 
+// Forçar renderização dinâmica para evitar problemas de build
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
-  const { userId } = await auth();
+  const session = await getSession();
 
   // Se não estiver autenticado, mostra a landing page
-  if (!userId) {
+  if (!session) {
     return <LandingPage />;
   }
 
-  // Se autenticado, buscar o role do usuário
-  const user = await currentUser();
-  const role = (user?.publicMetadata as { role?: string })?.role || "tutor";
-
-  if (role === "admin") {
+  // Se autenticado, redireciona baseado no role
+  if (session.role === "admin") {
     redirect("/admin");
   }
 
