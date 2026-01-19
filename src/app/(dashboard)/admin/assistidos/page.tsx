@@ -77,7 +77,70 @@ import {
   Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAssignment } from "@/contexts/assignment-context";
 import Link from "next/link";
+
+// Cores alinhadas com os workspaces
+const ATRIBUICAO_COLORS: Record<string, { 
+  border: string; 
+  bg: string; 
+  text: string;
+  hoverBg: string;
+  indicator: string;
+}> = {
+  all: { 
+    border: "border-l-zinc-400", 
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-700 dark:text-zinc-300",
+    hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800",
+    indicator: "bg-zinc-600"
+  },
+  JURI: { 
+    border: "border-l-emerald-600 dark:border-l-emerald-500", 
+    bg: "bg-emerald-100 dark:bg-emerald-900/30",
+    text: "text-emerald-700 dark:text-emerald-400",
+    hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
+    indicator: "bg-emerald-600"
+  },
+  VVD: { 
+    border: "border-l-violet-600 dark:border-l-violet-500",
+    bg: "bg-violet-100 dark:bg-violet-900/30",
+    text: "text-violet-700 dark:text-violet-400",
+    hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20",
+    indicator: "bg-violet-600"
+  },
+  EXECUCAO: { 
+    border: "border-l-blue-600 dark:border-l-blue-500",
+    bg: "bg-blue-100 dark:bg-blue-900/30",
+    text: "text-blue-700 dark:text-blue-400",
+    hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-900/20",
+    indicator: "bg-blue-600"
+  },
+  CRIMINAL: { 
+    border: "border-l-rose-600 dark:border-l-rose-500",
+    bg: "bg-rose-100 dark:bg-rose-900/30",
+    text: "text-rose-700 dark:text-rose-400",
+    hoverBg: "hover:bg-rose-50 dark:hover:bg-rose-900/20",
+    indicator: "bg-rose-600"
+  },
+  CIVEL: { 
+    border: "border-l-purple-600 dark:border-l-purple-500",
+    bg: "bg-purple-100 dark:bg-purple-900/30",
+    text: "text-purple-700 dark:text-purple-400",
+    hoverBg: "hover:bg-purple-50 dark:hover:bg-purple-900/20",
+    indicator: "bg-purple-600"
+  },
+};
+
+// Atribuições disponíveis para o filtro
+const ATRIBUICAO_OPTIONS = [
+  { value: "all", label: "Todas", shortLabel: "Todas", icon: "📋" },
+  { value: "JURI", label: "Júri", shortLabel: "Júri", icon: "🏛️" },
+  { value: "VVD", label: "VVD", shortLabel: "VVD", icon: "💜" },
+  { value: "EXECUCAO", label: "Exec. Penal", shortLabel: "EP", icon: "⛓️" },
+  { value: "CRIMINAL", label: "Subst. Criminal", shortLabel: "Crim", icon: "🔄" },
+  { value: "CIVEL", label: "Subst. Cível", shortLabel: "Cível", icon: "⚖️" },
+];
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -953,6 +1016,11 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
 }
 
 export default function AssistidosPage() {
+  // Atribuição do contexto global
+  const { currentAssignment } = useAssignment();
+  
+  // Estados
+  const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -983,7 +1051,8 @@ export default function AssistidosPage() {
       const matchesStatus = statusFilter === "all" || a.statusPrisional === statusFilter;
       const matchesArea = areaFilter === "all" || a.area === areaFilter;
       const matchesPinned = !showPinnedOnly || pinnedIds.has(a.id);
-      return matchesSearch && matchesStatus && matchesArea && matchesPinned;
+      const matchesAtribuicao = atribuicaoFilter === "all" || a.area === atribuicaoFilter;
+      return matchesSearch && matchesStatus && matchesArea && matchesPinned && matchesAtribuicao;
     });
 
     result.sort((a, b) => {
@@ -1008,7 +1077,7 @@ export default function AssistidosPage() {
     });
 
     return result;
-  }, [searchTerm, statusFilter, areaFilter, sortBy, pinnedIds, showPinnedOnly]);
+  }, [searchTerm, statusFilter, areaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter]);
 
   const stats = useMemo(() => ({
     total: mockAssistidos.length,
@@ -1018,28 +1087,95 @@ export default function AssistidosPage() {
     pinned: pinnedIds.size,
   }), [pinnedIds]);
 
+  // Configuração visual da atribuição selecionada
+  const atribuicaoColors = ATRIBUICAO_COLORS[atribuicaoFilter] || ATRIBUICAO_COLORS.all;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Assistidos</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {stats.total} cadastrados • {stats.presos} presos
-            {pinnedIds.size > 0 && <span className="text-amber-600"> • {pinnedIds.size} fixados</span>}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/admin/inteligencia">
-            <Button variant="outline" className="gap-2 text-violet-600 border-violet-200 hover:bg-violet-50">
-              <Brain className="h-4 w-4" />
-              Inteligência
+    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+      {/* Header - Design Suíço: limpo, estruturado, tipografia clara */}
+      <div className="space-y-4">
+        {/* Linha superior: Título + Ações */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "p-2 sm:p-2.5 rounded-lg flex-shrink-0",
+              atribuicaoColors.bg
+            )}>
+              <Users className={cn("w-5 h-5 sm:w-6 sm:h-6", atribuicaoColors.text)} />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                Assistidos
+              </h1>
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                {stats.total} cadastrados • {stats.presos} presos
+                {pinnedIds.size > 0 && <span className="text-amber-600"> • {pinnedIds.size} fixados</span>}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Link href="/admin/inteligencia">
+              <Button variant="outline" size="sm" className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm text-violet-600 border-violet-200 hover:bg-violet-50 dark:border-violet-800 dark:hover:bg-violet-950/20">
+                <Brain className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Inteligência</span>
+              </Button>
+            </Link>
+            <Button variant="outline" size="icon" title="Exportar" className="h-8 w-8 sm:h-9 sm:w-9">
+              <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
-          </Link>
-          <Button variant="outline" size="icon"><Download className="h-4 w-4" /></Button>
-          <Link href="/admin/assistidos/novo">
-            <Button className="gap-2"><Plus className="h-4 w-4" />Novo</Button>
-          </Link>
+            <Link href="/admin/assistidos/novo">
+              <Button className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm">
+                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Novo Assistido</span>
+                <span className="sm:hidden">Novo</span>
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Seletor de Atribuição - Tabs compactos com cores dos workspaces */}
+        <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+          <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
+            {ATRIBUICAO_OPTIONS.map((option) => {
+              const isActive = atribuicaoFilter === option.value;
+              const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
+              const count = option.value === "all" 
+                ? mockAssistidos.length 
+                : mockAssistidos.filter(a => a.area === option.value).length;
+              
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => setAtribuicaoFilter(option.value)}
+                  className={cn(
+                    "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
+                    isActive 
+                      ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
+                      : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
+                  )}
+                >
+                  <span>{option.icon}</span>
+                  <span className="hidden sm:inline">{option.label}</span>
+                  <span className="sm:hidden">{option.shortLabel}</span>
+                  <span className={cn(
+                    "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
+                    isActive 
+                      ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
+                      : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
+                  )}>
+                    {count}
+                  </span>
+                  {isActive && (
+                    <span className={cn(
+                      "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
+                      optionColors.indicator
+                    )} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
