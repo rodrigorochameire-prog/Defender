@@ -1510,7 +1510,7 @@ export default function DemandasPage() {
   const [defensorFilter, setDefensorFilter] = useState("all");
   const [reuPresoFilter, setReuPresoFilter] = useState<boolean | null>(null);
   const [activeView, setActiveView] = useState<"table" | "kanban" | "timeline">("table");
-  const [sortField, setSortField] = useState<"prazo" | "assistido" | "area" | "status" | "comarca">("prazo");
+  const [sortField, setSortField] = useState<"prazo" | "assistido" | "area" | "status" | "comarca">("status");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedDemanda, setSelectedDemanda] = useState<Demanda | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -1593,31 +1593,57 @@ export default function DemandasPage() {
       return matchesSearch && matchesStatus && matchesArea && matchesPrioridade && matchesComarca && matchesDefensor && matchesReuPreso;
     });
 
+    // Função para obter prioridade do status
+    const getStatusPriority = (status: string): number => {
+      // Ordem: Protocolar > Urgente > Trabalho > Delegado > Fila > Aguardando > Concluído
+      if (status.startsWith("3_")) return 1; // Protocolar - PRIMEIRO (pronto para enviar)
+      if (status.startsWith("1_")) return 2; // Urgente
+      if (status.startsWith("2_")) return 3; // Trabalho (amarelo)
+      if (status.startsWith("4_")) return 4; // Delegado (azul)
+      if (status.startsWith("5_")) return 5; // Fila (violeta)
+      if (status.startsWith("6_")) return 6; // Aguardando
+      if (status.startsWith("7_")) return 7; // Concluído
+      return 8;
+    };
+
     // Ordenar
     result.sort((a, b) => {
-      // Réu preso sempre primeiro
+      // Réu preso sempre primeiro dentro do mesmo grupo
       if (a.reuPreso && !b.reuPreso) return -1;
       if (!a.reuPreso && b.reuPreso) return 1;
 
-      let comparison = 0;
-      switch (sortField) {
-        case "prazo":
-          comparison = new Date(a.prazo).getTime() - new Date(b.prazo).getTime();
-          break;
-        case "assistido":
-          comparison = a.assistido.localeCompare(b.assistido);
-          break;
-        case "area":
-          comparison = a.area.localeCompare(b.area);
-          break;
-        case "status":
-          comparison = a.status.localeCompare(b.status);
-          break;
-        case "comarca":
-          comparison = (a.comarca || "").localeCompare(b.comarca || "");
-          break;
+      // Se ordenação manual está ativa, usar ela
+      if (sortField !== "status") {
+        let comparison = 0;
+        switch (sortField) {
+          case "prazo":
+            comparison = new Date(a.prazo || "9999-12-31").getTime() - new Date(b.prazo || "9999-12-31").getTime();
+            break;
+          case "assistido":
+            comparison = a.assistido.localeCompare(b.assistido);
+            break;
+          case "area":
+            comparison = a.area.localeCompare(b.area);
+            break;
+          case "comarca":
+            comparison = (a.comarca || "").localeCompare(b.comarca || "");
+            break;
+        }
+        return sortOrder === "asc" ? comparison : -comparison;
       }
-      return sortOrder === "asc" ? comparison : -comparison;
+
+      // Ordenação padrão por prioridade de status
+      const priorityA = getStatusPriority(a.status);
+      const priorityB = getStatusPriority(b.status);
+      
+      if (priorityA !== priorityB) {
+        return sortOrder === "asc" ? priorityA - priorityB : priorityB - priorityA;
+      }
+
+      // Dentro do mesmo status, ordenar por prazo (mais próximo primeiro)
+      const prazoA = a.prazo ? new Date(a.prazo).getTime() : Infinity;
+      const prazoB = b.prazo ? new Date(b.prazo).getTime() : Infinity;
+      return prazoA - prazoB;
     });
 
     return result;
@@ -1964,7 +1990,13 @@ export default function DemandasPage() {
                   <span className="hidden sm:inline">Ordenar</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => { setSortField("status"); setSortOrder("asc"); }} className="cursor-pointer">
+                  <Target className="h-4 w-4 mr-2" />
+                  Por Prioridade (padrão)
+                  {sortField === "status" && sortOrder === "asc" && <Check className="h-4 w-4 ml-auto" />}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => { setSortField("prazo"); setSortOrder("asc"); }} className="cursor-pointer">
                   <Clock className="h-4 w-4 mr-2" />
                   Prazo (mais próximo)
@@ -1976,11 +2008,6 @@ export default function DemandasPage() {
                   {sortField === "prazo" && sortOrder === "desc" && <Check className="h-4 w-4 ml-auto" />}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { setSortField("status"); setSortOrder("asc"); }} className="cursor-pointer">
-                  <Target className="h-4 w-4 mr-2" />
-                  Status (urgente primeiro)
-                  {sortField === "status" && sortOrder === "asc" && <Check className="h-4 w-4 ml-auto" />}
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => { setSortField("status"); setSortOrder("desc"); }} className="cursor-pointer">
                   <Target className="h-4 w-4 mr-2" />
                   Status (concluído primeiro)
