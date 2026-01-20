@@ -4,18 +4,38 @@ import * as React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+/**
+ * SwissCard - Container Padrão "Clean Canvas"
+ * 
+ * Regra do Minimalismo Institucional:
+ * - Fundo SEMPRE branco (bg-white) no light mode
+ * - Bordas sutis em stone-200 (nunca pretas)
+ * - Sombra muito leve (shadow-sm)
+ * - NUNCA use bg-blue-100, bg-red-50 para fundos de cards inteiros
+ * - Use cores apenas para status pequenos ou hovers
+ */
 export function SwissCard({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof Card>) {
   return (
     <Card
       className={cn(
-        "rounded-lg border border-border shadow-sm bg-card transition-shadow duration-200 hover:shadow-md",
+        // Fundo sempre branco para criar contraste com bg-stone-50 da página
+        "bg-white dark:bg-zinc-900",
+        // Borda sutil em stone (nunca preta)
+        "border border-stone-200 dark:border-zinc-800",
+        // Cantos arredondados e sombra leve
+        "rounded-xl shadow-sm",
+        // Overflow para garantir que nada vaze
+        "overflow-hidden",
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </Card>
   );
 }
 

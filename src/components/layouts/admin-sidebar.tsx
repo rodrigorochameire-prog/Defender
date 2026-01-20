@@ -782,8 +782,8 @@ function AdminSidebarContent({
           </div>
         </header>
 
-        {/* Content */}
-        <main className="flex-1 overflow-auto">{children}</main>
+        {/* Content - Fundo stone-50 para contraste com cards brancos */}
+        <main className="flex-1 overflow-auto bg-stone-50/50 dark:bg-zinc-950">{children}</main>
       </SidebarInset>
     </>
   );
