@@ -22,8 +22,10 @@ import {
   FileText,
   MessageCircle,
   Mic,
+  Moon,
   Pause,
   Play,
+  Sun,
   Tag,
   Timer,
   Users,
@@ -83,13 +85,20 @@ function formatTime(totalSeconds: number) {
   return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function getReactionStyles(value: number) {
-  if (value === 1) return "bg-emerald-500/20 border-emerald-500/40 text-emerald-200";
-  if (value === -1) return "bg-red-500/20 border-red-500/40 text-red-200";
-  return "bg-slate-800/60 border-slate-700 text-slate-300";
+function getReactionStyles(value: number, isDark: boolean) {
+  if (value === 1) return isDark 
+    ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-200" 
+    : "bg-emerald-100 border-emerald-300 text-emerald-700";
+  if (value === -1) return isDark 
+    ? "bg-red-500/20 border-red-500/40 text-red-200" 
+    : "bg-red-100 border-red-300 text-red-700";
+  return isDark 
+    ? "bg-slate-800/60 border-slate-700 text-slate-300" 
+    : "bg-slate-100 border-slate-300 text-slate-700";
 }
 
 export default function PlenarioCockpitPage() {
+  const [isDarkMode, setIsDarkMode] = useState(false); // Modo claro é o padrão
   const [faseAtual, setFaseAtual] = useState(phases[0].id);
   const [isRunning, setIsRunning] = useState(false);
   const [totalTime, setTotalTime] = useState(phases[0].minutes * 60);
@@ -153,33 +162,77 @@ export default function PlenarioCockpitPage() {
     );
   };
 
+  // Classes condicionais baseadas no tema
+  const containerClass = isDarkMode
+    ? "min-h-screen bg-slate-950 text-slate-100 px-4 py-4 lg:px-6 lg:py-6"
+    : "min-h-screen bg-slate-50 text-slate-900 px-4 py-4 lg:px-6 lg:py-6";
+  
+  const cardClass = isDarkMode
+    ? "rounded-2xl border border-slate-800 bg-slate-900/60"
+    : "rounded-2xl border border-slate-200 bg-white shadow-sm";
+  
+  const inputClass = isDarkMode
+    ? "bg-slate-950 border-slate-800 text-slate-100"
+    : "bg-white border-slate-200 text-slate-900";
+  
+  const selectClass = isDarkMode
+    ? "bg-slate-900 border-slate-700 text-slate-200"
+    : "bg-white border-slate-200 text-slate-900";
+  
+  const selectContentClass = isDarkMode
+    ? "bg-slate-950 border-slate-800 text-slate-100"
+    : "bg-white border-slate-200 text-slate-900";
+  
+  const tabsClass = isDarkMode
+    ? "bg-slate-900 border border-slate-800"
+    : "bg-slate-100 border border-slate-200";
+  
+  const tabActiveClass = isDarkMode
+    ? "data-[state=active]:bg-slate-800"
+    : "data-[state=active]:bg-white data-[state=active]:shadow-sm";
+  
+  const textMutedClass = isDarkMode ? "text-slate-400" : "text-slate-500";
+  const textSecondaryClass = isDarkMode ? "text-slate-500" : "text-slate-400";
+  const borderClass = isDarkMode ? "border-slate-800" : "border-slate-200";
+  const hoverBorderClass = isDarkMode ? "hover:border-slate-500" : "hover:border-slate-400";
+  
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-4 py-4 lg:px-6 lg:py-6">
+    <div className={containerClass}>
       {/* Header */}
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex items-center gap-4">
           <Link href="/admin/juri">
-            <Button variant="ghost" size="icon" className="text-slate-200 hover:text-white">
+            <Button variant="ghost" size="icon" className={isDarkMode ? "text-slate-200 hover:text-white" : "text-slate-700 hover:text-slate-900"}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/40 flex items-center justify-center">
-            <Zap className="h-6 w-6 text-amber-400" />
+          <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${isDarkMode ? "bg-amber-500/10 border border-amber-500/40" : "bg-amber-100 border border-amber-300"}`}>
+            <Zap className={isDarkMode ? "h-6 w-6 text-amber-400" : "h-6 w-6 text-amber-600"} />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">Plenário Live</h1>
               <Badge className="bg-amber-500 text-white text-[10px]">Cockpit</Badge>
             </div>
-            <p className="text-sm text-slate-400">Controle em tempo real do julgamento</p>
+            <p className={`text-sm ${textMutedClass}`}>Controle em tempo real do julgamento</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="border-slate-700 text-slate-300">
+          {/* Toggle de tema */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={`gap-2 ${isDarkMode ? "border-slate-700 text-slate-300 hover:text-white hover:border-slate-500" : "border-slate-300 text-slate-700 hover:text-slate-900 hover:border-slate-400"}`}
+          >
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {isDarkMode ? "Modo Claro" : "Modo Escuro"}
+          </Button>
+          <Badge variant="outline" className={isDarkMode ? "border-slate-700 text-slate-300" : "border-slate-300 text-slate-700"}>
             <Users className="h-3 w-3 mr-1" />
             Conselho: 7 jurados
           </Badge>
-          <Badge variant="outline" className="border-slate-700 text-slate-300">
+          <Badge variant="outline" className={isDarkMode ? "border-slate-700 text-slate-300" : "border-slate-300 text-slate-700"}>
             <Mic className="h-3 w-3 mr-1" />
             Defesa ativa
           </Badge>
@@ -187,17 +240,17 @@ export default function PlenarioCockpitPage() {
       </div>
 
       {/* Cronômetro */}
-      <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+      <div className={`mt-6 p-5 ${cardClass}`}>
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Fase atual</p>
+            <p className={`text-xs uppercase tracking-[0.2em] ${textSecondaryClass}`}>Fase atual</p>
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-semibold">{faseSelecionada.label}</h2>
               <Select value={faseAtual} onValueChange={setFaseAtual}>
-                <SelectTrigger className="w-[180px] h-9 bg-slate-900 border-slate-700 text-slate-200">
+                <SelectTrigger className={`w-[180px] h-9 ${selectClass}`}>
                   <SelectValue placeholder="Selecionar fase" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-950 border-slate-800 text-slate-100">
+                <SelectContent className={selectContentClass}>
                   {phases.map((fase) => (
                     <SelectItem key={fase.id} value={fase.id}>
                       {fase.label}
@@ -224,14 +277,14 @@ export default function PlenarioCockpitPage() {
             </Button>
             <Button
               variant="outline"
-              className="border-slate-700 text-slate-200 hover:text-white hover:border-slate-500"
+              className={isDarkMode ? "border-slate-700 text-slate-200 hover:text-white hover:border-slate-500" : "border-slate-300 text-slate-700 hover:text-slate-900 hover:border-slate-400"}
               onClick={() => setTimeLeft(totalTime)}
             >
               <Timer className="h-4 w-4 mr-2" /> Reset
             </Button>
             <Button
               variant="outline"
-              className="border-amber-500/60 text-amber-300 hover:text-amber-200 hover:border-amber-400"
+              className={isDarkMode ? "border-amber-500/60 text-amber-300 hover:text-amber-200 hover:border-amber-400" : "border-amber-400 text-amber-600 hover:text-amber-700 hover:border-amber-500"}
               onClick={() => setIsRunning(false)}
             >
               <MessageCircle className="h-4 w-4 mr-2" /> Aparte
@@ -239,10 +292,10 @@ export default function PlenarioCockpitPage() {
           </div>
         </div>
         <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="text-4xl font-bold tracking-[0.1em] text-white">{formatTime(timeLeft)}</div>
+          <div className={`text-4xl font-bold tracking-[0.1em] ${isDarkMode ? "text-white" : "text-slate-900"}`}>{formatTime(timeLeft)}</div>
           <div className="flex-1 xl:px-6">
-            <Progress value={progress} className="h-3 bg-slate-800" />
-            <p className="text-xs text-slate-400 mt-2">
+            <Progress value={progress} className={`h-3 ${isDarkMode ? "bg-slate-800" : "bg-slate-200"}`} />
+            <p className={`text-xs mt-2 ${textMutedClass}`}>
               {progress}% do tempo estimado concluído
             </p>
           </div>
@@ -253,24 +306,24 @@ export default function PlenarioCockpitPage() {
       <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-12">
         {/* Coluna esquerda */}
         <div className="xl:col-span-4 flex flex-col gap-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className={`p-4 ${cardClass}`}>
             <Tabs defaultValue="roteiro">
-              <TabsList className="bg-slate-900 border border-slate-800">
-                <TabsTrigger value="roteiro" className="data-[state=active]:bg-slate-800">
+              <TabsList className={tabsClass}>
+                <TabsTrigger value="roteiro" className={tabActiveClass}>
                   Roteiro
                 </TabsTrigger>
-                <TabsTrigger value="autos" className="data-[state=active]:bg-slate-800">
+                <TabsTrigger value="autos" className={tabActiveClass}>
                   Referências
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="roteiro" className="mt-4 space-y-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Testemunha</p>
+                  <p className={`text-xs uppercase tracking-[0.2em] ${textSecondaryClass}`}>Testemunha</p>
                   <Select value={testemunhaId} onValueChange={setTestemunhaId}>
-                    <SelectTrigger className="mt-2 bg-slate-950 border-slate-800 text-slate-100">
+                    <SelectTrigger className={`mt-2 ${inputClass}`}>
                       <SelectValue placeholder="Selecionar testemunha" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-950 border-slate-800 text-slate-100">
+                    <SelectContent className={selectContentClass}>
                       {testemunhas.map((testemunha) => (
                         <SelectItem key={testemunha.id} value={testemunha.id}>
                           {testemunha.nome}
@@ -283,17 +336,17 @@ export default function PlenarioCockpitPage() {
                   {perguntasAtuais.map((pergunta) => (
                     <div
                       key={pergunta.id}
-                      className="rounded-xl border border-slate-800 bg-slate-950/60 p-3"
+                      className={`rounded-xl border p-3 ${isDarkMode ? "border-slate-800 bg-slate-950/60" : "border-slate-200 bg-slate-50"}`}
                     >
                       <div className="flex items-start gap-3">
                         <Checkbox
                           checked={!!perguntasMarcadas[pergunta.id]}
                           onCheckedChange={() => handleTogglePergunta(pergunta.id)}
-                          className="mt-1 border-slate-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                          className={`mt-1 ${isDarkMode ? "border-slate-600" : "border-slate-400"} data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500`}
                         />
                         <div>
-                          <p className="text-sm font-medium text-slate-100">{pergunta.texto}</p>
-                          <p className="text-xs text-amber-300 mt-1">
+                          <p className={`text-sm font-medium ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>{pergunta.texto}</p>
+                          <p className={`text-xs mt-1 ${isDarkMode ? "text-amber-300" : "text-amber-600"}`}>
                             Se negar: ler {pergunta.referencia}
                           </p>
                         </div>
@@ -302,7 +355,7 @@ export default function PlenarioCockpitPage() {
                   ))}
                 </div>
               </TabsContent>
-              <TabsContent value="autos" className="mt-4 space-y-3 text-sm text-slate-300">
+              <TabsContent value="autos" className={`mt-4 space-y-3 text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
                 <p>Fls. 45-52: Contradição na distância.</p>
                 <p>Fls. 78-83: Divergência sobre iluminação.</p>
                 <p>Fls. 90: Trecho-chave para descredibilizar.</p>
@@ -310,9 +363,9 @@ export default function PlenarioCockpitPage() {
             </Tabs>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-slate-300" />
+          <div className={`p-4 ${cardClass}`}>
+            <h3 className={`text-sm font-semibold flex items-center gap-2 ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>
+              <FileText className={`h-4 w-4 ${isDarkMode ? "text-slate-300" : "text-slate-500"}`} />
               Checklist do plenário
             </h3>
             <div className="mt-3 space-y-2">
@@ -321,8 +374,8 @@ export default function PlenarioCockpitPage() {
                 "Separar trechos críticos das provas",
                 "Atualizar tese principal e subsidiária",
               ].map((item) => (
-                <div key={item} className="flex items-start gap-2 text-sm text-slate-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 mt-0.5" />
+                <div key={item} className={`flex items-start gap-2 text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5" />
                   <span>{item}</span>
                 </div>
               ))}
@@ -332,13 +385,13 @@ export default function PlenarioCockpitPage() {
 
         {/* Coluna central */}
         <div className="xl:col-span-5 flex flex-col gap-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className={`p-4 ${cardClass}`}>
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-red-300 flex items-center gap-2">
+              <h3 className={`text-sm font-semibold flex items-center gap-2 ${isDarkMode ? "text-red-300" : "text-red-600"}`}>
                 <MessageCircle className="h-4 w-4" />
                 Munição para Tréplica
               </h3>
-              <Badge variant="outline" className="border-red-500/40 text-red-300">
+              <Badge variant="outline" className={isDarkMode ? "border-red-500/40 text-red-300" : "border-red-400 text-red-600"}>
                 Live
               </Badge>
             </div>
@@ -347,7 +400,7 @@ export default function PlenarioCockpitPage() {
                 value={anotacaoRapida}
                 onChange={(event) => setAnotacaoRapida(event.target.value)}
                 placeholder="Digite um ponto do MP, contradição ou novo fato..."
-                className="min-h-[120px] bg-slate-950 border-slate-800 text-slate-100"
+                className={`min-h-[120px] ${inputClass}`}
               />
               <div className="flex flex-wrap items-center gap-2">
                 {tagsRapidas.map((tag) => (
@@ -359,7 +412,9 @@ export default function PlenarioCockpitPage() {
                     className={
                       tagSelecionada === tag
                         ? "bg-amber-500 text-white hover:bg-amber-400"
-                        : "border-slate-700 text-slate-300 hover:text-white"
+                        : isDarkMode 
+                          ? "border-slate-700 text-slate-300 hover:text-white"
+                          : "border-slate-300 text-slate-700 hover:text-slate-900"
                     }
                   >
                     <Tag className="h-3 w-3 mr-2" />
@@ -377,25 +432,25 @@ export default function PlenarioCockpitPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-              <MessageCircle className="h-4 w-4 text-slate-300" />
+          <div className={`p-4 ${cardClass}`}>
+            <h3 className={`text-sm font-semibold flex items-center gap-2 ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>
+              <MessageCircle className={`h-4 w-4 ${isDarkMode ? "text-slate-300" : "text-slate-500"}`} />
               Feed de Ocorrências
             </h3>
             <div className="mt-4 space-y-3 max-h-[360px] overflow-y-auto pr-2">
               {ocorrencias.length === 0 ? (
-                <p className="text-sm text-slate-500">Nenhuma ocorrência registrada ainda.</p>
+                <p className={`text-sm ${textSecondaryClass}`}>Nenhuma ocorrência registrada ainda.</p>
               ) : (
                 ocorrencias.map((ocorrencia) => (
                   <div
                     key={ocorrencia.id}
-                    className="rounded-xl border border-slate-800 bg-slate-950/70 p-3"
+                    className={`rounded-xl border p-3 ${isDarkMode ? "border-slate-800 bg-slate-950/70" : "border-slate-200 bg-slate-50"}`}
                   >
-                    <div className="flex items-center justify-between text-xs text-slate-500">
+                    <div className={`flex items-center justify-between text-xs ${textSecondaryClass}`}>
                       <span>{ocorrencia.horario}</span>
-                      <span className="text-amber-300">{ocorrencia.tag}</span>
+                      <span className={isDarkMode ? "text-amber-300" : "text-amber-600"}>{ocorrencia.tag}</span>
                     </div>
-                    <p className="text-sm text-slate-100 mt-2">{ocorrencia.texto}</p>
+                    <p className={`text-sm mt-2 ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>{ocorrencia.texto}</p>
                   </div>
                 ))
               )}
@@ -405,19 +460,20 @@ export default function PlenarioCockpitPage() {
 
         {/* Coluna direita */}
         <div className="xl:col-span-3 flex flex-col gap-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-              <Users className="h-4 w-4 text-slate-300" />
+          <div className={`p-4 ${cardClass}`}>
+            <h3 className={`text-sm font-semibold flex items-center gap-2 ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>
+              <Users className={`h-4 w-4 ${isDarkMode ? "text-slate-300" : "text-slate-500"}`} />
               Reação dos Jurados
             </h3>
-            <p className="text-xs text-slate-500 mt-1">Clique para alternar (positivo/negativo/neutro)</p>
+            <p className={`text-xs mt-1 ${textSecondaryClass}`}>Clique para alternar (positivo/negativo/neutro)</p>
             <div className="mt-4 grid grid-cols-3 gap-2">
               {jurados.map((jurado, index) => (
                 <button
                   key={jurado.id}
                   onClick={() => handleToggleReacao(index)}
                   className={`rounded-xl border px-2 py-3 text-xs font-semibold transition-colors ${getReactionStyles(
-                    reacoes[index]
+                    reacoes[index],
+                    isDarkMode
                   )}`}
                 >
                   {jurado.nome}
@@ -426,9 +482,9 @@ export default function PlenarioCockpitPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-slate-300" />
+          <div className={`p-4 ${cardClass}`}>
+            <h3 className={`text-sm font-semibold flex items-center gap-2 ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}>
+              <FileText className={`h-4 w-4 ${isDarkMode ? "text-slate-300" : "text-slate-500"}`} />
               Acesso Rápido
             </h3>
             <div className="mt-3 flex flex-col gap-2">
@@ -436,15 +492,17 @@ export default function PlenarioCockpitPage() {
                 <Button
                   key={doc.id}
                   variant="outline"
-                  className="justify-start border-slate-700 text-slate-200 hover:text-white hover:border-slate-500"
+                  className={isDarkMode 
+                    ? "justify-start border-slate-700 text-slate-200 hover:text-white hover:border-slate-500" 
+                    : "justify-start border-slate-300 text-slate-700 hover:text-slate-900 hover:border-slate-400"}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   {doc.label}
                 </Button>
               ))}
             </div>
-            <div className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
-              <p className="text-xs text-amber-200">
+            <div className={`mt-4 rounded-xl border p-3 ${isDarkMode ? "border-amber-500/40 bg-amber-500/10" : "border-amber-300 bg-amber-50"}`}>
+              <p className={`text-xs ${isDarkMode ? "text-amber-200" : "text-amber-700"}`}>
                 Dica: mantenha os documentos-chave abertos em abas fixas.
               </p>
             </div>

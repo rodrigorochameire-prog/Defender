@@ -548,13 +548,25 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
         hasReuPreso && "ring-1 ring-rose-200 dark:ring-rose-900/50"
       )}>
         
-        {/* CAMADA A: CABEÇALHO - MOBILE OPTIMIZED */}
+        {/* CAMADA A: CABEÇALHO - DESIGN SUÍÇO */}
         <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
           {/* Topo */}
           <div className="flex justify-between items-start gap-2 sm:gap-4">
             <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
-              {/* Badges de Status */}
+              {/* Badges de Status - ORDENAÇÃO: Status/Fase → Atribuição → Réu Preso */}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                {/* 1. FASE/STATUS DO PROCESSO - Primeiro */}
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "text-[9px] sm:text-[10px] font-semibold uppercase px-1.5 py-0 rounded-md",
+                    FASES_CASO[caso.faseNome as keyof typeof FASES_CASO]?.color || "bg-zinc-100 text-zinc-600"
+                  )}
+                >
+                  {FASES_CASO[caso.faseNome as keyof typeof FASES_CASO]?.label || caso.faseNome}
+                </Badge>
+
+                {/* 2. ATRIBUIÇÃO/WORKSPACE */}
                 <Badge 
                   variant="secondary" 
                   className={cn(
@@ -565,43 +577,47 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                   {atribuicaoLabel}
                 </Badge>
                 
+                {/* 3. CÓDIGO (secundário) */}
                 {caso.codigo && (
                   <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 dark:text-zinc-500 hidden sm:inline">
                     {caso.codigo}
                   </span>
                 )}
 
+                {/* 4. RÉU PRESO - Badge visível */}
+                {hasReuPreso && (
+                  <Badge 
+                    variant="outline" 
+                    className="text-[9px] sm:text-[10px] font-bold uppercase px-1.5 py-0 rounded-md border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:border-rose-800 dark:text-rose-400"
+                  >
+                    <Lock className="w-2.5 h-2.5 mr-0.5" /> Preso
+                  </Badge>
+                )}
+
+                {/* 5. AUDIÊNCIA HOJE/AMANHÃ */}
                 {hasAudienciaHoje && (
-                  <span className="flex items-center gap-1">
-                    <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-rose-500" />
+                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-100 dark:bg-rose-900/30">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600" />
                     </span>
-                    <span className="text-[9px] sm:text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">
+                    <span className="text-[9px] sm:text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase">
                       Hoje
                     </span>
                   </span>
                 )}
 
                 {hasAudienciaAmanha && !hasAudienciaHoje && (
-                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[9px] sm:text-[10px] px-1.5 py-0">
+                  <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md border border-amber-200 dark:border-amber-800">
                     Amanhã
                   </Badge>
                 )}
 
-                {hasReuPreso && (
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>Réu Preso</TooltipContent>
-                  </Tooltip>
-                )}
-
+                {/* 6. TEORIA COMPLETA */}
                 {caso.teoriaCompleta && (
                   <Tooltip>
                     <TooltipTrigger>
-                      <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
+                      <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600 dark:text-emerald-500" />
                     </TooltipTrigger>
                     <TooltipContent>Teoria do Caso Completa</TooltipContent>
                   </Tooltip>

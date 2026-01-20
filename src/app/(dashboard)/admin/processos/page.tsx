@@ -295,21 +295,29 @@ function ProcessoCard({ processo }: { processo: Processo }) {
         <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
           <div className="flex items-start justify-between gap-2 sm:gap-3">
             <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
-              {/* Badges */}
+              {/* Badges - ORDENAÇÃO: Situação → Área → Réu Preso → Prazo */}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 py-0", areaConfig.bg, areaConfig.color)}>
+                {/* 1. SITUAÇÃO/STATUS - Primeiro */}
+                <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 py-0 font-semibold uppercase rounded-md", situacaoConfig.bg, situacaoConfig.color)}>
+                  {situacaoConfig.label}
+                </Badge>
+
+                {/* 2. ÁREA */}
+                <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md", areaConfig.bg, areaConfig.color)}>
                   {areaConfig.icon} {areaConfig.label}
                 </Badge>
                 
-                {processo.isJuri && (
-                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
-                    <Gavel className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" /> Júri
+                {/* 3. RÉU PRESO */}
+                {processo.assistido.preso && (
+                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-200 dark:border-rose-800 font-bold">
+                    <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Preso
                   </Badge>
                 )}
 
+                {/* 4. PRAZO URGENTE */}
                 {prazoUrgente && diasPrazo !== null && (
-                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                    <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
+                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                    <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
                     {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : `${diasPrazo}d`}
                   </Badge>
                 )}
@@ -428,8 +436,8 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 <Tooltip>
                   <TooltipTrigger>
                     <Badge variant="outline" className={cn(
-                      "text-[9px] sm:text-[10px] font-mono px-1.5 py-0",
-                      processo.demandasAbertas > 0 ? "border-amber-200 text-amber-600 dark:border-amber-800 dark:text-amber-400" : ""
+                      "text-[9px] sm:text-[10px] font-mono px-1.5 py-0 rounded-md",
+                      processo.demandasAbertas > 0 ? "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:bg-amber-950/30" : ""
                     )}>
                       <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                       {processo.demandasAbertas}
@@ -439,9 +447,15 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 </Tooltip>
               )}
               
-              <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 py-0", situacaoConfig.bg, situacaoConfig.color)}>
-                {situacaoConfig.label}
-              </Badge>
+              {/* Júri badge - se for processo do júri */}
+              {processo.isJuri && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Gavel className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400" />
+                  </TooltipTrigger>
+                  <TooltipContent>Processo do Júri</TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </div>
         </div>

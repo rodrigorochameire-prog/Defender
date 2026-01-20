@@ -641,32 +641,54 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               </h3>
             </Link>
             
-            {/* Status + Local */}
+            {/* Badges - ORDENAÇÃO: Fase Processual → Área → Status Prisional */}
             <div className="flex items-center gap-1.5 flex-wrap">
+              {/* 1. FASE PROCESSUAL - Primeiro */}
+              {assistido.faseProcessual && faseConfig[assistido.faseProcessual] && (
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-semibold",
+                    faseConfig[assistido.faseProcessual].bgColor,
+                    faseConfig[assistido.faseProcessual].color,
+                    "border-transparent"
+                  )}
+                >
+                  {faseConfig[assistido.faseProcessual].label}
+                </Badge>
+              )}
+
+              {/* 2. ÁREA - Segundo */}
+              {assistido.area && areaConfig[assistido.area] && (
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-medium",
+                    areaConfig[assistido.area].bgColor,
+                    areaConfig[assistido.area].color,
+                    "border-transparent"
+                  )}
+                >
+                  {areaConfig[assistido.area].label}
+                </Badge>
+              )}
+
+              {/* 3. STATUS PRISIONAL - Por último */}
               {isPreso ? (
                 <Badge 
                   variant="outline" 
-                  className="rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-medium border-rose-200 text-rose-700 bg-rose-50 dark:bg-rose-950/20 dark:border-rose-800 dark:text-rose-400"
+                  className="rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-bold border-rose-300 text-rose-700 bg-rose-100 dark:bg-rose-950/30 dark:border-rose-800 dark:text-rose-400"
                 >
                   <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Preso
                 </Badge>
-              ) : (
+              ) : isMonitorado ? (
                 <Badge 
                   variant="outline" 
-                  className="rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-medium border-emerald-200 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 dark:text-emerald-400"
-                >
-                  <Unlock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Solto
-                </Badge>
-              )}
-              
-              {isMonitorado && (
-                <Badge 
-                  variant="outline" 
-                  className="rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-medium border-amber-200 text-amber-700 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 dark:text-amber-400"
+                  className="rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-medium border-amber-300 text-amber-700 bg-amber-100 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400"
                 >
                   <AlertCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Monitor.
                 </Badge>
-              )}
+              ) : null}
             </div>
             
             {/* Local de prisão - mais compacto */}
