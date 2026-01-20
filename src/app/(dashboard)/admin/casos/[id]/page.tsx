@@ -206,7 +206,14 @@ export default function CasoDetailPage() {
               <div className="flex items-center gap-2 flex-wrap mb-2">
                 <Badge variant="outline" className="text-[10px] font-normal">{ATRIBUICAO_LABELS[caso.atribuicao]}</Badge>
                 <Badge variant="secondary" className="text-[10px] font-normal">{faseConfig.label}</Badge>
-                {caso.prioridade === "REU_PRESO" && <Badge variant="reuPreso" className="text-[10px]">Réu Preso</Badge>}
+                {caso.prioridade === "REU_PRESO" && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Lock className="w-4 h-4 text-rose-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>Réu Preso</TooltipContent>
+                  </Tooltip>
+                )}
               </div>
               <h1 className="text-2xl font-bold text-foreground leading-tight tracking-tight">{caso.titulo}</h1>
               <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">

@@ -355,9 +355,12 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 
                 {/* 3. RÉU PRESO */}
                 {processo.assistido.preso && (
-                  <Badge className="text-[11px] sm:text-[10px] px-1.5 py-0 rounded-md bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-0 font-bold">
-                    <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Preso
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Lock className="w-4 h-4 text-rose-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>Preso</TooltipContent>
+                  </Tooltip>
                 )}
 
                 {/* 4. PRAZO URGENTE */}

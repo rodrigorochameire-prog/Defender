@@ -417,7 +417,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                         <p className="font-medium">{assistido.nome}</p>
                         {assistido.preso && (
                           <p className="text-rose-400 text-xs flex items-center gap-1 justify-center">
-                            <Lock className="w-3 h-3" /> Preso
+                            <Lock className="w-3 h-3" />
                           </p>
                         )}
                       </div>
