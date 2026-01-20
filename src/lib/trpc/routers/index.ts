@@ -22,6 +22,29 @@ import { documentsRouter } from "./documents";
 import { whatsappRouter } from "./whatsapp";
 import { auditLogsRouter } from "./auditLogs";
 
+// Routers do TeteCare (gestão de pets)
+import { petsRouter } from "./pets";
+import { creditsRouter } from "./credits";
+import { vaccinesRouter } from "./vaccines";
+import { medicationsRouter } from "./medications";
+import { preventivesRouter } from "./preventives";
+import { analyticsRouter } from "./analytics";
+import { trainingRouter } from "./training";
+import { logsRouter } from "./logs";
+import { wallRouter } from "./wall";
+import { bookingsRouter } from "./bookings";
+import { foodRouter } from "./food";
+import { reportsRouter } from "./reports";
+import { dashboardRouter } from "./dashboard";
+import { checkinRouter } from "./checkin";
+import { aiRouter } from "./ai";
+import { alertsRouter } from "./alerts";
+import { behaviorRouter } from "./behavior";
+import { financesRouter } from "./finances";
+import { packagesRouter } from "./packages";
+import { tutorsRouter } from "./tutors";
+import { reviewsRouter } from "./reviews";
+
 
 export const appRouter = router({
   // ==========================================
@@ -53,6 +76,29 @@ export const appRouter = router({
   auditLogs: auditLogsRouter,
   
   // ==========================================
+  // TETECARE - GESTÃO DE PETS
+  // ==========================================
+  pets: petsRouter,
+  credits: creditsRouter,
+  vaccines: vaccinesRouter,
+  medications: medicationsRouter,
+  preventives: preventivesRouter,
+  analytics: analyticsRouter,
+  training: trainingRouter,
+  logs: logsRouter,
+  wall: wallRouter,
+  bookings: bookingsRouter,
+  food: foodRouter,
+  reports: reportsRouter,
+  dashboard: dashboardRouter,
+  checkin: checkinRouter,
+  ai: aiRouter,
+  alerts: alertsRouter,
+  behavior: behaviorRouter,
+  finances: financesRouter,
+  packages: packagesRouter,
+  tutors: tutorsRouter,
+  reviews: reviewsRouter,
 });
 
 export type AppRouter = typeof appRouter;
