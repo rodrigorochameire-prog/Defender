@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   ExternalLink,
+  ClipboardCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -83,6 +84,12 @@ export default function SessaoJuriPage() {
             <Edit className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Editar</span>
           </Button>
+          <Link href={`/admin/juri/avaliacao/${sessaoId}`}>
+            <Button variant="outline" size="sm" className="gap-1.5 border-purple-300 text-purple-700 hover:bg-purple-50">
+              <ClipboardCheck className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Avaliação</span>
+            </Button>
+          </Link>
           <Link href="/admin/juri/cockpit">
             <Button size="sm" className="gap-1.5 bg-amber-500 hover:bg-amber-600">
               <Zap className="w-3.5 h-3.5" />
