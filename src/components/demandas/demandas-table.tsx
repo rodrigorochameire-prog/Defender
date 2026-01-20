@@ -354,7 +354,7 @@ function CalculadoraPrazos({
                 Prazo Fatal
               </span>
               {prazoEmDobro && (
-                <Badge className="bg-emerald-500 text-white text-[9px] h-4 px-1.5">
+                <Badge className="bg-emerald-500 text-white text-xs h-4 px-1.5">
                   ×2 DP
                 </Badge>
               )}

@@ -170,20 +170,36 @@
   }
   
   /* ==========================================
-     SISTEMA DE TAMANHOS DE FONTE ESCALÁVEL
-     Modo Normal: base 16px (padrão web)
-     Modo Grande: base 18px (acessibilidade sem exagero)
+     SISTEMA TIPOGRÁFICO HIERÁRQUICO
+     Escala harmonizada baseada em Tailwind
+     Elimina "magic numbers" (10px, 11px, 13px)
+     
+     ESCALA MODO PADRÃO (Densidade + Legibilidade):
+     - Micro/Label: 12px (text-xs) - Tags, legendas, datas secundárias
+     - Corpo UI:    14px (text-sm) - Tabelas, inputs, menus, cartões
+     - Corpo Leitura: 16px (text-base) - Descrições longas, anotações
+     - Subtítulo:   18px (text-lg) - Títulos de widgets, seções
+     - Título:      24px (text-2xl) - Nome da página
+     
+     ESCALA MODO AMPLIADO (Acessibilidade):
+     - Micro/Label: 14px (text-sm) - Sai da zona de esforço visual
+     - Corpo UI:    16px (text-base) - Padrão web moderno
+     - Corpo Leitura: 18px (text-lg) - Ideal para leitura jurídica
+     - Subtítulo:   20px (text-xl) - Destaca bem seções
+     - Título:      30px (text-3xl) - Hierarquia muito clara
      ========================================== */
   html {
-    /* BASE FONT SIZE - 16px (padrão) */
+    /* BASE: 16px = 1rem (padrão dos browsers) */
     font-size: 16px;
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     transition: font-size 0.25s ease-out;
   }
   
-  /* MODO FONTE GRANDE - Ativado pelo toggle */
+  /* MODO AMPLIADO: Aumenta base em 12.5% (tudo escala proporcionalmente) */
   html.font-large {
-    font-size: 18px; /* +12.5% para acessibilidade */
+    font-size: 18px; /* 1rem = 18px neste modo */
   }
   
   body {
@@ -395,41 +411,65 @@
   /* ==========================================
      CLASSES UTILITÁRIAS DE UI - Hierarquia Tipográfica
      Substituem os "magic numbers" (text-[10px], text-[11px], text-[13px])
+     REGRA: Tamanho mínimo absoluto é text-xs (12px)
      ========================================== */
   
-  /* Corpo de UI - Texto padrão para interfaces */
+  /* Corpo de UI - Texto padrão para interfaces (14px) */
   .text-ui-body {
     @apply text-sm leading-relaxed text-zinc-700 dark:text-zinc-300;
   }
   
-  /* Label de UI - Legendas, tags, etiquetas */
+  /* Label de UI - Legendas, tags, etiquetas (12px mínimo) */
   .text-ui-label {
     @apply text-xs font-medium tracking-wide text-zinc-500 dark:text-zinc-400 uppercase;
   }
   
-  /* Micro texto - Apenas para elementos muito pequenos que precisam de hierarquia visual reduzida */
+  /* Micro texto - Elementos secundários (12px - nunca menor) */
   .text-ui-micro {
     @apply text-xs text-muted-foreground/80;
   }
   
-  /* Texto de sidebar - Itens de menu */
+  /* Texto de sidebar - Itens de menu (14px) */
   .text-sidebar-item {
     @apply text-sm font-medium transition-colors duration-200;
   }
   
-  /* Texto de sidebar - Seções/categorias */
+  /* Texto de sidebar - Seções/categorias (12px) */
   .text-sidebar-section {
     @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground/80;
   }
   
-  /* Badge/Tag texto */
+  /* Badge/Tag texto (12px) */
   .text-badge {
     @apply text-xs font-semibold uppercase tracking-wide;
   }
   
-  /* Mono para dados - Números de processo, datas, valores */
+  /* Mono para dados - Números de processo, datas, valores (14px) */
   .text-data {
-    @apply font-mono text-xs tracking-tight tabular-nums;
+    @apply font-mono text-sm tracking-tight tabular-nums;
+  }
+  
+  /* Modo fonte grande - ajustes para utilidades UI */
+  html.font-large .text-ui-body {
+    @apply text-base;
+  }
+  html.font-large .text-ui-label {
+    @apply text-sm;
+  }
+  html.font-large .text-ui-micro {
+    @apply text-sm;
+  }
+  html.font-large .text-sidebar-item {
+    @apply text-base;
+  }
+  html.font-large .text-sidebar-section {
+    @apply text-sm;
+  }
+  html.font-large .text-badge {
+    @apply text-sm;
+  }
+  html.font-large .text-data {
+    @apply text-base;
   }
   
   /* ==========================================
