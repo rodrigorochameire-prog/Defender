@@ -253,52 +253,52 @@ const COMARCA_OPTIONS = [
   { value: "SALVADOR", label: "Salvador" },
 ];
 
-// Status disponíveis - Estilo Notion com cores de fundo vibrantes
+// Status disponíveis - Paleta neutra com destaque verde para concluído
 const STATUS_OPTIONS: OptionItem[] = [
-  // Grupo Urgente (vermelho intenso)
-  { value: "1_URGENTE", label: "Urgente", color: "bg-red-500", textColor: "text-white", group: "Urgente", description: "Prazo crítico/urgente" },
-  // Grupo Trabalho (amarelo vibrante) - ordem alfabética
-  { value: "2_ANALISAR", label: "Analisar", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Analisar processo" },
-  { value: "2_ATENDER", label: "Atender", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Atender assistido" },
-  { value: "2_BUSCAR", label: "Buscar", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Buscar informações" },
-  { value: "2_ELABORANDO", label: "Elaborando", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Em elaboração" },
-  { value: "2_ELABORAR", label: "Elaborar", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Elaborar peça" },
-  { value: "2_INVESTIGAR", label: "Investigar", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Investigar caso" },
-  { value: "2_RELATORIO", label: "Relatório", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Analisar/fazer relatório" },
-  { value: "2_REVISANDO", label: "Revisando", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Em revisão" },
-  { value: "2_REVISAR", label: "Revisar", color: "bg-amber-400", textColor: "text-amber-950", group: "Trabalho", description: "Revisar peça" },
-  // Grupo Protocolar (laranja vibrante)
-  { value: "3_PROTOCOLAR", label: "Protocolar", color: "bg-orange-500", textColor: "text-white", group: "Protocolar", description: "Pronto para protocolar" },
-  // Grupo Delegado (azul vibrante) - ordem alfabética
-  { value: "4_AMANDA", label: "Amanda", color: "bg-sky-500", textColor: "text-white", group: "Delegado", description: "Com Amanda" },
-  { value: "4_EMILLY", label: "Emilly", color: "bg-sky-500", textColor: "text-white", group: "Delegado", description: "Com Emilly" },
-  { value: "4_MONITORAR", label: "Monitorar", color: "bg-sky-500", textColor: "text-white", group: "Delegado", description: "Monitorando andamento" },
-  { value: "4_ESTAGIO_TARISSA", label: "Tarissa (Estágio)", color: "bg-sky-500", textColor: "text-white", group: "Delegado", description: "Com Tarissa (estágio)" },
-  // Grupo Fila (roxo vibrante)
-  { value: "5_FILA", label: "Fila", color: "bg-violet-500", textColor: "text-white", group: "Fila", description: "Na fila de trabalho" },
-  // Grupo Aguardando (cinza escuro) - ordem alfabética
-  { value: "6_DOCUMENTOS", label: "Documentos", color: "bg-slate-500", textColor: "text-white", group: "Aguardando", description: "Aguardando documentos" },
-  { value: "6_TESTEMUNHAS", label: "Testemunhas", color: "bg-slate-500", textColor: "text-white", group: "Aguardando", description: "Aguardando testemunhas" },
-  // Grupo Concluído (verde vibrante) - ordem alfabética
-  { value: "7_CIENCIA", label: "Ciência", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Ciência tomada" },
-  { value: "7_CONSTITUIU_ADVOGADO", label: "Constituiu advogado", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Constituiu advogado particular" },
-  { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Peça protocolada" },
-  { value: "7_RESOLVIDO", label: "Resolvido", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Caso resolvido" },
-  { value: "7_SEM_ATUACAO", label: "Sem atuação", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Sem necessidade de atuação" },
-  { value: "7_SOLAR", label: "Solar", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Registrado no Solar" },
+  // Grupo Urgente (destaque)
+  { value: "1_URGENTE", label: "Urgente", color: "bg-zinc-800", textColor: "text-white", group: "Urgente", description: "Prazo crítico/urgente" },
+  // Grupo Trabalho (cinza médio)
+  { value: "2_ANALISAR", label: "Analisar", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Analisar processo" },
+  { value: "2_ATENDER", label: "Atender", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Atender assistido" },
+  { value: "2_BUSCAR", label: "Buscar", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Buscar informações" },
+  { value: "2_ELABORANDO", label: "Elaborando", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Em elaboração" },
+  { value: "2_ELABORAR", label: "Elaborar", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Elaborar peça" },
+  { value: "2_INVESTIGAR", label: "Investigar", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Investigar caso" },
+  { value: "2_RELATORIO", label: "Relatório", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Analisar/fazer relatório" },
+  { value: "2_REVISANDO", label: "Revisando", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Em revisão" },
+  { value: "2_REVISAR", label: "Revisar", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Revisar peça" },
+  // Grupo Protocolar (cinza escuro)
+  { value: "3_PROTOCOLAR", label: "Protocolar", color: "bg-zinc-600", textColor: "text-white", group: "Protocolar", description: "Pronto para protocolar" },
+  // Grupo Delegado (cinza)
+  { value: "4_AMANDA", label: "Amanda", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Delegado", description: "Com Amanda" },
+  { value: "4_EMILLY", label: "Emilly", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Delegado", description: "Com Emilly" },
+  { value: "4_MONITORAR", label: "Monitorar", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Delegado", description: "Monitorando andamento" },
+  { value: "4_ESTAGIO_TARISSA", label: "Tarissa (Estágio)", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Delegado", description: "Com Tarissa (estágio)" },
+  // Grupo Fila (cinza claro)
+  { value: "5_FILA", label: "Fila", color: "bg-zinc-300", textColor: "text-zinc-800", group: "Fila", description: "Na fila de trabalho" },
+  // Grupo Aguardando (cinza)
+  { value: "6_DOCUMENTOS", label: "Documentos", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Aguardando", description: "Aguardando documentos" },
+  { value: "6_TESTEMUNHAS", label: "Testemunhas", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Aguardando", description: "Aguardando testemunhas" },
+  // Grupo Concluído (verde primary)
+  { value: "7_CIENCIA", label: "Ciência", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Ciência tomada" },
+  { value: "7_CONSTITUIU_ADVOGADO", label: "Constituiu advogado", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Constituiu advogado particular" },
+  { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Peça protocolada" },
+  { value: "7_RESOLVIDO", label: "Resolvido", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Caso resolvido" },
+  { value: "7_SEM_ATUACAO", label: "Sem atuação", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Sem necessidade de atuação" },
+  { value: "7_SOLAR", label: "Solar", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Registrado no Solar" },
 ];
 
-// Situação Prisional / Unidades - Cores suaves e premium
+// Situação Prisional / Unidades - Paleta neutra
 const PRISAO_OPTIONS: OptionItem[] = [
   // Solto / Não informado
-  { value: "NAO_INFORMADO", label: "(Não informado)", color: "bg-slate-200", group: "Geral" },
-  { value: "SOLTO", label: "Solto", color: "bg-emerald-200", group: "Geral" },
-  // Bahia - Região Metropolitana (rose suave)
-  { value: "CADEIA_PUBLICA", label: "Cadeia Pública", color: "bg-rose-300", group: "RMS" },
-  { value: "COP", label: "COP - Centro de Obs. Penal", color: "bg-rose-300", group: "RMS" },
-  { value: "CPMS", label: "CPMS - Simões Filho", color: "bg-rose-300", group: "RMS" },
-  { value: "PLB", label: "PLB - Lemos Brito", color: "bg-rose-300", group: "RMS" },
-  { value: "PRESIDIO_SSA", label: "Presídio Salvador", color: "bg-rose-300", group: "RMS" },
+  { value: "NAO_INFORMADO", label: "(Não informado)", color: "bg-zinc-200", group: "Geral" },
+  { value: "SOLTO", label: "Solto", color: "bg-zinc-100", group: "Geral" },
+  // Bahia - Região Metropolitana
+  { value: "CADEIA_PUBLICA", label: "Cadeia Pública", color: "bg-zinc-300", group: "RMS" },
+  { value: "COP", label: "COP - Centro de Obs. Penal", color: "bg-zinc-300", group: "RMS" },
+  { value: "CPMS", label: "CPMS - Simões Filho", color: "bg-zinc-300", group: "RMS" },
+  { value: "PLB", label: "PLB - Lemos Brito", color: "bg-zinc-300", group: "RMS" },
+  { value: "PRESIDIO_SSA", label: "Presídio Salvador", color: "bg-zinc-300", group: "RMS" },
   // Bahia - Interior (pink suave)
   { value: "CP_ALAGOINHAS", label: "CP Alagoinhas", color: "bg-pink-200", group: "Interior BA" },
   { value: "CP_BARREIRAS", label: "CP Barreiras", color: "bg-pink-200", group: "Interior BA" },
@@ -1993,54 +1993,54 @@ export default function DemandasPage() {
             </CardContent>
           </Card>
 
-          {/* Elaborar - Prioridade 2 */}
-          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.elaborar > 0 && "border-amber-200/60 bg-amber-50/30 dark:bg-amber-950/10")}>
+          {/* Elaborar */}
+          <Card className="stat-card flex-shrink-0 w-[90px] sm:w-auto">
             <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
               <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className={cn("text-lg sm:text-xl font-bold", stats.elaborar > 0 ? "text-amber-600" : "text-foreground")}>{stats.elaborar}</p>
+                  <p className="text-lg sm:text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.elaborar}</p>
                   <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Elaborar</p>
                 </div>
-                <Edit className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.elaborar > 0 ? "text-amber-500" : "text-muted-foreground")} />
+                <Edit className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-zinc-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          {/* Protocolar - Prioridade 3 */}
-          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.protocolar > 0 && "border-orange-200/60 bg-orange-50/30 dark:bg-orange-950/10")}>
+          {/* Protocolar */}
+          <Card className="stat-card flex-shrink-0 w-[90px] sm:w-auto">
             <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
               <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className={cn("text-lg sm:text-xl font-bold", stats.protocolar > 0 ? "text-orange-600" : "text-foreground")}>{stats.protocolar}</p>
+                  <p className="text-lg sm:text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.protocolar}</p>
                   <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Protocolar</p>
                 </div>
-                <ArrowUpRight className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.protocolar > 0 ? "text-orange-500" : "text-muted-foreground")} />
+                <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-zinc-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          {/* Monitorar - Prioridade 4 */}
-          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.monitorar > 0 && "border-sky-200/60 bg-sky-50/30 dark:bg-sky-950/10")}>
+          {/* Monitorar */}
+          <Card className="stat-card flex-shrink-0 w-[90px] sm:w-auto">
             <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
               <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className={cn("text-lg sm:text-xl font-bold", stats.monitorar > 0 ? "text-sky-600" : "text-foreground")}>{stats.monitorar}</p>
+                  <p className="text-lg sm:text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.monitorar}</p>
                   <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Monitorar</p>
                 </div>
-                <Eye className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.monitorar > 0 ? "text-sky-500" : "text-muted-foreground")} />
+                <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-zinc-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          {/* Réu Preso - Sempre visível */}
-          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.reuPreso > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
+          {/* Réu Preso */}
+          <Card className="stat-card flex-shrink-0 w-[90px] sm:w-auto">
             <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
               <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className={cn("text-lg sm:text-xl font-bold", stats.reuPreso > 0 ? "text-rose-600" : "text-foreground")}>{stats.reuPreso}</p>
+                  <p className="text-lg sm:text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.reuPreso}</p>
                   <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Preso</p>
                 </div>
-                <Lock className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.reuPreso > 0 ? "text-rose-500" : "text-muted-foreground")} />
+                <Lock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-zinc-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
@@ -2050,10 +2050,10 @@ export default function DemandasPage() {
             <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
               <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className="text-lg sm:text-xl font-semibold text-violet-600">{stats.fila}</p>
+                  <p className="text-lg sm:text-xl font-semibold text-zinc-800 dark:text-zinc-100">{stats.fila}</p>
                   <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Fila</p>
                 </div>
-                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-violet-400 flex-shrink-0" />
+                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-zinc-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
@@ -2063,10 +2063,10 @@ export default function DemandasPage() {
             <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
               <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className="text-lg sm:text-xl font-semibold text-emerald-600">{stats.concluido}</p>
+                  <p className="text-lg sm:text-xl font-semibold text-primary">{stats.concluido}</p>
                   <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Concluído</p>
                 </div>
-                <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary/60 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
@@ -2076,10 +2076,10 @@ export default function DemandasPage() {
             <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
               <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className="text-lg sm:text-xl font-semibold">{stats.total}</p>
+                  <p className="text-lg sm:text-xl font-semibold text-zinc-800 dark:text-zinc-100">{stats.total}</p>
                   <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Total</p>
                 </div>
-                <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground flex-shrink-0" />
+                <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-zinc-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
