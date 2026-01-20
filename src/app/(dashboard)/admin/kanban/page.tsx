@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { SwissCard, SwissCardContent } from "@/components/shared/swiss-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -212,8 +213,11 @@ function KanbanCard({ demanda, onMove }: KanbanCardProps) {
   const prazoInfo = getPrazoInfo(demanda.prazo);
   
   return (
-    <Card className={`kanban-card ${demanda.reuPreso ? "border-l-4 border-l-red-500" : ""}`}>
-      <CardContent className="p-3">
+    <SwissCard className={cn(
+      "mb-2 hover:shadow-md transition-shadow",
+      demanda.reuPreso && "border-l-[3px] border-l-rose-500"
+    )}>
+      <SwissCardContent className="p-3">
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -280,13 +284,13 @@ function KanbanCard({ demanda, onMove }: KanbanCardProps) {
           
           <div className="flex items-center justify-between pt-1">
             <span className="text-[10px] text-muted-foreground">{demanda.defensor}</span>
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-[10px] text-muted-foreground font-mono">
               {format(parseISO(demanda.prazo), "dd/MM", { locale: ptBR })}
             </span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </SwissCardContent>
+    </SwissCard>
   );
 }
 
@@ -334,52 +338,70 @@ export default function KanbanPage() {
   }).length;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="p-3 sm:p-4 lg:p-6 space-y-6">
+      {/* Header - Padrão Swiss */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Kanban de Prazos</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Arraste demandas entre colunas para atualizar o status
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+            <Target className="w-5 h-5 text-purple-600" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Kanban de Prazos</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              Gerencie o fluxo de demandas e prazos
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" title="Atualizar">
+          <Button variant="outline" size="icon" title="Atualizar" className="h-9 w-9">
             <RefreshCw className="h-4 w-4" />
           </Button>
           <Link href="/admin/demandas/nova">
-            <Button className="gap-2">
+            <Button className="gap-2 h-9">
               <Plus className="h-4 w-4" />
-              Nova Demanda
+              <span className="hidden sm:inline">Nova Demanda</span>
+              <span className="sm:hidden">Nova</span>
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      {/* Stats - Padrão Swiss */}
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
         {stats.map((col) => (
-          <div 
+          <SwissCard 
             key={col.id}
-            className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border/50"
+            className="border-l-[3px]"
+            style={{ borderLeftColor: col.color.replace("bg-", "").includes("zinc") ? "#a1a1aa" : 
+              col.color.includes("amber") ? "#f59e0b" :
+              col.color.includes("blue") ? "#3b82f6" :
+              col.color.includes("emerald") ? "#10b981" : "#a1a1aa" }}
           >
-            <div className={`w-3 h-3 rounded-full ${col.color}`} />
-            <div>
-              <p className="text-2xl font-bold">{col.count}</p>
-              <p className="text-xs text-muted-foreground">{col.title}</p>
-            </div>
-          </div>
+            <SwissCardContent className="p-2 sm:p-3">
+              <div className="flex items-center gap-2">
+                <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full", col.color)} />
+                <div>
+                  <p className="text-lg sm:text-2xl font-bold">{col.count}</p>
+                  <p className="text-[9px] sm:text-xs text-muted-foreground">{col.title}</p>
+                </div>
+              </div>
+            </SwissCardContent>
+          </SwissCard>
         ))}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50">
-          <AlertTriangle className="h-5 w-5 text-red-600" />
-          <div>
-            <p className="text-2xl font-bold text-red-600">{totalUrgentes}</p>
-            <p className="text-xs text-muted-foreground">Urgentes</p>
-          </div>
-        </div>
+        <SwissCard className="border-l-[3px] border-l-rose-500">
+          <SwissCardContent className="p-2 sm:p-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-rose-600" />
+              <div>
+                <p className="text-lg sm:text-2xl font-bold text-rose-600">{totalUrgentes}</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Urgentes</p>
+              </div>
+            </div>
+          </SwissCardContent>
+        </SwissCard>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Padrão Swiss */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -387,11 +409,11 @@ export default function KanbanPage() {
             placeholder="Buscar por assistido, processo ou ato..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-9"
           />
         </div>
         <Select value={areaFilter} onValueChange={setAreaFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px] h-9">
             <Filter className="h-4 w-4 mr-2" />
             <SelectValue placeholder="Área" />
           </SelectTrigger>
