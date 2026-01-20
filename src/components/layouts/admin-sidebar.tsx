@@ -435,7 +435,7 @@ function AdminSidebarContent({
         <Sidebar
           collapsible="icon"
           className={cn(
-            "border-r-2 backdrop-blur-xl shadow-[2px_0_12px_-4px_rgba(0,0,0,0.08)] dark:shadow-[2px_0_12px_-4px_rgba(0,0,0,0.3)]"
+            "border-r backdrop-blur-xl shadow-[1px_0_8px_-2px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_8px_-2px_rgba(0,0,0,0.25)]"
           )}
           style={{
             background: `var(--sidebar-bg, ${config.sidebarBg})`,
@@ -447,7 +447,7 @@ function AdminSidebarContent({
               BLOCO SUPERIOR: CONTEXTO (Switcher)
               ========================================== */}
           <SidebarHeader
-            className="border-b-2 py-3"
+            className="border-b py-2.5 px-3"
             style={{
               background: `var(--sidebar-header-bg, ${config.sidebarHeaderBg})`,
               borderColor: `var(--sidebar-divider, ${config.sidebarDivider})`,
@@ -614,7 +614,7 @@ function AdminSidebarContent({
 
           {/* Footer */}
           <SidebarFooter
-            className={cn("border-t-2", isCollapsed ? "p-2" : "p-3")}
+            className={cn("border-t", isCollapsed ? "p-2" : "p-2.5")}
             style={{
               borderColor: config.sidebarDivider,
               background: `linear-gradient(to top, ${config.sidebarHover}, transparent)`,
@@ -707,73 +707,41 @@ function AdminSidebarContent({
       <SidebarInset className="flex flex-col min-h-screen">
         {/* Header Desktop */}
         <header
-          className="hidden md:flex h-20 shrink-0 items-center border-b-2 px-6 backdrop-blur-sm"
+          className="hidden md:flex h-16 shrink-0 items-center border-b px-6 backdrop-blur-md"
           style={{
-            background: `linear-gradient(to right, ${config.sidebarHeaderBg}, transparent 80%)`,
+            background: config.sidebarHeaderBg,
             borderColor: config.sidebarBorder,
           }}
         >
-          <div className="flex items-center gap-4 flex-1">
-            {/* Logo Icon */}
-            <div
-              className="flex items-center justify-center w-12 h-12 rounded-xl shadow-lg"
-              style={{
-                background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 32 32"
-                fill="none"
-                className="w-8 h-8"
+          {/* Logo Centralizada */}
+          <div className="flex items-center justify-center flex-1">
+            <div className="flex items-center gap-3">
+              {/* Logo Icon */}
+              <div
+                className="flex items-center justify-center w-10 h-10 rounded-xl shadow-md"
+                style={{
+                  background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
+                }}
               >
-                <path
-                  d="M16 4L6 8.5v6.5c0 6.5 4.3 12.3 10 13.5 5.7-1.2 10-7 10-13.5V8.5L16 4z"
-                  fill="white"
-                  opacity="0.95"
-                />
-                <g transform="translate(16, 15)">
-                  <path
-                    d="M0 -8 L1.5 -6 L1 4 L0 5 L-1 4 L-1.5 -6 Z"
-                    fill={config.accentColor}
-                    opacity="0.9"
-                  />
-                  <rect
-                    x="-4"
-                    y="3"
-                    width="8"
-                    height="2"
-                    rx="0.5"
-                    fill={config.accentColor}
-                    opacity="0.85"
-                  />
-                  <rect
-                    x="-0.75"
-                    y="5"
-                    width="1.5"
-                    height="4"
-                    rx="0.5"
-                    fill={config.accentColor}
-                    opacity="0.8"
-                  />
-                </g>
-              </svg>
-            </div>
+                <Shield className="w-5 h-5 text-white" strokeWidth={2.5} />
+              </div>
 
-            <div>
-              <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                DefesaHub
-              </h1>
-              <p
-                className="text-xs font-medium"
-                style={{ color: config.sidebarTextMuted }}
-              >
-                {config.name}
-              </p>
+              <div className="text-center">
+                <h1 className="text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                  DefesaHub
+                </h1>
+                <p
+                  className="text-[10px] font-medium tracking-wide uppercase"
+                  style={{ color: config.sidebarTextMuted }}
+                >
+                  {config.shortName}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Ações à direita */}
+          <div className="flex items-center gap-2 absolute right-6">
             <CommandPalette />
             <FontSizeToggle />
             <ThemeToggle />
@@ -783,38 +751,32 @@ function AdminSidebarContent({
 
         {/* Header Mobile */}
         <header
-          className="md:hidden flex h-16 shrink-0 items-center border-b-2 px-4 gap-3"
+          className="md:hidden flex h-14 shrink-0 items-center border-b px-4 gap-3"
           style={{
             background: config.sidebarHeaderBg,
             borderColor: config.sidebarBorder,
           }}
         >
-          <SidebarTrigger className="h-9 w-9" />
-          <div className="flex items-center gap-3 flex-1">
-            <div
-              className="flex items-center justify-center w-9 h-9 rounded-lg shadow"
-              style={{
-                background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 32 32"
-                fill="none"
-                className="w-6 h-6"
+          <SidebarTrigger className="h-8 w-8" />
+          
+          {/* Logo Centralizada Mobile */}
+          <div className="flex items-center justify-center flex-1">
+            <div className="flex items-center gap-2">
+              <div
+                className="flex items-center justify-center w-8 h-8 rounded-lg shadow-sm"
+                style={{
+                  background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
+                }}
               >
-                <path
-                  d="M16 4L6 8.5v6.5c0 6.5 4.3 12.3 10 13.5 5.7-1.2 10-7 10-13.5V8.5L16 4z"
-                  fill="white"
-                  opacity="0.95"
-                />
-              </svg>
+                <Shield className="w-4 h-4 text-white" strokeWidth={2.5} />
+              </div>
+              <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                DefesaHub
+              </span>
             </div>
-            <span className="font-bold text-zinc-900 dark:text-zinc-100">
-              DefesaHub
-            </span>
           </div>
-          <div className="flex items-center gap-2">
+          
+          <div className="flex items-center gap-1">
             <ThemeToggle />
             <NotificationsPopover />
           </div>
