@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Card } from "@/components/ui/card";
+import { SwissCard, SwissCardContent } from "@/components/shared/swiss-card";
+import {
+  SwissTable,
+  SwissTableBody,
+  SwissTableCell,
+  SwissTableHead,
+  SwissTableHeader,
+  SwissTableRow,
+} from "@/components/shared/swiss-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,14 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Tooltip,
   TooltipContent,
@@ -57,6 +57,7 @@ import {
   Users,
   Building2,
   Target,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -67,7 +68,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { format, formatDistanceToNow, differenceInDays } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 // ==========================================
@@ -103,53 +104,79 @@ interface Processo {
 }
 
 // ==========================================
-// CONSTANTES
+// CONSTANTES - DESIGN SUÍÇO
 // ==========================================
 
-const AREA_CONFIGS: Record<string, { label: string; color: string; bg: string; icon: string }> = {
+// Cores alinhadas com os workspaces
+const ATRIBUICAO_COLORS: Record<string, { 
+  border: string; 
+  bg: string; 
+  text: string;
+  hoverBg: string;
+  indicator: string;
+}> = {
+  all: { 
+    border: "border-l-zinc-400", 
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-700 dark:text-zinc-300",
+    hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800",
+    indicator: "bg-zinc-600"
+  },
   JURI: { 
-    label: "Júri", 
-    color: "text-emerald-700 dark:text-emerald-400", 
+    border: "border-l-emerald-600 dark:border-l-emerald-500", 
     bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    icon: "🏛️"
+    text: "text-emerald-700 dark:text-emerald-400",
+    hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
+    indicator: "bg-emerald-600"
+  },
+  VVD: { 
+    border: "border-l-violet-600 dark:border-l-violet-500",
+    bg: "bg-violet-100 dark:bg-violet-900/30",
+    text: "text-violet-700 dark:text-violet-400",
+    hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20",
+    indicator: "bg-violet-600"
   },
   EXECUCAO_PENAL: { 
-    label: "Execução Penal", 
-    color: "text-blue-700 dark:text-blue-400", 
+    border: "border-l-blue-600 dark:border-l-blue-500",
     bg: "bg-blue-100 dark:bg-blue-900/30",
-    icon: "⛓️"
-  },
-  VIOLENCIA_DOMESTICA: { 
-    label: "Violência Doméstica", 
-    color: "text-violet-700 dark:text-violet-400", 
-    bg: "bg-violet-100 dark:bg-violet-900/30",
-    icon: "💜"
+    text: "text-blue-700 dark:text-blue-400",
+    hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-900/20",
+    indicator: "bg-blue-600"
   },
   SUBSTITUICAO: { 
-    label: "Substituição", 
-    color: "text-rose-700 dark:text-rose-400", 
+    border: "border-l-rose-600 dark:border-l-rose-500",
     bg: "bg-rose-100 dark:bg-rose-900/30",
-    icon: "🔄"
-  },
-  CURADORIA: { 
-    label: "Curadoria", 
-    color: "text-teal-700 dark:text-teal-400", 
-    bg: "bg-teal-100 dark:bg-teal-900/30",
-    icon: "🛡️"
-  },
-  FAMILIA: { 
-    label: "Família", 
-    color: "text-pink-700 dark:text-pink-400", 
-    bg: "bg-pink-100 dark:bg-pink-900/30",
-    icon: "👨‍👩‍👧"
+    text: "text-rose-700 dark:text-rose-400",
+    hoverBg: "hover:bg-rose-50 dark:hover:bg-rose-900/20",
+    indicator: "bg-rose-600"
   },
   CIVEL: { 
-    label: "Cível", 
-    color: "text-slate-700 dark:text-slate-400", 
-    bg: "bg-slate-100 dark:bg-slate-900/30",
-    icon: "⚖️"
+    border: "border-l-purple-600 dark:border-l-purple-500",
+    bg: "bg-purple-100 dark:bg-purple-900/30",
+    text: "text-purple-700 dark:text-purple-400",
+    hoverBg: "hover:bg-purple-50 dark:hover:bg-purple-900/20",
+    indicator: "bg-purple-600"
   },
 };
+
+// Ícones para cada atribuição
+const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
+  all: <Scale className="w-3.5 h-3.5" />,
+  JURI: <Gavel className="w-3.5 h-3.5" />,
+  VVD: <Shield className="w-3.5 h-3.5" />,
+  EXECUCAO_PENAL: <Lock className="w-3.5 h-3.5" />,
+  SUBSTITUICAO: <Scale className="w-3.5 h-3.5" />,
+  CIVEL: <FileText className="w-3.5 h-3.5" />,
+};
+
+const ATRIBUICAO_OPTIONS = [
+  { value: "all", label: "Todos os Processos", shortLabel: "Todos" },
+  { value: "JURI", label: "Júri", shortLabel: "Júri" },
+  { value: "VVD", label: "VVD", shortLabel: "VVD" },
+  { value: "EXECUCAO_PENAL", label: "Exec. Penal", shortLabel: "EP" },
+  { value: "SUBSTITUICAO", label: "Subst. Criminal", shortLabel: "Crim" },
+  { value: "CIVEL", label: "Subst. Cível", shortLabel: "Cível" },
+];
 
 const SITUACAO_CONFIGS: Record<string, { label: string; color: string; bg: string }> = {
   ativo: { label: "Ativo", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
@@ -158,7 +185,7 @@ const SITUACAO_CONFIGS: Record<string, { label: string; color: string; bg: strin
   baixado: { label: "Baixado", color: "text-zinc-500 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-900/30" },
 };
 
-// Dados mockados mais completos
+// Dados mockados
 const mockProcessos: Processo[] = [
   { 
     id: 1, 
@@ -225,7 +252,7 @@ const mockProcessos: Processo[] = [
     assistido: { id: 4, nome: "Ana Paula Costa Ferreira", preso: false },
     comarca: "Camaçari",
     vara: "Juizado de VVD",
-    area: "VIOLENCIA_DOMESTICA",
+    area: "VVD",
     classeProcessual: "Medida Protetiva",
     assunto: "Lesão Corporal Doméstica (Art. 129, §9º)",
     situacao: "ativo",
@@ -260,14 +287,14 @@ const mockProcessos: Processo[] = [
 ];
 
 // ==========================================
-// COMPONENTE DE CARD DE PROCESSO
+// COMPONENTE DE CARD DE PROCESSO - DESIGN SUÍÇO
 // ==========================================
 
 function ProcessoCard({ processo }: { processo: Processo }) {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   
-  const areaConfig = AREA_CONFIGS[processo.area] || AREA_CONFIGS.SUBSTITUICAO;
+  const atribuicaoColors = ATRIBUICAO_COLORS[processo.area] || ATRIBUICAO_COLORS.SUBSTITUICAO;
   const situacaoConfig = SITUACAO_CONFIGS[processo.situacao] || SITUACAO_CONFIGS.ativo;
   
   const diasPrazo = processo.proximoPrazo 
@@ -283,60 +310,78 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <Card className={cn(
-        "group bg-white dark:bg-zinc-950",
-        "border border-zinc-200 dark:border-zinc-800",
-        "transition-all duration-300",
-        "hover:shadow-lg hover:border-zinc-300 dark:hover:border-zinc-700",
-        "border-l-[4px]",
-        processo.assistido.preso ? "border-l-rose-500" : "border-l-emerald-500"
+      <SwissCard className={cn(
+        "group",
+        "transition-all duration-200",
+        "hover:shadow-md",
+        // Borda lateral semântica - réu preso ou solto
+        "border-l-[3px]",
+        processo.assistido.preso 
+          ? "border-l-rose-500 dark:border-l-rose-400" 
+          : "border-l-emerald-500 dark:border-l-emerald-400"
       )}>
-        {/* Cabeçalho - Mobile Optimized */}
+        {/* Cabeçalho */}
         <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
           <div className="flex items-start justify-between gap-2 sm:gap-3">
             <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
               {/* Badges - ORDENAÇÃO: Situação → Área → Réu Preso → Prazo */}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                {/* 1. SITUAÇÃO/STATUS - Primeiro */}
-                <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 py-0 font-semibold uppercase rounded-md", situacaoConfig.bg, situacaoConfig.color)}>
+                {/* 1. SITUAÇÃO/STATUS */}
+                <Badge className={cn(
+                  "text-[9px] sm:text-[10px] px-1.5 py-0 font-semibold uppercase rounded-md border-0",
+                  situacaoConfig.bg, situacaoConfig.color
+                )}>
                   {situacaoConfig.label}
                 </Badge>
 
                 {/* 2. ÁREA */}
-                <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md", areaConfig.bg, areaConfig.color)}>
-                  {areaConfig.icon} {areaConfig.label}
+                <Badge className={cn(
+                  "text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md border-0",
+                  atribuicaoColors.bg, atribuicaoColors.text
+                )}>
+                  {ATRIBUICAO_OPTIONS.find(o => o.value === processo.area)?.shortLabel || processo.area}
                 </Badge>
                 
                 {/* 3. RÉU PRESO */}
                 {processo.assistido.preso && (
-                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-200 dark:border-rose-800 font-bold">
+                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-0 font-bold">
                     <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Preso
                   </Badge>
                 )}
 
                 {/* 4. PRAZO URGENTE */}
                 {prazoUrgente && diasPrazo !== null && (
-                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-0">
                     <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
                     {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : `${diasPrazo}d`}
                   </Badge>
                 )}
+
+                {/* 5. JÚRI */}
+                {processo.isJuri && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Gavel className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    </TooltipTrigger>
+                    <TooltipContent>Processo do Júri</TooltipContent>
+                  </Tooltip>
+                )}
               </div>
 
               {/* Número do Processo (Mono) */}
-              <div className="flex items-center gap-1.5 sm:gap-2 group/copy" onClick={handleCopy}>
-                <span className="font-mono text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <div className="flex items-center gap-1.5 sm:gap-2 group/copy cursor-pointer" onClick={handleCopy}>
+                <span className="font-mono text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   <span className="hidden sm:inline">{processo.numeroAutos}</span>
                   <span className="sm:hidden">{processo.numeroAutos.split('.')[0]}...</span>
                 </span>
                 {copied ? (
                   <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
                 ) : (
-                  <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-300 dark:text-zinc-600 sm:opacity-0 sm:group-hover/copy:opacity-100 transition-opacity cursor-pointer" />
+                  <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-300 dark:text-zinc-600 sm:opacity-0 sm:group-hover/copy:opacity-100 transition-opacity" />
                 )}
               </div>
 
-              {/* Assunto (Serifado) */}
+              {/* Assunto (Fonte serifada) */}
               <p className="font-legal text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 sm:line-clamp-1">
                 {processo.assunto}
               </p>
@@ -351,12 +396,12 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               </div>
             </div>
 
-            {/* Ações - Sempre visíveis no mobile */}
+            {/* Ações */}
             <div className="flex items-start gap-0.5 sm:gap-1 flex-shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href={`/admin/processos/${processo.id}`}>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </Button>
                   </Link>
@@ -366,7 +411,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <MoreHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -390,8 +435,8 @@ function ProcessoCard({ processo }: { processo: Processo }) {
             </div>
           </div>
 
-          {/* Assistido - Mobile Optimized */}
-          <div className="flex items-center gap-2 sm:gap-3 py-2 border-t border-dashed border-zinc-100 dark:border-zinc-800/50">
+          {/* Assistido */}
+          <div className="flex items-center gap-2 sm:gap-3 py-2 border-t border-zinc-100 dark:border-zinc-800/50">
             <Avatar className={cn(
               "w-7 h-7 sm:w-9 sm:h-9 ring-2",
               processo.assistido.preso ? "ring-rose-500/50" : "ring-emerald-500/50"
@@ -430,37 +475,25 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               </div>
             </div>
 
-            {/* Contadores - Mobile Optimized */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-              {processo.demandasAbertas > 0 && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Badge variant="outline" className={cn(
-                      "text-[9px] sm:text-[10px] font-mono px-1.5 py-0 rounded-md",
-                      processo.demandasAbertas > 0 ? "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:bg-amber-950/30" : ""
-                    )}>
-                      <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
-                      {processo.demandasAbertas}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent>{processo.demandasAbertas} demandas pendentes</TooltipContent>
-                </Tooltip>
-              )}
-              
-              {/* Júri badge - se for processo do júri */}
-              {processo.isJuri && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Gavel className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400" />
-                  </TooltipTrigger>
-                  <TooltipContent>Processo do Júri</TooltipContent>
-                </Tooltip>
-              )}
-            </div>
+            {/* Contadores */}
+            {processo.demandasAbertas > 0 && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Badge variant="outline" className={cn(
+                    "text-[9px] sm:text-[10px] font-mono px-1.5 py-0 rounded-md",
+                    "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:bg-amber-950/30"
+                  )}>
+                    <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
+                    {processo.demandasAbertas}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>{processo.demandasAbertas} demandas pendentes</TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
 
-        {/* Conteúdo Expansível - Mobile Optimized */}
+        {/* Conteúdo Expansível */}
         <CollapsibleContent>
           <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 space-y-2.5 sm:space-y-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
             {/* Próximo Prazo */}
@@ -469,7 +502,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 "flex items-start sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg mt-2.5 sm:mt-3",
                 prazoUrgente
                   ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
-                  : "bg-zinc-100 dark:bg-zinc-800"
+                  : "bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800"
               )}>
                 <Clock className={cn(
                   "w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 sm:mt-0",
@@ -482,7 +515,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                   )}>
                     {processo.atoProximoPrazo}
                   </p>
-                  <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-400">
+                  <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
                     {format(processo.proximoPrazo, "dd/MM/yyyy", { locale: ptBR })}
                   </p>
                 </div>
@@ -492,13 +525,13 @@ function ProcessoCard({ processo }: { processo: Processo }) {
             {/* Caso Vinculado */}
             {processo.casoId && processo.casoTitulo && (
               <Link href={`/admin/casos/${processo.casoId}`}>
-                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
-                  <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
+                  <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] sm:text-xs font-medium text-indigo-700 dark:text-indigo-400 truncate">
+                    <p className="text-[10px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate">
                       {processo.casoTitulo}
                     </p>
-                    <p className="text-[9px] sm:text-[10px] text-indigo-600/70 dark:text-indigo-400/70">
+                    <p className="text-[9px] sm:text-[10px] text-emerald-600/70 dark:text-emerald-400/70">
                       Vinculado ao caso
                     </p>
                   </div>
@@ -539,18 +572,18 @@ function ProcessoCard({ processo }: { processo: Processo }) {
             </div>
           </div>
         </CollapsibleTrigger>
-      </Card>
+      </SwissCard>
     </Collapsible>
   );
 }
 
 // ==========================================
-// COMPONENTE DE LINHA DA TABELA
+// COMPONENTE DE LINHA DA TABELA - DESIGN SUÍÇO
 // ==========================================
 
 function ProcessoRow({ processo }: { processo: Processo }) {
   const [copied, setCopied] = useState(false);
-  const areaConfig = AREA_CONFIGS[processo.area] || AREA_CONFIGS.SUBSTITUICAO;
+  const atribuicaoColors = ATRIBUICAO_COLORS[processo.area] || ATRIBUICAO_COLORS.SUBSTITUICAO;
   const situacaoConfig = SITUACAO_CONFIGS[processo.situacao] || SITUACAO_CONFIGS.ativo;
 
   const handleCopy = () => {
@@ -560,20 +593,20 @@ function ProcessoRow({ processo }: { processo: Processo }) {
   };
 
   return (
-    <TableRow className={cn(
+    <SwissTableRow className={cn(
       "group transition-colors",
       processo.assistido.preso && "border-l-[3px] border-l-rose-500"
     )}>
-      <TableCell>
-        <div className="flex items-center gap-2" onClick={handleCopy}>
-          <span className="font-mono text-sm cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+      <SwissTableCell>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={handleCopy}>
+          <span className="font-mono text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             {processo.numeroAutos}
           </span>
-          {processo.isJuri && <Gavel className="w-3.5 h-3.5 text-rose-500" />}
+          {processo.isJuri && <Gavel className="w-3.5 h-3.5 text-emerald-600" />}
           {copied && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
         </div>
-      </TableCell>
-      <TableCell>
+      </SwissTableCell>
+      <SwissTableCell>
         <div className="flex items-center gap-2">
           <Avatar className={cn(
             "w-7 h-7 ring-1",
@@ -587,46 +620,46 @@ function ProcessoRow({ processo }: { processo: Processo }) {
             <span className="text-sm font-medium">{processo.assistido.nome}</span>
           </Link>
         </div>
-      </TableCell>
-      <TableCell>
+      </SwissTableCell>
+      <SwissTableCell>
         <div>
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{processo.comarca}</p>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">{processo.vara}</p>
         </div>
-      </TableCell>
-      <TableCell>
-        <Badge className={cn("text-[10px]", areaConfig.bg, areaConfig.color)}>
-          {areaConfig.label}
+      </SwissTableCell>
+      <SwissTableCell>
+        <Badge className={cn("text-[10px] border-0", atribuicaoColors.bg, atribuicaoColors.text)}>
+          {ATRIBUICAO_OPTIONS.find(o => o.value === processo.area)?.shortLabel || processo.area}
         </Badge>
-      </TableCell>
-      <TableCell>
+      </SwissTableCell>
+      <SwissTableCell>
         <p className="text-xs font-legal text-zinc-600 dark:text-zinc-400 max-w-[200px] truncate">
           {processo.assunto}
         </p>
-      </TableCell>
-      <TableCell className="text-center">
+      </SwissTableCell>
+      <SwissTableCell className="text-center">
         <span className={cn(
           "font-mono text-sm font-medium",
           processo.demandasAbertas > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-400"
         )}>
           {processo.demandasAbertas}
         </span>
-      </TableCell>
-      <TableCell>
-        <Badge className={cn("text-[10px]", situacaoConfig.bg, situacaoConfig.color)}>
+      </SwissTableCell>
+      <SwissTableCell>
+        <Badge className={cn("text-[10px] border-0", situacaoConfig.bg, situacaoConfig.color)}>
           {situacaoConfig.label}
         </Badge>
-      </TableCell>
-      <TableCell className="text-right">
+      </SwissTableCell>
+      <SwissTableCell className="text-right">
         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Link href={`/admin/processos/${processo.id}`}>
-            <Button variant="ghost" size="icon" className="h-7 w-7">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
               <Eye className="w-4 h-4" />
             </Button>
           </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -642,13 +675,13 @@ function ProcessoRow({ processo }: { processo: Processo }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </TableCell>
-    </TableRow>
+      </SwissTableCell>
+    </SwissTableRow>
   );
 }
 
 // ==========================================
-// PÁGINA PRINCIPAL
+// PÁGINA PRINCIPAL - DESIGN SUÍÇO
 // ==========================================
 
 export default function ProcessosPage() {
@@ -677,103 +710,166 @@ export default function ProcessosPage() {
     comarcas: new Set(mockProcessos.map(p => p.comarca)).size,
   }), []);
 
+  // Configuração visual da atribuição selecionada
+  const atribuicaoColors = ATRIBUICAO_COLORS[areaFilter] || ATRIBUICAO_COLORS.all;
+
   return (
     <TooltipProvider>
       <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-        {/* Header - Mobile Optimized */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex-shrink-0">
-              <Scale className="w-5 h-5 sm:w-6 sm:h-6 text-blue-700 dark:text-blue-400" />
+        {/* Header - Design Suíço */}
+        <div className="space-y-4">
+          {/* Linha superior: Título + Ações */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "p-2 sm:p-2.5 rounded-lg flex-shrink-0",
+                atribuicaoColors.bg
+              )}>
+                <Scale className={cn("w-5 h-5 sm:w-6 sm:h-6", atribuicaoColors.text)} />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                  Processos
+                </h1>
+                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                  Gerenciamento integrado • {stats.total} processos
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                Processos
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
-                Gerenciamento integrado • {stats.total} processos ativos
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-9 w-9">
-              <Download className="w-4 h-4" />
-            </Button>
-            <Link href="/admin/processos/novo">
-              <Button className="bg-blue-600 hover:bg-blue-700 h-9 text-sm">
-                <Plus className="w-4 h-4 mr-1.5" />
-                <span className="hidden sm:inline">Novo Processo</span>
-                <span className="sm:hidden">Novo</span>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
-            </Link>
+              <Link href="/admin/processos/novo">
+                <Button className="h-8 sm:h-9 text-xs sm:text-sm gap-1.5">
+                  <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Novo Processo</span>
+                  <span className="sm:hidden">Novo</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Seletor de Atribuição - Tabs com cores dos workspaces */}
+          <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+            <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
+              {ATRIBUICAO_OPTIONS.map((option) => {
+                const isActive = areaFilter === option.value;
+                const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
+                const count = option.value === "all" 
+                  ? mockProcessos.length 
+                  : mockProcessos.filter(p => p.area === option.value).length;
+                
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setAreaFilter(option.value)}
+                    className={cn(
+                      "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
+                      isActive 
+                        ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
+                        : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
+                    )}
+                  >
+                    <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
+                    <span className="hidden sm:inline">{option.label}</span>
+                    <span className="sm:hidden">{option.shortLabel}</span>
+                    <span className={cn(
+                      "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
+                      isActive 
+                        ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
+                        : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
+                    )}>
+                      {count}
+                    </span>
+                    {isActive && (
+                      <span className={cn(
+                        "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
+                        optionColors.indicator
+                      )} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Stats Cards - Mobile Optimized */}
+        {/* Stats Cards - Design Suíço com borda lateral */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
-          <Card className="p-3 sm:p-4 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 border-0">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
+          <SwissCard className="border-l-2 border-l-slate-400">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
+                  <p className="text-[10px] sm:text-xs text-zinc-500">Total</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
-                <p className="text-[10px] sm:text-xs text-zinc-500">Total</p>
-              </div>
-            </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
           
-          <Card className="p-3 sm:p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-900/20 border-0">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Gavel className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
+          <SwissCard className="border-l-2 border-l-emerald-500">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Gavel className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.juri}</p>
+                  <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">Júri</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.juri}</p>
-                <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Júri</p>
-              </div>
-            </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
           
-          <Card className="p-3 sm:p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 border-0">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+          <SwissCard className="border-l-2 border-l-amber-500">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.comDemandas}</p>
+                  <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Demandas</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.comDemandas}</p>
-                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Demandas</p>
-              </div>
-            </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
           
-          <Card className="p-3 sm:p-4 bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-950/30 dark:to-pink-900/20 border-0 hidden sm:block">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
+          <SwissCard className="border-l-2 border-l-rose-500 hidden sm:block">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
+                  <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Réu Preso</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
-                <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Réu Preso</p>
-              </div>
-            </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
 
-          <Card className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-0 hidden lg:block">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+          <SwissCard className="border-l-2 border-l-blue-500 hidden lg:block">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.comarcas}</p>
+                  <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Comarcas</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.comarcas}</p>
-                <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Comarcas</p>
-              </div>
-            </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
         </div>
 
-        {/* Filters - Mobile Optimized */}
+        {/* Filters - Design Suíço */}
         <div className="flex flex-col gap-2 sm:gap-3">
           {/* Search + View Toggle */}
           <div className="flex items-center gap-2">
@@ -828,22 +924,8 @@ export default function ProcessosPage() {
             </div>
           </div>
 
-          {/* Filter Row - Horizontal scroll on mobile */}
+          {/* Filter Row */}
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
-            <Select value={areaFilter} onValueChange={setAreaFilter}>
-              <SelectTrigger className="w-[120px] sm:w-[180px] h-8 text-xs flex-shrink-0">
-                <SelectValue placeholder="Área" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas Áreas</SelectItem>
-                {Object.entries(AREA_CONFIGS).map(([key, config]) => (
-                  <SelectItem key={key} value={key}>
-                    {config.icon} {config.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
             <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
               <SelectTrigger className="w-[100px] sm:w-[140px] h-8 text-xs flex-shrink-0">
                 <SelectValue placeholder="Situação" />
@@ -858,7 +940,7 @@ export default function ProcessosPage() {
           </div>
         </div>
 
-        {/* Content - Mobile Optimized */}
+        {/* Content */}
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 px-1 sm:px-0">
             {filteredProcessos.map((processo) => (
@@ -866,33 +948,35 @@ export default function ProcessosPage() {
             ))}
           </div>
         ) : (
-          <Card className="overflow-hidden bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Número</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Assistido</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Comarca/Vara</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Área</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Assunto</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider text-center">Dem.</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Situação</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProcessos.map((processo) => (
-                  <ProcessoRow key={processo.id} processo={processo} />
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+          <SwissCard className="overflow-hidden">
+            <SwissCardContent className="p-0">
+              <SwissTable>
+                <SwissTableHeader>
+                  <SwissTableRow>
+                    <SwissTableHead>Número</SwissTableHead>
+                    <SwissTableHead>Assistido</SwissTableHead>
+                    <SwissTableHead>Comarca/Vara</SwissTableHead>
+                    <SwissTableHead>Área</SwissTableHead>
+                    <SwissTableHead>Assunto</SwissTableHead>
+                    <SwissTableHead className="text-center">Dem.</SwissTableHead>
+                    <SwissTableHead>Situação</SwissTableHead>
+                    <SwissTableHead className="text-right">Ações</SwissTableHead>
+                  </SwissTableRow>
+                </SwissTableHeader>
+                <SwissTableBody>
+                  {filteredProcessos.map((processo) => (
+                    <ProcessoRow key={processo.id} processo={processo} />
+                  ))}
+                </SwissTableBody>
+              </SwissTable>
+            </SwissCardContent>
+          </SwissCard>
         )}
 
         {/* Empty State */}
         {filteredProcessos.length === 0 && (
-          <Card className="border-dashed">
-            <div className="text-center py-16">
+          <SwissCard className="border-dashed">
+            <SwissCardContent className="text-center py-16">
               <div className="mx-auto w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
                 <Scale className="w-8 h-8 text-zinc-400" />
               </div>
@@ -908,8 +992,8 @@ export default function ProcessosPage() {
                   Cadastrar Processo
                 </Button>
               </Link>
-            </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
         )}
       </div>
     </TooltipProvider>
