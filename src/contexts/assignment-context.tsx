@@ -37,19 +37,12 @@ export interface MenuSection {
 
 // ==========================================
 // BLOCO CENTRAL - MÓDULOS POR ESPECIALIDADE
+// Contém apenas ferramentas específicas de cada especialidade
+// Os itens gerais (Assistidos, Processos, Demandas) ficam no menu fixo superior
 // ==========================================
 
 // 🏛️ TRIBUNAL DO JÚRI - Ferramentas específicas
 const JURI_MODULES: MenuSection[] = [
-  {
-    id: "gestao",
-    title: "Gestão",
-    items: [
-      { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
-      { label: "Processos", path: "/admin/processos", icon: "Scale" },
-      { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
-    ],
-  },
   {
     id: "plenario",
     title: "Plenário",
@@ -61,6 +54,8 @@ const JURI_MODULES: MenuSection[] = [
   {
     id: "inteligencia",
     title: "Inteligência",
+    collapsible: true,
+    defaultOpen: true,
     items: [
       { label: "Banco de Jurados", path: "/admin/jurados", icon: "UserCheck", description: "Perfil e histórico de votações" },
       { label: "Profiler de Jurados", path: "/admin/jurados/profiler", icon: "Brain", description: "Score de empatia e análise", isPremium: true },
@@ -75,15 +70,6 @@ const JURI_MODULES: MenuSection[] = [
 
 // 💜 VIOLÊNCIA DOMÉSTICA - Ferramentas específicas
 const VVD_MODULES: MenuSection[] = [
-  {
-    id: "gestao",
-    title: "Gestão",
-    items: [
-      { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
-      { label: "Processos", path: "/admin/processos", icon: "Scale" },
-      { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
-    ],
-  },
   {
     id: "protecao",
     title: "Proteção",
@@ -106,15 +92,6 @@ const VVD_MODULES: MenuSection[] = [
 // ⛓️ EXECUÇÃO PENAL - Ferramentas específicas
 const EP_MODULES: MenuSection[] = [
   {
-    id: "gestao",
-    title: "Gestão",
-    items: [
-      { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
-      { label: "Processos", path: "/admin/processos", icon: "Scale" },
-      { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
-    ],
-  },
-  {
     id: "beneficios",
     title: "Benefícios",
     items: [
@@ -126,6 +103,8 @@ const EP_MODULES: MenuSection[] = [
   {
     id: "unidades",
     title: "Unidades Prisionais",
+    collapsible: true,
+    defaultOpen: false,
     items: [
       { label: "Inspeções", path: "/admin/custodia/inspecoes", icon: "ClipboardCheck", description: "Relatórios de condições" },
       { label: "Lotação", path: "/admin/custodia/lotacao", icon: "Building2", description: "Capacidade das unidades" },
@@ -136,20 +115,10 @@ const EP_MODULES: MenuSection[] = [
 // 🔄 SUBSTITUIÇÃO CRIMINAL
 const SUBSTITUICAO_MODULES: MenuSection[] = [
   {
-    id: "gestao",
-    title: "Gestão",
+    id: "ferramentas",
+    title: "Ferramentas",
     items: [
-      { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
-      { label: "Processos", path: "/admin/processos", icon: "Scale" },
-      { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
       { label: "Kanban", path: "/admin/kanban", icon: "Columns3", description: "Visão em cards" },
-    ],
-  },
-  {
-    id: "atuacao",
-    title: "Atuação",
-    items: [
-      { label: "Audiências", path: "/admin/audiencias", icon: "Briefcase" },
       { label: "Banco de Teses", path: "/admin/templates", icon: "FileText" },
     ],
   },
@@ -169,6 +138,8 @@ const GRUPO_JURI_MODULES: MenuSection[] = [
   {
     id: "inteligencia",
     title: "Inteligência Avançada",
+    collapsible: true,
+    defaultOpen: true,
     items: [
       { label: "Banco de Jurados", path: "/admin/jurados", icon: "UserCheck" },
       { label: "Investigação & OSINT", path: "/admin/juri/investigacao", icon: "FileSearch" },
@@ -184,20 +155,10 @@ const GRUPO_JURI_MODULES: MenuSection[] = [
 // ⚖️ SUBSTITUIÇÃO CÍVEL
 const CIVEL_MODULES: MenuSection[] = [
   {
-    id: "gestao",
-    title: "Gestão",
+    id: "ferramentas",
+    title: "Ferramentas",
     items: [
-      { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
-      { label: "Processos", path: "/admin/processos", icon: "Scale" },
-      { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
       { label: "Kanban", path: "/admin/kanban", icon: "Columns3" },
-    ],
-  },
-  {
-    id: "atuacao",
-    title: "Atuação",
-    items: [
-      { label: "Audiências", path: "/admin/audiencias", icon: "Briefcase" },
       { label: "Conciliações", path: "/admin/audiencias?tipo=CONCILIACAO", icon: "Handshake" },
       { label: "Documentos", path: "/admin/documentos", icon: "FileText" },
     ],
@@ -205,13 +166,15 @@ const CIVEL_MODULES: MenuSection[] = [
 ];
 
 // ==========================================
-// BLOCO SUPERIOR - MENU FIXO (CONTEXTO)
+// BLOCO SUPERIOR - MENU FIXO (CONTEXTO/GERAL)
+// Itens gerais que aparecem em todas as especialidades
 // ==========================================
 
 export const CONTEXT_MENU_ITEMS: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
-  { label: "Casos Ativos", path: "/admin/casos", icon: "Briefcase" },
-  { label: "Demandas", path: "/admin/demandas", icon: "FileText" },
+  { label: "Casos", path: "/admin/casos", icon: "Briefcase" },
+  { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
+  { label: "Processos", path: "/admin/processos", icon: "Scale" },
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
   { label: "Agenda", path: "/admin/audiencias", icon: "Calendar" },
 ];
