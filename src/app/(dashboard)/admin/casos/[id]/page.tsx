@@ -36,6 +36,7 @@ import {
   ChevronRight,
   Copy,
   CheckCircle2,
+  ClipboardList,
   MessageCircle,
   Sparkles,
   Gavel,
@@ -44,12 +45,14 @@ import {
   Brain,
   BookOpen,
   Timer,
+  Hash,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { format, formatDistanceToNow, isToday, isTomorrow, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { EntityLink } from "@/components/shared/entity-link";
 
 // ==========================================
 // TIPOS
@@ -137,6 +140,41 @@ interface CasoConexo {
   tagComum: string;
   assistidoNome: string;
   preso: boolean;
+}
+
+interface PersonaCaso {
+  id: number;
+  nome: string;
+  tipo: "reu" | "testemunha" | "vitima" | "perito" | "jurado" | "familiar";
+  status: "pendente" | "localizada" | "intimada" | "ouvida";
+  assistidoId?: number;
+  juradoId?: number;
+}
+
+interface CasoFato {
+  id: number;
+  titulo: string;
+  tipo: "controverso" | "incontroverso" | "tese";
+  status: "ativo" | "validado" | "em_revisao";
+  tags: string[];
+}
+
+interface FactEvidenceItem {
+  id: number;
+  factId: number;
+  fonte: string;
+  documento?: string;
+  trecho: string;
+  contradicao?: boolean;
+}
+
+interface TimelineItem {
+  id: number;
+  data: Date;
+  tipo: "movimentacao" | "nota" | "documento" | "audiencia" | "fato";
+  titulo: string;
+  descricao: string;
+  links?: { type: "pessoa" | "documento" | "fato"; name: string; href?: string }[];
 }
 
 // ==========================================
@@ -257,6 +295,100 @@ const MOCK_CASO: Caso = {
 const MOCK_CONEXOS: CasoConexo[] = [
   { id: 5, titulo: "Homicídio Privilegiado - Bairro Centro", codigo: "CASO-2024-087", tagComum: "LegitimaDefesa", assistidoNome: "Maria Silva", preso: false },
   { id: 7, titulo: "Tentativa de Homicídio - Mercado", codigo: "CASO-2024-092", tagComum: "NulidadeBusca", assistidoNome: "Carlos Mendes", preso: true },
+];
+
+const MOCK_PERSONAS: PersonaCaso[] = [
+  { id: 1, nome: "José Carlos Santos", tipo: "reu", status: "ouvida", assistidoId: 1 },
+  { id: 2, nome: "Pedro Oliveira Lima", tipo: "reu", status: "intimada", assistidoId: 2 },
+  { id: 3, nome: "Delegado Silva", tipo: "testemunha", status: "ouvida" },
+  { id: 4, nome: "Maria de Lourdes", tipo: "testemunha", status: "intimada" },
+  { id: 5, nome: "Perita Ana Paula", tipo: "perito", status: "localizada" },
+  { id: 6, nome: "Jurado 01", tipo: "jurado", status: "pendente", juradoId: 1 },
+];
+
+const MOCK_FACTS: CasoFato[] = [
+  { id: 1, titulo: "Iluminação do local", tipo: "controverso", status: "em_revisao", tags: ["prova", "contradição"] },
+  { id: 2, titulo: "Distância entre partes", tipo: "controverso", status: "ativo", tags: ["testemunha", "autos"] },
+  { id: 3, titulo: "Ausência de mandado", tipo: "tese", status: "validado", tags: ["nulidade", "busca"] },
+];
+
+const MOCK_EVIDENCIAS: FactEvidenceItem[] = [
+  {
+    id: 1,
+    factId: 1,
+    fonte: "Depoimento Delegado",
+    documento: "Fls. 45",
+    trecho: "Local estava bem iluminado.",
+    contradicao: true,
+  },
+  {
+    id: 2,
+    factId: 1,
+    fonte: "Depoimento Testemunha",
+    documento: "Fls. 78",
+    trecho: "Ambiente escuro, só ouviu voz.",
+    contradicao: true,
+  },
+  {
+    id: 3,
+    factId: 2,
+    fonte: "Auto de Prisão",
+    documento: "Fls. 52",
+    trecho: "Distância de 2 metros.",
+  },
+  {
+    id: 4,
+    factId: 3,
+    fonte: "Relatório de diligência",
+    documento: "Fls. 18",
+    trecho: "Não consta mandado anexado.",
+  },
+];
+
+const MOCK_TIMELINE: TimelineItem[] = [
+  {
+    id: 1,
+    data: new Date("2026-01-10"),
+    tipo: "movimentacao",
+    titulo: "Despacho de designação de audiência",
+    descricao: "Juízo designou audiência de instrução.",
+    links: [{ type: "documento", name: "Despacho fls. 12" }],
+  },
+  {
+    id: 2,
+    data: new Date("2026-01-14"),
+    tipo: "nota",
+    titulo: "Nota estratégica",
+    descricao: "Priorizar nulidade da busca e contradições nas testemunhas.",
+    links: [{ type: "fato", name: "Ausência de mandado" }],
+  },
+  {
+    id: 3,
+    data: new Date("2026-01-25"),
+    tipo: "audiencia",
+    titulo: "Audiência de instrução",
+    descricao: "Oitiva de testemunhas da acusação.",
+    links: [
+      { type: "pessoa", name: "Delegado Silva" },
+      { type: "pessoa", name: "Maria de Lourdes" },
+    ],
+  },
+  {
+    id: 4,
+    data: new Date("2026-02-01"),
+    tipo: "documento",
+    titulo: "Upload de laudo pericial",
+    descricao: "Laudo anexado ao processo.",
+    links: [{ type: "documento", name: "Laudo pericial" }],
+  },
+  {
+    id: 5,
+    data: new Date("2026-02-05"),
+    tipo: "fato",
+    titulo: "Consolidação do fato controvertido",
+    descricao: "Conflito de versões sobre iluminação.",
+    links: [{ type: "fato", name: "Iluminação do local" }],
+  },
 ];
 
 // ==========================================
@@ -491,6 +623,10 @@ export default function CasoDetailPage() {
   // Verificar teoria completa
   const teoriaCompleta = caso.teoriaFatos && caso.teoriaProvas && caso.teoriaDireito;
   const teoriaProgresso = [caso.teoriaFatos, caso.teoriaProvas, caso.teoriaDireito].filter(Boolean).length;
+  const personasPorTipo = MOCK_PERSONAS.reduce((acc, persona) => {
+    acc[persona.tipo] = acc[persona.tipo] ? [...acc[persona.tipo], persona] : [persona];
+    return acc;
+  }, {} as Record<string, PersonaCaso[]>);
 
   // Verificar próxima audiência
   const proximaAudiencia = caso.audiencias.find(a => a.status === "DESIGNADA");
@@ -828,6 +964,11 @@ export default function CasoDetailPage() {
                 <Sparkles className="w-3 h-3 text-amber-500" />
               )}
             </TabsTrigger>
+            <TabsTrigger value="integracao" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900">
+              <ClipboardList className="w-4 h-4" />
+              <span className="hidden sm:inline">Integração</span>
+              <span className="sm:hidden">Int.</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab: Teoria do Caso */}
@@ -967,6 +1108,194 @@ export default function CasoDetailPage() {
                       </Button>
                     </div>
                   </div>
+                </div>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Tab: Integração */}
+          <TabsContent value="integracao" className="mt-6">
+            <div className="space-y-6">
+              {/* Personas */}
+              <Card className="p-5 border border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                      Personas do Caso
+                    </h3>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Base única de pessoas conectadas ao caso.
+                    </p>
+                  </div>
+                  <Button size="sm" className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    Adicionar Persona
+                  </Button>
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {Object.entries(personasPorTipo).map(([tipo, personas]) => (
+                    <div key={tipo} className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Users className="w-4 h-4 text-zinc-500" />
+                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
+                          {tipo}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {personas.map((persona) => (
+                          <div key={persona.id} className="flex items-center justify-between border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <EntityLink type="pessoa" name={persona.nome} />
+                              <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+                                {persona.status}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {persona.assistidoId && (
+                                <EntityLink type="caso" name={`Assistido #${persona.assistidoId}`} />
+                              )}
+                              {persona.juradoId && (
+                                <EntityLink type="caso" name={`Jurado #${persona.juradoId}`} />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Fatos e Evidências */}
+              <Card className="p-5 border border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                      Fatos e Evidências
+                    </h3>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Fatos que atravessam investigação, instrução e plenário.
+                    </p>
+                  </div>
+                  <Button size="sm" className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    Novo Fato
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {MOCK_FACTS.map((fato) => {
+                    const evidencias = MOCK_EVIDENCIAS.filter((ev) => ev.factId === fato.id);
+                    return (
+                      <div key={fato.id} className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <Target className="w-4 h-4 text-zinc-500" />
+                          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                            {fato.titulo}
+                          </span>
+                          <Badge variant="outline" className="text-[10px] uppercase tracking-[0.2em]">
+                            {fato.tipo}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] uppercase tracking-[0.2em]">
+                            {fato.status}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {fato.tags.map((tag) => (
+                            <Badge key={tag} variant="outline" className="text-[10px]">
+                              <Hash className="w-2.5 h-2.5 mr-1" />
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="space-y-2">
+                          {evidencias.map((ev) => (
+                            <div
+                              key={ev.id}
+                              className={cn(
+                                "flex flex-col md:flex-row md:items-center gap-3 border border-dashed rounded-md px-3 py-2",
+                                ev.contradicao
+                                  ? "border-rose-300 bg-rose-50 dark:bg-rose-900/20"
+                                  : "border-zinc-200 dark:border-zinc-800"
+                              )}
+                            >
+                              <div className="flex-1">
+                                <p className="text-sm text-zinc-700 dark:text-zinc-200">
+                                  {ev.trecho}
+                                </p>
+                                <p className="text-xs text-zinc-500 mt-1">
+                                  {ev.fonte} • {ev.documento}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {ev.documento && (
+                                  <EntityLink type="documento" name={ev.documento} />
+                                )}
+                                {ev.contradicao && (
+                                  <Badge variant="outline" className="border-rose-300 text-rose-600 text-[10px]">
+                                    Contradição
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+
+              {/* Timeline Unificada */}
+              <Card className="p-5 border border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                      Linha do Tempo Unificada
+                    </h3>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Movimentações, notas, documentos e fatos em um único fluxo.
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" className="gap-2">
+                    <MessageCircle className="w-4 h-4" />
+                    Nova Nota
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {MOCK_TIMELINE.map((item) => (
+                    <div key={item.id} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <span className="w-2.5 h-2.5 rounded-full bg-zinc-400" />
+                        <span className="flex-1 w-px bg-zinc-200 dark:bg-zinc-800" />
+                      </div>
+                      <div className="flex-1 pb-4 border-b border-dashed border-zinc-200 dark:border-zinc-800">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className="text-[10px] uppercase tracking-[0.2em]">
+                            {item.tipo}
+                          </Badge>
+                          <span className="text-xs text-zinc-400">
+                            {format(item.data, "dd/MM/yyyy")}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
+                          {item.titulo}
+                        </h4>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-300 mt-1">
+                          {item.descricao}
+                        </p>
+                        {item.links && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {item.links.map((link, idx) => (
+                              <EntityLink key={`${item.id}-${idx}`} type={link.type} name={link.name} href={link.href} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </Card>
             </div>
