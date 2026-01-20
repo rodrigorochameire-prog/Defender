@@ -32,17 +32,23 @@ export const metadata: Metadata = {
   description: "Sistema de gestão de processos, prazos e demandas para Defensoria Pública",
 };
 
-// Script to prevent flash of wrong theme - default to light
+// Script to prevent flash of wrong theme and font size - default to light
 const themeScript = `
   (function() {
     try {
       var theme = localStorage.getItem('theme');
+      var fontSize = localStorage.getItem('defesahub-font-size');
       
       // Only apply dark mode if explicitly set
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.remove('dark');
+      }
+      
+      // Apply font size mode
+      if (fontSize === 'large') {
+        document.documentElement.classList.add('font-large');
       }
     } catch (e) {}
   })();

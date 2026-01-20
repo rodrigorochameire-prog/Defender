@@ -75,95 +75,95 @@ function TheorySection({
     <Card className={cn(
       "overflow-hidden transition-all duration-200",
       "bg-white dark:bg-zinc-950",
-      "border border-zinc-200 dark:border-zinc-800",
-      "hover:border-zinc-300 dark:hover:border-zinc-700",
+      "border border-zinc-200/80 dark:border-zinc-700/60",
+      "hover:border-zinc-300 dark:hover:border-zinc-600",
       `border-l-[4px] ${borderColor}`
     )}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <div className={cn(
-            "flex items-center justify-between p-4 cursor-pointer",
+            "flex items-center justify-between p-5 cursor-pointer",
             "hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors"
           )}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3.5">
               <div className={cn(
-                "p-2 rounded-lg",
+                "p-2.5 rounded-xl",
                 color
               )}>
                 {icon}
               </div>
               <div>
-                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                <h3 className="font-semibold text-base sm:text-lg text-zinc-900 dark:text-zinc-100">
                   {title}
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   {hint}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               {hasContent && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 rounded-sm bg-zinc-50 dark:bg-zinc-900">
+                <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-md bg-zinc-50 dark:bg-zinc-900">
                   Preenchido
                 </Badge>
               )}
               {isOpen ? (
-                <ChevronDown className="w-4 h-4 text-zinc-400" />
+                <ChevronDown className="w-5 h-5 text-zinc-400" />
               ) : (
-                <ChevronRight className="w-4 h-4 text-zinc-400" />
+                <ChevronRight className="w-5 h-5 text-zinc-400" />
               )}
             </div>
           </div>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="px-4 pb-4 border-t border-zinc-100 dark:border-zinc-800/50 pt-3">
+          <div className="px-5 pb-5 border-t border-zinc-100 dark:border-zinc-800/50 pt-4">
             {isEditing ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <Textarea
                   value={editValue}
                   onChange={(e) => onChangeValue(e.target.value)}
                   placeholder={placeholder}
-                  className="min-h-[150px] resize-none font-serif text-sm leading-relaxed
+                  className="min-h-[180px] resize-none font-serif text-base leading-relaxed
                     bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700
                     focus:border-zinc-400 dark:focus:border-zinc-600"
                 />
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex items-center justify-end gap-3">
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="default"
                     onClick={onCancel}
                     disabled={isSaving}
                     className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                   >
-                    <X className="w-4 h-4 mr-1" />
+                    <X className="w-4 h-4 mr-2" />
                     Cancelar
                   </Button>
                   <Button
-                    size="sm"
+                    size="default"
                     onClick={onSave}
                     disabled={isSaving}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-primary hover:bg-primary/90 text-white"
                   >
-                    <Save className="w-4 h-4 mr-1" />
+                    <Save className="w-4 h-4 mr-2" />
                     {isSaving ? "Salvando..." : "Salvar"}
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {hasContent ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <p className="whitespace-pre-wrap font-serif text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                  <div className="prose prose-base dark:prose-invert max-w-none">
+                    <p className="whitespace-pre-wrap font-serif text-base text-zinc-700 dark:text-zinc-300 leading-relaxed">
                       {content}
                     </p>
                   </div>
                 ) : (
-                  <div className="text-center py-6">
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                      <Lightbulb className="w-5 h-5 text-zinc-400" />
+                  <div className="text-center py-8">
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                      <Lightbulb className="w-6 h-6 text-zinc-400" />
                     </div>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <p className="text-base text-zinc-500 dark:text-zinc-400">
                       {placeholder}
                     </p>
                   </div>
@@ -172,11 +172,11 @@ function TheorySection({
                 {!readOnly && (
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="default"
                     onClick={onEdit}
                     className="w-full text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300
                       border border-dashed border-zinc-200 dark:border-zinc-700
-                      hover:border-zinc-300 dark:hover:border-zinc-600"
+                      hover:border-zinc-300 dark:hover:border-zinc-600 h-11"
                   >
                     <Edit3 className="w-4 h-4 mr-2" />
                     {hasContent ? "Editar" : "Adicionar conteúdo"}
@@ -234,14 +234,14 @@ export function TeoriaDoCaso({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30">
-            <Scale className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200/80 dark:from-zinc-800 dark:to-zinc-700/50">
+            <Scale className="w-6 h-6 text-zinc-700 dark:text-zinc-300" />
           </div>
           <div>
-            <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
-              Teoria do Caso
+            <h2 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100">
+              Estratégia da Defesa
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
               O tripé da defesa: Fatos, Provas e Direito
             </p>
           </div>
@@ -265,14 +265,14 @@ export function TeoriaDoCaso({
       </div>
 
       {/* Três Colunas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* 1. FATOS */}
         <TheorySection
           title="Fatos"
-          icon={<BookOpen className="w-4 h-4 text-blue-700 dark:text-blue-400" />}
+          icon={<BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
           content={teoriaFatos}
-          color="bg-blue-100 dark:bg-blue-900/30"
-          borderColor="border-l-blue-500 dark:border-l-blue-600"
+          color="bg-blue-100/80 dark:bg-blue-900/40"
+          borderColor="border-l-blue-400 dark:border-l-blue-500"
           field="teoriaFatos"
           placeholder="Descreva a narrativa defensiva dos fatos..."
           hint="A versão da defesa sobre o ocorrido"
@@ -289,10 +289,10 @@ export function TeoriaDoCaso({
         {/* 2. PROVAS */}
         <TheorySection
           title="Provas"
-          icon={<Link2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />}
+          icon={<Link2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
           content={teoriaProvas}
-          color="bg-emerald-100 dark:bg-emerald-900/30"
-          borderColor="border-l-emerald-500 dark:border-l-emerald-600"
+          color="bg-emerald-100/80 dark:bg-emerald-900/40"
+          borderColor="border-l-emerald-400 dark:border-l-emerald-500"
           field="teoriaProvas"
           placeholder="Liste as provas que corroboram a tese defensiva..."
           hint="Evidências e documentos favoráveis"
@@ -309,10 +309,10 @@ export function TeoriaDoCaso({
         {/* 3. DIREITO */}
         <TheorySection
           title="Direito"
-          icon={<FileText className="w-4 h-4 text-violet-700 dark:text-violet-400" />}
+          icon={<FileText className="w-5 h-5 text-violet-600 dark:text-violet-400" />}
           content={teoriaDireito}
-          color="bg-violet-100 dark:bg-violet-900/30"
-          borderColor="border-l-violet-500 dark:border-l-violet-600"
+          color="bg-violet-100/80 dark:bg-violet-900/40"
+          borderColor="border-l-violet-400 dark:border-l-violet-500"
           field="teoriaDireito"
           placeholder="Fundamente as teses jurídicas aplicáveis..."
           hint="Teses, jurisprudência e doutrina"
@@ -328,10 +328,12 @@ export function TeoriaDoCaso({
       </div>
 
       {/* Dica de conexões */}
-      <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50">
-        <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-        <p className="text-xs text-amber-800 dark:text-amber-300">
-          <strong>Dica:</strong> Use tags no título do caso (ex: #NulidadeBusca, #LegitimaDefesa) para conectar casos com teses similares e encontrar petições de sucesso.
+      <div className="flex items-start gap-3.5 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-700/60">
+        <div className="p-1.5 rounded-lg bg-zinc-200/60 dark:bg-zinc-700/50">
+          <Lightbulb className="w-4 h-4 text-zinc-600 dark:text-zinc-400 flex-shrink-0" />
+        </div>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <strong className="text-zinc-700 dark:text-zinc-300">Dica:</strong> Use tags no título do caso (ex: #NulidadeBusca, #LegitimaDefesa) para conectar casos com teses similares e encontrar petições de sucesso.
         </p>
       </div>
     </div>
