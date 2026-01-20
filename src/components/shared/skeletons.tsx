@@ -164,6 +164,53 @@ export function AccordionSkeleton() {
   );
 }
 
+// Skeleton para páginas de comportamento
+export function BehaviorSkeleton() {
+  return <TableSkeleton />;
+}
+
+// Skeleton para páginas de logs
+export function LogsSkeleton() {
+  return <TableSkeleton />;
+}
+
+// Skeleton para mural/wall
+export function WallSkeleton() {
+  return (
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header-content">
+          <Skeleton className="h-12 w-12 rounded-[14px]" />
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-32" />
+            <Skeleton className="h-4 w-56" />
+          </div>
+        </div>
+      </div>
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="p-6">
+            <div className="flex gap-4 mb-4">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-5/6 mb-4" />
+            <Skeleton className="h-48 w-full rounded-lg mb-4" />
+            <div className="flex gap-4">
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Skeleton PRECISO para Calendário (admin/calendar/page.tsx)
 export function CalendarSkeleton() {
   return (
