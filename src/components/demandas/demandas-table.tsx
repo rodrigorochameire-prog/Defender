@@ -68,7 +68,6 @@ import {
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import Link from "next/link";
-import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
 
 // ========================================
 // CONFIGURAÇÕES E TIPOS
@@ -565,7 +564,7 @@ function FaseJuriBadge({ fase }: { fase: string }) {
 
 function PrazoIndicator({ prazo }: { prazo: string | null }) {
   if (!prazo) {
-    return <span className="text-xs text-zinc-400 italic">Sem prazo</span>;
+    return <span className="text-sm text-zinc-400">—</span>;
   }
   
   const dataPrazo = parseISO(prazo);
@@ -575,34 +574,29 @@ function PrazoIndicator({ prazo }: { prazo: string | null }) {
   const urgente = diasRestantes <= 3 && diasRestantes >= 0;
   
   return (
-    <div className={cn(
-      "flex items-center gap-1.5 text-xs font-medium",
-      vencido && "text-rose-600 dark:text-rose-400",
-      hoje && "text-rose-600 dark:text-rose-400",
-      urgente && !hoje && "text-amber-600 dark:text-amber-400",
-      !vencido && !hoje && !urgente && "text-zinc-600 dark:text-zinc-400"
-    )}>
-      <Clock className={cn(
-        "w-3.5 h-3.5",
-        (vencido || hoje) && "text-rose-500",
-        urgente && !hoje && "text-amber-500"
-      )} />
-      <span className="font-data">
-        {format(dataPrazo, "dd/MM")}
+    <div className="flex flex-col gap-0.5">
+      <span className={cn(
+        "text-sm font-mono font-medium",
+        vencido && "text-zinc-800 dark:text-zinc-200",
+        hoje && "text-zinc-800 dark:text-zinc-200",
+        urgente && !hoje && "text-zinc-800 dark:text-zinc-200",
+        !vencido && !hoje && !urgente && "text-zinc-700 dark:text-zinc-300"
+      )}>
+        {format(dataPrazo, "dd/MM/yyyy")}
       </span>
       {vencido && (
-        <Badge className="bg-rose-500 text-white text-[9px] h-4 px-1">
+        <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
           Vencido
-        </Badge>
+        </span>
       )}
       {hoje && !vencido && (
-        <Badge className="bg-rose-500 text-white text-[9px] h-4 px-1">
+        <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
           Hoje
-        </Badge>
+        </span>
       )}
       {urgente && !hoje && !vencido && (
-        <span className="text-[10px] text-amber-600 dark:text-amber-400">
-          ({diasRestantes}d)
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          {diasRestantes}d restantes
         </span>
       )}
     </div>
@@ -671,21 +665,23 @@ export function DemandasTable({
         <Table>
           <TableHeader className="bg-zinc-50 dark:bg-zinc-900/50">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[4px] p-0" /> {/* Faixa Colorida */}
-              <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">
+              <TableHead className="w-[100px] text-xs uppercase tracking-wide font-semibold text-zinc-700 dark:text-zinc-300">
                 Status
               </TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">
-                Assistido / Autos
+              <TableHead className="text-xs uppercase tracking-wide font-semibold text-zinc-700 dark:text-zinc-300">
+                Assistido
               </TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">
+              <TableHead className="w-[180px] text-xs uppercase tracking-wide font-semibold text-zinc-700 dark:text-zinc-300">
                 Ato
               </TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">
-                Prazo
+              <TableHead className="w-[200px] text-xs uppercase tracking-wide font-semibold text-zinc-700 dark:text-zinc-300">
+                Providências
               </TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 w-[180px]">
-                Calculadora
+              <TableHead className="w-[110px] text-xs uppercase tracking-wide font-semibold text-zinc-700 dark:text-zinc-300">
+                Expedição
+              </TableHead>
+              <TableHead className="w-[100px] text-xs uppercase tracking-wide font-semibold text-zinc-700 dark:text-zinc-300">
+                Prazo
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -698,21 +694,18 @@ export function DemandasTable({
                 <TableRow 
                   key={demanda.id}
                   className={cn(
-                    "group h-16 cursor-pointer transition-colors",
+                    "group cursor-pointer transition-colors",
                     "hover:bg-zinc-50 dark:hover:bg-zinc-900/40",
-                    "border-b border-zinc-100 dark:border-zinc-800"
+                    "border-b border-zinc-200 dark:border-zinc-700"
                   )}
                   onClick={() => handleRowClick(demanda)}
                 >
-                  {/* Faixa de Status (Lateral) */}
-                  <TableCell className={cn("p-0 w-[4px]", statusColor.border)} />
-
-                  {/* Status Badge */}
-                  <TableCell className="py-3">
+                  {/* Status Badge - Primeira coluna */}
+                  <TableCell className="py-4">
                     <Badge 
                       variant="secondary" 
                       className={cn(
-                        "rounded-sm px-2 py-1 font-medium border-0 text-[11px]",
+                        "rounded px-2.5 py-1 font-semibold border-0 text-xs",
                         statusColor.bg
                       )}
                     >
@@ -720,40 +713,44 @@ export function DemandasTable({
                     </Badge>
                   </TableCell>
 
-                  {/* Assistido e Autos - Com Foto */}
-                  <TableCell className="py-3">
+                  {/* Assistido - Com Foto e cadeado discreto */}
+                  <TableCell className="py-4">
                     <div className="flex items-center gap-3">
-                      {/* Foto do Assistido - Estilo Clean */}
+                      {/* Foto do Assistido */}
                       <Avatar className="h-10 w-10 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
                         <AvatarImage 
                           src={demanda.assistidoFoto || undefined} 
                           alt={demanda.assistido}
                           className="object-cover"
                         />
-                        <AvatarFallback className="text-xs font-semibold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                        <AvatarFallback className="text-sm font-semibold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
                           {getInitials(demanda.assistido)}
                         </AvatarFallback>
                       </Avatar>
                       
                       {/* Nome e Processo */}
                       <div className="flex flex-col gap-0.5 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-base text-zinc-900 dark:text-zinc-50 truncate">
                             {demanda.assistido}
                           </span>
-                          <PrisonerIndicator 
-                            preso={isPreso} 
-                            size="xs"
-                            showTooltip={true}
-                          />
+                          {/* Cadeado discreto se preso */}
+                          {isPreso && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Lock className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+                              </TooltipTrigger>
+                              <TooltipContent>Preso</TooltipContent>
+                            </Tooltip>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           {demanda.area === "JURI" && (
                             <FaseJuriBadge fase={demanda.fase || "INSTRUCAO"} />
                           )}
-                          <span className="text-xs font-data text-zinc-500 dark:text-zinc-400 truncate">
-                            {demanda.processo.length > 22 
-                              ? demanda.processo.slice(0, 19) + "..." 
+                          <span className="text-sm font-mono text-zinc-600 dark:text-zinc-400 truncate">
+                            {demanda.processo.length > 25 
+                              ? demanda.processo.slice(0, 22) + "..." 
                               : demanda.processo
                             }
                           </span>
@@ -762,42 +759,34 @@ export function DemandasTable({
                     </div>
                   </TableCell>
 
-                  {/* Ato (Combobox) */}
-                  <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
-                    <AtoCombobox 
-                      value={demanda.tipoAto} 
-                      onValueChange={(value) => onAtoChange?.(demanda.id, value)}
-                    />
+                  {/* Ato */}
+                  <TableCell className="py-4">
+                    <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                      {demanda.ato}
+                    </span>
+                  </TableCell>
+
+                  {/* Providências */}
+                  <TableCell className="py-4">
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                      {demanda.observacoes || "—"}
+                    </span>
+                  </TableCell>
+
+                  {/* Data de Expedição */}
+                  <TableCell className="py-4">
+                    {demanda.dataIntimacao ? (
+                      <span className="text-sm font-mono text-zinc-700 dark:text-zinc-300">
+                        {format(parseISO(demanda.dataIntimacao), "dd/MM/yyyy")}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-zinc-400">—</span>
+                    )}
                   </TableCell>
 
                   {/* Prazo */}
-                  <TableCell className="py-3">
+                  <TableCell className="py-4">
                     <PrazoIndicator prazo={demanda.prazo} />
-                  </TableCell>
-
-                  {/* Calculadora */}
-                  <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-xs border-dashed border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 gap-1.5"
-                        >
-                          <Calculator className="h-3.5 w-3.5 text-zinc-500" />
-                          Calcular
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent 
-                        className="w-80 p-4 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800" 
-                        align="end"
-                      >
-                        <CalculadoraPrazos 
-                          tipoAto={demanda.tipoAto}
-                          onCalculate={(data) => console.log("Prazo:", data)}
-                        />
-                      </PopoverContent>
-                    </Popover>
                   </TableCell>
                 </TableRow>
               );
@@ -805,10 +794,10 @@ export function DemandasTable({
             
             {filteredDemandas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
-                  <div className="flex flex-col items-center gap-2 text-zinc-500">
-                    <FileText className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
-                    <p className="text-sm">Nenhuma demanda encontrada</p>
+                <TableCell colSpan={6} className="h-40 text-center">
+                  <div className="flex flex-col items-center gap-3 text-zinc-500">
+                    <FileText className="h-10 w-10 text-zinc-300 dark:text-zinc-700" />
+                    <p className="text-base">Nenhuma demanda encontrada</p>
                   </div>
                 </TableCell>
               </TableRow>
