@@ -460,25 +460,25 @@ const statusConfig: Record<string, { label: string; color: string; bgColor: stri
   SOLTO: { label: "Solto", color: "text-emerald-700 dark:text-emerald-300", bgColor: "bg-emerald-50/80 dark:bg-emerald-950/20", borderColor: "border-emerald-200/60 dark:border-emerald-800/30", iconBg: "bg-emerald-100 dark:bg-emerald-900/40", priority: 7 },
 };
 
-// Fases NEUTRAS para reduzir poluição visual
+// Fases NEUTRAS para reduzir poluição visual - com contraste melhorado
 const faseConfig: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-  INQUERITO: { label: "Inquérito", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
-  INSTRUCAO: { label: "Instrução", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
-  SUMARIO_CULPA: { label: "Sumário Culpa", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
-  ALEGACOES_FINAIS: { label: "Alegações Finais", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
-  SENTENCA: { label: "Sentença", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
-  RECURSO: { label: "Recurso", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
-  EXECUCAO: { label: "Execução", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Clock },
-  ARQUIVADO: { label: "Arquivado", color: "text-zinc-400 dark:text-zinc-500", bgColor: "bg-zinc-50 dark:bg-zinc-900", icon: CheckCircle2 },
+  INQUERITO: { label: "Inquérito", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700", icon: FileText },
+  INSTRUCAO: { label: "Instrução", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700", icon: Scale },
+  SUMARIO_CULPA: { label: "Sumário Culpa", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700", icon: Gavel },
+  ALEGACOES_FINAIS: { label: "Alegações Finais", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700", icon: FileText },
+  SENTENCA: { label: "Sentença", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700", icon: Gavel },
+  RECURSO: { label: "Recurso", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700", icon: Scale },
+  EXECUCAO: { label: "Execução", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700", icon: Clock },
+  ARQUIVADO: { label: "Arquivado", color: "text-zinc-500 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: CheckCircle2 },
 };
 
-// Áreas NEUTRAS para reduzir poluição visual
+// Áreas NEUTRAS para reduzir poluição visual - com contraste melhorado
 const areaConfig: Record<string, { label: string; labelFull: string; color: string; bgColor: string }> = {
-  JURI: { label: "Júri", labelFull: "Tribunal do Júri", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
-  EXECUCAO_PENAL: { label: "EP", labelFull: "Execução Penal", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
-  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violência Doméstica", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
-  SUBSTITUICAO: { label: "Sub", labelFull: "Substituição", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
-  FAMILIA: { label: "Fam", labelFull: "Família", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
+  JURI: { label: "Júri", labelFull: "Tribunal do Júri", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700" },
+  EXECUCAO_PENAL: { label: "EP", labelFull: "Execução Penal", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700" },
+  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violência Doméstica", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700" },
+  SUBSTITUICAO: { label: "Sub", labelFull: "Substituição", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700" },
+  FAMILIA: { label: "Fam", labelFull: "Família", color: "text-zinc-700 dark:text-zinc-200", bgColor: "bg-zinc-200/80 dark:bg-zinc-700" },
 };
 
 function getPrazoInfo(prazoStr: string | null) {

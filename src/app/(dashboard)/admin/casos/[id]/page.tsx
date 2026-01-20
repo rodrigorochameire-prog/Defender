@@ -109,14 +109,14 @@ const MOCK_CASO = {
 };
 
 // ... (Constants)
-// Fases NEUTRAS para reduzir poluição visual
+// Fases NEUTRAS para reduzir poluição visual - com contraste melhorado
 const FASES_CASO = {
-  INQUERITO: { label: "Inquérito", color: "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "🔍", progress: 10 },
-  INSTRUCAO: { label: "Instrução", color: "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "⚖️", progress: 35 },
-  PLENARIO: { label: "Plenário", color: "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "🎭", progress: 60 },
-  RECURSO: { label: "Recurso", color: "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "📤", progress: 80 },
-  EXECUCAO: { label: "Execução", color: "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "⏱️", progress: 90 },
-  ARQUIVADO: { label: "Arquivado", color: "text-zinc-400 dark:text-zinc-500 bg-zinc-50 dark:bg-zinc-900", icon: "📁", progress: 100 },
+  INQUERITO: { label: "Inquérito", color: "text-zinc-700 dark:text-zinc-200 bg-zinc-200/80 dark:bg-zinc-700", icon: "🔍", progress: 10 },
+  INSTRUCAO: { label: "Instrução", color: "text-zinc-700 dark:text-zinc-200 bg-zinc-200/80 dark:bg-zinc-700", icon: "⚖️", progress: 35 },
+  PLENARIO: { label: "Plenário", color: "text-zinc-700 dark:text-zinc-200 bg-zinc-200/80 dark:bg-zinc-700", icon: "🎭", progress: 60 },
+  RECURSO: { label: "Recurso", color: "text-zinc-700 dark:text-zinc-200 bg-zinc-200/80 dark:bg-zinc-700", icon: "📤", progress: 80 },
+  EXECUCAO: { label: "Execução", color: "text-zinc-700 dark:text-zinc-200 bg-zinc-200/80 dark:bg-zinc-700", icon: "⏱️", progress: 90 },
+  ARQUIVADO: { label: "Arquivado", color: "text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "📁", progress: 100 },
 };
 
 const ATRIBUICAO_LABELS: Record<string, string> = {

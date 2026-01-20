@@ -113,7 +113,7 @@ import { FilterChip, FilterChipGroup, ActiveFiltersBar } from "@/components/shar
 import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
 
 // Cores alinhadas com os workspaces
-// Cores de atribuição NEUTRAS para reduzir poluição visual
+// Cores de atribuição NEUTRAS para reduzir poluição visual - com contraste melhorado
 const ATRIBUICAO_COLORS: Record<string, { 
   border: string; 
   bg: string; 
@@ -123,52 +123,52 @@ const ATRIBUICAO_COLORS: Record<string, {
 }> = {
   all: { 
     border: "border-l-zinc-300", 
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
+    bg: "bg-zinc-200/80 dark:bg-zinc-700",
+    text: "text-zinc-700 dark:text-zinc-200",
     activeBg: "bg-zinc-600 hover:bg-zinc-700",
-    hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+    hoverBg: "hover:bg-zinc-200 dark:hover:bg-zinc-700/80"
   },
   JURI_CAMACARI: { 
     border: "border-l-zinc-400", 
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
+    bg: "bg-zinc-200/80 dark:bg-zinc-700",
+    text: "text-zinc-700 dark:text-zinc-200",
     activeBg: "bg-zinc-600 hover:bg-zinc-700",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
+    hoverBg: "hover:bg-zinc-200 dark:hover:bg-zinc-700/80"
   },
   GRUPO_JURI: { 
     border: "border-l-zinc-400", 
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
+    bg: "bg-zinc-200/80 dark:bg-zinc-700",
+    text: "text-zinc-700 dark:text-zinc-200",
     activeBg: "bg-zinc-600 hover:bg-zinc-700",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
+    hoverBg: "hover:bg-zinc-200 dark:hover:bg-zinc-700/80"
   },
   VVD_CAMACARI: { 
     border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
+    bg: "bg-zinc-200/80 dark:bg-zinc-700",
+    text: "text-zinc-700 dark:text-zinc-200",
     activeBg: "bg-zinc-600 hover:bg-zinc-700",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
+    hoverBg: "hover:bg-zinc-200 dark:hover:bg-zinc-700/80"
   },
   EXECUCAO_PENAL: { 
     border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
+    bg: "bg-zinc-200/80 dark:bg-zinc-700",
+    text: "text-zinc-700 dark:text-zinc-200",
     activeBg: "bg-zinc-600 hover:bg-zinc-700",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
+    hoverBg: "hover:bg-zinc-200 dark:hover:bg-zinc-700/80"
   },
   SUBSTITUICAO: { 
     border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
+    bg: "bg-zinc-200/80 dark:bg-zinc-700",
+    text: "text-zinc-700 dark:text-zinc-200",
     activeBg: "bg-zinc-600 hover:bg-zinc-700",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
+    hoverBg: "hover:bg-zinc-200 dark:hover:bg-zinc-700/80"
   },
   SUBSTITUICAO_CIVEL: { 
     border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
+    bg: "bg-zinc-200/80 dark:bg-zinc-700",
+    text: "text-zinc-700 dark:text-zinc-200",
     activeBg: "bg-zinc-600 hover:bg-zinc-700",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
+    hoverBg: "hover:bg-zinc-200 dark:hover:bg-zinc-700/80"
   },
 };
 
