@@ -318,7 +318,7 @@ export default function AssistidoDetailPage() {
 
           {/* Teoria e Audiencias (Reutilizados) */}
           <TabsContent value="teoria" className="mt-6">
-            <TeoriaDoCaso casoId={assistido.casoId || 0} teoriaFatos={assistido.teoriaFatos} teoriaProvas={assistido.teoriaProvas} teoriaDireito={assistido.teoriaDireito} linkDrive={assistido.linkDrive} onUpdate={async () => {}} />
+            <TeoriaDoCaso casoId={assistido.casoId || 0} teoriaFatos={""} teoriaProvas={""} teoriaDireito={""} linkDrive={""} onUpdate={async () => {}} />
           </TabsContent>
           <TabsContent value="audiencias" className="mt-6">
             <AudienciasHub audiencias={mockAudiencias} />
