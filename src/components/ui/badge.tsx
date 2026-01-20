@@ -7,28 +7,41 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
+        // === NEUTROS (para informações contextuais) ===
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive/10 text-destructive hover:bg-destructive/20",
-        outline: "text-foreground",
-        // Variantes Swiss Clean - Tons pastéis muito suaves, borda sutil ou transparente
-        success:
-          "border-transparent bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 hover:bg-emerald-100",
-        warning:
-          "border-transparent bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 hover:bg-amber-100",
-        info:
-          "border-transparent bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100",
-        neutral:
-          "border-transparent bg-zinc-50 text-zinc-600 dark:bg-zinc-900/50 dark:text-zinc-400 hover:bg-zinc-100",
+          "border-transparent bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+        outline: 
+          "border-zinc-300 bg-transparent text-zinc-600 dark:border-zinc-600 dark:text-zinc-400",
+        muted:
+          "border-transparent bg-zinc-100/80 text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-500",
         
-        // Estados críticos mantêm um pouco mais de peso, mas ainda elegantes
+        // === INFORMATIVOS (sutis, para categorização) ===
+        neutral:
+          "border-zinc-200 bg-zinc-50 text-zinc-600 dark:bg-zinc-800/40 dark:text-zinc-400 dark:border-zinc-700",
+        info:
+          "border-zinc-200 bg-zinc-50 text-zinc-600 dark:bg-zinc-800/40 dark:text-zinc-400 dark:border-zinc-700",
+        
+        // === ESTADOS DE PROGRESSO (sutis) ===
+        success:
+          "border-zinc-200 bg-zinc-50 text-zinc-600 dark:bg-zinc-800/40 dark:text-zinc-400 dark:border-zinc-700",
+        warning:
+          "border-amber-200/60 bg-amber-50/50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/40",
+        
+        // === CRÍTICOS (cores fortes - usar com parcimônia) ===
+        destructive:
+          "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800",
         urgent:
-          "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800 font-semibold",
+          "border-rose-300 bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700 font-semibold",
         reuPreso:
-          "border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800 font-semibold",
+          "border-rose-300 bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700 font-semibold",
+        
+        // === ESPECIAIS (para destaques funcionais) ===
+        primary:
+          "border-emerald-300 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700",
+        accent:
+          "border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
       },
     },
     defaultVariants: {

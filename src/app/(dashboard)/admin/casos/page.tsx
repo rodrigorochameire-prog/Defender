@@ -266,12 +266,12 @@ const ATRIBUICAO_LABELS: Record<string, string> = {
 };
 
 const FASES_CASO = {
-  INQUERITO: { label: "Inquérito", color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300", icon: "🔍", progress: 10 },
-  INSTRUCAO: { label: "Instrução", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", icon: "⚖️", progress: 35 },
-  PLENARIO: { label: "Plenário", color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", icon: "🎭", progress: 60 },
-  RECURSO: { label: "Recurso", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", icon: "📤", progress: 80 },
-  EXECUCAO: { label: "Execução", color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400", icon: "⏱️", progress: 90 },
-  ARQUIVADO: { label: "Arquivado", color: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400", icon: "📁", progress: 100 },
+  INQUERITO: { label: "Inquérito", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", icon: "🔍", progress: 10 },
+  INSTRUCAO: { label: "Instrução", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", icon: "⚖️", progress: 35 },
+  PLENARIO: { label: "Plenário", color: "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800", icon: "🎭", progress: 60 },
+  RECURSO: { label: "Recurso", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", icon: "📤", progress: 80 },
+  EXECUCAO: { label: "Execução", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", icon: "⏱️", progress: 90 },
+  ARQUIVADO: { label: "Arquivado", color: "bg-zinc-50 text-zinc-400 dark:bg-zinc-900 dark:text-zinc-500", icon: "📁", progress: 100 },
 };
 
 const FASE_LABELS = ["Inquérito", "Instrução", "Plenário", "Recurso", "Execução"];
@@ -567,13 +567,10 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                   {FASES_CASO[caso.faseNome as keyof typeof FASES_CASO]?.label || caso.faseNome}
                 </Badge>
 
-                {/* 2. ATRIBUIÇÃO/WORKSPACE */}
+                {/* 2. ATRIBUIÇÃO/WORKSPACE - Neutro */}
                 <Badge 
-                  variant="secondary" 
-                  className={cn(
-                    "text-[9px] sm:text-[10px] font-mono tracking-wider uppercase px-1.5 py-0",
-                    themeColors.bg, themeColors.text
-                  )}
+                  variant="muted" 
+                  className="text-[9px] sm:text-[10px] font-mono tracking-wider uppercase px-1.5 py-0"
                 >
                   {atribuicaoLabel}
                 </Badge>
@@ -899,11 +896,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                         )}
                         <span className="font-medium truncate">{testemunha.nome}</span>
                       </div>
-                      <Badge variant="outline" className={cn(
-                        "text-[8px] px-1 py-0 ml-1",
-                        testemunha.tipo === "defesa" && "border-emerald-200 text-emerald-600",
-                        testemunha.tipo === "acusacao" && "border-rose-200 text-rose-600"
-                      )}>
+                      <Badge variant="muted" className="text-[8px] px-1 py-0 ml-1">
                         {testemunha.tipo === "defesa" ? "DEF" : testemunha.tipo === "acusacao" ? "ACUS" : "INFO"}
                       </Badge>
                     </div>
@@ -928,7 +921,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                       <span className="text-[10px] text-zinc-400">/{caso.provas.length}</span>
                     </div>
                     {caso.provas.filter(p => p.status === "pendente" || p.status === "requerida").length > 0 && (
-                      <Badge className="text-[8px] px-1 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 mt-1">
+                      <Badge variant="muted" className="text-[8px] px-1 py-0 mt-1">
                         {caso.provas.filter(p => p.status === "pendente" || p.status === "requerida").length} pendentes
                       </Badge>
                     )}
@@ -948,13 +941,13 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                     </div>
                     <div className="flex gap-1 mt-1">
                       {caso.laudos.filter(l => l.favoravel === true).length > 0 && (
-                        <Badge className="text-[8px] px-1 py-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                          ✓{caso.laudos.filter(l => l.favoravel === true).length}
+                        <Badge variant="muted" className="text-[8px] px-1 py-0">
+                          ✓ {caso.laudos.filter(l => l.favoravel === true).length} fav.
                         </Badge>
                       )}
                       {caso.laudos.filter(l => l.favoravel === false).length > 0 && (
-                        <Badge className="text-[8px] px-1 py-0 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
-                          ✗{caso.laudos.filter(l => l.favoravel === false).length}
+                        <Badge variant="muted" className="text-[8px] px-1 py-0">
+                          ✗ {caso.laudos.filter(l => l.favoravel === false).length} desf.
                         </Badge>
                       )}
                     </div>
