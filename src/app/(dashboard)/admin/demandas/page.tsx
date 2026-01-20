@@ -256,40 +256,108 @@ const COMARCA_OPTIONS = [
   { value: "SALVADOR", label: "Salvador" },
 ];
 
-// Status disponíveis - Paleta neutra com destaque verde para concluído
-const STATUS_OPTIONS: OptionItem[] = [
-  // Grupo Urgente (destaque)
-  { value: "1_URGENTE", label: "Urgente", color: "bg-zinc-800", textColor: "text-white", group: "Urgente", description: "Prazo crítico/urgente" },
-  // Grupo Trabalho (cinza médio)
-  { value: "2_ANALISAR", label: "Analisar", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Analisar processo" },
-  { value: "2_ATENDER", label: "Atender", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Atender assistido" },
-  { value: "2_BUSCAR", label: "Buscar", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Buscar informações" },
-  { value: "2_ELABORANDO", label: "Elaborando", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Em elaboração" },
-  { value: "2_ELABORAR", label: "Elaborar", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Elaborar peça" },
-  { value: "2_INVESTIGAR", label: "Investigar", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Investigar caso" },
-  { value: "2_RELATORIO", label: "Relatório", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Analisar/fazer relatório" },
-  { value: "2_REVISANDO", label: "Revisando", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Em revisão" },
-  { value: "2_REVISAR", label: "Revisar", color: "bg-zinc-500", textColor: "text-white", group: "Trabalho", description: "Revisar peça" },
-  // Grupo Protocolar (cinza escuro)
-  { value: "3_PROTOCOLAR", label: "Protocolar", color: "bg-zinc-600", textColor: "text-white", group: "Protocolar", description: "Pronto para protocolar" },
-  // Grupo Delegado (cinza)
-  { value: "4_AMANDA", label: "Amanda", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Delegado", description: "Com Amanda" },
-  { value: "4_EMILLY", label: "Emilly", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Delegado", description: "Com Emilly" },
-  { value: "4_MONITORAR", label: "Monitorar", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Delegado", description: "Monitorando andamento" },
-  { value: "4_ESTAGIO_TARISSA", label: "Tarissa (Estágio)", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Delegado", description: "Com Tarissa (estágio)" },
-  // Grupo Fila (cinza claro)
-  { value: "5_FILA", label: "Fila", color: "bg-zinc-300", textColor: "text-zinc-800", group: "Fila", description: "Na fila de trabalho" },
-  // Grupo Aguardando (cinza)
-  { value: "6_DOCUMENTOS", label: "Documentos", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Aguardando", description: "Aguardando documentos" },
-  { value: "6_TESTEMUNHAS", label: "Testemunhas", color: "bg-zinc-400", textColor: "text-zinc-900", group: "Aguardando", description: "Aguardando testemunhas" },
-  // Grupo Concluído (verde primary)
-  { value: "7_CIENCIA", label: "Ciência", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Ciência tomada" },
-  { value: "7_CONSTITUIU_ADVOGADO", label: "Constituiu advogado", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Constituiu advogado particular" },
-  { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Peça protocolada" },
-  { value: "7_RESOLVIDO", label: "Resolvido", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Caso resolvido" },
-  { value: "7_SEM_ATUACAO", label: "Sem atuação", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Sem necessidade de atuação" },
-  { value: "7_SOLAR", label: "Solar", color: "bg-primary", textColor: "text-white", group: "Concluído", description: "Registrado no Solar" },
-];
+// ========================================
+// STATUS CONFIG - HIERARQUIA VISUAL INTELIGENTE
+// Ordenação automática: Vermelho (urgente) → Verde (concluído)
+// Cores intuitivas baseadas em semáforo de trânsito
+// ========================================
+
+interface StatusConfig {
+  order: number;        // Ordem de exibição (1 = topo, 7 = fim)
+  label: string;        // Label curto para badge
+  color: string;        // Classes Tailwind de cor
+  bgRow?: string;       // Cor de fundo da linha (opcional)
+  icon: React.ElementType; // Ícone Lucide
+  description: string;  // Tooltip/descrição
+  nextAction?: string;  // Texto do botão de ação rápida
+  nextStatus?: string;  // Próximo status após ação
+}
+
+const STATUS_CONFIG: Record<string, StatusConfig> = {
+  // 1. URGENTE - Vermelho (alerta máximo)
+  "1_URGENTE": { 
+    order: 1, 
+    label: "URGENTE", 
+    color: "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
+    bgRow: "bg-red-50/50 dark:bg-red-950/20",
+    icon: AlertTriangle, 
+    description: "Prazo crítico - ação imediata necessária",
+    nextAction: "Iniciar trabalho",
+    nextStatus: "2_ELABORAR"
+  },
+  // 2. TRABALHO (A FAZER) - Amarelo/Âmbar (trabalho do dia a dia)
+  "2_ANALISAR": { order: 2, label: "ANALISAR", color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800", icon: Clock, description: "Analisar processo", nextAction: "Marcar pronto", nextStatus: "3_PROTOCOLAR" },
+  "2_ATENDER": { order: 2, label: "ATENDER", color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800", icon: Clock, description: "Atender assistido", nextAction: "Marcar pronto", nextStatus: "3_PROTOCOLAR" },
+  "2_BUSCAR": { order: 2, label: "BUSCAR", color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800", icon: Clock, description: "Buscar informações", nextAction: "Marcar pronto", nextStatus: "3_PROTOCOLAR" },
+  "2_ELABORANDO": { order: 2, label: "ELABORANDO", color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800", icon: Clock, description: "Em elaboração", nextAction: "Marcar pronto", nextStatus: "3_PROTOCOLAR" },
+  "2_ELABORAR": { order: 2, label: "ELABORAR", color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800", icon: Clock, description: "Elaborar peça", nextAction: "Marcar pronto", nextStatus: "3_PROTOCOLAR" },
+  "2_INVESTIGAR": { order: 2, label: "INVESTIGAR", color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800", icon: Clock, description: "Investigar caso", nextAction: "Marcar pronto", nextStatus: "3_PROTOCOLAR" },
+  "2_RELATORIO": { order: 2, label: "RELATÓRIO", color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800", icon: Clock, description: "Analisar/fazer relatório", nextAction: "Marcar pronto", nextStatus: "3_PROTOCOLAR" },
+  "2_REVISANDO": { order: 2, label: "REVISANDO", color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800", icon: Clock, description: "Em revisão", nextAction: "Marcar pronto", nextStatus: "3_PROTOCOLAR" },
+  "2_REVISAR": { order: 2, label: "REVISAR", color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800", icon: Clock, description: "Revisar peça", nextAction: "Marcar pronto", nextStatus: "3_PROTOCOLAR" },
+  // 3. PROTOCOLAR - Laranja (ação: só falta enviar)
+  "3_PROTOCOLAR": { 
+    order: 3, 
+    label: "PROTOCOLAR", 
+    color: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800",
+    bgRow: "bg-orange-50/30 dark:bg-orange-950/10",
+    icon: ArrowUpRight, 
+    description: "Pronto para protocolar",
+    nextAction: "Protocolado",
+    nextStatus: "7_PROTOCOLADO"
+  },
+  // 4. MONITORAR/DELEGADO - Azul (aguardando resposta/estagiário)
+  "4_AMANDA": { order: 4, label: "AMANDA", color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800", icon: User, description: "Com Amanda", nextAction: "Receber trabalho", nextStatus: "2_REVISAR" },
+  "4_EMILLY": { order: 4, label: "EMILLY", color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800", icon: User, description: "Com Emilly", nextAction: "Receber trabalho", nextStatus: "2_REVISAR" },
+  "4_MONITORAR": { order: 4, label: "MONITORAR", color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800", icon: Timer, description: "Monitorando andamento", nextAction: "Atualizar", nextStatus: "2_ELABORAR" },
+  "4_ESTAGIO_TARISSA": { order: 4, label: "TARISSA", color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800", icon: User, description: "Com Tarissa (estágio)", nextAction: "Receber trabalho", nextStatus: "2_REVISAR" },
+  // 5. FILA - Roxo (para fazer quando sobrar tempo)
+  "5_FILA": { 
+    order: 5, 
+    label: "FILA", 
+    color: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800",
+    icon: List, 
+    description: "Na fila de trabalho",
+    nextAction: "Iniciar",
+    nextStatus: "2_ELABORAR"
+  },
+  // 6. AGUARDANDO - Cinza/Slate (bloqueado por dependência externa)
+  "6_DOCUMENTOS": { order: 6, label: "DOCS", color: "bg-slate-200 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700", icon: FileText, description: "Aguardando documentos", nextAction: "Recebido", nextStatus: "2_ELABORAR" },
+  "6_TESTEMUNHAS": { order: 6, label: "TESTEM.", color: "bg-slate-200 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700", icon: Users, description: "Aguardando testemunhas", nextAction: "Pronto", nextStatus: "2_ELABORAR" },
+  // 7. CONCLUÍDO - Verde (feito!)
+  "7_CIENCIA": { order: 7, label: "CIÊNCIA", color: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800", icon: CheckCircle2, description: "Ciência tomada", nextAction: "Arquivar", nextStatus: "7_SOLAR" },
+  "7_CONSTITUIU_ADVOGADO": { order: 7, label: "ADV. PART.", color: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800", icon: CheckCircle2, description: "Constituiu advogado particular" },
+  "7_PROTOCOLADO": { order: 7, label: "PROTOCOLADO", color: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800", icon: CheckCircle2, description: "Peça protocolada", nextAction: "Registrar Solar", nextStatus: "7_SOLAR" },
+  "7_RESOLVIDO": { order: 7, label: "RESOLVIDO", color: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800", icon: CheckCircle2, description: "Caso resolvido" },
+  "7_SEM_ATUACAO": { order: 7, label: "S/ ATUAÇÃO", color: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800", icon: CheckCircle2, description: "Sem necessidade de atuação" },
+  "7_SOLAR": { order: 7, label: "SOLAR", color: "bg-stone-200 text-stone-500 border-stone-300 line-through decoration-stone-400 dark:bg-stone-800 dark:text-stone-500 dark:border-stone-700", icon: CheckCircle2, description: "Arquivado no Solar" },
+};
+
+// Função para obter config de status (com fallback)
+function getStatusConfig(status: string): StatusConfig {
+  return STATUS_CONFIG[status] || {
+    order: 99,
+    label: status.replace(/^\d+_/, ""),
+    color: "bg-zinc-200 text-zinc-700 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-300",
+    icon: Clock,
+    description: status
+  };
+}
+
+// STATUS_OPTIONS para compatibilidade com componentes existentes
+const STATUS_OPTIONS: OptionItem[] = Object.entries(STATUS_CONFIG).map(([value, config]) => ({
+  value,
+  label: config.label,
+  color: config.color.split(" ")[0], // Pega apenas bg-*
+  textColor: config.color.split(" ")[1], // Pega text-*
+  description: config.description,
+  group: config.order <= 1 ? "Urgente" : 
+         config.order === 2 ? "Trabalho" : 
+         config.order === 3 ? "Protocolar" : 
+         config.order === 4 ? "Delegado" : 
+         config.order === 5 ? "Fila" :
+         config.order === 6 ? "Aguardando" : "Concluído",
+}));
 
 // Situação Prisional / Unidades - Paleta neutra
 const PRISAO_OPTIONS: OptionItem[] = [
@@ -774,9 +842,7 @@ const mockDemandas: Demanda[] = [
 ];
 
 // Funções utilitárias
-function getStatusConfig(status: string) {
-  return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[2];
-}
+// getStatusConfig já definida acima com STATUS_CONFIG
 
 function getPrioridadeConfig(prioridade: string) {
   return PRIORIDADE_OPTIONS.find(p => p.value === prioridade) || PRIORIDADE_OPTIONS[3];
@@ -820,11 +886,20 @@ function getPrazoInfo(prazoStr: string) {
   return { text: format(prazo, "dd/MM", { locale: ptBR }), className: "text-muted-foreground", icon: Calendar, urgent: false };
 }
 
-// Componente de Badge de Status
-function StatusBadge({ status }: { status: string }) {
+// Componente de Badge de Status - Usa hierarquia visual do STATUS_CONFIG
+function StatusBadge({ status, showIcon = false }: { status: string; showIcon?: boolean }) {
   const config = getStatusConfig(status);
+  const Icon = config.icon;
   return (
-    <Badge className={cn("font-semibold", config.color, "text-white hover:opacity-90")}>
+    <Badge 
+      variant="outline"
+      className={cn(
+        "font-semibold border px-2 py-0.5 text-xs",
+        config.color,
+        "hover:opacity-90 transition-opacity"
+      )}
+    >
+      {showIcon && Icon && <Icon className="w-3 h-3 mr-1" />}
       {config.label}
     </Badge>
   );
@@ -1759,17 +1834,11 @@ export default function DemandasPage() {
       return matchesSearch && matchesStatus && matchesArea && matchesPrioridade && matchesComarca && matchesDefensor && matchesReuPreso && matchesAtribuicao;
     });
 
-    // Função para obter prioridade do status - ordenação por cor
-    // Ordem: Vermelho > Laranja > Amarelo > Azul > Roxo > Verde
+    // Função para obter prioridade do status usando STATUS_CONFIG
+    // Ordem automática baseada na configuração hierárquica
     const getStatusPriority = (status: string): number => {
-      if (status.startsWith("1_")) return 1; // Vermelho - Urgente (PRIMEIRO)
-      if (status.startsWith("3_")) return 2; // Laranja - Protocolar
-      if (status.startsWith("2_")) return 3; // Amarelo - Trabalho
-      if (status.startsWith("4_")) return 4; // Azul - Delegado/Monitorar
-      if (status.startsWith("5_")) return 5; // Roxo - Fila
-      if (status.startsWith("6_")) return 6; // Cinza - Aguardando
-      if (status.startsWith("7_")) return 7; // Verde - Concluído (ÚLTIMO)
-      return 8;
+      const config = STATUS_CONFIG[status];
+      return config ? config.order : 99;
     };
 
     // Ordenar
@@ -2334,12 +2403,14 @@ export default function DemandasPage() {
                               PRESO
                             </Badge>
                           )}
-                          <Badge className={cn(
-                            "px-1.5 sm:px-2 py-0", 
-                            statusConfig.color, 
-                            statusConfig.textColor || "text-white",
-                            largerFontMode ? "text-xs h-6" : "text-xs h-5"
-                          )}>
+                          <Badge 
+                            variant="outline"
+                            className={cn(
+                              "px-2 py-0.5 font-semibold border", 
+                              statusConfig.color,
+                              largerFontMode ? "text-xs" : "text-xs"
+                            )}
+                          >
                             {statusConfig.label}
                           </Badge>
                         </div>
@@ -2879,40 +2950,95 @@ export default function DemandasPage() {
                               />
                             </TableCell>
                           )}
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleOpenEdit(demanda)} className="cursor-pointer">
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer">
-                                  <Copy className="h-4 w-4 mr-2" />
-                                  Duplicar
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => handleUpdateStatus(demanda.id, "7_PROTOCOLADO")}
-                                  className="cursor-pointer text-emerald-600"
-                                >
-                                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                                  Marcar Protocolado
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => handleDelete(demanda.id)}
-                                  className="cursor-pointer text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Excluir
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                          {/* Coluna de Ação Rápida (Smart Action) */}
+                          <TableCell className="text-right p-1">
+                            <div className="flex items-center justify-end gap-1">
+                              {/* Botão de Ação Rápida - Aparece no hover */}
+                              {(() => {
+                                const statusConfig = getStatusConfig(demanda.status);
+                                if (statusConfig.nextAction && statusConfig.nextStatus) {
+                                  const NextIcon = statusConfig.icon;
+                                  return (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleUpdateStatus(demanda.id, statusConfig.nextStatus!)}
+                                      className={cn(
+                                        "h-7 px-2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity",
+                                        "bg-primary/10 hover:bg-primary/20 text-primary"
+                                      )}
+                                    >
+                                      <NextIcon className="h-3 w-3 mr-1" />
+                                      {statusConfig.nextAction}
+                                    </Button>
+                                  );
+                                }
+                                return null;
+                              })()}
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleOpenEdit(demanda)} className="cursor-pointer">
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="cursor-pointer">
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Duplicar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  {/* Ações de fluxo baseadas no status */}
+                                  {demanda.status.startsWith("2_") && (
+                                    <DropdownMenuItem 
+                                      onClick={() => handleUpdateStatus(demanda.id, "3_PROTOCOLAR")}
+                                      className="cursor-pointer text-orange-600"
+                                    >
+                                      <ArrowUpRight className="h-4 w-4 mr-2" />
+                                      Marcar Pronto
+                                    </DropdownMenuItem>
+                                  )}
+                                  {demanda.status === "3_PROTOCOLAR" && (
+                                    <DropdownMenuItem 
+                                      onClick={() => handleUpdateStatus(demanda.id, "7_PROTOCOLADO")}
+                                      className="cursor-pointer text-emerald-600"
+                                    >
+                                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                                      Protocolado
+                                    </DropdownMenuItem>
+                                  )}
+                                  {demanda.status === "7_PROTOCOLADO" && (
+                                    <DropdownMenuItem 
+                                      onClick={() => handleUpdateStatus(demanda.id, "7_SOLAR")}
+                                      className="cursor-pointer text-stone-600"
+                                    >
+                                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                                      Registrar no Solar
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleArchive(demanda.id)}
+                                    className="cursor-pointer"
+                                  >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    {showArchived ? "Desarquivar" : "Arquivar"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDelete(demanda.id)}
+                                    className="cursor-pointer text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
