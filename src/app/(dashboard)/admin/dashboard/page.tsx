@@ -7,35 +7,26 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Users, 
   Calendar, 
-  AlertTriangle,
   Clock, 
-  Plus,
-  ChevronRight,
   Scale,
   Gavel,
   FileText,
   Timer,
   Target,
   Briefcase,
-  AlertOctagon,
   CheckCircle2,
   ArrowUpRight,
   BarChart3,
-  Shield,
   Lock,
-  Award,
   TrendingUp,
-  Calculator,
   Layers,
   Building2,
   CalendarClock,
   CalendarDays,
   UserCheck,
-  FileCheck2,
   ClipboardList,
   AlertCircle,
   ArrowRight,
-  Percent,
   Bell,
   Activity,
 } from "lucide-react";
@@ -56,7 +47,7 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { useAssignment, ASSIGNMENT_CONFIGS, Assignment } from "@/contexts/assignment-context";
+import { useAssignment } from "@/contexts/assignment-context";
 import {
   Tooltip as UITooltip,
   TooltipContent,
@@ -148,24 +139,24 @@ const mockPrazosPorArea = [
 function getPrioridadeStyle(prioridade: string) {
   switch (prioridade) {
     case "REU_PRESO":
-      return { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive", label: "RÉU PRESO" };
+      return { label: "RÉU PRESO", variant: "reuPreso" as const };
     case "URGENTE":
-      return { bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", label: "URGENTE" };
+      return { label: "URGENTE", variant: "urgent" as const };
     case "ALTA":
-      return { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-500", label: "ALTA" };
+      return { label: "ALTA", variant: "warning" as const };
     default:
-      return { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "NORMAL" };
+      return { label: "NORMAL", variant: "secondary" as const };
   }
 }
 
 function getStatusAudienciaStyle(status: string) {
   switch (status) {
     case "confirmada":
-      return { bg: "bg-success/10", text: "text-success" };
+      return "success";
     case "pendente":
-      return { bg: "bg-warning/10", text: "text-warning-foreground" };
+      return "warning";
     default:
-      return { bg: "bg-muted", text: "text-muted-foreground" };
+      return "secondary";
   }
 }
 
@@ -220,7 +211,7 @@ export default function DashboardPage() {
 
   return (
     <TooltipProvider>
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-8">
       {/* Mode Selector - Todos vs Específico */}
       <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/40">
         <div className="flex items-center gap-1 p-1.5 bg-muted rounded-xl border border-border/50">
@@ -282,15 +273,15 @@ export default function DashboardPage() {
       {/* Header - Dinâmico por atribuição */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="h-16 w-16 rounded-2xl flex items-center justify-center bg-primary text-primary-foreground shadow-lg">
+          <div className="h-14 w-14 rounded-xl flex items-center justify-center bg-primary text-primary-foreground shadow-md">
             {dashboardMode === "all_workspaces" ? (
-              <Layers className="h-8 w-8" />
+              <Layers className="h-7 w-7" />
             ) : (
-              <BarChart3 className="h-8 w-8" />
+              <BarChart3 className="h-7 w-7" />
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{dashboardInfo.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{dashboardInfo.title}</h1>
             <p className="text-muted-foreground text-sm mt-0.5">
               {dashboardInfo.subtitle}
             </p>
@@ -303,120 +294,93 @@ export default function DashboardPage() {
 
       {activeView === "overview" ? (
         <>
-          {/* SEÇÃO 1: INDICADORES RÁPIDOS - Padrão Swiss */}
+          {/* SEÇÃO 1: INDICADORES RÁPIDOS - Padrão Swiss - Mais limpo */}
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
             {/* Prazos Hoje */}
-            <SwissCard className="border-l-[3px] border-l-warning group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{mockStats.prazosHoje}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Prazos Hoje</p>
-                  </div>
-                  <Timer className="hidden sm:block h-6 w-6 text-warning" />
-                </div>
-                <div className="flex items-center gap-1 mt-2">
-                  <span className="text-xs text-muted-foreground">{mockStats.prazosSemana} na semana</span>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
+            <div className="p-4 rounded-xl border bg-card hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Prazos Hoje</p>
+                <Timer className="h-4 w-4 text-amber-500" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground">{mockStats.prazosHoje}</p>
+                <span className="text-xs text-muted-foreground">de {mockStats.prazosSemana}</span>
+              </div>
+            </div>
 
             {/* Audiências Hoje */}
-            <SwissCard className="border-l-[3px] border-l-info group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{mockStats.audienciasHoje}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Audiências Hoje</p>
-                  </div>
-                  <Briefcase className="hidden sm:block h-6 w-6 text-info" />
-                </div>
-                <div className="flex items-center gap-1 mt-2">
-                  <span className="text-xs text-muted-foreground">{mockStats.audienciasSemana} na semana</span>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
+            <div className="p-4 rounded-xl border bg-card hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Audiências</p>
+                <Briefcase className="h-4 w-4 text-blue-500" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground">{mockStats.audienciasHoje}</p>
+                <span className="text-xs text-muted-foreground">de {mockStats.audienciasSemana}</span>
+              </div>
+            </div>
 
             {/* Atendimentos Hoje */}
-            <SwissCard className="border-l-[3px] border-l-primary group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{mockStats.atendimentosHoje}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Atendimentos</p>
-                  </div>
-                  <UserCheck className="hidden sm:block h-6 w-6 text-primary" />
-                </div>
-                <div className="flex items-center gap-1 mt-2">
-                  <span className="text-xs text-muted-foreground">{mockStats.atendimentosSemana} na semana</span>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
+            <div className="p-4 rounded-xl border bg-card hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Atendimentos</p>
+                <UserCheck className="h-4 w-4 text-emerald-500" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground">{mockStats.atendimentosHoje}</p>
+                <span className="text-xs text-muted-foreground">de {mockStats.atendimentosSemana}</span>
+              </div>
+            </div>
 
             {/* Júris do Mês */}
-            <SwissCard className="border-l-[3px] border-l-primary group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{mockStats.jurisMes}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Júris no Mês</p>
-                  </div>
-                  <Gavel className="hidden sm:block h-6 w-6 text-primary" />
-                </div>
-                <div className="flex items-center gap-1 mt-2">
-                  <span className="text-xs text-muted-foreground">Sessões plenárias</span>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
+            <div className="p-4 rounded-xl border bg-card hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Júris Mês</p>
+                <Gavel className="h-4 w-4 text-purple-500" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground">{mockStats.jurisMes}</p>
+                <span className="text-xs text-muted-foreground">sessões</span>
+              </div>
+            </div>
 
             {/* Taxa de Cumprimento */}
-            <SwissCard className="border-l-[3px] border-l-success group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{mockStats.taxaCumprimento}%</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Cumprimento</p>
-                  </div>
-                  <CheckCircle2 className="hidden sm:block h-6 w-6 text-success" />
-                </div>
-                <div className="flex items-center gap-1 mt-2">
-                  <span className="text-xs text-muted-foreground">Prazos em dia</span>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
+            <div className="p-4 rounded-xl border bg-card hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Cumprimento</p>
+                <CheckCircle2 className="h-4 w-4 text-teal-500" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground">{mockStats.taxaCumprimento}%</p>
+                <span className="text-xs text-muted-foreground">em dia</span>
+              </div>
+            </div>
 
             {/* Tempo Médio de Resposta */}
-            <SwissCard className="border-l-[3px] border-l-muted-foreground group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{mockStats.mediaTempoResposta}d</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Tempo Médio</p>
-                  </div>
-                  <Activity className="hidden sm:block h-6 w-6 text-muted-foreground" />
-                </div>
-                <div className="flex items-center gap-1 mt-2">
-                  <span className="text-xs text-muted-foreground">Para protocolar</span>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
+            <div className="p-4 rounded-xl border bg-card hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tempo Médio</p>
+                <Activity className="h-4 w-4 text-slate-500" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground">{mockStats.mediaTempoResposta}d</p>
+                <span className="text-xs text-muted-foreground">resposta</span>
+              </div>
+            </div>
           </div>
 
           {/* SEÇÃO 2: PRIORIDADES DO DIA - Grid Principal */}
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Coluna 1: Prazos e Demandas Urgentes */}
             <SwissCard className="lg:col-span-2">
-              <SwissCardHeader className="pb-3">
+              <SwissCardHeader className="pb-3 border-b-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                      <AlertCircle className="h-5 w-5 text-destructive" />
+                    <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center flex-shrink-0">
+                      <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                     </div>
                     <div>
                       <SwissCardTitle>Prazos e Demandas Urgentes</SwissCardTitle>
-                      <SwissCardDescription className="mt-0.5">
-                        Atenção imediata necessária
-                      </SwissCardDescription>
                     </div>
                   </div>
                   <Link href="/admin/demandas?urgente=true">
@@ -427,26 +391,28 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               </SwissCardHeader>
-              <SwissCardContent className="p-4 pt-0">
-                <div className="space-y-2">
+              <SwissCardContent className="p-0">
+                <div className="divide-y divide-border/40">
                   {mockPrazosUrgentes.map((prazo) => {
                     const style = getPrioridadeStyle(prazo.prioridade);
                     return (
-                      <Link key={prazo.id} href={`/admin/demandas/${prazo.id}`}>
-                        <div className={`flex items-center gap-3 p-3 rounded-lg ${style.bg} hover:opacity-80 transition-all cursor-pointer`}>
-                          <div className={`w-1 h-10 rounded-full ${style.dot}`} />
+                      <Link key={prazo.id} href={`/admin/demandas/${prazo.id}`} className="block hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center gap-4 p-4">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 mb-1">
                               <p className="font-semibold text-sm truncate text-foreground">{prazo.assistido}</p>
-                              <Badge variant="outline" className={`text-[10px] font-bold ${style.text} px-1.5 py-0 border-transparent bg-background/50`}>
+                              <Badge variant={style.variant} className="px-1.5 py-0 text-[10px] h-5">
                                 {style.label}
                               </Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground truncate">{prazo.ato}</p>
-                            <p className="text-[10px] font-mono text-muted-foreground/80 mt-0.5 truncate">{prazo.processo}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="font-medium text-foreground/80">{prazo.ato}</span>
+                              <span>•</span>
+                              <span className="font-mono">{prazo.processo}</span>
+                            </div>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className={`text-sm font-bold ${prazo.diasRestantes === 0 ? "text-destructive" : prazo.diasRestantes === 1 ? "text-warning-foreground" : "text-muted-foreground"}`}>
+                            <p className={`text-sm font-bold ${prazo.diasRestantes === 0 ? "text-destructive" : prazo.diasRestantes === 1 ? "text-amber-600" : "text-muted-foreground"}`}>
                               {prazo.prazo}
                             </p>
                           </div>
@@ -460,36 +426,33 @@ export default function DashboardPage() {
 
             {/* Coluna 2: Atendimentos do Dia */}
             <SwissCard>
-              <SwissCardHeader className="pb-3">
+              <SwissCardHeader className="pb-3 border-b-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <UserCheck className="h-5 w-5 text-primary" />
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
+                      <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
                       <SwissCardTitle>Atendimentos</SwissCardTitle>
-                      <SwissCardDescription className="mt-0.5">
-                        {mockAtendimentos.length} agendados hoje
-                      </SwissCardDescription>
                     </div>
                   </div>
                 </div>
               </SwissCardHeader>
-              <SwissCardContent className="p-4 pt-0">
+              <SwissCardContent className="p-0">
                 {mockAtendimentos.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
                     <UserCheck className="h-10 w-10 text-muted-foreground/30 mb-2" />
                     <p className="text-sm text-muted-foreground">Sem atendimentos hoje</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="divide-y divide-border/40">
                     {mockAtendimentos.slice(0, 5).map((atendimento) => (
                       <div
                         key={atendimento.id}
-                        className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer"
+                        className="flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors cursor-pointer"
                       >
-                        <div className="text-center min-w-[42px] bg-primary/10 rounded-md py-1 px-2">
-                          <p className="text-sm font-bold font-mono text-primary">{atendimento.hora}</p>
+                        <div className="text-center min-w-[42px] bg-muted/50 rounded-md py-1 px-2 border border-border/50">
+                          <p className="text-xs font-bold font-mono text-foreground">{atendimento.hora}</p>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate text-foreground">{atendimento.assistido}</p>
@@ -510,17 +473,14 @@ export default function DashboardPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Audiências Próximas */}
             <SwissCard>
-              <SwissCardHeader className="pb-3">
+              <SwissCardHeader className="pb-3 border-b-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center flex-shrink-0">
-                      <CalendarClock className="h-5 w-5 text-info" />
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                      <CalendarClock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
                       <SwissCardTitle>Audiências Próximas</SwissCardTitle>
-                      <SwissCardDescription className="mt-0.5">
-                        Compromissos agendados
-                      </SwissCardDescription>
                     </div>
                   </div>
                   <Link href="/admin/audiencias">
@@ -531,46 +491,39 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               </SwissCardHeader>
-              <SwissCardContent className="p-4 pt-0">
-                <div className="space-y-2">
+              <SwissCardContent className="p-0">
+                <div className="divide-y divide-border/40">
                   {mockAudienciasProximas.map((audiencia) => {
-                    const statusStyle = getStatusAudienciaStyle(audiencia.status);
+                    const statusVariant = getStatusAudienciaStyle(audiencia.status);
                     const isToday = audiencia.data === "Hoje";
                     return (
                       <div
                         key={audiencia.id}
                         className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer",
-                          isToday ? "bg-info/5" : "bg-muted/30 hover:bg-muted/50"
+                          "flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors cursor-pointer",
+                          isToday && "bg-blue-50/30 dark:bg-blue-900/10"
                         )}
                       >
-                        <div className={cn(
-                          "text-center min-w-[52px] rounded-lg py-1.5 px-2",
-                          isToday ? "bg-info/10" : "bg-muted"
-                        )}>
+                        <div className="text-center min-w-[48px]">
                           <p className={cn(
-                            "text-[10px] font-semibold",
-                            isToday ? "text-info" : "text-muted-foreground"
+                            "text-[10px] font-medium uppercase tracking-wider mb-0.5",
+                            isToday ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"
                           )}>{audiencia.data}</p>
-                          <p className={cn(
-                            "text-sm font-bold",
-                            isToday ? "text-info" : ""
-                          )}>{audiencia.hora}</p>
+                          <p className="text-sm font-bold text-foreground">{audiencia.hora}</p>
                         </div>
+                        <div className="w-px h-8 bg-border/60 mx-1"></div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate text-foreground">{audiencia.assistido}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{audiencia.vara}</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
-                            {audiencia.tipo}
-                          </Badge>
-                          <span className={cn(
-                            "text-[9px] px-1.5 py-0.5 rounded font-medium",
-                            statusStyle.bg, statusStyle.text
-                          )}>
-                            {audiencia.status}
-                          </span>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="font-semibold text-sm truncate text-foreground">{audiencia.assistido}</p>
+                            <Badge variant={statusVariant as any} className="text-[9px] px-1.5 py-0 h-5 font-normal">
+                              {audiencia.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground/70">{audiencia.tipo}</span>
+                            <span>•</span>
+                            <span>{audiencia.vara}</span>
+                          </div>
                         </div>
                       </div>
                     );
@@ -581,46 +534,42 @@ export default function DashboardPage() {
 
             {/* Júris Próximos */}
             <SwissCard>
-              <SwissCardHeader className="pb-3">
+              <SwissCardHeader className="pb-3 border-b-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Gavel className="h-5 w-5 text-primary" />
+                    <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+                      <Gavel className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div>
                       <SwissCardTitle>Próximos Júris</SwissCardTitle>
-                      <SwissCardDescription className="mt-0.5">
-                        Sessões plenárias do mês
-                      </SwissCardDescription>
                     </div>
                   </div>
                   <Link href="/admin/juri">
                     <Button variant="ghost" size="sm" className="gap-1 text-xs h-8">
-                      Ver todos
+                      Ver todas
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </Button>
                   </Link>
                 </div>
               </SwissCardHeader>
-              <SwissCardContent className="p-4 pt-0">
+              <SwissCardContent className="p-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   {mockJurisProximos.map((juri) => (
                     <Link key={juri.id} href={`/admin/juri/${juri.id}`}>
-                      <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 hover:border-primary/30 transition-colors cursor-pointer group">
-                        <div className="flex items-center justify-between mb-2">
+                      <div className="p-4 rounded-lg bg-card border hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group h-full flex flex-col">
+                        <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <div className="bg-primary/10 rounded-md px-2 py-0.5">
-                              <p className="text-sm font-bold font-mono text-primary">{juri.data}</p>
-                            </div>
-                            <span className="text-[10px] text-muted-foreground font-mono">{juri.hora}</span>
+                            <Badge variant="outline" className="font-mono bg-muted/30">
+                              {juri.data}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground font-mono">{juri.hora}</span>
                           </div>
-                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
                         </div>
-                        <p className="font-semibold text-sm truncate text-foreground">{juri.assistido}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{juri.crime}</p>
-                        <div className="flex items-center justify-between mt-1.5">
+                        <p className="font-semibold text-sm truncate text-foreground mb-1">{juri.assistido}</p>
+                        <p className="text-xs text-muted-foreground truncate mb-3">{juri.crime}</p>
+                        <div className="mt-auto flex items-center justify-between pt-3 border-t border-border/40">
                           <p className="text-[10px] text-muted-foreground">{juri.defensor}</p>
-                          <Badge className="text-[9px] px-1 py-0 bg-background text-muted-foreground border shadow-sm">{juri.comarca}</Badge>
+                          <span className="text-[10px] font-medium text-foreground/70">{juri.comarca}</span>
                         </div>
                       </div>
                     </Link>
@@ -630,236 +579,29 @@ export default function DashboardPage() {
             </SwissCard>
           </div>
 
-          {/* SEÇÃO 4: INFORMAÇÕES CONDENSADAS - Padrão Swiss */}
-          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-            {/* Réus Presos */}
-            <SwissCard className="group hover:shadow-md transition-all border-l-[3px] border-l-destructive">
-              <SwissCardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                    <Lock className="h-5 w-5 text-destructive" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-2xl font-bold text-foreground">{mockStats.reusPresos}</p>
-                    <p className="text-xs text-muted-foreground">Réus Presos</p>
-                  </div>
-                  <Link href="/admin/assistidos?preso=true">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </Link>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
-
-            {/* Casos Ativos */}
-            <SwissCard className="group hover:shadow-md transition-all border-l-[3px] border-l-info">
-              <SwissCardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center flex-shrink-0">
-                    <Briefcase className="h-5 w-5 text-info" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-2xl font-bold text-foreground">{mockStats.casosAtivos}</p>
-                    <p className="text-xs text-muted-foreground">Casos Ativos</p>
-                  </div>
-                  <Link href="/admin/casos">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </Link>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
-
-            {/* Total Assistidos */}
-            <SwissCard className="group hover:shadow-md transition-all border-l-[3px] border-l-primary">
-              <SwissCardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-2xl font-bold text-foreground">{mockStats.totalAssistidos}</p>
-                    <p className="text-xs text-muted-foreground">Assistidos</p>
-                  </div>
-                  <Link href="/admin/assistidos">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </Link>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
-
-            {/* Total Processos */}
-            <SwissCard className="group hover:shadow-md transition-all border-l-[3px] border-l-primary">
-              <SwissCardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Scale className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-2xl font-bold text-foreground">{mockStats.totalProcessos}</p>
-                    <p className="text-xs text-muted-foreground">Processos</p>
-                  </div>
-                  <Link href="/admin/processos">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </Link>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
-          </div>
-
-          {/* SEÇÃO 5: INFOGRÁFICOS - Padrão Swiss */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Gráfico de Pizza - Status das Demandas */}
-            <SwissCard>
-              <SwissCardHeader className="pb-2">
-                <SwissCardTitle className="text-sm flex items-center gap-2">
-                  <ClipboardList className="h-4 w-4 text-primary" />
-                  Status das Demandas
-                </SwissCardTitle>
-              </SwissCardHeader>
-              <SwissCardContent className="p-4">
-                <div className="h-[180px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={mockDemandasPorStatus}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={70}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {mockDemandasPorStatus.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "var(--radius)",
-                          fontSize: "12px",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {mockDemandasPorStatus.map((item) => (
-                    <div key={item.name} className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-xs text-muted-foreground">{item.name}</span>
-                      <span className="text-xs font-semibold ml-auto">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </SwissCardContent>
-            </SwissCard>
-
-            {/* Gráfico de Linha - Evolução Semanal */}
-            <SwissCard>
-              <SwissCardHeader className="pb-2">
-                <SwissCardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  Evolução Semanal
-                </SwissCardTitle>
-              </SwissCardHeader>
-              <SwissCardContent className="p-4">
-                <div className="h-[200px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={mockEvolucaoSemanal}>
-                      <defs>
-                        <linearGradient id="colorProtocolados" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                        </linearGradient>
-                        <linearGradient id="colorRecebidos" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--warning))" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(var(--warning))" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                      <XAxis dataKey="dia" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "var(--radius)",
-                          fontSize: "12px",
-                        }}
-                      />
-                      <Area type="monotone" dataKey="protocolados" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorProtocolados)" />
-                      <Area type="monotone" dataKey="recebidos" stroke="hsl(var(--warning))" strokeWidth={2} fillOpacity={1} fill="url(#colorRecebidos)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex items-center justify-center gap-4 mt-2">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                    <span className="text-xs text-muted-foreground">Protocolados</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-warning" />
-                    <span className="text-xs text-muted-foreground">Recebidos</span>
-                  </div>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
-
-            {/* Gráfico de Barras - Prazos por Área */}
-            <SwissCard>
-              <SwissCardHeader className="pb-2">
-                <SwissCardTitle className="text-sm flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  Prazos por Área
-                </SwissCardTitle>
-              </SwissCardHeader>
-              <SwissCardContent className="p-4">
-                <div className="h-[200px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mockPrazosPorArea} layout="vertical" margin={{ left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                      <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} />
-                      <YAxis type="category" dataKey="area" stroke="hsl(var(--muted-foreground))" fontSize={9} width={60} tickLine={false} axisLine={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "var(--radius)",
-                          fontSize: "12px",
-                        }}
-                      />
-                      <Bar dataKey="quantidade" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
-          </div>
-
-          {/* SEÇÃO 6: AÇÕES RÁPIDAS - Padrão Swiss */}
+          {/* SEÇÃO 4: AÇÕES RÁPIDAS - Padrão Swiss */}
           <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
             <Link href="/admin/assistidos/novo">
-              <Button variant="outline" className="w-full h-auto py-3 flex-col gap-1.5 hover:bg-primary/5 hover:border-primary/50 transition-colors rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-muted/50 hover:border-primary/20 transition-all rounded-xl border-dashed">
+                <Users className="h-5 w-5 text-muted-foreground" />
                 <span className="text-xs font-medium">Novo Assistido</span>
               </Button>
             </Link>
             <Link href="/admin/demandas/nova">
-              <Button variant="outline" className="w-full h-auto py-3 flex-col gap-1.5 hover:bg-primary/5 hover:border-primary/50 transition-colors rounded-lg">
-                <FileText className="h-5 w-5 text-primary" />
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-muted/50 hover:border-primary/20 transition-all rounded-xl border-dashed">
+                <FileText className="h-5 w-5 text-muted-foreground" />
                 <span className="text-xs font-medium">Nova Demanda</span>
               </Button>
             </Link>
             <Link href="/admin/kanban">
-              <Button variant="outline" className="w-full h-auto py-3 flex-col gap-1.5 hover:bg-primary/5 hover:border-primary/50 transition-colors rounded-lg">
-                <Target className="h-5 w-5 text-primary" />
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-muted/50 hover:border-primary/20 transition-all rounded-xl border-dashed">
+                <Target className="h-5 w-5 text-muted-foreground" />
                 <span className="text-xs font-medium">Kanban</span>
               </Button>
             </Link>
             <Link href="/admin/calendar">
-              <Button variant="outline" className="w-full h-auto py-3 flex-col gap-1.5 hover:bg-primary/5 hover:border-primary/50 transition-colors rounded-lg">
-                <CalendarDays className="h-5 w-5 text-primary" />
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-muted/50 hover:border-primary/20 transition-all rounded-xl border-dashed">
+                <CalendarDays className="h-5 w-5 text-muted-foreground" />
                 <span className="text-xs font-medium">Calendário</span>
               </Button>
             </Link>
