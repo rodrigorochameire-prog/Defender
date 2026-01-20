@@ -25,10 +25,10 @@ CREATE TABLE IF NOT EXISTS whatsapp_config (
   last_verified_at TIMESTAMP,
   
   -- Configurações de envio automático
-  auto_notify_checkin BOOLEAN NOT NULL DEFAULT false,
-  auto_notify_checkout BOOLEAN NOT NULL DEFAULT false,
-  auto_notify_daily_log BOOLEAN NOT NULL DEFAULT false,
-  auto_notify_booking BOOLEAN NOT NULL DEFAULT false,
+  auto_notify_prazo BOOLEAN NOT NULL DEFAULT false,
+  auto_notify_audiencia BOOLEAN NOT NULL DEFAULT false,
+  auto_notify_juri BOOLEAN NOT NULL DEFAULT false,
+  auto_notify_movimentacao BOOLEAN NOT NULL DEFAULT false,
   
   -- Metadados
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
   -- Destinatário
   to_phone TEXT NOT NULL,
   to_name TEXT,
-  pet_id INTEGER REFERENCES pets(id) ON DELETE SET NULL,
+  assistido_id INTEGER REFERENCES assistidos(id) ON DELETE SET NULL,
   
   -- Mensagem
   message_type VARCHAR(50) NOT NULL, -- 'text' | 'template' | 'image' | 'document'
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
   error_message TEXT,
   
   -- Contexto
-  context VARCHAR(50), -- 'checkin' | 'checkout' | 'daily_log' | 'booking' | 'manual'
+  context VARCHAR(50), -- 'prazo' | 'audiencia' | 'juri' | 'movimentacao' | 'manual'
   sent_by_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   
   -- Timestamps
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
 
 -- Índices para whatsapp_messages
 CREATE INDEX IF NOT EXISTS whatsapp_messages_config_id_idx ON whatsapp_messages(config_id);
-CREATE INDEX IF NOT EXISTS whatsapp_messages_pet_id_idx ON whatsapp_messages(pet_id);
+CREATE INDEX IF NOT EXISTS whatsapp_messages_assistido_id_idx ON whatsapp_messages(assistido_id);
 CREATE INDEX IF NOT EXISTS whatsapp_messages_status_idx ON whatsapp_messages(status);
 CREATE INDEX IF NOT EXISTS whatsapp_messages_context_idx ON whatsapp_messages(context);
 CREATE INDEX IF NOT EXISTS whatsapp_messages_created_at_idx ON whatsapp_messages(created_at);

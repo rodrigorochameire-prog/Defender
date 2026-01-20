@@ -25,11 +25,6 @@ export default async function AdminLayout({
     redirect("/auth-redirect");
   }
 
-  // Verificar se é admin
-  if (dbUser.role !== "admin") {
-    redirect("/tutor");
-  }
-
   return (
     <AdminSidebar userName={dbUser.name} userEmail={dbUser.email}>
       {children}

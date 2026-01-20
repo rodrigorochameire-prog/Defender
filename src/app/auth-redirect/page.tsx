@@ -46,7 +46,7 @@ export default async function AuthRedirectPage() {
       .values({
         name,
         email,
-        role: isAdmin ? "admin" : "user",
+        role: isAdmin ? "admin" : "defensor",
         emailVerified: true,
       })
       .returning();
@@ -66,10 +66,6 @@ export default async function AuthRedirectPage() {
   console.log("[AuthRedirect] Email:", email, "Role:", dbUser.role);
 
   // Redirecionar baseado no role DO BANCO DE DADOS
-  if (dbUser.role === "admin") {
-    redirect("/admin");
-  } else {
-    redirect("/tutor");
-  }
+  redirect("/admin");
 }
 

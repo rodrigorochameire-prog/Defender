@@ -50,7 +50,7 @@ export function RegisterForm() {
       }
 
       toast.success("Conta criada com sucesso!");
-      router.push("/tutor");
+      router.push("/admin");
       router.refresh();
     } catch {
       toast.error("Erro ao criar conta. Tente novamente.");

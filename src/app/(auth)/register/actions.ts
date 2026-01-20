@@ -58,7 +58,7 @@ export async function registerAction(input: RegisterInput): Promise<RegisterResu
         name: input.name.trim(),
         email: input.email.toLowerCase().trim(),
         passwordHash,
-        role: "user", // Novos usuários são sempre tutores
+        role: "defensor", // Novos usuários entram como defensores
       })
       .returning();
 

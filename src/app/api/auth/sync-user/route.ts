@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         .values({
           name: name || email.split("@")[0],
           email,
-          role: isAdmin ? "admin" : "user",
+          role: isAdmin ? "admin" : "defensor",
           emailVerified: true,
         })
         .returning();

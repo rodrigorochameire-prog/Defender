@@ -1,4 +1,4 @@
-# 🚀 Deploy do TeteCare v2 na Vercel
+# 🚀 Deploy do DefesaHub na Vercel
 
 ## Pré-requisitos
 
@@ -13,7 +13,7 @@ Acesse seu projeto na Vercel e configure as seguintes variáveis:
 |----------|-------|
 | `DATABASE_URL` | URL de conexão PostgreSQL (veja abaixo) |
 | `AUTH_SECRET` | Uma string aleatória de 32+ caracteres |
-| `NEXT_PUBLIC_APP_URL` | URL do seu app (ex: https://tetecare.vercel.app) |
+| `NEXT_PUBLIC_APP_URL` | URL do seu app (ex: https://defesahub.vercel.app) |
 
 ### Formato da DATABASE_URL para Supabase
 
@@ -35,17 +35,7 @@ Após o deploy, execute localmente (ou via Vercel CLI):
 npm run db:push
 ```
 
-## Passo 3: Popular Dados Iniciais (Opcional)
-
-```bash
-npm run db:seed
-```
-
-**Credenciais de teste:**
-- Admin: `admin@tetecare.com` / `admin123`
-- Tutor: `maria@email.com` / `tutor123`
-
-## Passo 4: Deploy
+## Passo 3: Deploy
 
 ### Via GitHub (Recomendado)
 1. Push o código para o GitHub

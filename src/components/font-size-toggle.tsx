@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ALargeSmall, Type } from "lucide-react";
 
-const FONT_SIZE_KEY = "tetecare-font-size";
+const FONT_SIZE_KEY = "defesahub-font-size";
 
 export function FontSizeToggle() {
   const [isLarge, setIsLarge] = useState(false);

@@ -11,7 +11,7 @@ import type { User } from "@/lib/db/schema";
 /**
  * Roles disponíveis no sistema
  */
-export type UserRole = "admin" | "user";
+export type UserRole = "admin" | "defensor" | "estagiario" | "servidor";
 
 /**
  * Status de aprovação
@@ -42,13 +42,6 @@ export interface AuthenticatedContext extends TRPCContext {
  */
 export interface AdminContext extends AuthenticatedContext {
   user: User & { role: "admin" };
-}
-
-/**
- * Contexto de tutor aprovado
- */
-export interface TutorContext extends AuthenticatedContext {
-  user: User & { approvalStatus: "approved" };
 }
 
 /**
@@ -164,25 +157,6 @@ const requireAdmin = t.middleware(async ({ ctx, next }) => {
 });
 
 /**
- * Middleware de tutor aprovado
- * Verifica se o usuário é um tutor aprovado
- */
-const requireApprovedTutor = t.middleware(async ({ ctx, next }) => {
-  const user = (ctx as AuthenticatedContext).user;
-  
-  if (user.approvalStatus !== "approved") {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Sua conta ainda não foi aprovada. Aguarde a aprovação do administrador.",
-    });
-  }
-
-  return next({
-    ctx: ctx as TutorContext,
-  });
-});
-
-/**
  * Middleware de rate limiting simples (opcional)
  * Pode ser expandido com Redis para produção
  */
@@ -217,13 +191,6 @@ export const protectedProcedure = publicProcedure
   .use(requireAuth);
 
 /**
- * Procedure de tutor
- * Requer usuário logado E aprovado
- */
-export const tutorProcedure = protectedProcedure
-  .use(requireApprovedTutor);
-
-/**
  * Procedure de admin
  * Requer usuário logado E role admin
  */
@@ -239,13 +206,6 @@ export const adminProcedure = protectedProcedure
  */
 export function isAdmin(user: User | null): user is User & { role: "admin" } {
   return user?.role === "admin";
-}
-
-/**
- * Verifica se o usuário é tutor aprovado
- */
-export function isApprovedTutor(user: User | null): user is User & { approvalStatus: "approved" } {
-  return user?.approvalStatus === "approved";
 }
 
 /**

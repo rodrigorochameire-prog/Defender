@@ -5,23 +5,23 @@ import { z } from "zod";
 const defaultTemplates = [
   {
     id: 1,
-    type: "vaccine_reminder",
-    title: "Lembrete de Vacina",
-    content: "A vacina {{vaccine_name}} do seu pet {{pet_name}} está próxima!",
+    type: "prazo_alerta",
+    title: "Alerta de Prazo",
+    content: "O prazo {{prazo}} do processo {{processo_numero}} vence em {{data}}.",
     isActive: true,
   },
   {
     id: 2,
-    type: "checkin_confirmation",
-    title: "Check-in Confirmado",
-    content: "O check-in de {{pet_name}} foi confirmado para {{date}}.",
+    type: "audiencia_lembrete",
+    title: "Lembrete de Audiência",
+    content: "Audiência do processo {{processo_numero}} marcada para {{data}} às {{hora}}.",
     isActive: true,
   },
   {
     id: 3,
-    type: "low_credits",
-    title: "Créditos Baixos",
-    content: "Você tem apenas {{credits}} créditos restantes. Recarregue agora!",
+    type: "juri_aviso",
+    title: "Aviso de Júri",
+    content: "Sessão do júri do processo {{processo_numero}} em {{data}}. Defensor: {{defensor_nome}}.",
     isActive: true,
   },
 ];
@@ -83,14 +83,13 @@ export const notificationTemplatesRouter = router({
    */
   types: adminProcedure.query(() => {
     return [
-      { value: "vaccine_reminder", label: "Lembrete de Vacina" },
-      { value: "medication_reminder", label: "Lembrete de Medicamento" },
-      { value: "checkin_confirmation", label: "Confirmação de Check-in" },
-      { value: "checkout_confirmation", label: "Confirmação de Check-out" },
-      { value: "low_credits", label: "Créditos Baixos" },
-      { value: "booking_approved", label: "Reserva Aprovada" },
-      { value: "booking_rejected", label: "Reserva Rejeitada" },
-      { value: "daily_report", label: "Relatório Diário" },
+      { value: "prazo_alerta", label: "Alerta de Prazo" },
+      { value: "audiencia_lembrete", label: "Lembrete de Audiência" },
+      { value: "juri_aviso", label: "Aviso de Júri" },
+      { value: "movimentacao", label: "Movimentação Processual" },
+      { value: "atendimento_agendado", label: "Atendimento Agendado" },
+      { value: "visita_carceraria", label: "Visita Carcerária" },
+      { value: "aviso_geral", label: "Aviso Geral" },
       { value: "welcome", label: "Boas-vindas" },
     ];
   }),

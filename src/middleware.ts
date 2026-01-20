@@ -29,7 +29,7 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Usuário autenticado - permitir acesso
-  // A verificação de role é feita nos layouts (admin/tutor)
+  // A verificação de role é feita nos layouts
   return NextResponse.next();
 });
 

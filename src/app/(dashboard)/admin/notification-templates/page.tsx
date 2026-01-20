@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,17 +11,15 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Bell, Plus, Edit, Trash2, Check, X, Info, Loader2 } from "lucide-react";
+import { Bell, Plus, Edit, Trash2, Loader2 } from "lucide-react";
 
 const NOTIFICATION_TYPES = [
-  { value: "vaccine_reminder_7d", label: "Lembrete de Vacina (7 dias)", variables: ["{{petName}}", "{{vaccineName}}", "{{dueDate}}", "{{tutorName}}"] },
-  { value: "vaccine_reminder_1d", label: "Lembrete de Vacina (1 dia)", variables: ["{{petName}}", "{{vaccineName}}", "{{dueDate}}", "{{tutorName}}"] },
-  { value: "medication_reminder", label: "Lembrete de Medicamento", variables: ["{{petName}}", "{{medicationName}}", "{{dosage}}", "{{time}}", "{{tutorName}}"] },
-  { value: "checkin_notification", label: "Notificação de Check-in", variables: ["{{petName}}", "{{time}}", "{{tutorName}}"] },
-  { value: "checkout_notification", label: "Notificação de Check-out", variables: ["{{petName}}", "{{time}}", "{{tutorName}}"] },
-  { value: "daily_report", label: "Relatório Diário", variables: ["{{petName}}", "{{date}}", "{{mood}}", "{{activities}}", "{{tutorName}}"] },
-  { value: "credits_low", label: "Créditos Baixos", variables: ["{{petName}}", "{{remainingCredits}}", "{{tutorName}}"] },
-  { value: "event_reminder", label: "Lembrete de Evento", variables: ["{{petName}}", "{{eventTitle}}", "{{eventDate}}", "{{tutorName}}"] },
+  { value: "prazo_alerta", label: "Alerta de Prazo", variables: ["{{processoNumero}}", "{{prazo}}", "{{data}}", "{{assistidoNome}}"] },
+  { value: "audiencia_lembrete", label: "Lembrete de Audiência", variables: ["{{processoNumero}}", "{{data}}", "{{hora}}", "{{local}}"] },
+  { value: "juri_aviso", label: "Aviso de Júri", variables: ["{{processoNumero}}", "{{data}}", "{{hora}}", "{{sala}}", "{{defensorNome}}"] },
+  { value: "movimentacao", label: "Movimentação Processual", variables: ["{{processoNumero}}", "{{descricao}}", "{{data}}"] },
+  { value: "atendimento_agendado", label: "Atendimento Agendado", variables: ["{{assistidoNome}}", "{{data}}", "{{hora}}"] },
+  { value: "aviso_geral", label: "Aviso Geral", variables: ["{{titulo}}", "{{mensagem}}"] },
 ];
 
 export default function AdminNotificationTemplatesPage() {
@@ -29,7 +27,7 @@ export default function AdminNotificationTemplatesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const { data: templates, isLoading, refetch } = trpc.notificationTemplates.list.useQuery();
+  const { data: templates, isLoading } = trpc.notificationTemplates.list.useQuery();
   const utils = trpc.useUtils();
 
   const createMutation = trpc.notificationTemplates.create.useMutation({
@@ -150,7 +148,7 @@ export default function AdminNotificationTemplatesPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="title">Título</Label>
-                <Input id="title" name="title" required placeholder="Ex: Lembrete de Vacina" />
+                <Input id="title" name="title" required placeholder="Ex: Alerta de Prazo" />
               </div>
 
               <div className="space-y-2">
@@ -159,11 +157,11 @@ export default function AdminNotificationTemplatesPage() {
                   id="content"
                   name="content"
                   required
-                  placeholder="Olá {{tutorName}}, a vacina {{vaccineName}} do {{petName}} está próxima..."
+                  placeholder="Olá {{assistidoNome}}, o prazo {{prazo}} do processo {{processoNumero}} vence em {{data}}."
                   rows={4}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use variáveis como {"{{petName}}"}, {"{{tutorName}}"}, etc.
+                  Use variáveis como {"{{processoNumero}}"}, {"{{data}}"}, etc.
                 </p>
               </div>
 

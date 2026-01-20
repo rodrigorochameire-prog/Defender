@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 export default async function AuthLayout({
   children,
 }: {
@@ -8,12 +10,9 @@ export default async function AuthLayout({
 }) {
   const session = await getSession();
 
-  // Se já estiver logado, redirecionar para o dashboard apropriado
+  // Se já estiver logado, redirecionar para o dashboard
   if (session) {
-    if (session.role === "admin") {
-      redirect("/admin");
-    }
-    redirect("/tutor");
+    redirect("/admin");
   }
 
   return <>{children}</>;

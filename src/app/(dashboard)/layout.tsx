@@ -16,6 +16,6 @@ export default async function DashboardRootLayout({
   }
 
   // O layout apenas verifica autenticação
-  // Cada sub-layout (admin/tutor) adiciona sua própria sidebar
+  // Cada sub-layout adiciona sua própria sidebar
   return <>{children}</>;
 }

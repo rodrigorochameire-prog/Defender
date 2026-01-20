@@ -1,190 +1,67 @@
 -- =====================================================
--- CONFIGURAÇÃO DE STORAGE DO SUPABASE - TETECARE
+-- CONFIGURAÇÃO DE STORAGE DO SUPABASE - DEFESAHUB
 -- =====================================================
 -- Execute este script no SQL Editor do Supabase
 -- Dashboard > SQL Editor > New Query
+--
+-- =====================================================
+-- 1. CRIAR BUCKETS (via insert na tabela storage.buckets)
+-- =====================================================
+-- Bucket: documents (documentos jurídicos - privado)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'documents',
+  'documents',
+  false,
+  10485760, -- 10MB
+  ARRAY['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- =====================================================
--- 1. CRIAR BUCKETS (via Dashboard)
+-- 2. LIMPAR POLÍTICAS ANTIGAS (se existirem)
 -- =====================================================
--- Criar os seguintes buckets PRIVADOS:
--- 1. pet-photos
--- 2. documents  
--- 3. wall-media
+DROP POLICY IF EXISTS "documents_select" ON storage.objects;
+DROP POLICY IF EXISTS "documents_insert" ON storage.objects;
+DROP POLICY IF EXISTS "documents_update" ON storage.objects;
+DROP POLICY IF EXISTS "documents_delete" ON storage.objects;
 
 -- =====================================================
--- 2. FUNÇÃO - Extrair pet_id do path
+-- 3. POLÍTICAS PARA DOCUMENTS
 -- =====================================================
-CREATE OR REPLACE FUNCTION storage.extract_pet_id_from_path(file_path TEXT)
-RETURNS INTEGER AS $$
-DECLARE
-  path_parts TEXT[];
-BEGIN
-  path_parts := string_to_array(file_path, '/');
-  IF array_length(path_parts, 1) >= 2 THEN
-    BEGIN
-      RETURN path_parts[2]::INTEGER;
-    EXCEPTION WHEN OTHERS THEN
-      RETURN NULL;
-    END;
-  END IF;
-  RETURN NULL;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-
--- =====================================================
--- 3. POLÍTICAS PARA PET-PHOTOS
--- =====================================================
-
--- SELECT: Admin ou tutor vinculado ao pet
-CREATE POLICY "pet_photos_select" ON storage.objects
-FOR SELECT USING (
-  bucket_id = 'pet-photos' 
-  AND auth.role() = 'authenticated'
-  AND (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = (auth.uid())::text::integer 
-      AND role = 'admin'
-    )
-    OR
-    EXISTS (
-      SELECT 1 FROM public.pet_tutors 
-      WHERE pet_id = storage.extract_pet_id_from_path(name)
-      AND tutor_id = (auth.uid())::text::integer
-    )
-  )
-);
-
--- INSERT
-CREATE POLICY "pet_photos_insert" ON storage.objects
-FOR INSERT WITH CHECK (
-  bucket_id = 'pet-photos' 
-  AND auth.role() = 'authenticated'
-  AND (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = (auth.uid())::text::integer 
-      AND role = 'admin'
-    )
-    OR
-    EXISTS (
-      SELECT 1 FROM public.pet_tutors 
-      WHERE pet_id = storage.extract_pet_id_from_path(name)
-      AND tutor_id = (auth.uid())::text::integer
-    )
-  )
-);
-
--- DELETE
-CREATE POLICY "pet_photos_delete" ON storage.objects
-FOR DELETE USING (
-  bucket_id = 'pet-photos' 
-  AND auth.role() = 'authenticated'
-  AND (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = (auth.uid())::text::integer 
-      AND role = 'admin'
-    )
-    OR
-    EXISTS (
-      SELECT 1 FROM public.pet_tutors 
-      WHERE pet_id = storage.extract_pet_id_from_path(name)
-      AND tutor_id = (auth.uid())::text::integer
-    )
-  )
-);
-
--- =====================================================
--- 4. POLÍTICAS PARA DOCUMENTS
--- =====================================================
-
+-- Usuários autenticados com cadastro no sistema
 CREATE POLICY "documents_select" ON storage.objects
 FOR SELECT USING (
-  bucket_id = 'documents' 
+  bucket_id = 'documents'
   AND auth.role() = 'authenticated'
-  AND (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = (auth.uid())::text::integer 
-      AND role = 'admin'
-    )
-    OR
-    EXISTS (
-      SELECT 1 FROM public.pet_tutors 
-      WHERE pet_id = storage.extract_pet_id_from_path(name)
-      AND tutor_id = (auth.uid())::text::integer
-    )
-  )
+  AND EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer)
 );
 
 CREATE POLICY "documents_insert" ON storage.objects
 FOR INSERT WITH CHECK (
-  bucket_id = 'documents' 
+  bucket_id = 'documents'
   AND auth.role() = 'authenticated'
-  AND (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = (auth.uid())::text::integer 
-      AND role = 'admin'
-    )
-    OR
-    EXISTS (
-      SELECT 1 FROM public.pet_tutors 
-      WHERE pet_id = storage.extract_pet_id_from_path(name)
-      AND tutor_id = (auth.uid())::text::integer
-    )
-  )
+  AND EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer)
+);
+
+CREATE POLICY "documents_update" ON storage.objects
+FOR UPDATE USING (
+  bucket_id = 'documents'
+  AND auth.role() = 'authenticated'
+  AND EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer)
 );
 
 CREATE POLICY "documents_delete" ON storage.objects
 FOR DELETE USING (
-  bucket_id = 'documents' 
+  bucket_id = 'documents'
   AND auth.role() = 'authenticated'
-  AND (
-    EXISTS (
-      SELECT 1 FROM public.users 
-      WHERE id = (auth.uid())::text::integer 
-      AND role = 'admin'
-    )
-    OR
-    EXISTS (
-      SELECT 1 FROM public.pet_tutors 
-      WHERE pet_id = storage.extract_pet_id_from_path(name)
-      AND tutor_id = (auth.uid())::text::integer
-    )
-  )
+  AND EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer)
 );
 
 -- =====================================================
--- 5. POLÍTICAS PARA WALL-MEDIA (Mural - todos podem ver)
+-- 4. HABILITAR RLS
 -- =====================================================
-
-CREATE POLICY "wall_media_select" ON storage.objects
-FOR SELECT USING (
-  bucket_id = 'wall-media' 
-  AND auth.role() = 'authenticated'
-);
-
-CREATE POLICY "wall_media_insert" ON storage.objects
-FOR INSERT WITH CHECK (
-  bucket_id = 'wall-media' 
-  AND auth.role() = 'authenticated'
-  AND EXISTS (
-    SELECT 1 FROM public.users 
-    WHERE id = (auth.uid())::text::integer 
-    AND role = 'admin'
-  )
-);
-
-CREATE POLICY "wall_media_delete" ON storage.objects
-FOR DELETE USING (
-  bucket_id = 'wall-media' 
-  AND auth.role() = 'authenticated'
-  AND EXISTS (
-    SELECT 1 FROM public.users 
-    WHERE id = (auth.uid())::text::integer 
-    AND role = 'admin'
-  )
-);
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;

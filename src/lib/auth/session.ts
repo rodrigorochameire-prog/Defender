@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { db, users, type User } from "@/lib/db";
 import { eq } from "drizzle-orm";
 
-const SESSION_COOKIE_NAME = "tetecare_session";
+const SESSION_COOKIE_NAME = "defesahub_session";
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 dias
 
 // Chave secreta para JWT

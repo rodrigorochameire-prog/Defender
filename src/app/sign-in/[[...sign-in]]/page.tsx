@@ -1,17 +1,16 @@
 import { SignIn } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { Dog, Heart, Shield, Calendar } from "lucide-react";
-import Image from "next/image";
+import { Scale, Shield, Calendar, MessageCircle } from "lucide-react";
 
 // Forçar renderização dinâmica para evitar problemas de build
 export const dynamic = "force-dynamic";
 
 const features = [
-  { icon: Dog, text: "Gestão completa de pets" },
-  { icon: Shield, text: "Controle de vacinas e saúde" },
-  { icon: Calendar, text: "Calendário inteligente" },
-  { icon: Heart, text: "Cuidado personalizado" },
+  { icon: Scale, text: "Gestão processual integrada" },
+  { icon: Shield, text: "Controle de prazos e segurança" },
+  { icon: Calendar, text: "Agenda jurídica inteligente" },
+  { icon: MessageCircle, text: "Comunicação com assistidos" },
 ];
 
 export default async function SignInPage() {
@@ -34,24 +33,18 @@ export default async function SignInPage() {
           {/* Logo */}
           <div className="mb-8">
             <div className="w-24 h-24 rounded-full bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.08)] flex items-center justify-center">
-              <Image
-                src="/tetecare-logo.png"
-                alt="TeteCare"
-                width={96}
-                height={96}
-                className="rounded-full"
-              />
+              <Scale className="h-10 w-10 text-primary" />
             </div>
           </div>
           
           {/* Título e Subtítulo */}
           <div className="space-y-4 mb-12 max-w-lg">
-            <p className="text-xs uppercase tracking-[0.2em] text-orange-600 font-bold">Cuidar com Carinho</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-orange-600 font-bold">Gestão Jurídica</p>
             <h1 className="text-5xl font-bold text-[hsl(220_22%_18%)] leading-tight">
-              Bem-vindo ao<br />TeteCare
+              Bem-vindo ao<br />DefesaHub
             </h1>
             <p className="text-lg text-[hsl(220_11%_40%)] leading-relaxed font-medium">
-              A plataforma completa para gestão de creches e hotéis para pets
+              Plataforma completa para gestão processual jurídica e atendimento a assistidos
             </p>
           </div>
           
@@ -78,16 +71,10 @@ export default async function SignInPage() {
           {/* Header Mobile */}
           <div className="lg:hidden flex flex-col items-center mb-10">
             <div className="w-20 h-20 rounded-full bg-white shadow-[0_4px_12px_0_rgba(0,0,0,0.08)] flex items-center justify-center mb-4">
-              <Image 
-                src="/tetecare-logo.png" 
-                alt="TeteCare" 
-                width={80} 
-                height={80} 
-                className="rounded-full" 
-              />
+              <Scale className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">TeteCare</h1>
-            <p className="text-sm text-muted-foreground mt-1">Gestão de Creche para Pets</p>
+            <h1 className="text-2xl font-bold text-foreground">DefesaHub</h1>
+            <p className="text-sm text-muted-foreground mt-1">Gestão processual jurídica</p>
           </div>
           
           {/* Card de Login */}
@@ -96,10 +83,10 @@ export default async function SignInPage() {
             <div className="space-y-3">
               <p className="text-xs uppercase tracking-[0.15em] font-bold text-primary">Acesso Seguro</p>
               <h2 className="text-3xl font-bold text-foreground leading-tight">
-                Entrar no TeteCare
+                Entrar no DefesaHub
               </h2>
               <p className="text-base text-[hsl(220_13%_45%)] leading-relaxed">
-                Use sua conta para continuar cuidando dos seus pets
+                Acesse sua conta para acompanhar processos, prazos e audiências
               </p>
             </div>
 
