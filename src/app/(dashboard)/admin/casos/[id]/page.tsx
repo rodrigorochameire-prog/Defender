@@ -55,6 +55,7 @@ import { format, formatDistanceToNow, isToday, isTomorrow, differenceInDays } fr
 import { ptBR } from "date-fns/locale";
 import { EntityLink } from "@/components/shared/entity-link";
 import { MentionTextarea, renderMentions } from "@/components/shared/mention-textarea";
+import { trpc } from "@/lib/trpc/client";
 
 // ==========================================
 // TIPOS
@@ -166,6 +167,7 @@ interface FactEvidenceItem {
   factId: number;
   fonte: string;
   documento?: string;
+  documentoId?: number;
   trecho: string;
   contradicao?: boolean;
 }
@@ -617,21 +619,88 @@ export default function CasoDetailPage() {
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
   const [noteText, setNoteText] = useState("");
 
-  // Em produção, buscar dados do caso via tRPC
-  const caso = MOCK_CASO;
+  const casoIdNumber = Number(casoId);
+  const { data: casoData } = trpc.casos.getById.useQuery(
+    { id: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
+  const { data: personasData } = trpc.casos.listPersonas.useQuery(
+    { casoId: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
+  const { data: factsData } = trpc.casos.listFacts.useQuery(
+    { casoId: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
+  const { data: evidenceData } = trpc.casos.listEvidenceByCaso.useQuery(
+    { casoId: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
+  const { data: documentsData } = trpc.documents.byCaso.useQuery(
+    { casoId: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
+
+  const caso = casoData
+    ? {
+        ...MOCK_CASO,
+        ...casoData,
+        assistidos: casoData.assistidos?.length ? casoData.assistidos : MOCK_CASO.assistidos,
+        processos: casoData.processos?.length ? casoData.processos : MOCK_CASO.processos,
+        audiencias: casoData.audiencias?.length ? casoData.audiencias : MOCK_CASO.audiencias,
+      }
+    : MOCK_CASO;
   const faseConfig = FASES_CASO[caso.fase as keyof typeof FASES_CASO] || FASES_CASO.INSTRUCAO;
   const themeColors = ATRIBUICAO_COLORS[caso.atribuicao] || ATRIBUICAO_COLORS.SUBSTITUICAO;
   const tags = caso.tags ? JSON.parse(caso.tags) : [];
   const tempoDecorrido = formatDistanceToNow(caso.createdAt, { locale: ptBR });
+  const personasSource: PersonaCaso[] = personasData?.length
+    ? personasData.map((persona) => ({
+        id: persona.id,
+        nome: persona.nome,
+        tipo: persona.tipo as PersonaCaso["tipo"],
+        status: (persona.status as PersonaCaso["status"]) ?? "pendente",
+        assistidoId: persona.assistidoId || undefined,
+        juradoId: persona.juradoId || undefined,
+      }))
+    : MOCK_PERSONAS;
+
+  const factsSource: CasoFato[] = factsData?.length
+    ? factsData.map((fact) => ({
+        id: fact.id,
+        titulo: fact.titulo,
+        tipo: (fact.tipo as CasoFato["tipo"]) ?? "controverso",
+        status: (fact.status as CasoFato["status"]) ?? "ativo",
+        tags: Array.isArray(fact.tags) ? fact.tags : [],
+      }))
+    : MOCK_FACTS;
+
+  const evidenciasSource: FactEvidenceItem[] = evidenceData?.length
+    ? evidenceData.map((ev) => ({
+        id: ev.id,
+        factId: ev.factId,
+        fonte: ev.sourceType || "Evidência",
+        documento: ev.documentoTitulo || undefined,
+        documentoId: ev.documentoId || undefined,
+        trecho: ev.trecho || "",
+        contradicao: ev.contradicao || false,
+      }))
+    : MOCK_EVIDENCIAS;
+
+  const documentsSource = documentsData?.length ? documentsData : [];
+
   const mentionSuggestions = useMemo(() => {
     const docs = Array.from(
       new Set(
-        MOCK_EVIDENCIAS.map((item) => item.documento).filter(Boolean) as string[]
+        [
+          ...documentsSource.map((doc) => doc.titulo),
+          ...evidenciasSource.map((item) => item.documento).filter(Boolean),
+        ].filter(Boolean) as string[]
       )
     );
 
     return [
-      ...MOCK_PERSONAS.map((persona) => ({
+      ...personasSource.map((persona) => ({
         id: `p-${persona.id}`,
         label: persona.nome,
         type: "pessoa" as const,
@@ -641,18 +710,18 @@ export default function CasoDetailPage() {
         label: doc,
         type: "documento" as const,
       })),
-      ...MOCK_FACTS.map((fact) => ({
+      ...factsSource.map((fact) => ({
         id: `f-${fact.id}`,
         label: fact.titulo,
         type: "fato" as const,
       })),
     ];
-  }, []);
+  }, [personasSource, factsSource, evidenciasSource, documentsSource]);
   
   // Verificar teoria completa
   const teoriaCompleta = caso.teoriaFatos && caso.teoriaProvas && caso.teoriaDireito;
   const teoriaProgresso = [caso.teoriaFatos, caso.teoriaProvas, caso.teoriaDireito].filter(Boolean).length;
-  const personasPorTipo = MOCK_PERSONAS.reduce((acc, persona) => {
+  const personasPorTipo = personasSource.reduce((acc, persona) => {
     acc[persona.tipo] = acc[persona.tipo] ? [...acc[persona.tipo], persona] : [persona];
     return acc;
   }, {} as Record<string, PersonaCaso[]>);
@@ -1175,17 +1244,17 @@ export default function CasoDetailPage() {
                         {personas.map((persona) => (
                           <div key={persona.id} className="flex items-center justify-between border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2">
                             <div className="flex items-center gap-2">
-                              <EntityLink type="pessoa" name={persona.nome} />
+                              <EntityLink type="pessoa" name={persona.nome} subtitle={persona.status} />
                               <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">
                                 {persona.status}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
                               {persona.assistidoId && (
-                                <EntityLink type="caso" name={`Assistido #${persona.assistidoId}`} />
+                                <EntityLink type="caso" name={`Assistido #${persona.assistidoId}`} href={`/admin/assistidos/${persona.assistidoId}`} />
                               )}
                               {persona.juradoId && (
-                                <EntityLink type="caso" name={`Jurado #${persona.juradoId}`} />
+                                <EntityLink type="caso" name={`Jurado #${persona.juradoId}`} href="/admin/jurados" />
                               )}
                             </div>
                           </div>
@@ -1214,8 +1283,8 @@ export default function CasoDetailPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {MOCK_FACTS.map((fato) => {
-                    const evidencias = MOCK_EVIDENCIAS.filter((ev) => ev.factId === fato.id);
+                  {factsSource.map((fato) => {
+                    const evidencias = evidenciasSource.filter((ev) => ev.factId === fato.id);
                     return (
                       <div key={fato.id} className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
                         <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -1259,7 +1328,11 @@ export default function CasoDetailPage() {
                               </div>
                               <div className="flex items-center gap-2">
                                 {ev.documento && (
-                                  <EntityLink type="documento" name={ev.documento} />
+                                  <EntityLink
+                                    type="documento"
+                                    name={ev.documento}
+                                    href={ev.documentoId ? "/admin/documentos" : undefined}
+                                  />
                                 )}
                                 {ev.contradicao && (
                                   <Badge variant="outline" className="border-rose-300 text-rose-600 text-[10px]">
