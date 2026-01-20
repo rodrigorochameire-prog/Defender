@@ -448,16 +448,17 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
           {/* Assistido */}
           <div className="flex items-center gap-2 sm:gap-3 py-2 border-t border-zinc-100 dark:border-zinc-800/50">
+            {/* Avatar neutro - vermelho apenas se preso */}
             <Avatar className={cn(
-              "w-7 h-7 sm:w-9 sm:h-9 ring-2",
-              processo.assistido.preso ? "ring-rose-500/50" : "ring-emerald-500/50"
+              "w-8 h-8 sm:w-10 sm:h-10 ring-2 cursor-pointer hover:ring-primary/50 transition-all",
+              processo.assistido.preso ? "ring-rose-400" : "ring-zinc-200 dark:ring-zinc-700"
             )}>
-              <AvatarImage src={processo.assistido.foto || undefined} />
+              <AvatarImage src={processo.assistido.foto || undefined} alt={processo.assistido.nome} />
               <AvatarFallback className={cn(
-                "text-[10px] sm:text-xs font-bold",
+                "text-xs sm:text-sm font-semibold",
                 processo.assistido.preso
                   ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
-                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400"
+                  : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
               )}>
                 {processo.assistido.nome.substring(0, 2).toUpperCase()}
               </AvatarFallback>
@@ -619,12 +620,19 @@ function ProcessoRow({ processo }: { processo: Processo }) {
       </SwissTableCell>
       <SwissTableCell>
         <div className="flex items-center gap-2">
+          {/* Avatar neutro - vermelho apenas se preso */}
           <Avatar className={cn(
-            "w-7 h-7 ring-1",
-            processo.assistido.preso ? "ring-rose-500" : "ring-emerald-500"
+            "w-8 h-8 ring-2 cursor-pointer hover:ring-primary/50 transition-all",
+            processo.assistido.preso ? "ring-rose-400" : "ring-zinc-200 dark:ring-zinc-700"
           )}>
-            <AvatarFallback className="text-[10px]">
-              {processo.assistido.nome.charAt(0)}
+            <AvatarImage src={processo.assistido.foto || undefined} alt={processo.assistido.nome} />
+            <AvatarFallback className={cn(
+              "text-xs font-semibold",
+              processo.assistido.preso
+                ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
+                : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+            )}>
+              {processo.assistido.nome.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <Link href={`/admin/assistidos/${processo.assistido.id}`} className="hover:text-blue-600 dark:hover:text-blue-400">

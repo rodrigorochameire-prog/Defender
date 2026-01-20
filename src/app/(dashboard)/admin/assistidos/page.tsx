@@ -617,20 +617,21 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
         <div className="flex gap-3 items-start">
           {/* Avatar com botão de upload */}
           <div className="relative group/avatar flex-shrink-0">
+            {/* Avatar neutro - vermelho apenas se preso */}
             <Avatar 
               className={cn(
-                "h-12 w-12 sm:h-14 sm:w-14 ring-2 cursor-pointer transition-all hover:scale-105",
-                isPreso ? "ring-rose-400 dark:ring-rose-500" : "ring-emerald-400 dark:ring-emerald-500"
+                "h-12 w-12 sm:h-14 sm:w-14 ring-2 cursor-pointer transition-all hover:scale-105 hover:ring-primary/50",
+                isPreso ? "ring-rose-400 dark:ring-rose-500" : "ring-zinc-200 dark:ring-zinc-700"
               )}
               onClick={onPhotoClick}
             >
-              <AvatarImage src={assistido.photoUrl || undefined} />
+              <AvatarImage src={assistido.photoUrl || undefined} alt={assistido.nome} />
               <AvatarFallback 
                 className={cn(
-                  "text-sm sm:text-base font-bold",
+                  "text-sm sm:text-base font-semibold",
                   isPreso 
                     ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
-                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400"
+                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                 )}
               >
                 {getInitials(assistido.nome)}
