@@ -189,9 +189,9 @@ const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
 const ATRIBUICAO_OPTIONS = [
   { value: "all", label: "Todas", shortLabel: "Todas" },
   { value: "JURI_CAMACARI", label: "Júri Camaçari", shortLabel: "Júri" },
-  { value: "GRUPO_JURI", label: "Grupo Esp. Júri", shortLabel: "GEJ" },
-  { value: "VVD_CAMACARI", label: "VVD", shortLabel: "VVD" },
+  { value: "VVD_CAMACARI", label: "Violência Doméstica", shortLabel: "V.D." },
   { value: "EXECUCAO_PENAL", label: "Exec. Penal", shortLabel: "EP" },
+  { value: "GRUPO_JURI", label: "Grupo Esp. Júri", shortLabel: "GEJ" },
   { value: "SUBSTITUICAO", label: "Subst. Criminal", shortLabel: "Crim" },
   { value: "SUBSTITUICAO_CIVEL", label: "Subst. Cível", shortLabel: "Cível" },
 ];
@@ -278,7 +278,7 @@ const STATUS_OPTIONS: OptionItem[] = [
   { value: "7_PROTOCOLADO", label: "Protocolado", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Peça protocolada" },
   { value: "7_RESOLVIDO", label: "Resolvido", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Caso resolvido" },
   { value: "7_SEM_ATUACAO", label: "Sem atuação", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Sem necessidade de atuação" },
-  { value: "7_SIGAD", label: "Sigad", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Registrado no Sigad" },
+  { value: "7_SOLAR", label: "Solar", color: "bg-emerald-500", textColor: "text-white", group: "Concluído", description: "Registrado no Solar" },
 ];
 
 // Situação Prisional / Unidades - Cores suaves e premium
@@ -1644,7 +1644,7 @@ export default function DemandasPage() {
   const [defensorFilter, setDefensorFilter] = useState("all");
   const [reuPresoFilter, setReuPresoFilter] = useState<boolean | null>(null);
   const [showArchived, setShowArchived] = useState(false);
-  const [activeView, setActiveView] = useState<"grid" | "list" | "kanban" | "timeline">("grid");
+  const [activeView, setActiveView] = useState<"grid" | "list" | "kanban" | "timeline">("list");
   const [largerFontMode, setLargerFontMode] = useState(false);
   const [sortField, setSortField] = useState<"prazo" | "assistido" | "area" | "status" | "comarca">("status");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -1749,16 +1749,16 @@ export default function DemandasPage() {
       return matchesSearch && matchesStatus && matchesArea && matchesPrioridade && matchesComarca && matchesDefensor && matchesReuPreso && matchesAtribuicao;
     });
 
-    // Função para obter prioridade do status
+    // Função para obter prioridade do status - ordenação por cor
+    // Ordem: Vermelho > Laranja > Amarelo > Azul > Roxo > Verde
     const getStatusPriority = (status: string): number => {
-      // Ordem: Protocolar > Urgente > Trabalho > Delegado > Fila > Aguardando > Concluído
-      if (status.startsWith("3_")) return 1; // Protocolar - PRIMEIRO (pronto para enviar)
-      if (status.startsWith("1_")) return 2; // Urgente
-      if (status.startsWith("2_")) return 3; // Trabalho (amarelo)
-      if (status.startsWith("4_")) return 4; // Delegado (azul)
-      if (status.startsWith("5_")) return 5; // Fila (violeta)
-      if (status.startsWith("6_")) return 6; // Aguardando
-      if (status.startsWith("7_")) return 7; // Concluído
+      if (status.startsWith("1_")) return 1; // Vermelho - Urgente (PRIMEIRO)
+      if (status.startsWith("3_")) return 2; // Laranja - Protocolar
+      if (status.startsWith("2_")) return 3; // Amarelo - Trabalho
+      if (status.startsWith("4_")) return 4; // Azul - Delegado/Monitorar
+      if (status.startsWith("5_")) return 5; // Roxo - Fila
+      if (status.startsWith("6_")) return 6; // Cinza - Aguardando
+      if (status.startsWith("7_")) return 7; // Verde - Concluído (ÚLTIMO)
       return 8;
     };
 
@@ -1805,20 +1805,29 @@ export default function DemandasPage() {
     return result;
   }, [demandas, searchTerm, statusFilter, areaFilter, prioridadeFilter, comarcaFilter, defensorFilter, reuPresoFilter, atribuicaoFilter, sortField, sortOrder, showArchived]);
 
-  // Estatísticas baseadas nos status da planilha VVD (COMPLETO)
-  const stats = useMemo(() => ({
-    total: demandas.length,
-    urgente: demandas.filter(d => d.status === "1_URGENTE").length,
-    trabalho: demandas.filter(d => d.status.startsWith("2_")).length, // Todo grupo 2
-    protocolar: demandas.filter(d => d.status === "3_PROTOCOLAR").length,
-    delegado: demandas.filter(d => d.status.startsWith("4_")).length, // Amanda, Emilly, Tarissa, Monitorar
-    fila: demandas.filter(d => d.status === "5_FILA").length,
-    aguardando: demandas.filter(d => d.status.startsWith("6_")).length, // Documentos, Testemunhas
-    concluido: demandas.filter(d => d.status.startsWith("7_")).length, // Todos os concluídos
-    reuPreso: demandas.filter(d => d.reuPreso || (d.prisao && d.prisao !== "SOLTO" && d.prisao !== "NAO_INFORMADO" && d.prisao !== "")).length,
-    vencidos: demandas.filter(d => d.prazo && isPast(parseISO(d.prazo)) && !isToday(parseISO(d.prazo)) && !d.status.startsWith("7_")).length,
-    hoje: demandas.filter(d => d.prazo && isToday(parseISO(d.prazo))).length,
-  }), [demandas]);
+  // Estatísticas baseadas nos status - métricas prioritárias
+  const stats = useMemo(() => {
+    const ativas = demandas.filter(d => !d.arquivado);
+    return {
+      // Métricas principais (visíveis em primeiro plano)
+      atender: ativas.filter(d => d.status === "2_ATENDER").length,
+      elaborar: ativas.filter(d => d.status === "2_ELABORAR" || d.status === "2_ELABORANDO").length,
+      protocolar: ativas.filter(d => d.status === "3_PROTOCOLAR").length,
+      monitorar: ativas.filter(d => d.status === "4_MONITORAR").length,
+      reuPreso: ativas.filter(d => d.reuPreso || (d.prisao && d.prisao !== "SOLTO" && d.prisao !== "NAO_INFORMADO" && d.prisao !== "")).length,
+      // Métricas secundárias
+      total: demandas.filter(d => !d.arquivado).length,
+      urgente: ativas.filter(d => d.status === "1_URGENTE").length,
+      trabalho: ativas.filter(d => d.status.startsWith("2_")).length,
+      delegado: ativas.filter(d => d.status.startsWith("4_")).length,
+      fila: ativas.filter(d => d.status === "5_FILA").length,
+      aguardando: ativas.filter(d => d.status.startsWith("6_")).length,
+      concluido: demandas.filter(d => d.status.startsWith("7_")).length,
+      vencidos: ativas.filter(d => d.prazo && isPast(parseISO(d.prazo)) && !isToday(parseISO(d.prazo)) && !d.status.startsWith("7_")).length,
+      hoje: ativas.filter(d => d.prazo && isToday(parseISO(d.prazo))).length,
+      arquivados: demandas.filter(d => d.arquivado).length,
+    };
+  }, [demandas]);
 
   // Handlers
   const handleOpenCreate = () => {
@@ -1846,7 +1855,14 @@ export default function DemandasPage() {
   };
 
   const handleUpdateStatus = (id: number, newStatus: string) => {
-    setDemandas(demandas.map(d => d.id === id ? { ...d, status: newStatus } : d));
+    setDemandas(demandas.map(d => {
+      if (d.id === id) {
+        // Arquivar automaticamente quando status for SOLAR
+        const shouldArchive = newStatus === "7_SOLAR";
+        return { ...d, status: newStatus, arquivado: shouldArchive ? true : d.arquivado };
+      }
+      return d;
+    }));
   };
 
   const handleDelete = (id: number) => {
@@ -1955,6 +1971,7 @@ export default function DemandasPage() {
                       option.value === "JURI_CAMACARI" && "bg-emerald-600",
                       option.value === "VVD_CAMACARI" && "bg-violet-600",
                       option.value === "EXECUCAO_PENAL" && "bg-blue-600",
+                      option.value === "GRUPO_JURI" && "bg-orange-600",
                       option.value === "SUBSTITUICAO" && "bg-rose-600",
                       option.value === "SUBSTITUICAO_CIVEL" && "bg-purple-600",
                     )} />
@@ -1966,135 +1983,109 @@ export default function DemandasPage() {
         </div>
       </div>
 
-      {/* Stats Cards - Scroll horizontal no mobile */}
+      {/* Stats Cards - Métricas prioritárias: Atender, Elaborar, Protocolar, Monitorar */}
       <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-        <div className="flex sm:grid gap-2 sm:gap-3 sm:grid-cols-5 lg:grid-cols-10 min-w-max sm:min-w-0">
-          {/* Total */}
-          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto">
-            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
-              <div className="flex items-center justify-between gap-2">
+        <div className="flex sm:grid gap-2 sm:gap-2.5 sm:grid-cols-4 lg:grid-cols-8 min-w-max sm:min-w-0">
+          {/* Atender - Prioridade 1 */}
+          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.atender > 0 && "border-amber-200/60 bg-amber-50/30 dark:bg-amber-950/10")}>
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className="text-lg sm:text-xl font-bold">{stats.total}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Total</p>
+                  <p className={cn("text-lg sm:text-xl font-bold", stats.atender > 0 ? "text-amber-600" : "text-foreground")}>{stats.atender}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Atender</p>
                 </div>
-                <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                <User className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.atender > 0 ? "text-amber-500" : "text-muted-foreground")} />
               </div>
             </CardContent>
           </Card>
 
-          {/* Urgente */}
-          <Card className={cn("stat-card flex-shrink-0 w-[100px] sm:w-auto", stats.urgente > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
-            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
-              <div className="flex items-center justify-between gap-2">
+          {/* Elaborar - Prioridade 2 */}
+          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.elaborar > 0 && "border-amber-200/60 bg-amber-50/30 dark:bg-amber-950/10")}>
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className={cn("text-lg sm:text-xl font-semibold", stats.urgente > 0 ? "text-rose-600" : "text-foreground")}>{stats.urgente}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Urgente</p>
+                  <p className={cn("text-lg sm:text-xl font-bold", stats.elaborar > 0 ? "text-amber-600" : "text-foreground")}>{stats.elaborar}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Elaborar</p>
                 </div>
-                <AlertTriangle className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0", stats.urgente > 0 ? "text-rose-400" : "text-muted-foreground")} />
+                <Edit className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.elaborar > 0 ? "text-amber-500" : "text-muted-foreground")} />
               </div>
             </CardContent>
           </Card>
 
-          {/* Réu Preso */}
-          <Card className={cn("stat-card flex-shrink-0 w-[100px] sm:w-auto", stats.reuPreso > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
-            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
-              <div className="flex items-center justify-between gap-2">
+          {/* Protocolar - Prioridade 3 */}
+          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.protocolar > 0 && "border-orange-200/60 bg-orange-50/30 dark:bg-orange-950/10")}>
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className={cn("text-lg sm:text-xl font-semibold", stats.reuPreso > 0 ? "text-rose-600" : "text-foreground")}>{stats.reuPreso}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Preso</p>
+                  <p className={cn("text-lg sm:text-xl font-bold", stats.protocolar > 0 ? "text-orange-600" : "text-foreground")}>{stats.protocolar}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Protocolar</p>
                 </div>
-                <Lock className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0", stats.reuPreso > 0 ? "text-rose-400" : "text-muted-foreground")} />
+                <ArrowUpRight className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.protocolar > 0 ? "text-orange-500" : "text-muted-foreground")} />
               </div>
             </CardContent>
           </Card>
 
-          {/* Trabalho */}
-          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto">
-            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
-              <div className="flex items-center justify-between gap-2">
+          {/* Monitorar - Prioridade 4 */}
+          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.monitorar > 0 && "border-sky-200/60 bg-sky-50/30 dark:bg-sky-950/10")}>
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className="text-lg sm:text-xl font-semibold text-amber-600">{stats.trabalho}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Trabalho</p>
+                  <p className={cn("text-lg sm:text-xl font-bold", stats.monitorar > 0 ? "text-sky-600" : "text-foreground")}>{stats.monitorar}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Monitorar</p>
                 </div>
-                <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400 flex-shrink-0" />
+                <Eye className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.monitorar > 0 ? "text-sky-500" : "text-muted-foreground")} />
               </div>
             </CardContent>
           </Card>
 
-          {/* Protocolar */}
-          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto">
-            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
-              <div className="flex items-center justify-between gap-2">
+          {/* Réu Preso - Sempre visível */}
+          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.reuPreso > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className="text-lg sm:text-xl font-semibold text-orange-500">{stats.protocolar}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Protocolar</p>
+                  <p className={cn("text-lg sm:text-xl font-bold", stats.reuPreso > 0 ? "text-rose-600" : "text-foreground")}>{stats.reuPreso}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Preso</p>
                 </div>
-                <ArrowUpRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-400 flex-shrink-0" />
+                <Lock className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.reuPreso > 0 ? "text-rose-500" : "text-muted-foreground")} />
               </div>
             </CardContent>
           </Card>
 
-          {/* Delegado - hidden on small mobile */}
-          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto hidden sm:block">
-            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
-              <div className="flex items-center justify-between gap-2">
+          {/* Fila */}
+          <Card className="stat-card flex-shrink-0 w-[90px] sm:w-auto hidden sm:block">
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className="text-lg sm:text-xl font-semibold text-sky-600">{stats.delegado}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Delegado</p>
+                  <p className="text-lg sm:text-xl font-semibold text-violet-600">{stats.fila}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Fila</p>
                 </div>
-                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-sky-400 flex-shrink-0" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Fila - hidden on mobile */}
-          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto hidden lg:block">
-            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-lg sm:text-xl font-semibold text-indigo-600">{stats.fila}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Fila</p>
-                </div>
-                <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-indigo-400 flex-shrink-0" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Aguardando - hidden on mobile */}
-          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto hidden lg:block">
-            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-lg sm:text-xl font-semibold text-slate-600">{stats.aguardando}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Aguardando</p>
-                </div>
-                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 flex-shrink-0" />
+                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-violet-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
           {/* Concluído */}
-          <Card className="stat-card flex-shrink-0 w-[100px] sm:w-auto">
-            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
-              <div className="flex items-center justify-between gap-2">
+          <Card className="stat-card flex-shrink-0 w-[90px] sm:w-auto hidden lg:block">
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
                 <div>
                   <p className="text-lg sm:text-xl font-semibold text-emerald-600">{stats.concluido}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Concluído</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Concluído</p>
                 </div>
-                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          {/* Vencidos */}
-          <Card className={cn("stat-card flex-shrink-0 w-[100px] sm:w-auto", stats.vencidos > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
-            <CardContent className="pt-2.5 pb-2 px-2.5 sm:pt-3 sm:px-3">
-              <div className="flex items-center justify-between gap-2">
+          {/* Total */}
+          <Card className="stat-card flex-shrink-0 w-[90px] sm:w-auto hidden lg:block">
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
                 <div>
-                  <p className={cn("text-lg sm:text-xl font-semibold", stats.vencidos > 0 ? "text-rose-600" : "text-foreground")}>{stats.vencidos}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Vencidos</p>
+                  <p className="text-lg sm:text-xl font-semibold">{stats.total}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Total</p>
                 </div>
-                <AlertTriangle className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0", stats.vencidos > 0 ? "text-rose-400" : "text-muted-foreground")} />
+                <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
@@ -2116,12 +2107,8 @@ export default function DemandasPage() {
               />
             </div>
 
-            {/* View Toggle */}
+            {/* View Toggle - Ordem: Lista > Kanban > Grade > Timeline */}
             <TabsList className="h-9">
-              <TabsTrigger value="grid" className="gap-1 h-7 px-2 sm:px-3">
-                <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline text-xs">Grade</span>
-              </TabsTrigger>
               <TabsTrigger value="list" className="gap-1 h-7 px-2 sm:px-3">
                 <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline text-xs">Lista</span>
@@ -2129,6 +2116,10 @@ export default function DemandasPage() {
               <TabsTrigger value="kanban" className="gap-1 h-7 px-2 sm:px-3">
                 <Columns className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline text-xs">Kanban</span>
+              </TabsTrigger>
+              <TabsTrigger value="grid" className="gap-1 h-7 px-2 sm:px-3">
+                <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline text-xs">Grade</span>
               </TabsTrigger>
               <TabsTrigger value="timeline" className="gap-1 h-7 px-2 sm:px-3">
                 <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />

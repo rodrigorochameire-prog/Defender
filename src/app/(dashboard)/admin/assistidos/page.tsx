@@ -147,7 +147,7 @@ const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
 const ATRIBUICAO_OPTIONS = [
   { value: "all", label: "Todas", shortLabel: "Todas" },
   { value: "JURI", label: "Júri", shortLabel: "Júri" },
-  { value: "VVD", label: "VVD", shortLabel: "VVD" },
+  { value: "VVD", label: "Violência Doméstica", shortLabel: "V.D." },
   { value: "EXECUCAO", label: "Exec. Penal", shortLabel: "EP" },
   { value: "CRIMINAL", label: "Subst. Criminal", shortLabel: "Crim" },
   { value: "CIVEL", label: "Subst. Cível", shortLabel: "Cível" },
@@ -459,7 +459,7 @@ const faseConfig: Record<string, { label: string; color: string; bgColor: string
 const areaConfig: Record<string, { label: string; labelFull: string; color: string; bgColor: string }> = {
   JURI: { label: "Júri", labelFull: "Tribunal do Júri", color: "text-violet-600", bgColor: "bg-violet-50" },
   EXECUCAO_PENAL: { label: "EP", labelFull: "Execução Penal", color: "text-blue-600", bgColor: "bg-blue-50" },
-  VIOLENCIA_DOMESTICA: { label: "VVD", labelFull: "Violência Doméstica", color: "text-pink-600", bgColor: "bg-pink-50" },
+  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violência Doméstica", color: "text-pink-600", bgColor: "bg-pink-50" },
   SUBSTITUICAO: { label: "Sub", labelFull: "Substituição", color: "text-orange-600", bgColor: "bg-orange-50" },
   FAMILIA: { label: "Fam", labelFull: "Família", color: "text-rose-600", bgColor: "bg-rose-50" },
 };
@@ -1303,7 +1303,7 @@ export default function AssistidosPage() {
               <SelectItem value="all">Todas</SelectItem>
               <SelectItem value="JURI">Júri</SelectItem>
               <SelectItem value="EXECUCAO_PENAL">EP</SelectItem>
-              <SelectItem value="VIOLENCIA_DOMESTICA">VVD</SelectItem>
+              <SelectItem value="VIOLENCIA_DOMESTICA">Violência Doméstica</SelectItem>
               <SelectItem value="FAMILIA">Família</SelectItem>
             </SelectContent>
           </Select>

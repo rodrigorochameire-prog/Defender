@@ -104,7 +104,7 @@ export default function NovoTemplatePage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="JURI">Tribunal do Júri</SelectItem>
-                    <SelectItem value="VVD">Violência Doméstica</SelectItem>
+                    <SelectItem value="VIOLENCIA_DOMESTICA">Violência Doméstica</SelectItem>
                     <SelectItem value="EXECUCAO">Execução Penal</SelectItem>
                     <SelectItem value="CRIMINAL">Criminal Comum</SelectItem>
                     <SelectItem value="GERAL">Geral</SelectItem>
