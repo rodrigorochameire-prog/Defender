@@ -435,10 +435,9 @@ function AdminSidebarContent({
         <Sidebar
           collapsible="icon"
           className={cn(
-            "border-r backdrop-blur-xl shadow-[1px_0_8px_-2px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_8px_-2px_rgba(0,0,0,0.25)]"
+            "border-r bg-white dark:bg-sidebar shadow-soft"
           )}
           style={{
-            background: `var(--sidebar-bg, ${config.sidebarBg})`,
             borderColor: `var(--sidebar-border, ${config.sidebarBorder})`,
           }}
           disableTransition={isResizing}

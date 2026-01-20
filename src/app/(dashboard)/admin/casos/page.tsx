@@ -795,7 +795,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
           {/* Barra de Progresso - Responsiva */}
           <div className="space-y-1">
             {/* Labels no desktop */}
-            <div className="hidden sm:flex justify-between text-xs uppercase font-bold text-zinc-400 dark:text-zinc-500 tracking-widest">
+            <div className="hidden sm:flex justify-between text-xs uppercase font-semibold text-zinc-400 dark:text-zinc-500 tracking-widest">
               {FASE_LABELS.map((label, idx) => (
                 <span 
                   key={label}
@@ -826,7 +826,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
             {/* Teoria da Defesa */}
             {caso.teoriaResumo && (
               <div className="mt-3 sm:mt-4 p-3 rounded-lg bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
-                <h4 className="text-xs uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider flex items-center gap-2 mb-1.5">
+                <h4 className="text-xs uppercase font-semibold text-emerald-600 dark:text-emerald-400 tracking-wider flex items-center gap-2 mb-1.5">
                   <Shield className="w-3 h-3" /> Teoria da Defesa
                 </h4>
                 <p className="text-xs sm:text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed font-serif italic">
@@ -838,7 +838,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
             {/* Tese da Acusação */}
             {caso.teseAcusacao && (
               <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-rose-50/80 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/20 border border-rose-100 dark:border-rose-900/50">
-                <h4 className="text-xs uppercase font-bold text-rose-600 dark:text-rose-400 tracking-wider flex items-center gap-2 mb-1.5">
+                <h4 className="text-xs uppercase font-semibold text-rose-600 dark:text-rose-400 tracking-wider flex items-center gap-2 mb-1.5">
                   <Swords className="w-3 h-3" /> Tese da Acusação
                 </h4>
                 <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 leading-relaxed">
@@ -850,7 +850,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
             {/* Versão do Réu */}
             {caso.versaoReu && (
               <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-blue-50/80 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border border-blue-100 dark:border-blue-900/50">
-                <h4 className="text-xs uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider flex items-center gap-2 mb-1.5">
+                <h4 className="text-xs uppercase font-semibold text-blue-600 dark:text-blue-400 tracking-wider flex items-center gap-2 mb-1.5">
                   <User className="w-3 h-3" /> Versão do Réu
                 </h4>
                 <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
@@ -862,7 +862,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
             {/* Testemunhas */}
             {caso.testemunhas && caso.testemunhas.length > 0 && (
               <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-                <h4 className="text-xs uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
+                <h4 className="text-xs uppercase font-semibold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
                   <Users className="w-3 h-3" /> 
                   Testemunhas ({caso.testemunhas.filter(t => t.ouvida).length}/{caso.testemunhas.length})
                 </h4>
@@ -924,7 +924,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                   <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
                     <div className="flex items-center gap-1.5 mb-1">
                       <FileSearch className="w-3 h-3 text-zinc-400" />
-                      <span className="text-xs uppercase font-bold tracking-wider text-zinc-500">Provas</span>
+                      <span className="text-xs uppercase font-semibold tracking-wider text-zinc-500">Provas</span>
                     </div>
                     <div className="flex items-baseline gap-1">
                       <span className="text-lg font-bold font-mono text-zinc-700 dark:text-zinc-300">
@@ -944,7 +944,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                   <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
                     <div className="flex items-center gap-1.5 mb-1">
                       <Microscope className="w-3 h-3 text-zinc-400" />
-                      <span className="text-xs uppercase font-bold tracking-wider text-zinc-500">Laudos</span>
+                      <span className="text-xs uppercase font-semibold tracking-wider text-zinc-500">Laudos</span>
                     </div>
                     <div className="flex items-baseline gap-1">
                       <span className="text-lg font-bold font-mono text-zinc-700 dark:text-zinc-300">
@@ -971,7 +971,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
             {/* Investigação Defensiva */}
             {caso.investigacaoDefensiva && (
               <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-violet-50/80 to-violet-100/50 dark:from-violet-950/30 dark:to-violet-900/20 border border-violet-100 dark:border-violet-900/50">
-                <h4 className="text-xs uppercase font-bold text-violet-600 dark:text-violet-400 tracking-wider flex items-center gap-2 mb-1.5">
+                <h4 className="text-xs uppercase font-semibold text-violet-600 dark:text-violet-400 tracking-wider flex items-center gap-2 mb-1.5">
                   <FileSearch className="w-3 h-3" /> Investigação Defensiva
                 </h4>
                 <p className="text-xs sm:text-sm text-violet-700 dark:text-violet-300 leading-relaxed">
@@ -1015,7 +1015,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
             {/* Prazos Pendentes */}
             {caso.demandasPendentes.length > 0 && (
               <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-                <h4 className="text-xs uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
+                <h4 className="text-xs uppercase font-semibold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
                   <Clock className="w-3 h-3" /> Próximos Prazos ({caso.demandasPendentes.length})
                 </h4>
                 <div className="space-y-1">

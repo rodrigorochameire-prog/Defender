@@ -702,7 +702,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                     </p>
                   </div>
                   {hasAudienciaHoje && (
-                    <span className="ml-auto px-2 py-1 text-xs font-bold uppercase bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 rounded">
+                    <span className="ml-auto px-2 py-1 text-xs font-semibold uppercase bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 rounded">
                       Hoje
                     </span>
                   )}
