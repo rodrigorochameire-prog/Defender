@@ -25,7 +25,7 @@ export function PhotoUpload({
   currentPhotoUrl,
   onUpload,
   onRemove,
-  folder = "pets",
+  folder = "uploads",
   className,
   size = "md",
 }: PhotoUploadProps) {

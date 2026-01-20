@@ -2,43 +2,32 @@ import { getSupabaseAdmin } from "./client";
 
 // Buckets disponíveis
 const BUCKETS = {
-  PET_PHOTOS: "pet-photos",
+  PHOTOS: "photos",
   DOCUMENTS: "documents",
-  WALL_MEDIA: "wall-media",
 } as const;
 
 type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS];
 
 /**
- * Faz upload de uma foto de pet
- * Path: pets/{petId}/{timestamp}-{random}.{ext}
+ * Faz upload de uma foto
+ * Path: {folder}/{timestamp}-{random}.{ext}
  */
-export async function uploadPetPhoto(
+export async function uploadPhoto(
   file: File,
-  petId: number
+  folder: string = "uploads"
 ): Promise<{ url: string; path: string }> {
-  return uploadFile(file, BUCKETS.PET_PHOTOS, `pets/${petId}`);
+  return uploadFile(file, BUCKETS.PHOTOS, folder);
 }
 
 /**
- * Faz upload de um documento de pet
- * Path: pets/{petId}/{timestamp}-{random}.{ext}
+ * Faz upload de um documento
+ * Path: {folder}/{timestamp}-{random}.{ext}
  */
 export async function uploadDocument(
   file: File,
-  petId: number
+  folder: string = "documents"
 ): Promise<{ url: string; path: string }> {
-  return uploadFile(file, BUCKETS.DOCUMENTS, `pets/${petId}`);
-}
-
-/**
- * Faz upload de mídia do mural
- * Path: posts/{timestamp}-{random}.{ext}
- */
-export async function uploadWallMedia(
-  file: File
-): Promise<{ url: string; path: string }> {
-  return uploadFile(file, BUCKETS.WALL_MEDIA, "posts");
+  return uploadFile(file, BUCKETS.DOCUMENTS, folder);
 }
 
 /**
@@ -99,15 +88,15 @@ export async function uploadImageBuffer(
   buffer: Buffer,
   fileName: string,
   contentType: string,
-  petId: number
+  folder: string = "uploads"
 ): Promise<{ url: string; path: string }> {
   const supabase = getSupabaseAdmin();
 
   const fileExt = fileName.split(".").pop()?.toLowerCase() || "jpg";
-  const uniqueName = `pets/${petId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+  const uniqueName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
   const { data, error } = await supabase.storage
-    .from(BUCKETS.PET_PHOTOS)
+    .from(BUCKETS.PHOTOS)
     .upload(uniqueName, buffer, {
       cacheControl: "3600",
       upsert: false,
@@ -120,7 +109,7 @@ export async function uploadImageBuffer(
   }
 
   const { data: urlData } = await supabase.storage
-    .from(BUCKETS.PET_PHOTOS)
+    .from(BUCKETS.PHOTOS)
     .createSignedUrl(data.path, 60 * 60 * 24 * 365);
 
   return {
@@ -134,7 +123,7 @@ export async function uploadImageBuffer(
  */
 export async function deleteFile(
   path: string,
-  bucket: BucketName = BUCKETS.PET_PHOTOS
+  bucket: BucketName = BUCKETS.PHOTOS
 ): Promise<void> {
   const supabase = getSupabaseAdmin();
 
@@ -148,16 +137,12 @@ export async function deleteFile(
   }
 }
 
-export async function deletePetPhoto(path: string): Promise<void> {
-  return deleteFile(path, BUCKETS.PET_PHOTOS);
+export async function deletePhoto(path: string): Promise<void> {
+  return deleteFile(path, BUCKETS.PHOTOS);
 }
 
 export async function deleteDocument(path: string): Promise<void> {
   return deleteFile(path, BUCKETS.DOCUMENTS);
-}
-
-export async function deleteWallMedia(path: string): Promise<void> {
-  return deleteFile(path, BUCKETS.WALL_MEDIA);
 }
 
 /**
@@ -165,7 +150,7 @@ export async function deleteWallMedia(path: string): Promise<void> {
  */
 export async function getSignedUrl(
   path: string,
-  bucket: BucketName = BUCKETS.PET_PHOTOS,
+  bucket: BucketName = BUCKETS.PHOTOS,
   expiresIn: number = 60 * 60
 ): Promise<string> {
   const supabase = getSupabaseAdmin();
@@ -187,7 +172,7 @@ export async function getSignedUrl(
  */
 export async function listFiles(
   folder: string,
-  bucket: BucketName = BUCKETS.PET_PHOTOS
+  bucket: BucketName = BUCKETS.PHOTOS
 ): Promise<Array<{ name: string; url: string }>> {
   const supabase = getSupabaseAdmin();
 
@@ -220,9 +205,9 @@ export async function listFiles(
 export { BUCKETS };
 
 // Compatibilidade
-export const uploadImage = uploadPetPhoto;
-export const deleteImage = deletePetPhoto;
-export const listImages = async (folder: string = "pets") => {
-  const files = await listFiles(folder, BUCKETS.PET_PHOTOS);
+export const uploadImage = uploadPhoto;
+export const deleteImage = deletePhoto;
+export const listImages = async (folder: string = "uploads") => {
+  const files = await listFiles(folder, BUCKETS.PHOTOS);
   return files.map(f => f.url);
 };
