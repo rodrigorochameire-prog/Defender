@@ -88,6 +88,18 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        // Sombras suaves e elegantes para design jurídico profissional
+        'soft': '0 2px 10px rgba(0, 0, 0, 0.03)',
+        'soft-md': '0 4px 20px rgba(0, 0, 0, 0.06)',
+        'soft-lg': '0 8px 30px rgba(0, 0, 0, 0.08)',
+        // Sombras com toque de cor verde (para elementos primários)
+        'primary': '0 4px 14px rgba(34, 87, 69, 0.15)',
+        'primary-lg': '0 8px 25px rgba(34, 87, 69, 0.20)',
+        // Sombras para cards flutuantes
+        'card': '0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0, 0, 0, 0.04)',
+        'card-hover': '0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06)',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

@@ -3,142 +3,164 @@
 @tailwind utilities;
 
 /* ========================================
-   DEFESAHUB - DESIGN SYSTEM v5.0
+   DEFESAHUB - DESIGN SYSTEM v6.0
    Swiss Design • Green Premium • Sophisticated
    Visual elegante, limpo, funcional
    Padrão suíço com visualização ótima
-   Sistema de tamanhos de fonte escalável
-   CACHE BUST: 2026-01-20-v5
+   Sistema Tipográfico Hierárquico
+   CACHE BUST: 2026-01-20-v6
    ======================================== */
 
 /* ========================================
-   SISTEMA DE CORES - iOS 26.2 INSPIRED
-   Paleta baseada em tons de verde, cinza, preto e branco
+   SISTEMA TIPOGRÁFICO HIERÁRQUICO
+   Escala harmonizada baseada em Tailwind
+   Elimina "magic numbers" (10px, 11px, 13px)
+   
+   ESCALA MODO PADRÃO (Densidade + Legibilidade):
+   - Micro/Label: 12px (text-xs) - Tags, legendas, datas secundárias
+   - Corpo UI:    14px (text-sm) - Tabelas, inputs, menus, cartões
+   - Corpo Leitura: 16px (text-base) - Descrições longas, anotações
+   - Subtítulo:   18px (text-lg) - Títulos de widgets, seções
+   - Título:      24px (text-2xl) - Nome da página
+   
+   ESCALA MODO AMPLIADO (Acessibilidade):
+   - Micro/Label: 14px (text-sm) - Sai da zona de esforço visual
+   - Corpo UI:    16px (text-base) - Padrão web moderno
+   - Corpo Leitura: 18px (text-lg) - Ideal para leitura jurídica
+   - Subtítulo:   20px (text-xl) - Destaca bem seções
+   - Título:      30px (text-3xl) - Hierarquia muito clara
+   ======================================== */
+
+/* ========================================
+   SISTEMA DE CORES - ELEGÂNCIA JURÍDICA MODERNA
+   Verde Floresta (Forest Green) + Neutros Stone
+   Paleta sofisticada para contexto jurídico profissional
    ======================================== */
 
 @layer base {
   :root {
-    /* BASE - WARM NEUTRALS */
-    --background: 40 20% 99%; /* Warm off-white */
-    --foreground: 220 15% 20%; /* Warm dark grey */
+    /* BASE - BRANCO PURO + CINZA-ESVERDEADO */
+    --background: 0 0% 100%; /* Branco puro */
+    --foreground: 155 10% 20%; /* Cinza-esverdeado muito escuro (quase preto) */
 
     /* CARDS & SURFACES - ELEVATION SYSTEM */
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 20%;
+    --card-foreground: 155 10% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 20%;
+    --popover-foreground: 155 10% 20%;
 
-    /* PRIMARY - SOPHISTICATED TEAL */
-    --primary: 165 35% 38%; /* Muted teal-green */
+    /* PRIMARY - VERDE FLORESTA ELEGANTE E INSTITUCIONAL */
+    --primary: 158 45% 30%; /* Verde floresta profundo e sóbrio */
     --primary-foreground: 0 0% 100%;
 
-    /* SECONDARY - WARM GREY */
-    --secondary: 220 10% 96%;
-    --secondary-foreground: 220 10% 30%;
+    /* SECONDARY - TOM AREIA/BEGE MUITO SUTIL */
+    --secondary: 155 20% 94%; 
+    --secondary-foreground: 158 45% 30%;
 
-    /* MUTED - SUBTLE INFORMATION */
-    --muted: 220 10% 96%;
-    --muted-foreground: 220 8% 50%;
+    /* MUTED - PARA TEXTOS SECUNDÁRIOS E FUNDOS */
+    --muted: 155 10% 96%;
+    --muted-foreground: 155 5% 45%; /* Cinza médio para leitura suave */
 
-    /* ACCENT - INTERACTIVE ELEMENTS */
-    --accent: 220 10% 94%;
-    --accent-foreground: 220 10% 25%;
+    /* ACCENT - TOQUE SUTIL DE VERDE PARA HOVERS/SELEÇÕES */
+    --accent: 155 20% 96%;
+    --accent-foreground: 158 45% 30%;
 
-    /* DESTRUCTIVE - SOFT ALERT (menos saturado) */
-    --destructive: 0 55% 55%;
+    /* DESTRUCTIVE - ALERTA SUAVE */
+    --destructive: 0 50% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* SEMANTIC COLORS - PASTEL/SOFT */
-    --success: 160 40% 45%;
+    /* SEMANTIC COLORS - TONS NATURAIS */
+    --success: 158 45% 35%;
     --success-foreground: 0 0% 100%;
-    --warning: 40 70% 55%;
-    --warning-foreground: 40 80% 15%;
-    --info: 210 50% 55%;
+    --warning: 38 65% 50%;
+    --warning-foreground: 38 80% 15%;
+    --info: 205 45% 50%;
     --info-foreground: 0 0% 100%;
 
-    /* BORDERS & INPUTS - MORE VISIBLE */
-    --border: 220 15% 88%;
-    --input: 220 15% 92%;
-    --ring: 165 35% 45%;
+    /* BORDAS - SUAVES, NUNCA PRETAS */
+    --border: 155 10% 90%;
+    --input: 155 10% 90%;
+    --ring: 158 45% 30%;
     
-    --radius: 0.625rem; /* 10px - slightly larger */
+    /* RADIUS - CURVAS MODERNAS MAS PROFISSIONAIS */
+    --radius: 0.75rem; /* 12px - Moderno mas não "brinquedo" */
 
-    /* ELEVATION SHADOWS */
-    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    /* ELEVATION SHADOWS - SUAVES E COLORIDAS */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.02);
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.08);
 
-    /* SIDEBAR */
-    --sidebar-background: 220 15% 98%;
-    --sidebar-foreground: 220 10% 25%;
-    --sidebar-primary: 165 35% 40%;
+    /* SIDEBAR - LIMPA E ELEGANTE */
+    --sidebar-background: 0 0% 100%; /* Branco limpo */
+    --sidebar-foreground: 155 10% 25%;
+    --sidebar-primary: 158 45% 30%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 10% 95%;
-    --sidebar-accent-foreground: 220 10% 25%;
-    --sidebar-border: 220 15% 90%;
-    --sidebar-ring: 165 35% 45%;
+    --sidebar-accent: 155 20% 96%;
+    --sidebar-accent-foreground: 158 45% 30%;
+    --sidebar-border: 155 10% 92%;
+    --sidebar-ring: 158 45% 30%;
   }
 
   .dark {
-    /* BASE DARK - WARM */
-    --background: 220 15% 8%;
-    --foreground: 220 10% 95%;
+    /* BASE DARK - VERDE-PRETO PROFUNDO, NÃO PRETO PURO */
+    --background: 155 15% 10%;
+    --foreground: 155 10% 90%;
 
     /* CARDS DARK - ELEVATION */
-    --card: 220 15% 10%;
-    --card-foreground: 220 10% 95%;
-    --popover: 220 15% 10%;
-    --popover-foreground: 220 10% 95%;
+    --card: 155 15% 12%;
+    --card-foreground: 155 10% 90%;
+    --popover: 155 15% 12%;
+    --popover-foreground: 155 10% 90%;
 
-    /* PRIMARY DARK */
-    --primary: 165 40% 50%;
-    --primary-foreground: 220 15% 10%;
+    /* PRIMARY DARK - VERDE MAIS CLARO PARA CONTRASTE */
+    --primary: 158 40% 50%;
+    --primary-foreground: 155 15% 10%;
 
     /* SECONDARY DARK */
-    --secondary: 220 12% 16%;
-    --secondary-foreground: 220 10% 90%;
+    --secondary: 155 15% 15%;
+    --secondary-foreground: 155 10% 90%;
 
     /* MUTED DARK */
-    --muted: 220 12% 16%;
-    --muted-foreground: 220 8% 55%;
+    --muted: 155 15% 15%;
+    --muted-foreground: 155 5% 60%;
 
     /* ACCENT DARK */
-    --accent: 220 12% 18%;
-    --accent-foreground: 220 10% 90%;
+    --accent: 155 15% 20%;
+    --accent-foreground: 155 10% 90%;
 
-    /* DESTRUCTIVE DARK - SOFT */
-    --destructive: 0 50% 45%;
+    /* DESTRUCTIVE DARK */
+    --destructive: 0 45% 45%;
     --destructive-foreground: 0 0% 98%;
     
-    /* SEMANTIC DARK - SOFT */
-    --success: 160 45% 50%;
+    /* SEMANTIC DARK */
+    --success: 158 40% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 40 65% 55%;
-    --warning-foreground: 40 80% 15%;
-    --info: 210 50% 55%;
+    --warning: 38 60% 50%;
+    --warning-foreground: 38 80% 15%;
+    --info: 205 45% 50%;
     --info-foreground: 0 0% 100%;
 
     /* BORDERS DARK */
-    --border: 220 12% 18%;
-    --input: 220 12% 18%;
-    --ring: 165 40% 50%;
+    --border: 155 15% 20%;
+    --input: 155 15% 20%;
+    --ring: 158 40% 50%;
 
     /* ELEVATION SHADOWS DARK */
-    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.15);
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.15);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.25), 0 2px 4px -2px rgb(0 0 0 / 0.15);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.12);
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.15);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.20);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.25);
 
     /* SIDEBAR DARK */
-    --sidebar-background: 220 15% 6%;
-    --sidebar-foreground: 220 10% 90%;
-    --sidebar-primary: 165 40% 50%;
+    --sidebar-background: 155 15% 8%;
+    --sidebar-foreground: 155 10% 85%;
+    --sidebar-primary: 158 40% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 12% 14%;
-    --sidebar-accent-foreground: 220 10% 90%;
-    --sidebar-border: 220 12% 16%;
-    --sidebar-ring: 165 40% 50%;
+    --sidebar-accent: 155 15% 15%;
+    --sidebar-accent-foreground: 155 10% 90%;
+    --sidebar-border: 155 15% 18%;
+    --sidebar-ring: 158 40% 50%;
   }
 }
 
@@ -369,6 +391,106 @@
     @apply font-mono text-sm tracking-tight;
     font-feature-settings: "tnum" 1;
   }
+  
+  /* ==========================================
+     CLASSES UTILITÁRIAS DE UI - Hierarquia Tipográfica
+     Substituem os "magic numbers" (text-[10px], text-[11px], text-[13px])
+     ========================================== */
+  
+  /* Corpo de UI - Texto padrão para interfaces */
+  .text-ui-body {
+    @apply text-sm leading-relaxed text-zinc-700 dark:text-zinc-300;
+  }
+  
+  /* Label de UI - Legendas, tags, etiquetas */
+  .text-ui-label {
+    @apply text-xs font-medium tracking-wide text-zinc-500 dark:text-zinc-400 uppercase;
+  }
+  
+  /* Micro texto - Apenas para elementos muito pequenos que precisam de hierarquia visual reduzida */
+  .text-ui-micro {
+    @apply text-xs text-muted-foreground/80;
+  }
+  
+  /* Texto de sidebar - Itens de menu */
+  .text-sidebar-item {
+    @apply text-sm font-medium transition-colors duration-200;
+  }
+  
+  /* Texto de sidebar - Seções/categorias */
+  .text-sidebar-section {
+    @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground/80;
+  }
+  
+  /* Badge/Tag texto */
+  .text-badge {
+    @apply text-xs font-semibold uppercase tracking-wide;
+  }
+  
+  /* Mono para dados - Números de processo, datas, valores */
+  .text-data {
+    @apply font-mono text-xs tracking-tight tabular-nums;
+  }
+  
+  /* ==========================================
+     HIERARQUIA TIPOGRÁFICA ELEGANTE
+     Regra: Títulos = semibold, Labels = medium, Dados = normal/medium
+     Evita uso excessivo de bold que "suja" a interface
+     ========================================== */
+  
+  /* Títulos de página - Serifada, semibold, elegante */
+  .title-page {
+    @apply font-display text-2xl sm:text-3xl font-semibold text-foreground tracking-tight;
+  }
+  
+  /* Títulos de seção - Sans, semibold */
+  .title-section {
+    @apply font-sans text-lg font-semibold text-foreground;
+    letter-spacing: -0.01em;
+  }
+  
+  /* Subtítulos - Sans, medium, cinza */
+  .subtitle {
+    @apply font-sans text-sm font-medium text-muted-foreground;
+  }
+  
+  /* Labels de campo - Pequenos, medium, uppercase sutil */
+  .field-label {
+    @apply text-xs font-medium text-muted-foreground uppercase tracking-wider;
+  }
+  
+  /* Valores de campo - Normal ou medium, nunca bold */
+  .field-value {
+    @apply text-sm font-medium text-foreground;
+  }
+  
+  /* Dados numéricos destacados (estatísticas) - O único uso de bold permitido */
+  .stat-number {
+    @apply font-sans text-3xl font-bold text-foreground tabular-nums tracking-tight;
+  }
+  
+  /* Modo fonte grande - ajustes para utilidades UI */
+  html.font-large .text-ui-body {
+    @apply text-base;
+  }
+  html.font-large .text-ui-label {
+    @apply text-sm;
+  }
+  html.font-large .text-ui-micro {
+    @apply text-sm;
+  }
+  html.font-large .text-sidebar-item {
+    @apply text-base;
+  }
+  html.font-large .text-sidebar-section {
+    @apply text-sm;
+  }
+  html.font-large .text-badge {
+    @apply text-sm;
+  }
+  html.font-large .text-data {
+    @apply text-sm;
+  }
 }
 
 /* ==========================================
@@ -401,7 +523,7 @@
     letter-spacing: -0.01em;
   }
   .section-subtitle {
-    @apply text-[11px] uppercase tracking-[0.08em] text-muted-foreground font-semibold;
+    @apply text-xs uppercase tracking-wider text-muted-foreground font-semibold;
   }
   
   /* CARDS - With refined elevation */

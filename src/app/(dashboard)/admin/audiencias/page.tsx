@@ -360,7 +360,7 @@ export default function AudienciasPage() {
                     <span className="hidden sm:inline">{option.label}</span>
                     <span className="sm:hidden">{option.shortLabel}</span>
                     <span className={cn(
-                      "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
+                      "ml-0.5 px-1.5 py-0.5 text-xs font-semibold rounded-full",
                       isActive 
                         ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
                         : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
@@ -402,7 +402,7 @@ export default function AudienciasPage() {
                     {stats.hoje}
                   </p>
                   <p className={cn(
-                    "text-[10px] sm:text-xs",
+                    "text-xs sm:text-xs",
                     stats.hoje > 0 ? "text-rose-600 dark:text-rose-400" : "text-zinc-500"
                   )}>
                     Hoje
@@ -432,7 +432,7 @@ export default function AudienciasPage() {
                     {stats.amanha}
                   </p>
                   <p className={cn(
-                    "text-[10px] sm:text-xs",
+                    "text-xs sm:text-xs",
                     stats.amanha > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-500"
                   )}>
                     Amanhã
@@ -462,7 +462,7 @@ export default function AudienciasPage() {
                     {stats.aguardandoAta}
                   </p>
                   <p className={cn(
-                    "text-[10px] sm:text-xs",
+                    "text-xs sm:text-xs",
                     stats.aguardandoAta > 0 ? "text-orange-600 dark:text-orange-400" : "text-zinc-500"
                   )}>
                     Aguard. Ata
@@ -492,7 +492,7 @@ export default function AudienciasPage() {
                     {stats.reuPreso}
                   </p>
                   <p className={cn(
-                    "text-[10px] sm:text-xs",
+                    "text-xs sm:text-xs",
                     stats.reuPreso > 0 ? "text-rose-600 dark:text-rose-400" : "text-zinc-500"
                   )}>
                     Réu Preso

@@ -1113,7 +1113,7 @@ function DemandaModal({
                       <div className="flex items-center gap-2">
                         <div className={cn("w-2 h-2 rounded-full", status.color)} />
                         {status.label}
-                        {status.isCustom && <Badge variant="outline" className="text-[11px] ml-1">Custom</Badge>}
+                        {status.isCustom && <Badge variant="outline" className="text-xs ml-1">Custom</Badge>}
                       </div>
                     </SelectItem>
                   ))}
@@ -1222,7 +1222,7 @@ function DemandaModal({
                       <div className="flex items-center gap-2">
                         <div className={cn("w-2 h-2 rounded-full", p.color)} />
                         {p.label}
-                        {p.isCustom && <Badge variant="outline" className="text-[11px] ml-1">Custom</Badge>}
+                        {p.isCustom && <Badge variant="outline" className="text-xs ml-1">Custom</Badge>}
                       </div>
                     </SelectItem>
                   ))}
@@ -1285,7 +1285,7 @@ function DemandaModal({
               className="min-h-[120px]"
             />
             <div className="rounded-sm border border-slate-200 dark:border-slate-800 p-2">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-1">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-1">
                 Pré-visualização
               </p>
               <div className="text-sm text-slate-700 dark:text-slate-300 space-x-1">
@@ -1605,7 +1605,7 @@ function SelectWithAdd({
                   <div className="flex items-center gap-2">
                     <div className={cn("w-2 h-2 rounded-full flex-shrink-0", opt.color)} />
                     <span>{opt.label}</span>
-                    {opt.isCustom && <Badge variant="outline" className="text-[11px] ml-1">Custom</Badge>}
+                    {opt.isCustom && <Badge variant="outline" className="text-xs ml-1">Custom</Badge>}
                   </div>
                 </SelectItem>
               ))}
@@ -1617,7 +1617,7 @@ function SelectWithAdd({
               <div className="flex items-center gap-2">
                 <div className={cn("w-2 h-2 rounded-full flex-shrink-0", opt.color)} />
                 <span>{opt.label}</span>
-                {opt.isCustom && <Badge variant="outline" className="text-[11px] ml-1">Custom</Badge>}
+                {opt.isCustom && <Badge variant="outline" className="text-xs ml-1">Custom</Badge>}
               </div>
             </SelectItem>
           ))
@@ -1955,7 +1955,7 @@ export default function DemandasPage() {
                 <span className="hidden sm:inline">{option.label}</span>
                 <span className="sm:hidden">{option.shortLabel}</span>
                 <span className={cn(
-                  "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
+                  "ml-0.5 px-1.5 py-0.5 text-xs font-semibold rounded-full",
                   isActive 
                     ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
                     : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
@@ -2328,7 +2328,7 @@ export default function DemandasPage() {
                           {demanda.reuPreso && (
                             <Badge className={cn(
                               "bg-rose-600 text-white px-1.5 sm:px-2 py-0 animate-pulse",
-                              largerFontMode ? "text-xs h-6" : "text-[11px] sm:text-[10px] h-5"
+                              largerFontMode ? "text-xs h-6" : "text-xs h-5"
                             )}>
                               <Lock className={cn(largerFontMode ? "h-3 w-3" : "h-2.5 w-2.5", "mr-0.5")} />
                               PRESO
@@ -2338,7 +2338,7 @@ export default function DemandasPage() {
                             "px-1.5 sm:px-2 py-0", 
                             statusConfig.color, 
                             statusConfig.textColor || "text-white",
-                            largerFontMode ? "text-xs h-6" : "text-[11px] sm:text-[10px] h-5"
+                            largerFontMode ? "text-xs h-6" : "text-xs h-5"
                           )}>
                             {statusConfig.label}
                           </Badge>
@@ -2407,7 +2407,7 @@ export default function DemandasPage() {
                         {tipoAtoConfig && (
                           <Badge variant="outline" className={cn(
                             "px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700",
-                            largerFontMode ? "text-xs" : "text-[11px]"
+                            largerFontMode ? "text-xs" : "text-xs"
                           )}>
                             {tipoAtoConfig.label}
                           </Badge>
@@ -2455,7 +2455,7 @@ export default function DemandasPage() {
                             }
                           </span>
                           {prazoInfo.urgent && demanda.prazo && (
-                            <span className="text-[10px] font-bold ml-1">({prazoInfo.text})</span>
+                            <span className="text-xs font-bold ml-1">({prazoInfo.text})</span>
                           )}
                         </div>
                       </div>
@@ -2463,7 +2463,7 @@ export default function DemandasPage() {
                       {/* Linha 6: Grid de Metadados */}
                       <div className={cn(
                         "grid grid-cols-2 sm:grid-cols-3 gap-2",
-                        largerFontMode ? "text-sm" : "text-[10px] sm:text-xs"
+                        largerFontMode ? "text-sm" : "text-xs"
                       )}>
 
                         {/* Local/Comarca */}
@@ -2505,7 +2505,7 @@ export default function DemandasPage() {
                         {/* Providências */}
                         {demanda.providencias && (
                           <div className="space-y-1">
-                            <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                            <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                               Providências
                             </p>
                             <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800/50 rounded-lg p-2 sm:p-3 border border-zinc-100 dark:border-zinc-700">
@@ -2517,7 +2517,7 @@ export default function DemandasPage() {
                         {/* Observações */}
                         {demanda.observacoes && (
                           <div className="space-y-1">
-                            <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                            <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                               Observações
                             </p>
                             <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800/50 rounded-lg p-2 sm:p-3 border border-zinc-100 dark:border-zinc-700">
@@ -2531,7 +2531,7 @@ export default function DemandasPage() {
                           {/* Número completo do processo */}
                           {demanda.processo && (
                             <div className="space-y-1">
-                              <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                                 Processo
                               </p>
                               <p className="text-xs sm:text-sm font-mono text-zinc-700 dark:text-zinc-300 break-all">
@@ -2542,7 +2542,7 @@ export default function DemandasPage() {
 
                           {/* Tipo de Ato */}
                           <div className="space-y-1">
-                            <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                            <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                               Tipo de Ato
                             </p>
                             <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
@@ -2553,7 +2553,7 @@ export default function DemandasPage() {
                           {/* Data Intimação */}
                           {demanda.dataIntimacao && (
                             <div className="space-y-1">
-                              <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                                 Data Intimação
                               </p>
                               <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
@@ -2565,7 +2565,7 @@ export default function DemandasPage() {
                           {/* Defensor */}
                           {demanda.defensor && (
                             <div className="space-y-1">
-                              <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                                 Defensor
                               </p>
                               <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
@@ -2577,7 +2577,7 @@ export default function DemandasPage() {
                           {/* Vara */}
                           {demanda.vara && (
                             <div className="space-y-1">
-                              <p className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                                 Vara
                               </p>
                               <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
@@ -2804,7 +2804,7 @@ export default function DemandasPage() {
                             <TableCell className="p-1">
                               <div className="flex items-center gap-1">
                                 {demanda.prazo && (
-                                  <div className={cn("flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]", prazoInfo.className)}>
+                                  <div className={cn("flex items-center gap-1 px-1.5 py-0.5 rounded text-xs", prazoInfo.className)}>
                                     <PrazoIcon className="h-3 w-3" />
                                     <span className="font-semibold">{prazoInfo.text}</span>
                                   </div>
@@ -2960,7 +2960,7 @@ export default function DemandasPage() {
                 <span className="font-semibold text-foreground">{filteredDemandas.length}</span>
                 <span className="hidden sm:inline"> de {demandas.length}</span> demandas
               </p>
-              <p className="text-[10px] sm:text-sm">
+              <p className="text-xs sm:text-sm">
                 <span className="font-semibold text-rose-600">{stats.reuPreso}</span> presos •{" "}
                 <span className="font-semibold text-orange-600">{stats.urgente + stats.hoje}</span> urgentes
               </p>
@@ -2971,7 +2971,7 @@ export default function DemandasPage() {
         {/* Visualização em Lista (Horizontal) */}
         <TabsContent value="list" className="mt-0 space-y-2">
           {/* Cabeçalho da tabela (desktop) */}
-          <div className="hidden lg:grid grid-cols-[1fr_180px_140px_100px_100px_100px_80px] gap-3 px-4 py-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-[10px] uppercase font-semibold text-zinc-500 tracking-wider">
+          <div className="hidden lg:grid grid-cols-[1fr_180px_140px_100px_100px_100px_80px] gap-3 px-4 py-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-xs uppercase font-semibold text-zinc-500 tracking-wider">
             <span>Assistido / Ato</span>
             <span>Processo</span>
             <span>Prazo</span>
@@ -3021,7 +3021,7 @@ export default function DemandasPage() {
                         {demanda.reuPreso && (
                           <Badge className={cn(
                             "bg-rose-600 text-white px-1.5 py-0 h-5",
-                            largerFontMode ? "text-xs" : "text-[11px]"
+                            largerFontMode ? "text-xs" : "text-xs"
                           )}>
                             <Lock className={cn("mr-0.5", largerFontMode ? "h-3 w-3" : "h-2.5 w-2.5")} />
                             PRESO
@@ -3046,7 +3046,7 @@ export default function DemandasPage() {
                     <div className="lg:block">
                       <span className={cn(
                         "font-mono text-zinc-500 dark:text-zinc-400 truncate block",
-                        largerFontMode ? "text-sm" : "text-[11px]"
+                        largerFontMode ? "text-sm" : "text-xs"
                       )}>
                         {demanda.processo || "-"}
                       </span>
@@ -3068,7 +3068,7 @@ export default function DemandasPage() {
                           : "Sem prazo"
                         }
                         {prazoInfo.urgent && demanda.prazo && (
-                          <span className={cn("font-bold ml-1", largerFontMode ? "text-xs" : "text-[10px]")}>
+                          <span className={cn("font-bold ml-1", largerFontMode ? "text-xs" : "text-xs")}>
                             ({prazoInfo.text})
                           </span>
                         )}
@@ -3081,7 +3081,7 @@ export default function DemandasPage() {
                         "px-2 py-0 h-5",
                         statusConfig.color, 
                         statusConfig.textColor || "text-white",
-                        largerFontMode ? "text-xs" : "text-[10px]"
+                        largerFontMode ? "text-xs" : "text-xs"
                       )}>
                         {statusConfig.label}
                       </Badge>
@@ -3200,7 +3200,7 @@ export default function DemandasPage() {
                     <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-400" />
                     <CardTitle className="text-xs sm:text-sm font-medium text-amber-700 dark:text-amber-400">Atender</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                  <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50/50 text-xs px-1.5 sm:px-2">
                     {demandas.filter(d => d.status === "2_ATENDER").length}
                   </Badge>
                 </div>
@@ -3223,13 +3223,13 @@ export default function DemandasPage() {
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
                         {demanda.reuPreso && (
-                          <Badge className="bg-rose-600 text-white text-[10px] px-1 py-0 h-4">
+                          <Badge className="bg-rose-600 text-white text-xs px-1 py-0 h-4">
                             <Lock className="h-2 w-2 mr-0.5" />
                             PRESO
                           </Badge>
                         )}
                         {tipoAtoConfig && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                          <Badge variant="outline" className="text-xs px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}
                           </Badge>
                         )}
@@ -3237,16 +3237,16 @@ export default function DemandasPage() {
                       {/* Assistido */}
                       <p className="font-semibold text-xs sm:text-sm line-clamp-1 text-zinc-900 dark:text-zinc-100">{demanda.assistido}</p>
                       {/* Ato */}
-                      <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
                       {/* Processo */}
                       {demanda.processo && (
-                        <p className="text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
                           {demanda.processo}
                         </p>
                       )}
                       {/* Prazo */}
                       <div className={cn(
-                        "flex items-center gap-1 mt-2 text-[10px] sm:text-xs px-1.5 py-0.5 rounded w-fit",
+                        "flex items-center gap-1 mt-2 text-xs px-1.5 py-0.5 rounded w-fit",
                         prazoInfo.urgent 
                           ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 font-medium" 
                           : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
@@ -3257,7 +3257,7 @@ export default function DemandasPage() {
                       </div>
                       {/* Providências preview */}
                       {demanda.providencias && (
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
                           {demanda.providencias}
                         </p>
                       )}
@@ -3275,7 +3275,7 @@ export default function DemandasPage() {
                     <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-indigo-400" />
                     <CardTitle className="text-xs sm:text-sm font-medium text-indigo-700 dark:text-indigo-400">Em Fila</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-indigo-600 border-indigo-200 bg-indigo-50/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                  <Badge variant="outline" className="text-indigo-600 border-indigo-200 bg-indigo-50/50 text-xs px-1.5 sm:px-2">
                     {demandas.filter(d => d.status === "5_FILA" || d.status === "2_ELABORANDO").length}
                   </Badge>
                 </div>
@@ -3298,13 +3298,13 @@ export default function DemandasPage() {
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
                         {demanda.reuPreso && (
-                          <Badge className="bg-rose-600 text-white text-[10px] px-1 py-0 h-4">
+                          <Badge className="bg-rose-600 text-white text-xs px-1 py-0 h-4">
                             <Lock className="h-2 w-2 mr-0.5" />
                             PRESO
                           </Badge>
                         )}
                         {tipoAtoConfig && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                          <Badge variant="outline" className="text-xs px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}
                           </Badge>
                         )}
@@ -3312,16 +3312,16 @@ export default function DemandasPage() {
                       {/* Assistido */}
                       <p className="font-semibold text-xs sm:text-sm line-clamp-1 text-zinc-900 dark:text-zinc-100">{demanda.assistido}</p>
                       {/* Ato */}
-                      <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
                       {/* Processo */}
                       {demanda.processo && (
-                        <p className="text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
                           {demanda.processo}
                         </p>
                       )}
                       {/* Prazo */}
                       <div className={cn(
-                        "flex items-center gap-1 mt-2 text-[10px] sm:text-xs px-1.5 py-0.5 rounded w-fit",
+                        "flex items-center gap-1 mt-2 text-xs px-1.5 py-0.5 rounded w-fit",
                         prazoInfo.urgent 
                           ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 font-medium" 
                           : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
@@ -3332,7 +3332,7 @@ export default function DemandasPage() {
                       </div>
                       {/* Providências preview */}
                       {demanda.providencias && (
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
                           {demanda.providencias}
                         </p>
                       )}
@@ -3350,7 +3350,7 @@ export default function DemandasPage() {
                     <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-sky-400" />
                     <CardTitle className="text-xs sm:text-sm font-medium text-sky-700 dark:text-sky-400">Monitorar</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-sky-600 border-sky-200 bg-sky-50/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                  <Badge variant="outline" className="text-sky-600 border-sky-200 bg-sky-50/50 text-xs px-1.5 sm:px-2">
                     {demandas.filter(d => d.status === "4_MONITORAR").length}
                   </Badge>
                 </div>
@@ -3373,13 +3373,13 @@ export default function DemandasPage() {
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
                         {demanda.reuPreso && (
-                          <Badge className="bg-rose-600 text-white text-[10px] px-1 py-0 h-4">
+                          <Badge className="bg-rose-600 text-white text-xs px-1 py-0 h-4">
                             <Lock className="h-2 w-2 mr-0.5" />
                             PRESO
                           </Badge>
                         )}
                         {tipoAtoConfig && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                          <Badge variant="outline" className="text-xs px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}
                           </Badge>
                         )}
@@ -3387,16 +3387,16 @@ export default function DemandasPage() {
                       {/* Assistido */}
                       <p className="font-semibold text-xs sm:text-sm line-clamp-1 text-zinc-900 dark:text-zinc-100">{demanda.assistido}</p>
                       {/* Ato */}
-                      <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
                       {/* Processo */}
                       {demanda.processo && (
-                        <p className="text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
                           {demanda.processo}
                         </p>
                       )}
                       {/* Prazo */}
                       <div className={cn(
-                        "flex items-center gap-1 mt-2 text-[10px] sm:text-xs px-1.5 py-0.5 rounded w-fit",
+                        "flex items-center gap-1 mt-2 text-xs px-1.5 py-0.5 rounded w-fit",
                         prazoInfo.urgent 
                           ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 font-medium" 
                           : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
@@ -3407,7 +3407,7 @@ export default function DemandasPage() {
                       </div>
                       {/* Providências preview */}
                       {demanda.providencias && (
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
                           {demanda.providencias}
                         </p>
                       )}
@@ -3425,7 +3425,7 @@ export default function DemandasPage() {
                     <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-400" />
                     <CardTitle className="text-xs sm:text-sm font-medium text-emerald-700 dark:text-emerald-400">Concluído</CardTitle>
                   </div>
-                  <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                  <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50/50 text-xs px-1.5 sm:px-2">
                     {demandas.filter(d => d.status.startsWith("7_")).length}
                   </Badge>
                 </div>
@@ -3442,12 +3442,12 @@ export default function DemandasPage() {
                     >
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
-                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 text-[10px] px-1 py-0 h-4">
+                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 text-xs px-1 py-0 h-4">
                           <CheckCircle2 className="h-2 w-2 mr-0.5" />
                           {statusConfig.label}
                         </Badge>
                         {tipoAtoConfig && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                          <Badge variant="outline" className="text-xs px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}
                           </Badge>
                         )}
@@ -3455,10 +3455,10 @@ export default function DemandasPage() {
                       {/* Assistido */}
                       <p className="font-semibold text-xs sm:text-sm line-clamp-1 text-zinc-900 dark:text-zinc-100">{demanda.assistido}</p>
                       {/* Ato */}
-                      <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
                       {/* Processo */}
                       {demanda.processo && (
-                        <p className="text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
                           {demanda.processo}
                         </p>
                       )}

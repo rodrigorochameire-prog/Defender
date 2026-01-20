@@ -663,7 +663,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 <Badge 
                   variant="outline" 
                   className={cn(
-                    "rounded-md px-1.5 py-0 text-[11px] sm:text-[10px] uppercase font-semibold",
+                    "rounded-md px-1.5 py-0 text-xs uppercase font-semibold",
                     faseConfig[assistido.faseProcessual].bgColor,
                     faseConfig[assistido.faseProcessual].color,
                     "border-transparent"
@@ -678,7 +678,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 <Badge 
                   variant="outline" 
                   className={cn(
-                    "rounded-md px-1.5 py-0 text-[11px] sm:text-[10px] uppercase font-medium",
+                    "rounded-md px-1.5 py-0 text-xs uppercase font-medium",
                     areaConfig[assistido.area].bgColor,
                     areaConfig[assistido.area].color,
                     "border-transparent"
@@ -707,7 +707,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
             
             {/* Local de prisao - mais compacto */}
             {assistido.unidadePrisional && (
-              <span className="flex items-center text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+              <span className="flex items-center text-xs text-zinc-500 dark:text-zinc-400 truncate">
                 <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 flex-shrink-0" /> 
                 {assistido.unidadePrisional}
               </span>
@@ -788,7 +788,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
           >
             <div className="flex items-center gap-1.5">
               <Scale className="w-3 h-3 text-zinc-400" />
-              <span className="text-[10px] sm:text-xs font-data text-zinc-600 dark:text-zinc-400 tracking-tight">
+              <span className="text-xs font-data text-zinc-600 dark:text-zinc-400 tracking-tight">
                 {assistido.numeroProcesso}
               </span>
             </div>
@@ -817,7 +817,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               prazoUrgente ? "text-rose-600 dark:text-rose-500" : "text-zinc-400"
             )} />
             <span className={cn(
-              "text-[10px] sm:text-xs font-medium truncate",
+              "text-xs font-medium truncate",
               prazoUrgente 
                 ? "text-rose-700 dark:text-rose-400" 
                 : "text-zinc-600 dark:text-zinc-400"
@@ -827,7 +827,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
             </span>
           </div>
         ) : (
-          <span className="text-[10px] sm:text-xs text-zinc-400 italic">Sem prazos</span>
+          <span className="text-xs text-zinc-400 italic">Sem prazos</span>
         )}
 
         {/* Botao expandir */}
@@ -859,7 +859,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               <div className="p-2.5 rounded-lg bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Gavel className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                  <p className="text-[11px] sm:text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Tese da Defesa</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Tese da Defesa</p>
                 </div>
                 <p className="text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-200 leading-relaxed italic">&ldquo;{assistido.teseDaDefesa}&rdquo;</p>
               </div>
@@ -881,20 +881,20 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               <div className="grid grid-cols-2 gap-2">
                 {assistido.ultimaAudiencia && (
                   <div className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
-                    <p className="text-[10px] sm:text-[11px] uppercase text-zinc-400 font-semibold tracking-wider mb-0.5">Ultima Audiencia</p>
+                    <p className="text-xs sm:text-xs uppercase text-zinc-400 font-semibold tracking-wider mb-0.5">Ultima Audiencia</p>
                     <p className="text-xs sm:text-sm font-data font-semibold text-zinc-700 dark:text-zinc-300">
                       {format(parseISO(assistido.ultimaAudiencia), "dd/MM/yy")}
                     </p>
-                    <p className="text-[11px] sm:text-[10px] text-zinc-500 truncate">{assistido.tipoUltimaAudiencia}</p>
+                    <p className="text-xs text-zinc-500 truncate">{assistido.tipoUltimaAudiencia}</p>
                   </div>
                 )}
                 {assistido.proximaAudiencia && (
                   <div className="p-2 rounded-lg bg-blue-50/80 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50">
-                    <p className="text-[10px] sm:text-[11px] uppercase text-blue-600 dark:text-blue-400 font-semibold tracking-wider mb-0.5">Proxima Audiencia</p>
+                    <p className="text-xs sm:text-xs uppercase text-blue-600 dark:text-blue-400 font-semibold tracking-wider mb-0.5">Proxima Audiencia</p>
                     <p className="text-xs sm:text-sm font-data font-semibold text-blue-700 dark:text-blue-300">
                       {format(parseISO(assistido.proximaAudiencia), "dd/MM/yy")}
                     </p>
-                    <p className="text-[11px] sm:text-[10px] text-blue-600 dark:text-blue-400 truncate">{assistido.tipoProximaAudiencia}</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 truncate">{assistido.tipoProximaAudiencia}</p>
                   </div>
                 )}
               </div>
@@ -903,7 +903,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
             {/* Testemunhas e Interrogatorio - Pills */}
             {assistido.testemunhasArroladas.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs text-zinc-600 dark:text-zinc-400">
                   <UserCheck className="h-3 w-3" />
                   <span className="font-medium text-zinc-700 dark:text-zinc-300">
                     {assistido.testemunhasArroladas.filter(t => t.ouvida).length}
@@ -911,7 +911,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                   <span>/{assistido.testemunhasArroladas.length} testemunhas</span>
                 </div>
                 <div className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs",
+                  "flex items-center gap-1 px-2 py-1 rounded-full text-xs",
                   assistido.interrogatorioRealizado 
                     ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
                     : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
@@ -924,12 +924,12 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
 
             {/* Footer com Defensor */}
             <div className="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-zinc-800">
-              <span className="text-[10px] sm:text-[11px] text-zinc-400">{assistido.defensor}</span>
+              <span className="text-xs sm:text-xs text-zinc-400">{assistido.defensor}</span>
               <Link href={`/admin/assistidos/${assistido.id}`}>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-6 sm:h-7 text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 px-2"
+                  className="h-6 sm:h-7 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 px-2"
                 >
                   Ver Perfil <ChevronRight className="h-3 w-3 ml-0.5" />
                 </Button>

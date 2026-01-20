@@ -345,7 +345,7 @@ function FileGridItem({
         
         {/* Processo/Assistido Badge */}
         {file.assistidoNome && (
-          <Badge variant="secondary" className="mt-2 text-[10px] truncate max-w-full">
+          <Badge variant="secondary" className="mt-2 text-xs truncate max-w-full">
             {file.assistidoNome}
           </Badge>
         )}
@@ -383,12 +383,12 @@ function FileListItem({
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           {file.assistidoNome && (
-            <Badge variant="secondary" className="text-[10px]">
+            <Badge variant="secondary" className="text-xs">
               {file.assistidoNome}
             </Badge>
           )}
           {file.processoNumero && (
-            <span className="text-[10px] font-mono text-zinc-400 truncate">
+            <span className="text-xs font-mono text-zinc-400 truncate">
               {file.processoNumero}
             </span>
           )}

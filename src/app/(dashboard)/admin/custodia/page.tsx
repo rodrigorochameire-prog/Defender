@@ -196,18 +196,18 @@ export default function CustodiaPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <h3 className="font-semibold text-sm sm:text-base truncate">{custodia.assistido}</h3>
-                      <p className="text-[10px] sm:text-xs font-mono text-muted-foreground mt-0.5 truncate">
+                      <p className="text-xs sm:text-xs font-mono text-muted-foreground mt-0.5 truncate">
                         {custodia.processo}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
-                        <Badge className="text-[10px] sm:text-xs bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-0">{custodia.crime}</Badge>
+                        <Badge className="text-xs sm:text-xs bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-0">{custodia.crime}</Badge>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-xl sm:text-2xl font-bold font-mono text-amber-600">
                         {format(parseISO(custodia.dataAudiencia), "HH:mm")}
                       </p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground">{custodia.local}</p>
+                      <p className="text-xs sm:text-xs text-muted-foreground">{custodia.local}</p>
                     </div>
                   </div>
                 </SwissCardContent>
@@ -246,13 +246,13 @@ export default function CustodiaPage() {
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-medium text-sm sm:text-base truncate">{custodia.assistido}</h3>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground font-mono">
+                        <p className="text-xs sm:text-xs text-muted-foreground font-mono">
                           {format(parseISO(custodia.dataAudiencia), "dd/MM/yyyy 'às' HH:mm")}
                         </p>
                       </div>
                     </div>
                     {resultado && (
-                      <Badge className={cn("text-[10px] sm:text-xs border-0 flex-shrink-0", resultado.bg, resultado.color)}>
+                      <Badge className={cn("text-xs sm:text-xs border-0 flex-shrink-0", resultado.bg, resultado.color)}>
                         <ResultadoIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
                         <span className="hidden sm:inline">{resultado.label}</span>
                         <span className="sm:hidden">{resultado.label.split(' ')[0]}</span>

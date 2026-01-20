@@ -122,7 +122,7 @@ export default function ProfilerJuradosPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold">Profiler de Jurados 2.0</h1>
-              <Badge className="bg-amber-500 text-white text-[10px]">
+              <Badge className="bg-amber-500 text-white text-xs">
                 <Sparkles className="w-3 h-3 mr-0.5" />
                 Premium
               </Badge>
@@ -208,7 +208,7 @@ export default function ProfilerJuradosPage() {
                   <span className="block text-slate-500">Assento {index + 1}</span>
                   <span className="block mt-1">{jurado ? jurado.nome : "Vazio"}</span>
                   {jurado && (
-                    <span className="mt-1 flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
+                    <span className="mt-1 flex items-center justify-center gap-1 text-xs text-muted-foreground">
                       {getTrendIcon(jurado.tendencia)} {jurado.tendencia}
                     </span>
                   )}

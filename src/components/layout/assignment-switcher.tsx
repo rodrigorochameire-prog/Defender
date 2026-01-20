@@ -91,7 +91,7 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
                 <p className="text-sm font-semibold truncate text-foreground tracking-tight">
                   {config.shortName}
                 </p>
-                <p className="text-[11px] text-muted-foreground truncate uppercase tracking-wider font-medium">
+                <p className="text-xs text-muted-foreground truncate uppercase tracking-wider font-medium">
                   Atribuição
                 </p>
               </div>
@@ -153,12 +153,12 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
               {/* Nome e descrição */}
               <div className="flex-1 min-w-0">
                 <p className={cn(
-                  "text-[13px] truncate",
+                  "text-sm truncate",
                   isActive ? "font-semibold text-foreground" : "font-medium text-foreground"
                 )}>
                   {assignmentConfig.name}
                 </p>
-                <p className="text-[10px] text-muted-foreground truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {assignmentConfig.description}
                 </p>
               </div>
@@ -176,7 +176,7 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
 
         <DropdownMenuSeparator className="my-2" />
 
-        <div className="px-3 py-2 text-[10px] text-muted-foreground">
+        <div className="px-3 py-2 text-xs text-muted-foreground">
           Cada atribuição tem ferramentas e visualizações específicas para sua área de atuação.
         </div>
       </DropdownMenuContent>

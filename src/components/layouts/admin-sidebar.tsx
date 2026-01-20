@@ -223,7 +223,7 @@ function MenuItem({
           />
           <span
             className={cn(
-              "text-[13px] transition-colors duration-200 flex-1",
+              "text-sm transition-colors duration-200 flex-1",
               isActive ? "font-semibold text-foreground" : "font-medium"
             )}
             style={{
@@ -290,7 +290,7 @@ function MenuSectionComponent({
             )}
           >
             <span
-              className="text-[11px] font-semibold uppercase tracking-[0.08em]"
+              className="text-xs font-semibold uppercase tracking-wider"
               style={{ color: config.sidebarTextMuted }}
             >
               {section.title}
@@ -330,7 +330,7 @@ function MenuSectionComponent({
       {!isCollapsed && (
         <div className="px-3 py-2 mb-1">
           <span
-            className="text-[10px] font-bold uppercase tracking-[0.12em]"
+            className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80"
             style={{ color: config.accentColor }}
           >
             {section.title}
@@ -435,10 +435,9 @@ function AdminSidebarContent({
         <Sidebar
           collapsible="icon"
           className={cn(
-            "border-r backdrop-blur-xl shadow-[1px_0_8px_-2px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_8px_-2px_rgba(0,0,0,0.25)]"
+            "border-r bg-white dark:bg-sidebar shadow-soft"
           )}
           style={{
-            background: `var(--sidebar-bg, ${config.sidebarBg})`,
             borderColor: `var(--sidebar-border, ${config.sidebarBorder})`,
           }}
           disableTransition={isResizing}
@@ -470,7 +469,7 @@ function AdminSidebarContent({
                   }}
                 >
                   <PanelLeft className="h-[18px] w-[18px]" strokeWidth={1.8} />
-                  <span className="text-[13px] font-medium">
+                  <span className="text-sm font-medium">
                     {isCollapsed ? "Expandir" : "Recolher"}
                   </span>
                 </SidebarMenuButton>
@@ -482,7 +481,7 @@ function AdminSidebarContent({
               {!isCollapsed && (
                 <div className="px-3 py-2 mb-1 mt-2">
                   <span
-                    className="text-[10px] font-bold uppercase tracking-[0.12em] flex items-center gap-1.5"
+                    className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5"
                     style={{ color: config.sidebarTextMuted }}
                   >
                     <LayoutDashboard className="w-3 h-3" />
@@ -523,7 +522,7 @@ function AdminSidebarContent({
                         />
                         <span
                           className={cn(
-                            "text-[14px] transition-colors duration-200",
+                            "text-sm transition-colors duration-200",
                             isActive ? "font-bold text-foreground" : "font-semibold"
                           )}
                           style={{
@@ -561,7 +560,7 @@ function AdminSidebarContent({
               {!isCollapsed && (
                 <div className="px-3 py-2 mb-1">
                   <span
-                    className="text-[10px] font-bold uppercase tracking-[0.12em] flex items-center gap-1.5"
+                    className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5"
                     style={{ color: config.accentColor }}
                   >
                     <span>{config.emoji}</span>
@@ -640,7 +639,7 @@ function AdminSidebarContent({
                     style={{ borderColor: config.accentColor + "40" }}
                   >
                     <AvatarFallback
-                      className="text-[11px] font-semibold"
+                      className="text-xs font-semibold"
                       style={{
                         background: config.accentColorLight,
                         color: config.accentColor,
@@ -651,11 +650,11 @@ function AdminSidebarContent({
                   </Avatar>
                   {!isCollapsed && (
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold truncate text-[hsl(160_15%_20%)] dark:text-[hsl(150_10%_88%)]">
+                      <p className="text-sm font-semibold truncate text-foreground">
                         {userName}
                       </p>
                       {userEmail && (
-                        <p className="text-[11px] text-[hsl(160_8%_50%)] dark:text-[hsl(150_6%_50%)] truncate mt-0.5">
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
                           {userEmail}
                         </p>
                       )}
@@ -732,7 +731,7 @@ function AdminSidebarContent({
                   DefesaHub
                 </h1>
                 <p
-                  className="text-[11px] font-medium tracking-[0.08em] uppercase"
+                  className="text-xs font-medium tracking-wider uppercase"
                   style={{ color: config.sidebarTextMuted }}
                 >
                   {config.shortName}

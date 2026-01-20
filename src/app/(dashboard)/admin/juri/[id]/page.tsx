@@ -127,7 +127,7 @@ export default function SessaoJuriPage() {
               <div key={reu.id} className="p-3 rounded-lg bg-muted/50">
                 <p className="font-semibold text-sm">{reu.nome}</p>
                 <p className="text-xs text-muted-foreground mt-1">{reu.crime}</p>
-                <Badge variant="outline" className="mt-2 text-[10px]">
+                <Badge variant="outline" className="mt-2 text-xs">
                   {reu.artigo}
                 </Badge>
               </div>
@@ -171,15 +171,15 @@ export default function SessaoJuriPage() {
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/30">
                 <p className="text-lg font-bold text-rose-600">{sessao.testemunhas.acusacao}</p>
-                <p className="text-[10px] text-muted-foreground">Acusação</p>
+                <p className="text-xs text-muted-foreground">Acusação</p>
               </div>
               <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
                 <p className="text-lg font-bold text-emerald-600">{sessao.testemunhas.defesa}</p>
-                <p className="text-[10px] text-muted-foreground">Defesa</p>
+                <p className="text-xs text-muted-foreground">Defesa</p>
               </div>
               <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/30">
                 <p className="text-lg font-bold text-blue-600">{sessao.testemunhas.ouvidas}</p>
-                <p className="text-[10px] text-muted-foreground">Ouvidas</p>
+                <p className="text-xs text-muted-foreground">Ouvidas</p>
               </div>
             </div>
           </CardContent>
@@ -197,15 +197,15 @@ export default function SessaoJuriPage() {
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/30">
                 <p className="text-lg font-bold text-purple-600">{sessao.jurados.convocados}</p>
-                <p className="text-[10px] text-muted-foreground">Convocados</p>
+                <p className="text-xs text-muted-foreground">Convocados</p>
               </div>
               <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30">
                 <p className="text-lg font-bold text-amber-600">{sessao.jurados.presentes}</p>
-                <p className="text-[10px] text-muted-foreground">Presentes</p>
+                <p className="text-xs text-muted-foreground">Presentes</p>
               </div>
               <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
                 <p className="text-lg font-bold text-emerald-600">{sessao.jurados.selecionados}</p>
-                <p className="text-[10px] text-muted-foreground">Conselho</p>
+                <p className="text-xs text-muted-foreground">Conselho</p>
               </div>
             </div>
           </CardContent>

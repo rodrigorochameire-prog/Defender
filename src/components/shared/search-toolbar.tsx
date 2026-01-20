@@ -278,7 +278,7 @@ export function QuickFilters({ filters, onFilterClick, className }: QuickFilters
           {filter.count !== undefined && (
             <Badge
               variant={filter.active ? "default" : "secondary"}
-              className="h-4 px-1 text-[10px] min-w-[16px] justify-center"
+              className="h-4 px-1 text-xs min-w-[16px] justify-center"
             >
               {filter.count}
             </Badge>

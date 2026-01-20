@@ -34,7 +34,7 @@ export default function EstatisticasJuizesPage() {
               <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                 Estatísticas por Juiz
               </h1>
-              <Badge className="bg-amber-500 text-white text-[10px]">
+              <Badge className="bg-amber-500 text-white text-xs">
                 <Sparkles className="w-3 h-3 mr-0.5" />
                 Premium
               </Badge>

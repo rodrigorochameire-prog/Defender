@@ -51,7 +51,7 @@ export default function AtendimentosPage() {
               </div>
               <div>
                 <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">5</p>
-                <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Hoje</p>
+                <p className="text-xs sm:text-xs text-rose-600 dark:text-rose-400">Hoje</p>
               </div>
             </div>
           </SwissCardContent>
@@ -65,7 +65,7 @@ export default function AtendimentosPage() {
               </div>
               <div>
                 <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">3</p>
-                <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Presenciais</p>
+                <p className="text-xs sm:text-xs text-blue-600 dark:text-blue-400">Presenciais</p>
               </div>
             </div>
           </SwissCardContent>
@@ -79,7 +79,7 @@ export default function AtendimentosPage() {
               </div>
               <div>
                 <p className="text-xl sm:text-2xl font-bold text-violet-700 dark:text-violet-400">1</p>
-                <p className="text-[10px] sm:text-xs text-violet-600 dark:text-violet-400">Vídeo</p>
+                <p className="text-xs sm:text-xs text-violet-600 dark:text-violet-400">Vídeo</p>
               </div>
             </div>
           </SwissCardContent>
@@ -93,7 +93,7 @@ export default function AtendimentosPage() {
               </div>
               <div>
                 <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">1</p>
-                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Telefone</p>
+                <p className="text-xs sm:text-xs text-amber-600 dark:text-amber-400">Telefone</p>
               </div>
             </div>
           </SwissCardContent>

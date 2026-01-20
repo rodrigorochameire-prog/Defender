@@ -31,7 +31,7 @@ export function EntityLink({ type, name, entityId, href, subtitle, className }: 
     <Badge
       variant="outline"
       className={cn(
-        "gap-1.5 pr-3 pl-2 py-1 text-[11px] font-medium border-slate-300",
+        "gap-1.5 pr-3 pl-2 py-1 text-xs font-medium border-slate-300",
         "hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-sm",
         className
       )}

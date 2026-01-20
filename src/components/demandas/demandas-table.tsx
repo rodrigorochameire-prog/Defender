@@ -278,7 +278,7 @@ function CalculadoraPrazos({
               Prazo em Dobro (DP)
             </span>
           </div>
-          <span className="text-[10px] text-zinc-500">
+          <span className="text-xs text-zinc-500">
             Art. 44, I, LC 80/94
           </span>
         </div>
@@ -299,7 +299,7 @@ function CalculadoraPrazos({
               </span>
             </div>
           )}
-          <p className="text-[10px] text-zinc-400 mt-1">
+          <p className="text-xs text-zinc-400 mt-1">
             {prazoInfo.descricao}
           </p>
         </div>
@@ -320,7 +320,7 @@ function CalculadoraPrazos({
           {/* Data Fatal */}
           <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/20 p-3 border border-emerald-200 dark:border-emerald-800">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">
                 Prazo Fatal
               </span>
               {prazoEmDobro && (
@@ -338,7 +338,7 @@ function CalculadoraPrazos({
           </div>
           
           {/* Detalhes do Cálculo */}
-          <div className="text-[10px] text-zinc-500 space-y-0.5 p-2 bg-zinc-50 dark:bg-zinc-900 rounded-md">
+          <div className="text-xs text-zinc-500 space-y-0.5 p-2 bg-zinc-50 dark:bg-zinc-900 rounded-md">
             <p>📅 Expedição: {dataExpedicao}</p>
             <p>📖 Ciência (10d): {format(detalhesCalculo.dataCiencia, "dd/MM/yyyy")}</p>
             <p>⏱️ Prazo: {detalhesCalculo.prazoSimples}d {prazoEmDobro && `× 2 = ${detalhesCalculo.prazoDobrado}d`}</p>
@@ -549,7 +549,7 @@ function FaseJuriBadge({ fase }: { fase: string }) {
     <Badge 
       variant="outline" 
       className={cn(
-        "text-[10px] h-5 px-1.5 border-0 rounded-sm font-medium",
+        "text-xs h-5 px-1.5 border-0 rounded-sm font-medium",
         faseConfig.color
       )}
     >

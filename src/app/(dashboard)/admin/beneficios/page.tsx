@@ -168,7 +168,7 @@ export default function BeneficiosPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.elegivel}</p>
-                  <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">Elegíveis</p>
+                  <p className="text-xs sm:text-xs text-emerald-600 dark:text-emerald-400">Elegíveis</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -182,7 +182,7 @@ export default function BeneficiosPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.requerido}</p>
-                  <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Requeridos</p>
+                  <p className="text-xs sm:text-xs text-blue-600 dark:text-blue-400">Requeridos</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -196,7 +196,7 @@ export default function BeneficiosPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.aguardando}</p>
-                  <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Aguardando</p>
+                  <p className="text-xs sm:text-xs text-amber-600 dark:text-amber-400">Aguardando</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -210,7 +210,7 @@ export default function BeneficiosPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-violet-700 dark:text-violet-400">{stats.deferido}</p>
-                  <p className="text-[10px] sm:text-xs text-violet-600 dark:text-violet-400">Deferidos</p>
+                  <p className="text-xs sm:text-xs text-violet-600 dark:text-violet-400">Deferidos</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -301,13 +301,13 @@ export default function BeneficiosPage() {
                         {/* Badges */}
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <Badge className={cn(
-                            "text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md border-0",
+                            "text-[9px] sm:text-xs px-1.5 py-0 rounded-md border-0",
                             tipo.bg, tipo.color
                           )}>
                             {tipo.label}
                           </Badge>
                           <Badge className={cn(
-                            "text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md border-0",
+                            "text-[9px] sm:text-xs px-1.5 py-0 rounded-md border-0",
                             status.bg, status.color
                           )}>
                             {status.label}
@@ -319,13 +319,13 @@ export default function BeneficiosPage() {
                           <h3 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 truncate">
                             {beneficio.assistido}
                           </h3>
-                          <p className="text-[10px] sm:text-xs font-mono text-zinc-500 dark:text-zinc-400">
+                          <p className="text-xs sm:text-xs font-mono text-zinc-500 dark:text-zinc-400">
                             {beneficio.processo}
                           </p>
                         </div>
 
                         {/* Regime */}
-                        <div className="flex items-center gap-2 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="flex items-center gap-2 text-xs sm:text-xs text-zinc-500 dark:text-zinc-400">
                           <span className="flex items-center gap-1">
                             <Lock className="w-3 h-3" />
                             {beneficio.regimeAtual}
@@ -345,7 +345,7 @@ export default function BeneficiosPage() {
                     {/* Data e Ação */}
                     <div className="flex items-center sm:flex-col sm:items-end gap-2 sm:gap-2">
                       <div className="text-left sm:text-right flex-1 sm:flex-none">
-                        <p className="text-[9px] sm:text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                        <p className="text-[9px] sm:text-xs text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
                           Data-base
                         </p>
                         <p className="text-xs sm:text-sm font-mono font-medium text-zinc-700 dark:text-zinc-300">
@@ -354,7 +354,7 @@ export default function BeneficiosPage() {
                       </div>
                       
                       <Badge className={cn(
-                        "text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md border-0 font-medium",
+                        "text-[9px] sm:text-xs px-1.5 py-0 rounded-md border-0 font-medium",
                         elegivel
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                           : diasRestantes <= 30

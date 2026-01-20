@@ -98,7 +98,7 @@ export default function HistoricoJuriPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <Badge 
                       className={cn(
-                        "text-[10px]",
+                        "text-xs",
                         sessao.resultado === "ABSOLVIDO" && "bg-emerald-500 text-white",
                         sessao.resultado === "CONDENADO" && "bg-rose-500 text-white",
                         sessao.resultado === "DESCLASSIFICADO" && "bg-amber-500 text-white",

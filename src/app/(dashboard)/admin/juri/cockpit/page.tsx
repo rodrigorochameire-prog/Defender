@@ -213,7 +213,7 @@ export default function PlenarioCockpitPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">Plenário Live</h1>
-              <Badge className="bg-amber-500 text-white text-[10px]">Cockpit</Badge>
+              <Badge className="bg-amber-500 text-white text-xs">Cockpit</Badge>
             </div>
             <p className={`text-sm ${textMutedClass}`}>Controle em tempo real do julgamento</p>
           </div>

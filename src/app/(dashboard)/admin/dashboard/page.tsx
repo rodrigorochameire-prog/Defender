@@ -341,14 +341,14 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl sm:text-3xl font-bold text-orange-600">{mockStats.prazosHoje}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Prazos Hoje</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Prazos Hoje</p>
                   </div>
                   <Timer className="hidden sm:block h-7 w-7 text-orange-200 dark:text-orange-900" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">{mockStats.prazosSemana} na semana</span>
+                  <span className="text-xs text-muted-foreground">{mockStats.prazosSemana} na semana</span>
                   {mockStats.prazosVencidos > 0 && (
-                    <Badge className="text-[10px] sm:text-[11px] px-1 py-0 h-3.5 sm:h-4 bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-0">
+                    <Badge className="text-xs px-1 py-0 h-3.5 sm:h-4 bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-0">
                       {mockStats.prazosVencidos} vencidos
                     </Badge>
                   )}
@@ -362,12 +362,12 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl sm:text-3xl font-bold text-blue-600">{mockStats.audienciasHoje}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Audiências Hoje</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Audiências Hoje</p>
                   </div>
                   <Briefcase className="hidden sm:block h-7 w-7 text-blue-200 dark:text-blue-900" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">{mockStats.audienciasSemana} na semana</span>
+                  <span className="text-xs text-muted-foreground">{mockStats.audienciasSemana} na semana</span>
                 </div>
               </SwissCardContent>
             </SwissCard>
@@ -378,12 +378,12 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl sm:text-3xl font-bold text-purple-600">{mockStats.atendimentosHoje}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Atendimentos</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Atendimentos</p>
                   </div>
                   <UserCheck className="hidden sm:block h-7 w-7 text-purple-200 dark:text-purple-900" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">{mockStats.atendimentosSemana} na semana</span>
+                  <span className="text-xs text-muted-foreground">{mockStats.atendimentosSemana} na semana</span>
                 </div>
               </SwissCardContent>
             </SwissCard>
@@ -394,12 +394,12 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl sm:text-3xl font-bold text-emerald-600">{mockStats.jurisMes}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Júris no Mês</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Júris no Mês</p>
                   </div>
                   <Gavel className="hidden sm:block h-7 w-7 text-emerald-200 dark:text-emerald-900" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">Sessões plenárias</span>
+                  <span className="text-xs text-muted-foreground">Sessões plenárias</span>
                 </div>
               </SwissCardContent>
             </SwissCard>
@@ -410,12 +410,12 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl sm:text-3xl font-bold text-teal-600">{mockStats.taxaCumprimento}%</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Cumprimento</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Cumprimento</p>
                   </div>
                   <CheckCircle2 className="hidden sm:block h-7 w-7 text-teal-200 dark:text-teal-900" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">Prazos em dia</span>
+                  <span className="text-xs text-muted-foreground">Prazos em dia</span>
                 </div>
               </SwissCardContent>
             </SwissCard>
@@ -426,12 +426,12 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl sm:text-3xl font-bold">{mockStats.mediaTempoResposta}d</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Tempo Médio</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Tempo Médio</p>
                   </div>
                   <Activity className="hidden sm:block h-7 w-7 text-slate-200 dark:text-slate-700" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">Para protocolar</span>
+                  <span className="text-xs text-muted-foreground">Para protocolar</span>
                 </div>
               </SwissCardContent>
             </SwissCard>
@@ -455,7 +455,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <Link href="/admin/demandas?urgente=true">
-                    <Button variant="ghost" size="sm" className="gap-1 text-[10px] sm:text-xs h-8">
+                    <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-xs h-8">
                       Ver todos
                       <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     </Button>
@@ -473,12 +473,12 @@ export default function DashboardPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="font-semibold text-sm truncate">{prazo.assistido}</p>
-                              <Badge variant="outline" className={`text-[11px] font-semibold ${style.text} px-1.5 py-0`}>
+                              <Badge variant="outline" className={`text-xs font-semibold ${style.text} px-1.5 py-0`}>
                                 {style.label}
                               </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground truncate">{prazo.ato}</p>
-                            <p className="text-[10px] font-mono text-muted-foreground/80 mt-0.5 truncate">{prazo.processo}</p>
+                            <p className="text-xs font-mono text-muted-foreground/80 mt-0.5 truncate">{prazo.processo}</p>
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className={`text-sm font-bold ${prazo.diasRestantes === 0 ? "text-red-600" : prazo.diasRestantes === 1 ? "text-orange-600" : "text-muted-foreground"}`}>
@@ -530,7 +530,7 @@ export default function DashboardPage() {
                           <p className="font-medium text-xs sm:text-sm truncate">{atendimento.assistido}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-muted-foreground">{getTipoAtendimentoIcon(atendimento.tipo)}</span>
-                            <p className="text-[11px] sm:text-[10px] text-muted-foreground truncate">{atendimento.assunto}</p>
+                            <p className="text-xs text-muted-foreground truncate">{atendimento.assunto}</p>
                           </div>
                         </div>
                       </div>
@@ -559,7 +559,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <Link href="/admin/audiencias">
-                    <Button variant="ghost" size="sm" className="gap-1 text-[10px] sm:text-xs h-8">
+                    <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-xs h-8">
                       Ver todas
                       <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     </Button>
@@ -584,7 +584,7 @@ export default function DashboardPage() {
                           isToday ? "bg-blue-100 dark:bg-blue-900/50" : "bg-muted"
                         )}>
                           <p className={cn(
-                            "text-[10px] font-semibold",
+                            "text-xs font-semibold",
                             isToday ? "text-blue-600" : "text-muted-foreground"
                           )}>{audiencia.data}</p>
                           <p className={cn(
@@ -594,14 +594,14 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{audiencia.assistido}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{audiencia.vara}</p>
+                          <p className="text-xs text-muted-foreground truncate">{audiencia.vara}</p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
+                          <Badge variant="secondary" className="text-xs px-1.5 py-0">
                             {audiencia.tipo}
                           </Badge>
                           <span className={cn(
-                            "text-[11px] px-1.5 py-0.5 rounded",
+                            "text-xs px-1.5 py-0.5 rounded",
                             statusStyle.bg, statusStyle.text
                           )}>
                             {audiencia.status}
@@ -630,7 +630,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <Link href="/admin/juri">
-                    <Button variant="ghost" size="sm" className="gap-1 text-[10px] sm:text-xs h-8">
+                    <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-xs h-8">
                       Ver todos
                       <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     </Button>
@@ -647,15 +647,15 @@ export default function DashboardPage() {
                             <div className="bg-emerald-100 dark:bg-emerald-900/50 rounded-md px-1.5 sm:px-2 py-0.5">
                               <p className="text-xs sm:text-sm font-bold font-mono text-emerald-700 dark:text-emerald-300">{juri.data}</p>
                             </div>
-                            <span className="text-[11px] sm:text-[10px] text-muted-foreground font-mono">{juri.hora}</span>
+                            <span className="text-xs text-muted-foreground font-mono">{juri.hora}</span>
                           </div>
                           <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
                         </div>
                         <p className="font-semibold text-xs sm:text-sm truncate">{juri.assistido}</p>
-                        <p className="text-[11px] sm:text-[10px] text-muted-foreground truncate">{juri.crime}</p>
+                        <p className="text-xs text-muted-foreground truncate">{juri.crime}</p>
                         <div className="flex items-center justify-between mt-1 sm:mt-1.5">
-                          <p className="text-[11px] sm:text-[10px] text-muted-foreground">{juri.defensor}</p>
-                          <Badge className="text-[10px] sm:text-[11px] px-1 py-0 bg-white/60 dark:bg-zinc-900/40 text-muted-foreground border-0">{juri.comarca}</Badge>
+                          <p className="text-xs text-muted-foreground">{juri.defensor}</p>
+                          <Badge className="text-xs px-1 py-0 bg-white/60 dark:bg-zinc-900/40 text-muted-foreground border-0">{juri.comarca}</Badge>
                         </div>
                       </div>
                     </Link>
@@ -676,7 +676,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xl sm:text-2xl font-bold">{mockStats.reusPresos}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">Réus Presos</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground">Réus Presos</p>
                   </div>
                   <Link href="/admin/assistidos?preso=true">
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -694,7 +694,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xl sm:text-2xl font-bold">{mockStats.casosAtivos}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">Casos Ativos</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground">Casos Ativos</p>
                   </div>
                   <Link href="/admin/casos">
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -712,7 +712,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xl sm:text-2xl font-bold">{mockStats.totalAssistidos}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">Assistidos</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground">Assistidos</p>
                   </div>
                   <Link href="/admin/assistidos">
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -730,7 +730,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xl sm:text-2xl font-bold">{mockStats.totalProcessos}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">Processos</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground">Processos</p>
                   </div>
                   <Link href="/admin/processos">
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -782,8 +782,8 @@ export default function DashboardPage() {
                   {mockDemandasPorStatus.map((item) => (
                     <div key={item.name} className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-[10px] text-muted-foreground">{item.name}</span>
-                      <span className="text-[10px] font-semibold ml-auto">{item.value}</span>
+                      <span className="text-xs text-muted-foreground">{item.name}</span>
+                      <span className="text-xs font-semibold ml-auto">{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -831,11 +831,11 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-center gap-4 mt-2">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] text-muted-foreground">Protocolados</span>
+                    <span className="text-xs text-muted-foreground">Protocolados</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                    <span className="text-[10px] text-muted-foreground">Recebidos</span>
+                    <span className="text-xs text-muted-foreground">Recebidos</span>
                   </div>
                 </div>
               </SwissCardContent>
@@ -877,25 +877,25 @@ export default function DashboardPage() {
             <Link href="/admin/assistidos/novo">
               <Button variant="outline" className="w-full h-auto py-2.5 sm:py-3 flex-col gap-1 sm:gap-1.5 hover:bg-primary hover:text-primary-foreground transition-colors rounded-lg">
                 <Users className="h-4 w-4" />
-                <span className="text-[10px] sm:text-xs font-medium">Novo Assistido</span>
+                <span className="text-xs sm:text-xs font-medium">Novo Assistido</span>
               </Button>
             </Link>
             <Link href="/admin/demandas/nova">
               <Button variant="outline" className="w-full h-auto py-2.5 sm:py-3 flex-col gap-1 sm:gap-1.5 hover:bg-primary hover:text-primary-foreground transition-colors rounded-lg">
                 <FileText className="h-4 w-4" />
-                <span className="text-[10px] sm:text-xs font-medium">Nova Demanda</span>
+                <span className="text-xs sm:text-xs font-medium">Nova Demanda</span>
               </Button>
             </Link>
             <Link href="/admin/kanban">
               <Button variant="outline" className="w-full h-auto py-2.5 sm:py-3 flex-col gap-1 sm:gap-1.5 hover:bg-primary hover:text-primary-foreground transition-colors rounded-lg">
                 <Target className="h-4 w-4" />
-                <span className="text-[10px] sm:text-xs font-medium">Kanban</span>
+                <span className="text-xs sm:text-xs font-medium">Kanban</span>
               </Button>
             </Link>
             <Link href="/admin/calendar">
               <Button variant="outline" className="w-full h-auto py-2.5 sm:py-3 flex-col gap-1 sm:gap-1.5 hover:bg-primary hover:text-primary-foreground transition-colors rounded-lg">
                 <CalendarDays className="h-4 w-4" />
-                <span className="text-[10px] sm:text-xs font-medium">Calendário</span>
+                <span className="text-xs sm:text-xs font-medium">Calendário</span>
               </Button>
             </Link>
           </div>
@@ -987,19 +987,19 @@ export default function DashboardPage() {
               <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-slate-100 dark:border-slate-800">
                 <div className="text-center p-3 sm:p-4 rounded-lg bg-slate-50/60 dark:bg-slate-900/40">
                   <p className="text-2xl sm:text-3xl font-bold">{mockStats.totalAssistidos}</p>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground mt-1">Assistidos</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">Assistidos</p>
                 </div>
                 <div className="text-center p-3 sm:p-4 rounded-lg bg-slate-50/60 dark:bg-slate-900/40">
                   <p className="text-2xl sm:text-3xl font-bold">{mockStats.totalProcessos}</p>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground mt-1">Processos</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">Processos</p>
                 </div>
                 <div className="text-center p-3 sm:p-4 rounded-lg bg-slate-50/60 dark:bg-slate-900/40">
                   <p className="text-2xl sm:text-3xl font-bold">{mockStats.demandas.protocolado}</p>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground mt-1">Protocolados</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">Protocolados</p>
                 </div>
                 <div className="text-center p-3 sm:p-4 rounded-lg bg-slate-50/60 dark:bg-slate-900/40">
                   <p className="text-2xl sm:text-3xl font-bold text-emerald-600">94%</p>
-                  <p className="text-[10px] sm:text-sm text-muted-foreground mt-1">Eficiência</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">Eficiência</p>
                 </div>
               </div>
             </SwissCardContent>

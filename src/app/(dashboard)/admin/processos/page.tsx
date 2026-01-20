@@ -339,7 +339,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 {/* 1. SITUAÇÃO/STATUS */}
                 <Badge className={cn(
-                  "text-[11px] sm:text-[10px] px-1.5 py-0 font-semibold uppercase rounded-md border-0",
+                  "text-xs px-1.5 py-0 font-semibold uppercase rounded-md border-0",
                   situacaoConfig.bg, situacaoConfig.color
                 )}>
                   {situacaoConfig.label}
@@ -347,7 +347,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
                 {/* 2. ÁREA */}
                 <Badge className={cn(
-                  "text-[11px] sm:text-[10px] px-1.5 py-0 rounded-md border-0",
+                  "text-xs px-1.5 py-0 rounded-md border-0",
                   atribuicaoColors.bg, atribuicaoColors.text
                 )}>
                   {ATRIBUICAO_OPTIONS.find(o => o.value === processo.area)?.shortLabel || processo.area}
@@ -365,7 +365,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
                 {/* 4. PRAZO URGENTE */}
                 {prazoUrgente && diasPrazo !== null && (
-                  <Badge className="text-[11px] sm:text-[10px] px-1.5 py-0 rounded-md bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200 border-0">
+                  <Badge className="text-xs px-1.5 py-0 rounded-md bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200 border-0">
                     <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
                     {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : `${diasPrazo}d`}
                   </Badge>
@@ -401,7 +401,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               </p>
 
               {/* Localização */}
-              <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-2 sm:gap-3 text-xs text-zinc-500 dark:text-zinc-400">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
                   <span className="truncate max-w-[120px] sm:max-w-none">{processo.vara}</span>
@@ -477,14 +477,14 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 {processo.assistido.preso ? (
                   <>
                     <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-rose-500" />
-                    <span className="text-[11px] sm:text-[10px] text-rose-600 dark:text-rose-400 truncate max-w-[100px] sm:max-w-[150px]">
+                    <span className="text-xs text-rose-600 dark:text-rose-400 truncate max-w-[100px] sm:max-w-[150px]">
                       {processo.assistido.localPrisao || "Preso"}
                     </span>
                   </>
                 ) : (
                   <>
                     <Unlock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-500" />
-                    <span className="text-[11px] sm:text-[10px] text-emerald-600 dark:text-emerald-400">Solto</span>
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400">Solto</span>
                   </>
                 )}
               </div>
@@ -495,7 +495,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               <Tooltip>
                 <TooltipTrigger>
                   <Badge variant="outline" className={cn(
-                    "text-[11px] sm:text-[10px] font-mono px-1.5 py-0 rounded-md",
+                    "text-xs font-mono px-1.5 py-0 rounded-md",
                     "border-zinc-300 text-zinc-700 bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:bg-zinc-800"
                   )}>
                     <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
@@ -525,12 +525,12 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 )} />
                 <div className="flex-1 min-w-0">
                   <p className={cn(
-                    "text-[10px] sm:text-xs font-medium",
+                    "text-xs font-medium",
                     prazoUrgente ? "text-amber-700 dark:text-amber-400" : "text-zinc-700 dark:text-zinc-300"
                   )}>
                     {processo.atoProximoPrazo}
                   </p>
-                  <p className="text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
                     {format(processo.proximoPrazo, "dd/MM/yyyy", { locale: ptBR })}
                   </p>
                 </div>
@@ -543,10 +543,10 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
                   <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate">
+                    <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate">
                       {processo.casoTitulo}
                     </p>
-                    <p className="text-[11px] sm:text-[10px] text-emerald-600/70 dark:text-emerald-400/70">
+                    <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
                       Vinculado ao caso
                     </p>
                   </div>
@@ -556,7 +556,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
             {/* Último Evento */}
             {processo.ultimoEvento && (
-              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
                 <span className="truncate">
                   {processo.ultimoEvento}
@@ -571,7 +571,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
             {/* Defensor */}
             {processo.defensorNome && (
-              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                 <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
                 <span>{processo.defensorNome}</span>
               </div>
@@ -582,7 +582,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
         {/* Trigger de Expansão */}
         <CollapsibleTrigger asChild>
           <div className="flex justify-center py-1.5 sm:py-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-t border-zinc-100 dark:border-zinc-800">
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-zinc-400">
+            <div className="flex items-center gap-1 text-xs text-zinc-400">
               {isOpen ? <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </div>
           </div>
@@ -650,7 +650,7 @@ function ProcessoRow({ processo }: { processo: Processo }) {
         </div>
       </SwissTableCell>
       <SwissTableCell>
-        <Badge className={cn("text-[10px] border-0", atribuicaoColors.bg, atribuicaoColors.text)}>
+        <Badge className={cn("text-xs border-0", atribuicaoColors.bg, atribuicaoColors.text)}>
           {ATRIBUICAO_OPTIONS.find(o => o.value === processo.area)?.shortLabel || processo.area}
         </Badge>
       </SwissTableCell>
@@ -668,7 +668,7 @@ function ProcessoRow({ processo }: { processo: Processo }) {
         </span>
       </SwissTableCell>
       <SwissTableCell>
-        <Badge className={cn("text-[10px] border-0", situacaoConfig.bg, situacaoConfig.color)}>
+        <Badge className={cn("text-xs border-0", situacaoConfig.bg, situacaoConfig.color)}>
           {situacaoConfig.label}
         </Badge>
       </SwissTableCell>

@@ -266,7 +266,7 @@ export default function AssistidoDetailPage() {
                         <p className="font-mono text-sm text-muted-foreground">{proc.numero}</p>
                         <p className="text-xs text-muted-foreground">{proc.tipo} - {proc.vara}</p>
                       </div>
-                      <Badge variant="secondary" className="text-[10px]">{proc.status}</Badge>
+                      <Badge variant="secondary" className="text-xs">{proc.status}</Badge>
                     </div>
                   ))}
                 </div>
