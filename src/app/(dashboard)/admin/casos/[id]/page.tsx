@@ -54,6 +54,7 @@ import {
   FileQuestion,
   Bookmark,
   Copy,
+  BookOpen,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import Link from "next/link";
