@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea, renderMentions } from "@/components/shared/mention-textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -919,6 +920,30 @@ function DemandaModal({
     }
   }, [demanda]);
 
+  const mentionSuggestions = useMemo(() => {
+    const assistidos = Array.from(new Set(mockDemandas.map((item) => item.assistido).filter(Boolean)));
+    const processos = Array.from(new Set(mockDemandas.map((item) => item.processo).filter(Boolean)));
+    const atos = Array.from(new Set(mockDemandas.map((item) => item.ato).filter(Boolean)));
+
+    return [
+      ...assistidos.map((nome) => ({
+        id: `p-${nome}`,
+        label: nome,
+        type: "pessoa" as const,
+      })),
+      ...processos.map((numero) => ({
+        id: `d-${numero}`,
+        label: numero,
+        type: "documento" as const,
+      })),
+      ...atos.map((ato) => ({
+        id: `f-${ato}`,
+        label: ato,
+        type: "fato" as const,
+      })),
+    ];
+  }, []);
+
   const handleSubmit = () => {
     onSave(formData);
     onClose();
@@ -1231,13 +1256,21 @@ function DemandaModal({
           {/* Observações */}
           <div className="space-y-2">
             <Label htmlFor="observacoes">Observações</Label>
-            <Textarea
-              id="observacoes"
+            <MentionTextarea
               value={formData.observacoes || ""}
-              onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-              placeholder="Observações adicionais..."
-              rows={2}
+              onChange={(value) => setFormData({ ...formData, observacoes: value })}
+              suggestions={mentionSuggestions}
+              placeholder="Use @, # ou $ para inserir vínculos..."
+              className="min-h-[120px]"
             />
+            <div className="rounded-sm border border-slate-200 dark:border-slate-800 p-2">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-1">
+                Pré-visualização
+              </p>
+              <div className="text-sm text-slate-700 dark:text-slate-300 space-x-1">
+                {formData.observacoes ? renderMentions(formData.observacoes) : "Sem observações."}
+              </div>
+            </div>
           </div>
         </div>
 

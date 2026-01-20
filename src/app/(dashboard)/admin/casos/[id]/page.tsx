@@ -173,9 +173,9 @@ interface FactEvidenceItem {
 }
 
 interface TimelineItem {
-  id: number;
+  id: string;
   data: Date;
-  tipo: "movimentacao" | "nota" | "documento" | "audiencia" | "fato";
+  tipo: "movimentacao" | "nota" | "documento" | "audiencia" | "fato" | "demanda";
   titulo: string;
   descricao: string;
   links?: { type: "pessoa" | "documento" | "fato"; name: string; href?: string }[];
@@ -351,7 +351,7 @@ const MOCK_EVIDENCIAS: FactEvidenceItem[] = [
 
 const MOCK_TIMELINE: TimelineItem[] = [
   {
-    id: 1,
+    id: "1",
     data: new Date("2026-01-10"),
     tipo: "movimentacao",
     titulo: "Despacho de designação de audiência",
@@ -359,7 +359,7 @@ const MOCK_TIMELINE: TimelineItem[] = [
     links: [{ type: "documento", name: "Despacho fls. 12" }],
   },
   {
-    id: 2,
+    id: "2",
     data: new Date("2026-01-14"),
     tipo: "nota",
     titulo: "Nota estratégica",
@@ -367,7 +367,7 @@ const MOCK_TIMELINE: TimelineItem[] = [
     links: [{ type: "fato", name: "Ausência de mandado" }],
   },
   {
-    id: 3,
+    id: "3",
     data: new Date("2026-01-25"),
     tipo: "audiencia",
     titulo: "Audiência de instrução",
@@ -378,7 +378,7 @@ const MOCK_TIMELINE: TimelineItem[] = [
     ],
   },
   {
-    id: 4,
+    id: "4",
     data: new Date("2026-02-01"),
     tipo: "documento",
     titulo: "Upload de laudo pericial",
@@ -386,7 +386,7 @@ const MOCK_TIMELINE: TimelineItem[] = [
     links: [{ type: "documento", name: "Laudo pericial" }],
   },
   {
-    id: 5,
+    id: "5",
     data: new Date("2026-02-05"),
     tipo: "fato",
     titulo: "Consolidação do fato controvertido",
@@ -640,6 +640,10 @@ export default function CasoDetailPage() {
     { casoId: casoIdNumber },
     { enabled: Number.isFinite(casoIdNumber) }
   );
+  const { data: timelineData } = trpc.casos.listTimeline.useQuery(
+    { casoId: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
 
   const caso = casoData
     ? {
@@ -717,6 +721,19 @@ export default function CasoDetailPage() {
       })),
     ];
   }, [personasSource, factsSource, evidenciasSource, documentsSource]);
+
+  const timelineSource: TimelineItem[] = timelineData?.length
+    ? timelineData.map((item) => ({
+        id: item.id,
+        data: new Date(item.date),
+        tipo: item.type as TimelineItem["tipo"],
+        titulo: item.title,
+        descricao: item.description || "",
+        links: item.processoNumero
+          ? [{ type: "documento", name: item.processoNumero }]
+          : undefined,
+      }))
+    : MOCK_TIMELINE;
   
   // Verificar teoria completa
   const teoriaCompleta = caso.teoriaFatos && caso.teoriaProvas && caso.teoriaDireito;
@@ -1373,7 +1390,7 @@ export default function CasoDetailPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {MOCK_TIMELINE.map((item) => (
+                  {timelineSource.map((item) => (
                     <div key={item.id} className="flex gap-4">
                       <div className="flex flex-col items-center">
                         <span className="w-2.5 h-2.5 rounded-full bg-zinc-400" />

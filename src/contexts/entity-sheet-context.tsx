@@ -114,6 +114,12 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                         <span className="font-medium">{personaQuery.data.status}</span>
                       </div>
                     )}
+                    {personaQuery.data.observacoes && (
+                      <div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Observações</span>
+                        <p className="text-sm mt-1">{personaQuery.data.observacoes}</p>
+                      </div>
+                    )}
                     {(personaQuery.data.assistidoId || personaQuery.data.juradoId) && (
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Vínculo</span>
@@ -156,6 +162,18 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                       <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Status</span>
                       <span className="font-medium">{factQuery.data.status || "—"}</span>
                     </div>
+                    {Array.isArray(factQuery.data.tags) && factQuery.data.tags.length > 0 && (
+                      <div>
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Tags</span>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {factQuery.data.tags.map((tag) => (
+                            <Badge key={tag} variant="outline" className="text-[10px]">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Evidências</span>
                       <span className="font-medium">{factQuery.data.evidenceCount}</span>
