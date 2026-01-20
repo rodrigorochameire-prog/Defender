@@ -3205,8 +3205,7 @@ export default function DemandasPage() {
                     <div>
                       <Badge className={cn(
                         "px-2 py-0 h-5",
-                        statusConfig.color, 
-                        statusConfig.textColor || "text-white",
+                        statusConfig.color,
                         largerFontMode ? "text-xs" : "text-xs"
                       )}>
                         {statusConfig.label}
