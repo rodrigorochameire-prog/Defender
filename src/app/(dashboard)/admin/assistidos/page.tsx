@@ -657,7 +657,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 <Badge 
                   variant="outline" 
                   className={cn(
-                    "rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-semibold",
+                    "rounded-md px-1.5 py-0 text-[11px] sm:text-[10px] uppercase font-semibold",
                     faseConfig[assistido.faseProcessual].bgColor,
                     faseConfig[assistido.faseProcessual].color,
                     "border-transparent"
@@ -672,7 +672,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 <Badge 
                   variant="outline" 
                   className={cn(
-                    "rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-medium",
+                    "rounded-md px-1.5 py-0 text-[11px] sm:text-[10px] uppercase font-medium",
                     areaConfig[assistido.area].bgColor,
                     areaConfig[assistido.area].color,
                     "border-transparent"
@@ -686,14 +686,14 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               {isPreso ? (
                 <Badge 
                   variant="outline" 
-                  className="rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-bold border-rose-300 text-rose-700 bg-rose-100 dark:bg-rose-950/30 dark:border-rose-800 dark:text-rose-400"
+                  className="rounded-md px-1.5 py-0 text-[11px] sm:text-[10px] uppercase font-bold border-rose-300 text-rose-700 bg-rose-100 dark:bg-rose-950/30 dark:border-rose-800 dark:text-rose-400"
                 >
                   <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Preso
                 </Badge>
               ) : isMonitorado ? (
                 <Badge 
                   variant="outline" 
-                  className="rounded-md px-1.5 py-0 text-[9px] sm:text-[10px] uppercase font-medium border-amber-300 text-amber-700 bg-amber-100 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400"
+                  className="rounded-md px-1.5 py-0 text-[11px] sm:text-[10px] uppercase font-medium border-amber-300 text-amber-700 bg-amber-100 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400"
                 >
                   <AlertCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Monitor.
                 </Badge>
@@ -702,7 +702,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
             
             {/* Local de prisão - mais compacto */}
             {assistido.unidadePrisional && (
-              <span className="flex items-center text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+              <span className="flex items-center text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
                 <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 flex-shrink-0" /> 
                 {assistido.unidadePrisional}
               </span>
@@ -854,7 +854,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               <div className="p-2.5 rounded-lg bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Gavel className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                  <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Tese da Defesa</p>
+                  <p className="text-[11px] sm:text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Tese da Defesa</p>
                 </div>
                 <p className="text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-200 leading-relaxed italic">&ldquo;{assistido.teseDaDefesa}&rdquo;</p>
               </div>
@@ -876,20 +876,20 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               <div className="grid grid-cols-2 gap-2">
                 {assistido.ultimaAudiencia && (
                   <div className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
-                    <p className="text-[8px] sm:text-[9px] uppercase text-zinc-400 font-semibold tracking-wider mb-0.5">Última Audiência</p>
+                    <p className="text-[10px] sm:text-[11px] uppercase text-zinc-400 font-semibold tracking-wider mb-0.5">Última Audiência</p>
                     <p className="text-xs sm:text-sm font-data font-semibold text-zinc-700 dark:text-zinc-300">
                       {format(parseISO(assistido.ultimaAudiencia), "dd/MM/yy")}
                     </p>
-                    <p className="text-[9px] sm:text-[10px] text-zinc-500 truncate">{assistido.tipoUltimaAudiencia}</p>
+                    <p className="text-[11px] sm:text-[10px] text-zinc-500 truncate">{assistido.tipoUltimaAudiencia}</p>
                   </div>
                 )}
                 {assistido.proximaAudiencia && (
                   <div className="p-2 rounded-lg bg-blue-50/80 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50">
-                    <p className="text-[8px] sm:text-[9px] uppercase text-blue-600 dark:text-blue-400 font-semibold tracking-wider mb-0.5">Próxima Audiência</p>
+                    <p className="text-[10px] sm:text-[11px] uppercase text-blue-600 dark:text-blue-400 font-semibold tracking-wider mb-0.5">Próxima Audiência</p>
                     <p className="text-xs sm:text-sm font-data font-semibold text-blue-700 dark:text-blue-300">
                       {format(parseISO(assistido.proximaAudiencia), "dd/MM/yy")}
                     </p>
-                    <p className="text-[9px] sm:text-[10px] text-blue-600 dark:text-blue-400 truncate">{assistido.tipoProximaAudiencia}</p>
+                    <p className="text-[11px] sm:text-[10px] text-blue-600 dark:text-blue-400 truncate">{assistido.tipoProximaAudiencia}</p>
                   </div>
                 )}
               </div>

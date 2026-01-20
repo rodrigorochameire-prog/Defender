@@ -346,9 +346,9 @@ export default function DashboardPage() {
                   <Timer className="hidden sm:block h-7 w-7 text-orange-200 dark:text-orange-900" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[9px] sm:text-[10px] text-muted-foreground">{mockStats.prazosSemana} na semana</span>
+                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">{mockStats.prazosSemana} na semana</span>
                   {mockStats.prazosVencidos > 0 && (
-                    <Badge className="text-[8px] sm:text-[9px] px-1 py-0 h-3.5 sm:h-4 bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-0">
+                    <Badge className="text-[10px] sm:text-[11px] px-1 py-0 h-3.5 sm:h-4 bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-0">
                       {mockStats.prazosVencidos} vencidos
                     </Badge>
                   )}
@@ -367,7 +367,7 @@ export default function DashboardPage() {
                   <Briefcase className="hidden sm:block h-7 w-7 text-blue-200 dark:text-blue-900" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[9px] sm:text-[10px] text-muted-foreground">{mockStats.audienciasSemana} na semana</span>
+                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">{mockStats.audienciasSemana} na semana</span>
                 </div>
               </SwissCardContent>
             </SwissCard>
@@ -383,7 +383,7 @@ export default function DashboardPage() {
                   <UserCheck className="hidden sm:block h-7 w-7 text-purple-200 dark:text-purple-900" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[9px] sm:text-[10px] text-muted-foreground">{mockStats.atendimentosSemana} na semana</span>
+                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">{mockStats.atendimentosSemana} na semana</span>
                 </div>
               </SwissCardContent>
             </SwissCard>
@@ -399,7 +399,7 @@ export default function DashboardPage() {
                   <Gavel className="hidden sm:block h-7 w-7 text-emerald-200 dark:text-emerald-900" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[9px] sm:text-[10px] text-muted-foreground">Sessões plenárias</span>
+                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">Sessões plenárias</span>
                 </div>
               </SwissCardContent>
             </SwissCard>
@@ -415,7 +415,7 @@ export default function DashboardPage() {
                   <CheckCircle2 className="hidden sm:block h-7 w-7 text-teal-200 dark:text-teal-900" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[9px] sm:text-[10px] text-muted-foreground">Prazos em dia</span>
+                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">Prazos em dia</span>
                 </div>
               </SwissCardContent>
             </SwissCard>
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                   <Activity className="hidden sm:block h-7 w-7 text-slate-200 dark:text-slate-700" />
                 </div>
                 <div className="flex items-center gap-1 mt-2">
-                  <span className="text-[9px] sm:text-[10px] text-muted-foreground">Para protocolar</span>
+                  <span className="text-[11px] sm:text-[10px] text-muted-foreground">Para protocolar</span>
                 </div>
               </SwissCardContent>
             </SwissCard>
@@ -473,7 +473,7 @@ export default function DashboardPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="font-semibold text-sm truncate">{prazo.assistido}</p>
-                              <Badge variant="outline" className={`text-[9px] font-semibold ${style.text} px-1.5 py-0`}>
+                              <Badge variant="outline" className={`text-[11px] font-semibold ${style.text} px-1.5 py-0`}>
                                 {style.label}
                               </Badge>
                             </div>
@@ -530,7 +530,7 @@ export default function DashboardPage() {
                           <p className="font-medium text-xs sm:text-sm truncate">{atendimento.assistido}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-muted-foreground">{getTipoAtendimentoIcon(atendimento.tipo)}</span>
-                            <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">{atendimento.assunto}</p>
+                            <p className="text-[11px] sm:text-[10px] text-muted-foreground truncate">{atendimento.assunto}</p>
                           </div>
                         </div>
                       </div>
@@ -597,11 +597,11 @@ export default function DashboardPage() {
                           <p className="text-[10px] text-muted-foreground truncate">{audiencia.vara}</p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                          <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
                             {audiencia.tipo}
                           </Badge>
                           <span className={cn(
-                            "text-[9px] px-1.5 py-0.5 rounded",
+                            "text-[11px] px-1.5 py-0.5 rounded",
                             statusStyle.bg, statusStyle.text
                           )}>
                             {audiencia.status}
@@ -647,15 +647,15 @@ export default function DashboardPage() {
                             <div className="bg-emerald-100 dark:bg-emerald-900/50 rounded-md px-1.5 sm:px-2 py-0.5">
                               <p className="text-xs sm:text-sm font-bold font-mono text-emerald-700 dark:text-emerald-300">{juri.data}</p>
                             </div>
-                            <span className="text-[9px] sm:text-[10px] text-muted-foreground font-mono">{juri.hora}</span>
+                            <span className="text-[11px] sm:text-[10px] text-muted-foreground font-mono">{juri.hora}</span>
                           </div>
                           <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
                         </div>
                         <p className="font-semibold text-xs sm:text-sm truncate">{juri.assistido}</p>
-                        <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">{juri.crime}</p>
+                        <p className="text-[11px] sm:text-[10px] text-muted-foreground truncate">{juri.crime}</p>
                         <div className="flex items-center justify-between mt-1 sm:mt-1.5">
-                          <p className="text-[9px] sm:text-[10px] text-muted-foreground">{juri.defensor}</p>
-                          <Badge className="text-[8px] sm:text-[9px] px-1 py-0 bg-white/60 dark:bg-zinc-900/40 text-muted-foreground border-0">{juri.comarca}</Badge>
+                          <p className="text-[11px] sm:text-[10px] text-muted-foreground">{juri.defensor}</p>
+                          <Badge className="text-[10px] sm:text-[11px] px-1 py-0 bg-white/60 dark:bg-zinc-900/40 text-muted-foreground border-0">{juri.comarca}</Badge>
                         </div>
                       </div>
                     </Link>

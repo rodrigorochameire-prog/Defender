@@ -1109,7 +1109,7 @@ function DemandaModal({
                       <div className="flex items-center gap-2">
                         <div className={cn("w-2 h-2 rounded-full", status.color)} />
                         {status.label}
-                        {status.isCustom && <Badge variant="outline" className="text-[9px] ml-1">Custom</Badge>}
+                        {status.isCustom && <Badge variant="outline" className="text-[11px] ml-1">Custom</Badge>}
                       </div>
                     </SelectItem>
                   ))}
@@ -1218,7 +1218,7 @@ function DemandaModal({
                       <div className="flex items-center gap-2">
                         <div className={cn("w-2 h-2 rounded-full", p.color)} />
                         {p.label}
-                        {p.isCustom && <Badge variant="outline" className="text-[9px] ml-1">Custom</Badge>}
+                        {p.isCustom && <Badge variant="outline" className="text-[11px] ml-1">Custom</Badge>}
                       </div>
                     </SelectItem>
                   ))}
@@ -1601,7 +1601,7 @@ function SelectWithAdd({
                   <div className="flex items-center gap-2">
                     <div className={cn("w-2 h-2 rounded-full flex-shrink-0", opt.color)} />
                     <span>{opt.label}</span>
-                    {opt.isCustom && <Badge variant="outline" className="text-[9px] ml-1">Custom</Badge>}
+                    {opt.isCustom && <Badge variant="outline" className="text-[11px] ml-1">Custom</Badge>}
                   </div>
                 </SelectItem>
               ))}
@@ -1613,7 +1613,7 @@ function SelectWithAdd({
               <div className="flex items-center gap-2">
                 <div className={cn("w-2 h-2 rounded-full flex-shrink-0", opt.color)} />
                 <span>{opt.label}</span>
-                {opt.isCustom && <Badge variant="outline" className="text-[9px] ml-1">Custom</Badge>}
+                {opt.isCustom && <Badge variant="outline" className="text-[11px] ml-1">Custom</Badge>}
               </div>
             </SelectItem>
           ))
@@ -2256,7 +2256,7 @@ export default function DemandasPage() {
                           {demanda.reuPreso && (
                             <Badge className={cn(
                               "bg-rose-600 text-white px-1.5 sm:px-2 py-0 animate-pulse",
-                              largerFontMode ? "text-xs h-6" : "text-[9px] sm:text-[10px] h-5"
+                              largerFontMode ? "text-xs h-6" : "text-[11px] sm:text-[10px] h-5"
                             )}>
                               <Lock className={cn(largerFontMode ? "h-3 w-3" : "h-2.5 w-2.5", "mr-0.5")} />
                               PRESO
@@ -2266,7 +2266,7 @@ export default function DemandasPage() {
                             "px-1.5 sm:px-2 py-0", 
                             statusConfig.color, 
                             statusConfig.textColor || "text-white",
-                            largerFontMode ? "text-xs h-6" : "text-[9px] sm:text-[10px] h-5"
+                            largerFontMode ? "text-xs h-6" : "text-[11px] sm:text-[10px] h-5"
                           )}>
                             {statusConfig.label}
                           </Badge>
@@ -2335,7 +2335,7 @@ export default function DemandasPage() {
                         {tipoAtoConfig && (
                           <Badge variant="outline" className={cn(
                             "px-1.5 py-0 bg-zinc-100 dark:bg-zinc-800",
-                            largerFontMode ? "text-xs h-6" : "text-[9px] sm:text-[10px] h-5"
+                            largerFontMode ? "text-xs h-6" : "text-[11px] sm:text-[10px] h-5"
                           )}>
                             {tipoAtoConfig.label}
                           </Badge>
@@ -2943,7 +2943,7 @@ export default function DemandasPage() {
                         {demanda.reuPreso && (
                           <Badge className={cn(
                             "bg-rose-600 text-white px-1.5 py-0 h-5",
-                            largerFontMode ? "text-xs" : "text-[9px]"
+                            largerFontMode ? "text-xs" : "text-[11px]"
                           )}>
                             <Lock className={cn("mr-0.5", largerFontMode ? "h-3 w-3" : "h-2.5 w-2.5")} />
                             PRESO
@@ -3145,13 +3145,13 @@ export default function DemandasPage() {
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
                         {demanda.reuPreso && (
-                          <Badge className="bg-rose-600 text-white text-[8px] px-1 py-0 h-4">
+                          <Badge className="bg-rose-600 text-white text-[10px] px-1 py-0 h-4">
                             <Lock className="h-2 w-2 mr-0.5" />
                             PRESO
                           </Badge>
                         )}
                         {tipoAtoConfig && (
-                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}
                           </Badge>
                         )}
@@ -3162,7 +3162,7 @@ export default function DemandasPage() {
                       <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
                       {/* Processo */}
                       {demanda.processo && (
-                        <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                        <p className="text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
                           {demanda.processo}
                         </p>
                       )}
@@ -3179,7 +3179,7 @@ export default function DemandasPage() {
                       </div>
                       {/* Providências preview */}
                       {demanda.providencias && (
-                        <p className="text-[9px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
                           {demanda.providencias}
                         </p>
                       )}
@@ -3220,13 +3220,13 @@ export default function DemandasPage() {
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
                         {demanda.reuPreso && (
-                          <Badge className="bg-rose-600 text-white text-[8px] px-1 py-0 h-4">
+                          <Badge className="bg-rose-600 text-white text-[10px] px-1 py-0 h-4">
                             <Lock className="h-2 w-2 mr-0.5" />
                             PRESO
                           </Badge>
                         )}
                         {tipoAtoConfig && (
-                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}
                           </Badge>
                         )}
@@ -3237,7 +3237,7 @@ export default function DemandasPage() {
                       <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
                       {/* Processo */}
                       {demanda.processo && (
-                        <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                        <p className="text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
                           {demanda.processo}
                         </p>
                       )}
@@ -3254,7 +3254,7 @@ export default function DemandasPage() {
                       </div>
                       {/* Providências preview */}
                       {demanda.providencias && (
-                        <p className="text-[9px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
                           {demanda.providencias}
                         </p>
                       )}
@@ -3295,13 +3295,13 @@ export default function DemandasPage() {
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
                         {demanda.reuPreso && (
-                          <Badge className="bg-rose-600 text-white text-[8px] px-1 py-0 h-4">
+                          <Badge className="bg-rose-600 text-white text-[10px] px-1 py-0 h-4">
                             <Lock className="h-2 w-2 mr-0.5" />
                             PRESO
                           </Badge>
                         )}
                         {tipoAtoConfig && (
-                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}
                           </Badge>
                         )}
@@ -3312,7 +3312,7 @@ export default function DemandasPage() {
                       <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
                       {/* Processo */}
                       {demanda.processo && (
-                        <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                        <p className="text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
                           {demanda.processo}
                         </p>
                       )}
@@ -3329,7 +3329,7 @@ export default function DemandasPage() {
                       </div>
                       {/* Providências preview */}
                       {demanda.providencias && (
-                        <p className="text-[9px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-500 mt-1.5 line-clamp-2 italic">
                           {demanda.providencias}
                         </p>
                       )}
@@ -3364,12 +3364,12 @@ export default function DemandasPage() {
                     >
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
-                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 text-[8px] px-1 py-0 h-4">
+                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 text-[10px] px-1 py-0 h-4">
                           <CheckCircle2 className="h-2 w-2 mr-0.5" />
                           {statusConfig.label}
                         </Badge>
                         {tipoAtoConfig && (
-                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
+                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}
                           </Badge>
                         )}
@@ -3380,7 +3380,7 @@ export default function DemandasPage() {
                       <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">{demanda.ato || "Sem ato"}</p>
                       {/* Processo */}
                       {demanda.processo && (
-                        <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
+                        <p className="text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-500 font-mono mt-1 truncate">
                           {demanda.processo}
                         </p>
                       )}

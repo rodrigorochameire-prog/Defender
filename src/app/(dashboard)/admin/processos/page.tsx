@@ -337,7 +337,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 {/* 1. SITUAÇÃO/STATUS */}
                 <Badge className={cn(
-                  "text-[9px] sm:text-[10px] px-1.5 py-0 font-semibold uppercase rounded-md border-0",
+                  "text-[11px] sm:text-[10px] px-1.5 py-0 font-semibold uppercase rounded-md border-0",
                   situacaoConfig.bg, situacaoConfig.color
                 )}>
                   {situacaoConfig.label}
@@ -345,7 +345,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
                 {/* 2. ÁREA */}
                 <Badge className={cn(
-                  "text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md border-0",
+                  "text-[11px] sm:text-[10px] px-1.5 py-0 rounded-md border-0",
                   atribuicaoColors.bg, atribuicaoColors.text
                 )}>
                   {ATRIBUICAO_OPTIONS.find(o => o.value === processo.area)?.shortLabel || processo.area}
@@ -353,14 +353,14 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 
                 {/* 3. RÉU PRESO */}
                 {processo.assistido.preso && (
-                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-0 font-bold">
+                  <Badge className="text-[11px] sm:text-[10px] px-1.5 py-0 rounded-md bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-0 font-bold">
                     <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Preso
                   </Badge>
                 )}
 
                 {/* 4. PRAZO URGENTE */}
                 {prazoUrgente && diasPrazo !== null && (
-                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-0">
+                  <Badge className="text-[11px] sm:text-[10px] px-1.5 py-0 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-0">
                     <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
                     {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : `${diasPrazo}d`}
                   </Badge>
@@ -471,14 +471,14 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 {processo.assistido.preso ? (
                   <>
                     <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-rose-500" />
-                    <span className="text-[9px] sm:text-[10px] text-rose-600 dark:text-rose-400 truncate max-w-[100px] sm:max-w-[150px]">
+                    <span className="text-[11px] sm:text-[10px] text-rose-600 dark:text-rose-400 truncate max-w-[100px] sm:max-w-[150px]">
                       {processo.assistido.localPrisao || "Preso"}
                     </span>
                   </>
                 ) : (
                   <>
                     <Unlock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-500" />
-                    <span className="text-[9px] sm:text-[10px] text-emerald-600 dark:text-emerald-400">Solto</span>
+                    <span className="text-[11px] sm:text-[10px] text-emerald-600 dark:text-emerald-400">Solto</span>
                   </>
                 )}
               </div>
@@ -489,7 +489,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               <Tooltip>
                 <TooltipTrigger>
                   <Badge variant="outline" className={cn(
-                    "text-[9px] sm:text-[10px] font-mono px-1.5 py-0 rounded-md",
+                    "text-[11px] sm:text-[10px] font-mono px-1.5 py-0 rounded-md",
                     "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:bg-amber-950/30"
                   )}>
                     <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
@@ -524,7 +524,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                   )}>
                     {processo.atoProximoPrazo}
                   </p>
-                  <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
+                  <p className="text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
                     {format(processo.proximoPrazo, "dd/MM/yyyy", { locale: ptBR })}
                   </p>
                 </div>
@@ -540,7 +540,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                     <p className="text-[10px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate">
                       {processo.casoTitulo}
                     </p>
-                    <p className="text-[9px] sm:text-[10px] text-emerald-600/70 dark:text-emerald-400/70">
+                    <p className="text-[11px] sm:text-[10px] text-emerald-600/70 dark:text-emerald-400/70">
                       Vinculado ao caso
                     </p>
                   </div>
