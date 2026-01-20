@@ -1,91 +1,125 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SwissCard, SwissCardContent } from "@/components/shared/swiss-card";
 import { Button } from "@/components/ui/button";
 import { 
   UserCheck,
   Plus,
-  Calendar,
   Clock,
   Phone,
   Video,
   Building2,
 } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function AtendimentosPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Atendimentos</h1>
-          <p className="text-muted-foreground mt-1">
-            Gestão de atendimentos aos assistidos
-          </p>
+    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+      {/* Header - Design Suíço */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 sm:p-2.5 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
+            <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-purple-700 dark:text-purple-400" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              Atendimentos
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+              Gestão de atendimentos aos assistidos
+            </p>
+          </div>
         </div>
+
         <Link href="/admin/atendimentos/novo">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Novo Atendimento
+          <Button className="h-8 sm:h-9 text-xs sm:text-sm gap-1.5">
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Novo Atendimento</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hoje</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground">atendimentos agendados</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Presenciais</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Videoconferência</CardTitle>
-            <Video className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Telefone</CardTitle>
-            <Phone className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1</div>
-          </CardContent>
-        </Card>
+      {/* Stats Cards - Design Suíço com borda lateral */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+        <SwissCard className="border-l-2 border-l-rose-500">
+          <SwissCardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
+              </div>
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">5</p>
+                <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Hoje</p>
+              </div>
+            </div>
+          </SwissCardContent>
+        </SwissCard>
+        
+        <SwissCard className="border-l-2 border-l-blue-500">
+          <SwissCardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">3</p>
+                <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Presenciais</p>
+              </div>
+            </div>
+          </SwissCardContent>
+        </SwissCard>
+        
+        <SwissCard className="border-l-2 border-l-violet-500">
+          <SwissCardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Video className="w-4 h-4 sm:w-5 sm:h-5 text-violet-500" />
+              </div>
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-violet-700 dark:text-violet-400">1</p>
+                <p className="text-[10px] sm:text-xs text-violet-600 dark:text-violet-400">Vídeo</p>
+              </div>
+            </div>
+          </SwissCardContent>
+        </SwissCard>
+        
+        <SwissCard className="border-l-2 border-l-amber-500">
+          <SwissCardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">1</p>
+                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Telefone</p>
+              </div>
+            </div>
+          </SwissCardContent>
+        </SwissCard>
       </div>
 
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <UserCheck className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-lg font-medium text-muted-foreground">Módulo de Atendimentos</p>
-          <p className="text-sm text-muted-foreground max-w-md">
+      {/* Empty State - Design Suíço */}
+      <SwissCard className="border-dashed">
+        <SwissCardContent className="text-center py-16">
+          <div className="mx-auto w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
+            <UserCheck className="w-8 h-8 text-purple-500" />
+          </div>
+          <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+            Módulo de Atendimentos
+          </h3>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto mb-4">
             Registre e acompanhe atendimentos presenciais, por videoconferência, telefone e visitas carcerárias.
           </p>
-          <Link href="/admin/atendimentos/novo" className="mt-4">
+          <Link href="/admin/atendimentos/novo">
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="w-4 h-4 mr-2" />
               Agendar Atendimento
             </Button>
           </Link>
-        </CardContent>
-      </Card>
+        </SwissCardContent>
+      </SwissCard>
     </div>
   );
 }
