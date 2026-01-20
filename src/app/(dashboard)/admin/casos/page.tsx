@@ -631,15 +631,15 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                 )}
               </div>
 
-              {/* Título (Serifada) */}
+              {/* Título (Serifada - Elegante) */}
               <Link href={`/admin/casos/${caso.id}`}>
-                <h3 className="font-serif text-base sm:text-lg font-medium text-zinc-900 dark:text-zinc-100 leading-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer line-clamp-2">
+                <h3 className="font-serif text-base sm:text-lg font-medium text-foreground leading-tight hover:text-primary transition-colors cursor-pointer line-clamp-2 tracking-[-0.01em]">
                   {caso.titulo}
                 </h3>
               </Link>
 
               {/* Meta-dados */}
-              <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium flex-wrap">
+              <div className="flex items-center gap-3 sm:gap-4 text-xs text-muted-foreground font-medium flex-wrap">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="flex items-center gap-1 sm:gap-1.5 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
@@ -1123,10 +1123,10 @@ function CasoTableRow({ caso }: { caso: Caso }) {
     )}>
       <SwissTableCell className="py-4">
         <Link href={`/admin/casos/${caso.id}`} className="block">
-          <div className="font-medium text-sm text-foreground hover:text-primary transition-colors">
+          <div className="font-serif font-medium text-sm text-foreground hover:text-primary transition-colors tracking-[-0.01em]">
             {caso.titulo}
           </div>
-          <div className="font-mono text-xs text-muted-foreground mt-0.5">{caso.codigo}</div>
+          <code className="font-mono text-xs text-muted-foreground mt-1 block">{caso.codigo}</code>
         </Link>
       </SwissTableCell>
       <SwissTableCell className="py-4">
