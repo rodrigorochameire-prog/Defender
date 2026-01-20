@@ -18,12 +18,13 @@ const iconMap: Record<EntityType, React.ElementType> = {
 interface EntityLinkProps {
   type: EntityType;
   name: string;
+  entityId?: number;
   href?: string;
   subtitle?: string;
   className?: string;
 }
 
-export function EntityLink({ type, name, href, subtitle, className }: EntityLinkProps) {
+export function EntityLink({ type, name, entityId, href, subtitle, className }: EntityLinkProps) {
   const Icon = iconMap[type];
   const entitySheet = useEntitySheet();
   const content = (
@@ -52,7 +53,7 @@ export function EntityLink({ type, name, href, subtitle, className }: EntityLink
     <button
       type="button"
       className="inline-flex"
-      onClick={() => entitySheet?.openEntity({ type, name, subtitle })}
+      onClick={() => entitySheet?.openEntity({ type, name, subtitle, id: entityId })}
     >
       {content}
     </button>

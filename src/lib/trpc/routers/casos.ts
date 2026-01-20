@@ -622,6 +622,25 @@ export const casosRouter = router({
       return result;
     }),
 
+  getPersonaById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const [persona] = await db
+        .select()
+        .from(casePersonas)
+        .where(eq(casePersonas.id, input.id))
+        .limit(1);
+
+      if (!persona) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Persona não encontrada",
+        });
+      }
+
+      return persona;
+    }),
+
   createPersona: protectedProcedure
     .input(createPersonaSchema)
     .mutation(async ({ input }) => {
@@ -687,6 +706,37 @@ export const casosRouter = router({
         .orderBy(desc(caseFacts.createdAt));
 
       return result;
+    }),
+
+  getFactById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const [fact] = await db
+        .select()
+        .from(caseFacts)
+        .where(eq(caseFacts.id, input.id))
+        .limit(1);
+
+      if (!fact) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Fato não encontrado",
+        });
+      }
+
+      const [stats] = await db
+        .select({
+          total: sql<number>`count(*)::int`,
+          contradicoes: sql<number>`count(*) FILTER (WHERE ${factEvidence.contradicao} = true)::int`,
+        })
+        .from(factEvidence)
+        .where(eq(factEvidence.factId, input.id));
+
+      return {
+        ...fact,
+        evidenceCount: stats?.total || 0,
+        contradicoesCount: stats?.contradicoes || 0,
+      };
     }),
 
   createFact: protectedProcedure

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,7 @@ import { ptBR } from "date-fns/locale";
 import { useAssignment } from "@/contexts/assignment-context";
 import { TeoriaDoCaso } from "@/components/casos/teoria-do-caso";
 import { AudienciasHub } from "@/components/casos/audiencias-hub";
+import { MentionTextarea, renderMentions } from "@/components/shared/mention-textarea";
 
 // ==========================================
 // TIPOS
@@ -394,6 +395,7 @@ export default function AssistidoDetailPage() {
   const router = useRouter();
   const { config } = useAssignment();
   const [activeTab, setActiveTab] = useState("resumo");
+  const [noteText, setNoteText] = useState("");
 
   const assistido = mockAssistido;
   const idade = assistido.dataNascimento
@@ -402,6 +404,26 @@ export default function AssistidoDetailPage() {
 
   const status = statusConfig[assistido.statusPrisional] || statusConfig.SOLTO;
   const isPreso = !["SOLTO", "MONITORADO"].includes(assistido.statusPrisional);
+  const mentionSuggestions = useMemo(() => {
+    return [
+      { id: `p-${assistido.id}`, label: assistido.nome, type: "pessoa" as const },
+      ...mockProcessos.map((processo) => ({
+        id: `d-${processo.id}`,
+        label: processo.numeroAutos,
+        type: "documento" as const,
+      })),
+      ...mockDemandas.map((demanda) => ({
+        id: `f-${demanda.id}`,
+        label: demanda.ato,
+        type: "fato" as const,
+      })),
+      ...mockAudiencias.map((audiencia) => ({
+        id: `f-aud-${audiencia.id}`,
+        label: `Audiência ${audiencia.tipo}`,
+        type: "fato" as const,
+      })),
+    ];
+  }, []);
 
   // Health Score calculado
   const healthScore: HealthScore = {
@@ -671,6 +693,34 @@ export default function AssistidoDetailPage() {
                 </div>
               </Card>
             </div>
+
+            <Card className="p-5 border-dashed">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4" />
+                  Nota Integrada
+                </h3>
+                <Badge variant="outline" className="text-[10px] uppercase tracking-[0.2em]">
+                  Menções
+                </Badge>
+              </div>
+              <div className="space-y-4">
+                <MentionTextarea
+                  value={noteText}
+                  onChange={setNoteText}
+                  suggestions={mentionSuggestions}
+                  placeholder="Use @ para pessoa, # para documento e $ para fato."
+                />
+                <div className="rounded-sm border border-slate-200 dark:border-slate-800 p-3">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-2">
+                    Pré-visualização
+                  </p>
+                  <div className="text-sm text-slate-700 dark:text-slate-300 space-x-1">
+                    {noteText ? renderMentions(noteText) : "Sua nota aparecerá aqui."}
+                  </div>
+                </div>
+              </div>
+            </Card>
 
             {/* Processos Vinculados */}
             <Card className="p-5">
