@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, users, processos, assistidos } from "@/lib/db";
+import { db, users, processos, assistidos, workspaces } from "@/lib/db";
 import { eq, desc, sql, and, ne } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, emailSchema, nameSchema, phoneSchema } from "@/lib/validations";
@@ -32,8 +32,11 @@ export const usersRouter = router({
             comarca: users.comarca,
             emailVerified: users.emailVerified,
             createdAt: users.createdAt,
+            workspaceId: users.workspaceId,
+            workspaceName: workspaces.name,
           })
           .from(users)
+          .leftJoin(workspaces, eq(users.workspaceId, workspaces.id))
           .orderBy(desc(users.createdAt));
 
         // Aplicar filtros
@@ -204,6 +207,12 @@ export const usersRouter = router({
           throw Errors.notFound("Usuário");
         }
 
+        const workspace = user.workspaceId
+          ? await db.query.workspaces.findFirst({
+              where: eq(workspaces.id, user.workspaceId),
+            })
+          : null;
+
         // Buscar estatísticas do usuário
         const [processoStats] = await db
           .select({ count: sql<number>`count(*)::int` })
@@ -225,6 +234,8 @@ export const usersRouter = router({
           comarca: user.comarca,
           emailVerified: user.emailVerified,
           createdAt: user.createdAt,
+          workspaceId: user.workspaceId,
+          workspaceName: workspace?.name || null,
           processoCount: processoStats.count,
           assistidoCount: assistidoStats.count,
         };
@@ -244,6 +255,7 @@ export const usersRouter = router({
         phone: phoneSchema,
         oab: z.string().optional(),
         comarca: z.string().optional(),
+        workspaceId: z.number().optional().nullable(),
       })
     )
     .mutation(async ({ input }) => {
@@ -270,6 +282,7 @@ export const usersRouter = router({
             phone: input.phone || null,
             oab: input.oab || null,
             comarca: input.comarca || null,
+            workspaceId: input.workspaceId || null,
             emailVerified: true, // Admin criando, já verificado
             approvalStatus: "approved", // Admin criando, já aprovado
           })
@@ -280,6 +293,7 @@ export const usersRouter = router({
           name: newUser.name,
           email: newUser.email,
           role: newUser.role,
+          workspaceId: newUser.workspaceId,
         };
       }, "Erro ao criar usuário");
     }),
@@ -296,6 +310,7 @@ export const usersRouter = router({
         oab: z.string().optional(),
         comarca: z.string().optional(),
         role: z.enum(["admin", "defensor", "estagiario", "servidor"]).optional(),
+        workspaceId: z.number().nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -324,6 +339,7 @@ export const usersRouter = router({
         if (data.oab !== undefined) updateData.oab = data.oab || null;
         if (data.comarca !== undefined) updateData.comarca = data.comarca || null;
         if (data.role) updateData.role = data.role;
+        if (data.workspaceId !== undefined) updateData.workspaceId = data.workspaceId;
 
         const [updated] = await db
           .update(users)
@@ -336,6 +352,7 @@ export const usersRouter = router({
           name: updated.name,
           email: updated.email,
           role: updated.role,
+          workspaceId: updated.workspaceId,
         };
       }, "Erro ao atualizar usuário");
     }),

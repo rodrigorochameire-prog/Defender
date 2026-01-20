@@ -2,7 +2,9 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { processos, assistidos } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql } from "drizzle-orm";
+import { eq, ilike, or, desc, sql, and } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { getWorkspaceScope } from "../workspace";
 
 export const processosRouter = router({
   // Listar todos os processos
@@ -16,8 +18,9 @@ export const processosRouter = router({
         offset: z.number().min(0).default(0),
       }).optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { search, area, isJuri, limit = 50, offset = 0 } = input || {};
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       
       let conditions = [];
       
@@ -36,6 +39,10 @@ export const processosRouter = router({
       
       if (isJuri !== undefined) {
         conditions.push(eq(processos.isJuri, isJuri));
+      }
+
+      if (!isAdmin) {
+        conditions.push(eq(processos.workspaceId, workspaceId));
       }
       
       const result = await db
@@ -58,6 +65,7 @@ export const processosRouter = router({
         })
         .from(processos)
         .leftJoin(assistidos, eq(processos.assistidoId, assistidos.id))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(processos.createdAt))
         .limit(limit)
         .offset(offset);
@@ -68,11 +76,18 @@ export const processosRouter = router({
   // Buscar processo por ID
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const conditions = [eq(processos.id, input.id)];
+
+      if (!isAdmin) {
+        conditions.push(eq(processos.workspaceId, workspaceId));
+      }
+
       const [processo] = await db
         .select()
         .from(processos)
-        .where(eq(processos.id, input.id));
+        .where(and(...conditions));
       
       return processo || null;
     }),
@@ -94,10 +109,36 @@ export const processosRouter = router({
         isJuri: z.boolean().default(false),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const assistido = await db.query.assistidos.findFirst({
+        where: eq(assistidos.id, input.assistidoId),
+      });
+
+      if (!assistido) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+      }
+
+      if (!assistido.workspaceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Assistido sem workspace atribuído.",
+        });
+      }
+
+      if (!isAdmin && assistido.workspaceId !== workspaceId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem acesso ao workspace deste assistido.",
+        });
+      }
+
       const [novoProcesso] = await db
         .insert(processos)
-        .values(input)
+        .values({
+          ...input,
+          workspaceId: assistido.workspaceId,
+        })
         .returning();
       
       return novoProcesso;
@@ -120,8 +161,9 @@ export const processosRouter = router({
         isJuri: z.boolean().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       
       const [atualizado] = await db
         .update(processos)
@@ -129,7 +171,11 @@ export const processosRouter = router({
           ...data,
           updatedAt: new Date(),
         })
-        .where(eq(processos.id, id))
+        .where(
+          isAdmin
+            ? eq(processos.id, id)
+            : and(eq(processos.id, id), eq(processos.workspaceId, workspaceId))
+        )
         .returning();
       
       return atualizado;
@@ -138,24 +184,40 @@ export const processosRouter = router({
   // Excluir processo (soft delete)
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+
       const [excluido] = await db
         .update(processos)
         .set({ deletedAt: new Date() })
-        .where(eq(processos.id, input.id))
+        .where(
+          isAdmin
+            ? eq(processos.id, input.id)
+            : and(eq(processos.id, input.id), eq(processos.workspaceId, workspaceId))
+        )
         .returning();
       
       return excluido;
     }),
 
   // Estatísticas
-  stats: protectedProcedure.query(async () => {
-    const total = await db.select({ count: sql<number>`count(*)` }).from(processos);
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+    const baseCondition = isAdmin ? undefined : eq(processos.workspaceId, workspaceId);
+
+    const total = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(processos)
+      .where(baseCondition);
     
     const juris = await db
       .select({ count: sql<number>`count(*)` })
       .from(processos)
-      .where(eq(processos.isJuri, true));
+      .where(
+        baseCondition
+          ? and(baseCondition, eq(processos.isJuri, true))
+          : eq(processos.isJuri, true)
+      );
     
     return {
       total: Number(total[0]?.count || 0),

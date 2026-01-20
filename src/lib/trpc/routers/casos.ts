@@ -13,6 +13,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, isNull, sql, desc, ilike, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 
 // ==========================================
 // SCHEMAS DE VALIDAÇÃO
@@ -82,7 +83,8 @@ export const casosRouter = router({
         offset: z.number().default(0),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const conditions = [isNull(casos.deletedAt)];
       
       if (input.atribuicao) {
@@ -99,6 +101,10 @@ export const casosRouter = router({
       
       if (input.search) {
         conditions.push(ilike(casos.titulo, `%${input.search}%`));
+      }
+
+      if (!isAdmin) {
+        conditions.push(eq(casos.workspaceId, workspaceId));
       }
 
       const result = await db
@@ -135,11 +141,18 @@ export const casosRouter = router({
   // ==========================================
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const conditions = [eq(casos.id, input.id), isNull(casos.deletedAt)];
+
+      if (!isAdmin) {
+        conditions.push(eq(casos.workspaceId, workspaceId));
+      }
+
       const [caso] = await db
         .select()
         .from(casos)
-        .where(and(eq(casos.id, input.id), isNull(casos.deletedAt)))
+        .where(and(...conditions))
         .limit(1);
 
       if (!caso) {
@@ -218,6 +231,15 @@ export const casosRouter = router({
   create: protectedProcedure
     .input(createCasoSchema)
     .mutation(async ({ input, ctx }) => {
+      const workspaceId = resolveWorkspaceId(ctx.user);
+
+      if (!workspaceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Defina um workspace para criar o caso.",
+        });
+      }
+
       const [novoCaso] = await db
         .insert(casos)
         .values({
@@ -225,6 +247,7 @@ export const casosRouter = router({
           atribuicao: input.atribuicao as any,
           prioridade: input.prioridade as any,
           defensorId: ctx.user?.id,
+          workspaceId,
         })
         .returning();
 
@@ -236,8 +259,9 @@ export const casosRouter = router({
   // ==========================================
   update: protectedProcedure
     .input(updateCasoSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
 
       const [updated] = await db
         .update(casos)
@@ -247,7 +271,13 @@ export const casosRouter = router({
           prioridade: data.prioridade as any,
           updatedAt: new Date(),
         })
-        .where(and(eq(casos.id, id), isNull(casos.deletedAt)))
+        .where(
+          and(
+            eq(casos.id, id),
+            isNull(casos.deletedAt),
+            ...(isAdmin ? [] : [eq(casos.workspaceId, workspaceId)])
+          )
+        )
         .returning();
 
       if (!updated) {
@@ -265,7 +295,8 @@ export const casosRouter = router({
   // ==========================================
   updateTeoria: protectedProcedure
     .input(updateTeoriaSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const updateData: Record<string, any> = {
         [input.field]: input.value,
         updatedAt: new Date(),
@@ -274,7 +305,13 @@ export const casosRouter = router({
       const [updated] = await db
         .update(casos)
         .set(updateData)
-        .where(and(eq(casos.id, input.casoId), isNull(casos.deletedAt)))
+        .where(
+          and(
+            eq(casos.id, input.casoId),
+            isNull(casos.deletedAt),
+            ...(isAdmin ? [] : [eq(casos.workspaceId, workspaceId)])
+          )
+        )
         .returning();
 
       if (!updated) {
@@ -292,11 +329,18 @@ export const casosRouter = router({
   // ==========================================
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const [deleted] = await db
         .update(casos)
         .set({ deletedAt: new Date() })
-        .where(and(eq(casos.id, input.id), isNull(casos.deletedAt)))
+        .where(
+          and(
+            eq(casos.id, input.id),
+            isNull(casos.deletedAt),
+            ...(isAdmin ? [] : [eq(casos.workspaceId, workspaceId)])
+          )
+        )
         .returning();
 
       if (!deleted) {
@@ -314,7 +358,36 @@ export const casosRouter = router({
   // ==========================================
   createConexao: protectedProcedure
     .input(createCasoConexoSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const casosSelecionados = await db
+        .select({ id: casos.id, workspaceId: casos.workspaceId })
+        .from(casos)
+        .where(inArray(casos.id, [input.casoOrigemId, input.casoDestinoId]));
+
+      if (casosSelecionados.length !== 2) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Casos não encontrados",
+        });
+      }
+
+      const workspaceIds = new Set(casosSelecionados.map((c) => c.workspaceId));
+
+      if (workspaceIds.size !== 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Os casos precisam pertencer ao mesmo workspace.",
+        });
+      }
+
+      if (!isAdmin && !workspaceIds.has(workspaceId)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem acesso a esses casos.",
+        });
+      }
+
       const [conexao] = await db
         .insert(casosConexos)
         .values(input)
@@ -328,7 +401,29 @@ export const casosRouter = router({
   // ==========================================
   removeConexao: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const [conexao] = await db
+        .select({ id: casosConexos.id, workspaceId: casos.workspaceId })
+        .from(casosConexos)
+        .innerJoin(casos, eq(casosConexos.casoOrigemId, casos.id))
+        .where(eq(casosConexos.id, input.id))
+        .limit(1);
+
+      if (!conexao) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Conexão não encontrada",
+        });
+      }
+
+      if (!isAdmin && conexao.workspaceId !== workspaceId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem acesso a essa conexão.",
+        });
+      }
+
       await db
         .delete(casosConexos)
         .where(eq(casosConexos.id, input.id));
@@ -344,7 +439,8 @@ export const casosRouter = router({
       casoId: z.number(),
       tags: z.array(z.string()),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       // Buscar casos com pelo menos uma tag em comum
       const result = await db
         .select({
@@ -355,10 +451,13 @@ export const casosRouter = router({
           tags: casos.tags,
         })
         .from(casos)
-        .where(and(
-          isNull(casos.deletedAt),
-          sql`${casos.id} != ${input.casoId}`,
-        ))
+        .where(
+          and(
+            isNull(casos.deletedAt),
+            sql`${casos.id} != ${input.casoId}`,
+            ...(isAdmin ? [] : [eq(casos.workspaceId, workspaceId)])
+          )
+        )
         .limit(10);
 
       // Filtrar por tags em comum
@@ -381,11 +480,17 @@ export const casosRouter = router({
   saveAudienciaNotas: protectedProcedure
     .input(saveAudienciaNotasSchema)
     .mutation(async ({ input, ctx }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       // Buscar versão atual
       const [audiencia] = await db
         .select({ anotacoesVersao: audiencias.anotacoesVersao, anotacoes: audiencias.anotacoes })
         .from(audiencias)
-        .where(eq(audiencias.id, input.audienciaId))
+        .where(
+          and(
+            eq(audiencias.id, input.audienciaId),
+            ...(isAdmin ? [] : [eq(audiencias.workspaceId, workspaceId)])
+          )
+        )
         .limit(1);
 
       if (!audiencia) {
@@ -414,7 +519,12 @@ export const casosRouter = router({
           anotacoes: input.anotacoes,
           anotacoesVersao: novaVersao,
         })
-        .where(eq(audiencias.id, input.audienciaId))
+        .where(
+          and(
+            eq(audiencias.id, input.audienciaId),
+            ...(isAdmin ? [] : [eq(audiencias.workspaceId, workspaceId)])
+          )
+        )
         .returning();
 
       return updated;
@@ -471,7 +581,48 @@ export const casosRouter = router({
       casoId: z.number(),
       assistidoId: z.number(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const [caso] = await db
+        .select({ id: casos.id, workspaceId: casos.workspaceId })
+        .from(casos)
+        .where(and(eq(casos.id, input.casoId), isNull(casos.deletedAt)))
+        .limit(1);
+
+      if (!caso) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Caso não encontrado",
+        });
+      }
+
+      if (!isAdmin && caso.workspaceId !== workspaceId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem acesso a este caso.",
+        });
+      }
+
+      const [assistido] = await db
+        .select({ id: assistidos.id, workspaceId: assistidos.workspaceId })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+
+      if (!assistido) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Assistido não encontrado",
+        });
+      }
+
+      if (assistido.workspaceId !== caso.workspaceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Assistido com workspace divergente do caso.",
+        });
+      }
+
       const [updated] = await db
         .update(assistidos)
         .set({ casoId: input.casoId })
@@ -496,7 +647,48 @@ export const casosRouter = router({
       casoId: z.number(),
       processoId: z.number(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const [caso] = await db
+        .select({ id: casos.id, workspaceId: casos.workspaceId })
+        .from(casos)
+        .where(and(eq(casos.id, input.casoId), isNull(casos.deletedAt)))
+        .limit(1);
+
+      if (!caso) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Caso não encontrado",
+        });
+      }
+
+      if (!isAdmin && caso.workspaceId !== workspaceId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem acesso a este caso.",
+        });
+      }
+
+      const [processo] = await db
+        .select({ id: processos.id, workspaceId: processos.workspaceId })
+        .from(processos)
+        .where(eq(processos.id, input.processoId))
+        .limit(1);
+
+      if (!processo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Processo não encontrado",
+        });
+      }
+
+      if (processo.workspaceId !== caso.workspaceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Processo com workspace divergente do caso.",
+        });
+      }
+
       const [updated] = await db
         .update(processos)
         .set({ casoId: input.casoId })
@@ -520,13 +712,18 @@ export const casosRouter = router({
     .input(z.object({
       atribuicao: z.string().optional(),
     }).optional())
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const filters = input || {};
       
       const conditions = [isNull(casos.deletedAt)];
       
       if (filters.atribuicao) {
         conditions.push(eq(casos.atribuicao, filters.atribuicao as any));
+      }
+
+      if (!isAdmin) {
+        conditions.push(eq(casos.workspaceId, workspaceId));
       }
 
       // Total de casos ativos

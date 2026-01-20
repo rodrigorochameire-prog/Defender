@@ -241,6 +241,7 @@ export const UTILITIES_MENU: MenuSection[] = [
     title: "Sistema",
     items: [
       { label: "Configurações", path: "/admin/settings", icon: "Settings" },
+      { label: "Workspaces", path: "/admin/workspaces", icon: "Building2", description: "Acessos e universos de dados" },
       { label: "Relatórios", path: "/admin/relatorios", icon: "BarChart3" },
     ],
     collapsible: true,

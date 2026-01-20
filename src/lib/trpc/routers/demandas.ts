@@ -3,6 +3,8 @@ import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, ilike, or, desc, sql, lte, gte, and } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { getWorkspaceScope } from "../workspace";
 
 export const demandasRouter = router({
   // Listar todas as demandas
@@ -17,8 +19,9 @@ export const demandasRouter = router({
         offset: z.number().min(0).default(0),
       }).optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { search, status, area, reuPreso, limit = 50, offset = 0 } = input || {};
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       
       let conditions = [];
       
@@ -34,6 +37,10 @@ export const demandasRouter = router({
       
       if (reuPreso !== undefined) {
         conditions.push(eq(demandas.reuPreso, reuPreso));
+      }
+
+      if (!isAdmin) {
+        conditions.push(eq(demandas.workspaceId, workspaceId));
       }
       
       const result = await db
@@ -63,6 +70,7 @@ export const demandasRouter = router({
         .from(demandas)
         .leftJoin(processos, eq(demandas.processoId, processos.id))
         .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(demandas.prazo)
         .limit(limit)
         .offset(offset);
@@ -73,11 +81,18 @@ export const demandasRouter = router({
   // Buscar demanda por ID
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const conditions = [eq(demandas.id, input.id)];
+
+      if (!isAdmin) {
+        conditions.push(eq(demandas.workspaceId, workspaceId));
+      }
+
       const [demanda] = await db
         .select()
         .from(demandas)
-        .where(eq(demandas.id, input.id));
+        .where(and(...conditions));
       
       return demanda || null;
     }),
@@ -89,8 +104,9 @@ export const demandasRouter = router({
         dias: z.number().default(7),
       }).optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { dias = 7 } = input || {};
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const hoje = new Date();
       const limite = new Date();
       limite.setDate(limite.getDate() + dias);
@@ -125,7 +141,8 @@ export const demandasRouter = router({
               eq(demandas.status, "4_MONITORAR"),
               eq(demandas.status, "5_FILA"),
               eq(demandas.status, "URGENTE")
-            )
+            ),
+            ...(isAdmin ? [] : [eq(demandas.workspaceId, workspaceId)])
           )
         )
         .orderBy(demandas.prazo);
@@ -151,13 +168,52 @@ export const demandasRouter = router({
         reuPreso: z.boolean().default(false),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const processo = await db.query.processos.findFirst({
+        where: eq(processos.id, input.processoId),
+      });
+
+      if (!processo) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
+      }
+
+      if (!processo.workspaceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Processo sem workspace atribuído.",
+        });
+      }
+
+      if (!isAdmin && processo.workspaceId !== workspaceId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem acesso ao workspace deste processo.",
+        });
+      }
+
+      const assistido = await db.query.assistidos.findFirst({
+        where: eq(assistidos.id, input.assistidoId),
+      });
+
+      if (!assistido) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+      }
+
+      if (!assistido.workspaceId || assistido.workspaceId !== processo.workspaceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Assistido com workspace divergente do processo.",
+        });
+      }
+
       const [novaDemanda] = await db
         .insert(demandas)
         .values({
           ...input,
           prazo: input.prazo || null,
           dataEntrada: input.dataEntrada || null,
+          workspaceId: processo.workspaceId,
         })
         .returning();
       
@@ -180,8 +236,9 @@ export const demandasRouter = router({
         reuPreso: z.boolean().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       
       const updateData: any = {
         ...data,
@@ -196,7 +253,11 @@ export const demandasRouter = router({
       const [atualizado] = await db
         .update(demandas)
         .set(updateData)
-        .where(eq(demandas.id, id))
+        .where(
+          isAdmin
+            ? eq(demandas.id, id)
+            : and(eq(demandas.id, id), eq(demandas.workspaceId, workspaceId))
+        )
         .returning();
       
       return atualizado;
@@ -205,39 +266,67 @@ export const demandasRouter = router({
   // Excluir demanda (soft delete)
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+
       const [excluido] = await db
         .update(demandas)
         .set({ deletedAt: new Date() })
-        .where(eq(demandas.id, input.id))
+        .where(
+          isAdmin
+            ? eq(demandas.id, input.id)
+            : and(eq(demandas.id, input.id), eq(demandas.workspaceId, workspaceId))
+        )
         .returning();
       
       return excluido;
     }),
 
   // Estatísticas
-  stats: protectedProcedure.query(async () => {
-    const total = await db.select({ count: sql<number>`count(*)` }).from(demandas);
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+    const baseCondition = isAdmin ? undefined : eq(demandas.workspaceId, workspaceId);
+
+    const total = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(demandas)
+      .where(baseCondition);
     
     const atender = await db
       .select({ count: sql<number>`count(*)` })
       .from(demandas)
-      .where(eq(demandas.status, "2_ATENDER"));
+      .where(
+        baseCondition
+          ? and(baseCondition, eq(demandas.status, "2_ATENDER"))
+          : eq(demandas.status, "2_ATENDER")
+      );
     
     const fila = await db
       .select({ count: sql<number>`count(*)` })
       .from(demandas)
-      .where(eq(demandas.status, "5_FILA"));
+      .where(
+        baseCondition
+          ? and(baseCondition, eq(demandas.status, "5_FILA"))
+          : eq(demandas.status, "5_FILA")
+      );
     
     const protocolados = await db
       .select({ count: sql<number>`count(*)` })
       .from(demandas)
-      .where(eq(demandas.status, "7_PROTOCOLADO"));
+      .where(
+        baseCondition
+          ? and(baseCondition, eq(demandas.status, "7_PROTOCOLADO"))
+          : eq(demandas.status, "7_PROTOCOLADO")
+      );
     
     const reuPreso = await db
       .select({ count: sql<number>`count(*)` })
       .from(demandas)
-      .where(eq(demandas.reuPreso, true));
+      .where(
+        baseCondition
+          ? and(baseCondition, eq(demandas.reuPreso, true))
+          : eq(demandas.reuPreso, true)
+      );
     
     return {
       total: Number(total[0]?.count || 0),

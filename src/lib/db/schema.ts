@@ -93,6 +93,25 @@ export const statusProcessoEnum = pgEnum("status_processo", [
 ]);
 
 // ==========================================
+// WORKSPACES (Universos de dados)
+// ==========================================
+
+export const workspaces = pgTable("workspaces", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("workspaces_name_idx").on(table.name),
+  index("workspaces_active_idx").on(table.isActive),
+]);
+
+export type Workspace = typeof workspaces.$inferSelect;
+export type InsertWorkspace = typeof workspaces.$inferInsert;
+
+// ==========================================
 // USUÁRIOS (DEFENSORES)
 // ==========================================
 
@@ -105,6 +124,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   oab: varchar("oab", { length: 50 }), // Número da OAB
   comarca: varchar("comarca", { length: 100 }), // Comarca de atuação
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
   emailVerified: boolean("email_verified").default(false).notNull(),
   approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(),
   // Soft delete
@@ -116,6 +136,7 @@ export const users = pgTable("users", {
   index("users_approval_status_idx").on(table.approvalStatus),
   index("users_deleted_at_idx").on(table.deletedAt),
   index("users_comarca_idx").on(table.comarca),
+  index("users_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type User = typeof users.$inferSelect;
@@ -135,6 +156,9 @@ export const assistidos = pgTable("assistidos", {
   dataNascimento: date("data_nascimento"),
   naturalidade: varchar("naturalidade", { length: 100 }),
   nacionalidade: varchar("nacionalidade", { length: 50 }).default("Brasileira"),
+  
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
   
   // Status Prisional
   statusPrisional: statusPrisionalEnum("status_prisional").default("SOLTO"),
@@ -172,6 +196,7 @@ export const assistidos = pgTable("assistidos", {
   index("assistidos_defensor_id_idx").on(table.defensorId),
   index("assistidos_deleted_at_idx").on(table.deletedAt),
   index("assistidos_caso_id_idx").on(table.casoId),
+  index("assistidos_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Assistido = typeof assistidos.$inferSelect;
@@ -189,6 +214,9 @@ export const processos = pgTable("processos", {
   
   // ATRIBUIÇÃO - O filtro mestre para workspaces
   atribuicao: atribuicaoEnum("atribuicao").notNull().default("SUBSTITUICAO"),
+  
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
   
   // Identificação do Processo
   numeroAutos: text("numero_autos").notNull(),
@@ -244,6 +272,7 @@ export const processos = pgTable("processos", {
   index("processos_situacao_idx").on(table.situacao),
   index("processos_deleted_at_idx").on(table.deletedAt),
   index("processos_caso_id_idx").on(table.casoId),
+  index("processos_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Processo = typeof processos.$inferSelect;
@@ -261,6 +290,9 @@ export const demandas = pgTable("demandas", {
   assistidoId: integer("assistido_id")
     .notNull()
     .references(() => assistidos.id, { onDelete: "cascade" }),
+  
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
   
   // Identificação da Demanda
   ato: text("ato").notNull(), // ex: "Resposta à Acusação", "Apelação", "Alegações Finais"
@@ -305,6 +337,7 @@ export const demandas = pgTable("demandas", {
   index("demandas_reu_preso_idx").on(table.reuPreso),
   index("demandas_deleted_at_idx").on(table.deletedAt),
   index("demandas_caso_id_idx").on(table.casoId),
+  index("demandas_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Demanda = typeof demandas.$inferSelect;
@@ -319,6 +352,9 @@ export const sessoesJuri = pgTable("sessoes_juri", {
   processoId: integer("processo_id")
     .notNull()
     .references(() => processos.id, { onDelete: "cascade" }),
+  
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
   
   // Detalhes da Sessão
   dataSessao: timestamp("data_sessao").notNull(),
@@ -348,6 +384,7 @@ export const sessoesJuri = pgTable("sessoes_juri", {
   index("sessoes_juri_data_sessao_idx").on(table.dataSessao),
   index("sessoes_juri_defensor_id_idx").on(table.defensorId),
   index("sessoes_juri_status_idx").on(table.status),
+  index("sessoes_juri_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type SessaoJuri = typeof sessoesJuri.$inferSelect;
@@ -362,6 +399,9 @@ export const audiencias = pgTable("audiencias", {
   processoId: integer("processo_id")
     .notNull()
     .references(() => processos.id, { onDelete: "cascade" }),
+  
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
   
   // Case-Centric
   casoId: integer("caso_id"),
@@ -416,6 +456,7 @@ export const audiencias = pgTable("audiencias", {
   index("audiencias_caso_id_idx").on(table.casoId),
   index("audiencias_assistido_id_idx").on(table.assistidoId),
   index("audiencias_google_event_idx").on(table.googleCalendarEventId),
+  index("audiencias_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Audiencia = typeof audiencias.$inferSelect;
@@ -461,6 +502,9 @@ export const documentos = pgTable("documentos", {
   assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
   demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
   
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  
   // Detalhes do documento
   titulo: text("titulo").notNull(),
   descricao: text("descricao"),
@@ -489,6 +533,7 @@ export const documentos = pgTable("documentos", {
   index("documentos_demanda_id_idx").on(table.demandaId),
   index("documentos_categoria_idx").on(table.categoria),
   index("documentos_is_template_idx").on(table.isTemplate),
+  index("documentos_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Documento = typeof documentos.$inferSelect;
@@ -545,6 +590,9 @@ export const calendarEvents = pgTable("calendar_events", {
   assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
   demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
   
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  
   isAllDay: boolean("is_all_day").default(true).notNull(),
   color: varchar("color", { length: 20 }),
   location: varchar("location", { length: 200 }),
@@ -581,6 +629,7 @@ export const calendarEvents = pgTable("calendar_events", {
   index("calendar_events_status_idx").on(table.status),
   index("calendar_events_deleted_at_idx").on(table.deletedAt),
   index("calendar_events_date_range_idx").on(table.eventDate, table.endDate),
+  index("calendar_events_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
@@ -1083,6 +1132,7 @@ export const casos = pgTable("casos", {
   
   // Atribuição/Workspace
   atribuicao: atribuicaoEnum("atribuicao").notNull().default("SUBSTITUICAO"),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
   
   // Teoria do Caso (Tripé da Defesa)
   teoriaFatos: text("teoria_fatos"),             // Narrativa defensiva dos fatos
@@ -1123,6 +1173,7 @@ export const casos = pgTable("casos", {
   index("casos_status_idx").on(table.status),
   index("casos_defensor_id_idx").on(table.defensorId),
   index("casos_deleted_at_idx").on(table.deletedAt),
+  index("casos_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Caso = typeof casos.$inferSelect;
@@ -1202,7 +1253,20 @@ export type InsertAudienciaHistorico = typeof audienciasHistorico.$inferInsert;
 // RELAÇÕES
 // ==========================================
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const workspacesRelations = relations(workspaces, ({ many }) => ({
+  users: many(users),
+  assistidos: many(assistidos),
+  processos: many(processos),
+  demandas: many(demandas),
+  sessoesJuri: many(sessoesJuri),
+  audiencias: many(audiencias),
+  documentos: many(documentos),
+  calendarEvents: many(calendarEvents),
+  casos: many(casos),
+}));
+
+export const usersRelations = relations(users, ({ many, one }) => ({
+  workspace: one(workspaces, { fields: [users.workspaceId], references: [workspaces.id] }),
   assistidos: many(assistidos),
   processos: many(processos),
   demandas: many(demandas),
@@ -1214,6 +1278,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 }));
 
 export const assistidosRelations = relations(assistidos, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [assistidos.workspaceId], references: [workspaces.id] }),
   defensor: one(users, { fields: [assistidos.defensorId], references: [users.id] }),
   processos: many(processos),
   demandas: many(demandas),
@@ -1224,6 +1289,7 @@ export const assistidosRelations = relations(assistidos, ({ one, many }) => ({
 }));
 
 export const processosRelations = relations(processos, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [processos.workspaceId], references: [workspaces.id] }),
   assistido: one(assistidos, { fields: [processos.assistidoId], references: [assistidos.id] }),
   defensor: one(users, { fields: [processos.defensorId], references: [users.id] }),
   demandas: many(demandas),
@@ -1236,6 +1302,7 @@ export const processosRelations = relations(processos, ({ one, many }) => ({
 }));
 
 export const demandasRelations = relations(demandas, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [demandas.workspaceId], references: [workspaces.id] }),
   processo: one(processos, { fields: [demandas.processoId], references: [processos.id] }),
   assistido: one(assistidos, { fields: [demandas.assistidoId], references: [assistidos.id] }),
   defensor: one(users, { fields: [demandas.defensorId], references: [users.id] }),
@@ -1245,11 +1312,13 @@ export const demandasRelations = relations(demandas, ({ one, many }) => ({
 }));
 
 export const sessoesJuriRelations = relations(sessoesJuri, ({ one }) => ({
+  workspace: one(workspaces, { fields: [sessoesJuri.workspaceId], references: [workspaces.id] }),
   processo: one(processos, { fields: [sessoesJuri.processoId], references: [processos.id] }),
   defensor: one(users, { fields: [sessoesJuri.defensorId], references: [users.id] }),
 }));
 
 export const audienciasRelations = relations(audiencias, ({ one }) => ({
+  workspace: one(workspaces, { fields: [audiencias.workspaceId], references: [workspaces.id] }),
   processo: one(processos, { fields: [audiencias.processoId], references: [processos.id] }),
   defensor: one(users, { fields: [audiencias.defensorId], references: [users.id] }),
 }));
@@ -1260,6 +1329,7 @@ export const movimentacoesRelations = relations(movimentacoes, ({ one }) => ({
 }));
 
 export const documentosRelations = relations(documentos, ({ one }) => ({
+  workspace: one(workspaces, { fields: [documentos.workspaceId], references: [workspaces.id] }),
   processo: one(processos, { fields: [documentos.processoId], references: [processos.id] }),
   assistido: one(assistidos, { fields: [documentos.assistidoId], references: [assistidos.id] }),
   demanda: one(demandas, { fields: [documentos.demandaId], references: [demandas.id] }),
@@ -1274,6 +1344,7 @@ export const anotacoesRelations = relations(anotacoes, ({ one }) => ({
 }));
 
 export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
+  workspace: one(workspaces, { fields: [calendarEvents.workspaceId], references: [workspaces.id] }),
   processo: one(processos, { fields: [calendarEvents.processoId], references: [processos.id] }),
   assistido: one(assistidos, { fields: [calendarEvents.assistidoId], references: [assistidos.id] }),
   demanda: one(demandas, { fields: [calendarEvents.demandaId], references: [demandas.id] }),
@@ -1331,6 +1402,7 @@ export const conselhoJuriRelations = relations(conselhoJuri, ({ one }) => ({
 // ==========================================
 
 export const casosRelations = relations(casos, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [casos.workspaceId], references: [workspaces.id] }),
   defensor: one(users, { fields: [casos.defensorId], references: [users.id] }),
   casoConexo: one(casos, { fields: [casos.casoConexoId], references: [casos.id] }),
   assistidos: many(assistidos),

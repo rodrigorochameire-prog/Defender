@@ -3,6 +3,8 @@ import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { assistidos } from "@/lib/db/schema";
 import { eq, ilike, or, desc, sql, and, isNull } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 
 export const assistidosRouter = router({
   // Listar todos os assistidos
@@ -15,8 +17,9 @@ export const assistidosRouter = router({
         offset: z.number().min(0).default(0),
       }).optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { search, statusPrisional, limit = 50, offset = 0 } = input || {};
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       
       // Construir condições
       const conditions = [isNull(assistidos.deletedAt)];
@@ -33,6 +36,10 @@ export const assistidosRouter = router({
       if (statusPrisional && statusPrisional !== "all") {
         conditions.push(eq(assistidos.statusPrisional, statusPrisional as any));
       }
+
+      if (!isAdmin) {
+        conditions.push(eq(assistidos.workspaceId, workspaceId));
+      }
       
       const result = await db
         .select()
@@ -48,11 +55,18 @@ export const assistidosRouter = router({
   // Buscar assistido por ID
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const conditions = [eq(assistidos.id, input.id)];
+
+      if (!isAdmin) {
+        conditions.push(eq(assistidos.workspaceId, workspaceId));
+      }
+
       const [assistido] = await db
         .select()
         .from(assistidos)
-        .where(eq(assistidos.id, input.id));
+        .where(and(...conditions));
       
       return assistido || null;
     }),
@@ -83,9 +97,19 @@ export const assistidosRouter = router({
         endereco: z.string().optional(),
         observacoes: z.string().optional(),
         defensorId: z.number().optional(),
+        workspaceId: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const workspaceId = resolveWorkspaceId(ctx.user, input.workspaceId);
+
+      if (!workspaceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Defina um workspace para criar o assistido.",
+        });
+      }
+
       const [novoAssistido] = await db
         .insert(assistidos)
         .values({
@@ -108,6 +132,7 @@ export const assistidosRouter = router({
           endereco: input.endereco || null,
           observacoes: input.observacoes || null,
           defensorId: input.defensorId || ctx.user.id,
+          workspaceId,
         })
         .returning();
       
@@ -144,8 +169,9 @@ export const assistidosRouter = router({
         photoUrl: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       
       const updateData: Record<string, unknown> = { updatedAt: new Date() };
       
@@ -159,7 +185,11 @@ export const assistidosRouter = router({
       const [atualizado] = await db
         .update(assistidos)
         .set(updateData)
-        .where(eq(assistidos.id, id))
+        .where(
+          isAdmin
+            ? eq(assistidos.id, id)
+            : and(eq(assistidos.id, id), eq(assistidos.workspaceId, workspaceId))
+        )
         .returning();
       
       return atualizado;
@@ -168,22 +198,35 @@ export const assistidosRouter = router({
   // Excluir assistido (soft delete)
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+
       const [excluido] = await db
         .update(assistidos)
         .set({ deletedAt: new Date() })
-        .where(eq(assistidos.id, input.id))
+        .where(
+          isAdmin
+            ? eq(assistidos.id, input.id)
+            : and(eq(assistidos.id, input.id), eq(assistidos.workspaceId, workspaceId))
+        )
         .returning();
       
       return excluido;
     }),
 
   // Estatísticas
-  stats: protectedProcedure.query(async () => {
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+    const baseConditions = [isNull(assistidos.deletedAt)];
+
+    if (!isAdmin) {
+      baseConditions.push(eq(assistidos.workspaceId, workspaceId));
+    }
+
     const total = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(assistidos)
-      .where(isNull(assistidos.deletedAt));
+      .where(and(...baseConditions));
     
     // Contagem por status prisional (presos)
     const presos = await db
@@ -191,7 +234,7 @@ export const assistidosRouter = router({
       .from(assistidos)
       .where(
         and(
-          isNull(assistidos.deletedAt),
+          ...baseConditions,
           or(
             eq(assistidos.statusPrisional, "CADEIA_PUBLICA"),
             eq(assistidos.statusPrisional, "PENITENCIARIA"),
@@ -207,7 +250,7 @@ export const assistidosRouter = router({
       .from(assistidos)
       .where(
         and(
-          isNull(assistidos.deletedAt),
+          ...baseConditions,
           or(
             eq(assistidos.statusPrisional, "SOLTO"),
             eq(assistidos.statusPrisional, "DOMICILIAR"),
