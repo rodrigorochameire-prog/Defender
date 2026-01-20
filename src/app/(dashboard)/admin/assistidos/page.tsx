@@ -38,6 +38,7 @@ import {
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { 
@@ -177,12 +178,6 @@ import {
 import { getInitials } from "@/lib/utils";
 import { format, differenceInDays, parseISO, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 // Dados mockados expandidos com informações processuais detalhadas
 const mockAssistidos = [
