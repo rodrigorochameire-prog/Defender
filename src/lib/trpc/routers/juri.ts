@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { sessoesJuri, processos, assistidos } from "@/lib/db/schema";
-import { eq, desc, sql, gte } from "drizzle-orm";
+import { sessoesJuri, processos } from "@/lib/db/schema";
+import { eq, desc, sql, gte, and } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { getWorkspaceScope } from "../workspace";
 
 export const juriRouter = router({
   // Listar todas as sessões do júri
@@ -15,8 +17,9 @@ export const juriRouter = router({
         offset: z.number().min(0).default(0),
       }).optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { status, defensor, limit = 50, offset = 0 } = input || {};
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       
       let conditions = [];
       
@@ -26,6 +29,10 @@ export const juriRouter = router({
       
       if (defensor) {
         conditions.push(eq(sessoesJuri.defensorNome, defensor));
+      }
+
+      if (!isAdmin) {
+        conditions.push(eq(sessoesJuri.workspaceId, workspaceId));
       }
       
       const result = await db
@@ -45,6 +52,7 @@ export const juriRouter = router({
         })
         .from(sessoesJuri)
         .leftJoin(processos, eq(sessoesJuri.processoId, processos.id))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(sessoesJuri.dataSessao)
         .limit(limit)
         .offset(offset);
@@ -59,8 +67,9 @@ export const juriRouter = router({
         dias: z.number().default(30),
       }).optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { dias = 30 } = input || {};
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const hoje = new Date();
       
       const result = await db
@@ -78,7 +87,10 @@ export const juriRouter = router({
         .from(sessoesJuri)
         .leftJoin(processos, eq(sessoesJuri.processoId, processos.id))
         .where(
-          gte(sessoesJuri.dataSessao, hoje)
+          and(
+            gte(sessoesJuri.dataSessao, hoje),
+            ...(isAdmin ? [] : [eq(sessoesJuri.workspaceId, workspaceId)])
+          )
         )
         .orderBy(sessoesJuri.dataSessao)
         .limit(10);
@@ -89,11 +101,17 @@ export const juriRouter = router({
   // Buscar sessão por ID
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const [sessao] = await db
         .select()
         .from(sessoesJuri)
-        .where(eq(sessoesJuri.id, input.id));
+        .where(
+          and(
+            eq(sessoesJuri.id, input.id),
+            ...(isAdmin ? [] : [eq(sessoesJuri.workspaceId, workspaceId)])
+          )
+        );
       
       return sessao || null;
     }),
@@ -111,12 +129,36 @@ export const juriRouter = router({
         observacoes: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const processo = await db.query.processos.findFirst({
+        where: eq(processos.id, input.processoId),
+      });
+
+      if (!processo) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
+      }
+
+      if (!processo.workspaceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Processo sem workspace atribuído.",
+        });
+      }
+
+      if (!isAdmin && processo.workspaceId !== workspaceId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem acesso ao workspace deste processo.",
+        });
+      }
+
       const [novaSessao] = await db
         .insert(sessoesJuri)
         .values({
           ...input,
           dataSessao: new Date(input.dataSessao),
+          workspaceId: processo.workspaceId,
         })
         .returning();
       
@@ -135,8 +177,9 @@ export const juriRouter = router({
         observacoes: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { id, dataSessao, ...data } = input;
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       
       const updateData: any = {
         ...data,
@@ -150,7 +193,12 @@ export const juriRouter = router({
       const [atualizado] = await db
         .update(sessoesJuri)
         .set(updateData)
-        .where(eq(sessoesJuri.id, id))
+        .where(
+          and(
+            eq(sessoesJuri.id, id),
+            ...(isAdmin ? [] : [eq(sessoesJuri.workspaceId, workspaceId)])
+          )
+        )
         .returning();
       
       return atualizado;
@@ -159,28 +207,48 @@ export const juriRouter = router({
   // Excluir sessão
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       const [excluido] = await db
         .delete(sessoesJuri)
-        .where(eq(sessoesJuri.id, input.id))
+        .where(
+          and(
+            eq(sessoesJuri.id, input.id),
+            ...(isAdmin ? [] : [eq(sessoesJuri.workspaceId, workspaceId)])
+          )
+        )
         .returning();
       
       return excluido;
     }),
 
   // Estatísticas
-  stats: protectedProcedure.query(async () => {
-    const total = await db.select({ count: sql<number>`count(*)` }).from(sessoesJuri);
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+    const baseCondition = isAdmin ? undefined : eq(sessoesJuri.workspaceId, workspaceId);
+
+    const total = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(sessoesJuri)
+      .where(baseCondition);
     
     const agendadas = await db
       .select({ count: sql<number>`count(*)` })
       .from(sessoesJuri)
-      .where(eq(sessoesJuri.status, "AGENDADA"));
+      .where(
+        baseCondition
+          ? and(baseCondition, eq(sessoesJuri.status, "AGENDADA"))
+          : eq(sessoesJuri.status, "AGENDADA")
+      );
     
     const realizadas = await db
       .select({ count: sql<number>`count(*)` })
       .from(sessoesJuri)
-      .where(eq(sessoesJuri.status, "REALIZADA"));
+      .where(
+        baseCondition
+          ? and(baseCondition, eq(sessoesJuri.status, "REALIZADA"))
+          : eq(sessoesJuri.status, "REALIZADA")
+      );
     
     return {
       total: Number(total[0]?.count || 0),
