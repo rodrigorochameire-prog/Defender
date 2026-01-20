@@ -83,6 +83,9 @@ import {
   MapPin,
   ArrowUpDown,
   ChevronRight,
+  Briefcase,
+  Shield,
+  Users,
 } from "lucide-react";
 import {
   Collapsible,
@@ -182,20 +185,20 @@ const AREA_TO_ASSIGNMENT: Record<string, string[]> = {
 };
 
 // Atribuições disponíveis para o filtro
-// Ícones para cada atribuição (Lucide icons)
+// Ícones para cada atribuição (Lucide icons) - Padronizado com Casos
 const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
-  all: <LayoutGrid className="w-3.5 h-3.5" />,
+  all: <Briefcase className="w-3.5 h-3.5" />,
   JURI_CAMACARI: <Gavel className="w-3.5 h-3.5" />,
-  GRUPO_JURI: <Target className="w-3.5 h-3.5" />,
-  VVD_CAMACARI: <AlertTriangle className="w-3.5 h-3.5" />,
+  VVD_CAMACARI: <Shield className="w-3.5 h-3.5" />,
   EXECUCAO_PENAL: <Lock className="w-3.5 h-3.5" />,
   SUBSTITUICAO: <Scale className="w-3.5 h-3.5" />,
+  GRUPO_JURI: <Users className="w-3.5 h-3.5" />,
   SUBSTITUICAO_CIVEL: <FileText className="w-3.5 h-3.5" />,
 };
 
 const ATRIBUICAO_OPTIONS = [
-  { value: "all", label: "Todas", shortLabel: "Todas" },
-  { value: "JURI_CAMACARI", label: "Júri Camaçari", shortLabel: "Júri" },
+  { value: "all", label: "Todas as Demandas", shortLabel: "Todas" },
+  { value: "JURI_CAMACARI", label: "Júri", shortLabel: "Júri" },
   { value: "VVD_CAMACARI", label: "Violência Doméstica", shortLabel: "V.D." },
   { value: "EXECUCAO_PENAL", label: "Exec. Penal", shortLabel: "EP" },
   { value: "GRUPO_JURI", label: "Grupo Esp. Júri", shortLabel: "GEJ" },
