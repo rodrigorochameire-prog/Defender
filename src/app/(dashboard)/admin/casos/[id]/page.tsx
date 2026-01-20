@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Tooltip,
   TooltipContent,
@@ -53,6 +54,7 @@ import { useParams } from "next/navigation";
 import { format, formatDistanceToNow, isToday, isTomorrow, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { EntityLink } from "@/components/shared/entity-link";
+import { MentionTextarea, renderMentions } from "@/components/shared/mention-textarea";
 
 // ==========================================
 // TIPOS
@@ -612,6 +614,8 @@ export default function CasoDetailPage() {
   const params = useParams();
   const casoId = params.id as string;
   const [activeTab, setActiveTab] = useState("teoria");
+  const [noteSheetOpen, setNoteSheetOpen] = useState(false);
+  const [noteText, setNoteText] = useState("");
 
   // Em produção, buscar dados do caso via tRPC
   const caso = MOCK_CASO;
@@ -619,6 +623,31 @@ export default function CasoDetailPage() {
   const themeColors = ATRIBUICAO_COLORS[caso.atribuicao] || ATRIBUICAO_COLORS.SUBSTITUICAO;
   const tags = caso.tags ? JSON.parse(caso.tags) : [];
   const tempoDecorrido = formatDistanceToNow(caso.createdAt, { locale: ptBR });
+  const mentionSuggestions = useMemo(() => {
+    const docs = Array.from(
+      new Set(
+        MOCK_EVIDENCIAS.map((item) => item.documento).filter(Boolean) as string[]
+      )
+    );
+
+    return [
+      ...MOCK_PERSONAS.map((persona) => ({
+        id: `p-${persona.id}`,
+        label: persona.nome,
+        type: "pessoa" as const,
+      })),
+      ...docs.map((doc) => ({
+        id: `d-${doc}`,
+        label: doc,
+        type: "documento" as const,
+      })),
+      ...MOCK_FACTS.map((fact) => ({
+        id: `f-${fact.id}`,
+        label: fact.titulo,
+        type: "fato" as const,
+      })),
+    ];
+  }, []);
   
   // Verificar teoria completa
   const teoriaCompleta = caso.teoriaFatos && caso.teoriaProvas && caso.teoriaDireito;
@@ -1258,7 +1287,7 @@ export default function CasoDetailPage() {
                       Movimentações, notas, documentos e fatos em um único fluxo.
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" className="gap-2">
+                  <Button size="sm" variant="outline" className="gap-2" onClick={() => setNoteSheetOpen(true)}>
                     <MessageCircle className="w-4 h-4" />
                     Nova Nota
                   </Button>
@@ -1298,6 +1327,42 @@ export default function CasoDetailPage() {
                   ))}
                 </div>
               </Card>
+
+              <Sheet open={noteSheetOpen} onOpenChange={setNoteSheetOpen}>
+                <SheetContent side="right" className="w-[420px] sm:w-[520px]">
+                  <SheetHeader>
+                    <SheetTitle className="text-base font-semibold">Nova Nota Integrada</SheetTitle>
+                    <SheetDescription>
+                      Vincule pessoas, documentos e fatos diretamente na nota.
+                    </SheetDescription>
+                  </SheetHeader>
+
+                  <div className="mt-6 space-y-4">
+                    <MentionTextarea
+                      value={noteText}
+                      onChange={setNoteText}
+                      suggestions={mentionSuggestions}
+                      placeholder="Digite sua nota... use @, # ou $ para inserir vínculos."
+                    />
+
+                    <div className="rounded-sm border border-slate-200 dark:border-slate-800 p-3">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-2">
+                        Pré-visualização vinculada
+                      </p>
+                      <div className="text-sm text-slate-700 dark:text-slate-300 space-x-1">
+                        {noteText ? renderMentions(noteText) : "Sua nota aparecerá aqui."}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button onClick={() => setNoteSheetOpen(false)}>Salvar nota</Button>
+                      <Button variant="outline" onClick={() => setNoteText("")}>
+                        Limpar
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </TabsContent>
         </Tabs>
