@@ -3203,12 +3203,14 @@ export default function DemandasPage() {
 
                     {/* Coluna 4: Status */}
                     <div>
-                      <Badge className={cn(
-                        "px-2 py-0 h-5",
-                        statusConfig.color, 
-                        statusConfig.textColor || "text-white",
-                        largerFontMode ? "text-xs" : "text-xs"
-                      )}>
+                      <Badge 
+                        variant="outline"
+                        className={cn(
+                          "px-2 py-0.5 h-5 font-semibold border",
+                          statusConfig.color,
+                          largerFontMode ? "text-xs" : "text-xs"
+                        )}
+                      >
                         {statusConfig.label}
                       </Badge>
                     </div>
