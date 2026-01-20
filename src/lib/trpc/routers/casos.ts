@@ -14,9 +14,11 @@ import {
   caseFacts,
   factEvidence,
   juriScriptItems,
-  documentos
+  documentos,
+  movimentacoes,
+  anotacoes
 } from "@/lib/db/schema";
-import { eq, and, isNull, sql, desc, ilike, inArray } from "drizzle-orm";
+import { eq, and, isNull, sql, desc, ilike, inArray, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 
@@ -961,6 +963,149 @@ export const casosRouter = router({
         evidenceCount: stats?.total || 0,
         contradicoesCount: stats?.contradicoes || 0,
       };
+    }),
+
+  // ==========================================
+  // TIMELINE UNIFICADA
+  // ==========================================
+  listTimeline: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input }) => {
+      const processosDoCaso = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+        })
+        .from(processos)
+        .where(and(
+          eq(processos.casoId, input.casoId),
+          isNull(processos.deletedAt)
+        ));
+
+      const processoIds = processosDoCaso.map((p) => p.id);
+      const processoMap = processosDoCaso.reduce<Record<number, string>>((acc, item) => {
+        acc[item.id] = item.numeroAutos;
+        return acc;
+      }, {});
+
+      const audienciasData = await db
+        .select({
+          id: audiencias.id,
+          data: audiencias.dataAudiencia,
+          tipo: audiencias.tipo,
+          status: audiencias.status,
+          local: audiencias.local,
+          sala: audiencias.sala,
+          processoId: audiencias.processoId,
+        })
+        .from(audiencias)
+        .where(eq(audiencias.casoId, input.casoId));
+
+      const demandasData = await db
+        .select({
+          id: demandas.id,
+          ato: demandas.ato,
+          prazo: demandas.prazo,
+          status: demandas.status,
+          processoId: demandas.processoId,
+        })
+        .from(demandas)
+        .where(and(
+          eq(demandas.casoId, input.casoId),
+          isNull(demandas.deletedAt)
+        ));
+
+      const anotacoesData = await db
+        .select({
+          id: anotacoes.id,
+          conteudo: anotacoes.conteudo,
+          tipo: anotacoes.tipo,
+          createdAt: anotacoes.createdAt,
+        })
+        .from(anotacoes)
+        .where(eq(anotacoes.casoId, input.casoId));
+
+      const documentosData = await db
+        .select({
+          id: documentos.id,
+          titulo: documentos.titulo,
+          createdAt: documentos.createdAt,
+          processoId: documentos.processoId,
+        })
+        .from(documentos)
+        .where(
+          processoIds.length > 0
+            ? or(
+                eq(documentos.casoId, input.casoId),
+                inArray(documentos.processoId, processoIds)
+              )
+            : eq(documentos.casoId, input.casoId)
+        );
+
+      const movimentacoesData = processoIds.length
+        ? await db
+            .select({
+              id: movimentacoes.id,
+              data: movimentacoes.dataMovimentacao,
+              descricao: movimentacoes.descricao,
+              tipo: movimentacoes.tipo,
+              processoId: movimentacoes.processoId,
+            })
+            .from(movimentacoes)
+            .where(inArray(movimentacoes.processoId, processoIds))
+        : [];
+
+      const timeline = [
+        ...audienciasData
+          .filter((item) => item.data)
+          .map((item) => ({
+            id: `aud-${item.id}`,
+            type: "audiencia",
+            title: `Audiência ${item.tipo}`,
+            description: [item.local, item.sala ? `Sala ${item.sala}` : null]
+              .filter(Boolean)
+              .join(" • "),
+            date: item.data,
+            processoNumero: item.processoId ? processoMap[item.processoId] : undefined,
+          })),
+        ...demandasData
+          .filter((item) => item.prazo)
+          .map((item) => ({
+            id: `dem-${item.id}`,
+            type: "demanda",
+            title: item.ato,
+            description: `Status: ${item.status}`,
+            date: item.prazo,
+            processoNumero: item.processoId ? processoMap[item.processoId] : undefined,
+          })),
+        ...anotacoesData.map((item) => ({
+          id: `nota-${item.id}`,
+          type: "nota",
+          title: item.tipo === "providencia" ? "Providência" : "Nota da defesa",
+          description: item.conteudo,
+          date: item.createdAt,
+        })),
+        ...documentosData.map((item) => ({
+          id: `doc-${item.id}`,
+          type: "documento",
+          title: item.titulo,
+          description: "Documento anexado",
+          date: item.createdAt,
+          processoNumero: item.processoId ? processoMap[item.processoId] : undefined,
+        })),
+        ...movimentacoesData.map((item) => ({
+          id: `mov-${item.id}`,
+          type: "movimentacao",
+          title: item.descricao,
+          description: item.tipo || "Movimentação processual",
+          date: item.data,
+          processoNumero: item.processoId ? processoMap[item.processoId] : undefined,
+        })),
+      ]
+        .filter((item) => item.date)
+        .sort((a, b) => new Date(b.date as any).getTime() - new Date(a.date as any).getTime());
+
+      return timeline;
     }),
 
   createFact: protectedProcedure

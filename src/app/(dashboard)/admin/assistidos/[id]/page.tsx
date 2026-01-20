@@ -62,6 +62,7 @@ import { useAssignment } from "@/contexts/assignment-context";
 import { TeoriaDoCaso } from "@/components/casos/teoria-do-caso";
 import { AudienciasHub } from "@/components/casos/audiencias-hub";
 import { MentionTextarea, renderMentions } from "@/components/shared/mention-textarea";
+import { trpc } from "@/lib/trpc/client";
 
 // ==========================================
 // TIPOS
@@ -77,8 +78,18 @@ interface HealthScore {
 }
 
 interface TimelineEvent {
-  id: number;
-  type: "peticao" | "audiencia" | "decisao" | "atendimento" | "whatsapp" | "notificacao" | "documento";
+  id: string;
+  type:
+    | "audiencia"
+    | "documento"
+    | "demanda"
+    | "movimentacao"
+    | "nota"
+    | "peticao"
+    | "decisao"
+    | "atendimento"
+    | "whatsapp"
+    | "notificacao";
   title: string;
   description?: string;
   date: Date;
@@ -187,8 +198,8 @@ const mockAudiencias: any[] = [
 
 const mockTimeline: TimelineEvent[] = [
   {
-    id: 1,
-    type: "peticao",
+    id: "mov-1",
+    type: "movimentacao",
     title: "Resposta à Acusação protocolada",
     description: "Petição protocolada no sistema PJe",
     date: new Date("2026-01-15T10:30:00"),
@@ -197,8 +208,8 @@ const mockTimeline: TimelineEvent[] = [
     processoNumero: "8012906-74.2025.8.05.0039",
   },
   {
-    id: 2,
-    type: "whatsapp",
+    id: "nota-2",
+    type: "nota",
     title: "Mensagem enviada para familiar",
     description: "Notificação de audiência enviada para Maria (Mãe)",
     date: new Date("2026-01-14T15:20:00"),
@@ -206,8 +217,8 @@ const mockTimeline: TimelineEvent[] = [
     color: "text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30",
   },
   {
-    id: 3,
-    type: "atendimento",
+    id: "nota-3",
+    type: "nota",
     title: "Atendimento presencial",
     description: "Orientação sobre procedimentos da audiência de instrução",
     date: new Date("2026-01-10T14:00:00"),
@@ -215,8 +226,8 @@ const mockTimeline: TimelineEvent[] = [
     color: "text-violet-500 bg-violet-100 dark:bg-violet-900/30",
   },
   {
-    id: 4,
-    type: "decisao",
+    id: "aud-4",
+    type: "audiencia",
     title: "Decisão de designação de audiência",
     description: "Audiência de instrução designada para 25/01/2026",
     date: new Date("2026-01-08T09:45:00"),
@@ -225,7 +236,7 @@ const mockTimeline: TimelineEvent[] = [
     processoNumero: "8012906-74.2025.8.05.0039",
   },
   {
-    id: 5,
+    id: "doc-5",
     type: "documento",
     title: "Novo documento anexado",
     description: "RG e Comprovante de Residência",
@@ -234,8 +245,8 @@ const mockTimeline: TimelineEvent[] = [
     color: "text-rose-500 bg-rose-100 dark:bg-rose-900/30",
   },
   {
-    id: 6,
-    type: "notificacao",
+    id: "dem-6",
+    type: "demanda",
     title: "Prazo cadastrado",
     description: "Resposta à Acusação - vence em 20/01/2026",
     date: new Date("2026-01-03T08:30:00"),
@@ -243,6 +254,20 @@ const mockTimeline: TimelineEvent[] = [
     color: "text-zinc-500 bg-zinc-100 dark:bg-zinc-800",
   },
 ];
+
+const timelineStyleMap: Record<string, { icon: React.ReactNode; color: string }> = {
+  audiencia: { icon: <Calendar className="w-4 h-4" />, color: "text-purple-600 bg-purple-100 dark:bg-purple-900/30" },
+  demanda: { icon: <Clock className="w-4 h-4" />, color: "text-amber-600 bg-amber-100 dark:bg-amber-900/30" },
+  documento: { icon: <FolderOpen className="w-4 h-4" />, color: "text-rose-600 bg-rose-100 dark:bg-rose-900/30" },
+  movimentacao: { icon: <FileText className="w-4 h-4" />, color: "text-blue-600 bg-blue-100 dark:bg-blue-900/30" },
+  nota: { icon: <MessageCircle className="w-4 h-4" />, color: "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30" },
+  peticao: { icon: <FileText className="w-4 h-4" />, color: "text-blue-600 bg-blue-100 dark:bg-blue-900/30" },
+  decisao: { icon: <Gavel className="w-4 h-4" />, color: "text-amber-600 bg-amber-100 dark:bg-amber-900/30" },
+  atendimento: { icon: <User className="w-4 h-4" />, color: "text-violet-600 bg-violet-100 dark:bg-violet-900/30" },
+  whatsapp: { icon: <MessageCircle className="w-4 h-4" />, color: "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30" },
+  notificacao: { icon: <Bell className="w-4 h-4" />, color: "text-zinc-500 bg-zinc-100 dark:bg-zinc-800" },
+  default: { icon: <History className="w-4 h-4" />, color: "text-zinc-500 bg-zinc-100 dark:bg-zinc-800" },
+};
 
 const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
   CADEIA_PUBLICA: { label: "Cadeia Pública", color: "text-rose-600", bgColor: "bg-rose-50 dark:bg-rose-900/20" },
@@ -396,6 +421,11 @@ export default function AssistidoDetailPage() {
   const { config } = useAssignment();
   const [activeTab, setActiveTab] = useState("resumo");
   const [noteText, setNoteText] = useState("");
+  const assistidoId = Number(Array.isArray(params?.id) ? params.id[0] : params?.id);
+  const { data: timelineData } = trpc.assistidos.listTimeline.useQuery(
+    { assistidoId },
+    { enabled: Number.isFinite(assistidoId) }
+  );
 
   const assistido = mockAssistido;
   const idade = assistido.dataNascimento
@@ -424,6 +454,23 @@ export default function AssistidoDetailPage() {
       })),
     ];
   }, []);
+
+  const timelineSource = useMemo<TimelineEvent[]>(() => {
+    if (!timelineData || timelineData.length === 0) return mockTimeline;
+    return timelineData.map((item) => {
+      const style = timelineStyleMap[item.type] || timelineStyleMap.default;
+      return {
+        id: item.id,
+        type: item.type as TimelineEvent["type"],
+        title: item.title,
+        description: item.description || undefined,
+        date: new Date(item.date as any),
+        icon: style.icon,
+        color: style.color,
+        processoNumero: item.processoNumero || undefined,
+      };
+    });
+  }, [timelineData]);
 
   // Health Score calculado
   const healthScore: HealthScore = {
@@ -835,16 +882,16 @@ export default function AssistidoDetailPage() {
                   Histórico Completo
                 </h3>
                 <p className="text-sm text-zinc-500">
-                  {mockTimeline.length} eventos registrados
+                  {timelineSource.length} eventos registrados
                 </p>
               </div>
               
               <div className="space-y-0">
-                {mockTimeline.map((event, idx) => (
+                {timelineSource.map((event, idx) => (
                   <TimelineItem 
                     key={event.id} 
                     event={event} 
-                    isLast={idx === mockTimeline.length - 1}
+                    isLast={idx === timelineSource.length - 1}
                   />
                 ))}
               </div>

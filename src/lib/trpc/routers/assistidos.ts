@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { assistidos } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql, and, isNull } from "drizzle-orm";
+import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes } from "@/lib/db/schema";
+import { eq, ilike, or, desc, sql, and, isNull, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 
@@ -265,4 +265,168 @@ export const assistidosRouter = router({
       soltos: Number(soltos[0]?.count || 0),
     };
   }),
+
+  // ==========================================
+  // TIMELINE UNIFICADA DO ASSISTIDO
+  // ==========================================
+  listTimeline: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const assistidoScope = await db
+        .select({ id: assistidos.id })
+        .from(assistidos)
+        .where(
+          isAdmin
+            ? eq(assistidos.id, input.assistidoId)
+            : and(eq(assistidos.id, input.assistidoId), eq(assistidos.workspaceId, workspaceId))
+        );
+
+      if (assistidoScope.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado." });
+      }
+
+      const processosDoAssistido = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+        })
+        .from(processos)
+        .where(and(
+          eq(processos.assistidoId, input.assistidoId),
+          isNull(processos.deletedAt)
+        ));
+
+      const processoIds = processosDoAssistido.map((p) => p.id);
+      const processoMap = processosDoAssistido.reduce<Record<number, string>>((acc, item) => {
+        acc[item.id] = item.numeroAutos;
+        return acc;
+      }, {});
+
+      const audienciasData = await db
+        .select({
+          id: audiencias.id,
+          data: audiencias.dataAudiencia,
+          tipo: audiencias.tipo,
+          status: audiencias.status,
+          local: audiencias.local,
+          sala: audiencias.sala,
+          processoId: audiencias.processoId,
+        })
+        .from(audiencias)
+        .where(
+          processoIds.length > 0
+            ? or(
+                eq(audiencias.assistidoId, input.assistidoId),
+                inArray(audiencias.processoId, processoIds)
+              )
+            : eq(audiencias.assistidoId, input.assistidoId)
+        );
+
+      const demandasData = await db
+        .select({
+          id: demandas.id,
+          ato: demandas.ato,
+          prazo: demandas.prazo,
+          status: demandas.status,
+          processoId: demandas.processoId,
+        })
+        .from(demandas)
+        .where(and(
+          eq(demandas.assistidoId, input.assistidoId),
+          isNull(demandas.deletedAt)
+        ));
+
+      const anotacoesData = await db
+        .select({
+          id: anotacoes.id,
+          conteudo: anotacoes.conteudo,
+          tipo: anotacoes.tipo,
+          createdAt: anotacoes.createdAt,
+        })
+        .from(anotacoes)
+        .where(eq(anotacoes.assistidoId, input.assistidoId));
+
+      const documentosData = await db
+        .select({
+          id: documentos.id,
+          titulo: documentos.titulo,
+          createdAt: documentos.createdAt,
+          processoId: documentos.processoId,
+        })
+        .from(documentos)
+        .where(
+          processoIds.length > 0
+            ? or(
+                eq(documentos.assistidoId, input.assistidoId),
+                inArray(documentos.processoId, processoIds)
+              )
+            : eq(documentos.assistidoId, input.assistidoId)
+        );
+
+      const movimentacoesData = processoIds.length
+        ? await db
+            .select({
+              id: movimentacoes.id,
+              data: movimentacoes.dataMovimentacao,
+              descricao: movimentacoes.descricao,
+              tipo: movimentacoes.tipo,
+              processoId: movimentacoes.processoId,
+            })
+            .from(movimentacoes)
+            .where(inArray(movimentacoes.processoId, processoIds))
+        : [];
+
+      const timeline = [
+        ...audienciasData
+          .filter((item) => item.data)
+          .map((item) => ({
+            id: `aud-${item.id}`,
+            type: "audiencia",
+            title: `Audiência ${item.tipo}`,
+            description: [item.local, item.sala ? `Sala ${item.sala}` : null]
+              .filter(Boolean)
+              .join(" • "),
+            date: item.data,
+            processoNumero: item.processoId ? processoMap[item.processoId] : undefined,
+          })),
+        ...demandasData
+          .filter((item) => item.prazo)
+          .map((item) => ({
+            id: `dem-${item.id}`,
+            type: "demanda",
+            title: item.ato,
+            description: `Status: ${item.status}`,
+            date: item.prazo,
+            processoNumero: item.processoId ? processoMap[item.processoId] : undefined,
+          })),
+        ...anotacoesData.map((item) => ({
+          id: `nota-${item.id}`,
+          type: "nota",
+          title: item.tipo === "providencia" ? "Providência" : "Nota da defesa",
+          description: item.conteudo,
+          date: item.createdAt,
+        })),
+        ...documentosData.map((item) => ({
+          id: `doc-${item.id}`,
+          type: "documento",
+          title: item.titulo,
+          description: "Documento anexado",
+          date: item.createdAt,
+          processoNumero: item.processoId ? processoMap[item.processoId] : undefined,
+        })),
+        ...movimentacoesData.map((item) => ({
+          id: `mov-${item.id}`,
+          type: "movimentacao",
+          title: item.descricao,
+          description: item.tipo || "Movimentação processual",
+          date: item.data,
+          processoNumero: item.processoId ? processoMap[item.processoId] : undefined,
+        })),
+      ]
+        .filter((item) => item.date)
+        .sort((a, b) => new Date(b.date as any).getTime() - new Date(a.date as any).getTime());
+
+      return timeline;
+    }),
 });
