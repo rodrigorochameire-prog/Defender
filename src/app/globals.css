@@ -1238,3 +1238,62 @@ html.font-large {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* ========================================
+   HIGH CONTRAST TEXT ON COLORED BACKGROUNDS
+   Melhora legibilidade de texto branco
+   ======================================== */
+
+/* Text shadow utility for better contrast on colored backgrounds */
+.text-contrast {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.text-contrast-strong {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* Auto text shadow for white text on common colored backgrounds */
+.bg-emerald-500.text-white,
+.bg-emerald-600.text-white,
+.bg-green-500.text-white,
+.bg-green-600.text-white,
+.bg-green-700.text-white,
+.bg-amber-500.text-white,
+.bg-amber-600.text-white,
+.bg-rose-500.text-white,
+.bg-rose-600.text-white,
+.bg-red-500.text-white,
+.bg-red-600.text-white,
+.bg-blue-500.text-white,
+.bg-blue-600.text-white,
+.bg-sky-500.text-white,
+.bg-sky-600.text-white,
+.bg-violet-500.text-white,
+.bg-violet-600.text-white,
+.bg-indigo-500.text-white,
+.bg-indigo-600.text-white,
+.bg-purple-500.text-white,
+.bg-purple-600.text-white {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  font-weight: 600;
+}
+
+/* Ensure pure white text on all primary action buttons */
+[class*="bg-gradient-to"][class*="text-white"] {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Badge contrast improvements */
+[class*="Badge"][class*="text-white"],
+.badge[class*="text-white"] {
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  font-weight: 700;
+}
+
+/* Button hover state maintains text visibility */
+button[class*="text-white"]:hover,
+a[class*="text-white"]:hover {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
