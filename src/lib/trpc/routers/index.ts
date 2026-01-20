@@ -44,6 +44,12 @@ import { financesRouter } from "./finances";
 import { packagesRouter } from "./packages";
 import { tutorsRouter } from "./tutors";
 import { reviewsRouter } from "./reviews";
+import { businessRulesRouter } from "./businessRules";
+import { petManagementRouter } from "./petManagement";
+import { statsRouter } from "./stats";
+import { compatibilityRouter } from "./compatibility";
+import { trainingMatrixRouter } from "./trainingMatrix";
+import { inspectionsRouter } from "./inspections";
 
 
 export const appRouter = router({
@@ -99,6 +105,12 @@ export const appRouter = router({
   packages: packagesRouter,
   tutors: tutorsRouter,
   reviews: reviewsRouter,
+  businessRules: businessRulesRouter,
+  petManagement: petManagementRouter,
+  stats: statsRouter,
+  compatibility: compatibilityRouter,
+  trainingMatrix: trainingMatrixRouter,
+  inspections: inspectionsRouter,
 });
 
 export type AppRouter = typeof appRouter;
