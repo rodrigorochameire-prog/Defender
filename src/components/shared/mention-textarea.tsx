@@ -121,7 +121,7 @@ export function MentionTextarea({
       />
       {activeMatch && filteredSuggestions.length > 0 && (
         <div className="rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-950 p-2">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-2">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-2">
             Sugestões
           </p>
           <div className="space-y-1">
@@ -141,7 +141,7 @@ export function MentionTextarea({
           </div>
         </div>
       )}
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         Use @ para pessoas, # para documentos e $ para fatos.
       </p>
     </div>

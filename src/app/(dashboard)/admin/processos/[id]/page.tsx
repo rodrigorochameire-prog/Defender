@@ -137,11 +137,11 @@ function getAreaBadge(area: string) {
 
 function getRelacaoBadge(tipo: string) {
   switch (tipo) {
-    case "origem": return <Badge variant="outline" className="text-[10px]">Origem</Badge>;
-    case "apenso": return <Badge variant="outline" className="text-[10px]">Apenso</Badge>;
-    case "recurso": return <Badge variant="info" className="text-[10px]">Recurso</Badge>;
-    case "cautelar": return <Badge variant="warning" className="text-[10px]">Cautelar</Badge>;
-    default: return <Badge variant="outline" className="text-[10px]">{tipo}</Badge>;
+    case "origem": return <Badge variant="outline" className="text-xs">Origem</Badge>;
+    case "apenso": return <Badge variant="outline" className="text-xs">Apenso</Badge>;
+    case "recurso": return <Badge variant="info" className="text-xs">Recurso</Badge>;
+    case "cautelar": return <Badge variant="warning" className="text-xs">Cautelar</Badge>;
+    default: return <Badge variant="outline" className="text-xs">{tipo}</Badge>;
   }
 }
 
@@ -286,7 +286,7 @@ export default function ProcessoDetalhesPage() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <span className="font-mono font-medium text-primary">{processo.numeroAutos}</span>
-                        <Badge variant="default" className="text-[10px]">Atual</Badge>
+                        <Badge variant="default" className="text-xs">Atual</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{processo.classeProcessual}</p>
                     </div>
@@ -341,7 +341,7 @@ export default function ProcessoDetalhesPage() {
                         {format(parseISO(ato.data), "dd/MM/yyyy")}
                       </span>
                     </div>
-                    <Badge variant="outline" className="mt-1 text-[10px] text-muted-foreground border-border/50 uppercase tracking-wider">
+                    <Badge variant="outline" className="mt-1 text-xs text-muted-foreground border-border/50 uppercase tracking-wider">
                       {ato.tipo}
                     </Badge>
                   </div>
@@ -382,7 +382,7 @@ export default function ProcessoDetalhesPage() {
                   <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5" />
                   <div>
                     <p className="text-xs font-bold text-red-700 dark:text-red-400">Réu Preso</p>
-                    <p className="text-[10px] text-red-600/80 dark:text-red-400/80 mt-0.5">
+                    <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-0.5">
                       Prioridade legal. Verifique os prazos de prisão cautelar.
                     </p>
                   </div>

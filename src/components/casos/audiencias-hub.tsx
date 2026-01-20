@@ -149,7 +149,7 @@ function DateIndicator({ date }: { date: Date }) {
   
   if (isToday(date)) {
     return (
-      <Badge className="bg-rose-600 text-white text-[10px] px-1.5 py-0">
+      <Badge className="bg-rose-600 text-white text-xs px-1.5 py-0">
         HOJE
       </Badge>
     );
@@ -157,7 +157,7 @@ function DateIndicator({ date }: { date: Date }) {
   
   if (isTomorrow(date)) {
     return (
-      <Badge className="bg-amber-500 text-white text-[10px] px-1.5 py-0">
+      <Badge className="bg-amber-500 text-white text-xs px-1.5 py-0">
         AMANHÃ
       </Badge>
     );
@@ -211,7 +211,7 @@ function AudienciaCard({
             )}
             <DateIndicator date={audiencia.dataAudiencia} />
           </div>
-          <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", statusConfig.color)}>
+          <Badge variant="outline" className={cn("text-xs px-1.5 py-0", statusConfig.color)}>
             {statusConfig.label}
           </Badge>
         </div>
@@ -236,7 +236,7 @@ function AudienciaCard({
               audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
             )}>
               <AvatarImage src={audiencia.assistidoFoto || undefined} />
-              <AvatarFallback className="text-[10px] bg-zinc-100 dark:bg-zinc-800">
+              <AvatarFallback className="text-xs bg-zinc-100 dark:bg-zinc-800">
                 {audiencia.assistidoNome?.charAt(0)}
               </AvatarFallback>
             </Avatar>
@@ -291,12 +291,12 @@ function ListView({
         <Table>
           <TableHeader>
             <TableRow className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
-              <TableHead className="w-[100px] text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Data</TableHead>
-              <TableHead className="text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Tipo</TableHead>
-              <TableHead className="text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Assistido</TableHead>
-              <TableHead className="text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Processo</TableHead>
-              <TableHead className="text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Local</TableHead>
-              <TableHead className="w-[100px] text-[10px] uppercase text-zinc-500 font-semibold tracking-wider">Status</TableHead>
+              <TableHead className="w-[100px] text-xs uppercase text-zinc-500 font-semibold tracking-wider">Data</TableHead>
+              <TableHead className="text-xs uppercase text-zinc-500 font-semibold tracking-wider">Tipo</TableHead>
+              <TableHead className="text-xs uppercase text-zinc-500 font-semibold tracking-wider">Assistido</TableHead>
+              <TableHead className="text-xs uppercase text-zinc-500 font-semibold tracking-wider">Processo</TableHead>
+              <TableHead className="text-xs uppercase text-zinc-500 font-semibold tracking-wider">Local</TableHead>
+              <TableHead className="w-[100px] text-xs uppercase text-zinc-500 font-semibold tracking-wider">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -319,13 +319,13 @@ function ListView({
                         {format(audiencia.dataAudiencia, "dd/MM/yy")}
                       </span>
                       {audiencia.horario && (
-                        <span className="text-[10px] text-zinc-500 font-mono">{audiencia.horario}</span>
+                        <span className="text-xs text-zinc-500 font-mono">{audiencia.horario}</span>
                       )}
                       <DateIndicator date={audiencia.dataAudiencia} />
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={cn("text-[10px] px-1.5 py-0", tipoConfig.color)}>
+                    <Badge className={cn("text-xs px-1.5 py-0", tipoConfig.color)}>
                       {tipoConfig.icon} {tipoConfig.label}
                     </Badge>
                   </TableCell>
@@ -337,7 +337,7 @@ function ListView({
                           audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
                         )}>
                           <AvatarImage src={audiencia.assistidoFoto || undefined} />
-                          <AvatarFallback className="text-[10px] font-medium">
+                          <AvatarFallback className="text-xs font-medium">
                             {audiencia.assistidoNome?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -358,11 +358,11 @@ function ListView({
                     )}
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono text-[10px] text-zinc-500 truncate max-w-[160px] block">
+                    <span className="font-mono text-xs text-zinc-500 truncate max-w-[160px] block">
                       {audiencia.numeroAutos}
                     </span>
                     {audiencia.vara && (
-                      <span className="text-[10px] text-zinc-400">{audiencia.vara}</span>
+                      <span className="text-xs text-zinc-400">{audiencia.vara}</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -373,11 +373,11 @@ function ListView({
                       </div>
                     )}
                     {audiencia.sala && (
-                      <span className="text-[10px] text-zinc-400">Sala {audiencia.sala}</span>
+                      <span className="text-xs text-zinc-400">Sala {audiencia.sala}</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", statusConfig.color)}>
+                    <Badge variant="outline" className={cn("text-xs px-1.5 py-0", statusConfig.color)}>
                       {statusConfig.label}
                     </Badge>
                   </TableCell>
@@ -411,7 +411,7 @@ function ListView({
                       {format(audiencia.dataAudiencia, "dd/MM")}
                     </span>
                     {audiencia.horario && (
-                      <span className="text-[10px] text-zinc-500">{audiencia.horario}</span>
+                      <span className="text-xs text-zinc-500">{audiencia.horario}</span>
                     )}
                   </div>
                   <DateIndicator date={audiencia.dataAudiencia} />
@@ -434,7 +434,7 @@ function ListView({
                     audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
                   )}>
                     <AvatarImage src={audiencia.assistidoFoto || undefined} />
-                    <AvatarFallback className="text-[10px] font-medium">
+                    <AvatarFallback className="text-xs font-medium">
                       {audiencia.assistidoNome?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
@@ -442,7 +442,7 @@ function ListView({
                     <span className="text-sm text-zinc-900 dark:text-zinc-100 font-medium block truncate">
                       {audiencia.assistidoNome}
                     </span>
-                    <span className="font-mono text-[10px] text-zinc-500 truncate block">
+                    <span className="font-mono text-xs text-zinc-500 truncate block">
                       {audiencia.numeroAutos}
                     </span>
                   </div>
@@ -454,7 +454,7 @@ function ListView({
 
               {/* Bottom: Location */}
               {(audiencia.local || audiencia.sala) && (
-                <div className="flex items-center gap-1 text-[10px] text-zinc-500">
+                <div className="flex items-center gap-1 text-xs text-zinc-500">
                   <MapPin className="w-3 h-3" />
                   <span className="truncate">
                     {audiencia.local}{audiencia.sala && ` • Sala ${audiencia.sala}`}
@@ -505,7 +505,7 @@ function KanbanView({
               <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 {column.title}
               </h3>
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 ml-auto">
+              <Badge variant="secondary" className="text-xs px-1.5 py-0 ml-auto">
                 {items.length}
               </Badge>
             </div>
@@ -622,7 +622,7 @@ function CalendarView({
           <div
             key={day}
             className={cn(
-              "text-center font-medium text-[10px] sm:text-xs py-2 uppercase tracking-wider",
+              "text-center font-medium text-xs sm:text-xs py-2 uppercase tracking-wider",
               i === 0 || i === 6 ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
             )}
           >
@@ -674,7 +674,7 @@ function CalendarView({
                     <div
                       key={audiencia.id}
                       className={cn(
-                        "px-1 py-0.5 rounded text-[8px] sm:text-[10px] truncate cursor-pointer transition-colors",
+                        "px-1 py-0.5 rounded text-[8px] sm:text-xs truncate cursor-pointer transition-colors",
                         tipoConfig.color
                       )}
                       onClick={() => onAudienciaClick?.(audiencia)}
@@ -685,7 +685,7 @@ function CalendarView({
                   );
                 })}
                 {dayAudiencias.length > 2 && (
-                  <div className="text-[8px] sm:text-[10px] text-zinc-400 px-1">
+                  <div className="text-[8px] sm:text-xs text-zinc-400 px-1">
                     +{dayAudiencias.length - 2} mais
                   </div>
                 )}
@@ -700,7 +700,7 @@ function CalendarView({
         {Object.entries(TIPOS_AUDIENCIA).slice(0, 5).map(([key, config]) => (
           <div key={key} className="flex items-center gap-1">
             <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full", config.dotColor)} />
-            <span className="text-[9px] sm:text-[10px] text-zinc-500">{config.label}</span>
+            <span className="text-[9px] sm:text-xs text-zinc-500">{config.label}</span>
           </div>
         ))}
       </div>
@@ -765,7 +765,7 @@ function AudienciaSidePeek({
                 <Badge className={cn("text-xs", tipoConfig.color)}>
                   {tipoConfig.icon} {tipoConfig.label}
                 </Badge>
-                <Badge variant="outline" className={cn("text-[10px]", statusConfig.color)}>
+                <Badge variant="outline" className={cn("text-xs", statusConfig.color)}>
                   {statusConfig.label}
                 </Badge>
               </div>
@@ -777,25 +777,25 @@ function AudienciaSidePeek({
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] uppercase text-zinc-500 font-medium">Data</label>
+              <label className="text-xs uppercase text-zinc-500 font-medium">Data</label>
               <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100">
                 {format(audiencia.dataAudiencia, "dd/MM/yyyy")}
               </p>
             </div>
             <div>
-              <label className="text-[10px] uppercase text-zinc-500 font-medium">Horário</label>
+              <label className="text-xs uppercase text-zinc-500 font-medium">Horário</label>
               <p className="text-sm text-zinc-900 dark:text-zinc-100">
                 {audiencia.horario || "-"}
               </p>
             </div>
             <div>
-              <label className="text-[10px] uppercase text-zinc-500 font-medium">Local</label>
+              <label className="text-xs uppercase text-zinc-500 font-medium">Local</label>
               <p className="text-sm text-zinc-700 dark:text-zinc-300">
                 {audiencia.local || "-"}
               </p>
             </div>
             <div>
-              <label className="text-[10px] uppercase text-zinc-500 font-medium">Sala</label>
+              <label className="text-xs uppercase text-zinc-500 font-medium">Sala</label>
               <p className="text-sm text-zinc-700 dark:text-zinc-300">
                 {audiencia.sala || "-"}
               </p>
@@ -805,7 +805,7 @@ function AudienciaSidePeek({
           {/* Processo */}
           {audiencia.numeroAutos && (
             <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-              <label className="text-[10px] uppercase text-zinc-500 font-medium">Processo</label>
+              <label className="text-xs uppercase text-zinc-500 font-medium">Processo</label>
               <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100 mt-1">
                 {audiencia.numeroAutos}
               </p>
@@ -818,7 +818,7 @@ function AudienciaSidePeek({
           {/* Resumo da Defesa */}
           {audiencia.resumoDefesa && (
             <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-              <label className="text-[10px] uppercase text-amber-700 dark:text-amber-400 font-medium">
+              <label className="text-xs uppercase text-amber-700 dark:text-amber-400 font-medium">
                 Resumo da Defesa
               </label>
               <p className="text-sm text-amber-800 dark:text-amber-300 mt-1 italic">
@@ -829,7 +829,7 @@ function AudienciaSidePeek({
 
           {/* Participantes */}
           <div>
-            <label className="text-[10px] uppercase text-zinc-500 font-medium mb-2 block">
+            <label className="text-xs uppercase text-zinc-500 font-medium mb-2 block">
               Participantes
             </label>
             <div className="space-y-2">
@@ -859,7 +859,7 @@ function AudienciaSidePeek({
 
           {/* Anotações / Ata */}
           <div>
-            <label className="text-[10px] uppercase text-zinc-500 font-medium mb-2 block">
+            <label className="text-xs uppercase text-zinc-500 font-medium mb-2 block">
               Anotações da Audiência
             </label>
             <Textarea
@@ -869,7 +869,7 @@ function AudienciaSidePeek({
               className="min-h-[120px] text-sm"
             />
             <div className="flex items-center justify-between mt-2">
-              <p className="text-[10px] text-zinc-400">
+              <p className="text-xs text-zinc-400">
                 As anotações são versionadas para auditoria.
               </p>
               <Button 
@@ -885,7 +885,7 @@ function AudienciaSidePeek({
 
           {/* Ações */}
           <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
-            <label className="text-[10px] uppercase text-zinc-500 font-medium mb-2 block">
+            <label className="text-xs uppercase text-zinc-500 font-medium mb-2 block">
               Gerar Tarefa
             </label>
             <div className="flex flex-wrap gap-2">
@@ -999,7 +999,7 @@ export function AudienciasHub({
               <div className="flex items-center gap-2 sm:gap-3 text-xs text-zinc-500 dark:text-zinc-400">
                 <span>{filteredAudiencias.length} audiências</span>
                 {stats.hoje > 0 && (
-                  <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[10px] px-1.5 py-0">
+                  <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-xs px-1.5 py-0">
                     {stats.hoje} hoje
                   </Badge>
                 )}

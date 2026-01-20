@@ -28,7 +28,7 @@ export function SectionHeader({
       number: "w-5 h-5 text-xs",
       icon: "w-4 h-4",
       title: "text-sm font-semibold tracking-[-0.01em]",
-      subtitle: "text-[11px] uppercase tracking-[0.05em]",
+      subtitle: "text-xs uppercase tracking-[0.05em]",
     },
     md: {
       container: "pb-3 mb-5",

@@ -95,7 +95,7 @@ export default function LotacaoPage() {
                     <Badge 
                       variant="outline"
                       className={cn(
-                        "text-[10px]",
+                        "text-xs",
                         superlotada ? "text-rose-600 border-rose-200" : "text-emerald-600 border-emerald-200"
                       )}
                     >

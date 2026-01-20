@@ -166,7 +166,7 @@ export default function LaboratorioOratoriaPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold">Laboratório de Oratória</h1>
-              <Badge className="bg-amber-500 text-white text-[10px]">
+              <Badge className="bg-amber-500 text-white text-xs">
                 <Sparkles className="w-3 h-3 mr-0.5" />
                 Premium
               </Badge>

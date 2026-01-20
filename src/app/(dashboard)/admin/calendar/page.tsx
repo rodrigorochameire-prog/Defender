@@ -354,7 +354,7 @@ export default function AdminCalendarPage() {
                             handleEventClick(event);
                           }}
                           className={cn(
-                            "text-[10px] px-1 rounded truncate cursor-pointer hover:opacity-80",
+                            "text-xs px-1 rounded truncate cursor-pointer hover:opacity-80",
                             config.bgColor,
                             config.color
                           )}
@@ -365,7 +365,7 @@ export default function AdminCalendarPage() {
                       );
                     })}
                     {dayEvents.length > 3 && (
-                      <div className="text-[10px] text-muted-foreground px-1">
+                      <div className="text-xs text-muted-foreground px-1">
                         +{dayEvents.length - 3} mais
                       </div>
                     )}

@@ -90,7 +90,7 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
           {entity && (
             <div className="mt-6 space-y-4">
               <div>
-                <Badge variant="outline" className="uppercase tracking-[0.2em] text-[10px]">
+                <Badge variant="outline" className="uppercase tracking-[0.2em] text-xs">
                   {entity.type}
                 </Badge>
                 <h3 className="text-lg font-semibold mt-2">{entity.name}</h3>
@@ -109,24 +109,24 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                 {!isLoading && entity.type === "pessoa" && personaQuery.data && (
                   <div className="mt-2 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Tipo</span>
+                      <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Tipo</span>
                       <span className="font-medium">{personaQuery.data.tipo}</span>
                     </div>
                     {personaQuery.data.status && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Status</span>
+                        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Status</span>
                         <span className="font-medium">{personaQuery.data.status}</span>
                       </div>
                     )}
                     {personaQuery.data.observacoes && (
                       <div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Observações</span>
+                        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Observações</span>
                         <p className="text-sm mt-1">{personaQuery.data.observacoes}</p>
                       </div>
                     )}
                     {(personaQuery.data.assistidoId || personaQuery.data.juradoId) && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Vínculo</span>
+                        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Vínculo</span>
                         <span className="font-medium">
                           {personaQuery.data.assistidoId
                             ? `Assistido #${personaQuery.data.assistidoId}`
@@ -136,7 +136,7 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                     )}
                     {personaQuery.data.casoId && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Caso</span>
+                        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Caso</span>
                         <span className="font-medium">#{personaQuery.data.casoId}</span>
                       </div>
                     )}
@@ -145,24 +145,24 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                 {!isLoading && entity.type === "documento" && documentQuery.data && (
                   <div className="mt-2 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Categoria</span>
+                      <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Categoria</span>
                       <span className="font-medium">{documentQuery.data.categoria}</span>
                     </div>
                     {documentQuery.data.tipoPeca && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Tipo</span>
+                        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Tipo</span>
                         <span className="font-medium">{documentQuery.data.tipoPeca}</span>
                       </div>
                     )}
                     {documentQuery.data.fileName && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Arquivo</span>
+                        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Arquivo</span>
                         <span className="font-medium">{documentQuery.data.fileName}</span>
                       </div>
                     )}
                     {documentQuery.data.createdAt && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Criado</span>
+                        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Criado</span>
                         <span className="font-medium">
                           {new Date(documentQuery.data.createdAt).toLocaleDateString("pt-BR")}
                         </span>
@@ -173,19 +173,19 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                 {!isLoading && entity.type === "fato" && factQuery.data && (
                   <div className="mt-2 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Tipo</span>
+                      <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Tipo</span>
                       <span className="font-medium">{factQuery.data.tipo || "—"}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Status</span>
+                      <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Status</span>
                       <span className="font-medium">{factQuery.data.status || "—"}</span>
                     </div>
                     {Array.isArray(factQuery.data.tags) && factQuery.data.tags.length > 0 && (
                       <div>
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Tags</span>
+                        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Tags</span>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {factQuery.data.tags.map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-[10px]">
+                            <Badge key={tag} variant="outline" className="text-xs">
                               {tag}
                             </Badge>
                           ))}
@@ -193,11 +193,11 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                       </div>
                     )}
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Evidências</span>
+                      <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Evidências</span>
                       <span className="font-medium">{factQuery.data.evidenceCount}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Contradições</span>
+                      <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Contradições</span>
                       <span className="font-medium">{factQuery.data.contradicoesCount}</span>
                     </div>
                   </div>
@@ -205,18 +205,18 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                 {!isLoading && entity.type === "caso" && caseQuery.data && (
                   <div className="mt-2 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Status</span>
+                      <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Status</span>
                       <span className="font-medium">{caseQuery.data.status}</span>
                     </div>
                     {caseQuery.data.fase && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Fase</span>
+                        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Fase</span>
                         <span className="font-medium">{caseQuery.data.fase}</span>
                       </div>
                     )}
                     {caseQuery.data.prioridade && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Prioridade</span>
+                        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Prioridade</span>
                         <span className="font-medium">{caseQuery.data.prioridade}</span>
                       </div>
                     )}
@@ -237,7 +237,7 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                           )}
                         </div>
                         {item.date && (
-                          <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                          <span className="text-xs text-slate-400 whitespace-nowrap">
                             {new Date(item.date as any).toLocaleDateString("pt-BR")}
                           </span>
                         )}

@@ -148,7 +148,7 @@ function getAreaBadge(area: string) {
     FAMILIA: { label: "Fam", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" },
   };
   const config = configs[area] || { label: area, className: "bg-zinc-100 text-zinc-700" };
-  return <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${config.className}`}>{config.label}</span>;
+  return <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${config.className}`}>{config.label}</span>;
 }
 
 function getPrazoInfo(prazoStr: string) {
@@ -221,11 +221,11 @@ function KanbanCard({ demanda, onMove }: KanbanCardProps) {
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${prazoInfo.className}`}>
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${prazoInfo.className}`}>
               {prazoInfo.text}
             </span>
             {demanda.reuPreso && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">
+              <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">
                 RÉU PRESO
               </span>
             )}
@@ -279,12 +279,12 @@ function KanbanCard({ demanda, onMove }: KanbanCardProps) {
           
           <div className="pt-2 border-t border-border/30">
             <p className="text-sm font-medium text-foreground">{demanda.assistido}</p>
-            <p className="text-[11px] text-muted-foreground font-mono mt-0.5">{demanda.processo}</p>
+            <p className="text-xs text-muted-foreground font-mono mt-0.5">{demanda.processo}</p>
           </div>
           
           <div className="flex items-center justify-between pt-1">
-            <span className="text-[10px] text-muted-foreground">{demanda.defensor}</span>
-            <span className="text-[10px] text-muted-foreground font-mono">
+            <span className="text-xs text-muted-foreground">{demanda.defensor}</span>
+            <span className="text-xs text-muted-foreground font-mono">
               {format(parseISO(demanda.prazo), "dd/MM", { locale: ptBR })}
             </span>
           </div>

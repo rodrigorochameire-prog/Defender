@@ -219,7 +219,7 @@ export default function JuradosPage() {
                       <span className="truncate">{jurado.profissao}</span>
                     </p>
                   </div>
-                  <Badge className={cn("text-[10px] sm:text-xs border-0 ml-2 flex-shrink-0", perfil.bg, perfil.color)}>
+                  <Badge className={cn("text-xs sm:text-xs border-0 ml-2 flex-shrink-0", perfil.bg, perfil.color)}>
                     {perfil.label}
                   </Badge>
                 </div>
@@ -240,10 +240,10 @@ export default function JuradosPage() {
 
                 <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex justify-between items-center mb-1.5">
-                    <span className="text-[10px] sm:text-xs text-muted-foreground">
+                    <span className="text-xs sm:text-xs text-muted-foreground">
                       {jurado.totalSessoes} sessões
                     </span>
-                    <span className="text-[10px] sm:text-xs font-medium font-mono">
+                    <span className="text-xs sm:text-xs font-medium font-mono">
                       {taxaCondenacao}% condenação
                     </span>
                   </div>
@@ -253,7 +253,7 @@ export default function JuradosPage() {
                       style={{ width: `${taxaCondenacao}%` }}
                     />
                   </div>
-                  <div className="flex justify-between mt-1 text-[10px] sm:text-xs font-mono">
+                  <div className="flex justify-between mt-1 text-xs sm:text-xs font-mono">
                     <span className="text-rose-600 dark:text-rose-400">{jurado.votosCondenacao} cond.</span>
                     <span className="text-emerald-600 dark:text-emerald-400">{jurado.votosAbsolvicao} abs.</span>
                   </div>

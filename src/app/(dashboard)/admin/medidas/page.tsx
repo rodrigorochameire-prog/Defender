@@ -157,7 +157,7 @@ export default function MedidasProtetivasPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-violet-700 dark:text-violet-400">{stats.total}</p>
-                  <p className="text-[10px] sm:text-xs text-violet-600 dark:text-violet-400">Total MPUs</p>
+                  <p className="text-xs sm:text-xs text-violet-600 dark:text-violet-400">Total MPUs</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -171,7 +171,7 @@ export default function MedidasProtetivasPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.ativas}</p>
-                  <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">Ativas</p>
+                  <p className="text-xs sm:text-xs text-emerald-600 dark:text-emerald-400">Ativas</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -185,7 +185,7 @@ export default function MedidasProtetivasPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.vencendo}</p>
-                  <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Vencendo</p>
+                  <p className="text-xs sm:text-xs text-amber-600 dark:text-amber-400">Vencendo</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -199,7 +199,7 @@ export default function MedidasProtetivasPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-slate-700 dark:text-slate-400">{stats.expiradas}</p>
-                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">Expiradas</p>
+                  <p className="text-xs sm:text-xs text-slate-600 dark:text-slate-400">Expiradas</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -271,7 +271,7 @@ export default function MedidasProtetivasPage() {
                         {/* Badges */}
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <Badge className={cn(
-                            "text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md border-0",
+                            "text-[9px] sm:text-xs px-1.5 py-0 rounded-md border-0",
                             statusInfo.bg, statusInfo.color
                           )}>
                             <StatusIcon className="w-2.5 h-2.5 mr-0.5" />
@@ -279,7 +279,7 @@ export default function MedidasProtetivasPage() {
                           </Badge>
                           
                           {medida.distanciaMetros && (
-                            <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md">
+                            <Badge variant="outline" className="text-[9px] sm:text-xs px-1.5 py-0 rounded-md">
                               <MapPin className="w-2.5 h-2.5 mr-0.5" />
                               {medida.distanciaMetros}m
                             </Badge>
@@ -291,13 +291,13 @@ export default function MedidasProtetivasPage() {
                           <h3 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
                             {medida.tipoMedida}
                           </h3>
-                          <p className="text-[10px] sm:text-xs font-mono text-zinc-500 dark:text-zinc-400">
+                          <p className="text-xs sm:text-xs font-mono text-zinc-500 dark:text-zinc-400">
                             {medida.processo}
                           </p>
                         </div>
 
                         {/* Vítima e Assistido */}
-                        <div className="flex items-center gap-3 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 flex-wrap">
+                        <div className="flex items-center gap-3 text-xs sm:text-xs text-zinc-500 dark:text-zinc-400 flex-wrap">
                           <span className="flex items-center gap-1">
                             <User className="w-3 h-3" />
                             Vítima: <span className="font-medium text-zinc-700 dark:text-zinc-300">{medida.nomeVitima}</span>
@@ -313,7 +313,7 @@ export default function MedidasProtetivasPage() {
                     {/* Data e Ação */}
                     <div className="flex items-center sm:flex-col sm:items-end gap-2 sm:gap-2">
                       <div className="text-left sm:text-right flex-1 sm:flex-none">
-                        <p className="text-[9px] sm:text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                        <p className="text-[9px] sm:text-xs text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
                           Vencimento
                         </p>
                         <p className="text-xs sm:text-sm font-mono font-medium text-zinc-700 dark:text-zinc-300">
@@ -323,7 +323,7 @@ export default function MedidasProtetivasPage() {
                       
                       {isActive && (
                         <Badge className={cn(
-                          "text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md border-0 font-medium",
+                          "text-[9px] sm:text-xs px-1.5 py-0 rounded-md border-0 font-medium",
                           isExpiring
                             ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                             : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"

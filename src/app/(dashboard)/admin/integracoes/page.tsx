@@ -208,12 +208,12 @@ function IntegrationCard({ integration }: { integration: Integration }) {
 
       <div className="flex flex-wrap gap-1 mb-4">
         {integration.features.slice(0, 2).map((feature, idx) => (
-          <Badge key={idx} variant="secondary" className="text-[10px]">
+          <Badge key={idx} variant="secondary" className="text-xs">
             {feature}
           </Badge>
         ))}
         {integration.features.length > 2 && (
-          <Badge variant="secondary" className="text-[10px]">
+          <Badge variant="secondary" className="text-xs">
             +{integration.features.length - 2}
           </Badge>
         )}
@@ -290,7 +290,7 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
             </span>
           )}
         </div>
-        <Badge variant="secondary" className="text-[10px]">
+        <Badge variant="secondary" className="text-xs">
           {workflow.runsToday} hoje
         </Badge>
       </div>
@@ -364,7 +364,7 @@ function WebhookSection() {
               { method: "POST", path: "/alertas", desc: "Criar alerta/notificação" },
             ].map((endpoint, idx) => (
               <div key={idx} className="flex items-center gap-3 p-2 rounded bg-zinc-50 dark:bg-zinc-900">
-                <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px]">
+                <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs">
                   {endpoint.method}
                 </Badge>
                 <code className="text-sm font-mono text-zinc-700 dark:text-zinc-300">
@@ -392,7 +392,7 @@ function AISection() {
         <div className="flex-1">
           <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             Inteligência Artificial
-            <Badge className="bg-violet-600 text-white text-[10px]">
+            <Badge className="bg-violet-600 text-white text-xs">
               <Sparkles className="w-3 h-3 mr-1" />
               Premium
             </Badge>

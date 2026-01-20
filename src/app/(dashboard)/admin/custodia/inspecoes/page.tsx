@@ -81,7 +81,7 @@ export default function InspecoesPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <Badge 
                       className={cn(
-                        "text-[10px]",
+                        "text-xs",
                         inspecao.status === "CONCLUIDA" && "bg-emerald-500 text-white",
                         inspecao.status === "PENDENCIAS" && "bg-amber-500 text-white",
                         inspecao.status === "AGENDADA" && "bg-blue-500 text-white",

@@ -335,7 +335,7 @@ export default function PrazosPage() {
                     <span className="hidden sm:inline">{option.label}</span>
                     <span className="sm:hidden">{option.shortLabel}</span>
                     <span className={cn(
-                      "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
+                      "ml-0.5 px-1.5 py-0.5 text-xs font-semibold rounded-full",
                       isActive 
                         ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
                         : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
@@ -365,7 +365,7 @@ export default function PrazosPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.vencidos}</p>
-                  <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Vencidos</p>
+                  <p className="text-xs sm:text-xs text-rose-600 dark:text-rose-400">Vencidos</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -379,7 +379,7 @@ export default function PrazosPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.hoje}</p>
-                  <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Hoje</p>
+                  <p className="text-xs sm:text-xs text-rose-600 dark:text-rose-400">Hoje</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -393,7 +393,7 @@ export default function PrazosPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.amanha}</p>
-                  <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Amanhã</p>
+                  <p className="text-xs sm:text-xs text-amber-600 dark:text-amber-400">Amanhã</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -407,7 +407,7 @@ export default function PrazosPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-sky-700 dark:text-sky-400">{stats.semana}</p>
-                  <p className="text-[10px] sm:text-xs text-sky-600 dark:text-sky-400">7 dias</p>
+                  <p className="text-xs sm:text-xs text-sky-600 dark:text-sky-400">7 dias</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -421,7 +421,7 @@ export default function PrazosPage() {
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
-                  <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Réu Preso</p>
+                  <p className="text-xs sm:text-xs text-rose-600 dark:text-rose-400">Réu Preso</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -481,7 +481,7 @@ export default function PrazosPage() {
                       {/* Badges */}
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                         <Badge className={cn(
-                          "text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md border-0",
+                          "text-[9px] sm:text-xs px-1.5 py-0 rounded-md border-0",
                           prazoInfo.className
                         )}>
                           <PrazoIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
@@ -498,7 +498,7 @@ export default function PrazosPage() {
                         )}
                         
                         <Badge className={cn(
-                          "text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md border-0",
+                          "text-[9px] sm:text-xs px-1.5 py-0 rounded-md border-0",
                           areaColors.bg, areaColors.text
                         )}>
                           {ATRIBUICAO_OPTIONS.find(o => o.value === prazo.area)?.shortLabel || prazo.area}
@@ -509,13 +509,13 @@ export default function PrazosPage() {
                       <div>
                         <h3 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">{prazo.ato}</h3>
                         <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">{prazo.assistido}</p>
-                        <p className="text-[10px] sm:text-xs font-mono text-zinc-500 dark:text-zinc-500">{prazo.processo}</p>
+                        <p className="text-xs sm:text-xs font-mono text-zinc-500 dark:text-zinc-500">{prazo.processo}</p>
                       </div>
                       
                       {/* Providências */}
                       {prazo.providencias && (
                         <div className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-                          <p className="text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400">
+                          <p className="text-xs sm:text-xs text-zinc-600 dark:text-zinc-400">
                             <span className="font-medium text-zinc-700 dark:text-zinc-300">Providências:</span> {prazo.providencias}
                           </p>
                         </div>
@@ -525,12 +525,12 @@ export default function PrazosPage() {
                     {/* Ações */}
                     <div className="flex flex-col gap-1.5 sm:gap-2 flex-shrink-0">
                       <Link href={`/admin/demandas/${prazo.id}`}>
-                        <Button variant="outline" size="sm" className="h-7 sm:h-8 text-[10px] sm:text-xs gap-1">
+                        <Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs sm:text-xs gap-1">
                           Ver
                           <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </Button>
                       </Link>
-                      <Button size="sm" className="h-7 sm:h-8 text-[10px] sm:text-xs gap-1">
+                      <Button size="sm" className="h-7 sm:h-8 text-xs sm:text-xs gap-1">
                         <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         Concluir
                       </Button>

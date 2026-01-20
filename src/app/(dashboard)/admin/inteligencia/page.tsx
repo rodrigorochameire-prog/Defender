@@ -358,7 +358,7 @@ export default function InteligenciaPage() {
                 >
                   <Icon className="h-4 w-4" />
                   {label}
-                  <Badge variant="secondary" className="ml-auto text-[10px]">
+                  <Badge variant="secondary" className="ml-auto text-xs">
                     {osintTools[key as keyof typeof osintTools]?.length || 0}
                   </Badge>
                 </Button>

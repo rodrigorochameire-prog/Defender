@@ -231,12 +231,12 @@ export default function AvaliacoesListPage() {
                       </p>
                     </div>
                     {sessao.temAvaliacao ? (
-                      <Badge className="bg-purple-500 text-white text-[10px]">
+                      <Badge className="bg-purple-500 text-white text-xs">
                         <Edit className="h-3 w-3 mr-0.5" />
                         Continuar
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-xs">
                         <Plus className="h-3 w-3 mr-0.5" />
                         Nova
                       </Badge>

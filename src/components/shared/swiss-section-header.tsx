@@ -22,7 +22,7 @@ export function SwissSectionHeader({
     <div className={cn("flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between", className)}>
       <div>
         {label && (
-          <p className="text-[10px] uppercase font-semibold tracking-[0.25em] text-slate-400">
+          <p className="text-xs uppercase font-semibold tracking-[0.25em] text-slate-400">
             {label}
           </p>
         )}

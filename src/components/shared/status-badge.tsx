@@ -168,7 +168,7 @@ const defaultConfig = {
 };
 
 const sizeClasses = {
-  sm: "text-[10px] px-2 py-0.5 gap-1",
+  sm: "text-xs px-2 py-0.5 gap-1",
   md: "text-xs px-3 py-1 gap-1.5",
   lg: "text-sm px-4 py-1.5 gap-2",
 };

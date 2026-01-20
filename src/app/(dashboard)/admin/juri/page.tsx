@@ -190,7 +190,7 @@ function getStatusBadge(status: string) {
     cancelada: { label: "Cancelada", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-0" },
   };
   const config = configs[status] || { label: status, className: "bg-slate-100 text-slate-700 border-0" };
-  return <Badge className={cn("text-[10px] sm:text-xs font-medium", config.className)}>{config.label}</Badge>;
+  return <Badge className={cn("text-xs sm:text-xs font-medium", config.className)}>{config.label}</Badge>;
 }
 
 function getResultadoBadge(resultado: string | null) {
@@ -206,7 +206,7 @@ function getResultadoBadge(resultado: string | null) {
   const Icon = config.icon;
   
   return (
-    <Badge className={cn("gap-1 text-[10px] sm:text-xs font-medium", config.className)}>
+    <Badge className={cn("gap-1 text-xs sm:text-xs font-medium", config.className)}>
       <Icon className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
       {config.label}
     </Badge>
@@ -331,10 +331,10 @@ export default function JuriPage() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         {item.isPremium && (
-                          <Badge className="bg-amber-500 text-white text-[9px] sm:text-[10px] border-0 px-1.5">Premium</Badge>
+                          <Badge className="bg-amber-500 text-white text-[9px] sm:text-xs border-0 px-1.5">Premium</Badge>
                         )}
                         {"isNew" in item && item.isNew && (
-                          <Badge className="bg-purple-500 text-white text-[9px] sm:text-[10px] border-0 px-1.5">
+                          <Badge className="bg-purple-500 text-white text-[9px] sm:text-xs border-0 px-1.5">
                             <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
                             Novo
                           </Badge>
@@ -343,7 +343,7 @@ export default function JuriPage() {
                       </div>
                     </div>
                     <h3 className="font-semibold text-xs sm:text-sm">{item.titulo}</h3>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">{item.descricao}</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">{item.descricao}</p>
                   </div>
                 </Link>
               );
@@ -374,13 +374,13 @@ export default function JuriPage() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         {ferramenta.isPremium && (
-                          <Badge className="bg-amber-500 text-white text-[9px] sm:text-[10px] border-0 px-1.5">Premium</Badge>
+                          <Badge className="bg-amber-500 text-white text-[9px] sm:text-xs border-0 px-1.5">Premium</Badge>
                         )}
                         <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                       </div>
                     </div>
                     <h3 className="font-semibold text-xs sm:text-sm">{ferramenta.titulo}</h3>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">{ferramenta.descricao}</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">{ferramenta.descricao}</p>
                   </div>
                 </Link>
               );
@@ -417,11 +417,11 @@ export default function JuriPage() {
                           {format(parseISO(sessao.dataSessao), "dd/MM", { locale: ptBR })}
                         </p>
                       </div>
-                      <Badge variant="outline" className="text-[10px] sm:text-xs border-0 bg-white/60 dark:bg-zinc-900/40">{sessao.sala}</Badge>
+                      <Badge variant="outline" className="text-xs sm:text-xs border-0 bg-white/60 dark:bg-zinc-900/40">{sessao.sala}</Badge>
                     </div>
                     <p className="font-semibold text-xs sm:text-sm line-clamp-1">{sessao.assistidoNome}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{sessao.assunto}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 mt-2">
+                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{sessao.assunto}</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground flex items-center gap-1 mt-2">
                       <User className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                       {sessao.defensorNome}
                     </p>
@@ -482,7 +482,7 @@ export default function JuriPage() {
                       <div className="font-medium font-mono text-xs">
                         {format(parseISO(sessao.dataSessao), "dd/MM/yyyy", { locale: ptBR })}
                       </div>
-                      <div className="text-[10px] text-muted-foreground font-mono">
+                      <div className="text-xs text-muted-foreground font-mono">
                         {format(parseISO(sessao.dataSessao), "HH:mm")}
                       </div>
                     </SwissTableCell>
@@ -526,7 +526,7 @@ export default function JuriPage() {
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
                       <p className="font-semibold text-sm">{sessao.assistidoNome}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{sessao.assunto}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{sessao.assunto}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       {getStatusBadge(sessao.status)}
@@ -539,7 +539,7 @@ export default function JuriPage() {
                       {format(parseISO(sessao.dataSessao), "dd/MM/yy HH:mm", { locale: ptBR })}
                     </span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1.5">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1.5">
                     <User className="h-2.5 w-2.5" />
                     {sessao.defensorNome}
                   </p>
