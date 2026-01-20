@@ -42,6 +42,10 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
     { id: entityId ?? 0 },
     { enabled: entity?.type === "caso" && !!entityId }
   );
+  const caseTimelineQuery = trpc.casos.listTimeline.useQuery(
+    { casoId: entityId ?? 0 },
+    { enabled: entity?.type === "caso" && !!entityId }
+  );
 
   const isLoading =
     personaQuery.isLoading ||
@@ -130,6 +134,12 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                         </span>
                       </div>
                     )}
+                    {personaQuery.data.casoId && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Caso</span>
+                        <span className="font-medium">#{personaQuery.data.casoId}</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 {!isLoading && entity.type === "documento" && documentQuery.data && (
@@ -148,6 +158,14 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Arquivo</span>
                         <span className="font-medium">{documentQuery.data.fileName}</span>
+                      </div>
+                    )}
+                    {documentQuery.data.createdAt && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Criado</span>
+                        <span className="font-medium">
+                          {new Date(documentQuery.data.createdAt).toLocaleDateString("pt-BR")}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -205,6 +223,29 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
                   </div>
                 )}
               </div>
+
+              {entity?.type === "caso" && caseTimelineQuery.data && caseTimelineQuery.data.length > 0 && (
+                <div className="rounded-sm border border-slate-200 dark:border-slate-800 p-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Histórico recente</p>
+                  <div className="mt-2 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                    {caseTimelineQuery.data.slice(0, 3).map((item) => (
+                      <div key={item.id} className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium">{item.title}</p>
+                          {item.description && (
+                            <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.description}</p>
+                          )}
+                        </div>
+                        {item.date && (
+                          <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                            {new Date(item.date as any).toLocaleDateString("pt-BR")}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-2">
                 {profileLink ? (
