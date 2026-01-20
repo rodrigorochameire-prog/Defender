@@ -25,7 +25,8 @@ function safeJsonParse(text: string) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const module = typeof body?.module === "string" ? body.module : "geral";
+    const strategyModule =
+      typeof body?.module === "string" ? body.module : "geral";
     const input = body?.input ?? "";
     const context = body?.context ?? null;
 
@@ -42,9 +43,9 @@ export async function POST(request: Request) {
 
     const system = [
       MASTER_PROMPT,
-      `Módulo: ${module}`,
+      `Módulo: ${strategyModule}`,
       `Contexto: ${context ? JSON.stringify(context) : "sem contexto adicional"}`,
-      module === "discurso"
+      strategyModule === "discurso"
         ? "Responda EXCLUSIVAMENTE em JSON com campos: apeloRazao, apeloEmocao, frasesEfeito, conclusao, recomendacoes (array)."
         : "Responda em tópicos claros. Quando possível, use bullets.",
     ].join("\n");
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
       temperature: 0.2,
     });
 
-    if (module === "discurso") {
+    if (strategyModule === "discurso") {
       const analysis = safeJsonParse(text);
       return NextResponse.json({ text, analysis });
     }
