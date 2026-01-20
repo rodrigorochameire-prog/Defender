@@ -58,7 +58,6 @@ import {
   Building2,
   Target,
   Shield,
-  Link as LinkIcon,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -75,13 +74,6 @@ import { ptBR } from "date-fns/locale";
 // ==========================================
 // TIPOS
 // ==========================================
-
-interface ProcessoRelacionado {
-  id: number;
-  numeroAutos: string;
-  classeProcessual: string; // 'Ação Penal', 'Inquérito', 'Habeas Corpus'
-  tipo: "conexao" | "apenso" | "origem" | "recurso";
-}
 
 interface Processo {
   id: number;
@@ -108,7 +100,6 @@ interface Processo {
   casoId?: number | null;
   casoTitulo?: string | null;
   defensorNome?: string | null;
-  processosRelacionados?: ProcessoRelacionado[]; // AP, IP, HC, etc.
   createdAt: Date;
 }
 
@@ -215,10 +206,6 @@ const mockProcessos: Processo[] = [
     casoId: 1,
     casoTitulo: "Homicídio Qualificado - Operação Reuso",
     defensorNome: "Dr. Rodrigo Rocha",
-    processosRelacionados: [
-      { id: 101, numeroAutos: "0001111-22.2025.8.05.0039", classeProcessual: "Inquérito Policial", tipo: "origem" },
-      { id: 102, numeroAutos: "8005555-44.2025.8.05.0000", classeProcessual: "Habeas Corpus", tipo: "recurso" }
-    ],
     createdAt: new Date("2025-11-10"),
   },
   { 
@@ -238,10 +225,65 @@ const mockProcessos: Processo[] = [
     ultimoEvento: "Sentença condenatória",
     dataUltimoEvento: new Date("2026-01-10"),
     defensorNome: "Dra. Maria Oliveira",
-    processosRelacionados: [],
     createdAt: new Date("2025-06-20"),
   },
-  // ... outros processos ...
+  { 
+    id: 3, 
+    numeroAutos: "0005678-90.2024.8.05.0039",
+    assistido: { id: 3, nome: "José Carlos Oliveira", preso: true, localPrisao: "Conjunto Penal de Candeias" },
+    comarca: "Camaçari",
+    vara: "VEP",
+    area: "EXECUCAO_PENAL",
+    classeProcessual: "Execução Penal",
+    assunto: "Progressão de Regime",
+    situacao: "ativo",
+    isJuri: false,
+    demandasAbertas: 3,
+    proximoPrazo: new Date("2026-02-01"),
+    atoProximoPrazo: "Pedido de Progressão",
+    ultimoEvento: "Cálculo de pena atualizado",
+    dataUltimoEvento: new Date("2026-01-12"),
+    defensorNome: "Dr. Rodrigo Rocha",
+    createdAt: new Date("2023-06-15"),
+  },
+  { 
+    id: 4, 
+    numeroAutos: "0009012-34.2025.8.05.0039",
+    assistido: { id: 4, nome: "Ana Paula Costa Ferreira", preso: false },
+    comarca: "Camaçari",
+    vara: "Juizado de VVD",
+    area: "VVD",
+    classeProcessual: "Medida Protetiva",
+    assunto: "Lesão Corporal Doméstica (Art. 129, §9º)",
+    situacao: "ativo",
+    isJuri: false,
+    demandasAbertas: 1,
+    proximoPrazo: new Date("2026-02-10"),
+    atoProximoPrazo: "Audiência de Instrução",
+    defensorNome: "Dra. Juliane Costa",
+    createdAt: new Date("2025-09-20"),
+  },
+  { 
+    id: 5, 
+    numeroAutos: "8002341-90.2025.8.05.0039",
+    assistido: { id: 5, nome: "Roberto Ferreira Lima", preso: true, localPrisao: "Prisão Domiciliar" },
+    comarca: "Camaçari",
+    vara: "1ª Vara do Júri",
+    area: "JURI",
+    classeProcessual: "Ação Penal",
+    assunto: "Homicídio Simples (Art. 121, CP)",
+    situacao: "ativo",
+    isJuri: true,
+    demandasAbertas: 1,
+    proximoPrazo: new Date("2026-03-10"),
+    atoProximoPrazo: "Plenário do Júri",
+    ultimoEvento: "Pronúncia mantida",
+    dataUltimoEvento: new Date("2025-10-15"),
+    casoId: 5,
+    casoTitulo: "Homicídio Simples - Acidente de Trânsito",
+    defensorNome: "Dr. Rodrigo Rocha",
+    createdAt: new Date("2025-01-05"),
+  },
 ];
 
 // ==========================================
@@ -302,14 +344,14 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 
                 {/* 3. RÉU PRESO */}
                 {processo.assistido.preso && (
-                  <Badge variant="reuPreso" className="text-[9px] sm:text-[10px] px-1.5 py-0 h-5">
+                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-0 font-bold">
                     <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Preso
                   </Badge>
                 )}
 
                 {/* 4. PRAZO URGENTE */}
                 {prazoUrgente && diasPrazo !== null && (
-                  <Badge variant="urgent" className="text-[9px] sm:text-[10px] px-1.5 py-0 h-5">
+                  <Badge className="text-[9px] sm:text-[10px] px-1.5 py-0 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-0">
                     <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
                     {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : `${diasPrazo}d`}
                   </Badge>
@@ -328,24 +370,24 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
               {/* Número do Processo (Mono) */}
               <div className="flex items-center gap-1.5 sm:gap-2 group/copy cursor-pointer" onClick={handleCopy}>
-                <span className="font-mono text-xs sm:text-sm text-foreground hover:text-primary transition-colors font-medium">
+                <span className="font-mono text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   <span className="hidden sm:inline">{processo.numeroAutos}</span>
                   <span className="sm:hidden">{processo.numeroAutos.split('.')[0]}...</span>
                 </span>
                 {copied ? (
                   <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
                 ) : (
-                  <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground sm:opacity-0 sm:group-hover/copy:opacity-100 transition-opacity" />
+                  <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-300 dark:text-zinc-600 sm:opacity-0 sm:group-hover/copy:opacity-100 transition-opacity" />
                 )}
               </div>
 
               {/* Assunto (Fonte serifada) */}
-              <p className="font-legal text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:line-clamp-1">
+              <p className="font-legal text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 sm:line-clamp-1">
                 {processo.assunto}
               </p>
 
               {/* Localização */}
-              <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
                   <span className="truncate max-w-[120px] sm:max-w-none">{processo.vara}</span>
@@ -359,7 +401,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href={`/admin/processos/${processo.id}`}>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </Button>
                   </Link>
@@ -369,7 +411,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <MoreHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -394,17 +436,17 @@ function ProcessoCard({ processo }: { processo: Processo }) {
           </div>
 
           {/* Assistido */}
-          <div className="flex items-center gap-2 sm:gap-3 py-2 border-t border-border/40">
+          <div className="flex items-center gap-2 sm:gap-3 py-2 border-t border-zinc-100 dark:border-zinc-800/50">
             <Avatar className={cn(
               "w-7 h-7 sm:w-9 sm:h-9 ring-2",
-              processo.assistido.preso ? "ring-rose-500/20" : "ring-emerald-500/20"
+              processo.assistido.preso ? "ring-rose-500/50" : "ring-emerald-500/50"
             )}>
               <AvatarImage src={processo.assistido.foto || undefined} />
               <AvatarFallback className={cn(
                 "text-[10px] sm:text-xs font-bold",
                 processo.assistido.preso
-                  ? "bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
-                  : "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
+                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400"
               )}>
                 {processo.assistido.nome.substring(0, 2).toUpperCase()}
               </AvatarFallback>
@@ -412,7 +454,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
             
             <div className="flex-1 min-w-0">
               <Link href={`/admin/assistidos/${processo.assistido.id}`}>
-                <p className="font-medium text-xs sm:text-sm text-foreground truncate hover:text-primary transition-colors">
+                <p className="font-medium text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   {processo.assistido.nome}
                 </p>
               </Link>
@@ -439,7 +481,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 <TooltipTrigger>
                   <Badge variant="outline" className={cn(
                     "text-[9px] sm:text-[10px] font-mono px-1.5 py-0 rounded-md",
-                    "border-amber-200 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:bg-amber-950/30"
+                    "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:bg-amber-950/30"
                   )}>
                     <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                     {processo.demandasAbertas}
@@ -453,51 +495,37 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
         {/* Conteúdo Expansível */}
         <CollapsibleContent>
-          <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 space-y-2.5 sm:space-y-3 border-t border-border/40 bg-muted/30">
+          <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 space-y-2.5 sm:space-y-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
             {/* Próximo Prazo */}
             {processo.proximoPrazo && (
               <div className={cn(
                 "flex items-start sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg mt-2.5 sm:mt-3",
                 prazoUrgente
                   ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
-                  : "bg-card border border-border"
+                  : "bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800"
               )}>
                 <Clock className={cn(
                   "w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 sm:mt-0",
-                  prazoUrgente ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
+                  prazoUrgente ? "text-amber-600 dark:text-amber-400" : "text-zinc-500"
                 )} />
                 <div className="flex-1 min-w-0">
                   <p className={cn(
                     "text-[10px] sm:text-xs font-medium",
-                    prazoUrgente ? "text-amber-700 dark:text-amber-400" : "text-foreground"
+                    prazoUrgente ? "text-amber-700 dark:text-amber-400" : "text-zinc-700 dark:text-zinc-300"
                   )}>
                     {processo.atoProximoPrazo}
                   </p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground font-mono">
+                  <p className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
                     {format(processo.proximoPrazo, "dd/MM/yyyy", { locale: ptBR })}
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Processos Relacionados */}
-            {processo.processosRelacionados && processo.processosRelacionados.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider pl-1">Processos Relacionados</p>
-                {processo.processosRelacionados.map((proc) => (
-                  <div key={proc.id} className="flex items-center gap-2 p-2 rounded-md bg-background border border-border/50 text-xs">
-                    <LinkIcon className="w-3 h-3 text-muted-foreground" />
-                    <span className="font-mono">{proc.numeroAutos}</span>
-                    <Badge variant="outline" className="text-[9px] h-4 px-1 py-0">{proc.classeProcessual}</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-
             {/* Caso Vinculado */}
             {processo.casoId && processo.casoTitulo && (
               <Link href={`/admin/casos/${processo.casoId}`}>
-                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 transition-colors">
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
                   <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate">
@@ -513,7 +541,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
             {/* Último Evento */}
             {processo.ultimoEvento && (
-              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
                 <span className="truncate">
                   {processo.ultimoEvento}
@@ -525,19 +553,130 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 </span>
               </div>
             )}
+
+            {/* Defensor */}
+            {processo.defensorNome && (
+              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+                <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                <span>{processo.defensorNome}</span>
+              </div>
+            )}
           </div>
         </CollapsibleContent>
 
         {/* Trigger de Expansão */}
         <CollapsibleTrigger asChild>
-          <div className="flex justify-center py-1.5 sm:py-2 cursor-pointer hover:bg-muted/50 transition-colors border-t border-border/40">
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
+          <div className="flex justify-center py-1.5 sm:py-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-zinc-400">
               {isOpen ? <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </div>
           </div>
         </CollapsibleTrigger>
       </SwissCard>
     </Collapsible>
+  );
+}
+
+// ==========================================
+// COMPONENTE DE LINHA DA TABELA - DESIGN SUÍÇO
+// ==========================================
+
+function ProcessoRow({ processo }: { processo: Processo }) {
+  const [copied, setCopied] = useState(false);
+  const atribuicaoColors = ATRIBUICAO_COLORS[processo.area] || ATRIBUICAO_COLORS.SUBSTITUICAO;
+  const situacaoConfig = SITUACAO_CONFIGS[processo.situacao] || SITUACAO_CONFIGS.ativo;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(processo.numeroAutos);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <SwissTableRow className={cn(
+      "group transition-colors",
+      processo.assistido.preso && "border-l-[3px] border-l-rose-500"
+    )}>
+      <SwissTableCell>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={handleCopy}>
+          <span className="font-mono text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            {processo.numeroAutos}
+          </span>
+          {processo.isJuri && <Gavel className="w-3.5 h-3.5 text-emerald-600" />}
+          {copied && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
+        </div>
+      </SwissTableCell>
+      <SwissTableCell>
+        <div className="flex items-center gap-2">
+          <Avatar className={cn(
+            "w-7 h-7 ring-1",
+            processo.assistido.preso ? "ring-rose-500" : "ring-emerald-500"
+          )}>
+            <AvatarFallback className="text-[10px]">
+              {processo.assistido.nome.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          <Link href={`/admin/assistidos/${processo.assistido.id}`} className="hover:text-blue-600 dark:hover:text-blue-400">
+            <span className="text-sm font-medium">{processo.assistido.nome}</span>
+          </Link>
+        </div>
+      </SwissTableCell>
+      <SwissTableCell>
+        <div>
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{processo.comarca}</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{processo.vara}</p>
+        </div>
+      </SwissTableCell>
+      <SwissTableCell>
+        <Badge className={cn("text-[10px] border-0", atribuicaoColors.bg, atribuicaoColors.text)}>
+          {ATRIBUICAO_OPTIONS.find(o => o.value === processo.area)?.shortLabel || processo.area}
+        </Badge>
+      </SwissTableCell>
+      <SwissTableCell>
+        <p className="text-xs font-legal text-zinc-600 dark:text-zinc-400 max-w-[200px] truncate">
+          {processo.assunto}
+        </p>
+      </SwissTableCell>
+      <SwissTableCell className="text-center">
+        <span className={cn(
+          "font-mono text-sm font-medium",
+          processo.demandasAbertas > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-400"
+        )}>
+          {processo.demandasAbertas}
+        </span>
+      </SwissTableCell>
+      <SwissTableCell>
+        <Badge className={cn("text-[10px] border-0", situacaoConfig.bg, situacaoConfig.color)}>
+          {situacaoConfig.label}
+        </Badge>
+      </SwissTableCell>
+      <SwissTableCell className="text-right">
+        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Link href={`/admin/processos/${processo.id}`}>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+              <Eye className="w-4 h-4" />
+            </Button>
+          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <Link href={`/admin/demandas?processo=${processo.id}`}>
+                <DropdownMenuItem className="cursor-pointer">
+                  <FileText className="w-4 h-4 mr-2" /> Ver Demandas
+                </DropdownMenuItem>
+              </Link>
+              <DropdownMenuItem className="cursor-pointer">
+                <ExternalLink className="w-4 h-4 mr-2" /> Consultar no TJ
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </SwissTableCell>
+    </SwissTableRow>
   );
 }
 
@@ -576,35 +715,35 @@ export default function ProcessosPage() {
 
   return (
     <TooltipProvider>
-      <div className="p-3 sm:p-4 lg:p-6 space-y-6">
+      <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
         {/* Header - Design Suíço */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Linha superior: Título + Ações */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className={cn(
-                "p-2.5 rounded-xl flex-shrink-0 shadow-sm",
+                "p-2 sm:p-2.5 rounded-lg flex-shrink-0",
                 atribuicaoColors.bg
               )}>
-                <Scale className={cn("w-6 h-6", atribuicaoColors.text)} />
+                <Scale className={cn("w-5 h-5 sm:w-6 sm:h-6", atribuicaoColors.text)} />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                   Processos
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
                   Gerenciamento integrado • {stats.total} processos
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" className="h-9 w-9">
-                <Download className="w-4 h-4" />
+              <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
               <Link href="/admin/processos/novo">
-                <Button className="h-9 text-sm gap-1.5">
-                  <Plus className="w-4 h-4" />
+                <Button className="h-8 sm:h-9 text-xs sm:text-sm gap-1.5">
+                  <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Novo Processo</span>
                   <span className="sm:hidden">Novo</span>
                 </Button>
@@ -614,7 +753,7 @@ export default function ProcessosPage() {
 
           {/* Seletor de Atribuição - Tabs com cores dos workspaces */}
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-            <div className="flex gap-1.5 min-w-max border-b border-border pb-px">
+            <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
               {ATRIBUICAO_OPTIONS.map((option) => {
                 const isActive = areaFilter === option.value;
                 const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
@@ -627,20 +766,20 @@ export default function ProcessosPage() {
                     key={option.value}
                     onClick={() => setAreaFilter(option.value)}
                     className={cn(
-                      "relative px-3 py-2 text-sm font-medium transition-all duration-200 flex items-center gap-2 flex-shrink-0 rounded-t-md",
+                      "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
                       isActive 
-                        ? cn("text-foreground", optionColors.bg)
-                        : cn("text-muted-foreground hover:bg-muted", optionColors.hoverBg)
+                        ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
+                        : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
                     )}
                   >
-                    <span className={cn(isActive ? optionColors.text : "text-muted-foreground")}>{ATRIBUICAO_ICONS[option.value]}</span>
+                    <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
                     <span className="hidden sm:inline">{option.label}</span>
                     <span className="sm:hidden">{option.shortLabel}</span>
                     <span className={cn(
-                      "px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
+                      "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
                       isActive 
-                        ? cn(optionColors.text, "bg-background/50")
-                        : "text-muted-foreground bg-muted"
+                        ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
+                        : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
                     )}>
                       {count}
                     </span>
@@ -658,72 +797,72 @@ export default function ProcessosPage() {
         </div>
 
         {/* Stats Cards - Design Suíço com borda lateral */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          <SwissCard className="border-l-[3px] border-l-slate-400">
-            <SwissCardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted shadow-sm">
-                  <Scale className="w-5 h-5 text-muted-foreground" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          <SwissCard className="border-l-2 border-l-slate-400">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
+                  <p className="text-[10px] sm:text-xs text-zinc-500">Total</p>
                 </div>
               </div>
             </SwissCardContent>
           </SwissCard>
           
-          <SwissCard className="border-l-[3px] border-l-emerald-500">
-            <SwissCardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 shadow-sm">
-                  <Gavel className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          <SwissCard className="border-l-2 border-l-emerald-500">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Gavel className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.juri}</p>
-                  <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80">Júri</p>
+                  <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.juri}</p>
+                  <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">Júri</p>
                 </div>
               </div>
             </SwissCardContent>
           </SwissCard>
           
-          <SwissCard className="border-l-[3px] border-l-amber-500">
-            <SwissCardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 shadow-sm">
-                  <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          <SwissCard className="border-l-2 border-l-amber-500">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.comDemandas}</p>
-                  <p className="text-xs text-amber-600/80 dark:text-amber-400/80">Demandas</p>
+                  <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.comDemandas}</p>
+                  <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Demandas</p>
                 </div>
               </div>
             </SwissCardContent>
           </SwissCard>
           
-          <SwissCard className="border-l-[3px] border-l-rose-500 hidden sm:block">
-            <SwissCardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 shadow-sm">
-                  <Lock className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+          <SwissCard className="border-l-2 border-l-rose-500 hidden sm:block">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
-                  <p className="text-xs text-rose-600/80 dark:text-rose-400/80">Réu Preso</p>
+                  <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
+                  <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Réu Preso</p>
                 </div>
               </div>
             </SwissCardContent>
           </SwissCard>
 
-          <SwissCard className="border-l-[3px] border-l-blue-500 hidden lg:block">
-            <SwissCardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 shadow-sm">
-                  <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <SwissCard className="border-l-2 border-l-blue-500 hidden lg:block">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.comarcas}</p>
-                  <p className="text-xs text-blue-600/80 dark:text-blue-400/80">Comarcas</p>
+                  <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.comarcas}</p>
+                  <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Comarcas</p>
                 </div>
               </div>
             </SwissCardContent>
@@ -731,21 +870,21 @@ export default function ProcessosPage() {
         </div>
 
         {/* Filters - Design Suíço */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2 sm:gap-3">
           {/* Search + View Toggle */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
               <Input
                 placeholder="Buscar por número, assistido..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-9 text-sm"
+                className="pl-10 bg-white dark:bg-zinc-950 h-9 text-sm"
               />
             </div>
 
             {/* View Toggle */}
-            <div className="flex items-center gap-1 bg-muted p-1 rounded-lg flex-shrink-0">
+            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg flex-shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -755,8 +894,8 @@ export default function ProcessosPage() {
                     className={cn(
                       "h-7 w-7 p-0 rounded-md",
                       viewMode === "grid" 
-                        ? "bg-background shadow-sm text-foreground" 
-                        : "text-muted-foreground"
+                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                        : "text-zinc-500"
                     )}
                   >
                     <LayoutGrid className="w-4 h-4" />
@@ -773,8 +912,8 @@ export default function ProcessosPage() {
                     className={cn(
                       "h-7 w-7 p-0 rounded-md",
                       viewMode === "list" 
-                        ? "bg-background shadow-sm text-foreground" 
-                        : "text-muted-foreground"
+                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
+                        : "text-zinc-500"
                     )}
                   >
                     <List className="w-4 h-4" />
@@ -788,7 +927,7 @@ export default function ProcessosPage() {
           {/* Filter Row */}
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
             <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
-              <SelectTrigger className="w-[140px] h-8 text-xs flex-shrink-0">
+              <SelectTrigger className="w-[100px] sm:w-[140px] h-8 text-xs flex-shrink-0">
                 <SelectValue placeholder="Situação" />
               </SelectTrigger>
               <SelectContent>
@@ -803,7 +942,7 @@ export default function ProcessosPage() {
 
         {/* Content */}
         {viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 px-1 sm:px-0">
             {filteredProcessos.map((processo) => (
               <ProcessoCard key={processo.id} processo={processo} />
             ))}
@@ -825,22 +964,8 @@ export default function ProcessosPage() {
                   </SwissTableRow>
                 </SwissTableHeader>
                 <SwissTableBody>
-                  {/* Reuse row logic here if needed, but for brevity using grid mainly */}
                   {filteredProcessos.map((processo) => (
-                    <SwissTableRow key={processo.id} className="group">
-                      <SwissTableCell className="font-mono text-sm">{processo.numeroAutos}</SwissTableCell>
-                      <SwissTableCell>{processo.assistido.nome}</SwissTableCell>
-                      <SwissTableCell>{processo.vara}</SwissTableCell>
-                      <SwissTableCell>{processo.area}</SwissTableCell>
-                      <SwissTableCell>{processo.assunto}</SwissTableCell>
-                      <SwissTableCell className="text-center">{processo.demandasAbertas}</SwissTableCell>
-                      <SwissTableCell>{processo.situacao}</SwissTableCell>
-                      <SwissTableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </SwissTableCell>
-                    </SwissTableRow>
+                    <ProcessoRow key={processo.id} processo={processo} />
                   ))}
                 </SwissTableBody>
               </SwissTable>
@@ -852,13 +977,13 @@ export default function ProcessosPage() {
         {filteredProcessos.length === 0 && (
           <SwissCard className="border-dashed">
             <SwissCardContent className="text-center py-16">
-              <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Scale className="w-8 h-8 text-muted-foreground" />
+              <div className="mx-auto w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+                <Scale className="w-8 h-8 text-zinc-400" />
               </div>
-              <h3 className="text-lg font-medium text-foreground mb-2">
+              <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Nenhum processo encontrado
               </h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
                 Ajuste os filtros de busca ou cadastre um novo processo.
               </p>
               <Link href="/admin/processos/novo">
