@@ -24,25 +24,25 @@ export function SectionHeader({
 }: SectionHeaderProps) {
   const sizeStyles = {
     sm: {
-      container: "pb-2 mb-3",
+      container: "pb-2 mb-4",
       number: "w-5 h-5 text-xs",
       icon: "w-4 h-4",
-      title: "text-sm font-semibold",
-      subtitle: "text-xs",
+      title: "text-sm font-semibold tracking-[-0.01em]",
+      subtitle: "text-[11px] uppercase tracking-[0.05em]",
     },
     md: {
-      container: "pb-3 mb-4",
+      container: "pb-3 mb-5",
       number: "w-7 h-7 text-sm",
       icon: "w-5 h-5",
-      title: "text-base font-semibold",
-      subtitle: "text-sm",
+      title: "text-base font-semibold tracking-[-0.01em]",
+      subtitle: "text-xs uppercase tracking-[0.05em]",
     },
     lg: {
       container: "pb-4 mb-6",
       number: "w-9 h-9 text-base",
       icon: "w-6 h-6",
-      title: "text-lg font-bold",
-      subtitle: "text-sm",
+      title: "font-serif text-xl font-semibold tracking-[-0.015em]",
+      subtitle: "text-xs uppercase tracking-[0.05em]",
     },
   };
 
@@ -51,7 +51,7 @@ export function SectionHeader({
   return (
     <div
       className={cn(
-        "flex items-center justify-between border-b border-border/50",
+        "flex items-center justify-between border-b border-border/40",
         styles.container,
         className
       )}
@@ -61,7 +61,7 @@ export function SectionHeader({
         {number !== undefined && (
           <div
             className={cn(
-              "flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold",
+              "flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold font-mono",
               styles.number
             )}
           >
@@ -78,7 +78,7 @@ export function SectionHeader({
         <div>
           <h3 className={cn("text-foreground", styles.title)}>{title}</h3>
           {subtitle && (
-            <p className={cn("text-muted-foreground mt-0.5", styles.subtitle)}>
+            <p className={cn("text-muted-foreground font-medium mt-1", styles.subtitle)}>
               {subtitle}
             </p>
           )}
@@ -113,13 +113,13 @@ export function PageHeader({
       {breadcrumbs && <div className="mb-2">{breadcrumbs}</div>}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border/60">
+        <div className="max-w-2xl">
+          <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-foreground tracking-[-0.02em]">
             {title}
           </h1>
           {description && (
-            <p className="text-sm sm:text-base text-muted-foreground mt-1.5">
+            <p className="text-sm sm:text-[15px] text-muted-foreground mt-2 leading-relaxed">
               {description}
             </p>
           )}

@@ -1,12 +1,30 @@
 import type { Metadata } from "next";
-import { Inter_Tight } from "next/font/google";
+import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const interTight = Inter_Tight({
+// Fonte principal - Inter: limpa, moderna, excelente legibilidade
+const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-sans",
+  display: "swap",
+});
+
+// Fonte serifada - Source Serif 4: elegante, profissional, ideal para títulos jurídicos
+const sourceSerif = Source_Serif_4({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-serif",
+  display: "swap",
+});
+
+// Fonte monospace - JetBrains Mono: legível, moderna, para códigos de processo
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -40,7 +58,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${interTight.className} ${interTight.variable}`}>
+      <body className={`${inter.className} ${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable}`}>
         <Providers>
           {children}
         </Providers>

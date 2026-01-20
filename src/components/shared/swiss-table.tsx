@@ -84,9 +84,10 @@ export function SwissTableHead({
   return (
     <TableHead
       className={cn(
-        "text-[11px] uppercase tracking-[0.15em] font-bold text-muted-foreground",
+        "text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground",
         "py-3.5 px-4 first:pl-5 last:pr-5",
         "bg-muted/70 dark:bg-muted/30",
+        "font-sans",
         className
       )}
       {...props}

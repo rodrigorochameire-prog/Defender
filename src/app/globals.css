@@ -140,112 +140,210 @@
   }
   
   html {
-    /* BASE FONT SIZE INCREASE - 16px -> 17px */
-    font-size: 106.25%;
+    /* BASE FONT SIZE - 16px for crisp rendering */
+    font-size: 100%;
+    text-rendering: optimizeLegibility;
   }
   
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    letter-spacing: 0.01em;
-    line-height: 1.6;
+    letter-spacing: -0.011em;
+    line-height: 1.65;
   }
   
   /* ==========================================
-     TYPOGRAPHY SYSTEM - HIERARCHICAL
+     TYPOGRAPHY SYSTEM - SOPHISTICATED & ELEGANT
+     Hierarquia clara, proporções harmoniosas
      ========================================== */
-  h1, h2, h3, h4, h5, h6 {
-    @apply tracking-tight font-semibold text-foreground;
-    line-height: 1.25;
+  
+  /* HEADINGS - Serifadas para elegância profissional */
+  h1, h2, h3 {
+    @apply font-display tracking-tight text-foreground;
+    line-height: 1.2;
   }
   
-  /* Increased font sizes for better readability */
-  h1 { @apply text-3xl sm:text-4xl lg:text-5xl font-bold; }
-  h2 { @apply text-2xl sm:text-3xl font-bold; }
-  h3 { @apply text-xl sm:text-2xl; }
-  h4 { @apply text-lg sm:text-xl; }
-  h5 { @apply text-base sm:text-lg; }
+  /* SUBHEADINGS - Sans-serif para clareza */
+  h4, h5, h6 {
+    @apply font-sans font-semibold text-foreground tracking-tight;
+    line-height: 1.35;
+  }
+  
+  /* Escala tipográfica harmoniosa - ratio 1.25 (Major Third) */
+  h1 { 
+    @apply text-3xl sm:text-4xl font-bold; 
+    letter-spacing: -0.025em;
+  }
+  h2 { 
+    @apply text-2xl sm:text-3xl font-semibold; 
+    letter-spacing: -0.02em;
+  }
+  h3 { 
+    @apply text-xl sm:text-2xl font-medium; 
+    letter-spacing: -0.015em;
+  }
+  h4 { @apply text-lg font-semibold; }
+  h5 { @apply text-base font-semibold; }
+  h6 { @apply text-sm font-semibold uppercase tracking-wider; }
   
   p {
     @apply leading-relaxed text-muted-foreground;
   }
   
-  /* Better default text sizing */
-  .text-body { @apply text-[15px] leading-relaxed; }
-  .text-body-sm { @apply text-[14px] leading-relaxed; }
-  .text-body-lg { @apply text-[16px] leading-relaxed; }
-  
-  /* Label styling */
-  label, .label {
-    @apply text-sm font-medium text-foreground;
+  /* ==========================================
+     BODY TEXT - Tamanhos legíveis e harmoniosos
+     ========================================== */
+  .text-body { 
+    @apply text-[15px] leading-[1.7]; 
+    letter-spacing: -0.01em;
+  }
+  .text-body-sm { 
+    @apply text-sm leading-relaxed; 
+    letter-spacing: 0;
+  }
+  .text-body-lg { 
+    @apply text-base leading-relaxed; 
+    letter-spacing: -0.01em;
   }
   
-  /* Caption styling */
+  /* ==========================================
+     LABELS & CAPTIONS - Utilitários
+     ========================================== */
+  label, .label {
+    @apply text-sm font-medium text-foreground;
+    letter-spacing: 0.01em;
+  }
+  
+  .label-uppercase {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+  
   .caption {
     @apply text-xs text-muted-foreground;
+    letter-spacing: 0.01em;
+  }
+  
+  .overline {
+    @apply text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground;
+  }
+  
+  /* ==========================================
+     FONT UTILITIES - Famílias específicas
+     ========================================== */
+  .font-legal {
+    @apply font-serif;
+    font-feature-settings: "onum" 1, "pnum" 1;
+  }
+  
+  .font-data {
+    @apply font-mono text-[0.9em];
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum" 1, "zero" 1;
+  }
+  
+  .font-number {
+    @apply font-mono;
+    font-feature-settings: "tnum" 1;
+  }
+  
+  /* ==========================================
+     SWISS TYPOGRAPHY UTILITIES
+     ========================================== */
+  .swiss-heading {
+    @apply font-display font-semibold tracking-tight text-foreground;
+    letter-spacing: -0.02em;
+  }
+  
+  .swiss-subheading {
+    @apply font-sans font-medium text-muted-foreground uppercase tracking-wider text-xs;
+  }
+  
+  .swiss-label {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+  
+  .swiss-value {
+    @apply font-sans font-semibold text-foreground tabular-nums;
+  }
+  
+  .swiss-stat {
+    @apply font-sans font-bold text-2xl tracking-tight text-foreground tabular-nums;
+  }
+  
+  /* ==========================================
+     PROCESS NUMBER STYLING
+     ========================================== */
+  .process-number {
+    @apply font-mono text-sm tracking-tight;
+    font-feature-settings: "tnum" 1;
   }
 }
 
 /* ==========================================
    STRUCTURAL COMPONENTS
-   For hierarchy and organization
+   For hierarchy and organization - ELEGANT
    ========================================== */
 @layer components {
-  /* PAGE HEADER - Clear hierarchy */
+  /* PAGE HEADER - Sophisticated hierarchy */
   .page-header {
-    @apply pb-6 mb-6 border-b border-border;
+    @apply pb-6 mb-6 border-b border-border/60;
   }
   .page-title {
-    @apply text-2xl sm:text-3xl font-bold text-foreground tracking-tight;
+    @apply font-display text-2xl sm:text-3xl font-semibold text-foreground;
+    letter-spacing: -0.025em;
   }
   .page-description {
-    @apply text-sm sm:text-base text-muted-foreground mt-1.5;
+    @apply text-sm sm:text-base text-muted-foreground mt-2 max-w-2xl;
+    line-height: 1.6;
   }
   
   /* SECTION - Content grouping */
   .section {
-    @apply mb-8;
+    @apply mb-10;
   }
   .section-header {
-    @apply flex items-center justify-between mb-4 pb-2 border-b border-border/50;
+    @apply flex items-center justify-between mb-5 pb-3 border-b border-border/40;
   }
   .section-title {
-    @apply text-lg font-semibold text-foreground flex items-center gap-2;
+    @apply font-sans text-lg font-semibold text-foreground flex items-center gap-2.5;
+    letter-spacing: -0.01em;
   }
   .section-subtitle {
-    @apply text-xs uppercase tracking-wider text-muted-foreground font-medium;
+    @apply text-[11px] uppercase tracking-[0.08em] text-muted-foreground font-semibold;
   }
   
-  /* CARDS - With elevation system */
+  /* CARDS - With refined elevation */
   .card-elevated {
-    @apply rounded-xl border border-border/60 bg-card text-card-foreground;
+    @apply rounded-xl border border-border/50 bg-card text-card-foreground transition-all duration-200;
     box-shadow: var(--shadow-sm);
   }
   .card-elevated:hover {
+    @apply border-border;
     box-shadow: var(--shadow-md);
   }
   
   .card-raised {
-    @apply rounded-xl border-2 border-border/40 bg-card text-card-foreground;
+    @apply rounded-xl border border-border/40 bg-card text-card-foreground;
     box-shadow: var(--shadow-md);
   }
   
   .card-inset {
-    @apply rounded-lg bg-muted/40 border border-border/30 p-4;
+    @apply rounded-lg bg-muted/30 border border-border/20 p-5;
   }
   
   /* PANELS - For grouping related content */
   .panel {
-    @apply rounded-xl border border-border bg-card p-5;
+    @apply rounded-xl border border-border/50 bg-card p-6;
     box-shadow: var(--shadow-xs);
   }
   .panel-header {
-    @apply flex items-center justify-between pb-4 mb-4 border-b border-border/50;
+    @apply flex items-center justify-between pb-4 mb-5 border-b border-border/40;
   }
   .panel-title {
-    @apply text-base font-semibold text-foreground;
+    @apply font-sans text-base font-semibold text-foreground;
+    letter-spacing: -0.01em;
   }
   .panel-content {
     @apply space-y-4;

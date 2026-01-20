@@ -111,10 +111,10 @@ export function StatsCard({
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className={cn("font-bold tracking-tight", sizes.value, styles.value)}>
+          <p className={cn("font-sans font-bold tabular-nums", sizes.value, styles.value)}>
             {value}
           </p>
-          <p className={cn("uppercase tracking-wider font-medium mt-0.5", sizes.label, styles.label)}>
+          <p className={cn("uppercase tracking-[0.06em] font-semibold mt-1", sizes.label, styles.label)}>
             {label}
           </p>
           {subtitle && (
