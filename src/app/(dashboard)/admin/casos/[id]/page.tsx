@@ -723,16 +723,18 @@ export default function CasoDetailPage() {
   }, [personasSource, factsSource, evidenciasSource, documentsSource]);
 
   const timelineSource: TimelineItem[] = timelineData?.length
-    ? timelineData.map((item) => ({
-        id: item.id,
-        data: new Date(item.date),
-        tipo: item.type as TimelineItem["tipo"],
-        titulo: item.title,
-        descricao: item.description || "",
-        links: item.processoNumero
-          ? [{ type: "documento", name: item.processoNumero }]
-          : undefined,
-      }))
+    ? timelineData
+        .filter((item) => item.date !== null)
+        .map((item) => ({
+          id: item.id,
+          data: new Date(item.date!),
+          tipo: item.type as TimelineItem["tipo"],
+          titulo: item.title,
+          descricao: item.description || "",
+          links: item.processoNumero
+            ? [{ type: "documento", name: item.processoNumero }]
+            : undefined,
+        }))
     : MOCK_TIMELINE;
   
   // Verificar teoria completa
