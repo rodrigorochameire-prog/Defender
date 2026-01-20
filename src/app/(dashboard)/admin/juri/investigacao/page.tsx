@@ -18,6 +18,34 @@ import {
   Phone,
   Globe,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+type KanbanField = {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+};
+
+type KanbanChecklistItem = {
+  id: string;
+  label: string;
+};
+
+type KanbanTask = {
+  id: string;
+  title: string;
+  description: string;
+  fields?: KanbanField[];
+  checklist?: KanbanChecklistItem[];
+  textarea?: string;
+};
+
+type KanbanColumn = {
+  id: string;
+  title: string;
+  accent: string;
+  tasks: KanbanTask[];
+};
 
 const osintSources = [
   { label: "Jusbrasil", base: "https://www.jusbrasil.com.br/busca?q=" },
@@ -29,7 +57,7 @@ const osintSources = [
   { label: "Diário Oficial", base: "https://www.jusbrasil.com.br/diarios/busca?q=" },
 ];
 
-const kanbanColumns = [
+const kanbanColumns: KanbanColumn[] = [
   {
     id: "pesquisar",
     title: "A Pesquisar",
