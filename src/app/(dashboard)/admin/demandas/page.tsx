@@ -124,6 +124,13 @@ const ATRIBUICAO_COLORS: Record<string, {
     activeBg: "bg-emerald-600 hover:bg-emerald-700",
     hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
   },
+  GRUPO_JURI: { 
+    border: "border-l-orange-600 dark:border-l-orange-500", 
+    bg: "bg-orange-100 dark:bg-orange-900/30",
+    text: "text-orange-700 dark:text-orange-400",
+    activeBg: "bg-orange-600 hover:bg-orange-700",
+    hoverBg: "hover:bg-orange-50 dark:hover:bg-orange-900/20"
+  },
   VVD_CAMACARI: { 
     border: "border-l-violet-600 dark:border-l-violet-500",
     bg: "bg-violet-100 dark:bg-violet-900/30",
@@ -171,6 +178,7 @@ const AREA_TO_ASSIGNMENT: Record<string, string[]> = {
 const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
   all: <LayoutGrid className="w-3.5 h-3.5" />,
   JURI_CAMACARI: <Gavel className="w-3.5 h-3.5" />,
+  GRUPO_JURI: <Target className="w-3.5 h-3.5" />,
   VVD_CAMACARI: <AlertTriangle className="w-3.5 h-3.5" />,
   EXECUCAO_PENAL: <Lock className="w-3.5 h-3.5" />,
   SUBSTITUICAO: <Scale className="w-3.5 h-3.5" />,
@@ -179,7 +187,8 @@ const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
 
 const ATRIBUICAO_OPTIONS = [
   { value: "all", label: "Todas", shortLabel: "Todas" },
-  { value: "JURI_CAMACARI", label: "Júri", shortLabel: "Júri" },
+  { value: "JURI_CAMACARI", label: "Júri Camaçari", shortLabel: "Júri" },
+  { value: "GRUPO_JURI", label: "Grupo Esp. Júri", shortLabel: "GEJ" },
   { value: "VVD_CAMACARI", label: "VVD", shortLabel: "VVD" },
   { value: "EXECUCAO_PENAL", label: "Exec. Penal", shortLabel: "EP" },
   { value: "SUBSTITUICAO", label: "Subst. Criminal", shortLabel: "Crim" },
@@ -215,6 +224,7 @@ interface Demanda {
   prioridade: string;
   providencias: string | null;
   area: string;
+  atribuicao?: string; // Atribuição/workspace
   comarca?: string;
   vara?: string;
   reuPreso: boolean;
@@ -222,6 +232,7 @@ interface Demanda {
   defensorId?: number;
   observacoes?: string;
   googleCalendarEventId?: string;
+  arquivado?: boolean; // Se a demanda está arquivada
 }
 
 // Comarcas disponíveis
@@ -1599,7 +1610,9 @@ export default function DemandasPage() {
   const [comarcaFilter, setComarcaFilter] = useState("all");
   const [defensorFilter, setDefensorFilter] = useState("all");
   const [reuPresoFilter, setReuPresoFilter] = useState<boolean | null>(null);
-  const [activeView, setActiveView] = useState<"table" | "kanban" | "timeline">("table");
+  const [showArchived, setShowArchived] = useState(false);
+  const [activeView, setActiveView] = useState<"grid" | "list" | "kanban" | "timeline">("grid");
+  const [largerFontMode, setLargerFontMode] = useState(false);
   const [sortField, setSortField] = useState<"prazo" | "assistido" | "area" | "status" | "comarca">("status");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedDemanda, setSelectedDemanda] = useState<Demanda | null>(null);
@@ -1668,6 +1681,10 @@ export default function DemandasPage() {
   // Filtrar e ordenar demandas
   const filteredDemandas = useMemo(() => {
     let result = demandas.filter((demanda) => {
+      // Filtro de arquivados
+      const isArchived = demanda.arquivado === true;
+      if (showArchived !== isArchived) return false;
+      
       const matchesSearch = 
         demanda.assistido.toLowerCase().includes(searchTerm.toLowerCase()) ||
         demanda.processo.includes(searchTerm) ||
@@ -1684,10 +1701,16 @@ export default function DemandasPage() {
       // Filtro de atribuição
       let matchesAtribuicao = true;
       if (atribuicaoFilter !== "all") {
-        const areasForAtribuicao = Object.entries(AREA_TO_ASSIGNMENT)
-          .filter(([_, assignments]) => assignments.includes(atribuicaoFilter as Assignment))
-          .map(([area]) => area);
-        matchesAtribuicao = areasForAtribuicao.includes(demanda.area);
+        // Verifica se a demanda tem atribuição direta
+        if (demanda.atribuicao) {
+          matchesAtribuicao = demanda.atribuicao === atribuicaoFilter;
+        } else {
+          // Fallback para o mapeamento por área
+          const areasForAtribuicao = Object.entries(AREA_TO_ASSIGNMENT)
+            .filter(([_, assignments]) => assignments.includes(atribuicaoFilter as Assignment))
+            .map(([area]) => area);
+          matchesAtribuicao = areasForAtribuicao.includes(demanda.area);
+        }
       }
       
       return matchesSearch && matchesStatus && matchesArea && matchesPrioridade && matchesComarca && matchesDefensor && matchesReuPreso && matchesAtribuicao;
@@ -1747,7 +1770,7 @@ export default function DemandasPage() {
     });
 
     return result;
-  }, [demandas, searchTerm, statusFilter, areaFilter, prioridadeFilter, comarcaFilter, defensorFilter, reuPresoFilter, atribuicaoFilter, sortField, sortOrder]);
+  }, [demandas, searchTerm, statusFilter, areaFilter, prioridadeFilter, comarcaFilter, defensorFilter, reuPresoFilter, atribuicaoFilter, sortField, sortOrder, showArchived]);
 
   // Estatísticas baseadas nos status da planilha VVD (COMPLETO)
   const stats = useMemo(() => ({
@@ -1795,6 +1818,13 @@ export default function DemandasPage() {
 
   const handleDelete = (id: number) => {
     setDemandas(demandas.filter(d => d.id !== id));
+  };
+
+  // Arquivar/Desarquivar demanda
+  const handleArchive = (id: number) => {
+    setDemandas(demandas.map(d => 
+      d.id === id ? { ...d, arquivado: !d.arquivado } : d
+    ));
   };
 
   const handleSort = (field: typeof sortField) => {
@@ -2055,12 +2085,16 @@ export default function DemandasPage() {
 
             {/* View Toggle */}
             <TabsList className="h-9">
-              <TabsTrigger value="table" className="gap-1 h-7 px-2 sm:px-3">
+              <TabsTrigger value="grid" className="gap-1 h-7 px-2 sm:px-3">
+                <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline text-xs">Grade</span>
+              </TabsTrigger>
+              <TabsTrigger value="list" className="gap-1 h-7 px-2 sm:px-3">
                 <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline text-xs">Lista</span>
               </TabsTrigger>
               <TabsTrigger value="kanban" className="gap-1 h-7 px-2 sm:px-3">
-                <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <Columns className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline text-xs">Kanban</span>
               </TabsTrigger>
               <TabsTrigger value="timeline" className="gap-1 h-7 px-2 sm:px-3">
@@ -2068,6 +2102,31 @@ export default function DemandasPage() {
                 <span className="hidden sm:inline text-xs">Timeline</span>
               </TabsTrigger>
             </TabsList>
+            
+            {/* Botões de Controle */}
+            <div className="flex items-center gap-1">
+              {/* Toggle Letra Maior */}
+              <Button
+                variant={largerFontMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setLargerFontMode(!largerFontMode)}
+                className="h-9 px-2 sm:px-3 text-xs"
+                title="Modo letra maior"
+              >
+                <span className={cn("font-bold", largerFontMode ? "text-base" : "text-sm")}>A</span>
+              </Button>
+              
+              {/* Toggle Arquivados */}
+              <Button
+                variant={showArchived ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setShowArchived(!showArchived)}
+                className="h-9 px-2 sm:px-3 text-xs gap-1"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{showArchived ? "Ativos" : "Arquivo"}</span>
+              </Button>
+            </div>
           </div>
 
           {/* Filtros - Scroll horizontal no mobile */}
@@ -2201,8 +2260,8 @@ export default function DemandasPage() {
           </div>
         </div>
 
-        {/* Visualização em Cards - Unificada Mobile/Desktop */}
-        <TabsContent value="table" className="mt-0 space-y-3">
+        {/* Visualização em Grade (Cards) */}
+        <TabsContent value="grid" className="mt-0 space-y-3">
           {/* Grid de Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             {filteredDemandas.map((demanda) => {
@@ -2247,17 +2306,25 @@ export default function DemandasPage() {
                     )}
                   >
                     {/* HEADER - Sempre visível */}
-                    <CardContent className="p-3 sm:p-4">
+                    <CardContent className={cn("p-3 sm:p-4", largerFontMode && "p-4 sm:p-5")}>
                       {/* Linha 1: Badges de Status e Prioridade */}
-                      <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className={cn("flex items-center justify-between gap-2", largerFontMode ? "mb-3" : "mb-2")}>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {demanda.reuPreso && (
-                            <Badge className="bg-rose-600 text-white text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 h-5 animate-pulse">
-                              <Lock className="h-2.5 w-2.5 mr-0.5" />
+                            <Badge className={cn(
+                              "bg-rose-600 text-white px-1.5 sm:px-2 py-0 animate-pulse",
+                              largerFontMode ? "text-xs h-6" : "text-[9px] sm:text-[10px] h-5"
+                            )}>
+                              <Lock className={cn(largerFontMode ? "h-3 w-3" : "h-2.5 w-2.5", "mr-0.5")} />
                               PRESO
                             </Badge>
                           )}
-                          <Badge className={cn("text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 h-5", statusConfig.color, statusConfig.textColor || "text-white")}>
+                          <Badge className={cn(
+                            "px-1.5 sm:px-2 py-0", 
+                            statusConfig.color, 
+                            statusConfig.textColor || "text-white",
+                            largerFontMode ? "text-xs h-6" : "text-[9px] sm:text-[10px] h-5"
+                          )}>
                             {statusConfig.label}
                           </Badge>
                         </div>
@@ -2293,6 +2360,14 @@ export default function DemandasPage() {
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
+                                onClick={() => handleArchive(demanda.id)}
+                                className="cursor-pointer"
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                {showArchived ? "Desarquivar" : "Arquivar"}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
                                 onClick={() => handleDelete(demanda.id)}
                                 className="cursor-pointer text-destructive"
                               >
@@ -2305,34 +2380,47 @@ export default function DemandasPage() {
                       </div>
 
                       {/* Linha 2: Assistido */}
-                      <h3 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 mb-1 line-clamp-1">
+                      <h3 className={cn(
+                        "font-semibold text-zinc-900 dark:text-zinc-100 mb-1 line-clamp-1",
+                        largerFontMode ? "text-base sm:text-lg" : "text-sm sm:text-base"
+                      )}>
                         {demanda.assistido}
                       </h3>
 
                       {/* Linha 3: Tipo de Ato + Ato Processual */}
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className={cn("flex items-center gap-2", largerFontMode ? "mb-3" : "mb-2")}>
                         {tipoAtoConfig && (
-                          <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1.5 py-0 h-5 bg-zinc-100 dark:bg-zinc-800">
+                          <Badge variant="outline" className={cn(
+                            "px-1.5 py-0 bg-zinc-100 dark:bg-zinc-800",
+                            largerFontMode ? "text-xs h-6" : "text-[9px] sm:text-[10px] h-5"
+                          )}>
                             {tipoAtoConfig.label}
                           </Badge>
                         )}
-                        <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 font-medium line-clamp-1 flex-1">
+                        <p className={cn(
+                          "text-zinc-700 dark:text-zinc-300 font-medium line-clamp-1 flex-1",
+                          largerFontMode ? "text-sm sm:text-base" : "text-xs sm:text-sm"
+                        )}>
                           {demanda.ato || "Sem ato definido"}
                         </p>
                       </div>
 
                       {/* Linha 4: Processo completo */}
                       {demanda.processo && (
-                        <div className="flex items-center gap-1.5 mb-2 text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400">
-                          <Scale className="h-3 w-3 flex-shrink-0" />
+                        <div className={cn(
+                          "flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400",
+                          largerFontMode ? "mb-3 text-sm" : "mb-2 text-[10px] sm:text-xs"
+                        )}>
+                          <Scale className={cn(largerFontMode ? "h-4 w-4" : "h-3 w-3", "flex-shrink-0")} />
                           <span className="font-mono">{demanda.processo}</span>
                         </div>
                       )}
 
                       {/* Linha 5: Prazo com data final destacada */}
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className={cn("flex items-center gap-3", largerFontMode ? "mb-3" : "mb-2")}>
                         <div className={cn(
-                          "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs sm:text-sm font-medium",
+                          "flex items-center gap-1.5 px-2 py-1 rounded-md font-medium",
+                          largerFontMode ? "text-sm sm:text-base" : "text-xs sm:text-sm",
                           prazoInfo.urgent 
                             ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400" 
                             : demanda.prazo 
@@ -2353,17 +2441,20 @@ export default function DemandasPage() {
                       </div>
 
                       {/* Linha 6: Grid de Metadados */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px] sm:text-xs">
+                      <div className={cn(
+                        "grid grid-cols-2 sm:grid-cols-3 gap-2",
+                        largerFontMode ? "text-sm" : "text-[10px] sm:text-xs"
+                      )}>
 
                         {/* Local/Comarca */}
                         <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
-                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <MapPin className={cn(largerFontMode ? "h-4 w-4" : "h-3 w-3", "flex-shrink-0")} />
                           <span className="truncate">{comarcaConfig?.label || demanda.comarca || "Camaçari"}</span>
                         </div>
 
                         {/* Data Entrada/Expedição */}
                         <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
-                          <Calendar className="h-3 w-3 flex-shrink-0" />
+                          <Calendar className={cn(largerFontMode ? "h-4 w-4" : "h-3 w-3", "flex-shrink-0")} />
                           <span>
                             {demanda.dataEntrada 
                               ? format(parseISO(demanda.dataEntrada), "dd/MM/yy", { locale: ptBR })
@@ -2374,14 +2465,14 @@ export default function DemandasPage() {
 
                         {/* Área */}
                         <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
-                          <Gavel className="h-3 w-3 flex-shrink-0" />
+                          <Gavel className={cn(largerFontMode ? "h-4 w-4" : "h-3 w-3", "flex-shrink-0")} />
                           <span>{areaConfig.label}</span>
                         </div>
 
                         {/* Situação Prisional (se preso) */}
                         {demanda.reuPreso && prisaoConfig && prisaoConfig.value !== "NAO_INFORMADO" && (
                           <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
-                            <Lock className="h-3 w-3 flex-shrink-0" />
+                            <Lock className={cn(largerFontMode ? "h-4 w-4" : "h-3 w-3", "flex-shrink-0")} />
                             <span className="truncate">{prisaoConfig.label}</span>
                           </div>
                         )}
@@ -2854,6 +2945,224 @@ export default function DemandasPage() {
                 <span className="font-semibold text-orange-600">{stats.urgente + stats.hoje}</span> urgentes
               </p>
             </div>
+          )}
+        </TabsContent>
+
+        {/* Visualização em Lista (Horizontal) */}
+        <TabsContent value="list" className="mt-0 space-y-2">
+          {/* Cabeçalho da tabela (desktop) */}
+          <div className="hidden lg:grid grid-cols-[1fr_180px_140px_100px_100px_100px_80px] gap-3 px-4 py-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-[10px] uppercase font-semibold text-zinc-500 tracking-wider">
+            <span>Assistido / Ato</span>
+            <span>Processo</span>
+            <span>Prazo</span>
+            <span>Status</span>
+            <span>Área</span>
+            <span>Comarca</span>
+            <span className="text-right">Ações</span>
+          </div>
+          
+          {/* Lista de itens */}
+          <div className="space-y-1.5">
+            {filteredDemandas.map((demanda) => {
+              const prazoInfo = getPrazoInfo(demanda.prazo);
+              const statusConfig = getStatusConfig(demanda.status);
+              const areaConfig = getAreaConfig(demanda.area);
+              const comarcaConfig = COMARCA_OPTIONS.find(c => c.value === demanda.comarca);
+              
+              const getBorderColor = (status: string) => {
+                if (status.startsWith("1_")) return "border-l-red-500";
+                if (status.startsWith("2_")) return "border-l-amber-400";
+                if (status.startsWith("3_")) return "border-l-orange-500";
+                if (status.startsWith("4_")) return "border-l-sky-500";
+                if (status.startsWith("5_")) return "border-l-violet-500";
+                if (status.startsWith("6_")) return "border-l-slate-500";
+                if (status.startsWith("7_")) return "border-l-emerald-500";
+                return "border-l-zinc-300";
+              };
+
+              return (
+                <div
+                  key={demanda.id}
+                  className={cn(
+                    "group bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg border-l-4 transition-all hover:shadow-md",
+                    getBorderColor(demanda.status),
+                    demanda.reuPreso && "ring-1 ring-rose-200 dark:ring-rose-900/50"
+                  )}
+                >
+                  {/* Layout responsivo - Mobile: Stack / Desktop: Grid */}
+                  <div className={cn(
+                    "flex flex-col lg:grid lg:grid-cols-[1fr_180px_140px_100px_100px_100px_80px] gap-2 lg:gap-3 lg:items-center p-3 lg:py-2.5",
+                    largerFontMode && "p-4 lg:py-3"
+                  )}>
+                    {/* Coluna 1: Assistido + Ato */}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        {demanda.reuPreso && (
+                          <Badge className={cn(
+                            "bg-rose-600 text-white px-1.5 py-0 h-5",
+                            largerFontMode ? "text-xs" : "text-[9px]"
+                          )}>
+                            <Lock className={cn("mr-0.5", largerFontMode ? "h-3 w-3" : "h-2.5 w-2.5")} />
+                            PRESO
+                          </Badge>
+                        )}
+                        <h4 className={cn(
+                          "font-semibold text-zinc-900 dark:text-zinc-100 truncate",
+                          largerFontMode ? "text-base" : "text-sm"
+                        )}>
+                          {demanda.assistido}
+                        </h4>
+                      </div>
+                      <p className={cn(
+                        "text-zinc-600 dark:text-zinc-400 truncate",
+                        largerFontMode ? "text-sm" : "text-xs"
+                      )}>
+                        {demanda.ato || "Sem ato definido"}
+                      </p>
+                    </div>
+
+                    {/* Coluna 2: Processo */}
+                    <div className="lg:block">
+                      <span className={cn(
+                        "font-mono text-zinc-500 dark:text-zinc-400 truncate block",
+                        largerFontMode ? "text-sm" : "text-[11px]"
+                      )}>
+                        {demanda.processo || "-"}
+                      </span>
+                    </div>
+
+                    {/* Coluna 3: Prazo */}
+                    <div className={cn(
+                      "flex items-center gap-1.5 px-2 py-1 rounded-md w-fit lg:w-auto",
+                      prazoInfo.urgent 
+                        ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400" 
+                        : demanda.prazo 
+                          ? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                          : "bg-zinc-50 text-zinc-400 dark:bg-zinc-900 dark:text-zinc-500"
+                    )}>
+                      <Clock className={cn(largerFontMode ? "h-4 w-4" : "h-3.5 w-3.5")} />
+                      <span className={cn("font-medium", largerFontMode ? "text-sm" : "text-xs")}>
+                        {demanda.prazo 
+                          ? format(parseISO(demanda.prazo), "dd/MM", { locale: ptBR })
+                          : "Sem prazo"
+                        }
+                        {prazoInfo.urgent && demanda.prazo && (
+                          <span className={cn("font-bold ml-1", largerFontMode ? "text-xs" : "text-[10px]")}>
+                            ({prazoInfo.text})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Coluna 4: Status */}
+                    <div>
+                      <Badge className={cn(
+                        "px-2 py-0 h-5",
+                        statusConfig.color, 
+                        statusConfig.textColor || "text-white",
+                        largerFontMode ? "text-xs" : "text-[10px]"
+                      )}>
+                        {statusConfig.label}
+                      </Badge>
+                    </div>
+
+                    {/* Coluna 5: Área */}
+                    <div className="hidden lg:block">
+                      <span className={cn(
+                        "text-zinc-600 dark:text-zinc-400",
+                        largerFontMode ? "text-sm" : "text-xs"
+                      )}>
+                        {areaConfig.label}
+                      </span>
+                    </div>
+
+                    {/* Coluna 6: Comarca */}
+                    <div className="hidden lg:block">
+                      <span className={cn(
+                        "text-zinc-500 dark:text-zinc-400",
+                        largerFontMode ? "text-sm" : "text-xs"
+                      )}>
+                        {comarcaConfig?.label || demanda.comarca || "-"}
+                      </span>
+                    </div>
+
+                    {/* Coluna 7: Ações */}
+                    <div className="flex items-center justify-end gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className={cn(largerFontMode ? "h-9 w-9" : "h-7 w-7")}
+                        onClick={() => handleOpenEdit(demanda)}
+                      >
+                        <Edit className={cn(largerFontMode ? "h-4 w-4" : "h-3.5 w-3.5")} />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className={cn(largerFontMode ? "h-9 w-9" : "h-7 w-7")}>
+                            <MoreHorizontal className={cn(largerFontMode ? "h-4 w-4" : "h-3.5 w-3.5")} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleOpenEdit(demanda)} className="cursor-pointer">
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleUpdateStatus(demanda.id, "7_PROTOCOLADO")}
+                            className="cursor-pointer text-emerald-600"
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Protocolado
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleArchive(demanda.id)}
+                            className="cursor-pointer"
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            {showArchived ? "Desarquivar" : "Arquivar"}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleDelete(demanda.id)}
+                            className="cursor-pointer text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Contador de resultados */}
+          {filteredDemandas.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0 text-xs sm:text-sm text-muted-foreground px-1 sm:px-0">
+              <p>
+                <span className="font-semibold text-foreground">{filteredDemandas.length}</span>
+                <span className="hidden sm:inline"> de {demandas.filter(d => !d.arquivado).length}</span> demandas
+                {showArchived && <span className="text-amber-600 ml-1">(arquivo)</span>}
+              </p>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {filteredDemandas.length === 0 && (
+            <Card className="border-dashed">
+              <CardContent className="py-16 text-center">
+                <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                <p className="font-medium mb-1">
+                  {showArchived ? "Nenhuma demanda arquivada" : "Nenhuma demanda encontrada"}
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {showArchived ? "Itens arquivados aparecerão aqui" : "Ajuste os filtros ou crie uma nova demanda"}
+                </p>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
