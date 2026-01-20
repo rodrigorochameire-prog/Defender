@@ -2082,3 +2082,291 @@ export const testemunhasRelations = relations(testemunhas, ({ one }) => ({
   caso: one(casos, { fields: [testemunhas.casoId], references: [casos.id] }),
   audiencia: one(audiencias, { fields: [testemunhas.audienciaId], references: [audiencias.id] }),
 }));
+
+// ==========================================
+// AVALIAÇÃO DO TRIBUNAL DO JÚRI
+// Formulário de observação comportamental
+// ==========================================
+
+export const tendenciaVotoEnum = pgEnum("tendencia_voto", [
+  "CONDENAR",
+  "ABSOLVER",
+  "INDECISO",
+]);
+
+export const nivelConfiancaEnum = pgEnum("nivel_confianca", [
+  "BAIXA",
+  "MEDIA",
+  "ALTA",
+]);
+
+// Avaliação principal da sessão do júri
+export const avaliacoesJuri = pgTable("avaliacoes_juri", {
+  id: serial("id").primaryKey(),
+  
+  // Relacionamentos
+  sessaoJuriId: integer("sessao_juri_id")
+    .notNull()
+    .references(() => sessoesJuri.id, { onDelete: "cascade" }),
+  processoId: integer("processo_id")
+    .references(() => processos.id, { onDelete: "set null" }),
+  
+  // Identificação
+  observador: text("observador").notNull(),
+  dataJulgamento: date("data_julgamento").notNull(),
+  horarioInicio: varchar("horario_inicio", { length: 10 }),
+  duracaoEstimada: varchar("duracao_estimada", { length: 50 }),
+  
+  // Contexto e Ambiente
+  descricaoAmbiente: text("descricao_ambiente"),
+  disposicaoFisica: text("disposicao_fisica"),
+  climaEmocionalInicial: text("clima_emocional_inicial"),
+  presencaPublicoMidia: text("presenca_publico_midia"),
+  
+  // Interrogatório do Réu
+  interrogatorioReacaoGeral: text("interrogatorio_reacao_geral"),
+  interrogatorioJuradosAcreditaram: text("interrogatorio_jurados_acreditaram"),
+  interrogatorioJuradosCeticos: text("interrogatorio_jurados_ceticos"),
+  interrogatorioMomentosImpacto: text("interrogatorio_momentos_impacto"),
+  interrogatorioContradicoes: text("interrogatorio_contradicoes"),
+  interrogatorioImpressaoCredibilidade: text("interrogatorio_impressao_credibilidade"),
+  interrogatorioNivelCredibilidade: integer("interrogatorio_nivel_credibilidade"), // 1-10
+  
+  // Sustentação do MP
+  mpEstrategiaGeral: text("mp_estrategia_geral"),
+  mpImpactoGeral: integer("mp_impacto_geral"), // 1-10
+  mpInclinacaoCondenar: text("mp_inclinacao_condenar"),
+  
+  // Sustentação da Defesa
+  defesaEstrategiaGeral: text("defesa_estrategia_geral"),
+  defesaImpactoGeral: integer("defesa_impacto_geral"), // 1-10
+  defesaDuvidaRazoavel: text("defesa_duvida_razoavel"),
+  
+  // Réplica do MP
+  replicaRefutacoes: text("replica_refutacoes"),
+  replicaArgumentosNovos: text("replica_argumentos_novos"),
+  replicaReacaoGeral: text("replica_reacao_geral"),
+  replicaImpacto: integer("replica_impacto"), // 1-10
+  replicaMudancaOpiniao: text("replica_mudanca_opiniao"),
+  
+  // Tréplica da Defesa
+  treplicaRefutacoes: text("treplica_refutacoes"),
+  treplicaApeloFinal: text("treplica_apelo_final"),
+  treplicaReacaoGeral: text("treplica_reacao_geral"),
+  treplicaMomentoImpactante: text("treplica_momento_impactante"),
+  treplicaImpacto: integer("treplica_impacto"), // 1-10
+  treplicaReconquistaIndecisos: text("treplica_reconquista_indecisos"),
+  
+  // Análise Final
+  ladoMaisPersuasivo: text("lado_mais_persuasivo"),
+  impactoAcusacao: integer("impacto_acusacao"), // 1-10
+  impactoDefesa: integer("impacto_defesa"), // 1-10
+  
+  // Impressão Final
+  impressaoFinalLeiga: text("impressao_final_leiga"),
+  argumentoMaisImpactante: text("argumento_mais_impactante"),
+  pontosNaoExplorados: text("pontos_nao_explorados"),
+  
+  // Observações Gerais
+  climaGeralJulgamento: text("clima_geral_julgamento"),
+  momentosVirada: text("momentos_virada"),
+  surpresasJulgamento: text("surpresas_julgamento"),
+  observacoesAdicionais: text("observacoes_adicionais"),
+  
+  // Status
+  status: varchar("status", { length: 30 }).default("em_andamento"), // 'em_andamento' | 'concluida' | 'rascunho'
+  
+  // Metadados
+  criadoPorId: integer("criado_por_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("avaliacoes_juri_sessao_id_idx").on(table.sessaoJuriId),
+  index("avaliacoes_juri_processo_id_idx").on(table.processoId),
+  index("avaliacoes_juri_status_idx").on(table.status),
+  index("avaliacoes_juri_data_idx").on(table.dataJulgamento),
+]);
+
+export type AvaliacaoJuri = typeof avaliacoesJuri.$inferSelect;
+export type InsertAvaliacaoJuri = typeof avaliacoesJuri.$inferInsert;
+
+// Avaliação individual de cada jurado
+export const avaliacaoJurados = pgTable("avaliacao_jurados", {
+  id: serial("id").primaryKey(),
+  
+  // Relacionamentos
+  avaliacaoJuriId: integer("avaliacao_juri_id")
+    .notNull()
+    .references(() => avaliacoesJuri.id, { onDelete: "cascade" }),
+  juradoId: integer("jurado_id")
+    .references(() => jurados.id, { onDelete: "set null" }),
+  
+  // Posição no conselho (1-7)
+  posicao: integer("posicao").notNull(),
+  
+  // Identificação
+  nome: text("nome"),
+  profissao: varchar("profissao", { length: 100 }),
+  idadeAproximada: integer("idade_aproximada"),
+  sexo: varchar("sexo", { length: 20 }),
+  
+  // Observações iniciais
+  aparenciaPrimeiraImpressao: text("aparencia_primeira_impressao"),
+  linguagemCorporalInicial: text("linguagem_corporal_inicial"),
+  
+  // Previsão de voto
+  tendenciaVoto: tendenciaVotoEnum("tendencia_voto"),
+  nivelConfianca: nivelConfiancaEnum("nivel_confianca"),
+  justificativaTendencia: text("justificativa_tendencia"),
+  
+  // Anotações durante o julgamento
+  anotacoesInterrogatorio: text("anotacoes_interrogatorio"),
+  anotacoesMp: text("anotacoes_mp"),
+  anotacoesDefesa: text("anotacoes_defesa"),
+  anotacoesGerais: text("anotacoes_gerais"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("avaliacao_jurados_avaliacao_id_idx").on(table.avaliacaoJuriId),
+  index("avaliacao_jurados_jurado_id_idx").on(table.juradoId),
+  index("avaliacao_jurados_posicao_idx").on(table.posicao),
+  index("avaliacao_jurados_tendencia_idx").on(table.tendenciaVoto),
+]);
+
+export type AvaliacaoJurado = typeof avaliacaoJurados.$inferSelect;
+export type InsertAvaliacaoJurado = typeof avaliacaoJurados.$inferInsert;
+
+// Avaliação das testemunhas durante o júri
+export const avaliacaoTestemunhasJuri = pgTable("avaliacao_testemunhas_juri", {
+  id: serial("id").primaryKey(),
+  
+  // Relacionamentos
+  avaliacaoJuriId: integer("avaliacao_juri_id")
+    .notNull()
+    .references(() => avaliacoesJuri.id, { onDelete: "cascade" }),
+  testemunhaId: integer("testemunha_id")
+    .references(() => testemunhas.id, { onDelete: "set null" }),
+  
+  // Ordem de inquirição
+  ordem: integer("ordem"),
+  
+  // Identificação
+  nome: text("nome").notNull(),
+  
+  // Depoimento
+  resumoDepoimento: text("resumo_depoimento"),
+  reacaoJurados: text("reacao_jurados"),
+  expressoesFaciaisLinguagem: text("expressoes_faciais_linguagem"),
+  credibilidade: integer("credibilidade"), // 1-10
+  observacoesComplementares: text("observacoes_complementares"),
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("avaliacao_testemunhas_avaliacao_id_idx").on(table.avaliacaoJuriId),
+  index("avaliacao_testemunhas_testemunha_id_idx").on(table.testemunhaId),
+  index("avaliacao_testemunhas_ordem_idx").on(table.ordem),
+]);
+
+export type AvaliacaoTestemunhaJuri = typeof avaliacaoTestemunhasJuri.$inferSelect;
+export type InsertAvaliacaoTestemunhaJuri = typeof avaliacaoTestemunhasJuri.$inferInsert;
+
+// Argumentos do MP e Defesa durante a sustentação
+export const argumentosSustentacao = pgTable("argumentos_sustentacao", {
+  id: serial("id").primaryKey(),
+  
+  // Relacionamentos
+  avaliacaoJuriId: integer("avaliacao_juri_id")
+    .notNull()
+    .references(() => avaliacoesJuri.id, { onDelete: "cascade" }),
+  
+  // Tipo
+  tipo: varchar("tipo", { length: 20 }).notNull(), // 'mp' | 'defesa'
+  ordem: integer("ordem"),
+  
+  // Conteúdo
+  descricaoArgumento: text("descricao_argumento"),
+  reacaoJurados: text("reacao_jurados"),
+  nivelPersuasao: integer("nivel_persuasao"), // 1-10
+  
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("argumentos_sustentacao_avaliacao_id_idx").on(table.avaliacaoJuriId),
+  index("argumentos_sustentacao_tipo_idx").on(table.tipo),
+  index("argumentos_sustentacao_ordem_idx").on(table.ordem),
+]);
+
+export type ArgumentoSustentacao = typeof argumentosSustentacao.$inferSelect;
+export type InsertArgumentoSustentacao = typeof argumentosSustentacao.$inferInsert;
+
+// Personagens do Júri (Juiz, Promotor, etc.) - Histórico de aprendizado
+export const personagensJuri = pgTable("personagens_juri", {
+  id: serial("id").primaryKey(),
+  
+  // Identificação
+  nome: text("nome").notNull(),
+  tipo: varchar("tipo", { length: 30 }).notNull(), // 'juiz' | 'promotor' | 'defensor' | 'oficial'
+  
+  // Dados profissionais
+  vara: varchar("vara", { length: 100 }),
+  comarca: varchar("comarca", { length: 100 }),
+  
+  // Perfil observado
+  estiloAtuacao: text("estilo_atuacao"),
+  pontosFortes: text("pontos_fortes"),
+  pontosFracos: text("pontos_fracos"),
+  tendenciasObservadas: text("tendencias_observadas"),
+  estrategiasRecomendadas: text("estrategias_recomendadas"),
+  
+  // Estatísticas (JSON com histórico)
+  historico: text("historico"), // JSON com dados de sessões anteriores
+  totalSessoes: integer("total_sessoes").default(0),
+  
+  // Status
+  ativo: boolean("ativo").default(true),
+  
+  // Metadados
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("personagens_juri_nome_idx").on(table.nome),
+  index("personagens_juri_tipo_idx").on(table.tipo),
+  index("personagens_juri_comarca_idx").on(table.comarca),
+  index("personagens_juri_ativo_idx").on(table.ativo),
+]);
+
+export type PersonagemJuri = typeof personagensJuri.$inferSelect;
+export type InsertPersonagemJuri = typeof personagensJuri.$inferInsert;
+
+// Relações das tabelas de avaliação
+export const avaliacoesJuriRelations = relations(avaliacoesJuri, ({ one, many }) => ({
+  sessaoJuri: one(sessoesJuri, { fields: [avaliacoesJuri.sessaoJuriId], references: [sessoesJuri.id] }),
+  processo: one(processos, { fields: [avaliacoesJuri.processoId], references: [processos.id] }),
+  criadoPor: one(users, { fields: [avaliacoesJuri.criadoPorId], references: [users.id] }),
+  avaliacaoJurados: many(avaliacaoJurados),
+  avaliacaoTestemunhas: many(avaliacaoTestemunhasJuri),
+  argumentos: many(argumentosSustentacao),
+}));
+
+export const avaliacaoJuradosRelations = relations(avaliacaoJurados, ({ one }) => ({
+  avaliacaoJuri: one(avaliacoesJuri, { fields: [avaliacaoJurados.avaliacaoJuriId], references: [avaliacoesJuri.id] }),
+  jurado: one(jurados, { fields: [avaliacaoJurados.juradoId], references: [jurados.id] }),
+}));
+
+export const avaliacaoTestemunhasJuriRelations = relations(avaliacaoTestemunhasJuri, ({ one }) => ({
+  avaliacaoJuri: one(avaliacoesJuri, { fields: [avaliacaoTestemunhasJuri.avaliacaoJuriId], references: [avaliacoesJuri.id] }),
+  testemunha: one(testemunhas, { fields: [avaliacaoTestemunhasJuri.testemunhaId], references: [testemunhas.id] }),
+}));
+
+export const argumentosSustentacaoRelations = relations(argumentosSustentacao, ({ one }) => ({
+  avaliacaoJuri: one(avaliacoesJuri, { fields: [argumentosSustentacao.avaliacaoJuriId], references: [avaliacoesJuri.id] }),
+}));
+
+export const personagensJuriRelations = relations(personagensJuri, ({ one }) => ({
+  createdBy: one(users, { fields: [personagensJuri.createdById], references: [users.id] }),
+}));

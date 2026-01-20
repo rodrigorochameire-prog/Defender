@@ -467,7 +467,7 @@ export default function AssistidoDetailPage() {
         date: new Date(item.date as any),
         icon: style.icon,
         color: style.color,
-        processoNumero: item.processoNumero || undefined,
+        processoNumero: "processoNumero" in item ? item.processoNumero : undefined,
       };
     });
   }, [timelineData]);

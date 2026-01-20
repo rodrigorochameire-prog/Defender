@@ -43,6 +43,7 @@ import {
   Zap,
   Brain,
   UserCheck,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -114,6 +115,16 @@ const acessoPlenario = [
     accent: "bg-amber-50 dark:bg-amber-950/20 border-amber-200/60",
     iconColor: "text-amber-600",
     isPremium: true,
+  },
+  {
+    id: "avaliacao",
+    titulo: "Avaliação do Júri",
+    descricao: "Formulário de observação comportamental",
+    href: "/admin/juri/avaliacao",
+    icon: ClipboardCheck,
+    accent: "bg-purple-50 dark:bg-purple-950/20 border-purple-200/60",
+    iconColor: "text-purple-600",
+    isNew: true,
   },
   {
     id: "jurados",
@@ -322,6 +333,12 @@ export default function JuriPage() {
                       <div className="flex items-center gap-2">
                         {item.isPremium && (
                           <Badge className="bg-amber-500 text-white text-[10px]">Premium</Badge>
+                        )}
+                        {"isNew" in item && item.isNew && (
+                          <Badge className="bg-purple-500 text-white text-[10px]">
+                            <Sparkles className="h-3 w-3 mr-0.5" />
+                            Novo
+                          </Badge>
                         )}
                         <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                       </div>

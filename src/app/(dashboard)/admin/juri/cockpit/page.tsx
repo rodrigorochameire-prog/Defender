@@ -19,6 +19,7 @@ import {
 import {
   ArrowLeft,
   CheckCircle2,
+  ClipboardCheck,
   FileText,
   MessageCircle,
   Mic,
@@ -218,6 +219,17 @@ export default function PlenarioCockpitPage() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {/* Link para Avaliação */}
+          <Link href="/admin/juri/avaliacao/1">
+            <Button
+              variant="outline"
+              size="sm"
+              className={`gap-2 ${isDarkMode ? "border-purple-500/60 text-purple-300 hover:text-purple-200 hover:border-purple-400" : "border-purple-300 text-purple-700 hover:text-purple-900 hover:border-purple-400"}`}
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              Avaliação
+            </Button>
+          </Link>
           {/* Toggle de tema */}
           <Button
             variant="outline"
