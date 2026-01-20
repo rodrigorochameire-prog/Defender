@@ -2229,12 +2229,9 @@ export default function DemandasPage() {
                 return "border-l-zinc-300";
               };
 
-              // Gradientes apenas para urgências
-              const getBgGradient = (status: string) => {
-                if (status.startsWith("1_")) return "bg-gradient-to-r from-rose-50/30 to-transparent dark:from-rose-950/15";
-                if (status.startsWith("2_")) return "bg-gradient-to-r from-amber-50/30 to-transparent dark:from-amber-950/15";
-                if (status.startsWith("3_")) return "bg-gradient-to-r from-amber-50/20 to-transparent dark:from-amber-950/10";
-                return ""; // Demais sem gradiente
+              // Sem gradientes de fundo para manter visual limpo
+              const getBgGradient = (_status: string) => {
+                return ""; // Cards com fundo neutro
               };
 
               return (
@@ -2320,40 +2317,45 @@ export default function DemandasPage() {
                         </div>
                       </div>
 
-                      {/* Linha 2: Assistido */}
+                      {/* Linha 2: Assistido - Nome com tipografia elegante */}
                       <h3 className={cn(
-                        "font-semibold text-zinc-900 dark:text-zinc-100 mb-1 line-clamp-1",
-                        largerFontMode ? "text-base sm:text-lg" : "text-sm sm:text-base"
+                        "font-serif font-medium text-zinc-900 dark:text-zinc-100 mb-1.5 line-clamp-1 tracking-tight",
+                        largerFontMode ? "text-lg sm:text-xl" : "text-base sm:text-lg"
                       )}>
                         {demanda.assistido}
                       </h3>
 
                       {/* Linha 3: Tipo de Ato + Ato Processual */}
-                      <div className={cn("flex items-center gap-2", largerFontMode ? "mb-3" : "mb-2")}>
+                      <div className={cn("flex items-center gap-2", largerFontMode ? "mb-3" : "mb-2.5")}>
                         {tipoAtoConfig && (
                           <Badge variant="outline" className={cn(
-                            "px-1.5 py-0 bg-zinc-100 dark:bg-zinc-800",
-                            largerFontMode ? "text-xs h-6" : "text-[11px] sm:text-[10px] h-5"
+                            "px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700",
+                            largerFontMode ? "text-xs" : "text-[11px]"
                           )}>
                             {tipoAtoConfig.label}
                           </Badge>
                         )}
                         <p className={cn(
-                          "text-zinc-700 dark:text-zinc-300 font-medium line-clamp-1 flex-1",
-                          largerFontMode ? "text-sm sm:text-base" : "text-xs sm:text-sm"
+                          "text-zinc-600 dark:text-zinc-400 font-medium line-clamp-1 flex-1",
+                          largerFontMode ? "text-sm sm:text-base" : "text-sm"
                         )}>
                           {demanda.ato || "Sem ato definido"}
                         </p>
                       </div>
 
-                      {/* Linha 4: Processo completo */}
+                      {/* Linha 4: Processo completo - Mono elegante */}
                       {demanda.processo && (
                         <div className={cn(
-                          "flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400",
-                          largerFontMode ? "mb-3 text-sm" : "mb-2 text-[10px] sm:text-xs"
+                          "flex items-center gap-2 text-zinc-500 dark:text-zinc-400",
+                          largerFontMode ? "mb-3" : "mb-2.5"
                         )}>
-                          <Scale className={cn(largerFontMode ? "h-4 w-4" : "h-3 w-3", "flex-shrink-0")} />
-                          <span className="font-mono">{demanda.processo}</span>
+                          <Scale className={cn(largerFontMode ? "h-4 w-4" : "h-3.5 w-3.5", "flex-shrink-0 text-zinc-400")} />
+                          <span className={cn(
+                            "font-mono tracking-tight",
+                            largerFontMode ? "text-sm" : "text-xs sm:text-sm"
+                          )}>
+                            {demanda.processo}
+                          </span>
                         </div>
                       )}
 

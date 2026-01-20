@@ -445,9 +445,10 @@ function AdminSidebarContent({
         >
           {/* ==========================================
               BLOCO SUPERIOR: CONTEXTO (Switcher)
+              Altura alinhada com header principal (60px)
               ========================================== */}
           <SidebarHeader
-            className="border-b py-2.5 px-3"
+            className="border-b h-[60px] flex items-center px-3"
             style={{
               background: `var(--sidebar-header-bg, ${config.sidebarHeaderBg})`,
               borderColor: `var(--sidebar-divider, ${config.sidebarDivider})`,
@@ -705,33 +706,33 @@ function AdminSidebarContent({
 
       {/* Main Content */}
       <SidebarInset className="flex flex-col min-h-screen">
-        {/* Header Desktop */}
+        {/* Header Desktop - Alinhado com a linha da sidebar */}
         <header
-          className="hidden md:flex h-16 shrink-0 items-center border-b px-6 backdrop-blur-md"
+          className="hidden md:flex h-[60px] shrink-0 items-center border-b px-6 backdrop-blur-md"
           style={{
             background: config.sidebarHeaderBg,
             borderColor: config.sidebarBorder,
           }}
         >
-          {/* Logo Centralizada */}
+          {/* Logo Centralizada - Maior e mais elegante */}
           <div className="flex items-center justify-center flex-1">
-            <div className="flex items-center gap-3">
-              {/* Logo Icon */}
+            <div className="flex items-center gap-3.5">
+              {/* Logo Icon - Aumentado */}
               <div
-                className="flex items-center justify-center w-10 h-10 rounded-xl shadow-md"
+                className="flex items-center justify-center w-11 h-11 rounded-xl shadow-lg"
                 style={{
                   background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
                 }}
               >
-                <Shield className="w-5 h-5 text-white" strokeWidth={2.5} />
+                <Shield className="w-6 h-6 text-white" strokeWidth={2} />
               </div>
 
-              <div className="text-center">
-                <h1 className="text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              <div className="text-left">
+                <h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
                   DefesaHub
                 </h1>
                 <p
-                  className="text-[11px] font-medium tracking-wide uppercase"
+                  className="text-[11px] font-medium tracking-[0.08em] uppercase"
                   style={{ color: config.sidebarTextMuted }}
                 >
                   {config.shortName}
@@ -741,7 +742,7 @@ function AdminSidebarContent({
           </div>
 
           {/* Ações à direita */}
-          <div className="flex items-center gap-2 absolute right-6">
+          <div className="flex items-center gap-2.5 absolute right-6">
             <CommandPalette />
             <FontSizeToggle />
             <ThemeToggle />

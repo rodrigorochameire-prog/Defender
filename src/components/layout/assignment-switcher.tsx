@@ -71,28 +71,28 @@ export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean 
             background: open ? "var(--assignment-accent-light)" : undefined,
           }}
         >
-          {/* Ícone com cor da atribuição */}
+          {/* Ícone com cor da atribuição - Aumentado */}
           <div
             className={cn(
-              "rounded-lg flex items-center justify-center shrink-0 shadow-md transition-all",
-              collapsed ? "h-9 w-9" : "h-9 w-9"
+              "rounded-xl flex items-center justify-center shrink-0 shadow-lg transition-all",
+              collapsed ? "h-10 w-10" : "h-10 w-10"
             )}
             style={{
               background: `linear-gradient(145deg, ${config.accentColor}, ${config.accentColorDark})`,
             }}
           >
-            <Icon className={cn("text-white", collapsed ? "h-5 w-5" : "h-[18px] w-[18px]")} />
+            <Icon className={cn("text-white", collapsed ? "h-5 w-5" : "h-5 w-5")} />
           </div>
 
-          {/* Nome e descrição */}
+          {/* Nome e descrição - Tipografia melhorada */}
           {!collapsed && (
             <>
               <div className="flex-1 text-left min-w-0">
-                <p className="text-[13px] font-semibold truncate text-foreground">
+                <p className="text-sm font-semibold truncate text-foreground tracking-tight">
                   {config.shortName}
                 </p>
-                <p className="text-[10px] text-muted-foreground truncate">
-                  Atribuição Ativa
+                <p className="text-[11px] text-muted-foreground truncate uppercase tracking-wider font-medium">
+                  Atribuição
                 </p>
               </div>
 
