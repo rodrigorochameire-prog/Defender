@@ -3,9 +3,16 @@
 @tailwind utilities;
 
 /* ========================================
-   DEFESAHUB - DESIGN SYSTEM v6.0
-   Estruturado • Hierárquico • Elegante
-   Cores suaves, tipografia legível, relevo sutil.
+   DEFESAHUB - DESIGN SYSTEM v4.0
+   Swiss Design • Green Premium • Sophisticated
+   Visual elegante, limpo, funcional
+   Padrão suíço com visualização ótima
+   CACHE BUST: 2026-01-20-v4
+   ======================================== */
+
+/* ========================================
+   SISTEMA DE CORES - iOS 26.2 INSPIRED
+   Paleta baseada em tons de verde, cinza, preto e branco
    ======================================== */
 
 @layer base {
@@ -153,40 +160,34 @@
     letter-spacing: -0.011em;
     line-height: 1.65;
   }
-  
-  /* ==========================================
-     TYPOGRAPHY SYSTEM - SOPHISTICATED & ELEGANT
-     Hierarquia clara, proporções harmoniosas
-     ========================================== */
-  
-  /* HEADINGS - Serifadas para elegância profissional */
-  h1, h2, h3 {
-    @apply font-display tracking-tight text-foreground;
-    line-height: 1.2;
-  }
-  
-  /* SUBHEADINGS - Sans-serif para clareza */
-  h4, h5, h6 {
-    @apply font-sans font-semibold text-foreground tracking-tight;
-    line-height: 1.35;
-  }
-  
-  /* Escala tipográfica harmoniosa - ratio 1.25 (Major Third) */
+
+  /* Hierarquia Tipográfica - Design Suíço */
   h1 { 
-    @apply text-3xl sm:text-4xl font-bold; 
+    @apply text-xl sm:text-2xl font-bold tracking-tight text-foreground;
     letter-spacing: -0.025em;
   }
   h2 { 
-    @apply text-2xl sm:text-3xl font-semibold; 
+    @apply text-lg sm:text-xl font-semibold tracking-tight text-foreground;
     letter-spacing: -0.02em;
   }
   h3 { 
-    @apply text-xl sm:text-2xl font-medium; 
+    @apply text-base sm:text-lg font-semibold text-foreground;
     letter-spacing: -0.015em;
   }
-  h4 { @apply text-lg font-semibold; }
-  h5 { @apply text-base font-semibold; }
-  h6 { @apply text-sm font-semibold uppercase tracking-wider; }
+  h4 { 
+    @apply text-sm sm:text-base font-medium text-foreground;
+  }
+  p { 
+    @apply text-sm sm:text-base leading-relaxed text-foreground;
+  }
+  span, label { 
+    @apply text-xs sm:text-sm text-muted-foreground;
+  }
+
+  /* ========================================
+     TIPOGRAFIA JURÍDICA - Design Suíço
+     Serif para tipificações, Mono para dados
+     ======================================== */
   
   p {
     @apply leading-relaxed text-muted-foreground;
