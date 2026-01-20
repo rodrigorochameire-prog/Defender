@@ -290,7 +290,7 @@ function MenuSectionComponent({
             )}
           >
             <span
-              className="text-[10px] font-bold uppercase tracking-[0.12em]"
+              className="text-[11px] font-semibold uppercase tracking-[0.08em]"
               style={{ color: config.sidebarTextMuted }}
             >
               {section.title}
@@ -639,7 +639,7 @@ function AdminSidebarContent({
                     style={{ borderColor: config.accentColor + "40" }}
                   >
                     <AvatarFallback
-                      className="text-[10px] font-semibold"
+                      className="text-[11px] font-semibold"
                       style={{
                         background: config.accentColorLight,
                         color: config.accentColor,
@@ -731,7 +731,7 @@ function AdminSidebarContent({
                   DefesaHub
                 </h1>
                 <p
-                  className="text-[10px] font-medium tracking-wide uppercase"
+                  className="text-[11px] font-medium tracking-wide uppercase"
                   style={{ color: config.sidebarTextMuted }}
                 >
                   {config.shortName}
