@@ -9,6 +9,7 @@ import {
   SwissTableHead,
   SwissTableHeader,
   SwissTableRow,
+  SwissTableContainer,
 } from "@/components/shared/swiss-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +71,14 @@ import {
 import { cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+// Componentes estruturais padronizados
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { PageHeader } from "@/components/shared/section-header";
+import { FilterChip, FilterChipGroup } from "@/components/shared/filter-chips";
+import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
+import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
+import { EmptyState } from "@/components/shared/empty-state";
 
 // ==========================================
 // TIPOS
@@ -715,285 +724,162 @@ export default function ProcessosPage() {
 
   return (
     <TooltipProvider>
-      <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-        {/* Header - Design Suíço */}
-        <div className="space-y-4">
-          {/* Linha superior: Título + Ações */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "p-2 sm:p-2.5 rounded-lg flex-shrink-0",
-                atribuicaoColors.bg
-              )}>
-                <Scale className={cn("w-5 h-5 sm:w-6 sm:h-6", atribuicaoColors.text)} />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-                  Processos
-                </h1>
-                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                  Gerenciamento integrado • {stats.total} processos
-                </p>
-              </div>
-            </div>
-
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+        {/* Breadcrumbs */}
+        <Breadcrumbs className="mb-2" />
+        
+        {/* Page Header */}
+        <PageHeader
+          title="Processos"
+          description={`Gerenciamento integrado • ${stats.total} processos`}
+          actions={
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <Button variant="outline" size="icon">
+                <Download className="w-4 h-4" />
               </Button>
               <Link href="/admin/processos/novo">
-                <Button className="h-8 sm:h-9 text-xs sm:text-sm gap-1.5">
-                  <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
                   <span className="hidden sm:inline">Novo Processo</span>
                   <span className="sm:hidden">Novo</span>
                 </Button>
               </Link>
             </div>
-          </div>
+          }
+        />
 
-          {/* Seletor de Atribuição - Tabs com cores dos workspaces */}
-          <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-            <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
-              {ATRIBUICAO_OPTIONS.map((option) => {
-                const isActive = areaFilter === option.value;
-                const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
-                const count = option.value === "all" 
-                  ? mockProcessos.length 
-                  : mockProcessos.filter(p => p.area === option.value).length;
-                
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => setAreaFilter(option.value)}
-                    className={cn(
-                      "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
-                      isActive 
-                        ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
-                        : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
-                    )}
-                  >
-                    <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
-                    <span className="hidden sm:inline">{option.label}</span>
-                    <span className="sm:hidden">{option.shortLabel}</span>
-                    <span className={cn(
-                      "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
-                      isActive 
-                        ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
-                        : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
-                    )}>
-                      {count}
-                    </span>
-                    {isActive && (
-                      <span className={cn(
-                        "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
-                        optionColors.indicator
-                      )} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Cards - Design Suíço com borda lateral */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
-          <SwissCard className="border-l-2 border-l-slate-400">
-            <SwissCardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                  <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
-                  <p className="text-[10px] sm:text-xs text-zinc-500">Total</p>
-                </div>
-              </div>
-            </SwissCardContent>
-          </SwissCard>
-          
-          <SwissCard className="border-l-2 border-l-emerald-500">
-            <SwissCardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                  <Gavel className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.juri}</p>
-                  <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">Júri</p>
-                </div>
-              </div>
-            </SwissCardContent>
-          </SwissCard>
-          
-          <SwissCard className="border-l-2 border-l-amber-500">
-            <SwissCardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.comDemandas}</p>
-                  <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Demandas</p>
-                </div>
-              </div>
-            </SwissCardContent>
-          </SwissCard>
-          
-          <SwissCard className="border-l-2 border-l-rose-500 hidden sm:block">
-            <SwissCardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
-                  <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Réu Preso</p>
-                </div>
-              </div>
-            </SwissCardContent>
-          </SwissCard>
-
-          <SwissCard className="border-l-2 border-l-blue-500 hidden lg:block">
-            <SwissCardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                  <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.comarcas}</p>
-                  <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Comarcas</p>
-                </div>
-              </div>
-            </SwissCardContent>
-          </SwissCard>
-        </div>
-
-        {/* Filters - Design Suíço */}
-        <div className="flex flex-col gap-2 sm:gap-3">
-          {/* Search + View Toggle */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <Input
-                placeholder="Buscar por número, assistido..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white dark:bg-zinc-950 h-9 text-sm"
+        {/* Filtros por Atribuição */}
+        <FilterChipGroup label="Filtrar por Área">
+          {ATRIBUICAO_OPTIONS.map((option) => {
+            const count = option.value === "all" 
+              ? mockProcessos.length 
+              : mockProcessos.filter(p => p.area === option.value).length;
+            
+            return (
+              <FilterChip
+                key={option.value}
+                label={option.label}
+                value={option.value}
+                selected={areaFilter === option.value}
+                onSelect={setAreaFilter}
+                count={count}
+                icon={ATRIBUICAO_ICONS[option.value]}
+                size="md"
               />
-            </div>
+            );
+          })}
+        </FilterChipGroup>
 
-            {/* View Toggle */}
-            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg flex-shrink-0">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode("grid")}
-                    className={cn(
-                      "h-7 w-7 p-0 rounded-md",
-                      viewMode === "grid" 
-                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
-                        : "text-zinc-500"
-                    )}
-                  >
-                    <LayoutGrid className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Modo Grade</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode("list")}
-                    className={cn(
-                      "h-7 w-7 p-0 rounded-md",
-                      viewMode === "list" 
-                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
-                        : "text-zinc-500"
-                    )}
-                  >
-                    <List className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Modo Lista</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
+        {/* Stats Cards - Padronizado */}
+        <StatsGrid columns={5}>
+          <StatsCard
+            label="Total"
+            value={stats.total}
+            icon={Scale}
+            variant="default"
+            size="sm"
+          />
+          <StatsCard
+            label="Júri"
+            value={stats.juri}
+            icon={Gavel}
+            variant="success"
+            size="sm"
+          />
+          <StatsCard
+            label="Com Demandas"
+            value={stats.comDemandas}
+            icon={Clock}
+            variant={stats.comDemandas > 0 ? "warning" : "default"}
+            size="sm"
+          />
+          <StatsCard
+            label="Réu Preso"
+            value={stats.reuPreso}
+            icon={Lock}
+            variant={stats.reuPreso > 0 ? "danger" : "default"}
+            size="sm"
+            className="hidden sm:flex"
+          />
+          <StatsCard
+            label="Comarcas"
+            value={stats.comarcas}
+            icon={Building2}
+            variant="info"
+            size="sm"
+            className="hidden lg:flex"
+          />
+        </StatsGrid>
 
-          {/* Filter Row */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
-            <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
-              <SelectTrigger className="w-[100px] sm:w-[140px] h-8 text-xs flex-shrink-0">
-                <SelectValue placeholder="Situação" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="ativo">Ativos</SelectItem>
-                <SelectItem value="suspenso">Suspensos</SelectItem>
-                <SelectItem value="arquivado">Arquivados</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        {/* Search & Filters - Padronizado */}
+        <SearchToolbar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Buscar por número, assistido..."
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          filters={
+            <FilterSelect
+              label="Situação"
+              value={situacaoFilter}
+              onValueChange={setSituacaoFilter}
+              options={[
+                { value: "all", label: "Todas" },
+                { value: "ativo", label: "Ativos" },
+                { value: "suspenso", label: "Suspensos" },
+                { value: "arquivado", label: "Arquivados" },
+              ]}
+              width="md"
+            />
+          }
+          activeFiltersCount={situacaoFilter !== "all" ? 1 : 0}
+          onClearFilters={() => setSituacaoFilter("all")}
+        />
 
         {/* Content */}
         {viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 px-1 sm:px-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredProcessos.map((processo) => (
               <ProcessoCard key={processo.id} processo={processo} />
             ))}
           </div>
         ) : (
-          <SwissCard className="overflow-hidden">
-            <SwissCardContent className="p-0">
-              <SwissTable>
-                <SwissTableHeader>
-                  <SwissTableRow>
-                    <SwissTableHead>Número</SwissTableHead>
-                    <SwissTableHead>Assistido</SwissTableHead>
-                    <SwissTableHead>Comarca/Vara</SwissTableHead>
-                    <SwissTableHead>Área</SwissTableHead>
-                    <SwissTableHead>Assunto</SwissTableHead>
-                    <SwissTableHead className="text-center">Dem.</SwissTableHead>
-                    <SwissTableHead>Situação</SwissTableHead>
-                    <SwissTableHead className="text-right">Ações</SwissTableHead>
-                  </SwissTableRow>
-                </SwissTableHeader>
-                <SwissTableBody>
-                  {filteredProcessos.map((processo) => (
-                    <ProcessoRow key={processo.id} processo={processo} />
-                  ))}
-                </SwissTableBody>
-              </SwissTable>
-            </SwissCardContent>
-          </SwissCard>
+          <SwissTableContainer className="max-h-[calc(100vh-320px)]">
+            <SwissTable>
+              <SwissTableHeader>
+                <SwissTableRow className="bg-muted/50">
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Número</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Assistido</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Comarca/Vara</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Área</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Assunto</SwissTableHead>
+                  <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Dem.</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Situação</SwissTableHead>
+                  <SwissTableHead className="text-right font-semibold text-xs uppercase tracking-wider">Ações</SwissTableHead>
+                </SwissTableRow>
+              </SwissTableHeader>
+              <SwissTableBody>
+                {filteredProcessos.map((processo) => (
+                  <ProcessoRow key={processo.id} processo={processo} />
+                ))}
+              </SwissTableBody>
+            </SwissTable>
+          </SwissTableContainer>
         )}
 
         {/* Empty State */}
         {filteredProcessos.length === 0 && (
-          <SwissCard className="border-dashed">
-            <SwissCardContent className="text-center py-16">
-              <div className="mx-auto w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
-                <Scale className="w-8 h-8 text-zinc-400" />
-              </div>
-              <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                Nenhum processo encontrado
-              </h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                Ajuste os filtros de busca ou cadastre um novo processo.
-              </p>
-              <Link href="/admin/processos/novo">
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Cadastrar Processo
-                </Button>
-              </Link>
-            </SwissCardContent>
-          </SwissCard>
+          <EmptyState
+            icon={Scale}
+            title="Nenhum processo encontrado"
+            description="Crie um novo processo ou ajuste os filtros de busca."
+            action={{
+              label: "Novo Processo",
+              onClick: () => {},
+              icon: Plus,
+            }}
+            variant={searchTerm ? "search" : "default"}
+          />
         )}
       </div>
     </TooltipProvider>
