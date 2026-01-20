@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SwissCard, SwissCardContent, SwissCardHeader, SwissCardTitle, SwissCardDescription } from "@/components/shared/swiss-card";
+import { SwissCard, SwissCardContent, SwissCardHeader, SwissCardTitle, SwissCardDescription } from "@/components/ui/swiss-card";
 import { SwissTable, SwissTableBody, SwissTableCell, SwissTableHead, SwissTableHeader, SwissTableRow } from "@/components/shared/swiss-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

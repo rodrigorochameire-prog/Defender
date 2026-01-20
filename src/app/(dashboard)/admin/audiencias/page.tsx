@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { AudienciasHub } from "@/components/casos/audiencias-hub";
-import { SwissCard, SwissCardContent } from "@/components/shared/swiss-card";
+import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,

@@ -1,6 +1,6 @@
 "use client";
 
-import { SwissCard, SwissCardContent } from "@/components/shared/swiss-card";
+import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import { Button } from "@/components/ui/button";
 import { 
   UserCheck,

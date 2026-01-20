@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { SwissCard, SwissCardContent } from "@/components/shared/swiss-card";
+import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import {
   SwissTable,
   SwissTableBody,

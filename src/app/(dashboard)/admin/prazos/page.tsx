@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { SwissCard, SwissCardContent } from "@/components/shared/swiss-card";
+import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
