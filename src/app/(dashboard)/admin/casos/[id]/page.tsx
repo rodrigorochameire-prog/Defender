@@ -731,7 +731,7 @@ export default function CasoDetailPage() {
           tipo: item.type as TimelineItem["tipo"],
           titulo: item.title,
           descricao: item.description || "",
-          links: item.processoNumero
+          links: "processoNumero" in item && item.processoNumero
             ? [{ type: "documento", name: item.processoNumero }]
             : undefined,
         }))
