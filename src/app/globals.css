@@ -200,7 +200,9 @@
     @apply text-base leading-relaxed text-foreground;
     line-height: 1.7;
   }
-  span, label { 
+  
+  /* Labels apenas - spans herdam cor do pai para não quebrar botões */
+  label { 
     @apply text-sm text-muted-foreground;
   }
   
