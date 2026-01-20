@@ -581,7 +581,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
 
                 {/* 2. ATRIBUIÇÃO/WORKSPACE - Neutro */}
                 <Badge 
-                  variant="muted" 
+                  variant="neutral" 
                   className="text-xs font-mono tracking-wider uppercase px-1.5 py-0"
                 >
                   {atribuicaoLabel}
@@ -908,7 +908,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                         )}
                         <span className="font-medium truncate">{testemunha.nome}</span>
                       </div>
-                      <Badge variant="muted" className="text-xs px-1 py-0 ml-1">
+                      <Badge variant="neutral" className="text-xs px-1 py-0 ml-1">
                         {testemunha.tipo === "defesa" ? "DEF" : testemunha.tipo === "acusacao" ? "ACUS" : "INFO"}
                       </Badge>
                     </div>
@@ -933,7 +933,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                       <span className="text-xs text-zinc-400">/{caso.provas.length}</span>
                     </div>
                     {caso.provas.filter(p => p.status === "pendente" || p.status === "requerida").length > 0 && (
-                      <Badge variant="muted" className="text-xs px-1 py-0 mt-1">
+                      <Badge variant="neutral" className="text-xs px-1 py-0 mt-1">
                         {caso.provas.filter(p => p.status === "pendente" || p.status === "requerida").length} pendentes
                       </Badge>
                     )}
@@ -953,12 +953,12 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                     </div>
                     <div className="flex gap-1 mt-1">
                       {caso.laudos.filter(l => l.favoravel === true).length > 0 && (
-                        <Badge variant="muted" className="text-xs px-1 py-0">
+                        <Badge variant="neutral" className="text-xs px-1 py-0">
                           ✓ {caso.laudos.filter(l => l.favoravel === true).length} fav.
                         </Badge>
                       )}
                       {caso.laudos.filter(l => l.favoravel === false).length > 0 && (
-                        <Badge variant="muted" className="text-xs px-1 py-0">
+                        <Badge variant="neutral" className="text-xs px-1 py-0">
                           ✗ {caso.laudos.filter(l => l.favoravel === false).length} desf.
                         </Badge>
                       )}
