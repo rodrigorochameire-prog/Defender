@@ -4,6 +4,30 @@
 
 Este documento explica os avisos e mensagens que podem aparecer no console do navegador durante o desenvolvimento.
 
+## Erros de Banco de Dados
+
+### Erro: "column workspace_id does not exist"
+
+```
+column "workspace_id" does not exist
+```
+
+**Causa:** A migration de workspaces não foi aplicada ao banco de dados.
+
+**Solução:** Execute a migration `20260120_fix_workspace_columns.sql` no SQL Editor do Supabase:
+
+1. Acesse o painel do Supabase
+2. Vá para **SQL Editor**
+3. Copie e cole o conteúdo de `supabase/migrations/20260120_fix_workspace_columns.sql`
+4. Execute o script
+
+Alternativamente, execute todas as migrations pendentes:
+
+```bash
+# Via script local (requer DATABASE_URL configurada)
+node scripts/run-migration.mjs
+```
+
 ## Avisos CSS (Firefox)
 
 Os seguintes avisos CSS são **normais e inofensivos**:
