@@ -14,8 +14,8 @@ import { Inngest } from "inngest";
 
 // Criar cliente Inngest
 export const inngest = new Inngest({
-  id: "tetecare",
-  name: "TeteCare Hub",
+  id: "defesahub",
+  name: "DefesaHub",
 });
 
 // Tipos de eventos disponíveis
@@ -27,97 +27,70 @@ export type InngestEvents = {
       message: string;
       templateName?: string;
       templateParams?: Record<string, string>;
-      petId?: number;
-      tutorId?: number;
     };
   };
-  
-  // Email
-  "email/send": {
+
+  // Notificações jurídicas
+  "prazo/vencimento": {
     data: {
-      to: string;
-      subject: string;
-      body: string;
-      template?: string;
-      templateData?: Record<string, unknown>;
+      assistidoNome: string;
+      assistidoTelefone?: string;
+      processoNumero: string;
+      prazoData: string;
+      ato: string;
     };
   };
-  
-  // Check-in/Check-out notifications
-  "checkin/completed": {
+
+  "audiencia/agendada": {
     data: {
-      petId: number;
-      petName: string;
-      tutorId: number;
-      tutorPhone?: string;
-      timestamp: string;
+      assistidoNome: string;
+      assistidoTelefone?: string;
+      processoNumero: string;
+      dataAudiencia: string;
+      local?: string;
+      tipo: string;
     };
   };
-  
-  "checkout/completed": {
+
+  "juri/agendado": {
     data: {
-      petId: number;
-      petName: string;
-      tutorId: number;
-      tutorPhone?: string;
-      creditsRemaining: number;
-      timestamp: string;
+      assistidoNome: string;
+      assistidoTelefone?: string;
+      processoNumero: string;
+      dataSessao: string;
+      sala?: string;
     };
   };
-  
-  // Alertas
-  "alert/low.credits": {
+
+  "movimentacao/nova": {
     data: {
-      petId: number;
-      petName: string;
-      tutorId: number;
-      tutorPhone?: string;
-      creditsRemaining: number;
+      assistidoNome: string;
+      assistidoTelefone?: string;
+      processoNumero: string;
+      descricao: string;
+      dataMovimentacao: string;
     };
   };
-  
-  "alert/vaccine.due": {
+
+  "reminder/send": {
     data: {
-      petId: number;
-      petName: string;
-      tutorId: number;
-      tutorPhone?: string;
-      vaccineName: string;
-      dueDate: string;
+      phone: string;
+      title: string;
+      message: string;
     };
   };
-  
-  "alert/low.stock": {
+
+  // Google Drive
+  "drive/sync.folder": {
     data: {
-      petId: number;
-      petName: string;
-      tutorId: number;
-      tutorPhone?: string;
-      daysRemaining: number;
+      folderId: string;
+      userId?: number;
     };
   };
-  
-  // IA Jobs
-  "ai/generate.weekly.report": {
+
+  "drive/sync.all": {
     data: {
-      petId: number;
-      tutorId: number;
-      startDate: string;
-      endDate: string;
-    };
-  };
-  
-  "ai/analyze.behavior": {
-    data: {
-      petId: number;
-      daysToAnalyze: number;
-    };
-  };
-  
-  "ai/optimize.rooms": {
-    data: {
-      date: string;
-      roomIds?: number[];
+      userId?: number;
     };
   };
 };

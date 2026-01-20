@@ -19,27 +19,7 @@ import { notificationTemplatesRouter } from "./notificationTemplates";
 import { documentsRouter } from "./documents";
 import { whatsappRouter } from "./whatsapp";
 import { auditLogsRouter } from "./auditLogs";
-import { dashboardRouter } from "./dashboard";
 
-// Routers do TeteCare (pets) - mantidos para compatibilidade
-import { petsRouter } from "./pets";
-import { tutorsRouter } from "./tutors";
-import { bookingsRouter } from "./bookings";
-import { checkinRouter } from "./checkin";
-import { behaviorRouter } from "./behavior";
-import { trainingRouter } from "./training";
-import { vaccinesRouter } from "./vaccines";
-import { medicationsRouter } from "./medications";
-import { preventivesRouter } from "./preventives";
-import { foodRouter } from "./food";
-import { wallRouter } from "./wall";
-import { reportsRouter } from "./reports";
-import { reviewsRouter } from "./reviews";
-import { packagesRouter } from "./packages";
-import { creditsRouter } from "./credits";
-import { financesRouter } from "./finances";
-import { statsRouter } from "./stats";
-import { logsRouter } from "./logs";
 
 export const appRouter = router({
   // ==========================================
@@ -67,29 +47,8 @@ export const appRouter = router({
   documents: documentsRouter,
   whatsapp: whatsappRouter,
   auditLogs: auditLogsRouter,
-  dashboard: dashboardRouter,
   
   // ==========================================
-  // TETECARE - MÓDULOS DE PETS (COMPATIBILIDADE)
-  // ==========================================
-  pets: petsRouter,
-  tutors: tutorsRouter,
-  bookings: bookingsRouter,
-  checkin: checkinRouter,
-  behavior: behaviorRouter,
-  training: trainingRouter,
-  vaccines: vaccinesRouter,
-  medications: medicationsRouter,
-  preventives: preventivesRouter,
-  food: foodRouter,
-  wall: wallRouter,
-  reports: reportsRouter,
-  reviews: reviewsRouter,
-  packages: packagesRouter,
-  credits: creditsRouter,
-  finances: financesRouter,
-  stats: statsRouter,
-  logs: logsRouter,
 });
 
 export type AppRouter = typeof appRouter;

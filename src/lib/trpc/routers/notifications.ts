@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, notifications, users } from "@/lib/db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, ne } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, notificationSchema } from "@/lib/validations";
 
@@ -186,7 +186,7 @@ export const notificationsRouter = router({
     }),
 
   /**
-   * Envia notificação para todos os tutores (admin)
+   * Envia notificação para todos os usuários internos (admin)
    */
   sendToAll: adminProcedure
     .input(
@@ -199,19 +199,19 @@ export const notificationsRouter = router({
     )
     .mutation(async ({ input }) => {
       return safeAsync(async () => {
-        // Buscar todos os tutores
-        const tutors = await db
+        // Buscar todos os usuários não-admin
+        const recipients = await db
           .select({ id: users.id })
           .from(users)
-          .where(eq(users.role, "user"));
+          .where(ne(users.role, "admin"));
 
-        if (tutors.length === 0) {
+        if (recipients.length === 0) {
           return { sent: 0 };
         }
 
         // Criar notificações para todos
-        const notificationValues = tutors.map(tutor => ({
-          userId: tutor.id,
+        const notificationValues = recipients.map(recipient => ({
+          userId: recipient.id,
           title: input.title,
           message: input.message,
           type: input.type,
@@ -221,7 +221,7 @@ export const notificationsRouter = router({
 
         await db.insert(notifications).values(notificationValues);
 
-        return { sent: tutors.length };
+        return { sent: recipients.length };
       }, "Erro ao enviar notificações");
     }),
 });

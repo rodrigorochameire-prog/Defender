@@ -33,7 +33,7 @@ export const strongPasswordSchema = z
   .regex(/[0-9]/, "Senha deve conter pelo menos um número");
 
 /**
- * Nome de pessoa/pet
+ * Nome de pessoa
  */
 export const nameSchema = z
   .string()
@@ -109,59 +109,17 @@ export const searchSchema = z.object({
 // ENUMS E TIPOS
 // ==========================================
 
-export const userRoleSchema = z.enum(["admin", "user"]);
+export const userRoleSchema = z.enum(["admin", "defensor", "estagiario", "servidor"]);
 export type UserRole = z.infer<typeof userRoleSchema>;
 
 export const approvalStatusSchema = z.enum(["pending", "approved", "rejected"]);
 export type ApprovalStatus = z.infer<typeof approvalStatusSchema>;
-
-export const speciesSchema = z.enum(["dog", "cat"]);
-export type Species = z.infer<typeof speciesSchema>;
-
-export const petStatusSchema = z.enum(["active", "checked-in", "inactive"]);
-export type PetStatus = z.infer<typeof petStatusSchema>;
-
-export const bookingTypeSchema = z.enum(["daycare", "hotel", "grooming", "vet"]);
-export type BookingType = z.infer<typeof bookingTypeSchema>;
-
-export const bookingStatusSchema = z.enum(["pending", "approved", "rejected", "cancelled", "completed"]);
-export type BookingStatus = z.infer<typeof bookingStatusSchema>;
 
 export const prioritySchema = z.enum(["low", "normal", "high", "urgent"]);
 export type Priority = z.infer<typeof prioritySchema>;
 
 export const eventStatusSchema = z.enum(["scheduled", "completed", "cancelled"]);
 export type EventStatus = z.infer<typeof eventStatusSchema>;
-
-export const logSourceSchema = z.enum(["daycare", "home"]);
-export type LogSource = z.infer<typeof logSourceSchema>;
-
-export const logTypeSchema = z.enum(["general", "health", "feeding", "exercise", "grooming", "incident"]);
-export type LogType = z.infer<typeof logTypeSchema>;
-
-export const moodSchema = z.enum(["happy", "calm", "anxious", "tired", "agitated", "sick"]);
-export type Mood = z.infer<typeof moodSchema>;
-
-export const stoolSchema = z.enum(["normal", "soft", "hard", "diarrhea", "bloody", "mucus", "none"]);
-export type Stool = z.infer<typeof stoolSchema>;
-
-export const appetiteSchema = z.enum(["excellent", "good", "moderate", "poor", "none"]);
-export type Appetite = z.infer<typeof appetiteSchema>;
-
-export const energySchema = z.enum(["high", "normal", "low", "very_low"]);
-export type Energy = z.infer<typeof energySchema>;
-
-export const waterIntakeSchema = z.enum(["normal", "increased", "decreased", "none"]);
-export type WaterIntake = z.infer<typeof waterIntakeSchema>;
-
-export const trainingCategorySchema = z.enum(["obedience", "socialization", "behavior", "agility", "tricks"]);
-export type TrainingCategory = z.infer<typeof trainingCategorySchema>;
-
-export const trainingStatusSchema = z.enum(["learning", "practicing", "mastered"]);
-export type TrainingStatus = z.infer<typeof trainingStatusSchema>;
-
-export const trainingMethodSchema = z.enum(["positive_reinforcement", "clicker", "lure", "capture"]);
-export type TrainingMethod = z.infer<typeof trainingMethodSchema>;
 
 // ==========================================
 // SCHEMAS DE ENTIDADES - USUÁRIO
@@ -182,32 +140,6 @@ export const updateUserSchema = userSchema.partial();
 export const loginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, "Senha é obrigatória"),
-});
-
-// ==========================================
-// SCHEMAS DE ENTIDADES - PET
-// ==========================================
-
-export const petSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Nome é obrigatório")
-    .max(100, "Nome muito longo")
-    .transform((v) => v.trim()),
-  breed: z.string().max(100).optional(),
-  species: speciesSchema.default("dog"),
-  birthDate: dateStringSchema,
-  weight: z.number().min(0).max(200000).optional(), // até 200kg em gramas
-  photoUrl: optionalUrlSchema,
-  notes: z.string().max(2000).optional(),
-  foodBrand: z.string().max(200).optional(),
-  foodAmount: z.number().min(0).max(10000).optional(), // até 10kg por dia
-});
-
-export const createPetSchema = petSchema;
-
-export const updatePetSchema = petSchema.partial().extend({
-  id: idSchema,
 });
 
 // ==========================================
@@ -244,118 +176,35 @@ export const updateCalendarEventSchema = calendarEventSchema.partial().extend({
 });
 
 // ==========================================
-// SCHEMAS DE ENTIDADES - RESERVA
-// ==========================================
-
-export const bookingRequestSchema = z.object({
-  petId: idSchema,
-  startDate: dateTimeSchema,
-  endDate: dateTimeSchema,
-  requestType: bookingTypeSchema.default("daycare"),
-  notes: z.string().max(500).optional(),
-});
-
-export const updateBookingStatusSchema = z.object({
-  id: idSchema,
-  status: bookingStatusSchema,
-  rejectionReason: z.string().max(500).optional(),
-  adminNotes: z.string().max(1000).optional(),
-});
-
-// ==========================================
-// SCHEMAS DE ENTIDADES - LOGS DIÁRIOS
-// ==========================================
-
-export const dailyLogSchema = z.object({
-  petId: idSchema,
-  logDate: dateTimeSchema,
-  source: logSourceSchema,
-  logType: logTypeSchema.default("general"),
-  mood: moodSchema.optional(),
-  stool: stoolSchema.optional(),
-  appetite: appetiteSchema.optional(),
-  energy: energySchema.optional(),
-  waterIntake: waterIntakeSchema.optional(),
-  notes: z.string().max(2000).optional(),
-  attachments: z.array(z.string().url()).optional(),
-});
-
-export const updateDailyLogSchema = dailyLogSchema.partial().extend({
-  id: idSchema,
-});
-
-// ==========================================
-// SCHEMAS DE ENTIDADES - COMPORTAMENTO
-// ==========================================
-
-export const behaviorLogSchema = z.object({
-  petId: idSchema,
-  logDate: dateTimeSchema,
-  socialization: z.enum(["excellent", "good", "moderate", "poor"]).optional(),
-  energy: z.enum(["high", "normal", "low"]).optional(),
-  obedience: z.enum(["excellent", "good", "needs_work"]).optional(),
-  anxiety: z.enum(["none", "mild", "moderate", "severe"]).optional(),
-  aggression: z.enum(["none", "mild", "moderate", "severe"]).optional(),
-  notes: z.string().max(2000).optional(),
-  activities: z.array(z.string()).optional(),
-  attachments: z.array(z.string().url()).optional(),
-});
-
-export const updateBehaviorLogSchema = behaviorLogSchema.partial().extend({
-  id: idSchema,
-});
-
-// ==========================================
-// SCHEMAS DE ENTIDADES - TREINAMENTO
-// ==========================================
-
-export const trainingLogSchema = z.object({
-  petId: idSchema,
-  logDate: dateTimeSchema,
-  command: z.string().min(1).max(100),
-  category: trainingCategorySchema,
-  status: trainingStatusSchema,
-  successRate: z.number().int().min(0).max(100).optional(),
-  duration: z.number().int().min(0).max(480).optional(), // até 8 horas
-  treats: z.number().int().min(0).max(100).optional(),
-  method: trainingMethodSchema.optional(),
-  notes: z.string().max(2000).optional(),
-  videoUrl: optionalUrlSchema,
-  attachments: z.array(z.string().url()).optional(),
-});
-
-export const updateTrainingLogSchema = trainingLogSchema.partial().extend({
-  id: idSchema,
-});
-
-// ==========================================
 // SCHEMAS DE ENTIDADES - DOCUMENTOS
 // ==========================================
 
 export const documentCategorySchema = z.enum([
-  "vaccination",
-  "exam",
-  "prescription",
-  "daily_log",
-  "behavior",
-  "training",
-  "nutrition",
-  "other",
+  "peticao",
+  "despacho",
+  "decisao",
+  "sentenca",
+  "recurso",
+  "relatorio",
+  "outro",
 ]);
 export type DocumentCategory = z.infer<typeof documentCategorySchema>;
 
 export const documentModuleSchema = z.enum([
-  "daily_log",
-  "behavior",
-  "training",
-  "health",
-  "vaccination",
-  "nutrition",
+  "processo",
+  "assistido",
+  "demanda",
+  "caso",
+  "audiencia",
+  "juri",
+  "outro",
 ]);
 export type DocumentModule = z.infer<typeof documentModuleSchema>;
 
 export const documentSchema = z.object({
-  petId: idSchema,
+  processoId: optionalIdSchema,
+  assistidoId: optionalIdSchema,
+  demandaId: optionalIdSchema,
   title: z.string().min(1, "Título é obrigatório").max(200),
   description: z.string().max(2000).optional(),
   category: documentCategorySchema,
@@ -364,7 +213,6 @@ export const documentSchema = z.object({
   mimeType: z.string().max(100).optional(),
   fileSize: z.number().int().min(0).optional(),
   relatedModule: documentModuleSchema.optional(),
-  relatedId: optionalIdSchema,
 });
 
 export const updateDocumentSchema = documentSchema.partial().extend({
@@ -380,7 +228,8 @@ export type NotificationType = z.infer<typeof notificationTypeSchema>;
 
 export const notificationSchema = z.object({
   userId: idSchema,
-  petId: optionalIdSchema,
+  processoId: optionalIdSchema,
+  demandaId: optionalIdSchema,
   type: notificationTypeSchema.default("info"),
   title: z.string().min(1).max(200),
   message: z.string().min(1).max(2000),
@@ -396,35 +245,14 @@ export const dateRangeFilterSchema = z.object({
   endDate: dateTimeSchema.optional(),
 });
 
-export const petFilterSchema = z.object({
-  petId: optionalIdSchema,
-  species: speciesSchema.optional(),
-  status: petStatusSchema.optional(),
-});
-
-export const logFilterSchema = z.object({
-  petId: optionalIdSchema,
-  source: logSourceSchema.optional(),
-  logType: logTypeSchema.optional(),
-  ...dateRangeFilterSchema.shape,
-  ...paginationSchema.shape,
-});
-
 // ==========================================
 // TIPOS INFERIDOS
 // ==========================================
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
-export type PetInput = z.infer<typeof petSchema>;
-export type UpdatePetInput = z.infer<typeof updatePetSchema>;
 export type CalendarEventInput = z.infer<typeof calendarEventSchema>;
-export type BookingRequestInput = z.infer<typeof bookingRequestSchema>;
-export type DailyLogInput = z.infer<typeof dailyLogSchema>;
-export type BehaviorLogInput = z.infer<typeof behaviorLogSchema>;
-export type TrainingLogInput = z.infer<typeof trainingLogSchema>;
 export type DocumentInput = z.infer<typeof documentSchema>;
 export type NotificationInput = z.infer<typeof notificationSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;
 export type DateRangeFilter = z.infer<typeof dateRangeFilterSchema>;
-export type LogFilter = z.infer<typeof logFilterSchema>;

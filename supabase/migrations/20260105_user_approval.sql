@@ -1,5 +1,5 @@
--- Adicionar campo de aprovação para usuários (tutores)
--- Tutores precisam ser aprovados pelo admin para acessar o sistema
+-- Adicionar campo de aprovação para usuários
+-- Usuários internos precisam ser aprovados pelo admin para acessar o sistema
 
 -- Adicionar coluna se não existir
 DO $$ 
@@ -10,10 +10,12 @@ BEGIN
     END IF;
 END $$;
 
--- Atualizar usuários existentes (admins ficam aprovados, tutores também para não quebrar)
+-- Atualizar usuários existentes (admins ficam aprovados, demais usuários também)
 UPDATE users SET approval_status = 'approved' WHERE role = 'admin';
-UPDATE users SET approval_status = 'approved' WHERE role = 'user' AND approval_status = 'pending';
+UPDATE users SET approval_status = 'approved'
+  WHERE role IN ('defensor', 'estagiario', 'servidor')
+    AND approval_status = 'pending';
 
 -- Comentário para documentação
-COMMENT ON COLUMN users.approval_status IS 'Status de aprovação do tutor: pending, approved, rejected';
+COMMENT ON COLUMN users.approval_status IS 'Status de aprovação do usuário: pending, approved, rejected';
 

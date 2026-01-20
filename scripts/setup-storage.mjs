@@ -18,9 +18,7 @@ async function setupStorage() {
 
   // 1. Criar/Atualizar buckets
   const buckets = [
-    { id: 'pet-photos', name: 'pet-photos', public: false, fileSizeLimit: 5242880, allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] },
     { id: 'documents', name: 'documents', public: false, fileSizeLimit: 10485760, allowedMimeTypes: ['application/pdf', 'image/jpeg', 'image/png'] },
-    { id: 'wall-media', name: 'wall-media', public: false, fileSizeLimit: 10485760, allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'video/mp4'] },
   ];
 
   for (const bucket of buckets) {
@@ -56,81 +54,35 @@ async function setupStorage() {
   console.log('\n📋 Configurando políticas RLS...\n');
 
   const sql = `
-    -- Função para extrair pet_id
-    CREATE OR REPLACE FUNCTION storage.extract_pet_id_from_path(file_path TEXT)
-    RETURNS INTEGER AS $$
-    BEGIN
-      RETURN (string_to_array(file_path, '/'))[2]::INTEGER;
-    EXCEPTION WHEN OTHERS THEN RETURN NULL;
-    END;
-    $$ LANGUAGE plpgsql IMMUTABLE;
-
     -- Limpar políticas antigas
-    DROP POLICY IF EXISTS "pet_photos_select" ON storage.objects;
-    DROP POLICY IF EXISTS "pet_photos_insert" ON storage.objects;
-    DROP POLICY IF EXISTS "pet_photos_delete" ON storage.objects;
     DROP POLICY IF EXISTS "documents_select" ON storage.objects;
     DROP POLICY IF EXISTS "documents_insert" ON storage.objects;
+    DROP POLICY IF EXISTS "documents_update" ON storage.objects;
     DROP POLICY IF EXISTS "documents_delete" ON storage.objects;
-    DROP POLICY IF EXISTS "wall_media_select" ON storage.objects;
-    DROP POLICY IF EXISTS "wall_media_insert" ON storage.objects;
-    DROP POLICY IF EXISTS "wall_media_delete" ON storage.objects;
 
-    -- Políticas pet-photos
-    CREATE POLICY "pet_photos_select" ON storage.objects FOR SELECT USING (
-      bucket_id = 'pet-photos' AND auth.role() = 'authenticated' AND (
-        EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer AND role = 'admin')
-        OR EXISTS (SELECT 1 FROM public.pet_tutors WHERE pet_id = storage.extract_pet_id_from_path(name) AND tutor_id = (auth.uid())::text::integer)
-      )
-    );
-
-    CREATE POLICY "pet_photos_insert" ON storage.objects FOR INSERT WITH CHECK (
-      bucket_id = 'pet-photos' AND auth.role() = 'authenticated' AND (
-        EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer AND role = 'admin')
-        OR EXISTS (SELECT 1 FROM public.pet_tutors WHERE pet_id = storage.extract_pet_id_from_path(name) AND tutor_id = (auth.uid())::text::integer)
-      )
-    );
-
-    CREATE POLICY "pet_photos_delete" ON storage.objects FOR DELETE USING (
-      bucket_id = 'pet-photos' AND auth.role() = 'authenticated' AND (
-        EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer AND role = 'admin')
-        OR EXISTS (SELECT 1 FROM public.pet_tutors WHERE pet_id = storage.extract_pet_id_from_path(name) AND tutor_id = (auth.uid())::text::integer)
-      )
-    );
-
-    -- Políticas documents
+    -- Políticas documents (usuários autenticados)
     CREATE POLICY "documents_select" ON storage.objects FOR SELECT USING (
-      bucket_id = 'documents' AND auth.role() = 'authenticated' AND (
-        EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer AND role = 'admin')
-        OR EXISTS (SELECT 1 FROM public.pet_tutors WHERE pet_id = storage.extract_pet_id_from_path(name) AND tutor_id = (auth.uid())::text::integer)
-      )
+      bucket_id = 'documents' 
+      AND auth.role() = 'authenticated'
+      AND EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer)
     );
 
     CREATE POLICY "documents_insert" ON storage.objects FOR INSERT WITH CHECK (
-      bucket_id = 'documents' AND auth.role() = 'authenticated' AND (
-        EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer AND role = 'admin')
-        OR EXISTS (SELECT 1 FROM public.pet_tutors WHERE pet_id = storage.extract_pet_id_from_path(name) AND tutor_id = (auth.uid())::text::integer)
-      )
+      bucket_id = 'documents' 
+      AND auth.role() = 'authenticated'
+      AND EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer)
+    );
+
+    CREATE POLICY "documents_update" ON storage.objects FOR UPDATE USING (
+      bucket_id = 'documents' 
+      AND auth.role() = 'authenticated'
+      AND EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer)
     );
 
     CREATE POLICY "documents_delete" ON storage.objects FOR DELETE USING (
-      bucket_id = 'documents' AND auth.role() = 'authenticated' AND (
-        EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer AND role = 'admin')
-        OR EXISTS (SELECT 1 FROM public.pet_tutors WHERE pet_id = storage.extract_pet_id_from_path(name) AND tutor_id = (auth.uid())::text::integer)
-      )
-    );
-
-    -- Políticas wall-media
-    CREATE POLICY "wall_media_select" ON storage.objects FOR SELECT USING (bucket_id = 'wall-media' AND auth.role() = 'authenticated');
-
-    CREATE POLICY "wall_media_insert" ON storage.objects FOR INSERT WITH CHECK (
-      bucket_id = 'wall-media' AND auth.role() = 'authenticated' AND 
-      EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer AND role = 'admin')
-    );
-
-    CREATE POLICY "wall_media_delete" ON storage.objects FOR DELETE USING (
-      bucket_id = 'wall-media' AND auth.role() = 'authenticated' AND 
-      EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer AND role = 'admin')
+      bucket_id = 'documents' 
+      AND auth.role() = 'authenticated'
+      AND EXISTS (SELECT 1 FROM public.users WHERE id = (auth.uid())::text::integer)
     );
 
     -- Habilitar RLS

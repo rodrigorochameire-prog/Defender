@@ -84,6 +84,28 @@ export default function AdminProfilePage() {
     return <LoadingPage />;
   }
 
+  const roleLabel =
+    profile.role === "admin"
+      ? "Administrador"
+      : profile.role === "defensor"
+      ? "Defensor"
+      : profile.role === "estagiario"
+      ? "Estagiário"
+      : profile.role === "servidor"
+      ? "Servidor"
+      : "Usuário";
+
+  const roleBadge =
+    profile.role === "admin"
+      ? "Admin"
+      : profile.role === "defensor"
+      ? "Defensor"
+      : profile.role === "estagiario"
+      ? "Estagiário"
+      : profile.role === "servidor"
+      ? "Servidor"
+      : "Usuário";
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateMutation.mutate({
@@ -233,9 +255,7 @@ export default function AdminProfilePage() {
                     <Shield className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="text-sm text-muted-foreground">Tipo de conta</p>
-                      <p className="font-medium">
-                        {profile.role === "admin" ? "Administrador" : "Tutor"}
-                      </p>
+                      <p className="font-medium">{roleLabel}</p>
                     </div>
                   </div>
 
@@ -273,7 +293,7 @@ export default function AdminProfilePage() {
             <div className="flex items-center justify-between">
               <span className="text-sm">Tipo de conta</span>
               <Badge variant={profile.role === "admin" ? "default" : "secondary"}>
-                {profile.role === "admin" ? "Admin" : "Tutor"}
+                {roleBadge}
               </Badge>
             </div>
 

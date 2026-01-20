@@ -30,7 +30,7 @@ class MetricsLogger {
 
   constructor() {
     this.axiomToken = process.env.AXIOM_TOKEN;
-    this.axiomDataset = process.env.AXIOM_DATASET || "tetecare";
+    this.axiomDataset = process.env.AXIOM_DATASET || "defesahub";
   }
 
   private async send(data: Record<string, unknown>[]) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -9,46 +9,55 @@ import {
   BellOff,
   Check,
   CheckCheck,
-  Dog,
   Calendar,
   FileText,
   MessageSquare,
   AlertCircle,
+  Scale,
 } from "lucide-react";
 
 const mockNotifications = [
   {
     id: 1,
-    type: "pet",
-    title: "Novo pet cadastrado",
-    message: "O tutor João cadastrou um novo pet: Max (Golden Retriever)",
+    type: "prazo",
+    title: "Prazo próximo do vencimento",
+    message: "O prazo do processo 0001234-56.2024.8.05.0001 vence amanhã.",
     time: "Há 5 minutos",
     read: false,
-    icon: Dog,
+    icon: AlertCircle,
   },
   {
     id: 2,
-    type: "booking",
-    title: "Nova reserva",
-    message: "Reserva confirmada para Luna - 15/01/2026",
+    type: "audiencia",
+    title: "Audiência agendada",
+    message: "Audiência do processo 0009876-54.2024.8.05.0001 em 15/01/2026.",
     time: "Há 1 hora",
     read: false,
     icon: Calendar,
   },
   {
     id: 3,
-    type: "document",
-    title: "Documento enviado",
-    message: "Carteira de vacinação de Thor foi atualizada",
+    type: "documento",
+    title: "Documento juntado",
+    message: "Petição intermediária anexada ao processo 0005678-90.2024.8.05.0001.",
     time: "Há 3 horas",
     read: true,
     icon: FileText,
   },
   {
     id: 4,
-    type: "message",
+    type: "juri",
+    title: "Sessão do Júri confirmada",
+    message: "Sessão confirmada para o processo 0004321-12.2023.8.05.0001.",
+    time: "Ontem",
+    read: true,
+    icon: Scale,
+  },
+  {
+    id: 5,
+    type: "mensagem",
     title: "Nova mensagem",
-    message: "Maria enviou uma mensagem sobre o pet Bella",
+    message: "Assistido enviou uma mensagem pelo canal de atendimento.",
     time: "Ontem",
     read: true,
     icon: MessageSquare,

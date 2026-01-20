@@ -31,11 +31,7 @@ export function LoginForm() {
 
       toast.success("Login realizado com sucesso!");
       
-      if (result.role === "admin") {
-        router.push("/admin");
-      } else {
-        router.push("/tutor");
-      }
+      router.push("/admin");
       
       router.refresh();
     } catch {

@@ -311,24 +311,6 @@ export const Errors = {
       message,
     }),
 
-  // Erros específicos de domínio
-  petNotApproved: () =>
-    new TRPCError({
-      code: "FORBIDDEN",
-      message: "Este pet ainda não foi aprovado para usar a creche",
-    }),
-
-  noCredits: () =>
-    new TRPCError({
-      code: "FORBIDDEN",
-      message: "Sem créditos suficientes. Adquira um pacote de créditos.",
-    }),
-
-  bookingConflict: () =>
-    new TRPCError({
-      code: "CONFLICT",
-      message: "Já existe uma reserva para este período",
-    }),
 };
 
 // ==========================================

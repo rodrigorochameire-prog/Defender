@@ -13,10 +13,6 @@ export default async function HomePage() {
     return <LandingPage />;
   }
 
-  // Se autenticado, redireciona baseado no role
-  if (session.role === "admin") {
-    redirect("/admin");
-  }
-
-  redirect("/tutor");
+  // Se autenticado, redireciona para o dashboard
+  redirect("/admin");
 }

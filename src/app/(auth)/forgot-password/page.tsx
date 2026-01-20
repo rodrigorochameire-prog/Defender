@@ -1,7 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ForgotPasswordForm } from "./forgot-password-form";
-import { ChevronLeft, Mail } from "lucide-react";
+import { ChevronLeft, Mail, Scale } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   return (
@@ -19,16 +18,12 @@ export default function ForgotPasswordPage() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative mb-4">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-rose-400/20 blur-xl rounded-full scale-150" />
-              <Image
-                src="/tetecare-logo.png"
-                alt="Tetê Care"
-                width={64}
-                height={64}
-                className="relative rounded-xl shadow-md ring-1 ring-black/5"
-              />
+              <div className="relative h-16 w-16 rounded-xl bg-white shadow-md ring-1 ring-black/5 flex items-center justify-center">
+                <Scale className="h-7 w-7 text-orange-500" />
+              </div>
             </div>
             <h1 className="text-lg font-bold bg-gradient-to-r from-orange-600 to-rose-500 bg-clip-text text-transparent">
-              Tetê Care
+              DefesaHub
             </h1>
           </div>
 

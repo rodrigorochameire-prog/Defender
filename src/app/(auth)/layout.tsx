@@ -8,12 +8,9 @@ export default async function AuthLayout({
 }) {
   const session = await getSession();
 
-  // Se já estiver logado, redirecionar para o dashboard apropriado
+  // Se já estiver logado, redirecionar para o dashboard
   if (session) {
-    if (session.role === "admin") {
-      redirect("/admin");
-    }
-    redirect("/tutor");
+    redirect("/admin");
   }
 
   return <>{children}</>;

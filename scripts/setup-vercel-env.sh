@@ -34,7 +34,7 @@ read -p "   AXIOM_TOKEN (deixe vazio para pular): " AXIOM_TOKEN
 
 if [ -n "$AXIOM_TOKEN" ]; then
     echo "$AXIOM_TOKEN" | vercel env add AXIOM_TOKEN production
-    echo "tetecare" | vercel env add AXIOM_DATASET production
+    echo "defesahub" | vercel env add AXIOM_DATASET production
     echo "   ✅ Axiom configurado!"
 else
     echo "   ⏭️ Axiom pulado"
