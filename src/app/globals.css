@@ -219,6 +219,21 @@
   html.font-large h4 {
     @apply text-lg sm:text-xl;
   }
+  
+  /* Espaçamento ajustado para modo fonte grande */
+  html.font-large .page-header {
+    @apply pb-8 mb-8;
+  }
+  html.font-large .section {
+    @apply mb-12;
+  }
+  html.font-large .panel {
+    @apply p-7;
+  }
+  html.font-large .card-elevated,
+  html.font-large .card-raised {
+    @apply p-6;
+  }
 
   /* ========================================
      TIPOGRAFIA JURÍDICA - Design Suíço

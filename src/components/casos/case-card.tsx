@@ -509,17 +509,15 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
             
             {/* ========================================
                 SEÇÃO 1: ESTRATÉGIA DA DEFESA (Principal)
-                Abrange teoria, possibilidades e estratégias
+                Design limpo com borda lateral como indicador
                 ======================================== */}
             {data.teoriaResumo && (
-              <div className="mt-4 sm:mt-5 p-4 sm:p-5 rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100/80 dark:from-zinc-900/60 dark:to-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-600 dark:text-zinc-300 tracking-wide flex items-center gap-2.5 mb-3">
-                  <div className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-900/40">
-                    <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400" />
-                  </div>
+              <div className="mt-4 sm:mt-5 pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-zinc-600">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-2">
+                  <Shield className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Estratégia da Defesa
                 </h4>
-                <p className="text-sm sm:text-base text-zinc-700 dark:text-zinc-200 leading-relaxed font-serif italic">
+                <p className="text-base sm:text-lg text-zinc-800 dark:text-zinc-100 leading-relaxed font-serif italic">
                   &ldquo;{data.teoriaResumo}&rdquo;
                 </p>
               </div>
@@ -529,14 +527,12 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 2: TESE DA ACUSAÇÃO (Oposição)
                 ======================================== */}
             {data.teseAcusacao && (
-              <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100/80 dark:from-zinc-900/60 dark:to-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-600 dark:text-zinc-300 tracking-wide flex items-center gap-2.5 mb-3">
-                  <div className="p-1.5 rounded-md bg-rose-100 dark:bg-rose-900/40">
-                    <Swords className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500 dark:text-rose-400" />
-                  </div>
+              <div className="pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-zinc-600">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-2">
+                  <Swords className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Tese da Acusação
                 </h4>
-                <p className="text-sm sm:text-base text-zinc-700 dark:text-zinc-200 leading-relaxed">
+                <p className="text-base sm:text-lg text-zinc-700 dark:text-zinc-200 leading-relaxed">
                   {data.teseAcusacao}
                 </p>
               </div>
@@ -546,78 +542,70 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 3: VERSÃO DO RÉU NO ATENDIMENTO
                 ======================================== */}
             {data.versaoReu && (
-              <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100/80 dark:from-zinc-900/60 dark:to-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-600 dark:text-zinc-300 tracking-wide flex items-center gap-2.5 mb-3">
-                  <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/40">
-                    <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 dark:text-blue-400" />
-                  </div>
+              <div className="pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-zinc-600">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-2">
+                  <User className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Versão do Réu
                 </h4>
-                <p className="text-sm sm:text-base text-zinc-700 dark:text-zinc-200 leading-relaxed">
+                <p className="text-base sm:text-lg text-zinc-700 dark:text-zinc-200 leading-relaxed">
                   {data.versaoReu}
                 </p>
               </div>
             )}
 
             {/* ========================================
-                SEÇÃO 4: TESTEMUNHAS - Grid de status
+                SEÇÃO 4: TESTEMUNHAS - Grid estruturado
                 ======================================== */}
             {data.testemunhas && data.testemunhas.length > 0 && (
-              <div className="p-4 sm:p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-700/60">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-600 dark:text-zinc-300 tracking-wide flex items-center gap-2.5 mb-3">
-                  <div className="p-1.5 rounded-md bg-zinc-200 dark:bg-zinc-700">
-                    <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-600 dark:text-zinc-300" />
-                  </div>
-                  Testemunhas ({data.testemunhas.filter(t => t.ouvida).length}/{data.testemunhas.length})
+              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-3">
+                  <Users className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                  Testemunhas
+                  <span className="font-mono text-zinc-400 dark:text-zinc-500">
+                    {data.testemunhas.filter(t => t.ouvida).length}/{data.testemunhas.length}
+                  </span>
                 </h4>
                 
-                {/* Pills de status */}
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-200/60 dark:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 text-xs sm:text-sm font-medium">
-                    <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+                {/* Status em linha */}
+                <div className="flex flex-wrap gap-3 mb-4 text-sm">
+                  <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
+                    <CircleDot className="w-3.5 h-3.5 text-zinc-500" />
                     {data.testemunhas.filter(t => t.ouvida).length} ouvidas
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-200/60 dark:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 text-xs sm:text-sm font-medium">
-                    <UserX className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
+                    <Circle className="w-3.5 h-3.5 text-zinc-400" />
                     {data.testemunhas.filter(t => !t.ouvida).length} pendentes
                   </span>
                   {data.interrogatorioRealizado !== undefined && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-200/60 dark:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 text-xs sm:text-sm font-medium">
-                      <User className={cn("w-3.5 h-3.5", data.interrogatorioRealizado ? "text-emerald-500" : "text-rose-500")} />
+                    <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
+                      <User className="w-3.5 h-3.5 text-zinc-500" />
                       {data.interrogatorioRealizado ? "Interrogado" : "Interrog. Pendente"}
                     </span>
                   )}
                 </div>
 
                 {/* Lista de testemunhas */}
-                <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
+                <div className="space-y-1 max-h-[140px] overflow-y-auto">
                   {data.testemunhas.slice(0, 5).map((testemunha) => (
                     <div
                       key={testemunha.id}
-                      className={cn(
-                        "flex items-center justify-between py-2 px-3 rounded-lg text-xs sm:text-sm",
-                        testemunha.ouvida 
-                          ? "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
-                          : "bg-zinc-100/50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400"
-                      )}
+                      className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors text-sm"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         {testemunha.ouvida ? (
-                          <CircleDot className="w-3.5 h-3.5 flex-shrink-0 text-emerald-500" />
+                          <CircleDot className="w-3.5 h-3.5 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
                         ) : (
-                          <Circle className="w-3.5 h-3.5 flex-shrink-0 text-zinc-400" />
+                          <Circle className="w-3.5 h-3.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
                         )}
-                        <span className="font-medium truncate">{testemunha.nome}</span>
+                        <span className={cn(
+                          "font-medium truncate",
+                          testemunha.ouvida ? "text-zinc-700 dark:text-zinc-200" : "text-zinc-500 dark:text-zinc-400"
+                        )}>{testemunha.nome}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <Badge variant="outline" className={cn(
-                          "text-[10px] sm:text-xs px-1.5 py-0.5",
-                          testemunha.tipo === "defesa" && "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400",
-                          testemunha.tipo === "acusacao" && "border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400",
-                          testemunha.tipo === "informante" && "border-zinc-300 text-zinc-500 dark:border-zinc-600"
-                        )}>
+                        <span className="text-xs font-mono text-zinc-400 uppercase">
                           {testemunha.tipo === "defesa" ? "DEF" : testemunha.tipo === "acusacao" ? "ACUS" : "INFO"}
-                        </Badge>
+                        </span>
                         {testemunha.dataOitiva && (
                           <span className="font-mono text-xs text-zinc-400">
                             {format(testemunha.dataOitiva, "dd/MM")}
@@ -627,7 +615,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                     </div>
                   ))}
                   {data.testemunhas.length > 5 && (
-                    <p className="text-xs sm:text-sm text-zinc-400 text-center py-1.5">
+                    <p className="text-sm text-zinc-400 text-center py-1.5">
                       +{data.testemunhas.length - 5} mais
                     </p>
                   )}
@@ -636,73 +624,47 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
             )}
 
             {/* ========================================
-                SEÇÃO 5: PROVAS E LAUDOS - Grid de cards
+                SEÇÃO 5: PROVAS E LAUDOS - Layout horizontal
                 ======================================== */}
             {((data.provas && data.provas.length > 0) || (data.laudos && data.laudos.length > 0)) && (
-              <div className="grid grid-cols-2 gap-3">
-                {/* Provas Documentais */}
-                {data.provas && data.provas.length > 0 && (
-                  <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/60">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800">
-                        <FileSearch className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <div className="flex flex-wrap gap-6 sm:gap-10">
+                  {/* Provas */}
+                  {data.provas && data.provas.length > 0 && (
+                    <div className="flex items-center gap-3">
+                      <FileSearch className="w-5 h-5 text-zinc-400" />
+                      <div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl font-bold font-mono text-zinc-700 dark:text-zinc-200">
+                            {data.provas.filter(p => p.status === "juntada").length}
+                          </span>
+                          <span className="text-sm text-zinc-400">/{data.provas.length}</span>
+                        </div>
+                        <span className="text-xs uppercase tracking-wide text-zinc-500">Provas</span>
                       </div>
-                      <span className="text-xs sm:text-sm uppercase font-semibold tracking-wide text-zinc-600 dark:text-zinc-300">Provas</span>
                     </div>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-2xl sm:text-3xl font-bold font-mono text-zinc-700 dark:text-zinc-200">
-                        {data.provas.filter(p => p.status === "juntada").length}
-                      </span>
-                      <span className="text-sm text-zinc-400">/{data.provas.length}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {data.provas.filter(p => p.status === "juntada").slice(0, 2).map((prova, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs px-1.5 py-0.5 border-zinc-300 dark:border-zinc-600">
-                          {prova.tipo === "documental" ? "📄" : prova.tipo === "pericial" ? "🔬" : prova.tipo === "testemunhal" ? "👥" : "📦"}
-                        </Badge>
-                      ))}
-                      {data.provas.filter(p => p.status === "pendente").length > 0 && (
-                        <Badge className="text-xs px-1.5 py-0.5 bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
-                          {data.provas.filter(p => p.status === "pendente").length} pend.
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Laudos Periciais */}
-                {data.laudos && data.laudos.length > 0 && (
-                  <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700/60">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800">
-                        <Microscope className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+                  {/* Laudos */}
+                  {data.laudos && data.laudos.length > 0 && (
+                    <div className="flex items-center gap-3">
+                      <Microscope className="w-5 h-5 text-zinc-400" />
+                      <div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl font-bold font-mono text-zinc-700 dark:text-zinc-200">
+                            {data.laudos.length}
+                          </span>
+                          {data.laudos.filter(l => l.favoravel === true).length > 0 && (
+                            <span className="text-sm text-zinc-500">
+                              ({data.laudos.filter(l => l.favoravel === true).length} fav.)
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs uppercase tracking-wide text-zinc-500">Laudos</span>
                       </div>
-                      <span className="text-xs sm:text-sm uppercase font-semibold tracking-wide text-zinc-600 dark:text-zinc-300">Laudos</span>
                     </div>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-2xl sm:text-3xl font-bold font-mono text-zinc-700 dark:text-zinc-200">
-                        {data.laudos.length}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {data.laudos.filter(l => l.favoravel === true).length > 0 && (
-                        <Badge className="text-xs px-1.5 py-0.5 bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
-                          <span className="text-emerald-500 mr-1">✓</span> {data.laudos.filter(l => l.favoravel === true).length} fav.
-                        </Badge>
-                      )}
-                      {data.laudos.filter(l => l.favoravel === false).length > 0 && (
-                        <Badge className="text-xs px-1.5 py-0.5 bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
-                          <span className="text-rose-500 mr-1">✗</span> {data.laudos.filter(l => l.favoravel === false).length} desfav.
-                        </Badge>
-                      )}
-                      {data.laudos.filter(l => l.favoravel === null || l.favoravel === undefined).length > 0 && (
-                        <Badge variant="outline" className="text-xs px-1.5 py-0.5 border-zinc-300 dark:border-zinc-600">
-                          {data.laudos.filter(l => l.favoravel === null || l.favoravel === undefined).length} neutros
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
 
@@ -710,51 +672,40 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 6: INVESTIGAÇÃO DEFENSIVA
                 ======================================== */}
             {data.investigacaoDefensiva && (
-              <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100/80 dark:from-zinc-900/60 dark:to-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/60">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-600 dark:text-zinc-300 tracking-wide flex items-center gap-2.5 mb-3">
-                  <div className="p-1.5 rounded-md bg-violet-100 dark:bg-violet-900/40">
-                    <FileSearch className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-violet-500 dark:text-violet-400" />
-                  </div>
+              <div className="pl-4 sm:pl-5 py-3 sm:py-4 border-l-2 border-zinc-300 dark:border-zinc-600">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-2">
+                  <FileSearch className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   Investigação Defensiva
                 </h4>
-                <p className="text-sm sm:text-base text-zinc-700 dark:text-zinc-200 leading-relaxed">
+                <p className="text-base sm:text-lg text-zinc-700 dark:text-zinc-200 leading-relaxed">
                   {data.investigacaoDefensiva}
                 </p>
               </div>
             )}
 
             {/* ========================================
-                SEÇÃO 7: PRÓXIMA AUDIÊNCIA - Card de alerta
+                SEÇÃO 7: PRÓXIMA AUDIÊNCIA
                 ======================================== */}
             {data.proximaAudiencia && (
-              <div className={cn(
-                "flex items-start sm:items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border",
-                hasAudienciaHoje 
-                  ? "bg-zinc-50 dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-600"
-                  : "bg-zinc-50 dark:bg-zinc-900/60 border-zinc-200/80 dark:border-zinc-700/60"
-              )}>
-                <div className={cn(
-                  "p-2 rounded-lg",
-                  hasAudienciaHoje ? "bg-rose-100 dark:bg-rose-900/40" : "bg-amber-100 dark:bg-amber-900/40"
-                )}>
-                  <AlertTriangle className={cn(
-                    "w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0",
-                    hasAudienciaHoje ? "text-rose-500 dark:text-rose-400" : "text-amber-500 dark:text-amber-400"
-                  )} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300 block mb-1">
-                    Próxima Audiência
-                  </span>
-                  <p className="text-sm sm:text-base text-zinc-700 dark:text-zinc-200">
-                    <span className="font-medium">{data.proximaAudiencia.tipo}</span>
-                    <span className="hidden sm:inline"> • </span>
-                    <br className="sm:hidden" />
-                    <span className="font-mono">{format(data.proximaAudiencia.data, "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
-                    {data.proximaAudiencia.local && (
-                      <span className="hidden sm:inline truncate"> • {data.proximaAudiencia.local}</span>
-                    )}
-                  </p>
+              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-zinc-400" />
+                  <div>
+                    <span className="text-xs uppercase tracking-wide text-zinc-500 block">Próxima Audiência</span>
+                    <p className="text-base sm:text-lg text-zinc-700 dark:text-zinc-200">
+                      <span className="font-medium">{data.proximaAudiencia.tipo}</span>
+                      <span className="mx-2 text-zinc-300 dark:text-zinc-600">•</span>
+                      <span className="font-mono">{format(data.proximaAudiencia.data, "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
+                      {data.proximaAudiencia.local && (
+                        <span className="hidden sm:inline text-zinc-500 ml-2">({data.proximaAudiencia.local})</span>
+                      )}
+                    </p>
+                  </div>
+                  {hasAudienciaHoje && (
+                    <span className="ml-auto px-2 py-1 text-xs font-bold uppercase bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 rounded">
+                      Hoje
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -763,31 +714,28 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                 SEÇÃO 8: PRAZOS PENDENTES
                 ======================================== */}
             {data.demandasPendentes.length > 0 && (
-              <div className="p-4 sm:p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-700/60">
-                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-600 dark:text-zinc-300 tracking-wide flex items-center gap-2.5 mb-3">
-                  <div className="p-1.5 rounded-md bg-zinc-200 dark:bg-zinc-700">
-                    <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-600 dark:text-zinc-300" />
-                  </div>
-                  Próximos Prazos ({data.demandasPendentes.length})
+              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-3">
+                  <Clock className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                  Próximos Prazos
+                  <span className="font-mono text-zinc-400">({data.demandasPendentes.length})</span>
                 </h4>
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   {data.demandasPendentes.slice(0, 3).map((demanda) => {
                     const dias = differenceInDays(demanda.prazo, new Date());
                     const isUrgente = dias <= 3;
                     return (
                       <div
                         key={demanda.id}
-                        className={cn(
-                          "flex items-center justify-between py-2.5 px-3 rounded-lg text-xs sm:text-sm",
-                          isUrgente 
-                            ? "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-l-2 border-rose-400"
-                            : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
-                        )}
+                        className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
                       >
-                        <span className="font-medium truncate max-w-[180px] sm:max-w-[250px]">{demanda.ato}</span>
                         <span className={cn(
-                          "font-mono text-xs sm:text-sm flex-shrink-0 ml-3",
-                          isUrgente && "font-bold text-rose-500"
+                          "font-medium truncate max-w-[200px] sm:max-w-[280px] text-sm",
+                          isUrgente ? "text-zinc-800 dark:text-zinc-100" : "text-zinc-600 dark:text-zinc-300"
+                        )}>{demanda.ato}</span>
+                        <span className={cn(
+                          "font-mono text-sm flex-shrink-0 ml-3",
+                          isUrgente ? "font-bold text-zinc-800 dark:text-zinc-100" : "text-zinc-500"
                         )}>
                           {dias === 0 ? "HOJE" : dias === 1 ? "Amanhã" : format(demanda.prazo, "dd/MM", { locale: ptBR })}
                         </span>
