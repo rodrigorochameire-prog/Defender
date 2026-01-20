@@ -256,10 +256,42 @@ export const casosRouter = router({
           isNull(processos.deletedAt)
         ));
 
-      // Buscar audiências
+      // Buscar audiências com dados do assistido
       const audienciasVinculadas = await db
-        .select()
+        .select({
+          id: audiencias.id,
+          processoId: audiencias.processoId,
+          workspaceId: audiencias.workspaceId,
+          casoId: audiencias.casoId,
+          assistidoId: audiencias.assistidoId,
+          dataAudiencia: audiencias.dataAudiencia,
+          tipo: audiencias.tipo,
+          local: audiencias.local,
+          titulo: audiencias.titulo,
+          descricao: audiencias.descricao,
+          sala: audiencias.sala,
+          horario: audiencias.horario,
+          defensorId: audiencias.defensorId,
+          juiz: audiencias.juiz,
+          promotor: audiencias.promotor,
+          status: audiencias.status,
+          resultado: audiencias.resultado,
+          observacoes: audiencias.observacoes,
+          anotacoes: audiencias.anotacoes,
+          anotacoesVersao: audiencias.anotacoesVersao,
+          resumoDefesa: audiencias.resumoDefesa,
+          googleCalendarEventId: audiencias.googleCalendarEventId,
+          gerarPrazoApos: audiencias.gerarPrazoApos,
+          prazoGeradoId: audiencias.prazoGeradoId,
+          createdAt: audiencias.createdAt,
+          updatedAt: audiencias.updatedAt,
+          // Dados do assistido via JOIN
+          assistidoNome: assistidos.nome,
+          assistidoFoto: assistidos.photoUrl,
+          assistidoPreso: sql<boolean>`${assistidos.statusPrisional} != 'SOLTO'`,
+        })
         .from(audiencias)
+        .leftJoin(assistidos, eq(audiencias.assistidoId, assistidos.id))
         .where(eq(audiencias.casoId, input.id))
         .orderBy(audiencias.dataAudiencia);
 

@@ -162,8 +162,8 @@ export default function AdminWorkspacesPage() {
                     rows={3}
                   />
                 </div>
-                <Button onClick={handleCreateWorkspace} disabled={createWorkspace.isLoading}>
-                  {createWorkspace.isLoading ? "Salvando..." : "Criar workspace"}
+                <Button onClick={handleCreateWorkspace} disabled={createWorkspace.isPending}>
+                  {createWorkspace.isPending ? "Salvando..." : "Criar workspace"}
                 </Button>
               </div>
             </DialogContent>
@@ -204,7 +204,7 @@ export default function AdminWorkspacesPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleWorkspaceToggle(workspace.id, workspace.isActive)}
-                        disabled={updateWorkspace.isLoading}
+                        disabled={updateWorkspace.isPending}
                       >
                         {workspace.isActive ? "Desativar" : "Ativar"}
                       </Button>

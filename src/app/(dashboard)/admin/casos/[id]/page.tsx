@@ -77,7 +77,7 @@ interface Processo {
   vara?: string | null;
   comarca?: string | null;
   fase?: string | null;
-  isJuri: boolean;
+  isJuri: boolean | null;
 }
 
 interface Demanda {
