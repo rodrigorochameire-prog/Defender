@@ -352,4 +352,129 @@
   .indicator-danger { @apply bg-rose-500; }
   .indicator-info { @apply bg-blue-500; }
   .indicator-neutral { @apply bg-zinc-400; }
+  
+  /* ==========================================
+     NUMBERED SECTIONS
+     For hierarchical content organization
+     ========================================== */
+  .numbered-section {
+    @apply relative pl-12;
+  }
+  .numbered-section::before {
+    @apply absolute left-0 top-0 w-8 h-8 rounded-lg bg-primary text-primary-foreground;
+    @apply flex items-center justify-center text-sm font-bold;
+    content: attr(data-number);
+  }
+  
+  /* ==========================================
+     STICKY ELEMENTS
+     ========================================== */
+  .sticky-top {
+    @apply sticky top-0 z-10 bg-background/95 backdrop-blur-sm;
+  }
+  .sticky-header {
+    @apply sticky top-0 z-20 bg-muted/95 backdrop-blur-sm border-b border-border;
+  }
+  
+  /* ==========================================
+     CONTENT HIERARCHY
+     ========================================== */
+  .content-primary {
+    @apply text-foreground font-medium;
+  }
+  .content-secondary {
+    @apply text-muted-foreground text-sm;
+  }
+  .content-tertiary {
+    @apply text-muted-foreground/70 text-xs;
+  }
+  
+  /* Label/Value pairs */
+  .label-value {
+    @apply flex items-center justify-between;
+  }
+  .label-value-label {
+    @apply text-sm text-muted-foreground;
+  }
+  .label-value-value {
+    @apply text-sm font-medium text-foreground;
+  }
+  
+  /* ==========================================
+     VISUAL HIERARCHY HELPERS
+     ========================================== */
+  .hierarchy-primary {
+    @apply text-lg font-semibold text-foreground;
+  }
+  .hierarchy-secondary {
+    @apply text-base font-medium text-foreground;
+  }
+  .hierarchy-tertiary {
+    @apply text-sm text-muted-foreground;
+  }
+  
+  /* Emphasis boxes */
+  .emphasis-box {
+    @apply p-4 rounded-lg border-l-4 bg-muted/30;
+  }
+  .emphasis-box-primary {
+    @apply border-l-primary bg-primary/5;
+  }
+  .emphasis-box-warning {
+    @apply border-l-amber-500 bg-amber-50/50 dark:bg-amber-950/20;
+  }
+  .emphasis-box-danger {
+    @apply border-l-rose-500 bg-rose-50/50 dark:bg-rose-950/20;
+  }
+  .emphasis-box-info {
+    @apply border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20;
+  }
+  
+  /* ==========================================
+     GRID LAYOUTS
+     ========================================== */
+  .grid-stats {
+    @apply grid grid-cols-2 md:grid-cols-4 gap-4;
+  }
+  .grid-cards {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+  .grid-form {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4;
+  }
+  
+  /* ==========================================
+     INTERACTIVE STATES
+     ========================================== */
+  .interactive {
+    @apply cursor-pointer transition-all duration-200;
+    @apply hover:bg-muted/50 active:bg-muted;
+  }
+  .interactive-card {
+    @apply cursor-pointer transition-all duration-200;
+    @apply hover:shadow-md hover:border-primary/30;
+  }
+  
+  /* ==========================================
+     SCROLL AREAS
+     ========================================== */
+  .scroll-fade-top {
+    mask-image: linear-gradient(to bottom, transparent, black 20px);
+  }
+  .scroll-fade-bottom {
+    mask-image: linear-gradient(to top, transparent, black 20px);
+  }
+  
+  /* ==========================================
+     LOADING STATES
+     ========================================== */
+  .skeleton {
+    @apply animate-pulse bg-muted rounded;
+  }
+  .skeleton-text {
+    @apply h-4 w-full bg-muted rounded animate-pulse;
+  }
+  .skeleton-avatar {
+    @apply w-10 h-10 bg-muted rounded-full animate-pulse;
+  }
 }
