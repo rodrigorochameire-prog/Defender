@@ -9,7 +9,11 @@ import {
   audiencias,
   casosConexos,
   casoTags,
-  audienciasHistorico 
+  audienciasHistorico,
+  casePersonas,
+  caseFacts,
+  factEvidence,
+  juriScriptItems
 } from "@/lib/db/schema";
 import { eq, and, isNull, sql, desc, ilike, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -61,6 +65,64 @@ const createCasoConexoSchema = z.object({
 const saveAudienciaNotasSchema = z.object({
   audienciaId: z.number(),
   anotacoes: z.string(),
+});
+
+const createPersonaSchema = z.object({
+  casoId: z.number(),
+  assistidoId: z.number().optional(),
+  juradoId: z.number().optional(),
+  nome: z.string().min(1),
+  tipo: z.string().min(1),
+  status: z.string().optional(),
+  perfil: z.record(z.unknown()).optional(),
+  contatos: z.record(z.unknown()).optional(),
+  observacoes: z.string().optional(),
+});
+
+const updatePersonaSchema = createPersonaSchema.partial().extend({
+  id: z.number(),
+});
+
+const createFactSchema = z.object({
+  casoId: z.number(),
+  titulo: z.string().min(1),
+  descricao: z.string().optional(),
+  tipo: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  status: z.string().optional(),
+});
+
+const updateFactSchema = createFactSchema.partial().extend({
+  id: z.number(),
+});
+
+const createEvidenceSchema = z.object({
+  factId: z.number(),
+  documentoId: z.number().optional(),
+  sourceType: z.string().optional(),
+  sourceId: z.string().optional(),
+  trecho: z.string().optional(),
+  contradicao: z.boolean().optional(),
+  confianca: z.number().min(0).max(100).optional(),
+});
+
+const updateEvidenceSchema = createEvidenceSchema.partial().extend({
+  id: z.number(),
+});
+
+const createScriptItemSchema = z.object({
+  casoId: z.number(),
+  sessaoJuriId: z.number().optional(),
+  personaId: z.number().optional(),
+  factId: z.number().optional(),
+  pergunta: z.string().optional(),
+  fase: z.string().optional(),
+  ordem: z.number().optional(),
+  notas: z.string().optional(),
+});
+
+const updateScriptItemSchema = createScriptItemSchema.partial().extend({
+  id: z.number(),
 });
 
 // ==========================================
@@ -187,6 +249,35 @@ export const casosRouter = router({
         .where(eq(audiencias.casoId, input.id))
         .orderBy(audiencias.dataAudiencia);
 
+      const personas = await db
+        .select({
+          id: casePersonas.id,
+          nome: casePersonas.nome,
+          tipo: casePersonas.tipo,
+          status: casePersonas.status,
+          assistidoId: casePersonas.assistidoId,
+          juradoId: casePersonas.juradoId,
+          perfil: casePersonas.perfil,
+          contatos: casePersonas.contatos,
+          observacoes: casePersonas.observacoes,
+        })
+        .from(casePersonas)
+        .where(eq(casePersonas.casoId, input.id))
+        .orderBy(desc(casePersonas.createdAt));
+
+      const facts = await db
+        .select({
+          id: caseFacts.id,
+          titulo: caseFacts.titulo,
+          descricao: caseFacts.descricao,
+          tipo: caseFacts.tipo,
+          tags: caseFacts.tags,
+          status: caseFacts.status,
+        })
+        .from(caseFacts)
+        .where(eq(caseFacts.casoId, input.id))
+        .orderBy(desc(caseFacts.createdAt));
+
       // Buscar casos conexos
       const conexos = await db
         .select({
@@ -209,6 +300,8 @@ export const casosRouter = router({
         processos: processosVinculados,
         audiencias: audienciasVinculadas,
         conexos,
+        personas,
+        facts,
       };
     }),
 
@@ -511,6 +604,288 @@ export const casosRouter = router({
       }
 
       return updated;
+    }),
+
+  // ==========================================
+  // PERSONAS DO CASO
+  // ==========================================
+  listPersonas: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input }) => {
+      const result = await db
+        .select()
+        .from(casePersonas)
+        .where(eq(casePersonas.casoId, input.casoId))
+        .orderBy(desc(casePersonas.createdAt));
+
+      return result;
+    }),
+
+  createPersona: protectedProcedure
+    .input(createPersonaSchema)
+    .mutation(async ({ input }) => {
+      const [novaPersona] = await db
+        .insert(casePersonas)
+        .values({
+          ...input,
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      return novaPersona;
+    }),
+
+  updatePersona: protectedProcedure
+    .input(updatePersonaSchema)
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      const [updated] = await db
+        .update(casePersonas)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(casePersonas.id, id))
+        .returning();
+
+      if (!updated) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Persona não encontrada",
+        });
+      }
+
+      return updated;
+    }),
+
+  deletePersona: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const [deleted] = await db
+        .delete(casePersonas)
+        .where(eq(casePersonas.id, input.id))
+        .returning();
+
+      if (!deleted) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Persona não encontrada",
+        });
+      }
+
+      return { success: true };
+    }),
+
+  // ==========================================
+  // FATOS DO CASO
+  // ==========================================
+  listFacts: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input }) => {
+      const result = await db
+        .select()
+        .from(caseFacts)
+        .where(eq(caseFacts.casoId, input.casoId))
+        .orderBy(desc(caseFacts.createdAt));
+
+      return result;
+    }),
+
+  createFact: protectedProcedure
+    .input(createFactSchema)
+    .mutation(async ({ input }) => {
+      const [novoFato] = await db
+        .insert(caseFacts)
+        .values({
+          ...input,
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      return novoFato;
+    }),
+
+  updateFact: protectedProcedure
+    .input(updateFactSchema)
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      const [updated] = await db
+        .update(caseFacts)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(caseFacts.id, id))
+        .returning();
+
+      if (!updated) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Fato não encontrado",
+        });
+      }
+
+      return updated;
+    }),
+
+  deleteFact: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const [deleted] = await db
+        .delete(caseFacts)
+        .where(eq(caseFacts.id, input.id))
+        .returning();
+
+      if (!deleted) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Fato não encontrado",
+        });
+      }
+
+      return { success: true };
+    }),
+
+  // ==========================================
+  // EVIDÊNCIAS DOS FATOS
+  // ==========================================
+  listEvidenceByFact: protectedProcedure
+    .input(z.object({ factId: z.number() }))
+    .query(async ({ input }) => {
+      const result = await db
+        .select()
+        .from(factEvidence)
+        .where(eq(factEvidence.factId, input.factId))
+        .orderBy(desc(factEvidence.createdAt));
+
+      return result;
+    }),
+
+  createEvidence: protectedProcedure
+    .input(createEvidenceSchema)
+    .mutation(async ({ input }) => {
+      const [novaEvidencia] = await db
+        .insert(factEvidence)
+        .values(input)
+        .returning();
+
+      return novaEvidencia;
+    }),
+
+  updateEvidence: protectedProcedure
+    .input(updateEvidenceSchema)
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      const [updated] = await db
+        .update(factEvidence)
+        .set(data)
+        .where(eq(factEvidence.id, id))
+        .returning();
+
+      if (!updated) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Evidência não encontrada",
+        });
+      }
+
+      return updated;
+    }),
+
+  deleteEvidence: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const [deleted] = await db
+        .delete(factEvidence)
+        .where(eq(factEvidence.id, input.id))
+        .returning();
+
+      if (!deleted) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Evidência não encontrada",
+        });
+      }
+
+      return { success: true };
+    }),
+
+  // ==========================================
+  // ROTEIRO DO JÚRI (BASEADO EM FATOS)
+  // ==========================================
+  listScriptItems: protectedProcedure
+    .input(z.object({
+      casoId: z.number().optional(),
+      sessaoJuriId: z.number().optional(),
+    }))
+    .query(async ({ input }) => {
+      const conditions = [];
+
+      if (input.casoId) {
+        conditions.push(eq(juriScriptItems.casoId, input.casoId));
+      }
+
+      if (input.sessaoJuriId) {
+        conditions.push(eq(juriScriptItems.sessaoJuriId, input.sessaoJuriId));
+      }
+
+      if (conditions.length === 0) {
+        return [];
+      }
+
+      const result = await db
+        .select()
+        .from(juriScriptItems)
+        .where(and(...conditions))
+        .orderBy(juriScriptItems.ordem);
+
+      return result;
+    }),
+
+  createScriptItem: protectedProcedure
+    .input(createScriptItemSchema)
+    .mutation(async ({ input }) => {
+      const [novoItem] = await db
+        .insert(juriScriptItems)
+        .values({
+          ...input,
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      return novoItem;
+    }),
+
+  updateScriptItem: protectedProcedure
+    .input(updateScriptItemSchema)
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      const [updated] = await db
+        .update(juriScriptItems)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(juriScriptItems.id, id))
+        .returning();
+
+      if (!updated) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Item do roteiro não encontrado",
+        });
+      }
+
+      return updated;
+    }),
+
+  deleteScriptItem: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const [deleted] = await db
+        .delete(juriScriptItems)
+        .where(eq(juriScriptItems.id, input.id))
+        .returning();
+
+      if (!deleted) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Item do roteiro não encontrado",
+        });
+      }
+
+      return { success: true };
     }),
 
   // ==========================================
