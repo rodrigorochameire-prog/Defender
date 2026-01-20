@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { KeyRound, Loader2, PawPrint } from "lucide-react";
+import { KeyRound, Loader2, Scale } from "lucide-react";
 import Link from "next/link";
 import { ResetPasswordForm } from "./reset-password-form";
 
@@ -12,7 +12,7 @@ export default function ResetPasswordPage() {
       <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <PawPrint className="w-8 h-8 text-white" />
+            <Scale className="w-8 h-8 text-white" />
           </div>
           <div>
             <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
