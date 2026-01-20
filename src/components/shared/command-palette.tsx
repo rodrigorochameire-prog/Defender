@@ -65,6 +65,7 @@ export function CommandPalette() {
     { label: "Novo Caso", path: "/admin/casos", shortcut: "C" },
     { label: "Novo Assistido", path: "/admin/assistidos/novo", shortcut: "A" },
     { label: "Nova Demanda", path: "/admin/demandas/nova", shortcut: "D" },
+    { label: "Novo Processo", path: "/admin/processos/novo", shortcut: "P" },
     { label: "Nova Sessão do Júri", path: "/admin/juri/nova", shortcut: "J" },
   ];
 

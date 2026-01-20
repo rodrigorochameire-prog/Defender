@@ -1244,7 +1244,12 @@ export default function CasoDetailPage() {
                         {personas.map((persona) => (
                           <div key={persona.id} className="flex items-center justify-between border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2">
                             <div className="flex items-center gap-2">
-                              <EntityLink type="pessoa" name={persona.nome} subtitle={persona.status} />
+                              <EntityLink
+                                type="pessoa"
+                                name={persona.nome}
+                                subtitle={persona.status}
+                                entityId={persona.id}
+                              />
                               <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">
                                 {persona.status}
                               </span>
@@ -1332,6 +1337,7 @@ export default function CasoDetailPage() {
                                     type="documento"
                                     name={ev.documento}
                                     href={ev.documentoId ? "/admin/documentos" : undefined}
+                                    entityId={ev.documentoId}
                                   />
                                 )}
                                 {ev.contradicao && (
@@ -1390,9 +1396,26 @@ export default function CasoDetailPage() {
                         </p>
                         {item.links && (
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {item.links.map((link, idx) => (
-                              <EntityLink key={`${item.id}-${idx}`} type={link.type} name={link.name} href={link.href} />
-                            ))}
+                            {item.links.map((link, idx) => {
+                              const linkedId =
+                                link.type === "pessoa"
+                                  ? personasSource.find((p) => p.nome === link.name)?.id
+                                  : link.type === "documento"
+                                  ? documentsSource.find((doc) => doc.titulo === link.name)?.id
+                                  : link.type === "fato"
+                                  ? factsSource.find((fact) => fact.titulo === link.name)?.id
+                                  : undefined;
+
+                              return (
+                                <EntityLink
+                                  key={`${item.id}-${idx}`}
+                                  type={link.type}
+                                  name={link.name}
+                                  href={link.href}
+                                  entityId={linkedId}
+                                />
+                              );
+                            })}
                           </div>
                         )}
                       </div>

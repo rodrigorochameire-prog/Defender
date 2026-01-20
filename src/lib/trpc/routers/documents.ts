@@ -98,6 +98,27 @@ export const documentsRouter = router({
     }),
 
   /**
+   * Buscar documento por ID
+   */
+  getById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const [documento] = await db
+          .select()
+          .from(documentos)
+          .where(eq(documentos.id, input.id))
+          .limit(1);
+
+        if (!documento) {
+          throw Errors.notFound("Documento não encontrado");
+        }
+
+        return documento;
+      }, "Erro ao buscar documento");
+    }),
+
+  /**
    * Lista documentos por caso
    */
   byCaso: protectedProcedure
