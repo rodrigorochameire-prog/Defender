@@ -51,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
+import { PrisonerIndicator, StatusPrisionalDot } from "@/components/shared/prisoner-indicator";
 
 // ==========================================
 // TIPOS
@@ -233,10 +234,9 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
           "group bg-white dark:bg-zinc-950",
           "border border-zinc-200 dark:border-zinc-800",
           "transition-all duration-300",
-          "hover:shadow-lg hover:border-zinc-300 dark:hover:border-zinc-700",
-          "border-l-[4px]",
-          themeColors.border,
-          hasReupPreso && "ring-1 ring-rose-200 dark:ring-rose-900"
+          "hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700",
+          "border-l-[3px]",
+          themeColors.border
         )}
       >
         {/* ==========================================
@@ -295,14 +295,9 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                   </Tooltip>
                 )}
 
-                {/* Indicador de Réu Preso */}
+                {/* Indicador de Réu Preso - Cadeado sutil */}
                 {hasReupPreso && (
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>Réu Preso</TooltipContent>
-                  </Tooltip>
+                  <PrisonerIndicator preso={true} size="xs" showTooltip={true} />
                 )}
 
                 {/* Teoria Completa */}
@@ -387,39 +382,37 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
               CAMADA B: CONEXÕES (Integrado) - Design Suíço
               ========================================== */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 sm:py-4 gap-3 sm:gap-4 border-t border-zinc-100 dark:border-zinc-800/50">
-            {/* Assistidos (Avatares Sobrepostos) */}
+            {/* Assistidos (Avatares Clean) */}
             <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
               <div className="flex -space-x-1.5 sm:-space-x-2">
                 {data.assistidos.slice(0, 3).map((assistido) => (
                   <Tooltip key={assistido.id}>
                     <TooltipTrigger asChild>
-                      <Avatar
-                        className={cn(
-                          "h-7 w-7 sm:h-9 sm:w-9 border-2 border-white dark:border-zinc-950 transition-transform hover:scale-110 hover:z-10",
-                          assistido.preso && "ring-2 ring-rose-500"
-                        )}
-                      >
-                        <AvatarImage src={assistido.foto || undefined} />
-                        <AvatarFallback
-                          className={cn(
-                            "text-[10px] sm:text-xs font-bold",
-                            assistido.preso 
-                              ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
-                              : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-                          )}
+                      <div className="relative">
+                        <Avatar
+                          className="h-7 w-7 sm:h-9 sm:w-9 border border-zinc-200 dark:border-zinc-700 transition-transform hover:scale-110 hover:z-10"
                         >
-                          {assistido.nome.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                          <AvatarImage src={assistido.foto || undefined} />
+                          <AvatarFallback className="text-[10px] sm:text-xs font-bold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                            {assistido.nome.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {/* Indicador de status prisional sutil */}
+                        {assistido.preso && (
+                          <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-white dark:bg-zinc-950">
+                            <StatusPrisionalDot preso={true} size="xs" />
+                          </span>
+                        )}
+                      </div>
                     </TooltipTrigger>
                     <TooltipContent>
                       <div className="text-center">
-                        <p className="font-medium">{assistido.nome}</p>
-                        {assistido.preso && (
-                          <p className="text-rose-400 text-xs flex items-center gap-1 justify-center">
-                            <Lock className="w-3 h-3" />
-                          </p>
-                        )}
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <p className="font-medium">{assistido.nome}</p>
+                          {assistido.preso && (
+                            <Lock className="w-3 h-3 text-rose-500" />
+                          )}
+                        </div>
                       </div>
                     </TooltipContent>
                   </Tooltip>
