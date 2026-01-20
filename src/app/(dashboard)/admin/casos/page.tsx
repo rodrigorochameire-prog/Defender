@@ -134,18 +134,18 @@ const ATRIBUICAO_COLORS: Record<string, {
     indicator: "bg-rose-600"
   },
   GRUPO_JURI: { 
-    border: "border-l-orange-600 dark:border-l-orange-500",
-    bg: "bg-orange-100 dark:bg-orange-900/30",
-    text: "text-orange-700 dark:text-orange-400",
-    hoverBg: "hover:bg-orange-50 dark:hover:bg-orange-900/20",
-    indicator: "bg-orange-600"
+    border: "border-l-zinc-500 dark:border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-600"
   },
   SUBSTITUICAO_CIVEL: { 
-    border: "border-l-purple-600 dark:border-l-purple-500",
-    bg: "bg-purple-100 dark:bg-purple-900/30",
-    text: "text-purple-700 dark:text-purple-400",
-    hoverBg: "hover:bg-purple-50 dark:hover:bg-purple-900/20",
-    indicator: "bg-purple-600"
+    border: "border-l-zinc-500 dark:border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-600"
   },
 };
 

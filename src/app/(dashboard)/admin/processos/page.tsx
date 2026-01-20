@@ -365,7 +365,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
                 {/* 4. PRAZO URGENTE */}
                 {prazoUrgente && diasPrazo !== null && (
-                  <Badge className="text-[11px] sm:text-[10px] px-1.5 py-0 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-0">
+                  <Badge className="text-[11px] sm:text-[10px] px-1.5 py-0 rounded-md bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200 border-0">
                     <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
                     {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : `${diasPrazo}d`}
                   </Badge>
@@ -496,7 +496,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 <TooltipTrigger>
                   <Badge variant="outline" className={cn(
                     "text-[11px] sm:text-[10px] font-mono px-1.5 py-0 rounded-md",
-                    "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:bg-amber-950/30"
+                    "border-zinc-300 text-zinc-700 bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:bg-zinc-800"
                   )}>
                     <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                     {processo.demandasAbertas}
@@ -516,12 +516,12 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               <div className={cn(
                 "flex items-start sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg mt-2.5 sm:mt-3",
                 prazoUrgente
-                  ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
+                  ? "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
                   : "bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800"
               )}>
                 <Clock className={cn(
                   "w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 sm:mt-0",
-                  prazoUrgente ? "text-amber-600 dark:text-amber-400" : "text-zinc-500"
+                  prazoUrgente ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-500"
                 )} />
                 <div className="flex-1 min-w-0">
                   <p className={cn(
