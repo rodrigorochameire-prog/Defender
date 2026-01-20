@@ -103,6 +103,11 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useAssignment, type Assignment } from "@/contexts/assignment-context";
 
+// Novos componentes estruturais
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { PageHeader } from "@/components/shared/section-header";
+import { FilterChip, FilterChipGroup, ActiveFiltersBar } from "@/components/shared/filter-chips";
+
 // Cores alinhadas com os workspaces
 const ATRIBUICAO_COLORS: Record<string, { 
   border: string; 
@@ -1890,98 +1895,57 @@ export default function DemandasPage() {
   const atribuicaoOption = ATRIBUICAO_OPTIONS.find(opt => opt.value === atribuicaoFilter);
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Header - Design Suíço: limpo, estruturado, tipografia clara */}
-      <div className="space-y-4">
-        {/* Linha superior: Título + Ações */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "p-2 sm:p-2.5 rounded-lg flex-shrink-0",
-              atribuicaoColors.bg
-            )}>
-              <FileText className={cn("w-5 h-5 sm:w-6 sm:h-6", atribuicaoColors.text)} />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-                Demandas
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                Prazos e atos processuais
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <Button variant="outline" size="icon" title="Exportar" className="h-8 w-8 sm:h-9 sm:w-9">
-              <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs className="mb-2" />
+      
+      {/* Page Header */}
+      <PageHeader
+        title="Demandas"
+        description="Prazos e atos processuais pendentes"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" title="Exportar">
+              <Download className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" title="Atualizar" className="h-8 w-8 sm:h-9 sm:w-9">
-              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Button variant="outline" size="icon" title="Atualizar">
+              <RefreshCw className="h-4 w-4" />
             </Button>
-            <Button onClick={handleOpenCreate} className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm">
-              <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Button onClick={handleOpenCreate} className="gap-2">
+              <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Nova Demanda</span>
               <span className="sm:hidden">Nova</span>
             </Button>
           </div>
-        </div>
+        }
+      />
 
-        {/* Seletor de Atribuição - Tabs compactos com cores dos workspaces */}
-        <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-          <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
-            {ATRIBUICAO_OPTIONS.map((option) => {
-              const isActive = atribuicaoFilter === option.value;
-              const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
-              const count = option.value === "all" 
-                ? demandas.length 
-                : demandas.filter(d => {
-                    const areasForAtribuicao = Object.entries(AREA_TO_ASSIGNMENT)
-                      .filter(([_, assignments]) => assignments.includes(option.value))
-                      .map(([area]) => area);
-                    return areasForAtribuicao.includes(d.area);
-                  }).length;
-              
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => setAtribuicaoFilter(option.value)}
-                  className={cn(
-                    "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
-                    isActive 
-                      ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
-                      : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
-                  )}
-                >
-                  <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
-                  <span className="hidden sm:inline">{option.label}</span>
-                  <span className="sm:hidden">{option.shortLabel}</span>
-                  <span className={cn(
-                    "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
-                    isActive 
-                      ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
-                      : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
-                  )}>
-                    {count}
-                  </span>
-                  {isActive && (
-                    <span className={cn(
-                      "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
-                      option.value === "all" && "bg-zinc-600",
-                      option.value === "JURI_CAMACARI" && "bg-emerald-600",
-                      option.value === "VVD_CAMACARI" && "bg-violet-600",
-                      option.value === "EXECUCAO_PENAL" && "bg-blue-600",
-                      option.value === "GRUPO_JURI" && "bg-orange-600",
-                      option.value === "SUBSTITUICAO" && "bg-rose-600",
-                      option.value === "SUBSTITUICAO_CIVEL" && "bg-purple-600",
-                    )} />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      {/* Filtros por Atribuição - Filter Chips */}
+      <FilterChipGroup label="Filtrar por Atribuição">
+        {ATRIBUICAO_OPTIONS.map((option) => {
+          const count = option.value === "all" 
+            ? demandas.length 
+            : demandas.filter(d => {
+                const areasForAtribuicao = Object.entries(AREA_TO_ASSIGNMENT)
+                  .filter(([_, assignments]) => assignments.includes(option.value))
+                  .map(([area]) => area);
+                return areasForAtribuicao.includes(d.area);
+              }).length;
+          
+          return (
+            <FilterChip
+              key={option.value}
+              label={option.label}
+              value={option.value}
+              selected={atribuicaoFilter === option.value}
+              onSelect={setAtribuicaoFilter}
+              count={count}
+              icon={ATRIBUICAO_ICONS[option.value]}
+              size="md"
+            />
+          );
+        })}
+      </FilterChipGroup>
 
       {/* Stats Cards - Métricas prioritárias: Atender, Elaborar, Protocolar, Monitorar */}
       <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">

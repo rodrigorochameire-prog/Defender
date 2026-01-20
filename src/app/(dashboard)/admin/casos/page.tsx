@@ -10,6 +10,7 @@ import {
   SwissTableHead,
   SwissTableHeader,
   SwissTableRow,
+  SwissTableContainer,
 } from "@/components/shared/swiss-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +79,11 @@ import {
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
 import Link from "next/link";
+
+// Novos componentes estruturais
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { PageHeader } from "@/components/shared/section-header";
+import { FilterChip, FilterChipGroup } from "@/components/shared/filter-chips";
 
 // Cores alinhadas com os workspaces
 const ATRIBUICAO_COLORS: Record<string, { 
@@ -1227,85 +1233,44 @@ export default function CasosPage() {
 
   return (
     <TooltipProvider>
-      <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-        {/* Header - Design Suíço: limpo, estruturado, tipografia clara */}
-        <div className="space-y-4">
-          {/* Linha superior: Título + Ações */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "p-2 sm:p-2.5 rounded-lg flex-shrink-0",
-                atribuicaoColors.bg
-              )}>
-                <Briefcase className={cn("w-5 h-5 sm:w-6 sm:h-6", atribuicaoColors.text)} />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  Casos Ativos
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>Teoria do Caso Integrada</TooltipContent>
-                  </Tooltip>
-                </h1>
-                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                  Dossiês expansíveis com dados integrados
-                </p>
-              </div>
-            </div>
-
-            <Button className="h-8 sm:h-9 text-xs sm:text-sm gap-1.5">
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+        {/* Breadcrumbs */}
+        <Breadcrumbs className="mb-2" />
+        
+        {/* Page Header */}
+        <PageHeader
+          title="Casos Ativos"
+          description="Dossiês expansíveis com teoria do caso integrada"
+          actions={
+            <Button className="gap-2">
+              <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Novo Caso</span>
               <span className="sm:hidden">Novo</span>
             </Button>
-          </div>
+          }
+        />
 
-          {/* Seletor de Atribuição - Tabs compactos com cores dos workspaces */}
-          <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-            <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
-              {ATRIBUICAO_OPTIONS.map((option) => {
-                const isActive = filterAtribuicao === option.value;
-                const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
-                const count = option.value === "all" 
-                  ? MOCK_CASOS.length 
-                  : MOCK_CASOS.filter(c => c.atribuicao === option.value).length;
-                
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => setFilterAtribuicao(option.value)}
-                    className={cn(
-                      "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
-                      isActive 
-                        ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
-                        : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
-                    )}
-                  >
-                    <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
-                    <span className="hidden sm:inline">{option.label}</span>
-                    <span className="sm:hidden">{option.shortLabel}</span>
-                    <span className={cn(
-                      "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
-                      isActive 
-                        ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
-                        : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
-                    )}>
-                      {count}
-                    </span>
-                    {isActive && (
-                      <span className={cn(
-                        "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
-                        optionColors.indicator
-                      )} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        {/* Filtros por Atribuição - Filter Chips */}
+        <FilterChipGroup label="Filtrar por Atribuição">
+          {ATRIBUICAO_OPTIONS.map((option) => {
+            const count = option.value === "all" 
+              ? MOCK_CASOS.length 
+              : MOCK_CASOS.filter(c => c.atribuicao === option.value).length;
+            
+            return (
+              <FilterChip
+                key={option.value}
+                label={option.label}
+                value={option.value}
+                selected={filterAtribuicao === option.value}
+                onSelect={setFilterAtribuicao}
+                count={count}
+                icon={ATRIBUICAO_ICONS[option.value]}
+                size="md"
+              />
+            );
+          })}
+        </FilterChipGroup>
 
         {/* Stats Cards - Responsivo */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
