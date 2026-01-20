@@ -10,6 +10,7 @@ import {
   SwissTableHead,
   SwissTableHeader,
   SwissTableRow,
+  SwissTableContainer,
 } from "@/components/shared/swiss-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +81,14 @@ import {
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
 import Link from "next/link";
+
+// Componentes estruturais padronizados
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { PageHeader } from "@/components/shared/section-header";
+import { FilterChip, FilterChipGroup } from "@/components/shared/filter-chips";
+import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
+import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
+import { EmptyState } from "@/components/shared/empty-state";
 
 // Cores alinhadas com os workspaces
 const ATRIBUICAO_COLORS: Record<string, { 
@@ -1124,219 +1133,177 @@ export default function AssistidosPage() {
   const atribuicaoColors = ATRIBUICAO_COLORS[atribuicaoFilter] || ATRIBUICAO_COLORS.all;
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Header - Design Suíço: limpo, estruturado, tipografia clara */}
-      <div className="space-y-4">
-        {/* Linha superior: Título + Ações */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "p-2 sm:p-2.5 rounded-lg flex-shrink-0",
-              atribuicaoColors.bg
-            )}>
-              <Users className={cn("w-5 h-5 sm:w-6 sm:h-6", atribuicaoColors.text)} />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-                Assistidos
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                {stats.total} cadastrados • {stats.presos} presos
-                {pinnedIds.size > 0 && <span className="text-amber-600"> • {pinnedIds.size} fixados</span>}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 sm:gap-2">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs className="mb-2" />
+      
+      {/* Page Header */}
+      <PageHeader
+        title="Assistidos"
+        description={`${stats.total} cadastrados • ${stats.presos} presos${pinnedIds.size > 0 ? ` • ${pinnedIds.size} fixados` : ""}`}
+        actions={
+          <div className="flex items-center gap-2">
             <Link href="/admin/inteligencia">
-              <Button variant="outline" size="sm" className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm text-violet-600 border-violet-200 hover:bg-violet-50 dark:border-violet-800 dark:hover:bg-violet-950/20">
-                <Brain className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Button variant="outline" className="gap-2 text-violet-600 border-violet-200 hover:bg-violet-50">
+                <Brain className="h-4 w-4" />
                 <span className="hidden sm:inline">Inteligência</span>
               </Button>
             </Link>
-            <Button variant="outline" size="icon" title="Exportar" className="h-8 w-8 sm:h-9 sm:w-9">
-              <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Button variant="outline" size="icon">
+              <Download className="h-4 w-4" />
             </Button>
             <Link href="/admin/assistidos/novo">
-              <Button className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm">
-                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Novo Assistido</span>
                 <span className="sm:hidden">Novo</span>
               </Button>
             </Link>
           </div>
-        </div>
+        }
+      />
 
-        {/* Seletor de Atribuição - Tabs compactos com cores dos workspaces */}
-        <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-          <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
-            {ATRIBUICAO_OPTIONS.map((option) => {
-              const isActive = atribuicaoFilter === option.value;
-              const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
-              const count = option.value === "all" 
-                ? mockAssistidos.length 
-                : mockAssistidos.filter(a => a.area === option.value).length;
-              
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => setAtribuicaoFilter(option.value)}
-                  className={cn(
-                    "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
-                    isActive 
-                      ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
-                      : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
-                  )}
-                >
-                  <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
-                  <span className="hidden sm:inline">{option.label}</span>
-                  <span className="sm:hidden">{option.shortLabel}</span>
-                  <span className={cn(
-                    "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
-                    isActive 
-                      ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
-                      : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
-                  )}>
-                    {count}
-                  </span>
-                  {isActive && (
-                    <span className={cn(
-                      "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
-                      optionColors.indicator
-                    )} />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      {/* Filtros por Atribuição */}
+      <FilterChipGroup label="Filtrar por Área">
+        {ATRIBUICAO_OPTIONS.map((option) => {
+          const count = option.value === "all" 
+            ? mockAssistidos.length 
+            : mockAssistidos.filter(a => a.area === option.value).length;
+          
+          return (
+            <FilterChip
+              key={option.value}
+              label={option.label}
+              value={option.value}
+              selected={atribuicaoFilter === option.value}
+              onSelect={setAtribuicaoFilter}
+              count={count}
+              icon={ATRIBUICAO_ICONS[option.value]}
+              size="md"
+            />
+          );
+        })}
+      </FilterChipGroup>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <SwissCard className="border-l-2 border-l-slate-400">
-          <SwissCardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-semibold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total</p>
-              </div>
-              <Users className="h-8 w-8 text-slate-400" />
-            </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-2 border-l-rose-500">
-          <SwissCardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-semibold text-rose-600">{stats.presos}</p>
-                <p className="text-xs text-muted-foreground">Presos</p>
-              </div>
-              <AlertOctagon className="h-8 w-8 text-rose-400" />
-            </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-2 border-l-amber-500">
-          <SwissCardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-semibold text-amber-600">{stats.monitorados}</p>
-                <p className="text-xs text-muted-foreground">Monitorados</p>
-              </div>
-              <Timer className="h-8 w-8 text-amber-400" />
-            </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-2 border-l-emerald-500">
-          <SwissCardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-semibold text-emerald-600">{stats.soltos}</p>
-                <p className="text-xs text-muted-foreground">Soltos</p>
-              </div>
-              <CheckCircle2 className="h-8 w-8 text-emerald-400" />
-            </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard 
-          className={`cursor-pointer transition-all border-l-2 ${showPinnedOnly ? "border-amber-500" : "border-slate-300 hover:border-amber-400"}`}
+      {/* Stats Cards - Padronizado */}
+      <StatsGrid columns={5}>
+        <StatsCard
+          label="Total"
+          value={stats.total}
+          icon={Users}
+          variant="default"
+          size="sm"
+        />
+        <StatsCard
+          label="Presos"
+          value={stats.presos}
+          icon={AlertOctagon}
+          variant={stats.presos > 0 ? "danger" : "default"}
+          size="sm"
+        />
+        <StatsCard
+          label="Monitorados"
+          value={stats.monitorados}
+          icon={Timer}
+          variant={stats.monitorados > 0 ? "warning" : "default"}
+          size="sm"
+        />
+        <StatsCard
+          label="Soltos"
+          value={stats.soltos}
+          icon={CheckCircle2}
+          variant="success"
+          size="sm"
+          className="hidden sm:flex"
+        />
+        <div 
           onClick={() => setShowPinnedOnly(!showPinnedOnly)}
+          className="hidden lg:block cursor-pointer"
         >
-          <SwissCardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-semibold text-amber-600">{stats.pinned}</p>
-                <p className="text-xs text-muted-foreground">Fixados</p>
-              </div>
-              <BookmarkCheck className="h-8 w-8 text-amber-400" />
-            </div>
-          </SwissCardContent>
-        </SwissCard>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar nome, vulgo, CPF, crime..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-9"
+          <StatsCard
+            label="Fixados"
+            value={stats.pinned}
+            icon={BookmarkCheck}
+            variant={showPinnedOnly ? "highlight" : "default"}
+            size="sm"
+            className={cn(showPinnedOnly && "ring-2 ring-amber-400")}
           />
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="CADEIA_PUBLICA">Cadeia</SelectItem>
-              <SelectItem value="PENITENCIARIA">Penitenciária</SelectItem>
-              <SelectItem value="MONITORADO">Monitorado</SelectItem>
-              <SelectItem value="DOMICILIAR">Domiciliar</SelectItem>
-              <SelectItem value="SOLTO">Solto</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={areaFilter} onValueChange={setAreaFilter}>
-            <SelectTrigger className="w-[100px] h-9"><SelectValue placeholder="Área" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="JURI">Júri</SelectItem>
-              <SelectItem value="EXECUCAO_PENAL">EP</SelectItem>
-              <SelectItem value="VIOLENCIA_DOMESTICA">Violência Doméstica</SelectItem>
-              <SelectItem value="FAMILIA">Família</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={(v: "nome" | "prioridade" | "prazo") => setSortBy(v)}>
-            <SelectTrigger className="w-[110px] h-9"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="prioridade">Prioridade</SelectItem>
-              <SelectItem value="nome">Nome</SelectItem>
-              <SelectItem value="prazo">Prazo</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="flex items-center border rounded-md">
-            <Button variant={viewMode === "grid" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-r-none" onClick={() => setViewMode("grid")}>
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button variant={viewMode === "list" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-l-none" onClick={() => setViewMode("list")}>
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      </StatsGrid>
+
+      {/* Search & Filters - Padronizado */}
+      <SearchToolbar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Buscar nome, vulgo, CPF, crime..."
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        filters={
+          <>
+            <FilterSelect
+              label="Status"
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+              options={[
+                { value: "all", label: "Todos" },
+                { value: "CADEIA_PUBLICA", label: "Cadeia" },
+                { value: "PENITENCIARIA", label: "Penitenciária" },
+                { value: "MONITORADO", label: "Monitorado" },
+                { value: "DOMICILIAR", label: "Domiciliar" },
+                { value: "SOLTO", label: "Solto" },
+              ]}
+              width="md"
+            />
+            <FilterSelect
+              label="Área"
+              value={areaFilter}
+              onValueChange={setAreaFilter}
+              options={[
+                { value: "all", label: "Todas" },
+                { value: "JURI", label: "Júri" },
+                { value: "EXECUCAO_PENAL", label: "Execução Penal" },
+                { value: "VIOLENCIA_DOMESTICA", label: "Violência Doméstica" },
+                { value: "FAMILIA", label: "Família" },
+              ]}
+              width="md"
+            />
+            <FilterSelect
+              label="Ordenar"
+              value={sortBy}
+              onValueChange={(v) => setSortBy(v as "nome" | "prioridade" | "prazo")}
+              options={[
+                { value: "prioridade", label: "Prioridade" },
+                { value: "nome", label: "Nome" },
+                { value: "prazo", label: "Prazo" },
+              ]}
+              width="sm"
+            />
+          </>
+        }
+        activeFiltersCount={
+          (statusFilter !== "all" ? 1 : 0) + (areaFilter !== "all" ? 1 : 0)
+        }
+        onClearFilters={() => {
+          setStatusFilter("all");
+          setAreaFilter("all");
+        }}
+      />
 
       {/* Content */}
       {filteredAssistidos.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="font-medium mb-1">Nenhum assistido encontrado</p>
-            <p className="text-sm text-muted-foreground">Ajuste os filtros ou cadastre um novo</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Users}
+          title="Nenhum assistido encontrado"
+          description="Ajuste os filtros ou cadastre um novo assistido."
+          action={{
+            label: "Novo Assistido",
+            onClick: () => {},
+            icon: Plus,
+          }}
+          variant={searchTerm ? "search" : "default"}
+        />
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 px-1 sm:px-0 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
           {filteredAssistidos.map((a) => (
             <AssistidoCard 
               key={a.id}
@@ -1348,35 +1315,33 @@ export default function AssistidosPage() {
           ))}
         </div>
       ) : (
-        <SwissCard>
-          <SwissCardContent className="p-0">
-            <SwissTable>
-              <SwissTableHeader>
-                <SwissTableRow>
-                  <SwissTableHead>Assistido</SwissTableHead>
-                  <SwissTableHead>Fase</SwissTableHead>
-                  <SwissTableHead>Crime</SwissTableHead>
-                  <SwissTableHead>Status</SwissTableHead>
-                  <SwissTableHead className="text-center">Test.</SwissTableHead>
-                  <SwissTableHead className="text-center">Interr.</SwissTableHead>
-                  <SwissTableHead>Prazo</SwissTableHead>
-                  <SwissTableHead className="text-right">Ações</SwissTableHead>
-                </SwissTableRow>
-              </SwissTableHeader>
-              <SwissTableBody>
-                {filteredAssistidos.map((a) => (
-                  <AssistidoRow 
-                    key={a.id} 
-                    assistido={a}
-                    onPhotoClick={() => handlePhotoClick(a)}
-                    isPinned={pinnedIds.has(a.id)}
-                    onTogglePin={() => togglePin(a.id)}
-                  />
-                ))}
-              </SwissTableBody>
-            </SwissTable>
-          </SwissCardContent>
-        </SwissCard>
+        <SwissTableContainer className="max-h-[calc(100vh-320px)]">
+          <SwissTable>
+            <SwissTableHeader>
+              <SwissTableRow className="bg-muted/50">
+                <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Assistido</SwissTableHead>
+                <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Fase</SwissTableHead>
+                <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Crime</SwissTableHead>
+                <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Status</SwissTableHead>
+                <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Test.</SwissTableHead>
+                <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Interr.</SwissTableHead>
+                <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Prazo</SwissTableHead>
+                <SwissTableHead className="text-right font-semibold text-xs uppercase tracking-wider">Ações</SwissTableHead>
+              </SwissTableRow>
+            </SwissTableHeader>
+            <SwissTableBody>
+              {filteredAssistidos.map((a) => (
+                <AssistidoRow 
+                  key={a.id} 
+                  assistido={a}
+                  onPhotoClick={() => handlePhotoClick(a)}
+                  isPinned={pinnedIds.has(a.id)}
+                  onTogglePin={() => togglePin(a.id)}
+                />
+              ))}
+            </SwissTableBody>
+          </SwissTable>
+        </SwissTableContainer>
       )}
 
       {/* Photo Dialog */}
