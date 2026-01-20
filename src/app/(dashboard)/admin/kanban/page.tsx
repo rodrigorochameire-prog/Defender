@@ -141,7 +141,7 @@ function getAreaBadge(area: string) {
   const configs: Record<string, { label: string; className: string }> = {
     JURI: { label: "Júri", className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
     EXECUCAO_PENAL: { label: "EP", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-    VIOLENCIA_DOMESTICA: { label: "VVD", className: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400" },
+    VIOLENCIA_DOMESTICA: { label: "V. Doméstica", className: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400" },
     SUBSTITUICAO: { label: "Sub", className: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" },
     CURADORIA: { label: "Cur", className: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400" },
     FAMILIA: { label: "Fam", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" },

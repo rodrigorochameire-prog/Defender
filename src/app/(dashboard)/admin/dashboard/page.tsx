@@ -114,7 +114,7 @@ const mockAudienciasProximas = [
   { id: 2, hora: "14:00", data: "Hoje", assistido: "Maria Fernanda Souza", tipo: "Custódia", vara: "CEAC", status: "confirmada" },
   { id: 3, hora: "16:00", data: "Hoje", assistido: "Pedro Henrique Alves", tipo: "Justificação", vara: "VEC", status: "pendente" },
   { id: 4, hora: "10:00", data: "Amanhã", assistido: "Luiza Pereira", tipo: "Instrução", vara: "2ª Vara Criminal", status: "confirmada" },
-  { id: 5, hora: "14:30", data: "22/01", assistido: "Marcos Santos", tipo: "Conciliação", vara: "VVD", status: "pendente" },
+  { id: 5, hora: "14:30", data: "22/01", assistido: "Marcos Santos", tipo: "Conciliação", vara: "V. Doméstica", status: "pendente" },
 ];
 
 const mockAtendimentos = [
@@ -152,7 +152,7 @@ const mockEvolucaoSemanal = [
 
 const mockPrazosPorArea = [
   { area: "Júri", quantidade: 12 },
-  { area: "VVD", quantidade: 18 },
+  { area: "V. Doméstica", quantidade: 18 },
   { area: "Exec. Penal", quantidade: 8 },
   { area: "Substituição", quantidade: 25 },
 ];
@@ -201,8 +201,8 @@ const DASHBOARD_TITLES: Record<string, { title: string; subtitle: string }> = {
     subtitle: "Gestão de processos e plenários da Vara do Júri de Camaçari",
   },
   VVD_CAMACARI: {
-    title: "Central VVD",
-    subtitle: "Violência Doméstica - Proteção e celeridade",
+    title: "Central Violência Doméstica",
+    subtitle: "Proteção à mulher - Celeridade e acolhimento",
   },
   EXECUCAO_PENAL: {
     title: "Painel de Execução",

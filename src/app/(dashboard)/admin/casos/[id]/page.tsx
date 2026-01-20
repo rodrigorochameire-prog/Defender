@@ -219,7 +219,7 @@ const ATRIBUICAO_COLORS: Record<string, { border: string; bg: string; text: stri
 
 const ATRIBUICAO_LABELS: Record<string, string> = {
   JURI_CAMACARI: "Tribunal do Júri",
-  VVD_CAMACARI: "Violência Doméstica",
+  VVD_CAMACARI: "V. Doméstica",
   EXECUCAO_PENAL: "Execução Penal",
   SUBSTITUICAO: "Substituição",
 };

@@ -185,7 +185,7 @@ const ATRIBUICAO_COLORS: Record<string, { border: string; bg: string; text: stri
 
 const ATRIBUICAO_LABELS: Record<string, string> = {
   JURI_CAMACARI: "Júri",
-  VVD_CAMACARI: "VVD",
+  VVD_CAMACARI: "V.D.",
   EXECUCAO_PENAL: "EP",
   SUBSTITUICAO: "Subst.",
   GRUPO_JURI: "Grupo Júri",
@@ -384,12 +384,12 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
           </div>
 
           {/* ==========================================
-              CAMADA B: CONEXÕES (Integrado)
+              CAMADA B: CONEXÕES (Integrado) - Design Suíço
               ========================================== */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 sm:py-3 gap-2 sm:gap-0 border-t border-zinc-100 dark:border-zinc-800/50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 sm:py-4 gap-3 sm:gap-4 border-t border-zinc-100 dark:border-zinc-800/50">
             {/* Assistidos (Avatares Sobrepostos) */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex -space-x-2">
+            <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+              <div className="flex -space-x-1.5 sm:-space-x-2">
                 {data.assistidos.slice(0, 3).map((assistido) => (
                   <Tooltip key={assistido.id}>
                     <TooltipTrigger asChild>
@@ -439,7 +439,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
             </div>
 
             {/* Badges de Processos (Clicáveis) - Horizontal scroll no mobile */}
-            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto scrollbar-hide flex-shrink min-w-0">
               {data.processos.slice(0, 2).map((processo) => (
                 <Tooltip key={processo.id}>
                   <TooltipTrigger asChild>

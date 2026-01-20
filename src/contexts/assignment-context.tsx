@@ -10,9 +10,9 @@ export type Assignment =
   | "JURI_CAMACARI"      // Vara do Júri Camaçari
   | "VVD_CAMACARI"       // Violência Doméstica
   | "EXECUCAO_PENAL"     // Execução Penal
+  | "GRUPO_JURI"         // Grupo Especial do Júri (após Execução Penal)
   | "SUBSTITUICAO"       // Substituição Criminal
-  | "SUBSTITUICAO_CIVEL" // Substituições Não Penais (Cível, Família, etc.)
-  | "GRUPO_JURI";        // Grupo Especial do Júri
+  | "SUBSTITUICAO_CIVEL"; // Substituições Não Penais (Cível, Família, etc.)
 
 // ==========================================
 // ESTRUTURA DE MENU
@@ -334,7 +334,7 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
   VVD_CAMACARI: {
     id: "VVD_CAMACARI",
     name: "Violência Doméstica - Camaçari",
-    shortName: "VVD Camaçari",
+    shortName: "Violência Doméstica",
     description: "Vara de Violência Doméstica e Familiar",
     icon: "Shield",
     emoji: "💜",

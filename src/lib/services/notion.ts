@@ -56,7 +56,7 @@ const STATUS_COLORS: Record<string, string> = {
   "7_PROTOCOLADO": "green",
   "7_RESOLVIDO": "green",
   "7_SEM_ATUACAO": "green",
-  "7_SIGAD": "green",
+  "7_SOLAR": "green",
 };
 
 // Mapeamento de área para cores

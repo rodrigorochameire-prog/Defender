@@ -224,7 +224,7 @@ const mockProcessos: Processo[] = [
     numeroAutos: "0009012-34.2025.8.05.0039",
     assistido: { id: 4, nome: "Ana Paula Costa Ferreira", preso: false },
     comarca: "Camaçari",
-    vara: "Juizado de VVD",
+    vara: "Juizado de Violência Doméstica",
     area: "VIOLENCIA_DOMESTICA",
     classeProcessual: "Medida Protetiva",
     assunto: "Lesão Corporal Doméstica (Art. 129, §9º)",

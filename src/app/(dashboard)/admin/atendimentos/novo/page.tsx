@@ -131,12 +131,12 @@ export default function NovoAtendimentoPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="area">Área</Label>
-              <Select defaultValue="VVD">
+              <Select defaultValue="VIOLENCIA_DOMESTICA">
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="VVD">Violência Doméstica</SelectItem>
+                  <SelectItem value="VIOLENCIA_DOMESTICA">Violência Doméstica</SelectItem>
                   <SelectItem value="JURI">Tribunal do Júri</SelectItem>
                   <SelectItem value="CRIMINAL">Criminal</SelectItem>
                   <SelectItem value="CIVEL">Cível</SelectItem>

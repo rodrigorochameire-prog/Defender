@@ -152,8 +152,9 @@ const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
 const ATRIBUICAO_OPTIONS = [
   { value: "all", label: "Todos os Casos", shortLabel: "Todos" },
   { value: "JURI_CAMACARI", label: "Júri", shortLabel: "Júri" },
-  { value: "VVD_CAMACARI", label: "VVD", shortLabel: "VVD" },
+  { value: "VVD_CAMACARI", label: "Violência Doméstica", shortLabel: "V.D." },
   { value: "EXECUCAO_PENAL", label: "Exec. Penal", shortLabel: "EP" },
+  { value: "GRUPO_JURI", label: "Grupo Esp. Júri", shortLabel: "GEJ" },
   { value: "SUBSTITUICAO", label: "Subst. Criminal", shortLabel: "Crim" },
   { value: "SUBSTITUICAO_CIVEL", label: "Subst. Cível", shortLabel: "Cível" },
 ];
@@ -257,7 +258,7 @@ interface Caso {
 
 const ATRIBUICAO_LABELS: Record<string, string> = {
   JURI_CAMACARI: "Júri",
-  VVD_CAMACARI: "VVD",
+  VVD_CAMACARI: "V.D.",
   EXECUCAO_PENAL: "EP",
   SUBSTITUICAO: "Subst.",
   GRUPO_JURI: "Grupo Júri",
@@ -434,7 +435,7 @@ const MOCK_CASOS: Caso[] = [
     codigo: "CASO-2025-004",
     atribuicao: "VVD_CAMACARI",
     comarca: "Camaçari",
-    vara: "Vara de VVD",
+    vara: "Vara de Violência Doméstica",
     dataInicio: new Date("2025-06-10"),
     fase: 35,
     faseNome: "INSTRUCAO",
