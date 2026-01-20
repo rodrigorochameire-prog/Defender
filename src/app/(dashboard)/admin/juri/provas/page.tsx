@@ -146,7 +146,7 @@ export default function ProvasJuriPage() {
               {depoimentoAtual.contradicoes.map((contradicao) => (
                 <div key={contradicao.trecho} className="rounded-xl border border-rose-100 dark:border-rose-900/40 p-4">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <Badge variant="destructive">{contradicao.trecho}</Badge>
+                    <Badge variant="danger">{contradicao.trecho}</Badge>
                     <span className="text-xs text-muted-foreground">{contradicao.folha}</span>
                   </div>
                   <p className="text-sm text-slate-700 dark:text-slate-200">
