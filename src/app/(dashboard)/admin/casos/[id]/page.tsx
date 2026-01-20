@@ -62,9 +62,173 @@ import { trpc } from "@/lib/trpc/client";
 
 // ... (Interfaces remain similar)
 
-// MOCK DATA (Updated with requested structure)
-const MOCK_CASO = {
-  // ... existing fields
+interface Assistido {
+  id: number;
+  nome: string;
+  foto?: string | null;
+  preso: boolean;
+  localPrisao?: string | null;
+  crimePrincipal?: string | null;
+  proximoPrazo?: Date | null;
+}
+
+interface Processo {
+  id: number;
+  numeroAutos: string;
+  vara?: string | null;
+  comarca?: string | null;
+  fase?: string | null;
+  isJuri: boolean | null;
+}
+
+interface Demanda {
+  id: number;
+  ato: string;
+  prazo: Date;
+  urgente: boolean;
+}
+
+interface Audiencia {
+  id: number;
+  dataAudiencia: Date;
+  horario?: string | null;
+  tipo: string;
+  status: "A_DESIGNAR" | "DESIGNADA" | "REALIZADA" | "AGUARDANDO_ATA" | "CONCLUIDA" | "ADIADA" | "CANCELADA";
+  sala?: string | null;
+  local?: string | null;
+  juiz?: string | null;
+  promotor?: string | null;
+  anotacoes?: string | null;
+  resumoDefesa?: string | null;
+  googleCalendarEventId?: string | null;
+  casoId?: number | null;
+  casoTitulo?: string | null;
+  assistidoId?: number | null;
+  assistidoNome?: string | null;
+  assistidoFoto?: string | null;
+  assistidoPreso?: boolean;
+  processoId?: number | null;
+  numeroAutos?: string | null;
+  defensorNome?: string | null;
+}
+
+interface Caso {
+  id: number;
+  titulo: string;
+  codigo?: string | null;
+  atribuicao: string;
+  comarca: string;
+  vara?: string | null;
+  status: string;
+  fase?: string | null;
+  faseProgresso: number;
+  prioridade: string;
+  tags?: string | null;
+  teoriaFatos?: string | null;
+  teoriaProvas?: string | null;
+  teoriaDireito?: string | null;
+  linkDrive?: string | null;
+  defensorNome?: string | null;
+  observacoes?: string | null;
+  assistidos: Assistido[];
+  processos: Processo[];
+  audiencias: Audiencia[];
+  demandasPendentes: Demanda[];
+  createdAt: Date;
+}
+
+interface CasoConexo {
+  id: number;
+  titulo: string;
+  codigo?: string | null;
+  tagComum: string;
+  assistidoNome: string;
+  preso: boolean;
+}
+
+interface PersonaCaso {
+  id: number;
+  nome: string;
+  tipo: "reu" | "testemunha" | "vitima" | "perito" | "jurado" | "familiar";
+  status: "pendente" | "localizada" | "intimada" | "ouvida";
+  assistidoId?: number;
+  juradoId?: number;
+}
+
+interface CasoFato {
+  id: number;
+  titulo: string;
+  tipo: "controverso" | "incontroverso" | "tese";
+  status: "ativo" | "validado" | "em_revisao";
+  tags: string[];
+}
+
+interface FactEvidenceItem {
+  id: number;
+  factId: number;
+  fonte: string;
+  documento?: string;
+  documentoId?: number;
+  trecho: string;
+  contradicao?: boolean;
+}
+
+interface TimelineItem {
+  id: string;
+  data: Date;
+  tipo: "movimentacao" | "nota" | "documento" | "audiencia" | "fato" | "demanda";
+  titulo: string;
+  descricao: string;
+  links?: { type: "pessoa" | "documento" | "fato"; name: string; href?: string }[];
+}
+
+// ==========================================
+// CONSTANTES
+// ==========================================
+
+const FASES_CASO = {
+  INQUERITO: { label: "Inquérito", color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300", icon: "🔍", progress: 10 },
+  INSTRUCAO: { label: "Instrução", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", icon: "⚖️", progress: 35 },
+  PLENARIO: { label: "Plenário", color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", icon: "🎭", progress: 60 },
+  RECURSO: { label: "Recurso", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", icon: "📤", progress: 80 },
+  EXECUCAO: { label: "Execução", color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400", icon: "⏱️", progress: 90 },
+  ARQUIVADO: { label: "Arquivado", color: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400", icon: "📁", progress: 100 },
+};
+
+const ATRIBUICAO_COLORS: Record<string, { border: string; bg: string; text: string }> = {
+  JURI_CAMACARI: { 
+    border: "border-l-emerald-600 dark:border-l-emerald-500", 
+    bg: "bg-emerald-100 dark:bg-emerald-900/30",
+    text: "text-emerald-700 dark:text-emerald-400"
+  },
+  VVD_CAMACARI: { 
+    border: "border-l-violet-600 dark:border-l-violet-500",
+    bg: "bg-violet-100 dark:bg-violet-900/30",
+    text: "text-violet-700 dark:text-violet-400"
+  },
+  EXECUCAO_PENAL: { 
+    border: "border-l-blue-600 dark:border-l-blue-500",
+    bg: "bg-blue-100 dark:bg-blue-900/30",
+    text: "text-blue-700 dark:text-blue-400"
+  },
+  SUBSTITUICAO: { 
+    border: "border-l-rose-600 dark:border-l-rose-500",
+    bg: "bg-rose-100 dark:bg-rose-900/30",
+    text: "text-rose-700 dark:text-rose-400"
+  },
+};
+
+const ATRIBUICAO_LABELS: Record<string, string> = {
+  JURI_CAMACARI: "Tribunal do Júri",
+  VVD_CAMACARI: "V. Doméstica",
+  EXECUCAO_PENAL: "Execução Penal",
+  SUBSTITUICAO: "Substituição",
+};
+
+const FASE_LABELS = ["Inquérito", "Instrução", "Plenário", "Recurso", "Execução"];
+
+// Dados de exemplo
+const MOCK_CASO: Caso = {
   id: 1,
   titulo: "Homicídio Qualificado - Operação Reuso",
   codigo: "CASO-2025-001",

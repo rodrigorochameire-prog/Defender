@@ -474,11 +474,11 @@ const faseConfig: Record<string, { label: string; color: string; bgColor: string
 
 // Áreas NEUTRAS para reduzir poluição visual
 const areaConfig: Record<string, { label: string; labelFull: string; color: string; bgColor: string }> = {
-  JURI: { label: "Júri", labelFull: "Tribunal do Júri", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
-  EXECUCAO_PENAL: { label: "EP", labelFull: "Execução Penal", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
-  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violência Doméstica", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
-  SUBSTITUICAO: { label: "Sub", labelFull: "Substituição", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
-  FAMILIA: { label: "Fam", labelFull: "Família", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
+  JURI: { label: "Júri", labelFull: "Tribunal do Júri", color: "text-violet-600", bgColor: "bg-violet-50" },
+  EXECUCAO_PENAL: { label: "EP", labelFull: "Execução Penal", color: "text-blue-600", bgColor: "bg-blue-50" },
+  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violência Doméstica", color: "text-pink-600", bgColor: "bg-pink-50" },
+  SUBSTITUICAO: { label: "Sub", labelFull: "Substituição", color: "text-orange-600", bgColor: "bg-orange-50" },
+  FAMILIA: { label: "Fam", labelFull: "Família", color: "text-rose-600", bgColor: "bg-rose-50" },
 };
 
 function getPrazoInfo(prazoStr: string | null) {
@@ -1245,65 +1245,46 @@ export default function AssistidosPage() {
             className={cn(showPinnedOnly && "ring-2 ring-amber-400")}
           />
         </div>
-      </StatsGrid>
-
-      {/* Search & Filters - Padronizado */}
-      <SearchToolbar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Buscar nome, vulgo, CPF, crime..."
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        filters={
-          <>
-            <FilterSelect
-              label="Status"
-              value={statusFilter}
-              onValueChange={setStatusFilter}
-              options={[
-                { value: "all", label: "Todos" },
-                { value: "CADEIA_PUBLICA", label: "Cadeia" },
-                { value: "PENITENCIARIA", label: "Penitenciária" },
-                { value: "MONITORADO", label: "Monitorado" },
-                { value: "DOMICILIAR", label: "Domiciliar" },
-                { value: "SOLTO", label: "Solto" },
-              ]}
-              width="md"
-            />
-            <FilterSelect
-              label="Área"
-              value={areaFilter}
-              onValueChange={setAreaFilter}
-              options={[
-                { value: "all", label: "Todas" },
-                { value: "JURI", label: "Júri" },
-                { value: "EXECUCAO_PENAL", label: "Execução Penal" },
-                { value: "VIOLENCIA_DOMESTICA", label: "Violência Doméstica" },
-                { value: "FAMILIA", label: "Família" },
-              ]}
-              width="md"
-            />
-            <FilterSelect
-              label="Ordenar"
-              value={sortBy}
-              onValueChange={(v) => setSortBy(v as "nome" | "prioridade" | "prazo")}
-              options={[
-                { value: "prioridade", label: "Prioridade" },
-                { value: "nome", label: "Nome" },
-                { value: "prazo", label: "Prazo" },
-              ]}
-              width="sm"
-            />
-          </>
-        }
-        activeFiltersCount={
-          (statusFilter !== "all" ? 1 : 0) + (areaFilter !== "all" ? 1 : 0)
-        }
-        onClearFilters={() => {
-          setStatusFilter("all");
-          setAreaFilter("all");
-        }}
-      />
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="CADEIA_PUBLICA">Cadeia</SelectItem>
+              <SelectItem value="PENITENCIARIA">Penitenciária</SelectItem>
+              <SelectItem value="MONITORADO">Monitorado</SelectItem>
+              <SelectItem value="DOMICILIAR">Domiciliar</SelectItem>
+              <SelectItem value="SOLTO">Solto</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={areaFilter} onValueChange={setAreaFilter}>
+            <SelectTrigger className="w-[100px] h-9"><SelectValue placeholder="Área" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="JURI">Júri</SelectItem>
+              <SelectItem value="EXECUCAO_PENAL">EP</SelectItem>
+              <SelectItem value="VIOLENCIA_DOMESTICA">Violência Doméstica</SelectItem>
+              <SelectItem value="FAMILIA">Família</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={(v: "nome" | "prioridade" | "prazo") => setSortBy(v)}>
+            <SelectTrigger className="w-[110px] h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="prioridade">Prioridade</SelectItem>
+              <SelectItem value="nome">Nome</SelectItem>
+              <SelectItem value="prazo">Prazo</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center border rounded-md">
+            <Button variant={viewMode === "grid" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-r-none" onClick={() => setViewMode("grid")}>
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button variant={viewMode === "list" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-l-none" onClick={() => setViewMode("list")}>
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Content */}
       {filteredAssistidos.length === 0 ? (

@@ -1922,95 +1922,170 @@ export default function DemandasPage() {
         }
       />
 
-      {/* Filtros por Atribuição - Filter Chips */}
-      <FilterChipGroup label="Filtrar por Atribuição">
-        {ATRIBUICAO_OPTIONS.map((option) => {
-          const count = option.value === "all" 
-            ? demandas.length 
-            : demandas.filter(d => {
-                const areasForAtribuicao = Object.entries(AREA_TO_ASSIGNMENT)
-                  .filter(([_, assignments]) => assignments.includes(option.value))
-                  .map(([area]) => area);
-                return areasForAtribuicao.includes(d.area);
-              }).length;
-          
-          return (
-            <FilterChip
-              key={option.value}
-              label={option.label}
-              value={option.value}
-              selected={atribuicaoFilter === option.value}
-              onSelect={setAtribuicaoFilter}
-              count={count}
-              icon={ATRIBUICAO_ICONS[option.value]}
-              size="md"
-            />
-          );
-        })}
-      </FilterChipGroup>
+        {/* Seletor de Atribuição - Tabs compactos com cores dos workspaces */}
+        <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+          <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
+            {ATRIBUICAO_OPTIONS.map((option) => {
+              const isActive = atribuicaoFilter === option.value;
+              const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
+              const count = option.value === "all" 
+                ? demandas.length 
+                : demandas.filter(d => {
+                    const areasForAtribuicao = Object.entries(AREA_TO_ASSIGNMENT)
+                      .filter(([_, assignments]) => assignments.includes(option.value))
+                      .map(([area]) => area);
+                    return areasForAtribuicao.includes(d.area);
+                  }).length;
+              
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => setAtribuicaoFilter(option.value)}
+                  className={cn(
+                    "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
+                    isActive 
+                      ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
+                      : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
+                  )}
+                >
+                  <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
+                  <span className="hidden sm:inline">{option.label}</span>
+                  <span className="sm:hidden">{option.shortLabel}</span>
+                  <span className={cn(
+                    "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
+                    isActive 
+                      ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
+                      : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
+                  )}>
+                    {count}
+                  </span>
+                  {isActive && (
+                    <span className={cn(
+                      "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
+                      option.value === "all" && "bg-zinc-600",
+                      option.value === "JURI_CAMACARI" && "bg-emerald-600",
+                      option.value === "VVD_CAMACARI" && "bg-violet-600",
+                      option.value === "EXECUCAO_PENAL" && "bg-blue-600",
+                      option.value === "GRUPO_JURI" && "bg-orange-600",
+                      option.value === "SUBSTITUICAO" && "bg-rose-600",
+                      option.value === "SUBSTITUICAO_CIVEL" && "bg-purple-600",
+                    )} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
-      {/* Stats Cards - Métricas prioritárias padronizadas */}
-      <StatsGrid columns={8}>
-        <StatsCard
-          label="Atender"
-          value={stats.atender}
-          icon={User}
-          variant={stats.atender > 0 ? "warning" : "default"}
-          size="sm"
-        />
-        <StatsCard
-          label="Elaborar"
-          value={stats.elaborar}
-          icon={Edit}
-          variant={stats.elaborar > 0 ? "warning" : "default"}
-          size="sm"
-        />
-        <StatsCard
-          label="Protocolar"
-          value={stats.protocolar}
-          icon={ArrowUpRight}
-          variant={stats.protocolar > 0 ? "warning" : "default"}
-          size="sm"
-        />
-        <StatsCard
-          label="Monitorar"
-          value={stats.monitorar}
-          icon={Eye}
-          variant={stats.monitorar > 0 ? "info" : "default"}
-          size="sm"
-        />
-        <StatsCard
-          label="Preso"
-          value={stats.reuPreso}
-          icon={Lock}
-          variant={stats.reuPreso > 0 ? "danger" : "default"}
-          size="sm"
-        />
-        <StatsCard
-          label="Fila"
-          value={stats.fila}
-          icon={Clock}
-          variant="default"
-          size="sm"
-          className="hidden sm:flex"
-        />
-        <StatsCard
-          label="Concluído"
-          value={stats.concluido}
-          icon={CheckCircle2}
-          variant="success"
-          size="sm"
-          className="hidden lg:flex"
-        />
-        <StatsCard
-          label="Total"
-          value={stats.total}
-          icon={FileText}
-          variant="default"
-          size="sm"
-          className="hidden lg:flex"
-        />
-      </StatsGrid>
+      {/* Stats Cards - Métricas prioritárias: Atender, Elaborar, Protocolar, Monitorar */}
+      <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div className="flex sm:grid gap-2 sm:gap-2.5 sm:grid-cols-4 lg:grid-cols-8 min-w-max sm:min-w-0">
+          {/* Atender - Prioridade 1 */}
+          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.atender > 0 && "border-amber-200/60 bg-amber-50/30 dark:bg-amber-950/10")}>
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <div>
+                  <p className={cn("text-lg sm:text-xl font-bold", stats.atender > 0 ? "text-amber-600" : "text-foreground")}>{stats.atender}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Atender</p>
+                </div>
+                <User className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.atender > 0 ? "text-amber-500" : "text-muted-foreground")} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Elaborar - Prioridade 2 */}
+          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.elaborar > 0 && "border-amber-200/60 bg-amber-50/30 dark:bg-amber-950/10")}>
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <div>
+                  <p className={cn("text-lg sm:text-xl font-bold", stats.elaborar > 0 ? "text-amber-600" : "text-foreground")}>{stats.elaborar}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Elaborar</p>
+                </div>
+                <Edit className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.elaborar > 0 ? "text-amber-500" : "text-muted-foreground")} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Protocolar - Prioridade 3 */}
+          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.protocolar > 0 && "border-orange-200/60 bg-orange-50/30 dark:bg-orange-950/10")}>
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <div>
+                  <p className={cn("text-lg sm:text-xl font-bold", stats.protocolar > 0 ? "text-orange-600" : "text-foreground")}>{stats.protocolar}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Protocolar</p>
+                </div>
+                <ArrowUpRight className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.protocolar > 0 ? "text-orange-500" : "text-muted-foreground")} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Monitorar - Prioridade 4 */}
+          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.monitorar > 0 && "border-sky-200/60 bg-sky-50/30 dark:bg-sky-950/10")}>
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <div>
+                  <p className={cn("text-lg sm:text-xl font-bold", stats.monitorar > 0 ? "text-sky-600" : "text-foreground")}>{stats.monitorar}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Monitorar</p>
+                </div>
+                <Eye className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.monitorar > 0 ? "text-sky-500" : "text-muted-foreground")} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Réu Preso - Sempre visível */}
+          <Card className={cn("stat-card flex-shrink-0 w-[90px] sm:w-auto", stats.reuPreso > 0 && "border-rose-200/60 bg-rose-50/30 dark:bg-rose-950/10")}>
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <div>
+                  <p className={cn("text-lg sm:text-xl font-bold", stats.reuPreso > 0 ? "text-rose-600" : "text-foreground")}>{stats.reuPreso}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Preso</p>
+                </div>
+                <Lock className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0", stats.reuPreso > 0 ? "text-rose-500" : "text-muted-foreground")} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Fila */}
+          <Card className="stat-card flex-shrink-0 w-[90px] sm:w-auto hidden sm:block">
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <div>
+                  <p className="text-lg sm:text-xl font-semibold text-violet-600">{stats.fila}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Fila</p>
+                </div>
+                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-violet-400 flex-shrink-0" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Concluído */}
+          <Card className="stat-card flex-shrink-0 w-[90px] sm:w-auto hidden lg:block">
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <div>
+                  <p className="text-lg sm:text-xl font-semibold text-emerald-600">{stats.concluido}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Concluído</p>
+                </div>
+                <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 flex-shrink-0" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total */}
+          <Card className="stat-card flex-shrink-0 w-[90px] sm:w-auto hidden lg:block">
+            <CardContent className="pt-2 pb-1.5 px-2 sm:pt-2.5 sm:px-2.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <div>
+                  <p className="text-lg sm:text-xl font-semibold">{stats.total}</p>
+                  <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-wide">Total</p>
+                </div>
+                <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground flex-shrink-0" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Tabs de Visualização */}
       <Tabs value={activeView} onValueChange={(v) => setActiveView(v as any)} className="space-y-3 sm:space-y-4">
