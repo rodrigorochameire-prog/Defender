@@ -2,6 +2,15 @@
 
 import { useState, useMemo, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SwissCard, SwissCardContent } from "@/components/shared/swiss-card";
+import {
+  SwissTable,
+  SwissTableBody,
+  SwissTableCell,
+  SwissTableHead,
+  SwissTableHeader,
+  SwissTableRow,
+} from "@/components/shared/swiss-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,14 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -917,14 +918,14 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
   const totalTestemunhas = assistido.testemunhasArroladas.length;
 
   return (
-    <TableRow className={cn(
+    <SwissTableRow className={cn(
       "group transition-colors",
       // Borda lateral semântica
       isPreso ? "border-l-[3px] border-l-rose-500" : "border-l-[3px] border-l-emerald-500",
       isPinned && "bg-amber-50/30 dark:bg-amber-950/10"
     )}>
       {/* Nome */}
-      <TableCell className="py-3">
+      <SwissTableCell className="py-3">
         <div className="flex items-center gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -935,10 +936,10 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
             </div>
           </div>
         </div>
-      </TableCell>
+      </SwissTableCell>
 
       {/* Status - Badge minimalista */}
-      <TableCell>
+      <SwissTableCell>
         {isPreso ? (
           <Badge variant="outline" className="rounded-md px-1.5 py-0 text-[10px] uppercase font-medium border-rose-200 text-rose-700 bg-rose-50 dark:bg-rose-950/20 dark:border-rose-800 dark:text-rose-400">
             <Lock className="w-3 h-3 mr-1" /> Preso
@@ -948,24 +949,24 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
             <Unlock className="w-3 h-3 mr-1" /> Solto
           </Badge>
         )}
-      </TableCell>
+      </SwissTableCell>
 
       {/* Crime - Fonte serifada */}
-      <TableCell className="max-w-[180px]">
+      <SwissTableCell className="max-w-[180px]">
         <p className="text-xs font-legal text-zinc-600 dark:text-zinc-400 truncate">
           {assistido.crimePrincipal || "-"}
         </p>
-      </TableCell>
+      </SwissTableCell>
 
       {/* Processo - Fonte mono */}
-      <TableCell className="max-w-[200px]">
+      <SwissTableCell className="max-w-[200px]">
         <p className="text-xs font-data text-zinc-500 dark:text-zinc-400 truncate">
           {assistido.numeroProcesso}
         </p>
-      </TableCell>
+      </SwissTableCell>
 
       {/* Testemunhas */}
-      <TableCell className="text-center">
+      <SwissTableCell className="text-center">
         {totalTestemunhas > 0 ? (
           <span className="text-xs text-zinc-500">
             <span className="font-medium text-zinc-700 dark:text-zinc-300">{testemunhasOuvidas}</span>
@@ -974,20 +975,20 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
         ) : (
           <span className="text-zinc-300 dark:text-zinc-700">-</span>
         )}
-      </TableCell>
+      </SwissTableCell>
 
       {/* Interrogatório */}
-      <TableCell className="text-center">
+      <SwissTableCell className="text-center">
         <span className={cn(
           "text-xs font-medium",
           assistido.interrogatorioRealizado ? "text-emerald-600" : "text-amber-500"
         )}>
           {assistido.interrogatorioRealizado ? "✓" : "○"}
         </span>
-      </TableCell>
+      </SwissTableCell>
 
       {/* Prazo */}
-      <TableCell>
+      <SwissTableCell>
         {prazoInfo ? (
           <span className={cn(
             "text-xs font-medium",
@@ -998,10 +999,10 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
         ) : (
           <span className="text-zinc-300 dark:text-zinc-700">-</span>
         )}
-      </TableCell>
+      </SwissTableCell>
 
       {/* Ações */}
-      <TableCell className="text-right">
+      <SwissTableCell className="text-right">
         <div className="flex items-center justify-end gap-0.5">
           <Button 
             variant="ghost" 
@@ -1020,8 +1021,8 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
             </Button>
           </Link>
         </div>
-      </TableCell>
-    </TableRow>
+      </SwissTableCell>
+    </SwissTableRow>
   );
 }
 
@@ -1191,8 +1192,8 @@ export default function AssistidosPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Card className="border-border/50">
-          <CardContent className="p-4">
+        <SwissCard className="border-l-2 border-l-slate-400">
+          <SwissCardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-semibold">{stats.total}</p>
@@ -1200,10 +1201,10 @@ export default function AssistidosPage() {
               </div>
               <Users className="h-8 w-8 text-slate-400" />
             </div>
-          </CardContent>
-        </Card>
-        <Card className="border-rose-200/50 bg-rose-50/30">
-          <CardContent className="p-4">
+          </SwissCardContent>
+        </SwissCard>
+        <SwissCard className="border-l-2 border-l-rose-500">
+          <SwissCardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-semibold text-rose-600">{stats.presos}</p>
@@ -1211,10 +1212,10 @@ export default function AssistidosPage() {
               </div>
               <AlertOctagon className="h-8 w-8 text-rose-400" />
             </div>
-          </CardContent>
-        </Card>
-        <Card className="border-amber-200/50 bg-amber-50/30">
-          <CardContent className="p-4">
+          </SwissCardContent>
+        </SwissCard>
+        <SwissCard className="border-l-2 border-l-amber-500">
+          <SwissCardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-semibold text-amber-600">{stats.monitorados}</p>
@@ -1222,10 +1223,10 @@ export default function AssistidosPage() {
               </div>
               <Timer className="h-8 w-8 text-amber-400" />
             </div>
-          </CardContent>
-        </Card>
-        <Card className="border-emerald-200/50 bg-emerald-50/30">
-          <CardContent className="p-4">
+          </SwissCardContent>
+        </SwissCard>
+        <SwissCard className="border-l-2 border-l-emerald-500">
+          <SwissCardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-semibold text-emerald-600">{stats.soltos}</p>
@@ -1233,13 +1234,13 @@ export default function AssistidosPage() {
               </div>
               <CheckCircle2 className="h-8 w-8 text-emerald-400" />
             </div>
-          </CardContent>
-        </Card>
-        <Card 
-          className={`cursor-pointer transition-all ${showPinnedOnly ? "border-amber-400 bg-amber-50" : "border-border/50 hover:border-amber-300"}`}
+          </SwissCardContent>
+        </SwissCard>
+        <SwissCard 
+          className={`cursor-pointer transition-all border-l-2 ${showPinnedOnly ? "border-amber-500" : "border-slate-300 hover:border-amber-400"}`}
           onClick={() => setShowPinnedOnly(!showPinnedOnly)}
         >
-          <CardContent className="p-4">
+          <SwissCardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-semibold text-amber-600">{stats.pinned}</p>
@@ -1247,8 +1248,8 @@ export default function AssistidosPage() {
               </div>
               <BookmarkCheck className="h-8 w-8 text-amber-400" />
             </div>
-          </CardContent>
-        </Card>
+          </SwissCardContent>
+        </SwissCard>
       </div>
 
       {/* Toolbar */}
@@ -1325,22 +1326,22 @@ export default function AssistidosPage() {
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Assistido</TableHead>
-                  <TableHead>Fase</TableHead>
-                  <TableHead>Crime</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Test.</TableHead>
-                  <TableHead className="text-center">Interr.</TableHead>
-                  <TableHead>Prazo</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+        <SwissCard>
+          <SwissCardContent className="p-0">
+            <SwissTable>
+              <SwissTableHeader>
+                <SwissTableRow>
+                  <SwissTableHead>Assistido</SwissTableHead>
+                  <SwissTableHead>Fase</SwissTableHead>
+                  <SwissTableHead>Crime</SwissTableHead>
+                  <SwissTableHead>Status</SwissTableHead>
+                  <SwissTableHead className="text-center">Test.</SwissTableHead>
+                  <SwissTableHead className="text-center">Interr.</SwissTableHead>
+                  <SwissTableHead>Prazo</SwissTableHead>
+                  <SwissTableHead className="text-right">Ações</SwissTableHead>
+                </SwissTableRow>
+              </SwissTableHeader>
+              <SwissTableBody>
                 {filteredAssistidos.map((a) => (
                   <AssistidoRow 
                     key={a.id} 
@@ -1350,10 +1351,10 @@ export default function AssistidosPage() {
                     onTogglePin={() => togglePin(a.id)}
                   />
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </SwissTableBody>
+            </SwissTable>
+          </SwissCardContent>
+        </SwissCard>
       )}
 
       {/* Photo Dialog */}

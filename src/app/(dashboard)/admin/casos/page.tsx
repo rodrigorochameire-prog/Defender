@@ -2,6 +2,15 @@
 
 import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
+import { SwissCard, SwissCardContent } from "@/components/shared/swiss-card";
+import {
+  SwissTable,
+  SwissTableBody,
+  SwissTableCell,
+  SwissTableHead,
+  SwissTableHeader,
+  SwissTableRow,
+} from "@/components/shared/swiss-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -14,14 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Tooltip,
   TooltipContent,
@@ -1097,19 +1098,19 @@ function CasoTableRow({ caso }: { caso: Caso }) {
   const faseConfig = FASES_CASO[caso.faseNome as keyof typeof FASES_CASO] || FASES_CASO.INSTRUCAO;
 
   return (
-    <TableRow className={cn(
+    <SwissTableRow className={cn(
       "group transition-colors cursor-pointer",
       hasReuPreso && "border-l-[3px] border-l-rose-500"
     )}>
-      <TableCell>
+      <SwissTableCell>
         <Link href={`/admin/casos/${caso.id}`} className="block">
           <div className="font-serif font-medium text-zinc-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             {caso.titulo}
           </div>
           <div className="font-mono text-[10px] text-zinc-400">{caso.codigo}</div>
         </Link>
-      </TableCell>
-      <TableCell>
+      </SwissTableCell>
+      <SwissTableCell>
         <div className="flex items-center gap-2">
           {caso.assistidos.slice(0, 2).map((a) => (
             <Avatar key={a.id} className={cn(
@@ -1125,18 +1126,18 @@ function CasoTableRow({ caso }: { caso: Caso }) {
             <span className="text-[10px] text-zinc-400">+{caso.assistidos.length - 2}</span>
           )}
         </div>
-      </TableCell>
-      <TableCell>
+      </SwissTableCell>
+      <SwissTableCell>
         <Badge className={cn("text-xs", faseConfig.color)}>
           {faseConfig.icon} {faseConfig.label}
         </Badge>
-      </TableCell>
-      <TableCell className="text-center">
+      </SwissTableCell>
+      <SwissTableCell className="text-center">
         <span className="font-medium text-zinc-700 dark:text-zinc-300">
           {caso.processos.length}
         </span>
-      </TableCell>
-      <TableCell className="text-center">
+      </SwissTableCell>
+      <SwissTableCell className="text-center">
         <span className={cn(
           "font-medium",
           caso.demandasPendentes.length > 0 
@@ -1145,8 +1146,8 @@ function CasoTableRow({ caso }: { caso: Caso }) {
         )}>
           {caso.demandasPendentes.length}
         </span>
-      </TableCell>
-      <TableCell className="text-center">
+      </SwissTableCell>
+      <SwissTableCell className="text-center">
         <span className={cn(
           "font-medium",
           caso.teoriaCompleta 
@@ -1155,15 +1156,15 @@ function CasoTableRow({ caso }: { caso: Caso }) {
         )}>
           {caso.teoriaCompleta ? "✓" : "○"}
         </span>
-      </TableCell>
-      <TableCell className="text-right">
+      </SwissTableCell>
+      <SwissTableCell className="text-right">
         <Link href={`/admin/casos/${caso.id}`}>
           <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
             <Eye className="w-4 h-4 mr-1" /> Ver
           </Button>
         </Link>
-      </TableCell>
-    </TableRow>
+      </SwissTableCell>
+    </SwissTableRow>
   );
 }
 
@@ -1298,7 +1299,8 @@ export default function CasosPage() {
 
         {/* Stats Cards - Responsivo */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
-          <Card className="p-3 sm:p-4 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 border-0">
+          <SwissCard className="border-l-2 border-l-slate-400">
+            <SwissCardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                 <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
@@ -1308,9 +1310,11 @@ export default function CasosPage() {
                 <p className="text-[10px] sm:text-xs text-zinc-500">Total</p>
               </div>
             </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
           
-          <Card className="p-3 sm:p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-900/20 border-0">
+          <SwissCard className="border-l-2 border-l-rose-500">
+            <SwissCardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                 <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
@@ -1320,9 +1324,11 @@ export default function CasosPage() {
                 <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Presos</p>
               </div>
             </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
           
-          <Card className="p-3 sm:p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 border-0">
+          <SwissCard className="border-l-2 border-l-amber-500">
+            <SwissCardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
@@ -1332,9 +1338,11 @@ export default function CasosPage() {
                 <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Demandas</p>
               </div>
             </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
           
-          <Card className="p-3 sm:p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-0 hidden sm:block">
+          <SwissCard className="border-l-2 border-l-emerald-500 hidden sm:block">
+            <SwissCardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                 <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
@@ -1344,9 +1352,11 @@ export default function CasosPage() {
                 <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">Teoria OK</p>
               </div>
             </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
 
-          <Card className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-0 hidden lg:block">
+          <SwissCard className="border-l-2 border-l-blue-500 hidden lg:block">
+            <SwissCardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                 <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
@@ -1356,7 +1366,8 @@ export default function CasosPage() {
                 <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Audiências</p>
               </div>
             </div>
-          </Card>
+            </SwissCardContent>
+          </SwissCard>
         </div>
 
         {/* Filters - Responsivo */}
@@ -1464,26 +1475,28 @@ export default function CasosPage() {
             ))}
           </div>
         ) : (
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-950">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Caso</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Assistidos</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider">Fase</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider text-center">Proc.</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider text-center">Dem.</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider text-center">Teoria</TableHead>
-                  <TableHead className="text-[10px] uppercase text-zinc-500 font-medium tracking-wider text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCasos.map((caso) => (
-                  <CasoTableRow key={caso.id} caso={caso} />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <SwissCard className="overflow-hidden">
+            <SwissCardContent className="p-0">
+              <SwissTable>
+                <SwissTableHeader>
+                  <SwissTableRow>
+                    <SwissTableHead>Caso</SwissTableHead>
+                    <SwissTableHead>Assistidos</SwissTableHead>
+                    <SwissTableHead>Fase</SwissTableHead>
+                    <SwissTableHead className="text-center">Proc.</SwissTableHead>
+                    <SwissTableHead className="text-center">Dem.</SwissTableHead>
+                    <SwissTableHead className="text-center">Teoria</SwissTableHead>
+                    <SwissTableHead className="text-right">Ações</SwissTableHead>
+                  </SwissTableRow>
+                </SwissTableHeader>
+                <SwissTableBody>
+                  {filteredCasos.map((caso) => (
+                    <CasoTableRow key={caso.id} caso={caso} />
+                  ))}
+                </SwissTableBody>
+              </SwissTable>
+            </SwissCardContent>
+          </SwissCard>
         )}
 
         {/* Empty State */}
