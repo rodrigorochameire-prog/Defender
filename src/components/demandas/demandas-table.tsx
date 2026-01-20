@@ -109,31 +109,61 @@ const FASES_JURI = {
   },
 };
 
-// Status com cores funcionais (alto contraste)
-const STATUS_COLORS: Record<string, { bg: string; border: string }> = {
+// Status com cores funcionais e ORDEM DE PRIORIDADE
+// Quanto menor o número, maior a prioridade (aparece no topo)
+const STATUS_CONFIG: Record<string, { 
+  priority: number;
+  bg: string; 
+  border: string;
+  rowBg: string; // Fundo da linha inteira
+}> = {
   "urgente": { 
+    priority: 1,
     bg: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300", 
-    border: "bg-rose-500" 
-  },
-  "a_fazer": { 
-    bg: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300", 
-    border: "bg-zinc-400" 
-  },
-  "em_andamento": { 
-    bg: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300", 
-    border: "bg-amber-500" 
+    border: "bg-rose-500",
+    rowBg: "bg-red-50 dark:bg-red-950/20"
   },
   "protocolar": { 
+    priority: 2,
     bg: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300", 
-    border: "bg-orange-500" 
+    border: "bg-orange-500",
+    rowBg: "bg-orange-50 dark:bg-orange-950/20"
   },
-  "protocolado": { 
-    bg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300", 
-    border: "bg-emerald-500" 
+  "a_fazer": { 
+    priority: 3,
+    bg: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300", 
+    border: "bg-amber-500",
+    rowBg: "bg-yellow-50 dark:bg-yellow-950/20"
+  },
+  "em_andamento": { 
+    priority: 3, // Mesmo nível de A Fazer
+    bg: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300", 
+    border: "bg-amber-500",
+    rowBg: "bg-yellow-50 dark:bg-yellow-950/20"
   },
   "monitorar": { 
+    priority: 4,
     bg: "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300", 
-    border: "bg-sky-500" 
+    border: "bg-sky-500",
+    rowBg: "bg-blue-50 dark:bg-blue-950/20"
+  },
+  "fila": { 
+    priority: 5,
+    bg: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300", 
+    border: "bg-purple-500",
+    rowBg: "bg-purple-50 dark:bg-purple-950/20"
+  },
+  "protocolado": { 
+    priority: 6,
+    bg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300", 
+    border: "bg-emerald-500",
+    rowBg: "bg-stone-50 dark:bg-stone-950/20"
+  },
+  "concluido": { 
+    priority: 7,
+    bg: "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400", 
+    border: "bg-stone-400",
+    rowBg: "bg-stone-50 dark:bg-stone-950/20"
   },
 };
 
@@ -617,15 +647,36 @@ export function DemandasTable({
   const [sidePeekOpen, setSidePeekOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Filtrar demandas
+  // Filtrar e ORDENAR demandas por prioridade
   const filteredDemandas = useMemo(() => {
-    if (!searchTerm) return demandas;
-    const term = searchTerm.toLowerCase();
-    return demandas.filter(d => 
-      d.assistido.toLowerCase().includes(term) ||
-      d.processo.includes(term) ||
-      d.ato.toLowerCase().includes(term)
-    );
+    let filtered = demandas;
+    
+    // Filtro de busca
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = demandas.filter(d => 
+        d.assistido.toLowerCase().includes(term) ||
+        d.processo.includes(term) ||
+        d.ato.toLowerCase().includes(term)
+      );
+    }
+    
+    // Ordenação por prioridade (URGENTE primeiro, CONCLUÍDO por último)
+    return [...filtered].sort((a, b) => {
+      const priorityA = getStatusConfig(a.status).priority;
+      const priorityB = getStatusConfig(b.status).priority;
+      
+      // Se mesma prioridade, ordena por prazo (mais próximo primeiro)
+      if (priorityA === priorityB) {
+        if (a.prazo && b.prazo) {
+          return parseISO(a.prazo).getTime() - parseISO(b.prazo).getTime();
+        }
+        if (a.prazo) return -1;
+        if (b.prazo) return 1;
+      }
+      
+      return priorityA - priorityB;
+    });
   }, [demandas, searchTerm]);
   
   const handleRowClick = (demanda: Demanda) => {
@@ -634,15 +685,19 @@ export function DemandasTable({
     onDemandaClick?.(demanda);
   };
 
-  // Função para obter cor do status
-  const getStatusColor = (status: string) => {
-    const statusKey = status.toLowerCase().replace(/[0-9_]/g, "").trim();
-    if (status.includes("URGENTE")) return STATUS_COLORS.urgente;
-    if (status.includes("PROTOCOLAR") && !status.includes("PROTOCOLADO")) return STATUS_COLORS.protocolar;
-    if (status.includes("PROTOCOLADO")) return STATUS_COLORS.protocolado;
-    if (status.includes("MONITORAR")) return STATUS_COLORS.monitorar;
-    if (status.includes("ELABOR") || status.includes("REVIS") || status.includes("BUSCAR")) return STATUS_COLORS.em_andamento;
-    return STATUS_COLORS.a_fazer;
+  // Função para obter configuração do status
+  const getStatusConfig = (status: string) => {
+    const statusKey = status.toLowerCase().replace(/[0-9_\s]/g, "").trim();
+    
+    if (status.toLowerCase().includes("urgente")) return STATUS_CONFIG.urgente;
+    if (status.toLowerCase().includes("protocolar") && !status.toLowerCase().includes("protocolado")) return STATUS_CONFIG.protocolar;
+    if (status.toLowerCase().includes("protocolado")) return STATUS_CONFIG.protocolado;
+    if (status.toLowerCase().includes("monitorar")) return STATUS_CONFIG.monitorar;
+    if (status.toLowerCase().includes("fila")) return STATUS_CONFIG.fila;
+    if (status.toLowerCase().includes("conclu")) return STATUS_CONFIG.concluido;
+    if (status.toLowerCase().includes("elabor") || status.toLowerCase().includes("revis") || status.toLowerCase().includes("buscar")) return STATUS_CONFIG.em_andamento;
+    
+    return STATUS_CONFIG.a_fazer;
   };
 
   return (
@@ -687,16 +742,17 @@ export function DemandasTable({
           </TableHeader>
           <TableBody>
             {filteredDemandas.map((demanda) => {
-              const statusColor = getStatusColor(demanda.status);
+              const statusConfig = getStatusConfig(demanda.status);
               const isPreso = demanda.reuPreso;
               
               return (
                 <TableRow 
                   key={demanda.id}
                   className={cn(
-                    "group cursor-pointer transition-colors",
-                    "hover:bg-zinc-50 dark:hover:bg-zinc-900/40",
-                    "border-b border-zinc-200 dark:border-zinc-700"
+                    "group cursor-pointer transition-all duration-200",
+                    "hover:shadow-sm hover:scale-[1.01]",
+                    "border-b border-zinc-200 dark:border-zinc-700",
+                    statusConfig.rowBg
                   )}
                   onClick={() => handleRowClick(demanda)}
                 >
@@ -706,7 +762,7 @@ export function DemandasTable({
                       variant="secondary" 
                       className={cn(
                         "rounded px-2.5 py-1 font-semibold border-0 text-xs",
-                        statusColor.bg
+                        statusConfig.bg
                       )}
                     >
                       {demanda.status.replace(/[0-9_]/g, "").trim()}

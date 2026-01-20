@@ -171,19 +171,19 @@
   
   /* ==========================================
      SISTEMA DE TAMANHOS DE FONTE ESCALÁVEL
-     Modo Normal: base 17px (legível e confortável)
-     Modo Grande: base 19px (para melhor acessibilidade)
+     Modo Normal: base 16px (padrão web)
+     Modo Grande: base 18px (acessibilidade sem exagero)
      ========================================== */
   html {
-    /* BASE FONT SIZE - 17px for improved readability (was 16px) */
-    font-size: 106.25%;
+    /* BASE FONT SIZE - 16px (padrão) */
+    font-size: 16px;
     text-rendering: optimizeLegibility;
     transition: font-size 0.25s ease-out;
   }
   
   /* MODO FONTE GRANDE - Ativado pelo toggle */
   html.font-large {
-    font-size: 118.75%; /* 19px base */
+    font-size: 18px; /* +12.5% para acessibilidade */
   }
   
   body {

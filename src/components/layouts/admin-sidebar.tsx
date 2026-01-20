@@ -223,8 +223,8 @@ function MenuItem({
           />
           <span
             className={cn(
-              "text-sm transition-colors duration-200 flex-1",
-              isActive ? "font-semibold text-foreground" : "font-medium"
+              "text-sidebar-item transition-colors duration-200 flex-1",
+              isActive ? "font-semibold text-foreground" : ""
             )}
             style={{
               color: isActive ? undefined : config.sidebarTextMuted,
@@ -290,7 +290,7 @@ function MenuSectionComponent({
             )}
           >
             <span
-              className="text-xs font-semibold uppercase tracking-wider"
+              className="text-sidebar-section"
               style={{ color: config.sidebarTextMuted }}
             >
               {section.title}
@@ -330,7 +330,7 @@ function MenuSectionComponent({
       {!isCollapsed && (
         <div className="px-3 py-2 mb-1">
           <span
-            className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80"
+            className="text-sidebar-section"
             style={{ color: config.accentColor }}
           >
             {section.title}
@@ -469,7 +469,7 @@ function AdminSidebarContent({
                   }}
                 >
                   <PanelLeft className="h-[18px] w-[18px]" strokeWidth={1.8} />
-                  <span className="text-sm font-medium">
+                  <span className="text-sidebar-item">
                     {isCollapsed ? "Expandir" : "Recolher"}
                   </span>
                 </SidebarMenuButton>
@@ -481,7 +481,7 @@ function AdminSidebarContent({
               {!isCollapsed && (
                 <div className="px-3 py-2 mb-1 mt-2">
                   <span
-                    className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5"
+                    className="text-sidebar-section flex items-center gap-1.5"
                     style={{ color: config.sidebarTextMuted }}
                   >
                     <LayoutDashboard className="w-3 h-3" />
@@ -522,7 +522,7 @@ function AdminSidebarContent({
                         />
                         <span
                           className={cn(
-                            "text-sm transition-colors duration-200",
+                            "text-sidebar-item transition-colors duration-200",
                             isActive ? "font-bold text-foreground" : "font-semibold"
                           )}
                           style={{
@@ -560,7 +560,7 @@ function AdminSidebarContent({
               {!isCollapsed && (
                 <div className="px-3 py-2 mb-1">
                   <span
-                    className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5"
+                    className="text-sidebar-section flex items-center gap-1.5"
                     style={{ color: config.accentColor }}
                   >
                     <span>{config.emoji}</span>
@@ -650,11 +650,11 @@ function AdminSidebarContent({
                   </Avatar>
                   {!isCollapsed && (
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate text-foreground">
+                      <p className="text-sidebar-item font-semibold truncate text-foreground">
                         {userName}
                       </p>
                       {userEmail && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        <p className="text-ui-micro text-muted-foreground truncate mt-0.5">
                           {userEmail}
                         </p>
                       )}
@@ -783,7 +783,12 @@ function AdminSidebarContent({
         </header>
 
         {/* Content - Fundo stone-50 para contraste com cards brancos */}
-        <main className="flex-1 overflow-auto bg-stone-50/50 dark:bg-zinc-950">{children}</main>
+        <main className="flex-1 overflow-auto bg-stone-50 dark:bg-zinc-950">
+          {/* Container centraliza e limita largura em telas gigantes */}
+          <div className="container mx-auto p-6 md:p-8 max-w-[1600px] space-y-8">
+            {children}
+          </div>
+        </main>
       </SidebarInset>
     </>
   );
