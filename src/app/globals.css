@@ -3,120 +3,134 @@
 @tailwind utilities;
 
 /* ========================================
-   DEFESAHUB - DESIGN SYSTEM v5.0 (SWISS REFINED)
-   Swiss Design • Clean Typography • Functional
-   Visual limpo, preciso, tipografia forte.
+   DEFESAHUB - DESIGN SYSTEM v6.0
+   Estruturado • Hierárquico • Elegante
+   Cores suaves, tipografia legível, relevo sutil.
    ======================================== */
 
 @layer base {
   :root {
-    /* BASE - SWISS NEUTRALS */
-    --background: 0 0% 100%; /* Pure White */
-    --foreground: 240 10% 3.9%; /* Deep Grey, almost black */
+    /* BASE - WARM NEUTRALS */
+    --background: 40 20% 99%; /* Warm off-white */
+    --foreground: 220 15% 20%; /* Warm dark grey */
 
-    /* CARDS & SURFACES */
+    /* CARDS & SURFACES - ELEVATION SYSTEM */
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 220 15% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 220 15% 20%;
 
-    /* PRIMARY - SOPHISTICATED GREEN (Swiss Green) */
-    --primary: 158 45% 40%; /* More muted, professional green */
+    /* PRIMARY - SOPHISTICATED TEAL */
+    --primary: 165 35% 38%; /* Muted teal-green */
     --primary-foreground: 0 0% 100%;
 
-    /* SECONDARY - FUNCTIONAL GREY */
-    --secondary: 240 4.8% 95.9%; /* Very light grey */
-    --secondary-foreground: 240 5.9% 10%;
+    /* SECONDARY - WARM GREY */
+    --secondary: 220 10% 96%;
+    --secondary-foreground: 220 10% 30%;
 
     /* MUTED - SUBTLE INFORMATION */
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 220 10% 96%;
+    --muted-foreground: 220 8% 50%;
 
     /* ACCENT - INTERACTIVE ELEMENTS */
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 220 10% 94%;
+    --accent-foreground: 220 10% 25%;
 
-    /* DESTRUCTIVE - ALERT */
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    /* DESTRUCTIVE - SOFT ALERT (menos saturado) */
+    --destructive: 0 55% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* SEMANTIC COLORS (ALERTS/STATUS) */
-    --success: 158 60% 40%;
+    /* SEMANTIC COLORS - PASTEL/SOFT */
+    --success: 160 40% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 38 92% 10%;
-    --info: 215 100% 50%;
+    --warning: 40 70% 55%;
+    --warning-foreground: 40 80% 15%;
+    --info: 210 50% 55%;
     --info-foreground: 0 0% 100%;
 
-    /* BORDERS & INPUTS */
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 158 45% 40%;
+    /* BORDERS & INPUTS - MORE VISIBLE */
+    --border: 220 15% 88%;
+    --input: 220 15% 92%;
+    --ring: 165 35% 45%;
     
-    --radius: 0.5rem; /* Clean, modern radius (8px) */
+    --radius: 0.625rem; /* 10px - slightly larger */
+
+    /* ELEVATION SHADOWS */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
 
     /* SIDEBAR */
-    --sidebar-background: 240 5.9% 98%; /* Slightly off-white */
-    --sidebar-foreground: 240 5.9% 10%;
-    --sidebar-primary: 158 45% 40%;
+    --sidebar-background: 220 15% 98%;
+    --sidebar-foreground: 220 10% 25%;
+    --sidebar-primary: 165 35% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 220 10% 95%;
+    --sidebar-accent-foreground: 220 10% 25%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-ring: 165 35% 45%;
   }
 
   .dark {
-    /* BASE DARK */
-    --background: 240 10% 3.9%; /* Deep dark */
-    --foreground: 0 0% 98%;
+    /* BASE DARK - WARM */
+    --background: 220 15% 8%;
+    --foreground: 220 10% 95%;
 
-    /* CARDS DARK */
-    --card: 240 10% 6%; /* Slightly lighter than bg */
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 6%;
-    --popover-foreground: 0 0% 98%;
+    /* CARDS DARK - ELEVATION */
+    --card: 220 15% 10%;
+    --card-foreground: 220 10% 95%;
+    --popover: 220 15% 10%;
+    --popover-foreground: 220 10% 95%;
 
     /* PRIMARY DARK */
-    --primary: 158 45% 50%; /* Lighter green for dark mode */
-    --primary-foreground: 240 5.9% 10%;
+    --primary: 165 40% 50%;
+    --primary-foreground: 220 15% 10%;
 
     /* SECONDARY DARK */
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 220 12% 16%;
+    --secondary-foreground: 220 10% 90%;
 
     /* MUTED DARK */
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 220 12% 16%;
+    --muted-foreground: 220 8% 55%;
 
     /* ACCENT DARK */
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 220 12% 18%;
+    --accent-foreground: 220 10% 90%;
 
-    /* DESTRUCTIVE DARK */
-    --destructive: 0 62.8% 30.6%;
+    /* DESTRUCTIVE DARK - SOFT */
+    --destructive: 0 50% 45%;
     --destructive-foreground: 0 0% 98%;
     
-    /* SEMANTIC DARK */
-    --success: 158 50% 50%;
+    /* SEMANTIC DARK - SOFT */
+    --success: 160 45% 50%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 38 92% 10%;
+    --warning: 40 65% 55%;
+    --warning-foreground: 40 80% 15%;
+    --info: 210 50% 55%;
+    --info-foreground: 0 0% 100%;
 
     /* BORDERS DARK */
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 158 45% 50%;
+    --border: 220 12% 18%;
+    --input: 220 12% 18%;
+    --ring: 165 40% 50%;
+
+    /* ELEVATION SHADOWS DARK */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.15);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.15);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.25), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
 
     /* SIDEBAR DARK */
-    --sidebar-background: 240 5.9% 5%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 158 45% 50%;
+    --sidebar-background: 220 15% 6%;
+    --sidebar-foreground: 220 10% 90%;
+    --sidebar-primary: 165 40% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 220 12% 14%;
+    --sidebar-accent-foreground: 220 10% 90%;
+    --sidebar-border: 220 12% 16%;
+    --sidebar-ring: 165 40% 50%;
   }
 }
 
@@ -124,58 +138,218 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    /* BASE FONT SIZE INCREASE - 16px -> 17px */
+    font-size: 106.25%;
+  }
+  
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    letter-spacing: 0.01em;
+    line-height: 1.6;
   }
   
-  /* TYPOGRAPHY - SWISS STYLE
-     Clean, sans-serif, high legibility.
-  */
+  /* ==========================================
+     TYPOGRAPHY SYSTEM - HIERARCHICAL
+     ========================================== */
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight font-semibold text-foreground;
+    line-height: 1.25;
   }
   
-  h1 { @apply text-3xl sm:text-4xl; }
-  h2 { @apply text-2xl sm:text-3xl; }
+  /* Increased font sizes for better readability */
+  h1 { @apply text-3xl sm:text-4xl lg:text-5xl font-bold; }
+  h2 { @apply text-2xl sm:text-3xl font-bold; }
   h3 { @apply text-xl sm:text-2xl; }
   h4 { @apply text-lg sm:text-xl; }
+  h5 { @apply text-base sm:text-lg; }
   
   p {
-    @apply leading-7 text-muted-foreground [&:not(:first-child)]:mt-6;
-  }
-
-  /* UTILITIES FOR CLEAN LAYOUTS */
-  .layout-grid {
-    @apply grid grid-cols-1 md:grid-cols-12 gap-6;
+    @apply leading-relaxed text-muted-foreground;
   }
   
-  .glass-panel {
-    @apply bg-white/80 dark:bg-black/50 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-sm;
+  /* Better default text sizing */
+  .text-body { @apply text-[15px] leading-relaxed; }
+  .text-body-sm { @apply text-[14px] leading-relaxed; }
+  .text-body-lg { @apply text-[16px] leading-relaxed; }
+  
+  /* Label styling */
+  label, .label {
+    @apply text-sm font-medium text-foreground;
+  }
+  
+  /* Caption styling */
+  .caption {
+    @apply text-xs text-muted-foreground;
   }
 }
 
-/* 
-   SWISS UTILITIES 
-   Specific helper classes for the Swiss design language 
-*/
+/* ==========================================
+   STRUCTURAL COMPONENTS
+   For hierarchy and organization
+   ========================================== */
 @layer components {
-  /* Buttons - Clean, minimal, functional */
-  .btn-swiss {
-    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+  /* PAGE HEADER - Clear hierarchy */
+  .page-header {
+    @apply pb-6 mb-6 border-b border-border;
+  }
+  .page-title {
+    @apply text-2xl sm:text-3xl font-bold text-foreground tracking-tight;
+  }
+  .page-description {
+    @apply text-sm sm:text-base text-muted-foreground mt-1.5;
   }
   
-  .card-swiss {
-    @apply rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-300;
+  /* SECTION - Content grouping */
+  .section {
+    @apply mb-8;
   }
-
-  /* Lists - Clean separation */
-  .list-swiss {
-    @apply divide-y divide-border rounded-md border;
+  .section-header {
+    @apply flex items-center justify-between mb-4 pb-2 border-b border-border/50;
   }
-  .list-swiss-item {
-    @apply flex items-center justify-between p-4 hover:bg-muted/50 transition-colors;
+  .section-title {
+    @apply text-lg font-semibold text-foreground flex items-center gap-2;
   }
+  .section-subtitle {
+    @apply text-xs uppercase tracking-wider text-muted-foreground font-medium;
+  }
+  
+  /* CARDS - With elevation system */
+  .card-elevated {
+    @apply rounded-xl border border-border/60 bg-card text-card-foreground;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-elevated:hover {
+    box-shadow: var(--shadow-md);
+  }
+  
+  .card-raised {
+    @apply rounded-xl border-2 border-border/40 bg-card text-card-foreground;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .card-inset {
+    @apply rounded-lg bg-muted/40 border border-border/30 p-4;
+  }
+  
+  /* PANELS - For grouping related content */
+  .panel {
+    @apply rounded-xl border border-border bg-card p-5;
+    box-shadow: var(--shadow-xs);
+  }
+  .panel-header {
+    @apply flex items-center justify-between pb-4 mb-4 border-b border-border/50;
+  }
+  .panel-title {
+    @apply text-base font-semibold text-foreground;
+  }
+  .panel-content {
+    @apply space-y-4;
+  }
+  
+  /* DATA DISPLAY */
+  .data-row {
+    @apply flex items-center justify-between py-3 border-b border-border/30 last:border-0;
+  }
+  .data-label {
+    @apply text-sm text-muted-foreground;
+  }
+  .data-value {
+    @apply text-sm font-medium text-foreground;
+  }
+  
+  /* STAT CARDS */
+  .stat-card {
+    @apply rounded-xl border border-border/60 bg-card p-5;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-value {
+    @apply text-3xl font-bold text-foreground tracking-tight;
+  }
+  .stat-label {
+    @apply text-sm text-muted-foreground mt-1;
+  }
+  .stat-trend {
+    @apply text-xs font-medium mt-2;
+  }
+  
+  /* DIVIDERS */
+  .divider {
+    @apply h-px bg-border my-6;
+  }
+  .divider-label {
+    @apply flex items-center gap-4 my-6;
+  }
+  .divider-label::before,
+  .divider-label::after {
+    @apply flex-1 h-px bg-border content-[''];
+  }
+  .divider-label span {
+    @apply text-xs uppercase tracking-wider text-muted-foreground font-medium;
+  }
+  
+  /* LISTS - Structured */
+  .list-structured {
+    @apply divide-y divide-border rounded-xl border border-border overflow-hidden;
+    box-shadow: var(--shadow-xs);
+  }
+  .list-item {
+    @apply flex items-center gap-4 p-4 bg-card hover:bg-muted/30 transition-colors;
+  }
+  .list-item-content {
+    @apply flex-1 min-w-0;
+  }
+  .list-item-title {
+    @apply text-sm font-medium text-foreground truncate;
+  }
+  .list-item-description {
+    @apply text-xs text-muted-foreground truncate mt-0.5;
+  }
+  .list-item-actions {
+    @apply flex items-center gap-2;
+  }
+  
+  /* TOOLBAR */
+  .toolbar {
+    @apply flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border/50;
+  }
+  
+  /* EMPTY STATE */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-12 px-6 text-center;
+  }
+  .empty-state-icon {
+    @apply w-12 h-12 text-muted-foreground/50 mb-4;
+  }
+  .empty-state-title {
+    @apply text-base font-medium text-foreground mb-1;
+  }
+  .empty-state-description {
+    @apply text-sm text-muted-foreground max-w-sm;
+  }
+  
+  /* GLASS EFFECT */
+  .glass-panel {
+    @apply bg-white/70 dark:bg-zinc-900/70 backdrop-blur-lg border border-white/30 dark:border-white/10;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* BADGE GROUPS */
+  .badge-group {
+    @apply flex flex-wrap items-center gap-1.5;
+  }
+  
+  /* INDICATOR DOT */
+  .indicator {
+    @apply w-2 h-2 rounded-full;
+  }
+  .indicator-success { @apply bg-emerald-500; }
+  .indicator-warning { @apply bg-amber-500; }
+  .indicator-danger { @apply bg-rose-500; }
+  .indicator-info { @apply bg-blue-500; }
+  .indicator-neutral { @apply bg-zinc-400; }
 }
