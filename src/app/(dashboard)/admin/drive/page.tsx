@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +29,7 @@ import {
   FolderOpen,
   File,
   FileText,
-  Image,
+  ImageIcon,
   Film,
   Music,
   Archive,
@@ -95,7 +96,7 @@ const FILE_ICONS: Record<string, React.ElementType> = {
   folder: FolderOpen,
   document: FileText,
   pdf: FileText,
-  image: Image,
+  image: ImageIcon,
   video: Film,
   audio: Music,
   archive: Archive,
@@ -284,10 +285,13 @@ function FileGridItem({
         onClick={() => onPreview(file)}
       >
         {file.thumbnailLink ? (
-          <img 
-            src={file.thumbnailLink} 
+          <Image
+            src={file.thumbnailLink}
             alt={file.name}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 320px"
+            className="object-cover"
+            unoptimized
           />
         ) : (
           <Icon className={cn("w-12 h-12", colorClass)} />
@@ -438,10 +442,14 @@ function PreviewDialog({
         
         <div className="flex-1 min-h-[400px] bg-zinc-100 dark:bg-zinc-900 rounded-lg flex items-center justify-center">
           {file.thumbnailLink ? (
-            <img 
-              src={file.thumbnailLink} 
+            <Image
+              src={file.thumbnailLink}
               alt={file.name}
+              width={960}
+              height={540}
+              sizes="(max-width: 1024px) 100vw, 960px"
               className="max-w-full max-h-full object-contain"
+              unoptimized
             />
           ) : (
             <div className="text-center">
