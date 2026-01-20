@@ -11,7 +11,7 @@ export function SwissCard({
   return (
     <Card
       className={cn(
-        "rounded-sm border border-slate-200 dark:border-slate-800 shadow-none bg-card",
+        "rounded-xl border border-border shadow-none bg-card",
         className
       )}
       {...props}
@@ -25,7 +25,7 @@ export function SwissCardHeader({
 }: React.ComponentProps<typeof CardHeader>) {
   return (
     <CardHeader
-      className={cn("border-b border-slate-200/60 dark:border-slate-800/60", className)}
+      className={cn("border-b border-border/60 pb-3", className)}
       {...props}
     />
   );
@@ -42,12 +42,12 @@ export function SwissCardTitle({
   className,
   ...props
 }: React.ComponentProps<typeof CardTitle>) {
-  return <CardTitle className={cn("text-sm font-semibold", className)} {...props} />;
+  return <CardTitle className={cn("text-base font-semibold", className)} {...props} />;
 }
 
 export function SwissCardDescription({
   className,
   ...props
 }: React.ComponentProps<typeof CardDescription>) {
-  return <CardDescription className={cn("text-xs", className)} {...props} />;
+  return <CardDescription className={cn("text-sm", className)} {...props} />;
 }

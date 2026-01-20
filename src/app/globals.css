@@ -3,1298 +3,179 @@
 @tailwind utilities;
 
 /* ========================================
-   DEFESAHUB - DESIGN SYSTEM v4.0
-   Swiss Design • Green Premium • Sophisticated
-   Visual elegante, limpo, funcional
-   Padrão suíço com visualização ótima
-   CACHE BUST: 2026-01-20-v4
-   ======================================== */
-
-/* ========================================
-   SISTEMA DE CORES - iOS 26.2 INSPIRED
-   Paleta baseada em tons de verde, cinza, preto e branco
+   DEFESAHUB - DESIGN SYSTEM v5.0 (SWISS REFINED)
+   Swiss Design • Clean Typography • Functional
+   Visual limpo, preciso, tipografia forte.
    ======================================== */
 
 @layer base {
   :root {
-    /* MODO CLARO - Clean, leve e sofisticado */
-    --background: 150 10% 98%; /* Off-white com leve tom verde */
-    --foreground: 160 10% 12%; /* Quase preto com tom verde */
-    --card: 0 0% 100%; /* Branco puro */
-    --card-foreground: 160 8% 15%;
+    /* BASE - SWISS NEUTRALS */
+    --background: 0 0% 100%; /* Pure White */
+    --foreground: 240 10% 3.9%; /* Deep Grey, almost black */
+
+    /* CARDS & SURFACES */
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 160 8% 15%;
-    
-    /* PRIMARY - Green Premium (tom verde sofisticado) */
-    --primary: 158 55% 42%; /* Verde sofisticado */
+    --popover-foreground: 240 10% 3.9%;
+
+    /* PRIMARY - SOPHISTICATED GREEN (Swiss Green) */
+    --primary: 158 45% 40%; /* More muted, professional green */
     --primary-foreground: 0 0% 100%;
-    
-    /* Neutros com tom verde sutil */
-    --secondary: 150 8% 96%;
-    --secondary-foreground: 160 10% 35%;
-    --muted: 150 8% 96%;
-    --muted-foreground: 160 6% 45%;
-    --accent: 155 12% 94%;
-    --accent-foreground: 160 10% 30%;
-    
-    /* Funcionais */
-    --destructive: 0 65% 50%;
-    --destructive-foreground: 0 0% 100%;
+
+    /* SECONDARY - FUNCTIONAL GREY */
+    --secondary: 240 4.8% 95.9%; /* Very light grey */
+    --secondary-foreground: 240 5.9% 10%;
+
+    /* MUTED - SUBTLE INFORMATION */
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    /* ACCENT - INTERACTIVE ELEMENTS */
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+
+    /* DESTRUCTIVE - ALERT */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* SEMANTIC COLORS (ALERTS/STATUS) */
     --success: 158 60% 40%;
     --success-foreground: 0 0% 100%;
-    --warning: 45 85% 50%;
-    --warning-foreground: 45 80% 15%;
-    
-    --border: 155 12% 90%;
-    --input: 150 10% 95%;
-    --ring: 158 55% 42%;
-    --radius: 0.2rem; /* Swiss style radius */
-    
-    /* Charts */
-    --chart-1: 158 55% 42%;
-    --chart-2: 160 40% 30%;
-    --chart-3: 155 45% 55%;
-    --chart-4: 180 50% 45%;
-    --chart-5: 150 30% 50%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 10%;
+    --info: 215 100% 50%;
+    --info-foreground: 0 0% 100%;
 
-    /* Sidebar iOS 26.2 Style */
-    --sidebar-background: 155 15% 98%;
-    --sidebar-foreground: 160 10% 25%;
-    --sidebar-primary: 158 55% 42%;
+    /* BORDERS & INPUTS */
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 158 45% 40%;
+    
+    --radius: 0.5rem; /* Clean, modern radius (8px) */
+
+    /* SIDEBAR */
+    --sidebar-background: 240 5.9% 98%; /* Slightly off-white */
+    --sidebar-foreground: 240 5.9% 10%;
+    --sidebar-primary: 158 45% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 158 40% 95%;
-    --sidebar-accent-foreground: 158 50% 30%;
-    --sidebar-border: 155 15% 92%;
-    --sidebar-ring: 158 55% 42%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 60%;
   }
 
   .dark {
-    /* MODO ESCURO - Elegante, profundo e confortável para leitura */
-    --background: 160 12% 7%;
-    --foreground: 150 8% 95%;
-    --card: 160 10% 10%;
-    --card-foreground: 150 8% 95%;
-    --popover: 160 10% 10%;
-    --popover-foreground: 150 8% 95%;
-    
-    /* PRIMARY - Verde luminoso e vibrante no dark */
-    --primary: 158 55% 52%;
-    --primary-foreground: 160 15% 5%;
-    
-    --secondary: 160 10% 14%;
-    --secondary-foreground: 150 6% 80%;
-    --muted: 160 8% 16%;
-    --muted-foreground: 150 6% 60%;
-    --accent: 160 10% 16%;
-    --accent-foreground: 150 6% 85%;
-    
-    --destructive: 0 65% 55%;
-    --destructive-foreground: 0 0% 100%;
-    --success: 158 55% 52%;
-    --success-foreground: 160 15% 5%;
-    --warning: 45 85% 55%;
-    --warning-foreground: 45 80% 10%;
-    
-    --border: 160 10% 18%;
-    --input: 160 8% 15%;
-    --ring: 158 55% 52%;
+    /* BASE DARK */
+    --background: 240 10% 3.9%; /* Deep dark */
+    --foreground: 0 0% 98%;
 
-    /* Sidebar Dark - Mais integrada e elegante */
-    --sidebar-background: 160 12% 6%;
-    --sidebar-foreground: 150 6% 88%;
-    --sidebar-primary: 158 55% 52%;
-    --sidebar-primary-foreground: 160 15% 5%;
-    --sidebar-accent: 158 35% 14%;
-    --sidebar-accent-foreground: 158 40% 70%;
-    --sidebar-border: 160 10% 14%;
-    --sidebar-ring: 158 55% 52%;
+    /* CARDS DARK */
+    --card: 240 10% 6%; /* Slightly lighter than bg */
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    /* PRIMARY DARK */
+    --primary: 158 45% 50%; /* Lighter green for dark mode */
+    --primary-foreground: 240 5.9% 10%;
+
+    /* SECONDARY DARK */
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* MUTED DARK */
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    /* ACCENT DARK */
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    /* DESTRUCTIVE DARK */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    
+    /* SEMANTIC DARK */
+    --success: 158 50% 50%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 10%;
+
+    /* BORDERS DARK */
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 158 45% 50%;
+
+    /* SIDEBAR DARK */
+    --sidebar-background: 240 5.9% 5%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 158 45% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
-
-/* ========================================
-   TIPOGRAFIA - iOS 26.2 Style
-   ======================================== */
 
 @layer base {
   * {
     @apply border-border;
   }
-  
-  html {
-    scroll-behavior: smooth;
-    font-size: 16px;
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   
-  body {
-    @apply bg-background text-foreground antialiased;
-    line-height: 1.45;
-    letter-spacing: -0.015em;
-    font-weight: 400;
-    background-color: hsl(var(--background));
-    font-family: var(--font-sans);
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
-
-  /* Hierarquia Tipográfica - Design Suíço */
-  h1 { 
-    @apply text-xl sm:text-2xl font-bold tracking-tight text-foreground;
-    letter-spacing: -0.025em;
-  }
-  h2 { 
-    @apply text-lg sm:text-xl font-semibold tracking-tight text-foreground;
-    letter-spacing: -0.02em;
-  }
-  h3 { 
-    @apply text-base sm:text-lg font-semibold text-foreground;
-    letter-spacing: -0.015em;
-  }
-  h4 { 
-    @apply text-sm sm:text-base font-medium text-foreground;
-  }
-  p { 
-    @apply text-sm sm:text-base leading-relaxed text-foreground;
-  }
-  span, label { 
-    @apply text-xs sm:text-sm text-muted-foreground;
-  }
-
-  /* ========================================
-     TIPOGRAFIA JURÍDICA - Design Suíço
-     Serif para tipificações, Mono para dados
-     ======================================== */
-  
-  /* Fonte serifada para tipificações jurídicas (crimes, artigos) */
-  .font-legal {
-    font-family: 'Georgia', 'Times New Roman', 'Palatino Linotype', serif;
-    font-style: italic;
-    letter-spacing: 0.01em;
+  /* TYPOGRAPHY - SWISS STYLE
+     Clean, sans-serif, high legibility.
+  */
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-semibold text-foreground;
   }
   
-  /* Fonte mono para dados técnicos (CNJ, datas, CPF) */
-  .font-data {
-    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
+  h1 { @apply text-3xl sm:text-4xl; }
+  h2 { @apply text-2xl sm:text-3xl; }
+  h3 { @apply text-xl sm:text-2xl; }
+  h4 { @apply text-lg sm:text-xl; }
+  
+  p {
+    @apply leading-7 text-muted-foreground [&:not(:first-child)]:mt-6;
   }
 
-  /* ========================================
-     DARK MODE PREMIUM - Design Suíço
-     Elegante, confortável e sofisticado
-     ======================================== */
-  
-  /* Cards no dark mode com brilho sutil nas bordas */
-  .dark .card-swiss {
-    background: linear-gradient(180deg, hsl(160, 10%, 10%) 0%, hsl(160, 8%, 8%) 100%);
-    border-color: hsl(160, 10%, 16%);
+  /* UTILITIES FOR CLEAN LAYOUTS */
+  .layout-grid {
+    @apply grid grid-cols-1 md:grid-cols-12 gap-6;
   }
   
-  .dark .card-swiss:hover {
-    border-color: hsl(160, 12%, 22%);
-    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.5);
+  .glass-panel {
+    @apply bg-white/80 dark:bg-black/50 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-sm;
+  }
+}
+
+/* 
+   SWISS UTILITIES 
+   Specific helper classes for the Swiss design language 
+*/
+@layer components {
+  /* Buttons - Clean, minimal, functional */
+  .btn-swiss {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
   }
   
-  /* Texto com leve brilho no dark para melhor legibilidade */
-  .dark h1, .dark h2, .dark h3 {
-    text-shadow: 0 0 40px rgba(255, 255, 255, 0.03);
+  .card-swiss {
+    @apply rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-300;
   }
-  
-  /* Bordas semânticas mais vibrantes no dark */
-  .dark .border-l-rose-500 {
-    border-left-color: hsl(0, 70%, 55%);
+
+  /* Lists - Clean separation */
+  .list-swiss {
+    @apply divide-y divide-border rounded-md border;
   }
-  
-  .dark .border-l-emerald-500 {
-    border-left-color: hsl(158, 65%, 48%);
+  .list-swiss-item {
+    @apply flex items-center justify-between p-4 hover:bg-muted/50 transition-colors;
   }
-  
-  /* Badges mais legíveis no dark */
-  .dark [class*="bg-rose-50"] {
-    background-color: hsl(0, 50%, 12%);
-  }
-  
-  .dark [class*="bg-emerald-50"] {
-    background-color: hsl(158, 40%, 12%);
-  }
-  
-  .dark [class*="bg-amber-50"] {
-    background-color: hsl(45, 50%, 12%);
-  }
-  small { 
-    @apply text-xs text-muted-foreground;
-  }
-}
-
-/* ========================================
-   ANIMAÇÕES - iOS 26.2 Fluidas
-   ======================================== */
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.25s ease-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.animate-scale-in {
-  animation: scale-in 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* ========================================
-   GLASS CARDS - iOS 26.2 Glassmorphism
-   ======================================== */
-
-.glass-card {
-  @apply rounded-3xl overflow-hidden;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 
-    0 4px 24px -4px rgba(0, 0, 0, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.4);
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.glass-card:hover {
-  box-shadow: 
-    0 12px 40px -8px rgba(0, 0, 0, 0.1),
-    0 2px 4px rgba(0, 0, 0, 0.04),
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-}
-
-.dark .glass-card {
-  background: rgba(18, 24, 22, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 
-    0 4px 24px -4px rgba(0, 0, 0, 0.4),
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.06);
-}
-
-.dark .glass-card:hover {
-  background: rgba(20, 26, 24, 0.9);
-  border-color: rgba(255, 255, 255, 0.14);
-}
-
-/* ========================================
-   STAT CARDS - iOS 26.2 Premium
-   ======================================== */
-
-.stat-card {
-  @apply rounded-2xl p-5 overflow-hidden;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 
-    0 2px 12px -2px rgba(0, 0, 0, 0.05),
-    0 1px 2px rgba(0, 0, 0, 0.03);
-  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  min-width: 0;
-}
-
-.stat-card:hover {
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 
-    0 8px 24px -4px rgba(0, 0, 0, 0.08),
-    0 2px 4px rgba(0, 0, 0, 0.04);
-  transform: translateY(-1px);
-}
-
-.dark .stat-card {
-  background: rgba(18, 24, 22, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 2px 12px -2px rgba(0, 0, 0, 0.3),
-    0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.dark .stat-card:hover {
-  background: rgba(22, 28, 26, 0.85);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 
-    0 8px 24px -4px rgba(0, 0, 0, 0.35),
-    0 2px 4px rgba(0, 0, 0, 0.25);
-}
-
-/* ========================================
-   SECTION CARDS - iOS 26.2 Style
-   ======================================== */
-
-.section-card {
-  @apply rounded-3xl overflow-hidden;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(32px) saturate(150%);
-  -webkit-backdrop-filter: blur(32px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 
-    0 2px 16px -4px rgba(0, 0, 0, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.03);
-  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.section-card:hover {
-  box-shadow: 
-    0 8px 32px -6px rgba(0, 0, 0, 0.1),
-    0 2px 4px rgba(0, 0, 0, 0.04);
-}
-
-.dark .section-card {
-  background: rgba(18, 24, 22, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 2px 16px -4px rgba(0, 0, 0, 0.35),
-    0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.dark .section-card:hover {
-  background: rgba(22, 28, 26, 0.85);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-.section-card-header {
-  @apply flex items-center justify-between px-6 py-5;
-  background: rgba(255, 255, 255, 0.3);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
-}
-
-.dark .section-card-header {
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* Dark mode headers and main content areas */
-.dark .page-header-icon,
-.dark .icon-primary {
-  background: linear-gradient(145deg, hsl(158 55% 48%) 0%, hsl(160 50% 38%) 100%);
-  box-shadow: 
-    0 4px 16px -2px hsl(158 55% 45% / 0.4),
-    0 2px 6px -1px hsl(158 55% 45% / 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.section-card-content {
-  @apply p-6;
-}
-
-/* ========================================
-   PAGE HEADER - iOS 26.2 Premium
-   ======================================== */
-
-.page-header {
-  @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-8;
-}
-
-.page-header-content {
-  @apply flex items-center gap-4;
-}
-
-.page-header-icon,
-.icon-primary {
-  @apply h-14 w-14 rounded-2xl flex items-center justify-center flex-shrink-0;
-  background: linear-gradient(145deg, hsl(158 55% 42%) 0%, hsl(160 50% 35%) 100%);
-  box-shadow: 
-    0 4px 16px -2px hsl(158 55% 40% / 0.35),
-    0 2px 6px -1px hsl(158 55% 40% / 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.page-header-icon svg,
-.icon-primary svg {
-  @apply h-6 w-6 text-white;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
-}
-
-.page-header-info h1 {
-  @apply text-2xl font-bold tracking-tight;
-  letter-spacing: -0.025em;
-}
-
-.page-header-info p {
-  @apply text-sm text-muted-foreground mt-1;
-}
-
-.page-header-actions {
-  @apply flex items-center gap-3;
-}
-
-/* ========================================
-   ICON VARIANTS - iOS 26.2
-   ======================================== */
-
-.icon-secondary {
-  @apply h-12 w-12 rounded-2xl flex items-center justify-center;
-  background: linear-gradient(145deg, hsl(160 15% 30%) 0%, hsl(160 12% 22%) 100%);
-  box-shadow: 
-    0 4px 12px -2px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-.icon-secondary svg {
-  @apply h-5 w-5 text-white;
-}
-
-.icon-success {
-  @apply h-12 w-12 rounded-2xl flex items-center justify-center;
-  background: linear-gradient(145deg, hsl(158 60% 40%) 0%, hsl(158 55% 34%) 100%);
-  box-shadow: 0 4px 12px -2px hsl(158 60% 38% / 0.35);
-}
-
-.icon-success svg {
-  @apply h-5 w-5 text-white;
-}
-
-.icon-muted {
-  @apply h-12 w-12 rounded-2xl flex items-center justify-center;
-  background: hsl(var(--muted));
-  border: 1px solid hsl(var(--border));
-}
-
-.icon-muted svg {
-  @apply h-5 w-5 text-muted-foreground;
-}
-
-/* ========================================
-   BUTTONS - iOS 26.2 System
-   ======================================== */
-
-.btn-primary {
-  @apply font-medium rounded-2xl px-5 py-2.5;
-  background: linear-gradient(145deg, hsl(158 55% 42%) 0%, hsl(160 50% 36%) 100%);
-  color: white;
-  box-shadow: 
-    0 2px 8px -2px hsl(158 55% 40% / 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.btn-primary:hover {
-  background: linear-gradient(145deg, hsl(158 55% 38%) 0%, hsl(160 50% 32%) 100%);
-  box-shadow: 0 4px 16px -2px hsl(158 55% 40% / 0.45);
-  transform: translateY(-1px);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-.btn-outline {
-  @apply font-medium rounded-2xl px-5 py-2.5;
-  border: 1.5px solid hsl(var(--border));
-  color: hsl(var(--foreground));
-  background: transparent;
-  transition: all 0.25s ease;
-}
-
-.btn-outline:hover {
-  background: hsl(var(--muted) / 0.6);
-  border-color: hsl(var(--primary) / 0.3);
-}
-
-.btn-ghost {
-  @apply font-medium rounded-2xl px-4 py-2;
-  color: hsl(var(--muted-foreground));
-  transition: all 0.25s ease;
-}
-
-.btn-ghost:hover {
-  background: hsl(var(--muted) / 0.6);
-  color: hsl(var(--foreground));
-}
-
-/* ========================================
-   BADGES - iOS 26.2 Pills
-   ======================================== */
-
-.badge {
-  @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium;
-  transition: all 0.2s ease;
-}
-
-.badge-default {
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-}
-
-.badge-success {
-  background: hsl(158 60% 94%);
-  color: hsl(158 55% 32%);
-}
-
-.dark .badge-success {
-  background: hsl(158 40% 15% / 0.5);
-  color: hsl(158 50% 60%);
-}
-
-.badge-warning {
-  background: hsl(45 85% 92%);
-  color: hsl(45 75% 28%);
-}
-
-.dark .badge-warning {
-  background: hsl(45 60% 18% / 0.5);
-  color: hsl(45 75% 60%);
-}
-
-.badge-error {
-  background: hsl(0 65% 94%);
-  color: hsl(0 55% 38%);
-}
-
-.dark .badge-error {
-  background: hsl(0 50% 18% / 0.5);
-  color: hsl(0 60% 65%);
-}
-
-/* ========================================
-   LIST ITEMS - iOS 26.2 Style
-   ======================================== */
-
-.list-item {
-  @apply flex items-center gap-4 p-4 rounded-2xl cursor-pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.list-item:hover {
-  background: hsl(var(--accent) / 0.6);
-  transform: translateX(2px);
-}
-
-.list-item-icon {
-  @apply h-11 w-11 rounded-xl flex items-center justify-center flex-shrink-0;
-  background: linear-gradient(145deg, hsl(158 55% 42% / 0.12) 0%, hsl(158 55% 42% / 0.06) 100%);
-}
-
-.list-item-icon svg {
-  @apply h-5 w-5;
-  color: hsl(158 55% 42%);
-}
-
-/* ========================================
-   PROGRESS BAR - iOS 26.2
-   ======================================== */
-
-.progress-bar-premium {
-  @apply h-2 rounded-full overflow-hidden;
-  background: hsl(var(--muted));
-}
-
-.progress-bar-premium .progress-fill {
-  @apply h-full rounded-full;
-  background: linear-gradient(90deg, hsl(158 55% 42%) 0%, hsl(160 50% 48%) 100%);
-}
-
-/* ========================================
-   DATA TABLE - Clean
-   ======================================== */
-
-.data-table th {
-  @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left px-4 py-3;
-  background: hsl(var(--muted) / 0.4);
-}
-
-.data-table td {
-  @apply px-4 py-3;
-  border-bottom: 1px solid hsl(var(--border) / 0.4);
-}
-
-.data-table tr:hover {
-  background: hsl(var(--accent) / 0.4);
-}
-
-.dark .data-table th {
-  background: hsl(var(--muted) / 0.6);
-}
-
-.dark .data-table td {
-  border-bottom: 1px solid hsl(var(--border) / 0.5);
-}
-
-.dark .data-table tr:hover {
-  background: hsl(var(--accent) / 0.5);
-}
-
-/* ========================================
-   GRIDS - Responsivos
-   ======================================== */
-
-.stats-grid,
-.stats-row {
-  @apply grid grid-cols-2 lg:grid-cols-4 gap-4;
-  max-width: 100%;
-}
-
-.content-grid {
-  @apply grid gap-6 lg:grid-cols-2;
-  max-width: 100%;
-}
-
-.content-grid-3 {
-  @apply grid gap-6 md:grid-cols-2 lg:grid-cols-3;
-  max-width: 100%;
-}
-
-/* ========================================
-   SCROLLBAR - Minimalista
-   ======================================== */
-
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.12);
-  border-radius: 100px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.2);
-}
-
-/* Hide scrollbar for sidebar */
-[data-sidebar="content"] {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-[data-sidebar="content"]::-webkit-scrollbar {
-  display: none;
-}
-
-/* ========================================
-   FOCUS STATES
-   ======================================== */
-
-*:focus-visible {
-  outline: 2px solid hsl(var(--primary) / 0.4);
-  outline-offset: 2px;
-}
-
-/* ========================================
-   TRANSITIONS GLOBAIS
-   ======================================== */
-
-a, button {
-  transition: all 0.25s ease;
-}
-
-/* ========================================
-   REDUCED MOTION
-   ======================================== */
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* ========================================
-   MOBILE ADJUSTMENTS
-   ======================================== */
-
-@media (max-width: 640px) {
-  .stats-grid,
-  .stats-row {
-    gap: 0.75rem;
-  }
-  
-  .stat-card {
-    @apply p-4;
-  }
-  
-  .section-card-header {
-    @apply px-4 py-4;
-  }
-  
-  .section-card-content {
-    @apply p-4;
-  }
-  
-  .page-header-icon,
-  .icon-primary {
-    @apply h-10 w-10;
-  }
-  
-  .page-header-info h1 {
-    @apply text-xl;
-  }
-}
-
-/* ========================================
-   MOBILE SPACING - Respiro Visual
-   Evitar elementos colados nas bordas
-   ======================================== */
-
-@media (max-width: 640px) {
-  /* Padding geral em containers principais */
-  .mobile-container,
-  [data-slot="sidebar-inset"] > main {
-    @apply px-3 py-4;
-  }
-  
-  /* Cards com margem adequada no mobile */
-  .mobile-card-spacing {
-    @apply mx-2 mb-3;
-  }
-  
-  /* Grids de cards no mobile */
-  .mobile-cards-grid {
-    @apply gap-3 px-2;
-  }
-  
-  /* Botões de ação no mobile */
-  .mobile-actions {
-    @apply gap-2 px-2;
-  }
-  
-  /* Headers no mobile */
-  .mobile-header {
-    @apply px-3 py-3;
-  }
-  
-  /* Scroll areas com padding */
-  .mobile-scroll-padding {
-    @apply px-3;
-  }
-}
-
-/* ========================================
-   SWISS DESIGN - Card Containers
-   Containers organizados, cores funcionais
-   ======================================== */
-
-/* Container para seções dentro de cards */
-.card-section {
-  @apply p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800;
-}
-
-.card-section-highlight {
-  @apply p-3 rounded-lg bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900/50 dark:to-zinc-800/30 border border-zinc-200 dark:border-zinc-700;
-}
-
-/* Seções coloridas funcionais */
-.card-section-info {
-  @apply p-3 rounded-lg bg-blue-50/80 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50;
-}
-
-.card-section-warning {
-  @apply p-3 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50;
-}
-
-.card-section-danger {
-  @apply p-3 rounded-lg bg-rose-50/80 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50;
-}
-
-.card-section-success {
-  @apply p-3 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50;
-}
-
-/* ========================================
-   SWISS TYPOGRAPHY - Data Display
-   ======================================== */
-
-/* Label superior pequeno */
-.swiss-label {
-  @apply text-[10px] uppercase font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5;
-}
-
-/* Valor principal */
-.swiss-value {
-  @apply text-sm font-medium text-zinc-900 dark:text-zinc-100;
-}
-
-/* Valor mono (números, códigos) */
-.swiss-value-mono {
-  @apply text-sm font-mono font-medium text-zinc-700 dark:text-zinc-300;
-}
-
-/* Grid de informações */
-.swiss-info-grid {
-  @apply grid grid-cols-2 gap-3;
-}
-
-@media (max-width: 640px) {
-  .swiss-info-grid {
-    @apply grid-cols-1 gap-2;
-  }
-}
-
-/* ========================================
-   DARK MODE - DESKTOP HEADER
-   ======================================== */
-
-.dark [data-slot="sidebar-inset"] > div:first-child {
-  background: linear-gradient(135deg, hsl(160 12% 10%) 0%, hsl(160 10% 8%) 100%) !important;
-  border-color: hsl(160 10% 18%);
-}
-
-/* ========================================
-   DARK MODE - ADDITIONAL REFINEMENTS
-   ======================================== */
-
-/* Input fields in dark mode */
-.dark input,
-.dark textarea,
-.dark select {
-  background-color: hsl(160 10% 12%);
-  border-color: hsl(160 8% 20%);
-}
-
-.dark input:focus,
-.dark textarea:focus,
-.dark select:focus {
-  border-color: hsl(158 55% 45%);
-}
-
-/* Dropdown menus in dark mode */
-.dark [data-radix-dropdown-menu-content],
-.dark [data-radix-select-content],
-.dark [data-radix-popover-content] {
-  background-color: hsl(160 12% 10%);
-  border-color: hsl(160 10% 18%);
-}
-
-/* Dialog/Modal in dark mode */
-.dark [role="dialog"] {
-  background-color: hsl(160 12% 10%);
-  border-color: hsl(160 10% 18%);
-}
-
-/* Scrollbar in dark mode */
-.dark ::-webkit-scrollbar-thumb {
-  background: hsl(160 10% 25%);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: hsl(160 10% 32%);
-}
-
-/* ========================================
-   FONT SIZE MODE
-   ======================================== */
-
-html.font-large {
-  font-size: 17px;
-}
-
-/* ========================================
-   RADIX UI OVERRIDES
-   ======================================== */
-
-[data-radix-tooltip-content],
-[data-radix-popover-content],
-[data-radix-dropdown-menu-content],
-[data-radix-select-content],
-[data-radix-popper-content-wrapper],
-[data-radix-popper-content-wrapper] > * {
-  animation: none !important;
-  transition: none !important;
-}
-
-[data-radix-tooltip-content][data-state="open"],
-[data-radix-popover-content][data-state="open"] {
-  opacity: 1 !important;
-}
-
-/* ========================================
-   NOTION-STYLE TABLE - PREMIUM
-   Tabela limpa, moderna e fácil de ler
-   ======================================== */
-
-.notion-table {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.notion-table th {
-  @apply text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400;
-  @apply py-3 px-3;
-  @apply bg-slate-50/80 dark:bg-slate-900/50;
-  @apply first:rounded-tl-lg last:rounded-tr-lg;
-}
-
-.notion-table td {
-  @apply py-2.5 px-3;
-  @apply text-sm;
-  @apply border-b border-slate-100 dark:border-slate-800;
-}
-
-.notion-table tbody tr {
-  @apply transition-colors duration-100;
-}
-
-.notion-table tbody tr:hover {
-  @apply bg-slate-50/70 dark:bg-slate-800/30;
-}
-
-.notion-table tbody tr:last-child td {
-  @apply border-b-0;
-}
-
-/* Status Badge Notion Style */
-.notion-status-badge {
-  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold text-xs;
-  @apply shadow-sm transition-all duration-150 hover:shadow-md hover:scale-[1.02];
-}
-
-/* Priority indicators */
-.notion-table tbody tr.priority-high {
-  @apply border-l-4 border-l-rose-500 bg-rose-50/40 dark:bg-rose-950/20;
-}
-
-.notion-table tbody tr.priority-urgent {
-  @apply border-l-4 border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20;
-}
-
-/* Prazo badges */
-.prazo-vencido {
-  @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300;
-  @apply font-bold animate-pulse;
-}
-
-.prazo-hoje {
-  @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300;
-  @apply font-bold;
-}
-
-.prazo-amanha {
-  @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300;
-  @apply font-semibold;
-}
-
-.prazo-semana {
-  @apply bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300;
-}
-
-.prazo-normal {
-  @apply bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400;
-}
-
-/* ========================================
-   MOBILE-FIRST REFINEMENTS - Design Suíço
-   Padronização para telas pequenas
-   ======================================== */
-
-/* Container principal mobile */
-@media (max-width: 640px) {
-  /* Reset padding em containers de página */
-  .page-container {
-    @apply px-3 py-3;
-  }
-  
-  /* Stats cards menores no mobile */
-  .stats-grid-mobile {
-    @apply grid grid-cols-2 gap-2;
-  }
-  
-  .stats-grid-mobile .stat-card {
-    @apply p-3;
-  }
-  
-  .stats-grid-mobile .stat-card p:first-child {
-    @apply text-lg font-bold;
-  }
-  
-  .stats-grid-mobile .stat-card p:last-child {
-    @apply text-[10px];
-  }
-  
-  /* Filtros horizontais scrolláveis */
-  .filters-row-mobile {
-    @apply flex gap-2 overflow-x-auto pb-2 -mx-3 px-3;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  
-  .filters-row-mobile::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .filters-row-mobile > * {
-    @apply flex-shrink-0;
-  }
-  
-  /* Cards grid mobile */
-  .cards-grid-mobile {
-    @apply grid grid-cols-1 gap-3;
-  }
-  
-  /* View toggle compacto */
-  .view-toggle-mobile {
-    @apply flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg;
-  }
-  
-  .view-toggle-mobile button {
-    @apply h-7 w-7 p-0 rounded-md;
-  }
-}
-
-/* ========================================
-   CASE CARD EXPANDED - Swiss Design
-   Seções expandidas com informações ricas
-   ======================================== */
-
-/* Seção de testemunhas */
-.case-witnesses {
-  @apply p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800;
-}
-
-.witness-item {
-  @apply flex items-center justify-between py-1.5 px-2 rounded text-xs;
-}
-
-.witness-item.heard {
-  @apply bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400;
-}
-
-.witness-item.pending {
-  @apply bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400;
-}
-
-/* Seção de provas */
-.case-evidence-grid {
-  @apply grid grid-cols-2 gap-2;
-}
-
-@media (max-width: 640px) {
-  .case-evidence-grid {
-    @apply grid-cols-1;
-  }
-}
-
-.evidence-card {
-  @apply p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800;
-}
-
-.evidence-card .evidence-count {
-  @apply text-xl font-bold font-mono;
-}
-
-.evidence-card .evidence-label {
-  @apply text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500;
-}
-
-/* Seção da tese da acusação */
-.prosecution-theory {
-  @apply p-2.5 rounded-lg bg-gradient-to-br from-rose-50/80 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/20 border border-rose-100 dark:border-rose-900/50;
-}
-
-/* Seção da versão do réu */
-.defendant-version {
-  @apply p-2.5 rounded-lg bg-gradient-to-br from-blue-50/80 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border border-blue-100 dark:border-blue-900/50;
-}
-
-/* Seção da investigação defensiva */
-.defensive-investigation {
-  @apply p-2.5 rounded-lg bg-gradient-to-br from-violet-50/80 to-violet-100/50 dark:from-violet-950/30 dark:to-violet-900/20 border border-violet-100 dark:border-violet-900/50;
-}
-
-/* Progress pills para fase do caso */
-.phase-progress {
-  @apply flex items-center gap-1 overflow-x-auto pb-1;
-  scrollbar-width: none;
-}
-
-.phase-progress::-webkit-scrollbar {
-  display: none;
-}
-
-.phase-pill {
-  @apply px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider whitespace-nowrap flex-shrink-0;
-}
-
-.phase-pill.active {
-  @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400;
-}
-
-.phase-pill.completed {
-  @apply bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400;
-}
-
-.phase-pill.pending {
-  @apply bg-zinc-100 text-zinc-400 dark:bg-zinc-900 dark:text-zinc-500;
-}
-
-/* ========================================
-   MOBILE CARDS ENHANCEMENTS
-   Ajustes finos para cards no mobile
-   ======================================== */
-
-@media (max-width: 640px) {
-  /* Avatar menor no mobile */
-  .card-avatar-mobile {
-    @apply h-10 w-10;
-  }
-  
-  /* Badge menor no mobile */
-  .card-badge-mobile {
-    @apply text-[9px] px-1.5 py-0;
-  }
-  
-  /* Título menor no mobile */
-  .card-title-mobile {
-    @apply text-sm leading-tight;
-  }
-  
-  /* Meta info menor no mobile */
-  .card-meta-mobile {
-    @apply text-[10px];
-  }
-  
-  /* Ações sempre visíveis no mobile */
-  .card-actions-mobile {
-    @apply opacity-100;
-  }
-  
-  /* Collapsible trigger mais largo no mobile */
-  .collapsible-trigger-mobile {
-    @apply py-2;
-  }
-}
-
-/* ========================================
-   UTILITY CLASSES - Design Suíço
-   Classes utilitárias para componentes
-   ======================================== */
-
-/* Scrollbar hidden utility */
-.scrollbar-hide {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Touch-friendly button */
-.touch-target {
-  @apply min-h-[44px] min-w-[44px];
-}
-
-/* Truncate multiline */
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Status indicators */
-.status-dot {
-  @apply w-2 h-2 rounded-full;
-}
-
-.status-dot.danger { @apply bg-rose-500; }
-.status-dot.warning { @apply bg-amber-500; }
-.status-dot.success { @apply bg-emerald-500; }
-.status-dot.info { @apply bg-blue-500; }
-.status-dot.muted { @apply bg-zinc-400; }
-
-/* Pulse animation for urgent items */
-.pulse-urgent {
-  animation: pulse-urgent 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse-urgent {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* ========================================
-   HIGH CONTRAST TEXT ON COLORED BACKGROUNDS
-   Melhora legibilidade de texto branco
-   ======================================== */
-
-/* Text shadow utility for better contrast on colored backgrounds */
-.text-contrast {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.text-contrast-strong {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-}
-
-/* Auto text shadow for white text on common colored backgrounds */
-.bg-emerald-500.text-white,
-.bg-emerald-600.text-white,
-.bg-green-500.text-white,
-.bg-green-600.text-white,
-.bg-green-700.text-white,
-.bg-amber-500.text-white,
-.bg-amber-600.text-white,
-.bg-rose-500.text-white,
-.bg-rose-600.text-white,
-.bg-red-500.text-white,
-.bg-red-600.text-white,
-.bg-blue-500.text-white,
-.bg-blue-600.text-white,
-.bg-sky-500.text-white,
-.bg-sky-600.text-white,
-.bg-violet-500.text-white,
-.bg-violet-600.text-white,
-.bg-indigo-500.text-white,
-.bg-indigo-600.text-white,
-.bg-purple-500.text-white,
-.bg-purple-600.text-white {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  font-weight: 600;
-}
-
-/* Ensure pure white text on all primary action buttons */
-[class*="bg-gradient-to"][class*="text-white"] {
-  color: #ffffff !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* Badge contrast improvements */
-[class*="Badge"][class*="text-white"],
-.badge[class*="text-white"] {
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-  font-weight: 700;
-}
-
-/* Button hover state maintains text visibility */
-button[class*="text-white"]:hover,
-a[class*="text-white"]:hover {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }

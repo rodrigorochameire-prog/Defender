@@ -50,6 +50,19 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Semantic additions
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -91,53 +104,18 @@ const config: Config = {
           from: { transform: "translateY(100%)" },
           to: { transform: "translateY(0)" },
         },
-        "slide-in-from-left": {
-          from: { transform: "translateX(-100%)" },
-          to: { transform: "translateX(0)" },
-        },
-        "slide-in-from-right": {
-          from: { transform: "translateX(100%)" },
-          to: { transform: "translateX(0)" },
-        },
-        "zoom-in": {
-          from: { transform: "scale(0.95)" },
-          to: { transform: "scale(1)" },
-        },
-        "zoom-out": {
-          from: { transform: "scale(1)" },
-          to: { transform: "scale(0.95)" },
-        },
-        "pulse-soft": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.5" },
-        },
-        "collapsible-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-collapsible-content-height)" },
-        },
-        "collapsible-up": {
-          from: { height: "var(--radix-collapsible-content-height)" },
-          to: { height: "0" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.15s ease-out",
-        "fade-out": "fade-out 0.15s ease-out",
-        "slide-in-from-top": "slide-in-from-top 0.15s ease-out",
-        "slide-in-from-bottom": "slide-in-from-bottom 0.15s ease-out",
-        "slide-in-from-left": "slide-in-from-left 0.15s ease-out",
-        "slide-in-from-right": "slide-in-from-right 0.15s ease-out",
-        "zoom-in": "zoom-in 0.15s ease-out",
-        "zoom-out": "zoom-out 0.15s ease-out",
-        "pulse-soft": "pulse-soft 2s infinite",
-        "collapsible-down": "collapsible-down 0.2s ease-out",
-        "collapsible-up": "collapsible-up 0.2s ease-out",
+        "fade-in": "fade-in 0.2s ease-out",
+        "fade-out": "fade-out 0.2s ease-out",
+        "slide-in-from-top": "slide-in-from-top 0.3s ease-out",
+        "slide-in-from-bottom": "slide-in-from-bottom 0.3s ease-out",
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };
 
 export default config;
