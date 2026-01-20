@@ -121,7 +121,7 @@ function getAreaBadge(area: string) {
   const configs: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "success" | "warning" | "info" | "neutral" }> = {
     JURI: { label: "Júri", variant: "info" },
     EXECUCAO_PENAL: { label: "Execução Penal", variant: "warning" },
-    VIOLENCIA_DOMESTICA: { label: "V. Doméstica", variant: "destructive" }, // Using destructive style via className override if needed or mapped variant
+    VIOLENCIA_DOMESTICA: { label: "V. Doméstica", variant: "warning" },
     SUBSTITUICAO: { label: "Substituição", variant: "neutral" },
   };
   
