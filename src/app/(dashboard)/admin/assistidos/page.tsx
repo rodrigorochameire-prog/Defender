@@ -91,6 +91,7 @@ import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar"
 import { EmptyState } from "@/components/shared/empty-state";
 
 // Cores alinhadas com os workspaces
+// Cores de atribuição NEUTRAS para reduzir poluição visual
 const ATRIBUICAO_COLORS: Record<string, { 
   border: string; 
   bg: string; 
@@ -99,46 +100,46 @@ const ATRIBUICAO_COLORS: Record<string, {
   indicator: string;
 }> = {
   all: { 
-    border: "border-l-zinc-400", 
+    border: "border-l-zinc-300", 
     bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-700 dark:text-zinc-300",
+    text: "text-zinc-600 dark:text-zinc-400",
     hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-    indicator: "bg-zinc-600"
+    indicator: "bg-zinc-500"
   },
   JURI: { 
-    border: "border-l-emerald-600 dark:border-l-emerald-500", 
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-700 dark:text-emerald-400",
-    hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
-    indicator: "bg-emerald-600"
+    border: "border-l-zinc-400", 
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   VVD: { 
-    border: "border-l-violet-600 dark:border-l-violet-500",
-    bg: "bg-violet-100 dark:bg-violet-900/30",
-    text: "text-violet-700 dark:text-violet-400",
-    hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20",
-    indicator: "bg-violet-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   EXECUCAO: { 
-    border: "border-l-blue-600 dark:border-l-blue-500",
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
-    hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-900/20",
-    indicator: "bg-blue-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   CRIMINAL: { 
-    border: "border-l-rose-600 dark:border-l-rose-500",
-    bg: "bg-rose-100 dark:bg-rose-900/30",
-    text: "text-rose-700 dark:text-rose-400",
-    hoverBg: "hover:bg-rose-50 dark:hover:bg-rose-900/20",
-    indicator: "bg-rose-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   CIVEL: { 
-    border: "border-l-purple-600 dark:border-l-purple-500",
-    bg: "bg-purple-100 dark:bg-purple-900/30",
-    text: "text-purple-700 dark:text-purple-400",
-    hoverBg: "hover:bg-purple-50 dark:hover:bg-purple-900/20",
-    indicator: "bg-purple-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
 };
 
@@ -454,23 +455,25 @@ const statusConfig: Record<string, { label: string; color: string; bgColor: stri
   SOLTO: { label: "Solto", color: "text-emerald-700 dark:text-emerald-300", bgColor: "bg-emerald-50/80 dark:bg-emerald-950/20", borderColor: "border-emerald-200/60 dark:border-emerald-800/30", iconBg: "bg-emerald-100 dark:bg-emerald-900/40", priority: 7 },
 };
 
+// Fases NEUTRAS para reduzir poluição visual
 const faseConfig: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-  INQUERITO: { label: "Inquérito", color: "text-slate-600", bgColor: "bg-slate-100", icon: FileText },
-  INSTRUCAO: { label: "Instrução", color: "text-blue-600", bgColor: "bg-blue-100", icon: Scale },
-  SUMARIO_CULPA: { label: "Sumário Culpa", color: "text-violet-600", bgColor: "bg-violet-100", icon: Gavel },
-  ALEGACOES_FINAIS: { label: "Alegações Finais", color: "text-amber-600", bgColor: "bg-amber-100", icon: FileText },
-  SENTENCA: { label: "Sentença", color: "text-orange-600", bgColor: "bg-orange-100", icon: Gavel },
-  RECURSO: { label: "Recurso", color: "text-purple-600", bgColor: "bg-purple-100", icon: Scale },
-  EXECUCAO: { label: "Execução", color: "text-rose-600", bgColor: "bg-rose-100", icon: Clock },
-  ARQUIVADO: { label: "Arquivado", color: "text-gray-500", bgColor: "bg-gray-100", icon: CheckCircle2 },
+  INQUERITO: { label: "Inquérito", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
+  INSTRUCAO: { label: "Instrução", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
+  SUMARIO_CULPA: { label: "Sumário Culpa", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
+  ALEGACOES_FINAIS: { label: "Alegações Finais", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
+  SENTENCA: { label: "Sentença", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
+  RECURSO: { label: "Recurso", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
+  EXECUCAO: { label: "Execução", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Clock },
+  ARQUIVADO: { label: "Arquivado", color: "text-zinc-400 dark:text-zinc-500", bgColor: "bg-zinc-50 dark:bg-zinc-900", icon: CheckCircle2 },
 };
 
+// Áreas NEUTRAS para reduzir poluição visual
 const areaConfig: Record<string, { label: string; labelFull: string; color: string; bgColor: string }> = {
-  JURI: { label: "Júri", labelFull: "Tribunal do Júri", color: "text-violet-600", bgColor: "bg-violet-50" },
-  EXECUCAO_PENAL: { label: "EP", labelFull: "Execução Penal", color: "text-blue-600", bgColor: "bg-blue-50" },
-  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violência Doméstica", color: "text-pink-600", bgColor: "bg-pink-50" },
-  SUBSTITUICAO: { label: "Sub", labelFull: "Substituição", color: "text-orange-600", bgColor: "bg-orange-50" },
-  FAMILIA: { label: "Fam", labelFull: "Família", color: "text-rose-600", bgColor: "bg-rose-50" },
+  JURI: { label: "Júri", labelFull: "Tribunal do Júri", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
+  EXECUCAO_PENAL: { label: "EP", labelFull: "Execução Penal", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
+  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violência Doméstica", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
+  SUBSTITUICAO: { label: "Sub", labelFull: "Substituição", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
+  FAMILIA: { label: "Fam", labelFull: "Família", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800" },
 };
 
 function getPrazoInfo(prazoStr: string | null) {
@@ -590,9 +593,10 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
   };
 
   // Cor da borda lateral - ÚNICA cor estrutural do card
+  // Borda colorida apenas para réu preso (informação crítica)
   const statusBorderColor = isPreso 
     ? "border-l-rose-600 dark:border-l-rose-500" 
-    : "border-l-emerald-600 dark:border-l-emerald-500";
+    : "border-l-zinc-300 dark:border-l-zinc-600";
 
   return (
     <Card className={cn(
@@ -952,7 +956,7 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
     <SwissTableRow className={cn(
       "group transition-colors",
       // Borda lateral semântica
-      isPreso ? "border-l-[3px] border-l-rose-500" : "border-l-[3px] border-l-emerald-500",
+      isPreso ? "border-l-[3px] border-l-rose-500" : "border-l-[3px] border-l-zinc-300 dark:border-l-zinc-600",
       isPinned && "bg-amber-50/30 dark:bg-amber-950/10"
     )}>
       {/* Nome */}

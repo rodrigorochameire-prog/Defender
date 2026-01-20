@@ -117,6 +117,7 @@ interface Processo {
 // ==========================================
 
 // Cores alinhadas com os workspaces
+// Cores de atribuição NEUTRAS para reduzir poluição visual
 const ATRIBUICAO_COLORS: Record<string, { 
   border: string; 
   bg: string; 
@@ -125,46 +126,46 @@ const ATRIBUICAO_COLORS: Record<string, {
   indicator: string;
 }> = {
   all: { 
-    border: "border-l-zinc-400", 
+    border: "border-l-zinc-300", 
     bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-700 dark:text-zinc-300",
+    text: "text-zinc-600 dark:text-zinc-400",
     hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-    indicator: "bg-zinc-600"
+    indicator: "bg-zinc-500"
   },
   JURI: { 
-    border: "border-l-emerald-600 dark:border-l-emerald-500", 
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-700 dark:text-emerald-400",
-    hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
-    indicator: "bg-emerald-600"
+    border: "border-l-zinc-400", 
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   VVD: { 
-    border: "border-l-violet-600 dark:border-l-violet-500",
-    bg: "bg-violet-100 dark:bg-violet-900/30",
-    text: "text-violet-700 dark:text-violet-400",
-    hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20",
-    indicator: "bg-violet-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   EXECUCAO_PENAL: { 
-    border: "border-l-blue-600 dark:border-l-blue-500",
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
-    hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-900/20",
-    indicator: "bg-blue-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   SUBSTITUICAO: { 
-    border: "border-l-rose-600 dark:border-l-rose-500",
-    bg: "bg-rose-100 dark:bg-rose-900/30",
-    text: "text-rose-700 dark:text-rose-400",
-    hoverBg: "hover:bg-rose-50 dark:hover:bg-rose-900/20",
-    indicator: "bg-rose-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   CIVEL: { 
-    border: "border-l-purple-600 dark:border-l-purple-500",
-    bg: "bg-purple-100 dark:bg-purple-900/30",
-    text: "text-purple-700 dark:text-purple-400",
-    hoverBg: "hover:bg-purple-50 dark:hover:bg-purple-900/20",
-    indicator: "bg-purple-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
 };
 
@@ -187,11 +188,12 @@ const ATRIBUICAO_OPTIONS = [
   { value: "CIVEL", label: "Subst. Cível", shortLabel: "Cível" },
 ];
 
+// Status NEUTROS para reduzir poluição visual
 const SITUACAO_CONFIGS: Record<string, { label: string; color: string; bg: string }> = {
-  ativo: { label: "Ativo", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
-  suspenso: { label: "Suspenso", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-900/30" },
-  arquivado: { label: "Arquivado", color: "text-slate-500 dark:text-slate-400", bg: "bg-slate-100 dark:bg-slate-900/30" },
-  baixado: { label: "Baixado", color: "text-zinc-500 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-900/30" },
+  ativo: { label: "Ativo", color: "text-zinc-700 dark:text-zinc-300", bg: "bg-zinc-100 dark:bg-zinc-800" },
+  suspenso: { label: "Suspenso", color: "text-zinc-500 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" },
+  arquivado: { label: "Arquivado", color: "text-zinc-400 dark:text-zinc-500", bg: "bg-zinc-50 dark:bg-zinc-900" },
+  baixado: { label: "Baixado", color: "text-zinc-400 dark:text-zinc-500", bg: "bg-zinc-50 dark:bg-zinc-900" },
 };
 
 // Dados mockados
@@ -327,7 +329,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
         "border-l-[3px]",
         processo.assistido.preso 
           ? "border-l-rose-500 dark:border-l-rose-400" 
-          : "border-l-emerald-500 dark:border-l-emerald-400"
+          : "border-l-zinc-300 dark:border-l-zinc-600"
       )}>
         {/* Cabeçalho */}
         <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">

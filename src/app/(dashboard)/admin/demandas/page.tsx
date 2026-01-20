@@ -110,6 +110,7 @@ import { FilterChip, FilterChipGroup, ActiveFiltersBar } from "@/components/shar
 import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
 
 // Cores alinhadas com os workspaces
+// Cores de atribuição NEUTRAS para reduzir poluição visual
 const ATRIBUICAO_COLORS: Record<string, { 
   border: string; 
   bg: string; 
@@ -118,53 +119,53 @@ const ATRIBUICAO_COLORS: Record<string, {
   hoverBg: string;
 }> = {
   all: { 
-    border: "border-l-zinc-400", 
+    border: "border-l-zinc-300", 
     bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-700 dark:text-zinc-300",
+    text: "text-zinc-600 dark:text-zinc-400",
     activeBg: "bg-zinc-600 hover:bg-zinc-700",
     hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800"
   },
   JURI_CAMACARI: { 
-    border: "border-l-emerald-600 dark:border-l-emerald-500", 
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-700 dark:text-emerald-400",
-    activeBg: "bg-emerald-600 hover:bg-emerald-700",
-    hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+    border: "border-l-zinc-400", 
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    activeBg: "bg-zinc-600 hover:bg-zinc-700",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
   },
   GRUPO_JURI: { 
-    border: "border-l-orange-600 dark:border-l-orange-500", 
-    bg: "bg-orange-100 dark:bg-orange-900/30",
-    text: "text-orange-700 dark:text-orange-400",
-    activeBg: "bg-orange-600 hover:bg-orange-700",
-    hoverBg: "hover:bg-orange-50 dark:hover:bg-orange-900/20"
+    border: "border-l-zinc-400", 
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    activeBg: "bg-zinc-600 hover:bg-zinc-700",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
   },
   VVD_CAMACARI: { 
-    border: "border-l-violet-600 dark:border-l-violet-500",
-    bg: "bg-violet-100 dark:bg-violet-900/30",
-    text: "text-violet-700 dark:text-violet-400",
-    activeBg: "bg-violet-600 hover:bg-violet-700",
-    hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    activeBg: "bg-zinc-600 hover:bg-zinc-700",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
   },
   EXECUCAO_PENAL: { 
-    border: "border-l-blue-600 dark:border-l-blue-500",
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
-    activeBg: "bg-blue-600 hover:bg-blue-700",
-    hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-900/20"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    activeBg: "bg-zinc-600 hover:bg-zinc-700",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
   },
   SUBSTITUICAO: { 
-    border: "border-l-rose-600 dark:border-l-rose-500",
-    bg: "bg-rose-100 dark:bg-rose-900/30",
-    text: "text-rose-700 dark:text-rose-400",
-    activeBg: "bg-rose-600 hover:bg-rose-700",
-    hoverBg: "hover:bg-rose-50 dark:hover:bg-rose-900/20"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    activeBg: "bg-zinc-600 hover:bg-zinc-700",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
   },
   SUBSTITUICAO_CIVEL: { 
-    border: "border-l-purple-600 dark:border-l-purple-500",
-    bg: "bg-purple-100 dark:bg-purple-900/30",
-    text: "text-purple-700 dark:text-purple-400",
-    activeBg: "bg-purple-600 hover:bg-purple-700",
-    hoverBg: "hover:bg-purple-50 dark:hover:bg-purple-900/20"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    activeBg: "bg-zinc-600 hover:bg-zinc-700",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80"
   },
 };
 
@@ -2216,27 +2217,24 @@ export default function DemandasPage() {
               const tipoAtoConfig = tipoAtoOptions.find(t => t.value === demanda.tipoAto);
               const comarcaConfig = COMARCA_OPTIONS.find(c => c.value === demanda.comarca);
               
-              // Cor da borda baseada no status
+              // Cor da borda baseada no status - cores apenas para ação urgente
               const getBorderColor = (status: string) => {
-                if (status.startsWith("1_")) return "border-l-red-500"; // Urgente
-                if (status.startsWith("2_")) return "border-l-amber-400"; // Trabalho
-                if (status.startsWith("3_")) return "border-l-orange-500"; // Protocolar
-                if (status.startsWith("4_")) return "border-l-sky-500"; // Delegado
-                if (status.startsWith("5_")) return "border-l-violet-500"; // Fila
-                if (status.startsWith("6_")) return "border-l-slate-500"; // Aguardando
-                if (status.startsWith("7_")) return "border-l-emerald-500"; // Concluído
+                if (status.startsWith("1_")) return "border-l-rose-500"; // Urgente - vermelho
+                if (status.startsWith("2_")) return "border-l-amber-400"; // Trabalho - âmbar
+                if (status.startsWith("3_")) return "border-l-amber-300"; // Protocolar - âmbar suave
+                if (status.startsWith("4_")) return "border-l-zinc-400"; // Delegado - neutro
+                if (status.startsWith("5_")) return "border-l-zinc-300"; // Fila - neutro
+                if (status.startsWith("6_")) return "border-l-zinc-300"; // Aguardando - neutro
+                if (status.startsWith("7_")) return "border-l-zinc-400"; // Concluído - neutro
                 return "border-l-zinc-300";
               };
 
+              // Gradientes apenas para urgências
               const getBgGradient = (status: string) => {
-                if (status.startsWith("1_")) return "bg-gradient-to-r from-red-50/40 to-transparent dark:from-red-950/20";
-                if (status.startsWith("2_")) return "bg-gradient-to-r from-amber-50/40 to-transparent dark:from-amber-950/20";
-                if (status.startsWith("3_")) return "bg-gradient-to-r from-orange-50/40 to-transparent dark:from-orange-950/20";
-                if (status.startsWith("4_")) return "bg-gradient-to-r from-sky-50/40 to-transparent dark:from-sky-950/20";
-                if (status.startsWith("5_")) return "bg-gradient-to-r from-violet-50/40 to-transparent dark:from-violet-950/20";
-                if (status.startsWith("6_")) return "bg-gradient-to-r from-slate-50/40 to-transparent dark:from-slate-950/20";
-                if (status.startsWith("7_")) return "bg-gradient-to-r from-emerald-50/40 to-transparent dark:from-emerald-950/20";
-                return "";
+                if (status.startsWith("1_")) return "bg-gradient-to-r from-rose-50/30 to-transparent dark:from-rose-950/15";
+                if (status.startsWith("2_")) return "bg-gradient-to-r from-amber-50/30 to-transparent dark:from-amber-950/15";
+                if (status.startsWith("3_")) return "bg-gradient-to-r from-amber-50/20 to-transparent dark:from-amber-950/10";
+                return ""; // Demais sem gradiente
               };
 
               return (
@@ -2912,14 +2910,15 @@ export default function DemandasPage() {
               const areaConfig = getAreaConfig(demanda.area);
               const comarcaConfig = COMARCA_OPTIONS.find(c => c.value === demanda.comarca);
               
+              // Cores apenas para ação urgente
               const getBorderColor = (status: string) => {
-                if (status.startsWith("1_")) return "border-l-red-500";
-                if (status.startsWith("2_")) return "border-l-amber-400";
-                if (status.startsWith("3_")) return "border-l-orange-500";
-                if (status.startsWith("4_")) return "border-l-sky-500";
-                if (status.startsWith("5_")) return "border-l-violet-500";
-                if (status.startsWith("6_")) return "border-l-slate-500";
-                if (status.startsWith("7_")) return "border-l-emerald-500";
+                if (status.startsWith("1_")) return "border-l-rose-500"; // Urgente
+                if (status.startsWith("2_")) return "border-l-amber-400"; // Trabalho
+                if (status.startsWith("3_")) return "border-l-amber-300"; // Protocolar
+                if (status.startsWith("4_")) return "border-l-zinc-400"; // Delegado
+                if (status.startsWith("5_")) return "border-l-zinc-300"; // Fila
+                if (status.startsWith("6_")) return "border-l-zinc-300"; // Aguardando
+                if (status.startsWith("7_")) return "border-l-zinc-400"; // Concluído
                 return "border-l-zinc-300";
               };
 

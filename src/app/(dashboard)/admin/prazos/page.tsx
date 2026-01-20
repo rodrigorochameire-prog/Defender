@@ -43,6 +43,7 @@ import { ptBR } from "date-fns/locale";
 // ==========================================
 
 // Cores alinhadas com os workspaces
+// Cores de atribuição NEUTRAS para reduzir poluição visual
 const ATRIBUICAO_COLORS: Record<string, { 
   border: string; 
   bg: string; 
@@ -51,39 +52,39 @@ const ATRIBUICAO_COLORS: Record<string, {
   indicator: string;
 }> = {
   all: { 
-    border: "border-l-zinc-400", 
+    border: "border-l-zinc-300", 
     bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-700 dark:text-zinc-300",
+    text: "text-zinc-600 dark:text-zinc-400",
     hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-    indicator: "bg-zinc-600"
+    indicator: "bg-zinc-500"
   },
   JURI: { 
-    border: "border-l-emerald-600 dark:border-l-emerald-500", 
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-700 dark:text-emerald-400",
-    hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
-    indicator: "bg-emerald-600"
+    border: "border-l-zinc-400", 
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   VIOLENCIA_DOMESTICA: { 
-    border: "border-l-violet-600 dark:border-l-violet-500",
-    bg: "bg-violet-100 dark:bg-violet-900/30",
-    text: "text-violet-700 dark:text-violet-400",
-    hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20",
-    indicator: "bg-violet-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   EXECUCAO_PENAL: { 
-    border: "border-l-blue-600 dark:border-l-blue-500",
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
-    hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-900/20",
-    indicator: "bg-blue-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   SUBSTITUICAO: { 
-    border: "border-l-rose-600 dark:border-l-rose-500",
-    bg: "bg-rose-100 dark:bg-rose-900/30",
-    text: "text-rose-700 dark:text-rose-400",
-    hoverBg: "hover:bg-rose-50 dark:hover:bg-rose-900/20",
-    indicator: "bg-rose-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
 };
 
@@ -470,7 +471,7 @@ export default function PrazosPage() {
                   "border-l-[3px]",
                   prazo.reuPreso 
                     ? "border-l-rose-500 dark:border-l-rose-400" 
-                    : "border-l-emerald-500 dark:border-l-emerald-400",
+                    : "border-l-zinc-300 dark:border-l-zinc-600",
                   prazoInfo.urgent && "ring-1 ring-rose-200 dark:ring-rose-900/50"
                 )}
               >

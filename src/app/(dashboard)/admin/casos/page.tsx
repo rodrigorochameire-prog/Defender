@@ -89,6 +89,8 @@ import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar"
 import { EmptyState } from "@/components/shared/empty-state";
 
 // Cores alinhadas com os workspaces
+// Cores de atribuição NEUTRAS para reduzir poluição visual
+// Cores são reservadas apenas para informações críticas (Preso, Prazos urgentes)
 const ATRIBUICAO_COLORS: Record<string, { 
   border: string; 
   bg: string; 
@@ -97,38 +99,38 @@ const ATRIBUICAO_COLORS: Record<string, {
   indicator: string;
 }> = {
   all: { 
-    border: "border-l-zinc-400", 
+    border: "border-l-zinc-300", 
     bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-700 dark:text-zinc-300",
+    text: "text-zinc-600 dark:text-zinc-400",
     hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-    indicator: "bg-zinc-600"
+    indicator: "bg-zinc-500"
   },
   JURI_CAMACARI: { 
-    border: "border-l-emerald-600 dark:border-l-emerald-500", 
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-700 dark:text-emerald-400",
-    hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
-    indicator: "bg-emerald-600"
+    border: "border-l-zinc-400", 
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   VVD_CAMACARI: { 
-    border: "border-l-violet-600 dark:border-l-violet-500",
-    bg: "bg-violet-100 dark:bg-violet-900/30",
-    text: "text-violet-700 dark:text-violet-400",
-    hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20",
-    indicator: "bg-violet-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   EXECUCAO_PENAL: { 
-    border: "border-l-blue-600 dark:border-l-blue-500",
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
-    hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-900/20",
-    indicator: "bg-blue-600"
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+    indicator: "bg-zinc-500"
   },
   SUBSTITUICAO: { 
-    border: "border-l-rose-600 dark:border-l-rose-500",
-    bg: "bg-rose-100 dark:bg-rose-900/30",
-    text: "text-rose-700 dark:text-rose-400",
-    hoverBg: "hover:bg-rose-50 dark:hover:bg-rose-900/20",
+    border: "border-l-zinc-400",
+    bg: "bg-zinc-100 dark:bg-zinc-800",
+    text: "text-zinc-600 dark:text-zinc-400",
+    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
     indicator: "bg-rose-600"
   },
   GRUPO_JURI: { 
@@ -274,10 +276,11 @@ const ATRIBUICAO_LABELS: Record<string, string> = {
   SUBSTITUICAO_CIVEL: "Cível",
 };
 
+// Fases do caso - TODAS NEUTRAS para reduzir poluição visual
 const FASES_CASO = {
   INQUERITO: { label: "Inquérito", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", icon: "🔍", progress: 10 },
   INSTRUCAO: { label: "Instrução", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", icon: "⚖️", progress: 35 },
-  PLENARIO: { label: "Plenário", color: "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200 dark:border-amber-800", icon: "🎭", progress: 60 },
+  PLENARIO: { label: "Plenário", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", icon: "🎭", progress: 60 },
   RECURSO: { label: "Recurso", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", icon: "📤", progress: 80 },
   EXECUCAO: { label: "Execução", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", icon: "⏱️", progress: 90 },
   ARQUIVADO: { label: "Arquivado", color: "bg-zinc-50 text-zinc-400 dark:bg-zinc-900 dark:text-zinc-500", icon: "📁", progress: 100 },
