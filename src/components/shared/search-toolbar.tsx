@@ -32,8 +32,8 @@ interface SearchToolbarProps {
   searchPlaceholder?: string;
   
   // View Toggle
-  viewMode?: "grid" | "list" | "kanban";
-  onViewModeChange?: (mode: "grid" | "list" | "kanban") => void;
+  viewMode?: "grid" | "list";
+  onViewModeChange?: (mode: "grid" | "list") => void;
   showViewToggle?: boolean;
   
   // Filters

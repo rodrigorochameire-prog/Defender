@@ -84,6 +84,9 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { PageHeader } from "@/components/shared/section-header";
 import { FilterChip, FilterChipGroup } from "@/components/shared/filter-chips";
+import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
+import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
+import { EmptyState } from "@/components/shared/empty-state";
 
 // Cores alinhadas com os workspaces
 const ATRIBUICAO_COLORS: Record<string, { 
@@ -1115,68 +1118,68 @@ function CasoTableRow({ caso }: { caso: Caso }) {
 
   return (
     <SwissTableRow className={cn(
-      "group transition-colors cursor-pointer",
+      "group transition-colors cursor-pointer hover:bg-muted/50",
       hasReuPreso && "border-l-[3px] border-l-rose-500"
     )}>
-      <SwissTableCell>
+      <SwissTableCell className="py-4">
         <Link href={`/admin/casos/${caso.id}`} className="block">
-          <div className="font-serif font-medium text-zinc-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+          <div className="font-medium text-sm text-foreground hover:text-primary transition-colors">
             {caso.titulo}
           </div>
-          <div className="font-mono text-[10px] text-zinc-400">{caso.codigo}</div>
+          <div className="font-mono text-xs text-muted-foreground mt-0.5">{caso.codigo}</div>
         </Link>
       </SwissTableCell>
-      <SwissTableCell>
+      <SwissTableCell className="py-4">
         <div className="flex items-center gap-2">
           {caso.assistidos.slice(0, 2).map((a) => (
             <Avatar key={a.id} className={cn(
-              "w-6 h-6 ring-1",
-              a.preso ? "ring-rose-500" : "ring-emerald-500"
+              "w-8 h-8 ring-2 ring-background",
+              a.preso ? "ring-rose-500" : "ring-muted"
             )}>
-              <AvatarFallback className="text-[10px]">
+              <AvatarFallback className="text-xs font-medium">
                 {a.nome.charAt(0)}
               </AvatarFallback>
             </Avatar>
           ))}
           {caso.assistidos.length > 2 && (
-            <span className="text-[10px] text-zinc-400">+{caso.assistidos.length - 2}</span>
+            <span className="text-xs text-muted-foreground font-medium">+{caso.assistidos.length - 2}</span>
           )}
         </div>
       </SwissTableCell>
-      <SwissTableCell>
+      <SwissTableCell className="py-4">
         <Badge className={cn("text-xs", faseConfig.color)}>
           {faseConfig.icon} {faseConfig.label}
         </Badge>
       </SwissTableCell>
-      <SwissTableCell className="text-center">
-        <span className="font-medium text-zinc-700 dark:text-zinc-300">
+      <SwissTableCell className="text-center py-4">
+        <span className="font-semibold text-sm text-foreground">
           {caso.processos.length}
         </span>
       </SwissTableCell>
-      <SwissTableCell className="text-center">
+      <SwissTableCell className="text-center py-4">
         <span className={cn(
-          "font-medium",
+          "font-semibold text-sm",
           caso.demandasPendentes.length > 0 
             ? "text-amber-600 dark:text-amber-400" 
-            : "text-zinc-400"
+            : "text-muted-foreground"
         )}>
           {caso.demandasPendentes.length}
         </span>
       </SwissTableCell>
-      <SwissTableCell className="text-center">
+      <SwissTableCell className="text-center py-4">
         <span className={cn(
-          "font-medium",
+          "font-semibold text-sm",
           caso.teoriaCompleta 
             ? "text-emerald-600 dark:text-emerald-400" 
-            : "text-zinc-400"
+            : "text-muted-foreground"
         )}>
           {caso.teoriaCompleta ? "✓" : "○"}
         </span>
       </SwissTableCell>
-      <SwissTableCell className="text-right">
+      <SwissTableCell className="text-right py-4">
         <Link href={`/admin/casos/${caso.id}`}>
-          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-            <Eye className="w-4 h-4 mr-1" /> Ver
+          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity gap-1.5">
+            <Eye className="w-4 h-4" /> Ver
           </Button>
         </Link>
       </SwissTableCell>
@@ -1272,227 +1275,135 @@ export default function CasosPage() {
           })}
         </FilterChipGroup>
 
-        {/* Stats Cards - Responsivo */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
-          <SwissCard className="border-l-2 border-l-slate-400">
-            <SwissCardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</p>
-                <p className="text-[10px] sm:text-xs text-zinc-500">Total</p>
-              </div>
-            </div>
-            </SwissCardContent>
-          </SwissCard>
-          
-          <SwissCard className="border-l-2 border-l-rose-500">
-            <SwissCardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
-                <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">Presos</p>
-              </div>
-            </div>
-            </SwissCardContent>
-          </SwissCard>
-          
-          <SwissCard className="border-l-2 border-l-amber-500">
-            <SwissCardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.demandasPendentes}</p>
-                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Demandas</p>
-              </div>
-            </div>
-            </SwissCardContent>
-          </SwissCard>
-          
-          <SwissCard className="border-l-2 border-l-emerald-500 hidden sm:block">
-            <SwissCardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.teoriaCompleta}</p>
-                <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">Teoria OK</p>
-              </div>
-            </div>
-            </SwissCardContent>
-          </SwissCard>
+        {/* Stats Cards - Padronizado */}
+        <StatsGrid columns={5}>
+          <StatsCard
+            label="Total"
+            value={stats.total}
+            icon={Briefcase}
+            variant="default"
+            size="sm"
+          />
+          <StatsCard
+            label="Réu Preso"
+            value={stats.reuPreso}
+            icon={Lock}
+            variant={stats.reuPreso > 0 ? "danger" : "default"}
+            size="sm"
+          />
+          <StatsCard
+            label="Demandas"
+            value={stats.demandasPendentes}
+            icon={Clock}
+            variant={stats.demandasPendentes > 0 ? "warning" : "default"}
+            size="sm"
+          />
+          <StatsCard
+            label="Teoria OK"
+            value={stats.teoriaCompleta}
+            icon={Scale}
+            variant="success"
+            size="sm"
+            className="hidden sm:flex"
+          />
+          <StatsCard
+            label="Audiências"
+            value={stats.audienciasProximas}
+            icon={Calendar}
+            variant="info"
+            size="sm"
+            className="hidden lg:flex"
+          />
+        </StatsGrid>
 
-          <SwissCard className="border-l-2 border-l-blue-500 hidden lg:block">
-            <SwissCardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.audienciasProximas}</p>
-                <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400">Audiências</p>
-              </div>
-            </div>
-            </SwissCardContent>
-          </SwissCard>
-        </div>
-
-        {/* Filters - Responsivo */}
-        <div className="flex flex-col gap-2 sm:gap-3">
-          {/* Search + View Toggle */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <Input
-                placeholder="Buscar por título, código ou assistido..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white dark:bg-zinc-950 h-9 text-sm"
+        {/* Search & Filters - Padronizado */}
+        <SearchToolbar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Buscar por título, código ou assistido..."
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          filters={
+            <>
+              <FilterSelect
+                label="Fase"
+                value={filterFase}
+                onValueChange={setFilterFase}
+                options={[
+                  { value: "all", label: "Todas fases" },
+                  ...Object.entries(FASES_CASO).map(([key, val]) => ({
+                    value: key,
+                    label: `${val.icon} ${val.label}`,
+                  })),
+                ]}
+                width="md"
               />
-            </div>
-            
-            {/* View Toggle */}
-            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg flex-shrink-0">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode("grid")}
-                    className={cn(
-                      "h-7 w-7 p-0 rounded-md",
-                      viewMode === "grid" 
-                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
-                        : "text-zinc-500"
-                    )}
-                  >
-                    <LayoutGrid className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Modo Grade</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode("list")}
-                    className={cn(
-                      "h-7 w-7 p-0 rounded-md",
-                      viewMode === "list" 
-                        ? "bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-zinc-100" 
-                        : "text-zinc-500"
-                    )}
-                  >
-                    <List className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Modo Lista</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-
-          {/* Filter Row */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
-            <Select value={filterAtribuicao} onValueChange={setFilterAtribuicao}>
-              <SelectTrigger className="w-[110px] sm:w-[130px] h-8 text-xs flex-shrink-0">
-                <SelectValue placeholder="Atribuição" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {Object.entries(ATRIBUICAO_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterFase} onValueChange={setFilterFase}>
-              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 text-xs flex-shrink-0">
-                <SelectValue placeholder="Fase" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas fases</SelectItem>
-                {Object.entries(FASES_CASO).map(([key, val]) => (
-                  <SelectItem key={key} value={key}>
-                    {val.icon} {val.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[100px] sm:w-[120px] h-8 text-xs flex-shrink-0">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="ativo">Ativos</SelectItem>
-                <SelectItem value="suspenso">Suspensos</SelectItem>
-                <SelectItem value="arquivado">Arquivados</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+              <FilterSelect
+                label="Status"
+                value={filterStatus}
+                onValueChange={setFilterStatus}
+                options={[
+                  { value: "all", label: "Todos" },
+                  { value: "ativo", label: "Ativos" },
+                  { value: "suspenso", label: "Suspensos" },
+                  { value: "arquivado", label: "Arquivados" },
+                ]}
+                width="sm"
+              />
+            </>
+          }
+          activeFiltersCount={
+            (filterFase !== "all" ? 1 : 0) + (filterStatus !== "all" ? 1 : 0)
+          }
+          onClearFilters={() => {
+            setFilterFase("all");
+            setFilterStatus("all");
+          }}
+        />
 
         {/* Content */}
         {viewMode === "grid" ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 px-1 sm:px-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredCasos.map((caso) => (
               <CasoCardDossier key={caso.id} caso={caso} />
             ))}
           </div>
         ) : (
-          <SwissCard className="overflow-hidden">
-            <SwissCardContent className="p-0">
-              <SwissTable>
-                <SwissTableHeader>
-                  <SwissTableRow>
-                    <SwissTableHead>Caso</SwissTableHead>
-                    <SwissTableHead>Assistidos</SwissTableHead>
-                    <SwissTableHead>Fase</SwissTableHead>
-                    <SwissTableHead className="text-center">Proc.</SwissTableHead>
-                    <SwissTableHead className="text-center">Dem.</SwissTableHead>
-                    <SwissTableHead className="text-center">Teoria</SwissTableHead>
-                    <SwissTableHead className="text-right">Ações</SwissTableHead>
-                  </SwissTableRow>
-                </SwissTableHeader>
-                <SwissTableBody>
-                  {filteredCasos.map((caso) => (
-                    <CasoTableRow key={caso.id} caso={caso} />
-                  ))}
-                </SwissTableBody>
-              </SwissTable>
-            </SwissCardContent>
-          </SwissCard>
+          <SwissTableContainer className="max-h-[calc(100vh-320px)]">
+            <SwissTable>
+              <SwissTableHeader>
+                <SwissTableRow className="bg-muted/50">
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Caso</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Assistidos</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Fase</SwissTableHead>
+                  <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Proc.</SwissTableHead>
+                  <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Dem.</SwissTableHead>
+                  <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Teoria</SwissTableHead>
+                  <SwissTableHead className="text-right font-semibold text-xs uppercase tracking-wider">Ações</SwissTableHead>
+                </SwissTableRow>
+              </SwissTableHeader>
+              <SwissTableBody>
+                {filteredCasos.map((caso) => (
+                  <CasoTableRow key={caso.id} caso={caso} />
+                ))}
+              </SwissTableBody>
+            </SwissTable>
+          </SwissTableContainer>
         )}
 
         {/* Empty State */}
         {filteredCasos.length === 0 && (
-          <Card className="border-dashed">
-            <div className="text-center py-16">
-              <div className="mx-auto w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
-                <Briefcase className="w-8 h-8 text-zinc-400" />
-              </div>
-              <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                Nenhum caso encontrado
-              </h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                Crie um novo caso ou ajuste os filtros de busca.
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Criar Primeiro Caso
-              </Button>
-            </div>
-          </Card>
+          <EmptyState
+            icon={Briefcase}
+            title="Nenhum caso encontrado"
+            description="Crie um novo caso ou ajuste os filtros de busca."
+            action={{
+              label: "Criar Primeiro Caso",
+              onClick: () => {},
+              icon: Plus,
+            }}
+            variant={searchTerm ? "search" : "default"}
+          />
         )}
       </div>
     </TooltipProvider>
