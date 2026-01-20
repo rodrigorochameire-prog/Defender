@@ -25,8 +25,9 @@ const sizeClasses = {
 /**
  * Indicador de Prisão Sutil
  * 
- * Um cadeado vermelho discreto para indicar que o assistido está preso.
- * Usado após o nome, substituindo badges ruidosas.
+ * Minimalismo Institucional: Usa iconografia semântica.
+ * Um ícone de cadeado diz tudo, ocupa menos espaço e não agride o olhar.
+ * Se solto, não mostra nada (limpeza visual máxima).
  */
 export function PrisonerIndicator({
   preso,
@@ -35,18 +36,25 @@ export function PrisonerIndicator({
   showTooltip = true,
   className,
 }: PrisonerIndicatorProps) {
+  // Se solto, não mostra nada (limpeza visual)
   if (!preso) return null;
 
   const indicator = (
-    <span
+    <div
       className={cn(
-        "inline-flex items-center justify-center flex-shrink-0",
-        "text-rose-500 dark:text-rose-400",
+        "inline-flex items-center justify-center flex-shrink-0 rounded-md",
+        // Estilo outline elegante (nunca solid pesado)
+        "bg-red-50 text-red-600 border border-red-100",
+        "dark:bg-red-950/30 dark:text-red-400 dark:border-red-900",
+        // Tamanhos
+        size === "xs" && "w-5 h-5",
+        size === "sm" && "w-6 h-6",
+        size === "md" && "w-7 h-7",
         className
       )}
     >
       <Lock className={cn(sizeClasses[size])} />
-    </span>
+    </div>
   );
 
   if (!showTooltip) {
@@ -60,7 +68,7 @@ export function PrisonerIndicator({
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-[200px]">
         <div className="text-center">
-          <p className="font-medium text-rose-500 text-xs">Preso</p>
+          <p className="font-medium text-red-600 dark:text-red-400 text-xs">Réu Preso / Custódia</p>
           {localPrisao && (
             <p className="text-xs text-muted-foreground mt-0.5">
               {localPrisao}

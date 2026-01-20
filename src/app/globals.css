@@ -469,6 +469,61 @@
     @apply font-sans text-3xl font-bold text-foreground tabular-nums tracking-tight;
   }
   
+  /* ==========================================
+     BADGES ELEGANTES - ESTILO OUTLINE
+     Regra: Use borda colorida + fundo claro (nunca solid)
+     Errado: bg-red-500 text-white (muito pesado)
+     Certo: bg-red-50 text-red-700 border-red-200
+     ========================================== */
+  
+  /* Badge Status - Vermelho (Urgente/Preso) */
+  .badge-danger {
+    @apply bg-red-50 text-red-700 border border-red-200 
+           dark:bg-red-950/50 dark:text-red-300 dark:border-red-800;
+  }
+  
+  /* Badge Status - Laranja (Protocolar/Ação) */
+  .badge-warning {
+    @apply bg-orange-50 text-orange-700 border border-orange-200
+           dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800;
+  }
+  
+  /* Badge Status - Amarelo (A Fazer/Trabalho) */
+  .badge-pending {
+    @apply bg-amber-50 text-amber-700 border border-amber-200
+           dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800;
+  }
+  
+  /* Badge Status - Azul (Monitorar/Aguardando) */
+  .badge-info {
+    @apply bg-blue-50 text-blue-700 border border-blue-200
+           dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800;
+  }
+  
+  /* Badge Status - Roxo (Fila) */
+  .badge-queue {
+    @apply bg-purple-50 text-purple-700 border border-purple-200
+           dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800;
+  }
+  
+  /* Badge Status - Verde (Concluído) */
+  .badge-success {
+    @apply bg-emerald-50 text-emerald-700 border border-emerald-200
+           dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800;
+  }
+  
+  /* Badge Status - Cinza (Neutro/Arquivado) */
+  .badge-neutral {
+    @apply bg-stone-100 text-stone-600 border border-stone-200
+           dark:bg-stone-800 dark:text-stone-400 dark:border-stone-700;
+  }
+  
+  /* Badge Prisional - Discreto mas visível */
+  .badge-prisoner {
+    @apply bg-red-50 text-red-600 border border-red-100
+           dark:bg-red-950/30 dark:text-red-400 dark:border-red-900;
+  }
+  
   /* Modo fonte grande - ajustes para utilidades UI */
   html.font-large .text-ui-body {
     @apply text-base;
