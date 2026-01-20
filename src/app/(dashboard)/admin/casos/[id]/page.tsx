@@ -691,7 +691,10 @@ export default function CasoDetailPage() {
       }))
     : MOCK_EVIDENCIAS;
 
-  const documentsSource = documentsData?.length ? documentsData : [];
+  const documentsSource = useMemo(
+    () => (documentsData?.length ? documentsData : []),
+    [documentsData]
+  );
 
   const mentionSuggestions = useMemo(() => {
     const docs = Array.from(

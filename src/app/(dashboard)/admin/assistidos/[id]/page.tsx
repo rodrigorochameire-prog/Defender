@@ -453,7 +453,7 @@ export default function AssistidoDetailPage() {
         type: "fato" as const,
       })),
     ];
-  }, []);
+  }, [assistido.id, assistido.nome]);
 
   const timelineSource = useMemo<TimelineEvent[]>(() => {
     if (!timelineData || timelineData.length === 0) return mockTimeline;
