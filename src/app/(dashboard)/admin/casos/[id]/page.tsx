@@ -112,6 +112,37 @@ interface Audiencia {
   defensorNome?: string | null;
 }
 
+interface Envolvido {
+  id: number;
+  nome: string;
+  tipo: string;
+  foto: string | null;
+  status: string;
+}
+
+interface ProcessoDetalhado {
+  id: number;
+  autos: string;
+  fase: string;
+  reus: string[];
+  status: string;
+}
+
+interface Diligencia {
+  id: number;
+  tipo: string;
+  status: string;
+  resultado: string;
+}
+
+interface Atendimento {
+  id: number;
+  data: string;
+  pessoa: string;
+  tipo: string;
+  resumo: string;
+}
+
 interface Caso {
   id: number;
   titulo: string;
@@ -135,6 +166,11 @@ interface Caso {
   audiencias: Audiencia[];
   demandasPendentes: Demanda[];
   createdAt: Date;
+  // 360 View Data
+  envolvidos?: Envolvido[];
+  processosDetalhados?: ProcessoDetalhado[];
+  diligencias?: Diligencia[];
+  atendimentos?: Atendimento[];
 }
 
 interface CasoConexo {
@@ -272,26 +308,6 @@ const MOCK_CASO: Caso = {
   createdAt: new Date("2025-01-10"),
 };
 
-// ... (Constants)
-// Fases NEUTRAS para reduzir poluição visual
-const FASES_CASO = {
-  INQUERITO: { label: "Inquérito", color: "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "🔍", progress: 10 },
-  INSTRUCAO: { label: "Instrução", color: "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "⚖️", progress: 35 },
-  PLENARIO: { label: "Plenário", color: "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "🎭", progress: 60 },
-  RECURSO: { label: "Recurso", color: "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "📤", progress: 80 },
-  EXECUCAO: { label: "Execução", color: "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800", icon: "⏱️", progress: 90 },
-  ARQUIVADO: { label: "Arquivado", color: "text-zinc-400 dark:text-zinc-500 bg-zinc-50 dark:bg-zinc-900", icon: "📁", progress: 100 },
-};
-
-const ATRIBUICAO_LABELS: Record<string, string> = {
-  JURI_CAMACARI: "Tribunal do Júri",
-  VVD_CAMACARI: "V. Doméstica",
-  EXECUCAO_PENAL: "Execução Penal",
-  SUBSTITUICAO: "Substituição",
-};
-
-const FASE_LABELS = ["Inquérito", "Instrução", "Plenário", "Recurso", "Execução"];
-
 // ... (Helper Components)
 
 function EnvolvidosList({ envolvidos }: { envolvidos: any[] }) {
@@ -334,7 +350,7 @@ export default function CasoDetailPage() {
   const params = useParams();
   const caso = MOCK_CASO;
   const faseConfig = FASES_CASO.INSTRUCAO;
-  const tags = JSON.parse(caso.tags);
+  const tags = caso.tags ? JSON.parse(caso.tags) : [];
   const [activeTab, setActiveTab] = useState("visao-geral");
 
   // ... (Hooks and calculations)
@@ -386,7 +402,7 @@ export default function CasoDetailPage() {
               </div>
             </div>
             <div className="hidden md:block">
-              <EnvolvidosList envolvidos={caso.envolvidos} />
+              <EnvolvidosList envolvidos={caso.envolvidos || []} />
             </div>
           </div>
 
@@ -419,7 +435,7 @@ export default function CasoDetailPage() {
                   <Scale className="w-4 h-4 text-primary" /> Síntese Processual
                 </h3>
                 <div className="space-y-4">
-                  {caso.processosDetalhados.map((proc) => (
+                  {(caso.processosDetalhados || []).map((proc) => (
                     <div key={proc.id} className="p-3 bg-muted/30 rounded-lg border border-border/50">
                       <div className="flex justify-between items-start mb-2">
                         <div>
@@ -442,7 +458,7 @@ export default function CasoDetailPage() {
                   <MessageCircle className="w-4 h-4 text-primary" /> Atendimentos
                 </h3>
                 <div className="space-y-3">
-                  {caso.atendimentos.map((atend) => (
+                  {(caso.atendimentos || []).map((atend) => (
                     <div key={atend.id} className="flex gap-3 text-sm">
                       <div className="w-16 text-xs text-muted-foreground text-right">{atend.data}</div>
                       <div className="w-px bg-border"></div>
@@ -464,7 +480,7 @@ export default function CasoDetailPage() {
                 <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Nova Diligência</Button>
               </div>
               <div className="space-y-4">
-                {caso.diligencias.map((dil) => (
+                {(caso.diligencias || []).map((dil) => (
                   <div key={dil.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors">
                     <div>
                       <p className="font-medium">{dil.tipo}</p>

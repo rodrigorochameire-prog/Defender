@@ -97,7 +97,7 @@ import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar"
 import { EmptyState } from "@/components/shared/empty-state";
 
 // Cores alinhadas com os workspaces
-// Cores de atribuição NEUTRAS para reduzir poluição visual
+// Cores de atribuicao NEUTRAS para reduzir poluicao visual
 const ATRIBUICAO_COLORS: Record<string, { 
   border: string; 
   bg: string; 
@@ -149,8 +149,8 @@ const ATRIBUICAO_COLORS: Record<string, {
   },
 };
 
-// Atribuições disponíveis para o filtro
-// Ícones para cada atribuição (Lucide icons)
+// Atribuicoes disponiveis para o filtro
+// Icones para cada atribuicao (Lucide icons)
 const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
   all: <Users className="w-3.5 h-3.5" />,
   JURI: <Gavel className="w-3.5 h-3.5" />,
@@ -162,11 +162,11 @@ const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
 
 const ATRIBUICAO_OPTIONS = [
   { value: "all", label: "Todas", shortLabel: "Todas" },
-  { value: "JURI", label: "Júri", shortLabel: "Júri" },
-  { value: "VVD", label: "Violência Doméstica", shortLabel: "V.D." },
+  { value: "JURI", label: "Juri", shortLabel: "Juri" },
+  { value: "VVD", label: "Violencia Domestica", shortLabel: "V.D." },
   { value: "EXECUCAO", label: "Exec. Penal", shortLabel: "EP" },
   { value: "CRIMINAL", label: "Subst. Criminal", shortLabel: "Crim" },
-  { value: "CIVEL", label: "Subst. Cível", shortLabel: "Cível" },
+  { value: "CIVEL", label: "Subst. Civel", shortLabel: "Civel" },
 ];
 import {
   DropdownMenu,
@@ -179,54 +179,54 @@ import { getInitials } from "@/lib/utils";
 import { format, differenceInDays, parseISO, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// Dados mockados expandidos com informações processuais detalhadas
+// Dados mockados expandidos com informacoes processuais detalhadas
 const mockAssistidos = [
   { 
     id: 1, 
     nome: "Diego Bonfim Almeida",
-    vulgo: "Diegão",
+    vulgo: "Diegao",
     cpf: "123.456.789-00",
     rg: "12.345.678-90 SSP/BA",
     dataNascimento: "1990-05-15",
     nomeMae: "Maria Almeida Santos",
     naturalidade: "Salvador/BA",
-    endereco: "Rua das Flores, 123, Centro, Camaçari/BA",
+    endereco: "Rua das Flores, 123, Centro, Camacari/BA",
     bairro: "Centro",
-    cidade: "Camaçari",
+    cidade: "Camacari",
     statusPrisional: "CADEIA_PUBLICA",
-    unidadePrisional: "Cadeia Pública de Candeias",
+    unidadePrisional: "Cadeia Publica de Candeias",
     dataPrisao: "2024-11-20",
-    crimePrincipal: "Homicídio Qualificado (Art. 121, §2º, CP)",
-    artigos: ["121, §2º", "14, II"],
+    crimePrincipal: "Homicidio Qualificado (Art. 121, ?2o, CP)",
+    artigos: ["121, ?2o", "14, II"],
     telefone: "(71) 99999-1234",
     telefoneContato: "(71) 98888-5678",
-    nomeContato: "Maria Almeida (Mãe)",
+    nomeContato: "Maria Almeida (Mae)",
     processosAtivos: 2,
     demandasAbertas: 3,
     proximoPrazo: "2026-01-15",
-    atoProximoPrazo: "Resposta à Acusação",
+    atoProximoPrazo: "Resposta a Acusacao",
     defensor: "Dr. Rodrigo",
     area: "JURI",
     photoUrl: null,
-    // Informações processuais detalhadas
+    // Informacoes processuais detalhadas
     faseProcessual: "INSTRUCAO",
     numeroProcesso: "8012906-74.2025.8.05.0039",
     dataFato: "2024-11-15",
-    resumoFato: "Suposto homicídio ocorrido no bairro Centro, durante discussão em bar. Vítima: João da Silva.",
-    teseDaDefesa: "Legítima defesa. Réu agiu para proteger sua vida após ser atacado com faca.",
+    resumoFato: "Suposto homicidio ocorrido no bairro Centro, durante discussao em bar. Vitima: Joao da Silva.",
+    teseDaDefesa: "Legitima defesa. Reu agiu para proteger sua vida apos ser atacado com faca.",
     ultimaAudiencia: "2026-01-10",
-    tipoUltimaAudiencia: "Instrução e Julgamento",
+    tipoUltimaAudiencia: "Instrucao e Julgamento",
     proximaAudiencia: "2026-02-20",
-    tipoProximaAudiencia: "Continuação de Instrução",
+    tipoProximaAudiencia: "Continuacao de Instrucao",
     testemunhasArroladas: [
       { nome: "Maria Silva", tipo: "defesa", ouvida: true, data: "2026-01-10" },
       { nome: "Pedro Santos", tipo: "defesa", ouvida: false, data: null },
-      { nome: "José Oliveira", tipo: "acusacao", ouvida: true, data: "2026-01-10" },
+      { nome: "Jose Oliveira", tipo: "acusacao", ouvida: true, data: "2026-01-10" },
       { nome: "Ana Costa", tipo: "acusacao", ouvida: false, data: null },
     ],
     interrogatorioRealizado: false,
-    observacoesProcesso: "Réu nega autoria. Alega que estava em legítima defesa após ser atacado primeiro.",
-    estrategiaDefesaAtual: "Focar na produção de prova testemunhal que comprove a agressão prévia da vítima. Solicitar perícia nas imagens de câmera de segurança do bar. Preparar quesitação para tese de legítima defesa.",
+    observacoesProcesso: "Reu nega autoria. Alega que estava em legitima defesa apos ser atacado primeiro.",
+    estrategiaDefesaAtual: "Focar na producao de prova testemunhal que comprove a agressao previa da vitima. Solicitar pericia nas imagens de camera de seguranca do bar. Preparar quesitacao para tese de legitima defesa.",
   },
   { 
     id: 2, 
@@ -243,25 +243,25 @@ const mockAssistidos = [
     statusPrisional: "SOLTO",
     unidadePrisional: null,
     dataPrisao: null,
-    crimePrincipal: "Lesão Corporal (Art. 129, §9º, CP)",
-    artigos: ["129, §9º"],
+    crimePrincipal: "Lesao Corporal (Art. 129, ?9o, CP)",
+    artigos: ["129, ?9o"],
     telefone: "(71) 97777-4321",
     telefoneContato: null,
     nomeContato: null,
     processosAtivos: 1,
     demandasAbertas: 1,
     proximoPrazo: "2026-01-20",
-    atoProximoPrazo: "Alegações Finais",
+    atoProximoPrazo: "Alegacoes Finais",
     defensor: "Dra. Juliane",
     area: "VIOLENCIA_DOMESTICA",
     photoUrl: null,
     faseProcessual: "ALEGACOES_FINAIS",
     numeroProcesso: "0001234-56.2025.8.05.0039",
     dataFato: "2025-06-10",
-    resumoFato: "Discussão com companheiro que a agrediu. Assistida reagiu causando lesões no agressor.",
-    teseDaDefesa: "Legítima defesa da mulher agredida. Excludente de ilicitude.",
+    resumoFato: "Discussao com companheiro que a agrediu. Assistida reagiu causando lesoes no agressor.",
+    teseDaDefesa: "Legitima defesa da mulher agredida. Excludente de ilicitude.",
     ultimaAudiencia: "2025-12-15",
-    tipoUltimaAudiencia: "Instrução",
+    tipoUltimaAudiencia: "Instrucao",
     proximaAudiencia: null,
     tipoProximaAudiencia: null,
     testemunhasArroladas: [
@@ -269,25 +269,25 @@ const mockAssistidos = [
       { nome: "Filho menor", tipo: "informante", ouvida: true, data: "2025-12-15" },
     ],
     interrogatorioRealizado: true,
-    observacoesProcesso: "Instrução encerrada. Aguardando prazo para alegações finais.",
-    estrategiaDefesaAtual: "Alegações finais por memoriais. Enfatizar histórico de agressões sofridas pela assistida e laudo pericial que comprova lesões antigas. Requerer absolvição por legítima defesa.",
+    observacoesProcesso: "Instrucao encerrada. Aguardando prazo para alegacoes finais.",
+    estrategiaDefesaAtual: "Alegacoes finais por memoriais. Enfatizar historico de agressoes sofridas pela assistida e laudo pericial que comprova lesoes antigas. Requerer absolvicao por legitima defesa.",
   },
   { 
     id: 3, 
-    nome: "José Carlos Oliveira",
-    vulgo: "Zé do Morro",
+    nome: "Jose Carlos Oliveira",
+    vulgo: "Ze do Morro",
     cpf: "456.789.123-00",
     rg: "45.678.912-30 SSP/BA",
     dataNascimento: "1978-12-03",
     nomeMae: "Francisca Oliveira",
-    naturalidade: "Camaçari/BA",
-    endereco: "Trav. do Comércio, 78, Phoc II, Camaçari/BA",
+    naturalidade: "Camacari/BA",
+    endereco: "Trav. do Comercio, 78, Phoc II, Camacari/BA",
     bairro: "Phoc II",
-    cidade: "Camaçari",
+    cidade: "Camacari",
     statusPrisional: "PENITENCIARIA",
     unidadePrisional: "Conjunto Penal de Candeias",
     dataPrisao: "2023-06-15",
-    crimePrincipal: "Tráfico de Drogas (Art. 33, Lei 11.343/06)",
+    crimePrincipal: "Trafico de Drogas (Art. 33, Lei 11.343/06)",
     artigos: ["33, caput", "35"],
     telefone: null,
     telefoneContato: "(71) 96666-9999",
@@ -295,23 +295,23 @@ const mockAssistidos = [
     processosAtivos: 3,
     demandasAbertas: 5,
     proximoPrazo: "2026-01-14",
-    atoProximoPrazo: "Agravo em Execução",
+    atoProximoPrazo: "Agravo em Execucao",
     defensor: "Dr. Rodrigo",
     area: "EXECUCAO_PENAL",
     photoUrl: null,
     faseProcessual: "EXECUCAO",
     numeroProcesso: "0005678-90.2024.8.05.0039",
     dataFato: "2023-06-10",
-    resumoFato: "Preso em flagrante com 50g de cocaína em residência. Alega ser usuário.",
-    teseDaDefesa: "Desclassificação para porte para uso pessoal. Quantidade compatível com consumo.",
+    resumoFato: "Preso em flagrante com 50g de cocaina em residencia. Alega ser usuario.",
+    teseDaDefesa: "Desclassificacao para porte para uso pessoal. Quantidade compativel com consumo.",
     ultimaAudiencia: null,
     tipoUltimaAudiencia: null,
     proximaAudiencia: null,
     tipoProximaAudiencia: null,
     testemunhasArroladas: [],
     interrogatorioRealizado: true,
-    observacoesProcesso: "Condenado em 1º grau. Cumpre pena. Aguardando progressão de regime (2/5 cumprido).",
-    estrategiaDefesaAtual: "Acompanhar cálculo de pena na VEP. Preparar pedido de progressão para regime semiaberto (data prevista: Março/2026). Verificar remição por trabalho e estudo.",
+    observacoesProcesso: "Condenado em 1o grau. Cumpre pena. Aguardando progressao de regime (2/5 cumprido).",
+    estrategiaDefesaAtual: "Acompanhar calculo de pena na VEP. Preparar pedido de progressao para regime semiaberto (data prevista: Marco/2026). Verificar remicao por trabalho e estudo.",
   },
   { 
     id: 4, 
@@ -322,57 +322,57 @@ const mockAssistidos = [
     dataNascimento: "1995-03-28",
     nomeMae: "Teresa Costa",
     naturalidade: "Salvador/BA",
-    endereco: "Rua Nova, 200, Centro, Dias D'Ávila/BA",
+    endereco: "Rua Nova, 200, Centro, Dias D'Avila/BA",
     bairro: "Centro",
-    cidade: "Dias D'Ávila",
+    cidade: "Dias D'Avila",
     statusPrisional: "MONITORADO",
     unidadePrisional: null,
     dataPrisao: null,
-    crimePrincipal: "Ameaça (Art. 147, CP)",
+    crimePrincipal: "Ameaca (Art. 147, CP)",
     artigos: ["147"],
     telefone: "(71) 95555-1111",
     telefoneContato: "(71) 94444-2222",
-    nomeContato: "Pedro Costa (Irmão)",
+    nomeContato: "Pedro Costa (Irmao)",
     processosAtivos: 1,
     demandasAbertas: 2,
     proximoPrazo: "2026-01-18",
-    atoProximoPrazo: "Pedido de Revogação",
+    atoProximoPrazo: "Pedido de Revogacao",
     defensor: "Dra. Juliane",
     area: "VIOLENCIA_DOMESTICA",
     photoUrl: null,
     faseProcessual: "INSTRUCAO",
     numeroProcesso: "0002345-67.2025.8.05.0039",
     dataFato: "2025-09-20",
-    resumoFato: "Acusada de ameaçar ex-companheiro após término conturbado.",
-    teseDaDefesa: "Atipicidade. Discussão verbal sem grave ameaça.",
+    resumoFato: "Acusada de ameacar ex-companheiro apos termino conturbado.",
+    teseDaDefesa: "Atipicidade. Discussao verbal sem grave ameaca.",
     ultimaAudiencia: "2025-11-20",
-    tipoUltimaAudiencia: "Audiência de Custódia",
+    tipoUltimaAudiencia: "Audiencia de Custodia",
     proximaAudiencia: "2026-02-10",
-    tipoProximaAudiencia: "Instrução",
+    tipoProximaAudiencia: "Instrucao",
     testemunhasArroladas: [
       { nome: "Amiga Carla", tipo: "defesa", ouvida: false, data: null },
       { nome: "Ex-companheiro", tipo: "vitima", ouvida: false, data: null },
     ],
     interrogatorioRealizado: false,
-    observacoesProcesso: "Monitoramento eletrônico há 3 meses. Pedido de revogação em andamento.",
-    estrategiaDefesaAtual: "Insistir no pedido de revogação do monitoramento (bom comportamento). Na instrução, demonstrar atipicidade da conduta - discussão verbal sem ameaça grave.",
+    observacoesProcesso: "Monitoramento eletronico ha 3 meses. Pedido de revogacao em andamento.",
+    estrategiaDefesaAtual: "Insistir no pedido de revogacao do monitoramento (bom comportamento). Na instrucao, demonstrar atipicidade da conduta - discussao verbal sem ameaca grave.",
   },
   { 
     id: 5, 
     nome: "Roberto Ferreira Lima",
-    vulgo: "Betão",
+    vulgo: "Betao",
     cpf: "654.321.987-00",
     rg: "65.432.198-70 SSP/BA",
     dataNascimento: "1982-07-10",
     nomeMae: "Joana Lima",
-    naturalidade: "Dias D'Ávila/BA",
-    endereco: "Av. Central, 500, Centro, Dias D'Ávila/BA",
+    naturalidade: "Dias D'Avila/BA",
+    endereco: "Av. Central, 500, Centro, Dias D'Avila/BA",
     bairro: "Centro",
-    cidade: "Dias D'Ávila",
+    cidade: "Dias D'Avila",
     statusPrisional: "DOMICILIAR",
     unidadePrisional: null,
     dataPrisao: null,
-    crimePrincipal: "Homicídio Simples (Art. 121, CP)",
+    crimePrincipal: "Homicidio Simples (Art. 121, CP)",
     artigos: ["121, caput"],
     telefone: "(71) 93333-3333",
     telefoneContato: null,
@@ -387,19 +387,19 @@ const mockAssistidos = [
     faseProcessual: "SUMARIO_CULPA",
     numeroProcesso: "0003456-78.2025.8.05.0039",
     dataFato: "2025-01-05",
-    resumoFato: "Acidente de trânsito com vítima fatal. Réu conduzia veículo embriagado.",
+    resumoFato: "Acidente de transito com vitima fatal. Reu conduzia veiculo embriagado.",
     teseDaDefesa: "Culpa consciente vs. dolo eventual. Negativa de embriaguez ao volante.",
     ultimaAudiencia: "2025-10-15",
-    tipoUltimaAudiencia: "Sumário da Culpa",
+    tipoUltimaAudiencia: "Sumario da Culpa",
     proximaAudiencia: "2026-03-10",
-    tipoProximaAudiencia: "Plenário do Júri",
+    tipoProximaAudiencia: "Plenario do Juri",
     testemunhasArroladas: [
-      { nome: "Perito trânsito", tipo: "acusacao", ouvida: true, data: "2025-10-15" },
+      { nome: "Perito transito", tipo: "acusacao", ouvida: true, data: "2025-10-15" },
       { nome: "Passageiro", tipo: "defesa", ouvida: true, data: "2025-10-15" },
     ],
     interrogatorioRealizado: true,
-    observacoesProcesso: "Pronúncia mantida. Plenário designado. Prisão domiciliar por saúde.",
-    estrategiaDefesaAtual: "Preparar sustentação oral para plenário. Focar em culpa consciente vs. dolo eventual. Estudar perfil dos jurados. Preparar testemunha de defesa (passageiro) para depor novamente em plenário.",
+    observacoesProcesso: "Pronuncia mantida. Plenario designado. Prisao domiciliar por saude.",
+    estrategiaDefesaAtual: "Preparar sustentacao oral para plenario. Focar em culpa consciente vs. dolo eventual. Estudar perfil dos jurados. Preparar testemunha de defesa (passageiro) para depor novamente em plenario.",
   },
   { 
     id: 6, 
@@ -409,18 +409,18 @@ const mockAssistidos = [
     rg: "78.912.345-60 SSP/BA",
     dataNascimento: "1988-11-18",
     nomeMae: "Regina Mendes",
-    naturalidade: "Simões Filho/BA",
-    endereco: "Rua do Sol, 89, Centro, Simões Filho/BA",
+    naturalidade: "Simoes Filho/BA",
+    endereco: "Rua do Sol, 89, Centro, Simoes Filho/BA",
     bairro: "Centro",
-    cidade: "Simões Filho",
+    cidade: "Simoes Filho",
     statusPrisional: "CADEIA_PUBLICA",
-    unidadePrisional: "Cadeia Pública de Simões Filho",
+    unidadePrisional: "Cadeia Publica de Simoes Filho",
     dataPrisao: "2025-12-01",
-    crimePrincipal: "Roubo Majorado (Art. 157, §2º, CP)",
-    artigos: ["157, §2º"],
+    crimePrincipal: "Roubo Majorado (Art. 157, ?2o, CP)",
+    artigos: ["157, ?2o"],
     telefone: null,
     telefoneContato: "(71) 92222-4444",
-    nomeContato: "João Mendes (Pai)",
+    nomeContato: "Joao Mendes (Pai)",
     processosAtivos: 1,
     demandasAbertas: 4,
     proximoPrazo: "2026-01-15",
@@ -432,48 +432,48 @@ const mockAssistidos = [
     numeroProcesso: "0006789-01.2025.8.05.0039",
     dataFato: "2025-11-28",
     resumoFato: "Acusado de roubo a transeunte com uso de arma branca.",
-    teseDaDefesa: "Negativa de autoria. Reconhecimento fotográfico irregular.",
+    teseDaDefesa: "Negativa de autoria. Reconhecimento fotografico irregular.",
     ultimaAudiencia: "2025-12-02",
-    tipoUltimaAudiencia: "Custódia",
+    tipoUltimaAudiencia: "Custodia",
     proximaAudiencia: null,
     tipoProximaAudiencia: null,
     testemunhasArroladas: [],
     interrogatorioRealizado: false,
-    observacoesProcesso: "Preso em flagrante. Excesso de prazo na conclusão do IP. HC impetrado.",
-    estrategiaDefesaAtual: "Prioridade: obter liberdade via HC por excesso de prazo. Subsidiariamente, questionar validade do reconhecimento fotográfico (súmula 52 SDJE). Preparar defesa para eventual denúncia.",
+    observacoesProcesso: "Preso em flagrante. Excesso de prazo na conclusao do IP. HC impetrado.",
+    estrategiaDefesaAtual: "Prioridade: obter liberdade via HC por excesso de prazo. Subsidiariamente, questionar validade do reconhecimento fotografico (sumula 52 SDJE). Preparar defesa para eventual denuncia.",
   },
 ];
 
-// Configurações de status e fases
+// Configuracoes de status e fases
 const statusConfig: Record<string, { label: string; color: string; bgColor: string; borderColor: string; iconBg: string; priority: number }> = {
-  CADEIA_PUBLICA: { label: "Cadeia Pública", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 1 },
-  PENITENCIARIA: { label: "Penitenciária", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 2 },
+  CADEIA_PUBLICA: { label: "Cadeia Publica", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 1 },
+  PENITENCIARIA: { label: "Penitenciaria", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 2 },
   COP: { label: "COP", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 3 },
-  HOSPITAL_CUSTODIA: { label: "Hosp. Custódia", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 4 },
+  HOSPITAL_CUSTODIA: { label: "Hosp. Custodia", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-rose-100 dark:bg-rose-900/40", priority: 4 },
   MONITORADO: { label: "Monitorado", color: "text-amber-700 dark:text-amber-300", bgColor: "bg-amber-50/80 dark:bg-amber-950/20", borderColor: "border-amber-200/60 dark:border-amber-800/30", iconBg: "bg-amber-100 dark:bg-amber-900/40", priority: 5 },
   DOMICILIAR: { label: "Domiciliar", color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-50/80 dark:bg-orange-950/20", borderColor: "border-orange-200/60 dark:border-orange-800/30", iconBg: "bg-orange-100 dark:bg-orange-900/40", priority: 6 },
   SOLTO: { label: "Solto", color: "text-emerald-700 dark:text-emerald-300", bgColor: "bg-emerald-50/80 dark:bg-emerald-950/20", borderColor: "border-emerald-200/60 dark:border-emerald-800/30", iconBg: "bg-emerald-100 dark:bg-emerald-900/40", priority: 7 },
 };
 
-// Fases NEUTRAS para reduzir poluição visual
+// Fases NEUTRAS para reduzir poluicao visual
 const faseConfig: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-  INQUERITO: { label: "Inquérito", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
-  INSTRUCAO: { label: "Instrução", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
-  SUMARIO_CULPA: { label: "Sumário Culpa", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
-  ALEGACOES_FINAIS: { label: "Alegações Finais", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
-  SENTENCA: { label: "Sentença", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
+  INQUERITO: { label: "Inquerito", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
+  INSTRUCAO: { label: "Instrucao", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
+  SUMARIO_CULPA: { label: "Sumario Culpa", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
+  ALEGACOES_FINAIS: { label: "Alegacoes Finais", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: FileText },
+  SENTENCA: { label: "Sentenca", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Gavel },
   RECURSO: { label: "Recurso", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Scale },
-  EXECUCAO: { label: "Execução", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Clock },
+  EXECUCAO: { label: "Execucao", color: "text-zinc-600 dark:text-zinc-400", bgColor: "bg-zinc-100 dark:bg-zinc-800", icon: Clock },
   ARQUIVADO: { label: "Arquivado", color: "text-zinc-400 dark:text-zinc-500", bgColor: "bg-zinc-50 dark:bg-zinc-900", icon: CheckCircle2 },
 };
 
-// Áreas NEUTRAS para reduzir poluição visual
+// Areas NEUTRAS para reduzir poluicao visual
 const areaConfig: Record<string, { label: string; labelFull: string; color: string; bgColor: string }> = {
-  JURI: { label: "Júri", labelFull: "Tribunal do Júri", color: "text-violet-600", bgColor: "bg-violet-50" },
-  EXECUCAO_PENAL: { label: "EP", labelFull: "Execução Penal", color: "text-blue-600", bgColor: "bg-blue-50" },
-  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violência Doméstica", color: "text-pink-600", bgColor: "bg-pink-50" },
-  SUBSTITUICAO: { label: "Sub", labelFull: "Substituição", color: "text-orange-600", bgColor: "bg-orange-50" },
-  FAMILIA: { label: "Fam", labelFull: "Família", color: "text-rose-600", bgColor: "bg-rose-50" },
+  JURI: { label: "Juri", labelFull: "Tribunal do Juri", color: "text-violet-600", bgColor: "bg-violet-50" },
+  EXECUCAO_PENAL: { label: "EP", labelFull: "Execucao Penal", color: "text-blue-600", bgColor: "bg-blue-50" },
+  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violencia Domestica", color: "text-pink-600", bgColor: "bg-pink-50" },
+  SUBSTITUICAO: { label: "Sub", labelFull: "Substituicao", color: "text-orange-600", bgColor: "bg-orange-50" },
+  FAMILIA: { label: "Fam", labelFull: "Familia", color: "text-rose-600", bgColor: "bg-rose-50" },
 };
 
 function getPrazoInfo(prazoStr: string | null) {
@@ -481,7 +481,7 @@ function getPrazoInfo(prazoStr: string | null) {
   const dias = differenceInDays(parseISO(prazoStr), new Date());
   if (dias < 0) return { text: "Vencido", urgent: true, color: "text-rose-600", bgColor: "bg-rose-50" };
   if (dias === 0) return { text: "Hoje", urgent: true, color: "text-rose-600", bgColor: "bg-rose-50" };
-  if (dias === 1) return { text: "Amanhã", urgent: true, color: "text-amber-600", bgColor: "bg-amber-50" };
+  if (dias === 1) return { text: "Amanha", urgent: true, color: "text-amber-600", bgColor: "bg-amber-50" };
   if (dias <= 3) return { text: `${dias}d`, urgent: true, color: "text-amber-500", bgColor: "bg-amber-50/50" };
   if (dias <= 7) return { text: `${dias}d`, urgent: false, color: "text-sky-600", bgColor: "bg-sky-50/50" };
   return { text: `${dias}d`, urgent: false, color: "text-muted-foreground", bgColor: "" };
@@ -559,8 +559,8 @@ function PhotoUploadDialog({ isOpen, onClose, assistidoNome, currentPhoto, onUpl
 }
 
 // ========================================
-// CARD DO ASSISTIDO - DESIGN SUÍÇO
-// Com Foto • Containers Organizados • Cores Funcionais
+// CARD DO ASSISTIDO - DESIGN SUICO
+// Com Foto o Containers Organizados o Cores Funcionais
 // ========================================
 
 interface AssistidoCardProps {
@@ -574,26 +574,26 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   
-  // Lógica Semântica: Determina se réu está preso
+  // Logica Semantica: Determina se reu esta preso
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
   const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
   
-  // Prazo urgente (≤ 3 dias)
+  // Prazo urgente (<= 3 dias)
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
   const prazoUrgente = prazoInfo && prazoInfo.urgent;
   
   // Telefone para contato
   const telefoneDisplay = assistido.telefone || assistido.telefoneContato;
   
-  // Copiar número do processo
+  // Copiar numero do processo
   const handleCopyProcesso = () => {
     navigator.clipboard.writeText(assistido.numeroProcesso);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Cor da borda lateral - ÚNICA cor estrutural do card
-  // Borda colorida apenas para réu preso (informação crítica)
+  // Cor da borda lateral - UNICA cor estrutural do card
+  // Borda colorida apenas para reu preso (informacao critica)
   const statusBorderColor = isPreso 
     ? "border-l-rose-600 dark:border-l-rose-500" 
     : "border-l-zinc-300 dark:border-l-zinc-600";
@@ -605,7 +605,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
       "bg-white dark:bg-zinc-950",
       "border border-zinc-200 dark:border-zinc-800",
       "hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md",
-      // Borda lateral colorida - única cor estrutural
+      // Borda lateral colorida - unica cor estrutural
       "border-l-[3px]", statusBorderColor,
       // Fixado
       isPinned && "ring-1 ring-amber-400/60 dark:ring-amber-500/40"
@@ -615,7 +615,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
         
         {/* 1. TOPO: Foto + Identidade + Status */}
         <div className="flex gap-3 items-start">
-          {/* Avatar com botão de upload */}
+          {/* Avatar com botao de upload */}
           <div className="relative group/avatar flex-shrink-0">
             {/* Avatar neutro - vermelho apenas se preso */}
             <Avatar 
@@ -637,7 +637,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 {getInitials(assistido.nome)}
               </AvatarFallback>
             </Avatar>
-            {/* Botão de câmera sobreposto */}
+            {/* Botao de camera sobreposto */}
             <button
               onClick={onPhotoClick}
               className="absolute -bottom-1 -right-1 h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity shadow-md hover:scale-110"
@@ -655,7 +655,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               </h3>
             </Link>
             
-            {/* Badges - ORDENAÇÃO: Fase Processual → Área → Status Prisional */}
+            {/* Badges - ORDENACAO: Fase Processual -> Area -> Status Prisional */}
             <div className="flex items-center gap-1.5 flex-wrap">
               {/* 1. FASE PROCESSUAL - Primeiro */}
               {assistido.faseProcessual && faseConfig[assistido.faseProcessual] && (
@@ -672,7 +672,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 </Badge>
               )}
 
-              {/* 2. ÁREA - Segundo */}
+              {/* 2. AREA - Segundo */}
               {assistido.area && areaConfig[assistido.area] && (
                 <Badge 
                   variant="outline" 
@@ -687,7 +687,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 </Badge>
               )}
 
-              {/* 3. STATUS PRISIONAL - Por último */}
+              {/* 3. STATUS PRISIONAL - Por ultimo */}
               {isPreso ? (
                 <Tooltip>
                   <TooltipTrigger>
@@ -705,7 +705,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               ) : null}
             </div>
             
-            {/* Local de prisão - mais compacto */}
+            {/* Local de prisao - mais compacto */}
             {assistido.unidadePrisional && (
               <span className="flex items-center text-[11px] sm:text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
                 <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 flex-shrink-0" /> 
@@ -714,7 +714,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
             )}
           </div>
 
-          {/* Ações */}
+          {/* Acoes */}
           <div className="flex items-center gap-0.5 flex-shrink-0">
             <Button 
               size="icon" 
@@ -752,7 +752,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 </Link>
                 <Link href={`/admin/inteligencia?assistido=${assistido.id}`}>
                   <DropdownMenuItem className="cursor-pointer text-sm">
-                    <Brain className="h-4 w-4 mr-2" />Inteligência
+                    <Brain className="h-4 w-4 mr-2" />Inteligencia
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
@@ -771,7 +771,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
 
         {/* 2. CONTAINER: Dados do Processo */}
         <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 space-y-2">
-          {/* Tipificação - Fonte Serifada = Documento Jurídico */}
+          {/* Tipificacao - Fonte Serifada = Documento Juridico */}
           {assistido.crimePrincipal && (
             <div className="flex items-start gap-2">
               <Gavel className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-400 mt-0.5 flex-shrink-0" />
@@ -781,7 +781,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
             </div>
           )}
 
-          {/* Número do Processo - Clicável para copiar */}
+          {/* Numero do Processo - Clicavel para copiar */}
           <div 
             className="flex items-center justify-between group/copy cursor-pointer py-1 px-2 rounded bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800"
             onClick={handleCopyProcesso}
@@ -803,13 +803,13 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
 
       </div>
 
-      {/* 3. RODAPÉ: Prazo / Ação */}
+      {/* 3. RODAPE: Prazo / Acao */}
       <div className={cn(
         "px-3 sm:px-4 py-2 sm:py-2.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between",
         "bg-zinc-50/50 dark:bg-zinc-900/50"
       )}>
         
-        {/* Lógica de Urgência no Prazo */}
+        {/* Logica de Urgencia no Prazo */}
         {prazoInfo ? (
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
             <Clock className={cn(
@@ -823,14 +823,14 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 : "text-zinc-600 dark:text-zinc-400"
             )}>
               {assistido.atoProximoPrazo} 
-              <span className="opacity-70 ml-1">• {prazoInfo.text}</span>
+              <span className="opacity-70 ml-1">o {prazoInfo.text}</span>
             </span>
           </div>
         ) : (
           <span className="text-[10px] sm:text-xs text-zinc-400 italic">Sem prazos</span>
         )}
 
-        {/* Botão expandir */}
+        {/* Botao expandir */}
         <Button 
           size="icon"
           variant="ghost" 
@@ -841,7 +841,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
         </Button>
       </div>
 
-      {/* SEÇÃO EXPANDIDA - Containers Organizados */}
+      {/* SECAO EXPANDIDA - Containers Organizados */}
       <Collapsible open={isExpanded}>
         <CollapsibleContent>
           <div className="px-3 sm:px-4 py-3 space-y-2.5 sm:space-y-3 bg-zinc-50/80 dark:bg-zinc-900/80 border-t border-zinc-100 dark:border-zinc-800">
@@ -865,23 +865,23 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               </div>
             )}
 
-            {/* Estratégia - Container */}
+            {/* Estrategia - Container */}
             {assistido.estrategiaDefesaAtual && (
               <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Target className="h-3 w-3 text-zinc-400" />
-                  <p className="swiss-label">Estratégia Atual</p>
+                  <p className="swiss-label">Estrategia Atual</p>
                 </div>
                 <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{assistido.estrategiaDefesaAtual}</p>
               </div>
             )}
 
-            {/* Audiências - Grid de Cards */}
+            {/* Audiencias - Grid de Cards */}
             {(assistido.ultimaAudiencia || assistido.proximaAudiencia) && (
               <div className="grid grid-cols-2 gap-2">
                 {assistido.ultimaAudiencia && (
                   <div className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
-                    <p className="text-[10px] sm:text-[11px] uppercase text-zinc-400 font-semibold tracking-wider mb-0.5">Última Audiência</p>
+                    <p className="text-[10px] sm:text-[11px] uppercase text-zinc-400 font-semibold tracking-wider mb-0.5">Ultima Audiencia</p>
                     <p className="text-xs sm:text-sm font-data font-semibold text-zinc-700 dark:text-zinc-300">
                       {format(parseISO(assistido.ultimaAudiencia), "dd/MM/yy")}
                     </p>
@@ -890,7 +890,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 )}
                 {assistido.proximaAudiencia && (
                   <div className="p-2 rounded-lg bg-blue-50/80 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50">
-                    <p className="text-[10px] sm:text-[11px] uppercase text-blue-600 dark:text-blue-400 font-semibold tracking-wider mb-0.5">Próxima Audiência</p>
+                    <p className="text-[10px] sm:text-[11px] uppercase text-blue-600 dark:text-blue-400 font-semibold tracking-wider mb-0.5">Proxima Audiencia</p>
                     <p className="text-xs sm:text-sm font-data font-semibold text-blue-700 dark:text-blue-300">
                       {format(parseISO(assistido.proximaAudiencia), "dd/MM/yy")}
                     </p>
@@ -900,7 +900,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
               </div>
             )}
 
-            {/* Testemunhas e Interrogatório - Pills */}
+            {/* Testemunhas e Interrogatorio - Pills */}
             {assistido.testemunhasArroladas.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[10px] sm:text-xs text-zinc-600 dark:text-zinc-400">
@@ -943,7 +943,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
 }
 
 // ========================================
-// ROW DO ASSISTIDO - DESIGN SUÍÇO (Lista)
+// ROW DO ASSISTIDO - DESIGN SUICO (Lista)
 // ========================================
 
 function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: AssistidoCardProps) {
@@ -956,7 +956,7 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
   return (
     <SwissTableRow className={cn(
       "group transition-colors",
-      // Borda lateral semântica
+      // Borda lateral semantica
       isPreso ? "border-l-[3px] border-l-rose-500" : "border-l-[3px] border-l-zinc-300 dark:border-l-zinc-600",
       isPinned && "bg-amber-50/30 dark:bg-amber-950/10"
     )}>
@@ -974,7 +974,7 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
         </div>
       </SwissTableCell>
 
-      {/* Status - Ícone minimalista */}
+      {/* Status - Icone minimalista */}
       <SwissTableCell>
         {isPreso ? (
           <Tooltip>
@@ -1019,13 +1019,13 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
         )}
       </SwissTableCell>
 
-      {/* Interrogatório */}
+      {/* Interrogatorio */}
       <SwissTableCell className="text-center">
         <span className={cn(
           "text-xs font-medium",
           assistido.interrogatorioRealizado ? "text-emerald-600" : "text-amber-500"
         )}>
-          {assistido.interrogatorioRealizado ? "✓" : "○"}
+          {assistido.interrogatorioRealizado ? "?" : "?"}
         </span>
       </SwissTableCell>
 
@@ -1043,7 +1043,7 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
         )}
       </SwissTableCell>
 
-      {/* Ações */}
+      {/* Acoes */}
       <SwissTableCell className="text-right">
         <div className="flex items-center justify-end gap-0.5">
           <Button 
@@ -1069,7 +1069,7 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
 }
 
 export default function AssistidosPage() {
-  // Atribuição do contexto global
+  // Atribuicao do contexto global
   const { currentAssignment } = useAssignment();
   
   // Estados
@@ -1140,7 +1140,7 @@ export default function AssistidosPage() {
     pinned: pinnedIds.size,
   }), [pinnedIds]);
 
-  // Configuração visual da atribuição selecionada
+  // Visual config da atribuicao selecionada
   const atribuicaoColors = ATRIBUICAO_COLORS[atribuicaoFilter] || ATRIBUICAO_COLORS.all;
 
   return (
@@ -1151,13 +1151,13 @@ export default function AssistidosPage() {
       {/* Page Header */}
       <PageHeader
         title="Assistidos"
-        description={`${stats.total} cadastrados • ${stats.presos} presos${pinnedIds.size > 0 ? ` • ${pinnedIds.size} fixados` : ""}`}
+        description={`${stats.total} cadastrados o ${stats.presos} presos${pinnedIds.size > 0 ? ` o ${pinnedIds.size} fixados` : ""}`}
         actions={
           <div className="flex items-center gap-2">
             <Link href="/admin/inteligencia">
               <Button variant="outline" className="gap-2 text-violet-600 border-violet-200 hover:bg-violet-50">
                 <Brain className="h-4 w-4" />
-                <span className="hidden sm:inline">Inteligência</span>
+                <span className="hidden sm:inline">Inteligencia</span>
               </Button>
             </Link>
             <Button variant="outline" size="icon">
@@ -1174,8 +1174,8 @@ export default function AssistidosPage() {
         }
       />
 
-      {/* Filtros por Atribuição */}
-      <FilterChipGroup label="Filtrar por Área">
+      {/* Filtros por Atribuicao */}
+      <FilterChipGroup label="Filtrar por Area">
         {ATRIBUICAO_OPTIONS.map((option) => {
           const count = option.value === "all" 
             ? mockAssistidos.length 
@@ -1240,44 +1240,46 @@ export default function AssistidosPage() {
             className={cn(showPinnedOnly && "ring-2 ring-amber-400")}
           />
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="CADEIA_PUBLICA">Cadeia</SelectItem>
-              <SelectItem value="PENITENCIARIA">Penitenciária</SelectItem>
-              <SelectItem value="MONITORADO">Monitorado</SelectItem>
-              <SelectItem value="DOMICILIAR">Domiciliar</SelectItem>
-              <SelectItem value="SOLTO">Solto</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={areaFilter} onValueChange={setAreaFilter}>
-            <SelectTrigger className="w-[100px] h-9"><SelectValue placeholder="Área" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="JURI">Júri</SelectItem>
-              <SelectItem value="EXECUCAO_PENAL">EP</SelectItem>
-              <SelectItem value="VIOLENCIA_DOMESTICA">Violência Doméstica</SelectItem>
-              <SelectItem value="FAMILIA">Família</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={(v: "nome" | "prioridade" | "prazo") => setSortBy(v)}>
-            <SelectTrigger className="w-[110px] h-9"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="prioridade">Prioridade</SelectItem>
-              <SelectItem value="nome">Nome</SelectItem>
-              <SelectItem value="prazo">Prazo</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="flex items-center border rounded-md">
-            <Button variant={viewMode === "grid" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-r-none" onClick={() => setViewMode("grid")}>
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button variant={viewMode === "list" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-l-none" onClick={() => setViewMode("list")}>
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
+      </StatsGrid>
+
+      {/* Filters */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="CADEIA_PUBLICA">Cadeia</SelectItem>
+            <SelectItem value="PENITENCIARIA">Penitenciaria</SelectItem>
+            <SelectItem value="MONITORADO">Monitorado</SelectItem>
+            <SelectItem value="DOMICILIAR">Domiciliar</SelectItem>
+            <SelectItem value="SOLTO">Solto</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={areaFilter} onValueChange={setAreaFilter}>
+          <SelectTrigger className="w-[100px] h-9"><SelectValue placeholder="Area" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="JURI">Juri</SelectItem>
+            <SelectItem value="EXECUCAO_PENAL">EP</SelectItem>
+            <SelectItem value="VIOLENCIA_DOMESTICA">Violencia Domestica</SelectItem>
+            <SelectItem value="FAMILIA">Familia</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={(v: "nome" | "prioridade" | "prazo") => setSortBy(v)}>
+          <SelectTrigger className="w-[110px] h-9"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="prioridade">Prioridade</SelectItem>
+            <SelectItem value="nome">Nome</SelectItem>
+            <SelectItem value="prazo">Prazo</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="flex items-center border rounded-md">
+          <Button variant={viewMode === "grid" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-r-none" onClick={() => setViewMode("grid")}>
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button variant={viewMode === "list" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-l-none" onClick={() => setViewMode("list")}>
+            <List className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -1318,7 +1320,7 @@ export default function AssistidosPage() {
                 <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Test.</SwissTableHead>
                 <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Interr.</SwissTableHead>
                 <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Prazo</SwissTableHead>
-                <SwissTableHead className="text-right font-semibold text-xs uppercase tracking-wider">Ações</SwissTableHead>
+                <SwissTableHead className="text-right font-semibold text-xs uppercase tracking-wider">Acoes</SwissTableHead>
               </SwissTableRow>
             </SwissTableHeader>
             <SwissTableBody>

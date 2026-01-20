@@ -1922,59 +1922,58 @@ export default function DemandasPage() {
         }
       />
 
-        {/* Seletor de Atribuição - Tabs compactos com cores dos workspaces */}
-        <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
-          <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
-            {ATRIBUICAO_OPTIONS.map((option) => {
-              const isActive = atribuicaoFilter === option.value;
-              const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
-              const count = option.value === "all" 
-                ? demandas.length 
-                : demandas.filter(d => {
-                    const areasForAtribuicao = Object.entries(AREA_TO_ASSIGNMENT)
-                      .filter(([_, assignments]) => assignments.includes(option.value))
-                      .map(([area]) => area);
-                    return areasForAtribuicao.includes(d.area);
-                  }).length;
-              
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => setAtribuicaoFilter(option.value)}
-                  className={cn(
-                    "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
-                    isActive 
-                      ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
-                      : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
-                  )}
-                >
-                  <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
-                  <span className="hidden sm:inline">{option.label}</span>
-                  <span className="sm:hidden">{option.shortLabel}</span>
+      {/* Seletor de Atribuição - Tabs compactos com cores dos workspaces */}
+      <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
+          {ATRIBUICAO_OPTIONS.map((option) => {
+            const isActive = atribuicaoFilter === option.value;
+            const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
+            const count = option.value === "all" 
+              ? demandas.length 
+              : demandas.filter(d => {
+                  const areasForAtribuicao = Object.entries(AREA_TO_ASSIGNMENT)
+                    .filter(([_, assignments]) => assignments.includes(option.value))
+                    .map(([area]) => area);
+                  return areasForAtribuicao.includes(d.area);
+                }).length;
+            
+            return (
+              <button
+                key={option.value}
+                onClick={() => setAtribuicaoFilter(option.value)}
+                className={cn(
+                  "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
+                  isActive 
+                    ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
+                    : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
+                )}
+              >
+                <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
+                <span className="hidden sm:inline">{option.label}</span>
+                <span className="sm:hidden">{option.shortLabel}</span>
+                <span className={cn(
+                  "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
+                  isActive 
+                    ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
+                    : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
+                )}>
+                  {count}
+                </span>
+                {isActive && (
                   <span className={cn(
-                    "ml-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full",
-                    isActive 
-                      ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
-                      : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
-                  )}>
-                    {count}
-                  </span>
-                  {isActive && (
-                    <span className={cn(
-                      "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
-                      option.value === "all" && "bg-zinc-600",
-                      option.value === "JURI_CAMACARI" && "bg-emerald-600",
-                      option.value === "VVD_CAMACARI" && "bg-violet-600",
-                      option.value === "EXECUCAO_PENAL" && "bg-blue-600",
-                      option.value === "GRUPO_JURI" && "bg-orange-600",
-                      option.value === "SUBSTITUICAO" && "bg-rose-600",
-                      option.value === "SUBSTITUICAO_CIVEL" && "bg-purple-600",
-                    )} />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                    "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
+                    option.value === "all" && "bg-zinc-600",
+                    option.value === "JURI_CAMACARI" && "bg-emerald-600",
+                    option.value === "VVD_CAMACARI" && "bg-violet-600",
+                    option.value === "EXECUCAO_PENAL" && "bg-blue-600",
+                    option.value === "GRUPO_JURI" && "bg-orange-600",
+                    option.value === "SUBSTITUICAO" && "bg-rose-600",
+                    option.value === "SUBSTITUICAO_CIVEL" && "bg-purple-600",
+                  )} />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
