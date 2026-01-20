@@ -98,6 +98,34 @@ export const documentsRouter = router({
     }),
 
   /**
+   * Lista documentos por caso
+   */
+  byCaso: protectedProcedure
+    .input(
+      z.object({
+        casoId: z.number(),
+        categoria: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        let conditions = [eq(documentos.casoId, input.casoId)];
+
+        if (input.categoria) {
+          conditions.push(eq(documentos.categoria, input.categoria));
+        }
+
+        const result = await db
+          .select()
+          .from(documentos)
+          .where(and(...conditions))
+          .orderBy(desc(documentos.createdAt));
+
+        return result;
+      }, "Erro ao buscar documentos do caso");
+    }),
+
+  /**
    * Upload de documento
    */
   upload: protectedProcedure
@@ -106,6 +134,7 @@ export const documentsRouter = router({
         processoId: z.number().optional(),
         assistidoId: z.number().optional(),
         demandaId: z.number().optional(),
+        casoId: z.number().optional(),
         titulo: z.string().min(1).max(200),
         descricao: z.string().optional(),
         categoria: z.enum([
@@ -190,6 +219,7 @@ export const documentsRouter = router({
             processoId: input.processoId || null,
             assistidoId: input.assistidoId || null,
             demandaId: input.demandaId || null,
+            casoId: input.casoId || null,
             uploadedById: ctx.user.id,
             workspaceId: targetWorkspaceId,
             titulo: input.titulo,

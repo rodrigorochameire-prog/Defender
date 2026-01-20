@@ -76,6 +76,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeToggle } from "@/components/font-size-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
 import { AssignmentSwitcher } from "@/components/layout/assignment-switcher";
+import { CommandPalette } from "@/components/shared/command-palette";
+import { EntitySheetProvider } from "@/contexts/entity-sheet-context";
 import { 
   useAssignment, 
   CONTEXT_MENU_ITEMS, 
@@ -161,13 +163,15 @@ export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProp
         } as CSSProperties
       }
     >
-      <AdminSidebarContent
-        setSidebarWidth={setSidebarWidth}
-        userName={userName}
-        userEmail={userEmail}
-      >
-        {children}
-      </AdminSidebarContent>
+      <EntitySheetProvider>
+        <AdminSidebarContent
+          setSidebarWidth={setSidebarWidth}
+          userName={userName}
+          userEmail={userEmail}
+        >
+          {children}
+        </AdminSidebarContent>
+      </EntitySheetProvider>
     </SidebarProvider>
   );
 }
@@ -770,6 +774,7 @@ function AdminSidebarContent({
           </div>
 
           <div className="flex items-center gap-3">
+            <CommandPalette />
             <FontSizeToggle />
             <ThemeToggle />
             <NotificationsPopover />

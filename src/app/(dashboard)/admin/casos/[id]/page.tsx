@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Tooltip,
   TooltipContent,
@@ -53,6 +54,8 @@ import { useParams } from "next/navigation";
 import { format, formatDistanceToNow, isToday, isTomorrow, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { EntityLink } from "@/components/shared/entity-link";
+import { MentionTextarea, renderMentions } from "@/components/shared/mention-textarea";
+import { trpc } from "@/lib/trpc/client";
 
 // ==========================================
 // TIPOS
@@ -164,6 +167,7 @@ interface FactEvidenceItem {
   factId: number;
   fonte: string;
   documento?: string;
+  documentoId?: number;
   trecho: string;
   contradicao?: boolean;
 }
@@ -612,18 +616,112 @@ export default function CasoDetailPage() {
   const params = useParams();
   const casoId = params.id as string;
   const [activeTab, setActiveTab] = useState("teoria");
+  const [noteSheetOpen, setNoteSheetOpen] = useState(false);
+  const [noteText, setNoteText] = useState("");
 
-  // Em produção, buscar dados do caso via tRPC
-  const caso = MOCK_CASO;
+  const casoIdNumber = Number(casoId);
+  const { data: casoData } = trpc.casos.getById.useQuery(
+    { id: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
+  const { data: personasData } = trpc.casos.listPersonas.useQuery(
+    { casoId: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
+  const { data: factsData } = trpc.casos.listFacts.useQuery(
+    { casoId: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
+  const { data: evidenceData } = trpc.casos.listEvidenceByCaso.useQuery(
+    { casoId: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
+  const { data: documentsData } = trpc.documents.byCaso.useQuery(
+    { casoId: casoIdNumber },
+    { enabled: Number.isFinite(casoIdNumber) }
+  );
+
+  const caso = casoData
+    ? {
+        ...MOCK_CASO,
+        ...casoData,
+        assistidos: casoData.assistidos?.length ? casoData.assistidos : MOCK_CASO.assistidos,
+        processos: casoData.processos?.length ? casoData.processos : MOCK_CASO.processos,
+        audiencias: casoData.audiencias?.length ? casoData.audiencias : MOCK_CASO.audiencias,
+      }
+    : MOCK_CASO;
   const faseConfig = FASES_CASO[caso.fase as keyof typeof FASES_CASO] || FASES_CASO.INSTRUCAO;
   const themeColors = ATRIBUICAO_COLORS[caso.atribuicao] || ATRIBUICAO_COLORS.SUBSTITUICAO;
   const tags = caso.tags ? JSON.parse(caso.tags) : [];
   const tempoDecorrido = formatDistanceToNow(caso.createdAt, { locale: ptBR });
+  const personasSource: PersonaCaso[] = personasData?.length
+    ? personasData.map((persona) => ({
+        id: persona.id,
+        nome: persona.nome,
+        tipo: persona.tipo as PersonaCaso["tipo"],
+        status: (persona.status as PersonaCaso["status"]) ?? "pendente",
+        assistidoId: persona.assistidoId || undefined,
+        juradoId: persona.juradoId || undefined,
+      }))
+    : MOCK_PERSONAS;
+
+  const factsSource: CasoFato[] = factsData?.length
+    ? factsData.map((fact) => ({
+        id: fact.id,
+        titulo: fact.titulo,
+        tipo: (fact.tipo as CasoFato["tipo"]) ?? "controverso",
+        status: (fact.status as CasoFato["status"]) ?? "ativo",
+        tags: Array.isArray(fact.tags) ? fact.tags : [],
+      }))
+    : MOCK_FACTS;
+
+  const evidenciasSource: FactEvidenceItem[] = evidenceData?.length
+    ? evidenceData.map((ev) => ({
+        id: ev.id,
+        factId: ev.factId,
+        fonte: ev.sourceType || "Evidência",
+        documento: ev.documentoTitulo || undefined,
+        documentoId: ev.documentoId || undefined,
+        trecho: ev.trecho || "",
+        contradicao: ev.contradicao || false,
+      }))
+    : MOCK_EVIDENCIAS;
+
+  const documentsSource = documentsData?.length ? documentsData : [];
+
+  const mentionSuggestions = useMemo(() => {
+    const docs = Array.from(
+      new Set(
+        [
+          ...documentsSource.map((doc) => doc.titulo),
+          ...evidenciasSource.map((item) => item.documento).filter(Boolean),
+        ].filter(Boolean) as string[]
+      )
+    );
+
+    return [
+      ...personasSource.map((persona) => ({
+        id: `p-${persona.id}`,
+        label: persona.nome,
+        type: "pessoa" as const,
+      })),
+      ...docs.map((doc) => ({
+        id: `d-${doc}`,
+        label: doc,
+        type: "documento" as const,
+      })),
+      ...factsSource.map((fact) => ({
+        id: `f-${fact.id}`,
+        label: fact.titulo,
+        type: "fato" as const,
+      })),
+    ];
+  }, [personasSource, factsSource, evidenciasSource, documentsSource]);
   
   // Verificar teoria completa
   const teoriaCompleta = caso.teoriaFatos && caso.teoriaProvas && caso.teoriaDireito;
   const teoriaProgresso = [caso.teoriaFatos, caso.teoriaProvas, caso.teoriaDireito].filter(Boolean).length;
-  const personasPorTipo = MOCK_PERSONAS.reduce((acc, persona) => {
+  const personasPorTipo = personasSource.reduce((acc, persona) => {
     acc[persona.tipo] = acc[persona.tipo] ? [...acc[persona.tipo], persona] : [persona];
     return acc;
   }, {} as Record<string, PersonaCaso[]>);
@@ -1146,17 +1244,17 @@ export default function CasoDetailPage() {
                         {personas.map((persona) => (
                           <div key={persona.id} className="flex items-center justify-between border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2">
                             <div className="flex items-center gap-2">
-                              <EntityLink type="pessoa" name={persona.nome} />
+                              <EntityLink type="pessoa" name={persona.nome} subtitle={persona.status} />
                               <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">
                                 {persona.status}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
                               {persona.assistidoId && (
-                                <EntityLink type="caso" name={`Assistido #${persona.assistidoId}`} />
+                                <EntityLink type="caso" name={`Assistido #${persona.assistidoId}`} href={`/admin/assistidos/${persona.assistidoId}`} />
                               )}
                               {persona.juradoId && (
-                                <EntityLink type="caso" name={`Jurado #${persona.juradoId}`} />
+                                <EntityLink type="caso" name={`Jurado #${persona.juradoId}`} href="/admin/jurados" />
                               )}
                             </div>
                           </div>
@@ -1185,8 +1283,8 @@ export default function CasoDetailPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {MOCK_FACTS.map((fato) => {
-                    const evidencias = MOCK_EVIDENCIAS.filter((ev) => ev.factId === fato.id);
+                  {factsSource.map((fato) => {
+                    const evidencias = evidenciasSource.filter((ev) => ev.factId === fato.id);
                     return (
                       <div key={fato.id} className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
                         <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -1230,7 +1328,11 @@ export default function CasoDetailPage() {
                               </div>
                               <div className="flex items-center gap-2">
                                 {ev.documento && (
-                                  <EntityLink type="documento" name={ev.documento} />
+                                  <EntityLink
+                                    type="documento"
+                                    name={ev.documento}
+                                    href={ev.documentoId ? "/admin/documentos" : undefined}
+                                  />
                                 )}
                                 {ev.contradicao && (
                                   <Badge variant="outline" className="border-rose-300 text-rose-600 text-[10px]">
@@ -1258,7 +1360,7 @@ export default function CasoDetailPage() {
                       Movimentações, notas, documentos e fatos em um único fluxo.
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" className="gap-2">
+                  <Button size="sm" variant="outline" className="gap-2" onClick={() => setNoteSheetOpen(true)}>
                     <MessageCircle className="w-4 h-4" />
                     Nova Nota
                   </Button>
@@ -1298,6 +1400,42 @@ export default function CasoDetailPage() {
                   ))}
                 </div>
               </Card>
+
+              <Sheet open={noteSheetOpen} onOpenChange={setNoteSheetOpen}>
+                <SheetContent side="right" className="w-[420px] sm:w-[520px]">
+                  <SheetHeader>
+                    <SheetTitle className="text-base font-semibold">Nova Nota Integrada</SheetTitle>
+                    <SheetDescription>
+                      Vincule pessoas, documentos e fatos diretamente na nota.
+                    </SheetDescription>
+                  </SheetHeader>
+
+                  <div className="mt-6 space-y-4">
+                    <MentionTextarea
+                      value={noteText}
+                      onChange={setNoteText}
+                      suggestions={mentionSuggestions}
+                      placeholder="Digite sua nota... use @, # ou $ para inserir vínculos."
+                    />
+
+                    <div className="rounded-sm border border-slate-200 dark:border-slate-800 p-3">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 mb-2">
+                        Pré-visualização vinculada
+                      </p>
+                      <div className="text-sm text-slate-700 dark:text-slate-300 space-x-1">
+                        {noteText ? renderMentions(noteText) : "Sua nota aparecerá aqui."}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button onClick={() => setNoteSheetOpen(false)}>Salvar nota</Button>
+                      <Button variant="outline" onClick={() => setNoteText("")}>
+                        Limpar
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </TabsContent>
         </Tabs>

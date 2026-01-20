@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { FileText, Hash, User, Users } from "lucide-react";
+import { useEntitySheet } from "@/contexts/entity-sheet-context";
 
 type EntityType = "pessoa" | "caso" | "documento" | "fato";
 
@@ -18,11 +19,13 @@ interface EntityLinkProps {
   type: EntityType;
   name: string;
   href?: string;
+  subtitle?: string;
   className?: string;
 }
 
-export function EntityLink({ type, name, href, className }: EntityLinkProps) {
+export function EntityLink({ type, name, href, subtitle, className }: EntityLinkProps) {
   const Icon = iconMap[type];
+  const entitySheet = useEntitySheet();
   const content = (
     <Badge
       variant="outline"
@@ -45,5 +48,13 @@ export function EntityLink({ type, name, href, className }: EntityLinkProps) {
     );
   }
 
-  return <span className="inline-flex">{content}</span>;
+  return (
+    <button
+      type="button"
+      className="inline-flex"
+      onClick={() => entitySheet?.openEntity({ type, name, subtitle })}
+    >
+      {content}
+    </button>
+  );
 }

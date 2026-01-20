@@ -13,7 +13,8 @@ import {
   casePersonas,
   caseFacts,
   factEvidence,
-  juriScriptItems
+  juriScriptItems,
+  documentos
 } from "@/lib/db/schema";
 import { eq, and, isNull, sql, desc, ilike, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -942,6 +943,30 @@ export const casosRouter = router({
         .select()
         .from(factEvidence)
         .where(eq(factEvidence.factId, input.factId))
+        .orderBy(desc(factEvidence.createdAt));
+
+      return result;
+    }),
+
+  listEvidenceByCaso: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input }) => {
+      const result = await db
+        .select({
+          id: factEvidence.id,
+          factId: factEvidence.factId,
+          trecho: factEvidence.trecho,
+          contradicao: factEvidence.contradicao,
+          sourceType: factEvidence.sourceType,
+          sourceId: factEvidence.sourceId,
+          documentoId: factEvidence.documentoId,
+          documentoTitulo: documentos.titulo,
+          createdAt: factEvidence.createdAt,
+        })
+        .from(factEvidence)
+        .innerJoin(caseFacts, eq(factEvidence.factId, caseFacts.id))
+        .leftJoin(documentos, eq(factEvidence.documentoId, documentos.id))
+        .where(eq(caseFacts.casoId, input.casoId))
         .orderBy(desc(factEvidence.createdAt));
 
       return result;
