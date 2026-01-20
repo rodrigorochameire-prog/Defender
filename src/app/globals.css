@@ -3,10 +3,11 @@
 @tailwind utilities;
 
 /* ========================================
-   DEFESAHUB - DESIGN SYSTEM v3.0
-   iOS 26.2 Inspired • Green Premium • Sophisticated
-   Visual inspirado no iOS 26.2 da Apple
-   CACHE BUST: 2026-01-17-v3
+   DEFESAHUB - DESIGN SYSTEM v4.0
+   Swiss Design • Green Premium • Sophisticated
+   Visual elegante, limpo, funcional
+   Padrão suíço com visualização ótima
+   CACHE BUST: 2026-01-20-v4
    ======================================== */
 
 /* ========================================
@@ -136,27 +137,27 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Hierarquia Tipográfica iOS 26.2 */
+  /* Hierarquia Tipográfica - Design Suíço */
   h1 { 
-    @apply text-2xl font-bold tracking-tight text-foreground;
-    letter-spacing: -0.03em;
+    @apply text-xl sm:text-2xl font-bold tracking-tight text-foreground;
+    letter-spacing: -0.025em;
   }
   h2 { 
-    @apply text-xl font-semibold tracking-tight text-foreground;
+    @apply text-lg sm:text-xl font-semibold tracking-tight text-foreground;
     letter-spacing: -0.02em;
   }
   h3 { 
-    @apply text-lg font-semibold text-foreground;
+    @apply text-base sm:text-lg font-semibold text-foreground;
     letter-spacing: -0.015em;
   }
   h4 { 
-    @apply text-base font-medium text-foreground;
+    @apply text-sm sm:text-base font-medium text-foreground;
   }
   p { 
-    @apply text-base leading-relaxed text-foreground;
+    @apply text-sm sm:text-base leading-relaxed text-foreground;
   }
   span, label { 
-    @apply text-sm text-muted-foreground;
+    @apply text-xs sm:text-sm text-muted-foreground;
   }
 
   /* ========================================
