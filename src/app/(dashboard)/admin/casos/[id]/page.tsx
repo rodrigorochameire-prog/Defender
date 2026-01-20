@@ -419,13 +419,13 @@ function EnvolvidoCard({ envolvido }: { envolvido: Envolvido }) {
           </div>
           
           {envolvido.descricao && (
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1.5 line-clamp-2">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 line-clamp-2">
               {envolvido.descricao}
             </p>
           )}
           
           {envolvido.oitiva && (
-            <div className="mt-2 p-2 rounded bg-zinc-50 dark:bg-zinc-900 text-[10px]">
+            <div className="mt-2 p-2 rounded bg-zinc-50 dark:bg-zinc-900 text-xs">
               <div className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400 mb-0.5">
                 <Mic className="w-3 h-3" />
                 <span>Oitiva em {envolvido.oitiva.data ? format(envolvido.oitiva.data, "dd/MM/yyyy") : "N/A"}</span>
@@ -498,7 +498,7 @@ function TimelineMovimentacoes({ movimentacoes }: { movimentacoes: MovimentacaoP
                       {mov.descricao}
                     </p>
                     {mov.processoNumero && (
-                      <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 mt-1">
+                      <p className="text-xs font-mono text-zinc-400 dark:text-zinc-500 mt-1">
                         Autos: {mov.processoNumero}
                       </p>
                     )}
@@ -510,7 +510,7 @@ function TimelineMovimentacoes({ movimentacoes }: { movimentacoes: MovimentacaoP
                     </p>
                     {mov.prazo && (
                       <p className={cn(
-                        "text-[10px] font-medium mt-0.5",
+                        "text-xs font-medium mt-0.5",
                         differenceInDays(mov.prazo, new Date()) <= 0 
                           ? "text-rose-500" 
                           : differenceInDays(mov.prazo, new Date()) <= 3 
@@ -574,7 +574,7 @@ function PecaCard({ peca }: { peca: PecaImportante }) {
             <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
               {peca.nome}
             </h4>
-            <span className="text-[10px] font-mono text-zinc-400">
+            <span className="text-xs font-mono text-zinc-400">
               {format(peca.data, "dd/MM/yyyy")}
             </span>
           </div>
@@ -590,7 +590,7 @@ function PecaCard({ peca }: { peca: PecaImportante }) {
               href={peca.linkDrive} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400 hover:underline mt-2"
+              className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline mt-2"
             >
               <FolderOpen className="w-3 h-3" />
               Abrir no Drive
@@ -675,17 +675,17 @@ export default function CasoDetailPage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-2">
-                <Badge variant="outline" className="text-[10px] font-normal">
+                <Badge variant="outline" className="text-xs font-normal">
                   {ATRIBUICAO_LABELS[caso.atribuicao] || caso.atribuicao}
                 </Badge>
-                <Badge variant="secondary" className={cn("text-[10px] font-normal", faseConfig.color)}>
+                <Badge variant="secondary" className={cn("text-xs font-normal", faseConfig.color)}>
                   {faseConfig.label}
                 </Badge>
                 {caso.codigo && (
-                  <span className="text-[10px] font-mono text-zinc-400">{caso.codigo}</span>
+                  <span className="text-xs font-mono text-zinc-400">{caso.codigo}</span>
                 )}
                 {reusPresos > 0 && (
-                  <span className="flex items-center gap-1 text-[10px] text-rose-500">
+                  <span className="flex items-center gap-1 text-xs text-rose-500">
                     <Lock className="w-3 h-3" />
                     {reusPresos} preso{reusPresos > 1 ? "s" : ""}
                   </span>
@@ -736,7 +736,7 @@ export default function CasoDetailPage() {
                         {reu.preso && <Lock className="w-3 h-3 text-rose-500" />}
                       </div>
                       {reu.localPrisao && (
-                        <p className="text-[10px] text-muted-foreground">{reu.localPrisao}</p>
+                        <p className="text-xs text-muted-foreground">{reu.localPrisao}</p>
                       )}
                     </div>
                   </TooltipContent>
@@ -792,7 +792,7 @@ export default function CasoDetailPage() {
               <Card className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Réus</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Réus</p>
                     <p className="text-2xl font-bold mt-1">{reusCount}</p>
                   </div>
                   <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-900/20">
@@ -800,7 +800,7 @@ export default function CasoDetailPage() {
                   </div>
                 </div>
                 {reusPresos > 0 && (
-                  <p className="text-[10px] text-rose-500 mt-2 flex items-center gap-1">
+                  <p className="text-xs text-rose-500 mt-2 flex items-center gap-1">
                     <Lock className="w-3 h-3" /> {reusPresos} preso{reusPresos > 1 ? "s" : ""}
                   </p>
                 )}
@@ -809,14 +809,14 @@ export default function CasoDetailPage() {
               <Card className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Testemunhas</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Testemunhas</p>
                     <p className="text-2xl font-bold mt-1">{testemunhasOuvidas}/{testemunhasTotal}</p>
                   </div>
                   <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
                     <Users className="w-5 h-5 text-emerald-500" />
                   </div>
                 </div>
-                <p className="text-[10px] text-emerald-500 mt-2">
+                <p className="text-xs text-emerald-500 mt-2">
                   {testemunhasTotal - testemunhasOuvidas} pendentes
                 </p>
               </Card>
@@ -824,7 +824,7 @@ export default function CasoDetailPage() {
               <Card className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Diligências</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Diligências</p>
                     <p className="text-2xl font-bold mt-1">{diligenciasConcluidas}/{diligenciasTotal}</p>
                   </div>
                   <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
@@ -837,14 +837,14 @@ export default function CasoDetailPage() {
               <Card className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Laudos</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Laudos</p>
                     <p className="text-2xl font-bold mt-1">{caso.laudos.length}</p>
                   </div>
                   <div className="p-2 rounded-lg bg-violet-50 dark:bg-violet-900/20">
                     <Scroll className="w-5 h-5 text-violet-500" />
                   </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   {caso.laudos.filter(l => l.favoravel === true).length} favoráveis
                 </p>
               </Card>
@@ -903,7 +903,7 @@ export default function CasoDetailPage() {
                 <ul className="space-y-2">
                   {(caso.pontosFortes || []).map((ponto, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-sm">
-                      <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+                      <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                         {idx + 1}
                       </span>
                       <span className="text-muted-foreground">{ponto}</span>
@@ -921,7 +921,7 @@ export default function CasoDetailPage() {
                 <ul className="space-y-2">
                   {(caso.pontosFracos || []).map((ponto, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-sm">
-                      <span className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+                      <span className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                         !
                       </span>
                       <span className="text-muted-foreground">{ponto}</span>
@@ -961,7 +961,7 @@ export default function CasoDetailPage() {
                         <p className="text-xs text-muted-foreground">{proc.status}</p>
                         {proc.proximaAudiencia && (
                           <p className={cn(
-                            "text-[10px] font-medium mt-1 flex items-center gap-1 justify-end",
+                            "text-xs font-medium mt-1 flex items-center gap-1 justify-end",
                             isToday(proc.proximaAudiencia) && "text-rose-500",
                             isTomorrow(proc.proximaAudiencia) && "text-amber-500"
                           )}>
@@ -971,7 +971,7 @@ export default function CasoDetailPage() {
                         )}
                         {proc.proximoPrazo && (
                           <p className={cn(
-                            "text-[10px] font-medium mt-1 flex items-center gap-1 justify-end",
+                            "text-xs font-medium mt-1 flex items-center gap-1 justify-end",
                             differenceInDays(proc.proximoPrazo, new Date()) <= 3 && "text-amber-500"
                           )}>
                             <Clock className="w-3 h-3" />
@@ -1077,11 +1077,11 @@ export default function CasoDetailPage() {
                       
                       <div className="text-right flex-shrink-0 ml-4">
                         {dil.responsavel && (
-                          <p className="text-[10px] text-muted-foreground">{dil.responsavel}</p>
+                          <p className="text-xs text-muted-foreground">{dil.responsavel}</p>
                         )}
                         {dil.dataLimite && (
                           <p className={cn(
-                            "text-[10px] font-medium mt-1",
+                            "text-xs font-medium mt-1",
                             differenceInDays(dil.dataLimite, new Date()) <= 3 && "text-amber-500"
                           )}>
                             Limite: {format(dil.dataLimite, "dd/MM")}
@@ -1113,7 +1113,7 @@ export default function CasoDetailPage() {
                         <h4 className="font-medium text-sm">{laudo.tipo}</h4>
                         <p className="text-xs text-muted-foreground mt-0.5">{laudo.descricao}</p>
                         {laudo.perito && (
-                          <p className="text-[10px] text-muted-foreground mt-1">Perito: {laudo.perito}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Perito: {laudo.perito}</p>
                         )}
                         {laudo.conclusao && (
                           <p className="text-xs mt-2 p-2 bg-muted/50 rounded">

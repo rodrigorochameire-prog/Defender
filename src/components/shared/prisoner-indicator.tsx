@@ -62,7 +62,7 @@ export function PrisonerIndicator({
         <div className="text-center">
           <p className="font-medium text-rose-500 text-xs">Preso</p>
           {localPrisao && (
-            <p className="text-[10px] text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {localPrisao}
             </p>
           )}
