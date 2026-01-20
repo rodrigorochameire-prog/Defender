@@ -39,6 +39,11 @@ import {
   isToday 
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   Calculator, 
   Check, 
@@ -463,14 +468,13 @@ function DemandaSidePeek({
                   </SheetDescription>
                 </div>
                 
-                {isPreso ? (
-                  <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border-0 flex-shrink-0">
-                    <Lock className="w-3 h-3 mr-1" /> Preso
-                  </Badge>
-                ) : (
-                  <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-0 flex-shrink-0">
-                    <Unlock className="w-3 h-3 mr-1" /> Solto
-                  </Badge>
+                {isPreso && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Lock className="w-4 h-4 text-rose-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>Preso</TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             </div>

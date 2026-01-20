@@ -346,9 +346,12 @@ function ListView({
                             {audiencia.assistidoNome}
                           </span>
                           {audiencia.assistidoPreso && (
-                            <span className="text-[10px] text-rose-500 flex items-center gap-0.5">
-                              <Lock className="w-2.5 h-2.5" /> Preso
-                            </span>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Lock className="w-3 h-3 text-rose-500" />
+                              </TooltipTrigger>
+                              <TooltipContent>Preso</TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
                       </div>

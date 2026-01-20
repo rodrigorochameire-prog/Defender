@@ -35,6 +35,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   Users, 
   Plus,
@@ -689,19 +694,19 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
 
               {/* 3. STATUS PRISIONAL - Por último */}
               {isPreso ? (
-                <Badge 
-                  variant="outline" 
-                  className="rounded-md px-1.5 py-0 text-[11px] sm:text-[10px] uppercase font-bold border-rose-300 text-rose-700 bg-rose-100 dark:bg-rose-950/30 dark:border-rose-800 dark:text-rose-400"
-                >
-                  <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Preso
-                </Badge>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Lock className="w-4 h-4 text-rose-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>Preso</TooltipContent>
+                </Tooltip>
               ) : isMonitorado ? (
-                <Badge 
-                  variant="outline" 
-                  className="rounded-md px-1.5 py-0 text-[11px] sm:text-[10px] uppercase font-medium border-amber-300 text-amber-700 bg-amber-100 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400"
-                >
-                  <AlertCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" /> Monitor.
-                </Badge>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <AlertCircle className="w-4 h-4 text-amber-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>Monitorado</TooltipContent>
+                </Tooltip>
               ) : null}
             </div>
             
@@ -974,16 +979,22 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
         </div>
       </SwissTableCell>
 
-      {/* Status - Badge minimalista */}
+      {/* Status - Ícone minimalista */}
       <SwissTableCell>
         {isPreso ? (
-          <Badge variant="outline" className="rounded-md px-1.5 py-0 text-[10px] uppercase font-medium border-rose-200 text-rose-700 bg-rose-50 dark:bg-rose-950/20 dark:border-rose-800 dark:text-rose-400">
-            <Lock className="w-3 h-3 mr-1" /> Preso
-          </Badge>
+          <Tooltip>
+            <TooltipTrigger>
+              <Lock className="w-4 h-4 text-rose-500" />
+            </TooltipTrigger>
+            <TooltipContent>Preso</TooltipContent>
+          </Tooltip>
         ) : (
-          <Badge variant="outline" className="rounded-md px-1.5 py-0 text-[10px] uppercase font-medium border-emerald-200 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 dark:text-emerald-400">
-            <Unlock className="w-3 h-3 mr-1" /> Solto
-          </Badge>
+          <Tooltip>
+            <TooltipTrigger>
+              <Unlock className="w-4 h-4 text-emerald-500" />
+            </TooltipTrigger>
+            <TooltipContent>Solto</TooltipContent>
+          </Tooltip>
         )}
       </SwissTableCell>
 

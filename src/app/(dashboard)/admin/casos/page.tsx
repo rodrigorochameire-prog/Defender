@@ -594,14 +594,14 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                   </span>
                 )}
 
-                {/* 4. RÉU PRESO - Badge visível */}
+                {/* 4. RÉU PRESO - Ícone de cadeado */}
                 {hasReuPreso && (
-                  <Badge 
-                    variant="outline" 
-                    className="text-[11px] sm:text-[10px] font-bold uppercase px-1.5 py-0 rounded-md border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:border-rose-800 dark:text-rose-400"
-                  >
-                    <Lock className="w-2.5 h-2.5 mr-0.5" /> Preso
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Lock className="w-4 h-4 text-rose-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>Preso</TooltipContent>
+                  </Tooltip>
                 )}
 
                 {/* 5. AUDIÊNCIA HOJE/AMANHÃ */}
@@ -729,7 +729,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                         <p className="font-medium">{assistido.nome}</p>
                         {assistido.preso && (
                           <p className="text-rose-400 text-xs flex items-center gap-1 justify-center">
-                            <Lock className="w-3 h-3" /> Preso
+                            <Lock className="w-3 h-3" />
                           </p>
                         )}
                       </div>
