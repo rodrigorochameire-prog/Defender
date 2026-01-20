@@ -178,6 +178,7 @@ import {
 import { getInitials } from "@/lib/utils";
 import { format, differenceInDays, parseISO, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
 
 // Dados mockados expandidos com informacoes processuais detalhadas
 const mockAssistidos = [
@@ -687,22 +688,21 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
                 </Badge>
               )}
 
-              {/* 3. STATUS PRISIONAL - Por ultimo */}
-              {isPreso ? (
+              {/* 3. STATUS PRISIONAL - Cadeado sutil após o nome */}
+              <PrisonerIndicator 
+                preso={isPreso} 
+                localPrisao={assistido.unidadePrisional}
+                size="xs"
+                showTooltip={true}
+              />
+              {isMonitorado && !isPreso && (
                 <Tooltip>
                   <TooltipTrigger>
-                    <Lock className="w-4 h-4 text-rose-500" />
-                  </TooltipTrigger>
-                  <TooltipContent>Preso</TooltipContent>
-                </Tooltip>
-              ) : isMonitorado ? (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <AlertCircle className="w-4 h-4 text-amber-500" />
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
                   </TooltipTrigger>
                   <TooltipContent>Monitorado</TooltipContent>
                 </Tooltip>
-              ) : null}
+              )}
             </div>
             
             {/* Local de prisao - mais compacto */}
@@ -974,16 +974,14 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
         </div>
       </SwissTableCell>
 
-      {/* Status - Icone minimalista */}
+      {/* Status - Cadeado sutil */}
       <SwissTableCell>
-        {isPreso ? (
-          <Tooltip>
-            <TooltipTrigger>
-              <Lock className="w-4 h-4 text-rose-500" />
-            </TooltipTrigger>
-            <TooltipContent>Preso</TooltipContent>
-          </Tooltip>
-        ) : (
+        <PrisonerIndicator 
+          preso={isPreso} 
+          size="sm"
+          showTooltip={true}
+        />
+        {!isPreso && (
           <Tooltip>
             <TooltipTrigger>
               <Unlock className="w-4 h-4 text-emerald-500" />

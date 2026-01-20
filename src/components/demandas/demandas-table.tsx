@@ -68,6 +68,7 @@ import {
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import Link from "next/link";
+import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
 
 // ========================================
 // CONFIGURAÇÕES E TIPOS
@@ -722,37 +723,29 @@ export function DemandasTable({
                   {/* Assistido e Autos - Com Foto */}
                   <TableCell className="py-3">
                     <div className="flex items-center gap-3">
-                      {/* Foto do Assistido */}
-                      <Avatar className={cn(
-                        "h-10 w-10 flex-shrink-0 border-2",
-                        isPreso 
-                          ? "border-rose-300 dark:border-rose-700" 
-                          : "border-zinc-200 dark:border-zinc-700"
-                      )}>
+                      {/* Foto do Assistido - Estilo Clean */}
+                      <Avatar className="h-10 w-10 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
                         <AvatarImage 
                           src={demanda.assistidoFoto || undefined} 
                           alt={demanda.assistido}
                           className="object-cover"
                         />
-                        <AvatarFallback className={cn(
-                          "text-xs font-semibold",
-                          isPreso 
-                            ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
-                            : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-                        )}>
+                        <AvatarFallback className="text-xs font-semibold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                           {getInitials(demanda.assistido)}
                         </AvatarFallback>
                       </Avatar>
                       
                       {/* Nome e Processo */}
                       <div className="flex flex-col gap-0.5 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
                             {demanda.assistido}
                           </span>
-                          {isPreso && (
-                            <Lock className="h-3 w-3 text-rose-500 flex-shrink-0" />
-                          )}
+                          <PrisonerIndicator 
+                            preso={isPreso} 
+                            size="xs"
+                            showTooltip={true}
+                          />
                         </div>
                         <div className="flex items-center gap-2">
                           {demanda.area === "JURI" && (
