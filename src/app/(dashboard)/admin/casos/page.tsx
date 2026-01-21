@@ -720,12 +720,10 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                     </TooltipTrigger>
                     <TooltipContent>
                       <div className="text-center">
-                        <p className="font-medium">{assistido.nome}</p>
-                        {assistido.preso && (
-                          <p className="text-rose-400 text-xs flex items-center gap-1 justify-center">
-                            <Lock className="w-3 h-3" />
-                          </p>
-                        )}
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <p className="font-medium">{assistido.nome}</p>
+                          <PrisonerIndicator preso={assistido.preso} size="xs" showTooltip={false} />
+                        </div>
                       </div>
                     </TooltipContent>
                   </Tooltip>

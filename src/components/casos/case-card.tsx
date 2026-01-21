@@ -409,9 +409,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                       <div className="text-center">
                         <div className="flex items-center gap-2 justify-center">
                           <p className="font-medium text-sm">{assistido.nome}</p>
-                          {assistido.preso && (
-                            <Lock className="w-3.5 h-3.5 text-rose-500" />
-                          )}
+                          <PrisonerIndicator preso={assistido.preso} size="xs" showTooltip={false} />
                         </div>
                       </div>
                     </TooltipContent>

@@ -2827,10 +2827,11 @@ export default function DemandasPage() {
                           )}
                           {visibleColumns.assistido && (
                             <TableCell className="p-1">
-                              <div className="flex items-center gap-1">
-                                {(demanda.reuPreso || demanda.prisao === "CADEIA_PUBLICA" || demanda.prisao === "COP") && (
-                                  <Lock className="h-3.5 w-3.5 text-rose-400 flex-shrink-0" />
-                                )}
+                              <div className="flex items-center gap-1.5">
+                                <PrisonerIndicator 
+                                  preso={demanda.reuPreso || demanda.prisao === "CADEIA_PUBLICA" || demanda.prisao === "COP"} 
+                                  size="xs" 
+                                />
                                 <EditableCell
                                   value={demanda.assistido}
                                   onChange={(v) => handleInlineUpdate(demanda.id, "assistido", v)}

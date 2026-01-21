@@ -51,7 +51,6 @@ import {
   AlertCircle,
   Clock,
   Lock,
-  Unlock,
   Gavel,
   Search,
   FileText,
@@ -68,6 +67,7 @@ import {
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import Link from "next/link";
+import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
 
 // ========================================
 // CONFIGURAÇÕES E TIPOS
@@ -498,14 +498,7 @@ function DemandaSidePeek({
                   </SheetDescription>
                 </div>
                 
-                {isPreso && (
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Lock className="w-4 h-4 text-rose-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>Preso</TooltipContent>
-                  </Tooltip>
-                )}
+                <PrisonerIndicator preso={isPreso} size="sm" />
               </div>
             </div>
           </div>
@@ -790,15 +783,8 @@ export function DemandasTable({
                           <span className="font-semibold text-base text-zinc-900 dark:text-zinc-50 truncate">
                             {demanda.assistido}
                           </span>
-                          {/* Cadeado discreto se preso */}
-                          {isPreso && (
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <Lock className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
-                              </TooltipTrigger>
-                              <TooltipContent>Preso</TooltipContent>
-                            </Tooltip>
-                          )}
+                          {/* Indicador prisional discreto */}
+                          <PrisonerIndicator preso={isPreso} size="xs" />
                         </div>
                         <div className="flex items-center gap-2">
                           {demanda.area === "JURI" && (

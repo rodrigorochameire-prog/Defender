@@ -24,8 +24,6 @@ import {
   ChevronRight,
   MessageCircle,
   MoreHorizontal,
-  Lock,
-  Unlock,
   MapPin,
   Scale,
   Clock,
@@ -47,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getInitials, cn } from "@/lib/utils";
+import { StatusPrisionalDot } from "@/components/shared/prisoner-indicator";
 import { format, differenceInYears, parseISO, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -154,10 +153,10 @@ export default function AssistidoDetailPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className={cn(
-                  "absolute -bottom-1 -right-1 p-1.5 rounded-full border-2 border-background",
-                  isPreso ? "bg-rose-500" : "bg-emerald-500"
+                  "absolute -bottom-1 -right-1 p-2 rounded-full border-2 border-background",
+                  isPreso ? "bg-rose-100 dark:bg-rose-900/50" : "bg-emerald-100 dark:bg-emerald-900/50"
                 )}>
-                  {isPreso ? <Lock className="w-3 h-3 text-white" /> : <Unlock className="w-3 h-3 text-white" />}
+                  <StatusPrisionalDot preso={isPreso} size="md" />
                 </div>
               </div>
 

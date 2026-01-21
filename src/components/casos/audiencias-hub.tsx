@@ -50,12 +50,11 @@ import {
   Plus,
   ExternalLink,
   Scale,
-  Lock,
-  Unlock,
   LayoutGrid,
   CalendarDays
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PrisonerIndicator, StatusPrisionalDot } from "@/components/shared/prisoner-indicator";
 import { format, isToday, isTomorrow, isPast, differenceInDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -243,11 +242,7 @@ function AudienciaCard({
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
               {audiencia.assistidoNome}
             </span>
-            {audiencia.assistidoPreso ? (
-              <Lock className="w-3 h-3 text-rose-500" />
-            ) : (
-              <Unlock className="w-3 h-3 text-emerald-500" />
-            )}
+            <PrisonerIndicator preso={audiencia.assistidoPreso} size="xs" />
           </div>
         )}
 
@@ -345,14 +340,7 @@ function ListView({
                           <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate block max-w-[140px] font-medium">
                             {audiencia.assistidoNome}
                           </span>
-                          {audiencia.assistidoPreso && (
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <Lock className="w-3 h-3 text-rose-500" />
-                              </TooltipTrigger>
-                              <TooltipContent>Preso</TooltipContent>
-                            </Tooltip>
-                          )}
+                          <PrisonerIndicator preso={audiencia.assistidoPreso} size="xs" />
                         </div>
                       </div>
                     )}
@@ -446,9 +434,7 @@ function ListView({
                       {audiencia.numeroAutos}
                     </span>
                   </div>
-                  {audiencia.assistidoPreso && (
-                    <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
-                  )}
+                  <PrisonerIndicator preso={audiencia.assistidoPreso} size="xs" />
                 </div>
               )}
 
@@ -662,7 +648,7 @@ function CalendarView({
                   {date.getDate()}
                 </span>
                 {hasPreso && (
-                  <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-rose-500" />
+                  <StatusPrisionalDot preso={true} size="xs" />
                 )}
               </div>
 
@@ -1004,8 +990,8 @@ export function AudienciasHub({
                   </Badge>
                 )}
                 {stats.presos > 0 && (
-                  <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
-                    <Lock className="w-3 h-3" /> {stats.presos} presos
+                  <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400">
+                    <StatusPrisionalDot preso={true} size="sm" /> {stats.presos} presos
                   </span>
                 )}
               </div>

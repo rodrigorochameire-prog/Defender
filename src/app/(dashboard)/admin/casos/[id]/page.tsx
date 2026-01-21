@@ -384,7 +384,7 @@ function EnvolvidoCard({ envolvido }: { envolvido: Envolvido }) {
           </Avatar>
           {envolvido.preso && (
             <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700">
-              <Lock className="w-2.5 h-2.5 text-rose-500" />
+              <StatusPrisionalDot preso={true} size="sm" />
             </span>
           )}
         </div>
@@ -685,8 +685,8 @@ export default function CasoDetailPage() {
                   <span className="text-xs font-mono text-zinc-400">{caso.codigo}</span>
                 )}
                 {reusPresos > 0 && (
-                  <span className="flex items-center gap-1 text-xs text-rose-500">
-                    <Lock className="w-3 h-3" />
+                  <span className="flex items-center gap-1.5 text-xs text-rose-500">
+                    <StatusPrisionalDot preso={true} size="sm" />
                     {reusPresos} preso{reusPresos > 1 ? "s" : ""}
                   </span>
                 )}
@@ -800,8 +800,8 @@ export default function CasoDetailPage() {
                   </div>
                 </div>
                 {reusPresos > 0 && (
-                  <p className="text-xs text-rose-500 mt-2 flex items-center gap-1">
-                    <Lock className="w-3 h-3" /> {reusPresos} preso{reusPresos > 1 ? "s" : ""}
+                  <p className="text-xs text-rose-500 mt-2 flex items-center gap-1.5">
+                    <StatusPrisionalDot preso={true} size="sm" /> {reusPresos} preso{reusPresos > 1 ? "s" : ""}
                   </p>
                 )}
               </Card>

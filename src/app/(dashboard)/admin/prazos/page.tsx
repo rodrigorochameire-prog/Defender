@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
 import { format, differenceInDays, parseISO, isToday, isTomorrow, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -488,14 +489,7 @@ export default function PrazosPage() {
                           {prazoInfo.text}
                         </Badge>
                         
-                        {prazo.reuPreso && (
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <Lock className="w-4 h-4 text-rose-500" />
-                            </TooltipTrigger>
-                            <TooltipContent>Preso</TooltipContent>
-                          </Tooltip>
-                        )}
+                        <PrisonerIndicator preso={prazo.reuPreso} size="sm" />
                         
                         <Badge className={cn(
                           "text-[9px] sm:text-xs px-1.5 py-0 rounded-md border-0",

@@ -51,7 +51,6 @@ import {
   Copy,
   CheckCircle2,
   Lock,
-  Unlock,
   Clock,
   LayoutGrid,
   List,
@@ -467,19 +466,14 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                   {processo.assistido.nome}
                 </p>
               </Link>
-              <div className="flex items-center gap-1">
-                {processo.assistido.preso ? (
-                  <>
-                    <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-rose-500" />
-                    <span className="text-xs text-rose-600 dark:text-rose-400 truncate max-w-[100px] sm:max-w-[150px]">
-                      {processo.assistido.localPrisao || "Preso"}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Unlock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-500" />
-                    <span className="text-xs text-emerald-600 dark:text-emerald-400">Solto</span>
-                  </>
+              <div className="flex items-center gap-1.5">
+                <PrisonerIndicator 
+                  preso={processo.assistido.preso} 
+                  localPrisao={processo.assistido.localPrisao}
+                  size="xs" 
+                />
+                {!processo.assistido.preso && (
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400">Solto</span>
                 )}
               </div>
             </div>
