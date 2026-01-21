@@ -63,6 +63,7 @@
     "postgres": "^3.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-is": "^19.0.0",
     "recharts": "^3.6.0",
     "sonner": "^1.7.0",
     "stripe": "^20.1.0",
