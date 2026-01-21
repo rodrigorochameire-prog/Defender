@@ -280,10 +280,9 @@ export function DemandasTable() {
                 <SwissTableHead className="w-[120px]">Status</SwissTableHead>
                 <SwissTableHead className="min-w-[200px]">Assistido</SwissTableHead>
                 <SwissTableHead className="min-w-[180px]">Nº Processo</SwissTableHead>
-                <SwissTableHead className="min-w-[160px]">Ato/Tipo</SwissTableHead>
-                <SwissTableHead>Defensor</SwissTableHead>
+                <SwissTableHead className="min-w-[180px]">Ato</SwissTableHead>
                 <SwissTableHead className="text-center w-[100px]">Prazo</SwissTableHead>
-                <SwissTableHead className="min-w-[250px]">Providências</SwissTableHead>
+                <SwissTableHead className="min-w-[280px]">Providências</SwissTableHead>
                 <SwissTableHead className="text-right w-[80px]">Ações</SwissTableHead>
               </SwissTableRow>
             </SwissTableHeader>
@@ -364,17 +363,7 @@ export function DemandasTable() {
 
                     {/* Ato */}
                     <SwissTableCell>
-                      <div>
-                        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">{item.ato}</p>
-                        <Badge variant="outline" className="text-xs px-1.5 py-0 mt-1 area-badge">
-                          {item.tipoAto}
-                        </Badge>
-                      </div>
-                    </SwissTableCell>
-
-                    {/* Defensor */}
-                    <SwissTableCell>
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate">{item.defensorNome}</p>
+                      <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">{item.ato}</p>
                     </SwissTableCell>
 
                     {/* Prazo */}
