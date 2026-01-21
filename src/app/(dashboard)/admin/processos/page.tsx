@@ -692,7 +692,7 @@ function ProcessoRow({ processo }: { processo: Processo }) {
                 prazoHoje && "text-orange-600",
                 diasPrazo === 1 && "text-amber-600"
               )}>
-                {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : diasPrazo < 0 ? "Vencido" : `${diasPrazo}d`}
+                {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : diasPrazo !== null && diasPrazo < 0 ? "Vencido" : `${diasPrazo}d`}
               </span>
             </div>
             {processo.atoProximoPrazo && (
