@@ -16,6 +16,7 @@ import {
   Edit,
   Phone,
   User,
+  Lock,
   Activity,
   History,
   Target,
