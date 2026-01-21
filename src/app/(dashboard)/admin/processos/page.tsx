@@ -33,6 +33,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
 import { 
   Scale, 
   Plus,
@@ -354,14 +355,7 @@ function ProcessoCard({ processo }: { processo: Processo }) {
                 </Badge>
                 
                 {/* 3. RÉU PRESO */}
-                {processo.assistido.preso && (
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Lock className="w-4 h-4 text-rose-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>Preso</TooltipContent>
-                  </Tooltip>
-                )}
+                <PrisonerIndicator preso={processo.assistido.preso} size="sm" />
 
                 {/* 4. PRAZO URGENTE */}
                 {prazoUrgente && diasPrazo !== null && (

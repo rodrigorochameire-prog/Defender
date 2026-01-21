@@ -733,7 +733,7 @@ export default function CasoDetailPage() {
                     <div className="text-center">
                       <div className="flex items-center gap-1.5 justify-center">
                         <p className="font-medium">{reu.nome}</p>
-                        {reu.preso && <Lock className="w-3 h-3 text-rose-500" />}
+                        <PrisonerIndicator preso={reu.preso} size="xs" />
                       </div>
                       {reu.localPrisao && (
                         <p className="text-xs text-muted-foreground">{reu.localPrisao}</p>

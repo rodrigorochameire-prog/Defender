@@ -111,6 +111,7 @@ import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { PageHeader } from "@/components/shared/section-header";
 import { FilterChip, FilterChipGroup, ActiveFiltersBar } from "@/components/shared/filter-chips";
 import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
+import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
 
 // Cores alinhadas com os workspaces
 // Cores de atribuição NEUTRAS para reduzir poluição visual - com contraste melhorado
@@ -2394,15 +2395,7 @@ export default function DemandasPage() {
                       {/* Linha 1: Badges de Status e Prioridade */}
                       <div className={cn("flex items-center justify-between gap-2", largerFontMode ? "mb-3" : "mb-2")}>
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          {demanda.reuPreso && (
-                            <Badge className={cn(
-                              "bg-rose-600 text-white px-1.5 sm:px-2 py-0 animate-pulse",
-                              largerFontMode ? "text-xs h-6" : "text-xs h-5"
-                            )}>
-                              <Lock className={cn(largerFontMode ? "h-3 w-3" : "h-2.5 w-2.5", "mr-0.5")} />
-                              PRESO
-                            </Badge>
-                          )}
+                          <PrisonerIndicator preso={demanda.reuPreso} size={largerFontMode ? "md" : "sm"} />
                           <Badge 
                             variant="outline"
                             className={cn(
@@ -3144,15 +3137,7 @@ export default function DemandasPage() {
                     {/* Coluna 1: Assistido + Ato */}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        {demanda.reuPreso && (
-                          <Badge className={cn(
-                            "bg-rose-600 text-white px-1.5 py-0 h-5",
-                            largerFontMode ? "text-xs" : "text-xs"
-                          )}>
-                            <Lock className={cn("mr-0.5", largerFontMode ? "h-3 w-3" : "h-2.5 w-2.5")} />
-                            PRESO
-                          </Badge>
-                        )}
+                        <PrisonerIndicator preso={demanda.reuPreso} size={largerFontMode ? "md" : "sm"} />
                         <h4 className={cn(
                           "font-semibold text-zinc-900 dark:text-zinc-100 truncate",
                           largerFontMode ? "text-base" : "text-sm"
@@ -3350,12 +3335,7 @@ export default function DemandasPage() {
                     >
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
-                        {demanda.reuPreso && (
-                          <Badge className="bg-rose-600 text-white text-xs px-1 py-0 h-4">
-                            <Lock className="h-2 w-2 mr-0.5" />
-                            PRESO
-                          </Badge>
-                        )}
+                        <PrisonerIndicator preso={demanda.reuPreso} size="sm" />
                         {tipoAtoConfig && (
                           <Badge variant="outline" className="text-xs px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}
@@ -3425,12 +3405,7 @@ export default function DemandasPage() {
                     >
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
-                        {demanda.reuPreso && (
-                          <Badge className="bg-rose-600 text-white text-xs px-1 py-0 h-4">
-                            <Lock className="h-2 w-2 mr-0.5" />
-                            PRESO
-                          </Badge>
-                        )}
+                        <PrisonerIndicator preso={demanda.reuPreso} size="sm" />
                         {tipoAtoConfig && (
                           <Badge variant="outline" className="text-xs px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}
@@ -3500,12 +3475,7 @@ export default function DemandasPage() {
                     >
                       {/* Badges */}
                       <div className="flex items-center gap-1 flex-wrap mb-1.5">
-                        {demanda.reuPreso && (
-                          <Badge className="bg-rose-600 text-white text-xs px-1 py-0 h-4">
-                            <Lock className="h-2 w-2 mr-0.5" />
-                            PRESO
-                          </Badge>
-                        )}
+                        <PrisonerIndicator preso={demanda.reuPreso} size="sm" />
                         {tipoAtoConfig && (
                           <Badge variant="outline" className="text-xs px-1 py-0 h-4 bg-zinc-100 dark:bg-zinc-800">
                             {tipoAtoConfig.label}

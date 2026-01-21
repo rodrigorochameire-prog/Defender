@@ -87,6 +87,7 @@ import { FilterChip, FilterChipGroup } from "@/components/shared/filter-chips";
 import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
 import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
 
 // Cores alinhadas com os workspaces
 // Cores de atribuição NEUTRAS para reduzir poluição visual
@@ -595,14 +596,7 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
                 )}
 
                 {/* 4. RÉU PRESO - Ícone de cadeado */}
-                {hasReuPreso && (
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Lock className="w-4 h-4 text-rose-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>Preso</TooltipContent>
-                  </Tooltip>
-                )}
+                <PrisonerIndicator preso={hasReuPreso} size="sm" />
 
                 {/* 5. AUDIÊNCIA HOJE/AMANHÃ */}
                 {hasAudienciaHoje && (
