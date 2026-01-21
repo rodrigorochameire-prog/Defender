@@ -564,6 +564,8 @@ function ProcessoRow({ processo }: { processo: Processo }) {
   const diasPrazo = processo.proximoPrazo 
     ? differenceInDays(processo.proximoPrazo, new Date())
     : null;
+  const prazoVencido = diasPrazo !== null && diasPrazo < 0;
+  const prazoHoje = diasPrazo === 0;
   const prazoUrgente = diasPrazo !== null && diasPrazo <= 3;
 
   const handleCopy = () => {
