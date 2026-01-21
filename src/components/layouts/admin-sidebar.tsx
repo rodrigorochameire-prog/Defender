@@ -5,72 +5,25 @@ import { usePathname, useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  Bell,
-  FileText,
-  LogOut,
-  PanelLeft,
-  User,
-  MessageCircle,
-  Settings,
-  BarChart3,
-  Scale,
-  Gavel,
-  FileSearch,
-  Clock,
-  AlertTriangle,
-  Calculator,
-  FolderOpen,
-  UserCheck,
-  Building2,
-  Briefcase,
-  Target,
-  ChevronRight,
-  Shield,
-  Lock,
-  RefreshCw,
-  Award,
-  TrendingUp,
-  ChevronDown,
-  Zap,
-  Brain,
-  Mic,
-  Heart,
-  ClipboardCheck,
-  Columns3,
-  History,
-  PieChart,
-  Handshake,
-  CalendarDays,
-  Sparkles,
+  LayoutDashboard, Users, Calendar, Bell, FileText, LogOut, PanelLeft, User,
+  Settings, BarChart3, Scale, Gavel, Clock, AlertTriangle, Calculator,
+  FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
+  Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
+  Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
+  FileSearch, UserCheck, ChevronRight
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarInset,
-  SidebarTrigger,
-  useSidebar,
+  Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu,
+  SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarInset,
+  SidebarTrigger, useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FontSizeToggle } from "@/components/font-size-toggle";
@@ -79,11 +32,8 @@ import { AssignmentSwitcher } from "@/components/layout/assignment-switcher";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { EntitySheetProvider } from "@/contexts/entity-sheet-context";
 import { 
-  useAssignment, 
-  CONTEXT_MENU_ITEMS, 
-  UTILITIES_MENU,
-  type MenuSection,
-  type AssignmentMenuItem,
+  useAssignment, CONTEXT_MENU_ITEMS, UTILITIES_MENU,
+  type MenuSection, type AssignmentMenuItem,
 } from "@/contexts/assignment-context";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
@@ -95,80 +45,58 @@ interface AdminSidebarProps {
   userEmail?: string;
 }
 
-// Mapeamento de ícones
+// --- LOGO COMPONENT (INTELEX) ---
+function IntelexLogo({ collapsed }: { collapsed?: boolean }) {
+  return (
+    <div className={cn("flex items-center gap-3", collapsed ? "justify-center" : "px-2")}>
+      <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-stone-900 text-white shadow-md">
+        {/* O Ícone X Estilizado */}
+        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 6L6 18" className="text-stone-400" />
+          <path d="M6 6l12 12" className="text-emerald-400" />
+        </svg>
+      </div>
+      {!collapsed && (
+        <div className="flex flex-col text-left">
+          <span className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100 leading-none">
+            Intel<span className="text-emerald-700 font-serif font-black">ex</span>
+          </span>
+          <span className="text-[10px] font-medium text-stone-500 uppercase tracking-widest mt-0.5">
+            Gabinete Digital
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- CONFIGURAÇÃO ---
 const iconMap: Record<string, React.ElementType> = {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  Bell,
-  FileText,
-  User,
-  MessageCircle,
-  Settings,
-  BarChart3,
-  Scale,
-  Gavel,
-  FileSearch,
-  Clock,
-  AlertTriangle,
-  Calculator,
-  FolderOpen,
-  UserCheck,
-  Building2,
-  Briefcase,
-  Target,
-  Shield,
-  Lock,
-  RefreshCw,
-  Award,
-  TrendingUp,
-  Zap,
-  Brain,
-  Mic,
-  Heart,
-  ClipboardCheck,
-  Columns3,
-  History,
-  PieChart,
-  Handshake,
-  CalendarDays,
-  Sparkles,
+  LayoutDashboard, Users, Calendar, Bell, FileText, User, MessageCircle,
+  Settings, BarChart3, Scale, Gavel, Clock, AlertTriangle, Calculator,
+  FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
+  Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
+  History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
+  ChevronRight
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
 const DEFAULT_WIDTH = 280;
-const MIN_WIDTH = 240;
-const MAX_WIDTH = 380;
 
+// --- COMPONENTE PRINCIPAL ---
 export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProps) {
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
 
+  // Persistência de largura
   useEffect(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-    if (saved) {
-      setSidebarWidth(parseInt(saved, 10));
-    }
+    if (saved) setSidebarWidth(parseInt(saved, 10));
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
-  }, [sidebarWidth]);
-
   return (
-    <SidebarProvider
-      defaultOpen={false}
-      style={
-        {
-          "--sidebar-width": `${sidebarWidth}px`,
-        } as CSSProperties
-      }
-    >
+    <SidebarProvider defaultOpen={true} style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}>
       <EntitySheetProvider>
-        <AdminSidebarContent
-          setSidebarWidth={setSidebarWidth}
-          userName={userName}
-          userEmail={userEmail}
-        >
+        <AdminSidebarContent setSidebarWidth={setSidebarWidth} userName={userName} userEmail={userEmail}>
           {children}
         </AdminSidebarContent>
       </EntitySheetProvider>
@@ -176,25 +104,14 @@ export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProp
   );
 }
 
-// ==========================================
-// COMPONENTE DE ITEM DE MENU
-// ==========================================
-
-function MenuItem({
-  item,
-  isActive,
-  isCollapsed,
-  config,
-  onNavigate,
-}: {
+function MenuItem({ item, isActive, isCollapsed, config, onNavigate }: {
   item: AssignmentMenuItem;
   isActive: boolean;
   isCollapsed: boolean;
-  config: ReturnType<typeof useAssignment>["config"];
+  config: any;
   onNavigate: () => void;
 }) {
   const Icon = iconMap[item.icon] || Briefcase;
-
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -202,77 +119,32 @@ function MenuItem({
         isActive={isActive}
         tooltip={item.label}
         className={cn(
-          "h-10 transition-all duration-200 rounded-lg group/item",
-          isActive && "shadow-sm"
+          "h-9 transition-all duration-200 rounded-md group/item mb-0.5",
+          isActive ? "bg-stone-100 text-stone-900 font-medium" : "text-stone-500 hover:text-stone-900 hover:bg-stone-50"
         )}
-        style={{
-          background: isActive ? config.sidebarActiveBg : undefined,
-          boxShadow: isActive ? `0 0 0 1.5px ${config.sidebarActiveRing}` : undefined,
-        }}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
-          <Icon
-            className={cn(
-              "transition-all duration-200 flex-shrink-0",
-              isActive ? "h-[18px] w-[18px]" : "h-4 w-4"
-            )}
-            style={{
-              color: isActive ? config.accentColor : config.sidebarTextMuted,
-            }}
-            strokeWidth={isActive ? 2 : 1.8}
-          />
-          <span
-            className={cn(
-              "text-sidebar-item transition-colors duration-200 flex-1",
-              isActive ? "font-semibold text-foreground" : ""
-            )}
-            style={{
-              color: isActive ? undefined : config.sidebarTextMuted,
-            }}
-          >
-            {item.label}
-          </span>
-          {item.isPremium && !isCollapsed && (
-            <Sparkles className="w-3 h-3 text-amber-500 opacity-0 group-hover/item:opacity-100 transition-opacity" />
-          )}
-          {isActive && !isCollapsed && (
-            <div
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: config.accentColor }}
-            />
-          )}
+          <Icon className={cn("transition-all duration-200", isActive ? "h-4 w-4 text-emerald-700" : "h-4 w-4 text-stone-400 group-hover:text-stone-600")} strokeWidth={isActive ? 2.5 : 2} />
+          <span className="text-sm">{item.label}</span>
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
 }
 
-// ==========================================
-// COMPONENTE DE SEÇÃO DE MENU
-// ==========================================
-
-function MenuSectionComponent({
-  section,
-  pathname,
-  isCollapsed,
-  config,
-  onNavigate,
-}: {
+function MenuSectionComponent({ section, pathname, isCollapsed, config, onNavigate }: {
   section: MenuSection;
   pathname: string;
   isCollapsed: boolean;
-  config: ReturnType<typeof useAssignment>["config"];
+  config: any;
   onNavigate: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(section.defaultOpen !== false);
 
   const hasActiveItem = section.items.some(
-    (item) =>
-      pathname === item.path ||
-      (item.path !== "/admin" && pathname.startsWith(item.path))
+    (item) => pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path))
   );
 
-  // Auto-expand se tiver item ativo
   useEffect(() => {
     if (hasActiveItem && !isOpen) {
       setIsOpen(true);
@@ -283,42 +155,15 @@ function MenuSectionComponent({
     return (
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          <button
-            className={cn(
-              "w-full flex items-center justify-between px-3 py-2 mb-1 rounded-lg transition-colors",
-              "hover:bg-black/5 dark:hover:bg-white/5"
-            )}
-          >
-            <span
-              className="text-sidebar-section"
-              style={{ color: config.sidebarTextMuted }}
-            >
-              {section.title}
-            </span>
-            <ChevronDown
-              className={cn(
-                "h-3 w-3 transition-transform duration-200",
-                isOpen && "rotate-180"
-              )}
-              style={{ color: config.sidebarTextMuted }}
-            />
+          <button className="w-full flex items-center justify-between px-3 py-2 mb-1 rounded-lg transition-colors hover:bg-stone-50">
+            <span className="text-xs font-semibold text-stone-400 uppercase tracking-widest">{section.title}</span>
+            <ChevronDown className={cn("h-3 w-3 transition-transform duration-200 text-stone-400", isOpen && "rotate-180")} />
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-0.5">
           {section.items.map((item) => {
-            const isActive =
-              pathname === item.path ||
-              (item.path !== "/admin" && pathname.startsWith(item.path));
-            return (
-              <MenuItem
-                key={item.path}
-                item={item}
-                isActive={isActive}
-                isCollapsed={isCollapsed}
-                config={config}
-                onNavigate={onNavigate}
-              />
-            );
+            const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
+            return <MenuItem key={item.path} item={item} isActive={isActive} isCollapsed={isCollapsed} config={config} onNavigate={onNavigate} />;
           })}
         </CollapsibleContent>
       </Collapsible>
@@ -329,510 +174,107 @@ function MenuSectionComponent({
     <div>
       {!isCollapsed && (
         <div className="px-3 py-2 mb-1">
-          <span
-            className="text-sidebar-section"
-            style={{ color: config.accentColor }}
-          >
-            {section.title}
-          </span>
+          <span className="text-xs font-semibold text-stone-400 uppercase tracking-widest">{section.title}</span>
         </div>
       )}
       {section.items.map((item) => {
-        const isActive =
-          pathname === item.path ||
-          (item.path !== "/admin" && pathname.startsWith(item.path));
-        return (
-          <MenuItem
-            key={item.path}
-            item={item}
-            isActive={isActive}
-            isCollapsed={isCollapsed}
-            config={config}
-            onNavigate={onNavigate}
-          />
-        );
+        const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
+        return <MenuItem key={item.path} item={item} isActive={isActive} isCollapsed={isCollapsed} config={config} onNavigate={onNavigate} />;
       })}
     </div>
   );
 }
 
-// ==========================================
-// SIDEBAR CONTENT
-// ==========================================
-
-function AdminSidebarContent({
-  children,
-  setSidebarWidth,
-  userName,
-  userEmail,
-}: {
+function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }: {
   children: ReactNode;
   setSidebarWidth: (width: number) => void;
   userName: string;
   userEmail?: string;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { signOut } = useClerk();
   const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
-  const [isResizing, setIsResizing] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
+  const { config, modules } = useAssignment();
   const isMobile = useIsMobile();
 
-  // Contexto de atribuição com módulos
-  const { config, modules } = useAssignment();
-
-  const handleNavigate = () => {
-    if (isMobile && openMobile) {
-      setOpenMobile(false);
-    }
+  const handleNavigate = () => { 
+    if (isMobile && openMobile) setOpenMobile(false); 
   };
-
-  useEffect(() => {
-    if (isCollapsed) {
-      setIsResizing(false);
-    }
-  }, [isCollapsed]);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return;
-      const sidebarLeft = sidebarRef.current?.getBoundingClientRect().left ?? 0;
-      const newWidth = e.clientX - sidebarLeft;
-      if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
-        setSidebarWidth(newWidth);
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-    };
-
-    if (isResizing) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-  }, [isResizing, setSidebarWidth]);
-
-  async function handleLogout() {
-    await logoutAction();
-    await signOut({ redirectUrl: "/" });
+  
+  async function handleLogout() { 
+    await logoutAction(); 
+    await signOut({ redirectUrl: "/" }); 
   }
 
   return (
     <>
-      <div className="relative" ref={sidebarRef}>
-        <Sidebar
-          collapsible="icon"
-          className={cn(
-            "border-r bg-sidebar shadow-sm"
-          )}
-          style={{
-            borderColor: config.sidebarBorder,
-          }}
-          disableTransition={isResizing}
-        >
-          {/* ==========================================
-              HEADER: LOGOTIPO INTELEX
-              Altura alinhada com header principal (60px)
-              ========================================== */}
-          <SidebarHeader
-            className="border-b h-[60px] flex items-center justify-center px-4"
-            style={{
-              background: config.sidebarHeaderBg,
-              borderColor: config.sidebarBorder,
-            }}
-          >
-            {!isCollapsed ? (
-              <div className="flex items-center gap-2 w-full">
-                {/* Logo "X" do INTELEX */}
-                <div 
-                  className="flex items-center justify-center w-9 h-9 rounded-lg"
-                  style={{
-                    background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
-                  }}
-                >
-                  <div className="relative w-5 h-5">
-                    <div 
-                      className="absolute inset-0 text-white font-bold text-xl flex items-center justify-center"
-                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                    >
-                      ×
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Tipografia INTELEX */}
-                <div className="flex-1">
-                  <div className="flex items-baseline gap-0">
-                    <span className="text-lg font-bold text-foreground tracking-tight">
-                      Intel
-                    </span>
-                    <span className="text-lg font-light text-foreground tracking-tight">
-                      ex
-                    </span>
-                  </div>
-                  <p 
-                    className="text-[10px] font-medium tracking-wider uppercase leading-none"
-                    style={{ color: config.sidebarTextMuted }}
-                  >
-                    Inteligência • Lei
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div 
-                className="flex items-center justify-center w-9 h-9 rounded-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
-                }}
-              >
-                <div className="relative w-5 h-5">
-                  <div 
-                    className="absolute inset-0 text-white font-bold text-xl flex items-center justify-center"
-                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                  >
-                    ×
-                  </div>
-                </div>
-              </div>
-            )}
-          </SidebarHeader>
+      <Sidebar collapsible="icon" className="border-r border-stone-200 bg-white shadow-sm z-30">
+        <SidebarHeader className="h-[64px] border-b border-stone-100 flex items-center justify-center bg-stone-50/50">
+           <IntelexLogo collapsed={isCollapsed} />
+        </SidebarHeader>
 
-          <SidebarContent className="gap-0 py-3 px-2 overflow-y-auto flex-1">
-            <SidebarMenu className="gap-1">
-              {/* Assignment Switcher como primeiro item */}
-              <SidebarMenuItem>
-                <div className="px-2 mb-3">
-                  <AssignmentSwitcher collapsed={isCollapsed} />
-                </div>
-              </SidebarMenuItem>
+        <SidebarContent className="p-3 gap-6">
+          {/* Seletor de Atribuição */}
+          <div className={cn("transition-all duration-200", isCollapsed ? "opacity-0 h-0 overflow-hidden" : "opacity-100")}>
+             <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider pl-2 mb-2 block">Atribuição</label>
+             <AssignmentSwitcher collapsed={isCollapsed} />
+          </div>
 
-              {/* Toggle Button */}
-              <SidebarMenuItem className={isCollapsed ? "flex justify-center" : ""}>
-                <SidebarMenuButton
-                  onClick={toggleSidebar}
-                  tooltip={isCollapsed ? "Expandir" : "Recolher"}
-                  className="h-10 rounded-lg transition-all duration-200"
-                  style={{
-                    color: config.sidebarTextMuted,
-                  }}
-                >
-                  <PanelLeft className="h-[18px] w-[18px]" strokeWidth={1.8} />
-                  <span className="text-sidebar-item">
-                    {isCollapsed ? "Expandir" : "Recolher"}
-                  </span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+          {/* Menu Principal */}
+          <SidebarMenu>
+            {!isCollapsed && <div className="px-2 pb-2 text-xs font-semibold text-stone-400 uppercase tracking-widest">Navegação</div>}
+            {CONTEXT_MENU_ITEMS.map((item) => (
+              <MenuItem key={item.path} item={item} isActive={pathname === item.path} isCollapsed={isCollapsed} config={config} onNavigate={handleNavigate} />
+            ))}
+          </SidebarMenu>
 
-              {/* ==========================================
-                  BLOCO CONTEXTO: Dashboard, Casos, Agenda
-                  ========================================== */}
-              {!isCollapsed && (
-                <div className="px-3 py-2 mb-1 mt-2">
-                  <span
-                    className="text-sidebar-section flex items-center gap-1.5"
-                    style={{ color: config.sidebarTextMuted }}
-                  >
-                    <LayoutDashboard className="w-3 h-3" />
-                    Central
-                  </span>
-                </div>
-              )}
+          {/* Módulos Específicos */}
+          <SidebarMenu>
+             {!isCollapsed && <div className="px-2 pb-2 mt-4 text-xs font-semibold text-stone-400 uppercase tracking-widest">{config.shortName}</div>}
+             {modules.map((section: MenuSection) => (
+                <MenuSectionComponent key={section.id} section={section} pathname={pathname} isCollapsed={isCollapsed} config={config} onNavigate={handleNavigate} />
+             ))}
+          </SidebarMenu>
 
-              {CONTEXT_MENU_ITEMS.map((item) => {
-                const Icon = iconMap[item.icon] || LayoutDashboard;
-                const isActive = pathname === item.path;
+          {/* Utilidades */}
+          <SidebarMenu>
+            {!isCollapsed && <div className="px-2 pb-2 mt-4 text-xs font-semibold text-stone-400 uppercase tracking-widest">Utilidades</div>}
+            {UTILITIES_MENU.map((section) => (
+              <MenuSectionComponent key={section.id} section={section} pathname={pathname} isCollapsed={isCollapsed} config={config} onNavigate={handleNavigate} />
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
 
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.label}
-                      className={cn(
-                        "h-11 transition-all duration-200 rounded-lg",
-                        isActive && "shadow-sm"
-                      )}
-                      style={{
-                        background: isActive ? config.sidebarActiveBg : undefined,
-                        boxShadow: isActive ? `0 0 0 1.5px ${config.sidebarActiveRing}` : undefined,
-                      }}
-                    >
-                      <Link href={item.path} prefetch={true} onClick={handleNavigate}>
-                        <Icon
-                          className={cn(
-                            "transition-all duration-200",
-                            isActive ? "h-5 w-5" : "h-[18px] w-[18px]"
-                          )}
-                          style={{
-                            color: isActive ? config.accentColor : config.sidebarTextMuted,
-                          }}
-                          strokeWidth={isActive ? 2 : 1.8}
-                        />
-                        <span
-                          className={cn(
-                            "text-sidebar-item transition-colors duration-200",
-                            isActive ? "font-bold text-foreground" : "font-semibold"
-                          )}
-                          style={{
-                            color: isActive ? undefined : config.sidebarTextMuted,
-                          }}
-                        >
-                          {item.label}
-                        </span>
-                        {isActive && !isCollapsed && (
-                          <div
-                            className="ml-auto w-2 h-2 rounded-full"
-                            style={{ backgroundColor: config.accentColor }}
-                          />
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-
-              {/* Separador */}
-              {!isCollapsed && (
-                <div
-                  className="h-[2px] my-3 mx-1 rounded-full"
-                  style={{
-                    background: `linear-gradient(to right, ${config.sidebarDivider}, transparent)`,
-                  }}
-                />
-              )}
-              {isCollapsed && <div className="h-2" />}
-
-              {/* ==========================================
-                  BLOCO CENTRAL: ATUAÇÃO (Módulos Específicos)
-                  ========================================== */}
-              {!isCollapsed && (
-                <div className="px-3 py-2 mb-1">
-                  <span
-                    className="text-sidebar-section flex items-center gap-1.5"
-                    style={{ color: config.accentColor }}
-                  >
-                    <span>{config.emoji}</span>
-                    {config.shortName}
-                  </span>
-                </div>
-              )}
-
-              {/* Renderizar módulos específicos da especialidade */}
-              {modules.map((section, idx) => (
-                <div key={section.id}>
-                  <MenuSectionComponent
-                    section={section}
-                    pathname={pathname}
-                    isCollapsed={isCollapsed}
-                    config={config}
-                    onNavigate={handleNavigate}
-                  />
-                  {idx < modules.length - 1 && !isCollapsed && (
-                    <div className="h-2" />
-                  )}
-                </div>
-              ))}
-
-              {/* Separador antes das Utilidades */}
-              {!isCollapsed && (
-                <div
-                  className="h-[2px] my-3 mx-1 rounded-full"
-                  style={{
-                    background: `linear-gradient(to right, transparent, ${config.sidebarDivider}, transparent)`,
-                  }}
-                />
-              )}
-              {isCollapsed && <div className="h-2" />}
-
-              {/* ==========================================
-                  BLOCO INFERIOR: UTILIDADES
-                  ========================================== */}
-              {UTILITIES_MENU.map((section) => (
-                <MenuSectionComponent
-                  key={section.id}
-                  section={section}
-                  pathname={pathname}
-                  isCollapsed={isCollapsed}
-                  config={config}
-                  onNavigate={handleNavigate}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarContent>
-
-          {/* Footer */}
-          <SidebarFooter
-            className={cn("border-t", isCollapsed ? "p-2" : "p-2.5")}
-            style={{
-              borderColor: config.sidebarDivider,
-              background: `linear-gradient(to top, ${config.sidebarHover}, transparent)`,
-            }}
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-lg transition-all duration-200 w-full text-left focus:outline-none focus-visible:ring-2",
-                    isCollapsed ? "justify-center p-1.5" : "px-2 py-2"
-                  )}
-                  style={{
-                    ["--tw-ring-color" as string]: config.accentColor + "60",
-                  }}
-                >
-                  <Avatar
-                    className={cn(
-                      "border shadow-sm transition-all",
-                      isCollapsed ? "h-8 w-8" : "h-9 w-9"
-                    )}
-                    style={{ borderColor: config.accentColor + "40" }}
-                  >
-                    <AvatarFallback
-                      className="text-xs font-semibold"
-                      style={{
-                        background: config.accentColorLight,
-                        color: config.accentColor,
-                      }}
-                    >
-                      {getInitials(userName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  {!isCollapsed && (
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sidebar-item font-semibold truncate text-foreground">
-                        {userName}
-                      </p>
-                      {userEmail && (
-                        <p className="text-ui-micro text-muted-foreground truncate mt-0.5">
-                          {userEmail}
-                        </p>
-                      )}
-                    </div>
-                  )}
+        <SidebarFooter className="border-t border-stone-100 p-4 bg-stone-50/50">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9 border border-stone-200 bg-white">
+              <AvatarFallback className="text-stone-700 font-bold text-xs">{getInitials(userName)}</AvatarFallback>
+            </Avatar>
+            {!isCollapsed && (
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-semibold text-stone-800 truncate">{userName}</p>
+                <button onClick={handleLogout} className="text-xs text-red-500 hover:underline flex items-center gap-1 mt-0.5">
+                  <LogOut className="w-3 h-3" /> Sair
                 </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-52 shadow-xl border-[hsl(155_15%_90%)] dark:border-[hsl(160_12%_18%)]"
-              >
-                <DropdownMenuItem asChild>
-                  <Link href="/admin/profile" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    Meu Perfil
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Configurações
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-red-600 dark:text-red-400 cursor-pointer"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarFooter>
-        </Sidebar>
-
-        {/* Resize Handle */}
-        {!isCollapsed && (
-          <div
-            className={cn(
-              "absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-20 transition-colors",
-              "hover:bg-[hsl(158,40%,70%)] dark:hover:bg-[hsl(158,30%,30%)]",
-              isResizing && "bg-[hsl(158,50%,60%)] dark:bg-[hsl(158,40%,40%)]"
+              </div>
             )}
-            onMouseDown={() => setIsResizing(true)}
-          />
-        )}
-      </div>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
 
-      {/* Main Content */}
-      <SidebarInset className="flex flex-col min-h-screen">
-        {/* Header Desktop - Alinhado com a linha da sidebar */}
-        <header
-          className="hidden md:flex h-[60px] shrink-0 items-center border-b px-6 backdrop-blur-md"
-          style={{
-            background: 'rgba(255, 255, 255, 0.8)',
-            borderColor: 'hsl(20 5.9% 90%)',
-          }}
-        >
-          {/* Ações à direita */}
-          <div className="flex items-center gap-3 ml-auto">
+      <SidebarInset className="flex flex-col min-h-screen bg-stone-50/60 dark:bg-zinc-950">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white/80 px-6 backdrop-blur-md z-20 sticky top-0">
+          <SidebarTrigger className="-ml-2" />
+          <div className="flex-1" />
+          <div className="flex items-center gap-2">
             <CommandPalette />
-            <FontSizeToggle />
             <ThemeToggle />
             <NotificationsPopover />
           </div>
         </header>
-
-        {/* Header Mobile */}
-        <header
-          className="md:hidden flex h-14 shrink-0 items-center border-b px-4 gap-3"
-          style={{
-            background: 'rgba(255, 255, 255, 0.8)',
-            borderColor: 'hsl(20 5.9% 90%)',
-          }}
-        >
-          <SidebarTrigger className="h-8 w-8" />
-          
-          {/* Logo INTELEX Mobile */}
-          <div className="flex items-center justify-center flex-1">
-            <div className="flex items-center gap-2">
-              <div
-                className="flex items-center justify-center w-8 h-8 rounded-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
-                }}
-              >
-                <div className="relative w-4 h-4">
-                  <div 
-                    className="absolute inset-0 text-white font-bold text-lg flex items-center justify-center"
-                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                  >
-                    ×
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-baseline gap-0">
-                <span className="text-base font-bold text-foreground tracking-tight">
-                  Intel
-                </span>
-                <span className="text-base font-light text-foreground tracking-tight">
-                  ex
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1">
-            <ThemeToggle />
-            <NotificationsPopover />
-          </div>
-        </header>
-
-        {/* Content - Fundo stone-50 para contraste com cards brancos */}
-        <main className="flex-1 overflow-auto">
-          {/* Container centraliza e limita largura em telas gigantes */}
-          <div className="w-full max-w-[1400px] mx-auto p-6 md:p-8 space-y-8">
-            {children}
-          </div>
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 max-w-[1600px] mx-auto w-full space-y-8">
+          {children}
         </main>
       </SidebarInset>
     </>
