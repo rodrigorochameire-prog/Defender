@@ -909,6 +909,7 @@ export default function ProcessosPage() {
                   label="Comarca"
                   placeholder="Todas as comarcas"
                   value="all"
+                  onValueChange={() => {}}
                   options={[
                     { value: "all", label: "Todas" },
                     { value: "camacari", label: "Camaçari" },
@@ -919,6 +920,7 @@ export default function ProcessosPage() {
                   label="Defensor"
                   placeholder="Todos os defensores"
                   value="all"
+                  onValueChange={() => {}}
                   options={[
                     { value: "all", label: "Todos" },
                     { value: "rodrigo", label: "Dr. Rodrigo Rocha" },
