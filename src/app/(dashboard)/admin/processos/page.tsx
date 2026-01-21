@@ -79,6 +79,14 @@ import { FilterChip, FilterChipGroup } from "@/components/shared/filter-chips";
 import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
 import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
 import { EmptyState } from "@/components/shared/empty-state";
+import { FilterBar } from "@/components/shared/filter-bar";
+import { 
+  PageContainer, 
+  PageSection, 
+  ContentGrid,
+  Divider,
+  StatBlock
+} from "@/components/shared/page-structure";
 
 // ==========================================
 // TIPOS
@@ -588,6 +596,11 @@ function ProcessoRow({ processo }: { processo: Processo }) {
   const [copied, setCopied] = useState(false);
   const atribuicaoColors = ATRIBUICAO_COLORS[processo.area] || ATRIBUICAO_COLORS.SUBSTITUICAO;
   const situacaoConfig = SITUACAO_CONFIGS[processo.situacao] || SITUACAO_CONFIGS.ativo;
+  
+  const diasPrazo = processo.proximoPrazo 
+    ? differenceInDays(processo.proximoPrazo, new Date())
+    : null;
+  const prazoUrgente = diasPrazo !== null && diasPrazo <= 3;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(processo.numeroAutos);
@@ -598,23 +611,41 @@ function ProcessoRow({ processo }: { processo: Processo }) {
   return (
     <SwissTableRow className={cn(
       "group transition-colors",
-      processo.assistido.preso && "border-l-[3px] border-l-rose-500"
+      processo.assistido.preso && "border-semantic-prisoner"
     )}>
-      <SwissTableCell>
-        <div className="flex items-center gap-2 cursor-pointer" onClick={handleCopy}>
-          <span className="font-mono text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+      {/* Número do Processo */}
+      <SwissTableCell className="min-w-[200px]">
+        <div 
+          className="flex items-center gap-2 cursor-pointer process-number group/copy" 
+          onClick={handleCopy}
+        >
+          <span className="truncate">
             {processo.numeroAutos}
           </span>
-          {processo.isJuri && <Gavel className="w-3.5 h-3.5 text-emerald-600" />}
-          {copied && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {processo.isJuri && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Gavel className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                </TooltipTrigger>
+                <TooltipContent>Processo do Júri</TooltipContent>
+              </Tooltip>
+            )}
+            {copied ? (
+              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+            ) : (
+              <Copy className="w-3 h-3 opacity-0 group-hover/copy:opacity-100 transition-opacity" />
+            )}
+          </div>
         </div>
       </SwissTableCell>
-      <SwissTableCell>
+
+      {/* Assistido */}
+      <SwissTableCell className="min-w-[180px]">
         <div className="flex items-center gap-2">
-          {/* Avatar neutro - vermelho apenas se preso */}
           <Avatar className={cn(
-            "w-8 h-8 ring-2 cursor-pointer hover:ring-primary/50 transition-all",
-            processo.assistido.preso ? "ring-rose-400" : "ring-zinc-200 dark:ring-zinc-700"
+            "w-8 h-8 ring-2 cursor-pointer hover:ring-primary/50 transition-all flex-shrink-0",
+            processo.assistido.preso ? "ring-rose-400 dark:ring-rose-500" : "ring-zinc-200 dark:ring-zinc-700"
           )}>
             <AvatarImage src={processo.assistido.foto || undefined} alt={processo.assistido.nome} />
             <AvatarFallback className={cn(
@@ -626,40 +657,107 @@ function ProcessoRow({ processo }: { processo: Processo }) {
               {processo.assistido.nome.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <Link href={`/admin/assistidos/${processo.assistido.id}`} className="hover:text-blue-600 dark:hover:text-blue-400">
-            <span className="text-sm font-medium">{processo.assistido.nome}</span>
-          </Link>
+          <div className="flex-1 min-w-0">
+            <Link href={`/admin/assistidos/${processo.assistido.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <span className="text-sm font-medium block truncate">{processo.assistido.nome}</span>
+            </Link>
+            <div className="flex items-center gap-1">
+              <PrisonerIndicator 
+                preso={processo.assistido.preso} 
+                localPrisao={processo.assistido.localPrisao}
+                size="xs" 
+              />
+            </div>
+          </div>
         </div>
       </SwissTableCell>
-      <SwissTableCell>
+
+      {/* Comarca/Vara */}
+      <SwissTableCell className="min-w-[160px]">
         <div>
-          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{processo.comarca}</p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{processo.vara}</p>
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">{processo.comarca}</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{processo.vara}</p>
         </div>
       </SwissTableCell>
+
+      {/* Área */}
       <SwissTableCell>
-        <Badge className={cn("text-xs border-0", atribuicaoColors.bg, atribuicaoColors.text)}>
+        <Badge className="area-badge">
           {ATRIBUICAO_OPTIONS.find(o => o.value === processo.area)?.shortLabel || processo.area}
         </Badge>
       </SwissTableCell>
+
+      {/* Classe/Assunto */}
+      <SwissTableCell className="min-w-[180px]">
+        <div>
+          <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 truncate">{processo.classeProcessual}</p>
+          <p className="text-xs font-legal text-zinc-500 dark:text-zinc-400 truncate">
+            {processo.assunto}
+          </p>
+        </div>
+      </SwissTableCell>
+
+      {/* Defensor */}
       <SwissTableCell>
-        <p className="text-xs font-legal text-zinc-600 dark:text-zinc-400 max-w-[200px] truncate">
-          {processo.assunto}
+        <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate">
+          {processo.defensorNome || "-"}
         </p>
       </SwissTableCell>
-      <SwissTableCell className="text-center">
-        <span className={cn(
-          "font-mono text-sm font-medium",
-          processo.demandasAbertas > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-400"
-        )}>
-          {processo.demandasAbertas}
-        </span>
-      </SwissTableCell>
+
+      {/* Situação */}
       <SwissTableCell>
-        <Badge className={cn("text-xs border-0", situacaoConfig.bg, situacaoConfig.color)}>
+        <Badge 
+          variant="outline" 
+          className={cn(
+            "text-xs px-1.5 py-0.5 font-medium border-0",
+            "status-badge-neutral"
+          )}
+        >
           {situacaoConfig.label}
         </Badge>
       </SwissTableCell>
+
+      {/* Demandas */}
+      <SwissTableCell className="text-center">
+        <Badge 
+          variant="outline" 
+          className={cn(
+            "text-xs px-2 py-0.5 font-medium",
+            processo.demandasAbertas > 0 
+              ? "status-badge-warning"
+              : "status-badge-neutral"
+          )}
+        >
+          {processo.demandasAbertas}
+        </Badge>
+      </SwissTableCell>
+
+      {/* Próximo Prazo */}
+      <SwissTableCell className="min-w-[120px]">
+        {processo.proximoPrazo ? (
+          <div className="space-y-0.5">
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-xs px-1.5 py-0 font-medium border-0",
+                prazoUrgente 
+                  ? "status-badge-urgent"
+                  : "status-badge-info"
+              )}
+            >
+              <Clock className="w-2.5 h-2.5 mr-1" />
+              {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : `${diasPrazo}d`}
+            </Badge>
+            {processo.atoProximoPrazo && (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{processo.atoProximoPrazo}</p>
+            )}
+          </div>
+        ) : (
+          <span className="text-xs text-zinc-300 dark:text-zinc-600 italic">-</span>
+        )}
+      </SwissTableCell>
+
+      {/* Ações */}
       <SwissTableCell className="text-right">
         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Link href={`/admin/processos/${processo.id}`}>
@@ -723,23 +821,37 @@ export default function ProcessosPage() {
   // Configuração visual da atribuição selecionada
   const atribuicaoColors = ATRIBUICAO_COLORS[areaFilter] || ATRIBUICAO_COLORS.all;
 
+  // Preparar filtros ativos
+  const activeFilters = [
+    situacaoFilter !== "all" && { 
+      key: "situacao", 
+      label: "Situação", 
+      value: SITUACAO_CONFIGS[situacaoFilter]?.label || situacaoFilter 
+    },
+    areaFilter !== "all" && { 
+      key: "area", 
+      label: "Área", 
+      value: ATRIBUICAO_OPTIONS.find(o => o.value === areaFilter)?.label || areaFilter 
+    },
+  ].filter(Boolean) as Array<{ key: string; label: string; value: string }>;
+
   return (
     <TooltipProvider>
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <PageContainer maxWidth="wide">
         {/* Breadcrumbs */}
-        <Breadcrumbs className="mb-2" />
+        <Breadcrumbs className="mb-4" />
         
         {/* Page Header */}
         <PageHeader
           title="Processos"
-          description={`Gerenciamento integrado • ${stats.total} processos`}
+          description={`Gerenciamento integrado de processos judiciais • ${stats.total} processos cadastrados`}
           actions={
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" className="h-10 w-10">
                 <Download className="w-4 h-4" />
               </Button>
               <Link href="/admin/processos/novo">
-                <Button className="gap-2">
+                <Button className="gap-2 h-10">
                   <Plus className="w-4 h-4" />
                   <span className="hidden sm:inline">Novo Processo</span>
                   <span className="sm:hidden">Novo</span>
@@ -749,140 +861,189 @@ export default function ProcessosPage() {
           }
         />
 
-        {/* Filtros por Atribuição */}
-        <FilterChipGroup label="Filtrar por Área">
-          {ATRIBUICAO_OPTIONS.map((option) => {
-            const count = option.value === "all" 
-              ? mockProcessos.length 
-              : mockProcessos.filter(p => p.area === option.value).length;
-            
-            return (
-              <FilterChip
-                key={option.value}
-                label={option.label}
-                value={option.value}
-                selected={areaFilter === option.value}
-                onSelect={setAreaFilter}
-                count={count}
-                icon={ATRIBUICAO_ICONS[option.value]}
-                size="md"
-              />
-            );
-          })}
-        </FilterChipGroup>
+        <Divider className="my-6" />
 
-        {/* Stats Cards - Padronizado */}
-        <StatsGrid columns={5}>
-          <StatsCard
-            label="Total"
-            value={stats.total}
-            icon={Scale}
-            variant="default"
-            size="sm"
-          />
-          <StatsCard
-            label="Júri"
-            value={stats.juri}
-            icon={Gavel}
-            variant="success"
-            size="sm"
-          />
-          <StatsCard
-            label="Com Demandas"
-            value={stats.comDemandas}
-            icon={Clock}
-            variant={stats.comDemandas > 0 ? "warning" : "default"}
-            size="sm"
-          />
-          <StatsCard
-            label="Réu Preso"
-            value={stats.reuPreso}
-            icon={Lock}
-            variant={stats.reuPreso > 0 ? "danger" : "default"}
-            size="sm"
-            className="hidden sm:flex"
-          />
-          <StatsCard
-            label="Comarcas"
-            value={stats.comarcas}
-            icon={Building2}
-            variant="info"
-            size="sm"
-            className="hidden lg:flex"
-          />
-        </StatsGrid>
-
-        {/* Search & Filters - Padronizado */}
-        <SearchToolbar
-          searchValue={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="Buscar por número, assistido..."
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          filters={
-            <FilterSelect
-              label="Situação"
-              value={situacaoFilter}
-              onValueChange={setSituacaoFilter}
-              options={[
-                { value: "all", label: "Todas" },
-                { value: "ativo", label: "Ativos" },
-                { value: "suspenso", label: "Suspensos" },
-                { value: "arquivado", label: "Arquivados" },
-              ]}
-              width="md"
+        {/* Seção de Estatísticas */}
+        <PageSection
+          subtitle="Visão Geral"
+          title="Estatísticas"
+          icon={<Target className="w-6 h-6" />}
+          className="mb-6"
+        >
+          <ContentGrid columns={5} gap="md">
+            <StatBlock
+              label="Total de Processos"
+              value={stats.total}
+              icon={<Scale className="w-5 h-5 text-muted-foreground" />}
+              variant="default"
             />
-          }
-          activeFiltersCount={situacaoFilter !== "all" ? 1 : 0}
-          onClearFilters={() => setSituacaoFilter("all")}
-        />
+            <StatBlock
+              label="Processos do Júri"
+              value={stats.juri}
+              icon={<Gavel className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+              variant="success"
+            />
+            <StatBlock
+              label="Com Demandas"
+              value={stats.comDemandas}
+              icon={<Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
+              variant={stats.comDemandas > 0 ? "warning" : "default"}
+            />
+            <StatBlock
+              label="Réu Preso"
+              value={stats.reuPreso}
+              icon={<Lock className="w-5 h-5 text-rose-600 dark:text-rose-400" />}
+              variant={stats.reuPreso > 0 ? "danger" : "default"}
+            />
+            <StatBlock
+              label="Comarcas"
+              value={stats.comarcas}
+              icon={<Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+              variant="primary"
+            />
+          </ContentGrid>
+        </PageSection>
 
-        {/* Content */}
-        {viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredProcessos.map((processo) => (
-              <ProcessoCard key={processo.id} processo={processo} />
-            ))}
-          </div>
-        ) : (
-          <SwissTableContainer className="max-h-[calc(100vh-320px)]">
-            <SwissTable>
-              <SwissTableHeader>
-                <SwissTableRow className="bg-muted/50">
-                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Número</SwissTableHead>
-                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Assistido</SwissTableHead>
-                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Comarca/Vara</SwissTableHead>
-                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Área</SwissTableHead>
-                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Assunto</SwissTableHead>
-                  <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Dem.</SwissTableHead>
-                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Situação</SwissTableHead>
-                  <SwissTableHead className="text-right font-semibold text-xs uppercase tracking-wider">Ações</SwissTableHead>
-                </SwissTableRow>
-              </SwissTableHeader>
-              <SwissTableBody>
-                {filteredProcessos.map((processo) => (
-                  <ProcessoRow key={processo.id} processo={processo} />
-                ))}
-              </SwissTableBody>
-            </SwissTable>
-          </SwissTableContainer>
-        )}
+        <Divider className="my-6" />
 
-        {/* Empty State */}
-        {filteredProcessos.length === 0 && (
-          <EmptyState
-            icon={Scale}
-            title="Nenhum processo encontrado"
-            description="Crie um novo processo ou ajuste os filtros de busca."
-            action={{
-              label: "Novo Processo",
-              onClick: () => {},
-              icon: Plus,
+        {/* Seção de Filtros e Listagem */}
+        <PageSection
+          subtitle="Gestão"
+          title="Listagem de Processos"
+          icon={<FileText className="w-6 h-6" />}
+        >
+          {/* Filtros Rápidos - Chips de Área */}
+          <FilterChipGroup label="Filtrar por Área">
+            {ATRIBUICAO_OPTIONS.map((option) => {
+              const count = option.value === "all" 
+                ? mockProcessos.length 
+                : mockProcessos.filter(p => p.area === option.value).length;
+              
+              return (
+                <FilterChip
+                  key={option.value}
+                  label={option.label}
+                  value={option.value}
+                  selected={areaFilter === option.value}
+                  onSelect={setAreaFilter}
+                  count={count}
+                  icon={ATRIBUICAO_ICONS[option.value]}
+                  size="md"
+                />
+              );
+            })}
+          </FilterChipGroup>
+
+          {/* Barra de Filtros Principal */}
+          <FilterBar
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Buscar por número, assistido ou assunto..."
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            showViewToggle={true}
+            sortOptions={[
+              { value: "recente", label: "Mais Recentes" },
+              { value: "antigo", label: "Mais Antigos" },
+              { value: "numero", label: "Número do Processo" },
+              { value: "assistido", label: "Nome do Assistido" },
+            ]}
+            sortValue="recente"
+            advancedFilters={
+              <>
+                <FilterSelect
+                  label="Situação"
+                  placeholder="Todas as situações"
+                  value={situacaoFilter}
+                  onValueChange={setSituacaoFilter}
+                  options={[
+                    { value: "all", label: "Todas" },
+                    { value: "ativo", label: "Ativos" },
+                    { value: "suspenso", label: "Suspensos" },
+                    { value: "arquivado", label: "Arquivados" },
+                    { value: "baixado", label: "Baixados" },
+                  ]}
+                />
+                <FilterSelect
+                  label="Comarca"
+                  placeholder="Todas as comarcas"
+                  value="all"
+                  options={[
+                    { value: "all", label: "Todas" },
+                    { value: "camacari", label: "Camaçari" },
+                    { value: "salvador", label: "Salvador" },
+                  ]}
+                />
+                <FilterSelect
+                  label="Defensor"
+                  placeholder="Todos os defensores"
+                  value="all"
+                  options={[
+                    { value: "all", label: "Todos" },
+                    { value: "rodrigo", label: "Dr. Rodrigo Rocha" },
+                    { value: "maria", label: "Dra. Maria Oliveira" },
+                  ]}
+                />
+              </>
+            }
+            activeFilters={activeFilters}
+            onRemoveFilter={(key) => {
+              if (key === "situacao") setSituacaoFilter("all");
+              if (key === "area") setAreaFilter("all");
             }}
-            variant={searchTerm ? "search" : "default"}
+            onClearFilters={() => {
+              setSituacaoFilter("all");
+              setAreaFilter("all");
+              setSearchTerm("");
+            }}
           />
-        )}
-      </div>
+
+          {/* Content */}
+          {filteredProcessos.length === 0 ? (
+            <EmptyState
+              icon={Scale}
+              title="Nenhum processo encontrado"
+              description="Crie um novo processo ou ajuste os filtros de busca."
+              action={{
+                label: "Novo Processo",
+                onClick: () => {},
+                icon: Plus,
+              }}
+              variant={searchTerm ? "search" : "default"}
+            />
+          ) : viewMode === "grid" ? (
+            <ContentGrid columns={3} gap="md">
+              {filteredProcessos.map((processo) => (
+                <ProcessoCard key={processo.id} processo={processo} />
+              ))}
+            </ContentGrid>
+          ) : (
+            <SwissTableContainer className="max-h-[calc(100vh-400px)]">
+              <SwissTable>
+                <SwissTableHeader>
+                  <SwissTableRow>
+                    <SwissTableHead>Nº Processo</SwissTableHead>
+                    <SwissTableHead>Assistido</SwissTableHead>
+                    <SwissTableHead>Comarca/Vara</SwissTableHead>
+                    <SwissTableHead>Área</SwissTableHead>
+                    <SwissTableHead>Classe/Assunto</SwissTableHead>
+                    <SwissTableHead>Defensor</SwissTableHead>
+                    <SwissTableHead>Situação</SwissTableHead>
+                    <SwissTableHead className="text-center">Dem.</SwissTableHead>
+                    <SwissTableHead>Próximo Prazo</SwissTableHead>
+                    <SwissTableHead className="text-right">Ações</SwissTableHead>
+                  </SwissTableRow>
+                </SwissTableHeader>
+                <SwissTableBody>
+                  {filteredProcessos.map((processo) => (
+                    <ProcessoRow key={processo.id} processo={processo} />
+                  ))}
+                </SwissTableBody>
+              </SwissTable>
+            </SwissTableContainer>
+          )}
+        </PageSection>
+      </PageContainer>
     </TooltipProvider>
   );
 }

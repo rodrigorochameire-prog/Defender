@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Credenciais - DefensorHub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .status {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        .status h2 {
+            color: #0369a1;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 1.05em;
+        }
+        
+        .check {
+            color: #10b981;
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .cross {
+            color: #ef4444;
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .step {
+            background: #fff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .step:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+        
+        .step-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+        
+        .step h3 {
+            display: flex;
+            align-items: center;
+            color: #1f2937;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .instructions {
+            margin-left: 55px;
+            color: #4b5563;
+            line-height: 1.8;
+        }
+        
+        .instructions ol {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 10px 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin: 10px 0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .code-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.95em;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            color: #92400e;
+        }
+        
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+            color: #065f46;
+        }
+        
+        .success h3 {
+            margin-bottom: 10px;
+            color: #047857;
+        }
+        
+        footer {
+            background: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Configurar Credenciais</h1>
+            <p class="subtitle">DefensorHub - Supabase Setup</p>
+        </header>
+        
+        <div class="content">
+            <div class="status">
+                <h2>📊 Status da Configuração</h2>
+                <div class="status-item"><span class="check">✅</span> NEXT_PUBLIC_SUPABASE_URL</div>
+                <div class="status-item"><span class="check">✅</span> NEXT_PUBLIC_SUPABASE_ANON_KEY</div>
+                <div class="status-item"><span class="check">✅</span> CLERK_PUBLISHABLE_KEY</div>
+                <div class="status-item"><span class="check">✅</span> CLERK_SECRET_KEY</div>
+                <div class="status-item"><span class="cross">❌</span> SUPABASE_SERVICE_ROLE_KEY</div>
+                <div class="status-item"><span class="cross">❌</span> DATABASE_URL (senha)</div>
+            </div>
+            
+            <div class="step">
+                <h3><span class="step-number">1</span> SERVICE_ROLE_KEY</h3>
+                <div class="instructions">
+                    <p><strong>Acesse a página de API Keys:</strong></p>
+                    <a href="https://supabase.com/dashboard/project/hxfvlaeqhkmelvyzgfqp/settings/api" 
+                       target="_blank" 
+                       class="btn">
+                        🔗 Abrir Dashboard de API
+                    </a>
+                    
+                    <ol>
+                        <li>Procure pela seção <strong>"Project API keys"</strong></li>
+                        <li>Encontre a chave <strong>"service_role"</strong> (ícone de cadeado 🔒)</li>
+                        <li>Clique em <strong>"Reveal"</strong> ou <strong>"Copy"</strong></li>
+                        <li>Copie a chave completa</li>
+                    </ol>
+                    
+                    <div class="warning">
+                        ⚠️ <strong>ATENÇÃO:</strong> Esta é uma chave secreta. Nunca compartilhe ou commit no Git!
+                    </div>
+                    
+                    <p><strong>Cole a chave no arquivo .env.local:</strong></p>
+                    <div class="code-box">SUPABASE_SERVICE_ROLE_KEY="sua_chave_aqui"</div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <h3><span class="step-number">2</span> Senha do Banco de Dados</h3>
+                <div class="instructions">
+                    <p><strong>Acesse a página de configuração do Database:</strong></p>
+                    <a href="https://supabase.com/dashboard/project/hxfvlaeqhkmelvyzgfqp/settings/database" 
+                       target="_blank" 
+                       class="btn">
+                        🔗 Abrir Configurações do Database
+                    </a>
+                    
+                    <ol>
+                        <li>Role até a seção <strong>"Connection string"</strong></li>
+                        <li>Procure por <strong>"Database password"</strong> ou similar</li>
+                        <li>Copie <strong>APENAS a senha</strong> (não a URL completa)</li>
+                    </ol>
+                    
+                    <p><strong>Atualize no arquivo .env.local:</strong></p>
+                    <div class="code-box">DATABASE_URL="postgresql://postgres:SUA_SENHA_AQUI@db.hxfvlaeqhkmelvyzgfqp.supabase.co:5432/postgres"</div>
+                    
+                    <div class="warning">
+                        💡 <strong>DICA:</strong> Substitua apenas a parte <code>[SUA_SENHA]</code> pela senha real.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="success">
+                <h3>🎉 Após configurar:</h3>
+                <ol>
+                    <li>Salve o arquivo <strong>.env.local</strong></li>
+                    <li>Feche o servidor de desenvolvimento se estiver rodando</li>
+                    <li>Execute: <code>npm run dev</code></li>
+                    <li>Acesse: <code>http://localhost:3000</code></li>
+                </ol>
+            </div>
+        </div>
+        
+        <footer>
+            DefensorHub © 2026 | Powered by Supabase & Clerk
+        </footer>
+    </div>
+</body>
+</html>

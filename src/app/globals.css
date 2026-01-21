@@ -68,39 +68,54 @@
 
   .dark {
     /* Modo Escuro Otimizado para Leitura (Não preto total) */
-    --background: 20 14% 4%;
-    --foreground: 60 9.1% 97.8%;
-    --card: 20 14% 6%;
-    --card-foreground: 60 9.1% 97.8%;
-    --popover: 20 14% 6%;
-    --popover-foreground: 60 9.1% 97.8%;
-    --primary: 158 40% 50%;
+    /* MELHORADO: Mais contraste, cores mais harmônicas */
+    --background: 222 47% 11%; /* Azul escuro profundo - mais elegante */
+    --foreground: 210 40% 98%; /* Branco quase puro com toque azulado */
+    
+    /* CARDS & SURFACES - Melhor separação visual */
+    --card: 222 47% 14%; /* Ligeiramente mais claro que background */
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 16%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* PRIMÁRIA: Verde INTELEX mais vibrante no escuro */
+    --primary: 158 50% 45%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 12 6.5% 15.1%;
-    --secondary-foreground: 60 9.1% 97.8%;
-    --muted: 12 6.5% 15.1%;
-    --muted-foreground: 24 5.4% 63.9%;
-    --accent: 12 6.5% 15.1%;
-    --accent-foreground: 60 9.1% 97.8%;
-    --destructive: 0 45% 45%;
-    --destructive-foreground: 0 0% 98%;
-    --success: 158 40% 45%;
+    
+    /* SECONDARY & NEUTROS - Melhor contraste */
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%; /* Melhor contraste para texto secundário */
+    
+    --accent: 217 32% 20%;
+    --accent-foreground: 210 40% 98%;
+    
+    /* SEMANTIC - Cores funcionais melhoradas */
+    --success: 158 50% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 60% 50%;
-    --warning-foreground: 38 80% 15%;
-    --info: 205 45% 50%;
+    --destructive: 0 62% 55%; /* Vermelho mais vibrante */
+    --destructive-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
-    --border: 12 6.5% 15.1%;
-    --input: 12 6.5% 15.1%;
-    --ring: 158 40% 50%;
-    --sidebar-background: 20 14% 8%;
-    --sidebar-foreground: 60 9.1% 85%;
-    --sidebar-primary: 158 40% 50%;
+    
+    /* BORDAS & INPUTS - Melhor visibilidade */
+    --border: 217 32% 23%; /* Bordas mais visíveis */
+    --input: 217 32% 20%;
+    --ring: 158 50% 45%;
+    
+    /* SIDEBAR - Mais harmônica */
+    --sidebar-background: 222 47% 13%;
+    --sidebar-foreground: 210 40% 88%;
+    --sidebar-primary: 158 50% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 12 6.5% 15.1%;
-    --sidebar-accent-foreground: 60 9.1% 90%;
-    --sidebar-border: 12 6.5% 18%;
-    --sidebar-ring: 158 40% 50%;
+    --sidebar-accent: 217 32% 20%;
+    --sidebar-accent-foreground: 210 40% 92%;
+    --sidebar-border: 217 32% 24%;
+    --sidebar-ring: 158 50% 45%;
   }
 }
 
@@ -385,5 +400,163 @@
   }
   html.font-large .text-ui-micro {
     @apply text-sm;
+  }
+
+  /* ==========================================
+     MELHORIAS DE TABELAS - SWISS DESIGN
+     Visualização otimizada para ambos os modos
+     ========================================== */
+  
+  /* Container de tabela com scroll suave */
+  .table-container {
+    @apply relative rounded-xl border border-border/60 bg-card overflow-hidden;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  }
+  
+  .dark .table-container {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+  }
+
+  /* Header de tabela - melhor contraste */
+  .table-header-enhanced {
+    @apply bg-muted/80 dark:bg-muted/60 backdrop-blur-sm;
+    @apply border-b-2 border-border/70 dark:border-border;
+  }
+
+  /* Células com melhor espaçamento */
+  .table-cell-enhanced {
+    @apply py-4 px-4 first:pl-6 last:pr-6;
+    @apply align-middle;
+  }
+
+  /* Linhas com hover melhorado */
+  .table-row-enhanced {
+    @apply transition-colors duration-150;
+    @apply hover:bg-muted/50 dark:hover:bg-muted/30;
+    @apply border-b border-border/30 last:border-0;
+  }
+
+  /* Badge de status melhorado para ambos os modos */
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider;
+    @apply transition-all duration-200;
+  }
+
+  .status-badge-urgent {
+    @apply bg-rose-100 text-rose-700 border border-rose-200;
+    @apply dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/50;
+  }
+
+  .status-badge-warning {
+    @apply bg-amber-100 text-amber-700 border border-amber-200;
+    @apply dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/50;
+  }
+
+  .status-badge-success {
+    @apply bg-emerald-100 text-emerald-700 border border-emerald-200;
+    @apply dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/50;
+  }
+
+  .status-badge-info {
+    @apply bg-blue-100 text-blue-700 border border-blue-200;
+    @apply dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800/50;
+  }
+
+  .status-badge-neutral {
+    @apply bg-zinc-100 text-zinc-700 border border-zinc-200;
+    @apply dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700;
+  }
+
+  /* Indicador de réu preso - melhorado */
+  .prisoner-indicator {
+    @apply inline-flex items-center justify-center rounded-full;
+    @apply transition-all duration-200;
+  }
+
+  .prisoner-indicator-active {
+    @apply bg-rose-100 text-rose-600 border border-rose-200;
+    @apply dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800/50;
+  }
+
+  /* Tooltips melhorados */
+  .tooltip-enhanced {
+    @apply bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900;
+    @apply px-3 py-1.5 rounded-lg text-xs font-medium;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .tooltip-enhanced {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Cards de estatísticas melhorados */
+  .stat-card-enhanced {
+    @apply rounded-xl border border-border/60 bg-card p-5;
+    @apply transition-all duration-200 hover:shadow-md;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  }
+
+  .dark .stat-card-enhanced {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .stat-card-enhanced:hover {
+    @apply border-border;
+  }
+
+  /* Borda lateral semântica - réu preso */
+  .border-semantic-prisoner {
+    @apply border-l-[3px] border-l-rose-500 dark:border-l-rose-400;
+  }
+
+  /* Borda lateral semântica - livre */
+  .border-semantic-free {
+    @apply border-l-[3px] border-l-zinc-300 dark:border-l-zinc-600;
+  }
+
+  /* Texto mono para números de processo */
+  .process-number {
+    @apply font-mono text-sm tracking-tight;
+    @apply text-zinc-600 dark:text-zinc-400;
+    @apply hover:text-blue-600 dark:hover:text-blue-400;
+    @apply transition-colors cursor-pointer;
+  }
+
+  /* Badges de área/atribuição melhorados */
+  .area-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium;
+    @apply bg-zinc-200/80 text-zinc-700 border border-zinc-300/50;
+    @apply dark:bg-zinc-700 dark:text-zinc-200 dark:border-zinc-600/50;
+  }
+
+  /* Scrollbar customizada para tabelas */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-zinc-100 dark:bg-zinc-800 rounded-lg;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-zinc-300 dark:bg-zinc-600 rounded-lg;
+    @apply hover:bg-zinc-400 dark:hover:bg-zinc-500;
+  }
+
+  /* Animação suave para expansão de linhas */
+  @keyframes expand-row {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .row-expand-animation {
+    animation: expand-row 0.2s ease-out;
   }
 }
