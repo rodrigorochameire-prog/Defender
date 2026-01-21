@@ -1002,7 +1002,7 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
               {isPinned && <BookmarkCheck className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
             </div>
             {assistido.vulgo && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 italic truncate">"{assistido.vulgo}"</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 italic truncate">&ldquo;{assistido.vulgo}&rdquo;</p>
             )}
           </div>
         </div>
