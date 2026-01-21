@@ -28,8 +28,17 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DefensorHub - Sistema de Gestão Jurídica",
-  description: "Sistema de gestão de processos, prazos e demandas para Defensoria Pública",
+  title: "Intelex - Sistema de Inteligência Jurídica",
+  description: "Sistema institucional de gestão estratégica para Defensoria Pública - Inteligência aplicada à Lei",
+  applicationName: "Intelex",
+  keywords: ["defensoria pública", "gestão jurídica", "inteligência jurídica", "processos", "prazos"],
+  manifest: "/manifest.json",
+  themeColor: "#1e5945",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Intelex",
+  },
 };
 
 // Script to prevent flash of wrong theme and font size - default to light

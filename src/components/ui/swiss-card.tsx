@@ -1,10 +1,10 @@
 /**
- * SwissCard - Componente de Card Padronizado
+ * SwissCard - Componente de Card Padronizado INTELEX
  * 
  * Estilo "Papel sobre Mesa" para criar hierarquia visual.
  * Use este card para TUDO: Tabelas, Formulários, Listas, Widgets.
  * 
- * Baseado no Design System Swiss/Stone do Defender.
+ * Design System Swiss - INTELEX v7.0
  */
 
 import { cn } from "@/lib/utils";
@@ -16,13 +16,16 @@ export function SwissCard({ className, children, ...props }: SwissCardProps) {
   return (
     <div
       className={cn(
-        "bg-white dark:bg-zinc-900",
-        "border border-stone-200 dark:border-zinc-800",
-        "shadow-sm",
+        "bg-card text-card-foreground",
+        "border border-border/60",
         "rounded-xl",
         "overflow-hidden",
+        "transition-all hover:shadow-md",
         className
       )}
+      style={{
+        boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
+      }}
       {...props}
     >
       {children}
@@ -36,9 +39,9 @@ export function SwissCardHeader({ className, children, ...props }: SwissCardHead
   return (
     <div
       className={cn(
-        "px-6 py-4",
-        "border-b border-stone-200 dark:border-zinc-800",
-        "bg-stone-50/50 dark:bg-zinc-900/50",
+        "px-6 py-5",
+        "border-b border-border/40",
+        "bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm",
         className
       )}
       {...props}
@@ -54,8 +57,8 @@ export function SwissCardTitle({ className, children, ...props }: SwissCardTitle
   return (
     <h3
       className={cn(
-        "text-lg font-semibold text-foreground",
-        "tracking-tight",
+        "text-lg md:text-xl font-semibold text-foreground",
+        "tracking-tight leading-none",
         className
       )}
       {...props}
@@ -87,7 +90,7 @@ export interface SwissCardContentProps extends React.HTMLAttributes<HTMLDivEleme
 export function SwissCardContent({ className, children, ...props }: SwissCardContentProps) {
   return (
     <div
-      className={cn("px-6 py-5", className)}
+      className={cn("px-6 py-6 space-y-4", className)}
       {...props}
     >
       {children}
@@ -102,8 +105,8 @@ export function SwissCardFooter({ className, children, ...props }: SwissCardFoot
     <div
       className={cn(
         "px-6 py-4",
-        "border-t border-stone-200 dark:border-zinc-800",
-        "bg-stone-50/30 dark:bg-zinc-900/30",
+        "border-t border-border/40",
+        "bg-muted/20",
         className
       )}
       {...props}

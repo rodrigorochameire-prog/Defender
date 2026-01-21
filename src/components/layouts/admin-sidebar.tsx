@@ -435,29 +435,89 @@ function AdminSidebarContent({
         <Sidebar
           collapsible="icon"
           className={cn(
-            "border-r bg-white dark:bg-sidebar shadow-soft"
+            "border-r bg-sidebar shadow-sm"
           )}
           style={{
-            borderColor: `var(--sidebar-border, ${config.sidebarBorder})`,
+            borderColor: config.sidebarBorder,
           }}
           disableTransition={isResizing}
         >
           {/* ==========================================
-              BLOCO SUPERIOR: CONTEXTO (Switcher)
+              HEADER: LOGOTIPO INTELEX
               Altura alinhada com header principal (60px)
               ========================================== */}
           <SidebarHeader
-            className="border-b h-[60px] flex items-center px-3"
+            className="border-b h-[60px] flex items-center justify-center px-4"
             style={{
-              background: `var(--sidebar-header-bg, ${config.sidebarHeaderBg})`,
-              borderColor: `var(--sidebar-divider, ${config.sidebarDivider})`,
+              background: config.sidebarHeaderBg,
+              borderColor: config.sidebarBorder,
             }}
           >
-            <AssignmentSwitcher collapsed={isCollapsed} />
+            {!isCollapsed ? (
+              <div className="flex items-center gap-2 w-full">
+                {/* Logo "X" do INTELEX */}
+                <div 
+                  className="flex items-center justify-center w-9 h-9 rounded-lg"
+                  style={{
+                    background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
+                  }}
+                >
+                  <div className="relative w-5 h-5">
+                    <div 
+                      className="absolute inset-0 text-white font-bold text-xl flex items-center justify-center"
+                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                    >
+                      ×
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Tipografia INTELEX */}
+                <div className="flex-1">
+                  <div className="flex items-baseline gap-0">
+                    <span className="text-lg font-bold text-foreground tracking-tight">
+                      Intel
+                    </span>
+                    <span className="text-lg font-light text-foreground tracking-tight">
+                      ex
+                    </span>
+                  </div>
+                  <p 
+                    className="text-[10px] font-medium tracking-wider uppercase leading-none"
+                    style={{ color: config.sidebarTextMuted }}
+                  >
+                    Inteligência • Lei
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="flex items-center justify-center w-9 h-9 rounded-lg"
+                style={{
+                  background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
+                }}
+              >
+                <div className="relative w-5 h-5">
+                  <div 
+                    className="absolute inset-0 text-white font-bold text-xl flex items-center justify-center"
+                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                  >
+                    ×
+                  </div>
+                </div>
+              </div>
+            )}
           </SidebarHeader>
 
           <SidebarContent className="gap-0 py-3 px-2 overflow-y-auto flex-1">
             <SidebarMenu className="gap-1">
+              {/* Assignment Switcher como primeiro item */}
+              <SidebarMenuItem>
+                <div className="px-2 mb-3">
+                  <AssignmentSwitcher collapsed={isCollapsed} />
+                </div>
+              </SidebarMenuItem>
+
               {/* Toggle Button */}
               <SidebarMenuItem className={isCollapsed ? "flex justify-center" : ""}>
                 <SidebarMenuButton
@@ -465,7 +525,7 @@ function AdminSidebarContent({
                   tooltip={isCollapsed ? "Expandir" : "Recolher"}
                   className="h-10 rounded-lg transition-all duration-200"
                   style={{
-                    color: `var(--sidebar-text-muted, ${config.sidebarTextMuted})`,
+                    color: config.sidebarTextMuted,
                   }}
                 >
                   <PanelLeft className="h-[18px] w-[18px]" strokeWidth={1.8} />
@@ -709,39 +769,12 @@ function AdminSidebarContent({
         <header
           className="hidden md:flex h-[60px] shrink-0 items-center border-b px-6 backdrop-blur-md"
           style={{
-            background: config.sidebarHeaderBg,
-            borderColor: config.sidebarBorder,
+            background: 'rgba(255, 255, 255, 0.8)',
+            borderColor: 'hsl(20 5.9% 90%)',
           }}
         >
-          {/* Logo Centralizada - Maior e mais elegante */}
-          <div className="flex items-center justify-center flex-1">
-            <div className="flex items-center gap-3.5">
-              {/* Logo Icon - Aumentado */}
-              <div
-                className="flex items-center justify-center w-11 h-11 rounded-xl shadow-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
-                }}
-              >
-                <Shield className="w-6 h-6 text-white" strokeWidth={2} />
-              </div>
-
-              <div className="text-left">
-                <h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-                  DefesaHub
-                </h1>
-                <p
-                  className="text-xs font-medium tracking-wider uppercase"
-                  style={{ color: config.sidebarTextMuted }}
-                >
-                  {config.shortName}
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Ações à direita */}
-          <div className="flex items-center gap-2.5 absolute right-6">
+          <div className="flex items-center gap-3 ml-auto">
             <CommandPalette />
             <FontSizeToggle />
             <ThemeToggle />
@@ -753,26 +786,38 @@ function AdminSidebarContent({
         <header
           className="md:hidden flex h-14 shrink-0 items-center border-b px-4 gap-3"
           style={{
-            background: config.sidebarHeaderBg,
-            borderColor: config.sidebarBorder,
+            background: 'rgba(255, 255, 255, 0.8)',
+            borderColor: 'hsl(20 5.9% 90%)',
           }}
         >
           <SidebarTrigger className="h-8 w-8" />
           
-          {/* Logo Centralizada Mobile */}
+          {/* Logo INTELEX Mobile */}
           <div className="flex items-center justify-center flex-1">
             <div className="flex items-center gap-2">
               <div
-                className="flex items-center justify-center w-8 h-8 rounded-lg shadow-sm"
+                className="flex items-center justify-center w-8 h-8 rounded-lg"
                 style={{
                   background: `linear-gradient(135deg, ${config.accentColor}, ${config.accentColorDark})`,
                 }}
               >
-                <Shield className="w-4 h-4 text-white" strokeWidth={2.5} />
+                <div className="relative w-4 h-4">
+                  <div 
+                    className="absolute inset-0 text-white font-bold text-lg flex items-center justify-center"
+                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                  >
+                    ×
+                  </div>
+                </div>
               </div>
-              <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                DefesaHub
-              </span>
+              <div className="flex items-baseline gap-0">
+                <span className="text-base font-bold text-foreground tracking-tight">
+                  Intel
+                </span>
+                <span className="text-base font-light text-foreground tracking-tight">
+                  ex
+                </span>
+              </div>
             </div>
           </div>
           
@@ -783,9 +828,9 @@ function AdminSidebarContent({
         </header>
 
         {/* Content - Fundo stone-50 para contraste com cards brancos */}
-        <main className="flex-1 overflow-auto bg-stone-50 dark:bg-zinc-950">
+        <main className="flex-1 overflow-auto">
           {/* Container centraliza e limita largura em telas gigantes */}
-          <div className="container mx-auto p-6 md:p-8 max-w-[1600px] space-y-8">
+          <div className="w-full max-w-[1400px] mx-auto p-6 md:p-8 space-y-8">
             {children}
           </div>
         </main>

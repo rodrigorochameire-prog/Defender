@@ -29,9 +29,23 @@ export function LandingPage() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(158_55%_42%)] to-[hsl(160_50%_35%)] flex items-center justify-center shadow-lg">
-              <Scale className="h-5 w-5 text-white" />
+              <div className="relative w-5 h-5">
+                <div 
+                  className="absolute inset-0 text-white font-bold text-xl flex items-center justify-center"
+                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                >
+                  ×
+                </div>
+              </div>
             </div>
-            <span className="text-xl font-semibold tracking-tight text-[hsl(160_15%_15%)] dark:text-[hsl(150_10%_90%)]">DefesaHub</span>
+            <div className="flex items-baseline gap-0">
+              <span className="text-xl font-bold tracking-tight text-[hsl(160_15%_15%)] dark:text-[hsl(150_10%_90%)]">
+                Intel
+              </span>
+              <span className="text-xl font-light tracking-tight text-[hsl(160_15%_15%)] dark:text-[hsl(150_10%_90%)]">
+                ex
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
@@ -54,22 +68,22 @@ export function LandingPage() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(158_40%_94%)] dark:bg-[hsl(158_30%_12%)] border border-[hsl(158_35%_85%)] dark:border-[hsl(158_25%_20%)] text-sm font-medium text-[hsl(158_50%_35%)] dark:text-[hsl(158_45%_60%)]">
               <Sparkles className="w-4 h-4" />
-              <span>Sistema de Gestão para Defensoria Pública</span>
+              <span>Sistema Institucional de Inteligência Jurídica</span>
             </div>
 
             {/* Main Heading */}
             <div className="space-y-6">
               <div className="space-y-3">
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[hsl(160_15%_12%)] dark:text-[hsl(150_10%_92%)]">
-                  Gestão Jurídica
+                  Gestão Estratégica
                 </h1>
                 <p className="text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-[hsl(158_55%_38%)] dark:text-[hsl(158_50%_52%)]">
-                  Simplificada e Eficiente
+                  Inteligência • Lei • Defesa
                 </p>
               </div>
               <p className="text-lg md:text-xl text-[hsl(160_8%_45%)] dark:text-[hsl(150_6%_55%)] max-w-2xl mx-auto leading-relaxed">
-                Plataforma completa para gestão de processos, prazos e demandas. 
-                Controle de assistidos, audiências, júris e comunicação integrada.
+                Sistema de ponta para Defensoria Pública. 
+                Gestão completa de processos, prazos, audiências e inteligência aplicada à defesa.
               </p>
             </div>
 
