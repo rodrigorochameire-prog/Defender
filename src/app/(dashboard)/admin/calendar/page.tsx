@@ -582,7 +582,7 @@ export default function AdminCalendarPage() {
                   Editar
                 </Button>
                 <Button
-                  variant="danger"
+                  variant="destructive"
                   onClick={handleDeleteEvent}
                   disabled={deleteEvent.isPending}
                 >
