@@ -242,7 +242,7 @@ function AudienciaCard({
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
               {audiencia.assistidoNome}
             </span>
-            <PrisonerIndicator preso={audiencia.assistidoPreso} size="xs" />
+            <PrisonerIndicator preso={audiencia.assistidoPreso ?? false} size="xs" />
           </div>
         )}
 
@@ -340,7 +340,7 @@ function ListView({
                           <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate block max-w-[140px] font-medium">
                             {audiencia.assistidoNome}
                           </span>
-                          <PrisonerIndicator preso={audiencia.assistidoPreso} size="xs" />
+                          <PrisonerIndicator preso={audiencia.assistidoPreso ?? false} size="xs" />
                         </div>
                       </div>
                     )}
@@ -434,7 +434,7 @@ function ListView({
                       {audiencia.numeroAutos}
                     </span>
                   </div>
-                  <PrisonerIndicator preso={audiencia.assistidoPreso} size="xs" />
+                  <PrisonerIndicator preso={audiencia.assistidoPreso ?? false} size="xs" />
                 </div>
               )}
 
