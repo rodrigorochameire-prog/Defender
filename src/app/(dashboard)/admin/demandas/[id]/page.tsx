@@ -143,7 +143,7 @@ export default function DemandaDetalhesPage() {
               </Button>
             </Link>
             <Button 
-              variant="danger" 
+              variant="destructive" 
               size="sm"
               onClick={handleDelete}
             >
