@@ -1,181 +1,190 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { Circle, CheckCircle2 } from "lucide-react";
 
-export interface TimelineItem {
-  id: string | number;
-  date: Date;
-  title: string;
-  description?: string;
-  icon?: ReactNode;
-  variant?: "default" | "success" | "warning" | "danger" | "info";
-  metadata?: {
-    label: string;
-    value: string;
-  }[];
-}
+// ==========================================
+// TIMELINE - Linha do tempo vertical premium
+// Estilo Linear com ícones e conexões visuais
+// ==========================================
 
 interface TimelineProps {
-  items: TimelineItem[];
+  children: ReactNode;
   className?: string;
 }
 
-const variantStyles = {
-  default: {
-    dot: "bg-zinc-400 dark:bg-zinc-500",
-    line: "bg-border",
-    icon: "text-zinc-500",
-  },
-  success: {
-    dot: "bg-emerald-500",
-    line: "bg-emerald-200 dark:bg-emerald-800",
-    icon: "text-emerald-600 dark:text-emerald-400",
-  },
-  warning: {
-    dot: "bg-amber-500",
-    line: "bg-amber-200 dark:bg-amber-800",
-    icon: "text-amber-600 dark:text-amber-400",
-  },
-  danger: {
-    dot: "bg-rose-500",
-    line: "bg-rose-200 dark:bg-rose-800",
-    icon: "text-rose-600 dark:text-rose-400",
-  },
-  info: {
-    dot: "bg-blue-500",
-    line: "bg-blue-200 dark:bg-blue-800",
-    icon: "text-blue-600 dark:text-blue-400",
-  },
-};
-
-export function Timeline({ items, className }: TimelineProps) {
-  if (!items.length) return null;
-
+export function Timeline({ children, className }: TimelineProps) {
   return (
-    <div className={cn("relative", className)}>
-      {items.map((item, index) => {
-        const styles = variantStyles[item.variant || "default"];
-        const isLast = index === items.length - 1;
-
-        return (
-          <div key={item.id} className="relative flex gap-4 pb-8 last:pb-0">
-            {/* Linha vertical */}
-            {!isLast && (
-              <div
-                className={cn(
-                  "absolute left-[11px] top-6 w-0.5 h-[calc(100%-24px)]",
-                  styles.line
-                )}
-              />
-            )}
-
-            {/* Dot ou ícone */}
-            <div className="relative flex-shrink-0 z-10">
-              {item.icon ? (
-                <div
-                  className={cn(
-                    "w-6 h-6 rounded-full bg-background border-2 border-current flex items-center justify-center",
-                    styles.icon
-                  )}
-                >
-                  {item.icon}
-                </div>
-              ) : (
-                <div
-                  className={cn(
-                    "w-6 h-6 rounded-full border-4 border-background",
-                    styles.dot
-                  )}
-                />
-              )}
-            </div>
-
-            {/* Conteúdo */}
-            <div className="flex-1 min-w-0 pt-0.5">
-              {/* Data */}
-              <time className="text-xs text-muted-foreground font-medium">
-                {format(item.date, "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
-              </time>
-
-              {/* Título */}
-              <h4 className="text-sm font-semibold text-foreground mt-1">
-                {item.title}
-              </h4>
-
-              {/* Descrição */}
-              {item.description && (
-                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                  {item.description}
-                </p>
-              )}
-
-              {/* Metadata */}
-              {item.metadata && item.metadata.length > 0 && (
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                  {item.metadata.map((meta, i) => (
-                    <div key={i} className="text-xs">
-                      <span className="text-muted-foreground">{meta.label}: </span>
-                      <span className="font-medium text-foreground">{meta.value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
+    <div className={cn("relative space-y-6", className)}>
+      {children}
     </div>
   );
 }
 
-// Versão compacta da timeline
-export function TimelineCompact({ 
-  items, 
+// ==========================================
+// TIMELINE ITEM - Item individual
+// ==========================================
+
+interface TimelineItemProps {
+  children: ReactNode;
+  icon?: ReactNode;
+  completed?: boolean;
+  current?: boolean;
+  side?: "left" | "right" | "center";
+  timestamp?: string;
+  className?: string;
+}
+
+export function TimelineItem({
+  children,
+  icon,
+  completed = false,
+  current = false,
+  side = "center",
+  timestamp,
   className,
-  maxItems = 5 
-}: TimelineProps & { maxItems?: number }) {
-  const displayItems = items.slice(0, maxItems);
-  const hasMore = items.length > maxItems;
+}: TimelineItemProps) {
+  return (
+    <div className={cn("relative flex items-start gap-4", className)}>
+      {/* Linha vertical conectora */}
+      <div className="absolute left-[15px] top-8 bottom-0 w-[2px] -mb-6 bg-border/50" />
+
+      {/* Ícone ou dot */}
+      <div
+        className={cn(
+          "relative z-10 flex-shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center",
+          completed && "bg-emerald-500 border-emerald-500",
+          current && "bg-primary border-primary animate-pulse-slow",
+          !completed && !current && "bg-card border-border/50"
+        )}
+      >
+        {completed ? (
+          <CheckCircle2 className="w-4 h-4 text-white" />
+        ) : icon ? (
+          <span className={cn(
+            "text-muted-foreground [&>svg]:w-4 [&>svg]:h-4",
+            current && "text-primary-foreground"
+          )}>
+            {icon}
+          </span>
+        ) : (
+          <Circle className={cn(
+            "w-2 h-2 fill-current",
+            current ? "text-primary-foreground" : "text-muted-foreground"
+          )} />
+        )}
+      </div>
+
+      {/* Conteúdo */}
+      <div className="flex-1 min-w-0 pb-6">
+        {timestamp && (
+          <time className="text-xs text-muted-foreground font-mono mb-1 block">
+            {timestamp}
+          </time>
+        )}
+        <div className={cn(
+          "rounded-lg border border-border/50 bg-card p-4",
+          current && "border-primary/50 shadow-sm"
+        )}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// TIMELINE DUAL - Timeline com dois lados
+// Defesa (esquerda) vs Acusação (direita)
+// ==========================================
+
+interface TimelineDualItemProps {
+  children: ReactNode;
+  side: "left" | "right";
+  timestamp?: string;
+  icon?: ReactNode;
+  label?: string;
+  className?: string;
+}
+
+export function TimelineDual({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={cn("relative space-y-6", className)}>
+      {/* Linha central */}
+      <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-border/50 -translate-x-1/2" />
+      {children}
+    </div>
+  );
+}
+
+export function TimelineDualItem({
+  children,
+  side,
+  timestamp,
+  icon,
+  label,
+  className,
+}: TimelineDualItemProps) {
+  const isLeft = side === "left";
 
   return (
-    <div className={cn("space-y-3", className)}>
-      {displayItems.map((item) => {
-        const styles = variantStyles[item.variant || "default"];
-
-        return (
-          <div key={item.id} className="flex items-start gap-3">
-            <div
-              className={cn(
-                "w-2 h-2 rounded-full mt-1.5 flex-shrink-0",
-                styles.dot
-              )}
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2">
-                <span className="text-sm font-medium text-foreground truncate">
-                  {item.title}
-                </span>
-                <span className="text-xs text-muted-foreground flex-shrink-0">
-                  {format(item.date, "dd/MM", { locale: ptBR })}
-                </span>
-              </div>
-              {item.description && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {item.description}
-                </p>
-              )}
-            </div>
+    <div className={cn("relative flex items-center", className)}>
+      {/* Conteúdo esquerdo */}
+      {isLeft && (
+        <div className="w-1/2 pr-6 text-right">
+          {label && (
+            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1 block">
+              {label}
+            </span>
+          )}
+          {timestamp && (
+            <time className="text-xs text-muted-foreground font-mono mb-2 block">
+              {timestamp}
+            </time>
+          )}
+          <div className="rounded-lg border border-emerald-200/50 dark:border-emerald-900/50 bg-emerald-50/30 dark:bg-emerald-950/20 p-4">
+            {children}
           </div>
-        );
-      })}
-      
-      {hasMore && (
-        <p className="text-xs text-muted-foreground text-center pt-1">
-          +{items.length - maxItems} eventos anteriores
-        </p>
+        </div>
+      )}
+
+      {/* Ícone central */}
+      <div
+        className={cn(
+          "absolute left-1/2 -translate-x-1/2 z-10",
+          "w-8 h-8 rounded-full border-2 flex items-center justify-center",
+          isLeft 
+            ? "bg-emerald-500 border-emerald-500" 
+            : "bg-rose-500 border-rose-500"
+        )}
+      >
+        {icon ? (
+          <span className="text-white [&>svg]:w-4 [&>svg]:h-4">
+            {icon}
+          </span>
+        ) : (
+          <Circle className="w-2 h-2 fill-current text-white" />
+        )}
+      </div>
+
+      {/* Conteúdo direito */}
+      {!isLeft && (
+        <div className="w-1/2 pl-6 text-left ml-auto">
+          {label && (
+            <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider mb-1 block">
+              {label}
+            </span>
+          )}
+          {timestamp && (
+            <time className="text-xs text-muted-foreground font-mono mb-2 block">
+              {timestamp}
+            </time>
+          )}
+          <div className="rounded-lg border border-rose-200/50 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/20 p-4">
+            {children}
+          </div>
+        </div>
       )}
     </div>
   );

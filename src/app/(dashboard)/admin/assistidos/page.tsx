@@ -90,7 +90,7 @@ import Link from "next/link";
 // Componentes estruturais padronizados
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { PageHeader } from "@/components/shared/section-header";
-import { FilterChip, FilterChipGroup } from "@/components/shared/filter-chips";
+import { FilterTab, FilterTabsGroup } from "@/components/shared/filter-tabs";
 import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
 import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -1252,21 +1252,21 @@ export default function AssistidosPage() {
       {/* Page Header */}
       <PageHeader
         title="Assistidos"
-        description={`${stats.total} cadastrados o ${stats.presos} presos${pinnedIds.size > 0 ? ` o ${pinnedIds.size} fixados` : ""}`}
+        description={`${stats.total} cadastrados • ${stats.presos} presos${pinnedIds.size > 0 ? ` • ${pinnedIds.size} fixados` : ""}`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Link href="/admin/inteligencia">
-              <Button variant="outline" className="gap-2 text-violet-600 border-violet-200 hover:bg-violet-50">
-                <Brain className="h-4 w-4" />
-                <span className="hidden sm:inline">Inteligencia</span>
+              <Button variant="outline" className="gap-2 h-12 px-5 text-base font-semibold text-violet-600 border-2 border-violet-200 hover:bg-violet-50 rounded-xl">
+                <Brain className="h-5 w-5 md:h-6 md:w-6" />
+                <span className="hidden sm:inline">Inteligência</span>
               </Button>
             </Link>
-            <Button variant="outline" size="icon">
-              <Download className="h-4 w-4" />
+            <Button variant="outline" size="icon" className="h-12 w-12 border-2 rounded-xl">
+              <Download className="h-5 w-5 md:h-6 md:w-6" />
             </Button>
             <Link href="/admin/assistidos/novo">
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
+              <Button className="gap-2 h-12 px-6 text-base md:text-lg font-semibold rounded-xl">
+                <Plus className="h-5 w-5 md:h-6 md:w-6" />
                 <span className="hidden sm:inline">Novo Assistido</span>
                 <span className="sm:hidden">Novo</span>
               </Button>
@@ -1275,15 +1275,15 @@ export default function AssistidosPage() {
         }
       />
 
-      {/* Filtros por Atribuicao */}
-      <FilterChipGroup label="Filtrar por Area">
+      {/* Filtros por Atribuição - Tabs Premium */}
+      <FilterTabsGroup label="Filtrar por Área">
         {ATRIBUICAO_OPTIONS.map((option) => {
           const count = option.value === "all" 
             ? mockAssistidos.length 
             : mockAssistidos.filter(a => a.area === option.value).length;
           
           return (
-            <FilterChip
+            <FilterTab
               key={option.value}
               label={option.label}
               value={option.value}
@@ -1291,11 +1291,10 @@ export default function AssistidosPage() {
               onSelect={setAtribuicaoFilter}
               count={count}
               icon={ATRIBUICAO_ICONS[option.value]}
-              size="md"
             />
           );
         })}
-      </FilterChipGroup>
+      </FilterTabsGroup>
 
       {/* Stats Cards - Padronizado */}
       <StatsGrid columns={5}>
@@ -1452,6 +1451,6 @@ export default function AssistidosPage() {
           onUpload={(file) => console.log("Upload:", file)}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

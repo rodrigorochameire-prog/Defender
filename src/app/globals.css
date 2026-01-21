@@ -11,111 +11,110 @@
 
 @layer base {
   :root {
-    /* BASE: Tamanho e Fundo Stone (Não branco puro) */
-    font-size: 16px; /* Aumenta TUDO automaticamente */
+    /* BASE: Fundo off-white estilo Linear - Não cansa a vista */
+    font-size: 16px;
     
-    --background: 60 5% 96%; /* Stone-50 (Creme/cinza suave, não branco) */
-    --foreground: 20 14% 4%; /* Stone-950 (Preto suave para texto) */
+    --background: 0 0% 99%; /* Off-white suave (#FCFCFC) */
+    --foreground: 240 8% 12%; /* Preto desaturado */
 
-    /* PRIMÁRIA: Verde Institucional INTELEX */
-    /* Usado apenas em botões principais e destaques ativos */
-    --primary: 158 45% 30%; 
+    /* PRIMÁRIA: Verde Esmeralda Desaturado - Profissional */
+    --primary: 162 48% 32%; /* Verde desaturado, maduro */
     --primary-foreground: 0 0% 100%;
 
-    /* CARDS & SURFACES - Elevation System */
-    --card: 0 0% 100%; /* Branco Puro para os Cards "saltarem" */
-    --card-foreground: 20 14% 4%;
+    /* CARDS & SURFACES - Elevação sutil estilo Linear */
+    --card: 0 0% 100%; /* Branco puro apenas para cards */
+    --card-foreground: 240 8% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 20 14% 4%;
+    --popover-foreground: 240 8% 12%;
 
-    /* SECONDARY & NEUTROS */
-    --secondary: 60 4.8% 95.9%;
-    --secondary-foreground: 24 9.8% 10%;
+    /* SECONDARY & NEUTROS - Escala precisa */
+    --secondary: 240 5% 97%;
+    --secondary-foreground: 240 6% 14%;
 
-    --muted: 60 4.8% 95.9%;
-    --muted-foreground: 25 5.3% 44.7%; /* Cinza médio para textos de apoio */
+    --muted: 240 5% 97%; /* Cinza quase branco */
+    --muted-foreground: 240 4% 48%; /* Cinza médio */
 
-    --accent: 60 4.8% 95.9%;
-    --accent-foreground: 24 9.8% 10%;
+    --accent: 240 5% 97%;
+    --accent-foreground: 240 8% 12%;
 
-    /* SEMANTIC - Apenas cores funcionais */
-    --success: 158 45% 35%;
+    /* SEMANTIC - Cores desaturadas e profissionais */
+    --success: 162 48% 38%; /* Verde desaturado */
     --success-foreground: 0 0% 100%;
-    --destructive: 0 50% 50%;
+    --destructive: 0 55% 50%; /* Vermelho desaturado */
     --destructive-foreground: 0 0% 100%;
-    --warning: 38 65% 50%;
-    --warning-foreground: 38 80% 15%;
-    --info: 205 45% 50%;
+    --warning: 38 85% 52%; /* Laranja desaturado */
+    --warning-foreground: 38 95% 12%;
+    --info: 210 80% 50%; /* Azul desaturado */
     --info-foreground: 0 0% 100%;
 
-    /* BORDAS & INPUTS - Suaves, nunca pretas */
-    --border: 20 5.9% 90%;
-    --input: 20 5.9% 90%;
-    --ring: 158 45% 30%;
+    /* BORDAS & INPUTS - Ultra sutis estilo Linear */
+    --border: 240 6% 92%; /* Bordas quase invisíveis */
+    --input: 240 6% 92%;
+    --ring: 162 48% 32%;
 
-    --radius: 0.75rem; /* 12px - Moderno mas profissional */
+    --radius: 0.5rem; /* 8px - Mais preciso estilo Linear */
 
-    /* SIDEBAR - Limpa e Elegante */
-    --sidebar-background: 0 0% 100%; /* Branco limpo */
-    --sidebar-foreground: 20 14% 25%;
-    --sidebar-primary: 158 45% 30%;
+    /* SIDEBAR - Integrada ao fundo estilo Linear */
+    --sidebar-background: 0 0% 99%; /* Mesmo tom do fundo */
+    --sidebar-foreground: 240 8% 12%;
+    --sidebar-primary: 162 48% 32%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 60 4.8% 96%;
-    --sidebar-accent-foreground: 158 45% 30%;
-    --sidebar-border: 20 5.9% 92%;
-    --sidebar-ring: 158 45% 30%;
+    --sidebar-accent: 240 5% 96%; /* Hover sutil */
+    --sidebar-accent-foreground: 240 8% 12%;
+    --sidebar-border: 240 6% 94%; /* Borda quase invisível */
+    --sidebar-ring: 162 48% 32%;
   }
 
   .dark {
-    /* Modo Escuro Otimizado para Leitura (Não preto total) */
-    /* MELHORADO: Mais contraste, cores mais harmônicas */
-    --background: 222 47% 11%; /* Azul escuro profundo - mais elegante */
-    --foreground: 210 40% 98%; /* Branco quase puro com toque azulado */
+    /* Modo Escuro Premium - Tom Verde-Esmeralda */
+    /* Inspirado em aplicativos profissionais premium */
+    --background: 240 10% 8%; /* Preto suave elegante */
+    --foreground: 240 5% 98%; /* Branco quase puro */
     
-    /* CARDS & SURFACES - Melhor separação visual */
-    --card: 222 47% 14%; /* Ligeiramente mais claro que background */
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 16%;
-    --popover-foreground: 210 40% 98%;
+    /* CARDS & SURFACES - Elevação sofisticada */
+    --card: 240 8% 11%; /* Card elevado */
+    --card-foreground: 240 5% 98%;
+    --popover: 240 8% 13%;
+    --popover-foreground: 240 5% 98%;
     
-    /* PRIMÁRIA: Verde INTELEX mais vibrante no escuro */
-    --primary: 158 50% 45%;
-    --primary-foreground: 0 0% 100%;
+    /* PRIMÁRIA: Verde-esmeralda vibrante para modo escuro */
+    --primary: 162 60% 48%; /* Verde mais luminoso e sofisticado */
+    --primary-foreground: 240 10% 8%;
     
-    /* SECONDARY & NEUTROS - Melhor contraste */
-    --secondary: 217 32% 17%;
-    --secondary-foreground: 210 40% 98%;
+    /* SECONDARY & NEUTROS - Escala refinada */
+    --secondary: 240 6% 15%;
+    --secondary-foreground: 240 5% 96%;
     
-    --muted: 217 32% 17%;
-    --muted-foreground: 215 20% 65%; /* Melhor contraste para texto secundário */
+    --muted: 240 6% 15%;
+    --muted-foreground: 240 5% 64%; /* Cinza médio com bom contraste */
     
-    --accent: 217 32% 20%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 162 55% 20%; /* Toque do verde primário */
+    --accent-foreground: 162 60% 88%;
     
-    /* SEMANTIC - Cores funcionais melhoradas */
-    --success: 158 50% 45%;
-    --success-foreground: 0 0% 100%;
-    --destructive: 0 62% 55%; /* Vermelho mais vibrante */
+    /* SEMANTIC - Cores vibrantes para modo escuro */
+    --success: 162 65% 50%;
+    --success-foreground: 240 10% 8%;
+    --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --info: 199 89% 48%;
-    --info-foreground: 0 0% 100%;
+    --warning: 38 95% 55%;
+    --warning-foreground: 38 100% 10%;
+    --info: 205 95% 55%;
+    --info-foreground: 240 10% 8%;
     
-    /* BORDAS & INPUTS - Melhor visibilidade */
-    --border: 217 32% 23%; /* Bordas mais visíveis */
-    --input: 217 32% 20%;
-    --ring: 158 50% 45%;
+    /* BORDAS & INPUTS - Sutis mas visíveis */
+    --border: 240 6% 20%;
+    --input: 240 6% 18%;
+    --ring: 162 60% 48%;
     
-    /* SIDEBAR - Mais harmônica */
-    --sidebar-background: 222 47% 13%;
-    --sidebar-foreground: 210 40% 88%;
-    --sidebar-primary: 158 50% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 32% 20%;
-    --sidebar-accent-foreground: 210 40% 92%;
-    --sidebar-border: 217 32% 24%;
-    --sidebar-ring: 158 50% 45%;
+    /* SIDEBAR - Tom escuro premium */
+    --sidebar-background: 240 10% 6%;
+    --sidebar-foreground: 240 5% 90%;
+    --sidebar-primary: 162 60% 48%;
+    --sidebar-primary-foreground: 240 10% 6%;
+    --sidebar-accent: 240 6% 12%;
+    --sidebar-accent-foreground: 162 60% 48%;
+    --sidebar-border: 240 6% 15%;
+    --sidebar-ring: 162 60% 48%;
   }
 }
 
@@ -148,59 +147,96 @@
   }
 
   /* ==========================================
-     HIERARQUIA TIPOGRÁFICA - Design Suíço
-     Fontes GRANDES, legíveis, respiradas
+     HIERARQUIA TIPOGRÁFICA APRIMORADA
+     Sistema ampliado, mais legível e com destaque
      ========================================== */
+  
+  /* H1 - Títulos de Página (DESTAQUE MÁXIMO) */
   h1 { 
-    @apply text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-foreground mb-6;
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-3;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    font-weight: 700;
+  }
+  
+  /* H2 - Seções Principais (DESTAQUE FORTE) */
+  h2 { 
+    @apply text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-foreground mb-3;
     letter-spacing: -0.025em;
     line-height: 1.2;
+    font-weight: 700;
   }
   
-  h2 { 
-    @apply text-xl md:text-2xl font-semibold tracking-tight text-foreground mb-4;
+  /* H3 - Subseções (DESTAQUE MÉDIO) */
+  h3 { 
+    @apply text-lg md:text-xl lg:text-2xl font-semibold text-foreground mb-2;
     letter-spacing: -0.02em;
     line-height: 1.25;
+    font-weight: 600;
   }
   
-  h3 { 
-    @apply text-lg md:text-xl font-semibold text-foreground mb-3;
+  /* H4 - Títulos de Cards (DESTAQUE LEVE) */
+  h4 { 
+    @apply text-base md:text-lg font-semibold text-foreground mb-2;
     letter-spacing: -0.015em;
     line-height: 1.3;
+    font-weight: 600;
   }
   
-  h4 { 
-    @apply text-base md:text-lg font-medium text-foreground mb-2;
+  /* H5 - Sub-títulos */
+  h5 { 
+    @apply text-base md:text-lg lg:text-xl font-medium text-foreground mb-2;
     line-height: 1.35;
+    font-weight: 500;
   }
   
+  /* H6 - Labels de seção */
+  h6 { 
+    @apply text-sm md:text-base lg:text-lg font-medium text-muted-foreground mb-1;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+  
+  /* Parágrafo - Texto corpo */
   p { 
-    @apply text-sm md:text-base leading-relaxed text-foreground;
+    @apply text-base md:text-lg leading-relaxed text-foreground;
     line-height: 1.7;
   }
 
+  /* Label - Formulários e descrições */
   label { 
-    @apply text-sm font-medium text-muted-foreground;
+    @apply text-sm md:text-base font-medium text-muted-foreground;
+  }
+
+  /* Small - Texto auxiliar */
+  small { 
+    @apply text-sm md:text-base text-muted-foreground;
   }
 
   /* Ajustes para modo fonte grande */
   html.font-large h1 {
-    @apply text-3xl md:text-4xl lg:text-5xl;
+    @apply text-4xl md:text-5xl lg:text-6xl;
   }
   html.font-large h2 {
-    @apply text-2xl md:text-3xl;
+    @apply text-3xl md:text-4xl lg:text-5xl;
   }
   html.font-large h3 {
-    @apply text-xl md:text-2xl;
+    @apply text-2xl md:text-3xl lg:text-4xl;
   }
   html.font-large h4 {
-    @apply text-lg md:text-xl;
+    @apply text-xl md:text-2xl lg:text-3xl;
+  }
+  html.font-large h5 {
+    @apply text-lg md:text-xl lg:text-2xl;
+  }
+  html.font-large h6 {
+    @apply text-base md:text-lg lg:text-xl;
   }
   html.font-large p {
-    @apply text-base md:text-lg;
+    @apply text-lg md:text-xl;
   }
   html.font-large label {
-    @apply text-base;
+    @apply text-base md:text-lg;
   }
 }
 
@@ -209,29 +245,33 @@
    Para hierarquia e organização - ELEGANTE
    ========================================== */
 @layer components {
-  /* PAGE HEADER - Sophisticated hierarchy */
+  /* PAGE HEADER - Com fundo para destaque */
   .page-header {
-    @apply pb-6 mb-6 border-b border-border/60;
+    @apply pb-5 mb-5 border-b-2 border-border/70;
+    @apply bg-gradient-to-r from-muted/30 to-transparent;
+    @apply -mx-6 px-6 pt-5 rounded-t-xl;
   }
   .page-title {
-    @apply text-2xl md:text-3xl font-semibold text-foreground tracking-tight;
-    letter-spacing: -0.025em;
+    @apply text-3xl md:text-4xl font-bold text-foreground tracking-tight;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
   }
   .page-description {
-    @apply text-sm md:text-base text-muted-foreground mt-2 max-w-2xl;
+    @apply text-base md:text-lg text-muted-foreground mt-2 max-w-3xl;
     line-height: 1.6;
   }
 
-  /* SECTION - Content grouping */
+  /* SECTION - Com fundo para organização */
   .section {
-    @apply mb-10;
+    @apply mb-8;
   }
   .section-header {
-    @apply flex items-center justify-between mb-5 pb-3 border-b border-border/40;
+    @apply flex items-center justify-between mb-4 pb-3 border-b-2 border-border/50;
+    @apply bg-muted/20 -mx-4 px-4 py-3 rounded-t-lg;
   }
   .section-title {
-    @apply text-lg md:text-xl font-semibold text-foreground flex items-center gap-2.5;
-    letter-spacing: -0.01em;
+    @apply text-lg md:text-xl font-bold text-foreground flex items-center gap-3;
+    letter-spacing: -0.02em;
   }
   .section-subtitle {
     @apply text-xs uppercase tracking-wider text-muted-foreground font-semibold;
@@ -283,51 +323,59 @@
     @apply text-sm font-medium text-foreground;
   }
 
-  /* STAT CARDS */
+  /* STAT CARDS - Equilibrado */
   .stat-card {
     @apply rounded-xl border border-border/60 bg-card p-5;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
   }
   .stat-value {
-    @apply text-3xl font-bold text-foreground tracking-tight;
+    @apply text-3xl md:text-4xl font-bold text-foreground tracking-tight;
+    letter-spacing: -0.02em;
   }
   .stat-label {
-    @apply text-sm text-muted-foreground mt-1;
+    @apply text-sm md:text-base text-muted-foreground mt-1;
   }
 
   /* ==========================================
-     BADGES ELEGANTES - ESTILO OUTLINE
+     BADGES APRIMORADOS - Maiores e mais legíveis
      Apenas cores FUNCIONAIS
      ========================================== */
   
+  /* Badge base - Tamanho ampliado */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5;
+    @apply text-sm md:text-base font-semibold;
+    @apply transition-all duration-200;
+  }
+  
   /* Badge Status - Vermelho (Urgente/Preso) */
   .badge-danger {
-    @apply bg-red-50 text-red-700 border border-red-200 
+    @apply bg-red-50 text-red-700 border-2 border-red-200 
            dark:bg-red-950/50 dark:text-red-300 dark:border-red-800;
   }
   
   /* Badge Status - Laranja (Ação) */
   .badge-warning {
-    @apply bg-orange-50 text-orange-700 border border-orange-200
+    @apply bg-orange-50 text-orange-700 border-2 border-orange-200
            dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800;
   }
   
   /* Badge Status - Verde (Concluído) */
   .badge-success {
-    @apply bg-emerald-50 text-emerald-700 border border-emerald-200
+    @apply bg-emerald-50 text-emerald-700 border-2 border-emerald-200
            dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800;
   }
   
   /* Badge Status - Azul (Informação) */
   .badge-info {
-    @apply bg-blue-50 text-blue-700 border border-blue-200
+    @apply bg-blue-50 text-blue-700 border-2 border-blue-200
            dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800;
   }
   
   /* Badge Status - Cinza (Neutro) */
   .badge-neutral {
-    @apply bg-stone-100 text-stone-600 border border-stone-200
-           dark:bg-stone-800 dark:text-stone-400 dark:border-stone-700;
+    @apply bg-zinc-100 text-zinc-700 border-2 border-zinc-200
+           dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700;
   }
 
   /* EMPTY STATE */
@@ -558,5 +606,133 @@
 
   .row-expand-animation {
     animation: expand-row 0.2s ease-out;
+  }
+
+  /* ==========================================
+     TABS E ABAS - Organizadas com fundo
+     ========================================== */
+  
+  .tabs-container {
+    @apply border-b-2 border-border/60 mb-6;
+    @apply bg-muted/20 -mx-4 px-4 py-2 rounded-t-lg;
+  }
+  
+  .tab-button {
+    @apply relative px-4 py-2.5 text-sm md:text-base font-semibold;
+    @apply transition-all duration-200;
+    @apply text-muted-foreground hover:text-foreground;
+    @apply border-b-2 border-transparent;
+  }
+  
+  .tab-button-active {
+    @apply text-primary border-b-primary bg-primary/5 rounded-t-md;
+  }
+  
+  .tab-indicator {
+    @apply absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full;
+  }
+
+  /* ==========================================
+     FILTER SECTION - Com fundo para organização
+     ========================================== */
+  
+  .filter-section {
+    @apply bg-muted/20 border-2 border-border/40 rounded-xl p-4;
+    @apply space-y-3;
+  }
+  
+  .filter-section-label {
+    @apply text-xs font-semibold text-muted-foreground uppercase tracking-wider;
+    @apply mb-2;
+  }
+  
+  .filter-chip {
+    @apply inline-flex items-center gap-2 px-3 py-2;
+    @apply text-sm font-medium rounded-lg;
+    @apply transition-all duration-200;
+    @apply border border-border/40 bg-background;
+    @apply hover:border-primary/50 hover:bg-primary/5;
+    @apply cursor-pointer;
+  }
+  
+  .filter-chip-active {
+    @apply border-primary bg-primary/10 text-primary;
+    @apply font-semibold shadow-sm;
+  }
+  
+  .filter-chip-count {
+    @apply inline-flex items-center justify-center;
+    @apply min-w-[20px] h-5 px-1.5 rounded-full;
+    @apply text-xs font-bold;
+    @apply bg-muted text-muted-foreground;
+  }
+  
+  .filter-chip-active .filter-chip-count {
+    @apply bg-primary/20 text-primary;
+  }
+
+  /* ==========================================
+     STAT BLOCKS - Cards de estatísticas maiores
+     ========================================== */
+  
+  .stat-block {
+    @apply rounded-xl border-2 border-border/60 bg-card;
+    @apply p-6 space-y-3;
+    @apply transition-all duration-200;
+    @apply hover:shadow-lg hover:border-border;
+  }
+  
+  .stat-block-value {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold;
+    @apply tracking-tight;
+    letter-spacing: -0.02em;
+  }
+  
+  .stat-block-label {
+    @apply text-sm md:text-base lg:text-lg;
+    @apply text-muted-foreground font-medium;
+  }
+  
+  .stat-block-icon {
+    @apply w-12 h-12 md:w-14 md:h-14 rounded-xl;
+    @apply flex items-center justify-center;
+    @apply bg-primary/10 text-primary;
+  }
+
+  /* ==========================================
+     SPACING OTIMIZADO - Apenas o necessário
+     ========================================== */
+  
+  .page-spacing {
+    @apply space-y-6 md:space-y-8;
+  }
+  
+  .section-spacing {
+    @apply space-y-5 md:space-y-6;
+  }
+  
+  .card-spacing {
+    @apply space-y-3 md:space-y-4;
+  }
+  
+  .compact-spacing {
+    @apply space-y-2 md:space-y-3;
+  }
+
+  /* ==========================================
+     HEADINGS COM ÍCONE - Destaque visual
+     ========================================== */
+  
+  .heading-with-icon {
+    @apply flex items-center gap-4;
+  }
+  
+  .heading-icon-wrapper {
+    @apply flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-2xl;
+    @apply bg-primary/10 flex items-center justify-center;
+  }
+  
+  .heading-icon {
+    @apply w-7 h-7 md:w-8 md:h-8 text-primary;
   }
 }

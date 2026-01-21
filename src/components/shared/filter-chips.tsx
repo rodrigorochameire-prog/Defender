@@ -44,19 +44,19 @@ export function FilterChip({
   };
 
   const sizeStyles = {
-    sm: "h-7 text-xs px-2.5 gap-1.5",
-    md: "h-8 text-sm px-3 gap-2",
+    sm: "h-8 text-sm px-3 gap-1.5",
+    md: "h-10 md:h-12 text-sm md:text-base px-5 gap-2.5",
   };
 
   const variantStyles = {
     default: selected
-      ? "bg-primary text-primary-foreground border-primary"
-      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground",
+      ? "bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]"
+      : "bg-card text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground hover:border-border",
     outline: selected
-      ? "bg-primary/10 text-primary border-primary/50"
-      : "bg-transparent text-muted-foreground border-border hover:border-primary/30 hover:text-foreground",
+      ? "bg-primary/10 text-primary border-primary shadow-md scale-[1.02]"
+      : "bg-transparent text-muted-foreground border-border/60 hover:border-primary/40 hover:text-foreground hover:bg-primary/5",
     solid: selected
-      ? "bg-foreground text-background border-foreground"
+      ? "bg-foreground text-background border-foreground shadow-md scale-[1.02]"
       : "bg-muted text-muted-foreground border-muted hover:bg-muted/80",
   };
 
@@ -64,8 +64,9 @@ export function FilterChip({
     <button
       onClick={handleClick}
       className={cn(
-        "inline-flex items-center rounded-full border font-medium transition-all duration-200",
+        "inline-flex items-center rounded-xl border-2 font-semibold transition-all duration-200",
         "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        "hover:shadow-lg",
         sizeStyles[size],
         variantStyles[variant],
         className
@@ -73,12 +74,12 @@ export function FilterChip({
     >
       {/* Check icon quando selecionado */}
       {selected && !icon && (
-        <Check className="w-3.5 h-3.5 flex-shrink-0" />
+        <Check className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
       )}
       
       {/* Custom icon */}
       {icon && (
-        <span className="flex-shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5">
+        <span className="flex-shrink-0 [&>svg]:w-4 [&>svg]:h-4 md:[&>svg]:w-5 md:[&>svg]:h-5">
           {icon}
         </span>
       )}
@@ -89,10 +90,10 @@ export function FilterChip({
       {/* Count badge */}
       {count !== undefined && (
         <span className={cn(
-          "flex-shrink-0 rounded-full text-xs font-semibold min-w-[1.25rem] text-center",
+          "flex-shrink-0 rounded-full text-xs md:text-sm font-bold min-w-[1.75rem] h-6 md:h-7 flex items-center justify-center px-2",
           selected 
-            ? "bg-primary-foreground/20 text-primary-foreground px-1.5" 
-            : "bg-muted-foreground/20 px-1.5"
+            ? "bg-primary-foreground/20 text-primary-foreground" 
+            : "bg-muted text-muted-foreground"
         )}>
           {count}
         </span>
@@ -101,7 +102,7 @@ export function FilterChip({
       {/* Remove button */}
       {removable && selected && (
         <X 
-          className="w-3.5 h-3.5 flex-shrink-0 hover:text-destructive transition-colors" 
+          className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 hover:text-destructive transition-colors" 
           onClick={(e) => {
             e.stopPropagation();
             onRemove?.(value);
@@ -124,13 +125,13 @@ interface FilterChipGroupProps {
 
 export function FilterChipGroup({ children, label, className }: FilterChipGroupProps) {
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-3", className)}>
       {label && (
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <label className="text-sm md:text-base font-semibold text-muted-foreground uppercase tracking-wider">
           {label}
         </label>
       )}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {children}
       </div>
     </div>
@@ -164,18 +165,18 @@ export function ActiveFiltersBar({
 
   return (
     <div className={cn(
-      "flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border/50",
+      "flex items-center gap-3 p-5 rounded-xl bg-primary/5 border-2 border-primary/30",
       className
     )}>
-      <span className="text-xs font-medium text-muted-foreground flex-shrink-0">
+      <span className="text-sm md:text-base font-semibold text-primary flex-shrink-0">
         Filtros ativos:
       </span>
       
-      <div className="flex flex-wrap gap-1.5 flex-1">
+      <div className="flex flex-wrap gap-2 flex-1">
         {filters.map((filter) => (
           <span
             key={filter.key}
-            className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md bg-primary/10 text-primary text-xs font-medium"
+            className="inline-flex items-center gap-2 h-8 md:h-9 px-3 rounded-lg bg-primary/10 text-primary text-sm md:text-base font-semibold border-2 border-primary/20"
           >
             <span className="text-primary/70">{filter.label}:</span>
             <span>{filter.value}</span>
@@ -183,7 +184,7 @@ export function ActiveFiltersBar({
               onClick={() => onRemove(filter.key)}
               className="hover:text-destructive transition-colors"
             >
-              <X className="w-3 h-3" />
+              <X className="w-4 h-4" />
             </button>
           </span>
         ))}
@@ -191,7 +192,7 @@ export function ActiveFiltersBar({
 
       <button
         onClick={onClearAll}
-        className="text-xs text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+        className="text-sm md:text-base font-medium text-muted-foreground hover:text-destructive transition-colors flex-shrink-0 px-3"
       >
         Limpar todos
       </button>

@@ -89,16 +89,23 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        // Sombras suaves e elegantes para design jurídico profissional
-        'soft': '0 2px 10px rgba(0, 0, 0, 0.03)',
-        'soft-md': '0 4px 20px rgba(0, 0, 0, 0.06)',
-        'soft-lg': '0 8px 30px rgba(0, 0, 0, 0.08)',
-        // Sombras com toque de cor verde (para elementos primários)
-        'primary': '0 4px 14px rgba(34, 87, 69, 0.15)',
-        'primary-lg': '0 8px 25px rgba(34, 87, 69, 0.20)',
-        // Sombras para cards flutuantes
-        'card': '0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0, 0, 0, 0.04)',
-        'card-hover': '0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06)',
+        // SOMBRAS ESTILO LINEAR - Sutis e precisas
+        'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+        'DEFAULT': '0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04)',
+        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)',
+        'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
+        
+        // Sombras contextuais
+        'card': '0 0 0 1px rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+        'card-hover': '0 0 0 1px rgba(0, 0, 0, 0.04), 0 4px 8px 0 rgba(0, 0, 0, 0.06)',
+        'sidebar': '1px 0 0 0 rgba(0, 0, 0, 0.05)',
+        'float': '0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 4px 8px -4px rgba(0, 0, 0, 0.06)',
+        'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
+        'none': 'none',
+      },
+      backdropBlur: {
+        xs: '2px',
       },
       keyframes: {
         "accordion-down": {
@@ -125,6 +132,21 @@ const config: Config = {
           from: { transform: "translateY(100%)" },
           to: { transform: "translateY(0)" },
         },
+        // ANIMAÇÕES PREMIUM ESTILO LINEAR
+        "pulse-slow": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-1000px 0" },
+          "100%": { backgroundPosition: "1000px 0" },
+        },
+        "ping-slow": {
+          "75%, 100%": {
+            transform: "scale(1.5)",
+            opacity: "0",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -133,6 +155,9 @@ const config: Config = {
         "fade-out": "fade-out 0.2s ease-out",
         "slide-in-from-top": "slide-in-from-top 0.3s ease-out",
         "slide-in-from-bottom": "slide-in-from-bottom 0.3s ease-out",
+        "pulse-slow": "pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "shimmer": "shimmer 2s linear infinite",
+        "ping-slow": "ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite",
       },
     },
   },

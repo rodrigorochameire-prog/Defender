@@ -27,7 +27,7 @@ export function PageContainer({
 
   return (
     <div className={cn(
-      "mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8",
+      "mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6",
       widthStyles[maxWidth],
       className
     )}>
@@ -74,9 +74,9 @@ export function PageSection({
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
 
   const variantStyles = {
-    default: "space-y-6",
-    outlined: "border border-border rounded-xl p-6 space-y-6",
-    filled: "bg-muted/30 border border-border/50 rounded-xl p-6 space-y-6",
+    default: "space-y-5",
+    outlined: "border-2 border-border rounded-xl p-5 md:p-6 space-y-5",
+    filled: "bg-muted/30 border-2 border-border/50 rounded-xl p-5 md:p-6 space-y-5",
   };
 
   const hasHeader = title || subtitle || number !== undefined || icon;
@@ -85,16 +85,16 @@ export function PageSection({
     <section className={cn(variantStyles[variant], className)}>
       {/* Header */}
       {hasHeader && (
-        <div className="flex items-start justify-between gap-4 pb-4 border-b border-border/40">
-          <div className="flex items-start gap-4 flex-1">
+        <div className="flex items-start justify-between gap-4 pb-3 mb-4 border-b-2 border-border/50 bg-muted/20 -mx-4 px-4 py-3 rounded-t-lg">
+          <div className="flex items-start gap-3 flex-1">
             {/* Número ou Ícone */}
             {number !== undefined && (
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-foreground font-bold font-mono text-lg flex-shrink-0">
+              <div className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-lg bg-primary text-primary-foreground font-bold font-mono text-base md:text-lg flex-shrink-0 shadow-sm">
                 {number}
               </div>
             )}
             {icon && number === undefined && (
-              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground flex-shrink-0">
+              <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
                 {icon}
               </div>
             )}
@@ -107,12 +107,12 @@ export function PageSection({
                 </p>
               )}
               {title && (
-                <h2 className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">
+                <h2 className="text-lg md:text-xl font-bold text-foreground tracking-tight leading-tight">
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-3xl">
                   {description}
                 </p>
               )}
@@ -174,9 +174,9 @@ export function ContentGrid({
   className 
 }: ContentGridProps) {
   const gapStyles = {
-    sm: "gap-3",
-    md: "gap-4",
-    lg: "gap-6",
+    sm: "gap-3 md:gap-4",
+    md: "gap-4 md:gap-5",
+    lg: "gap-6 md:gap-8",
   };
 
   const columnStyles = {
@@ -231,24 +231,24 @@ export function InfoBlock({
 
   return (
     <div className={cn(
-      "rounded-lg border p-4",
+      "rounded-xl border-2 p-5 md:p-6",
       variantStyles[variant],
       className
     )}>
-      <div className="flex gap-3">
+      <div className="flex gap-4">
         {icon && (
           <div className="flex-shrink-0">
             {icon}
           </div>
         )}
-        <div className="flex-1 space-y-1">
+        <div className="flex-1 space-y-2">
           {title && (
-            <h4 className="text-sm font-semibold">
+            <h4 className="text-base md:text-lg font-bold">
               {title}
             </h4>
           )}
           {description && (
-            <p className="text-sm opacity-90">
+            <p className="text-sm md:text-base opacity-90 leading-relaxed">
               {description}
             </p>
           )}
@@ -272,17 +272,17 @@ interface DividerProps {
 export function Divider({ label, className, variant = "default" }: DividerProps) {
   const variantStyles = {
     default: "border-border/40",
-    strong: "border-border",
+    strong: "border-border/70",
   };
 
   if (label) {
     return (
-      <div className={cn("relative", className)}>
-        <div className={cn("absolute inset-0 flex items-center", variantStyles[variant])}>
-          <div className="w-full border-t" />
+      <div className={cn("relative my-6", className)}>
+        <div className={cn("absolute inset-0 flex items-center")}>
+          <div className={cn("w-full border-t-2", variantStyles[variant])} />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-4 text-muted-foreground font-medium tracking-wider">
+        <div className="relative flex justify-center text-xs md:text-sm uppercase">
+          <span className="bg-muted/50 px-5 py-1 rounded-full text-muted-foreground font-semibold tracking-wider border-2 border-border/50">
             {label}
           </span>
         </div>
@@ -290,7 +290,7 @@ export function Divider({ label, className, variant = "default" }: DividerProps)
     );
   }
 
-  return <hr className={cn("border-t", variantStyles[variant], className)} />;
+  return <hr className={cn("border-t-2 my-6", variantStyles[variant], className)} />;
 }
 
 // ==========================================
@@ -327,21 +327,21 @@ export function StatBlock({
 
   return (
     <div className={cn(
-      "stat-card-enhanced border-l-[3px]",
+      "stat-card-enhanced border-l-[3px] border-2 border-border/60 hover:shadow-md hover:scale-[1.01]",
       variantStyles[variant],
       className
     )}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground font-medium">
+          <p className="text-xs md:text-sm text-muted-foreground font-semibold uppercase tracking-wider">
             {label}
           </p>
-          <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+          <p className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
             {value}
           </p>
           {change && (
             <p className={cn(
-              "text-xs font-medium flex items-center gap-1",
+              "text-xs md:text-sm font-semibold flex items-center gap-1",
               change.type === "increase" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
             )}>
               {change.type === "increase" ? "↑" : "↓"} {Math.abs(change.value)}%
@@ -349,7 +349,7 @@ export function StatBlock({
           )}
         </div>
         {icon && (
-          <div className="p-2 rounded-lg bg-muted">
+          <div className="p-2 rounded-lg bg-primary/10">
             {icon}
           </div>
         )}

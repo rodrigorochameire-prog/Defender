@@ -1,45 +1,57 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <!-- Background Shield Shape -->
-  <path d="M16 2L4 7v8c0 7.5 5.1 14.5 12 16 6.9-1.5 12-8.5 12-16V7L16 2z" fill="url(#shieldGradient)" />
+  <!-- Shield Background -->
+  <path d="M16 2L4 7v8c0 7.5 5.1 14.5 12 16 6.9-1.5 12-8.5 12-16V7L16 2z" 
+        fill="url(#shieldGradient)" 
+        stroke="url(#shieldStroke)" 
+        stroke-width="0.5"/>
   
   <!-- Inner Shield Highlight -->
-  <path d="M16 4L6 8.5v6.5c0 6.5 4.3 12.3 10 13.5 5.7-1.2 10-7 10-13.5V8.5L16 4z" fill="url(#innerGradient)" opacity="0.95" />
+  <path d="M16 4L6 8.5v6.5c0 6.5 4.3 12.3 10 13.5 5.7-1.2 10-7 10-13.5V8.5L16 4z" 
+        fill="url(#innerGradient)" 
+        opacity="0.9"/>
   
-  <!-- Sword Symbol - Strategic and Proactive -->
+  <!-- X Symbol - Bold and Centered -->
   <g transform="translate(16, 15)">
-    <!-- Sword Blade -->
-    <path d="M0 -8 L1.5 -6 L1 4 L0 5 L-1 4 L-1.5 -6 Z" fill="white" opacity="0.95"/>
+    <path d="M-5 -6 L-2 -6 L0 -3 L2 -6 L5 -6 L1.5 -0.5 L5 5 L2 5 L0 2 L-2 5 L-5 5 L-1.5 -0.5 Z" 
+          fill="white" 
+          opacity="0.95"
+          stroke="white"
+          stroke-width="0.5"
+          stroke-linejoin="round"/>
     
-    <!-- Sword Guard (Cross-guard) -->
-    <rect x="-4" y="3" width="8" height="2" rx="0.5" fill="white" opacity="0.9"/>
-    
-    <!-- Sword Handle -->
-    <rect x="-0.75" y="5" width="1.5" height="4" rx="0.5" fill="white" opacity="0.85"/>
-    
-    <!-- Sword Pommel -->
-    <circle cx="0" cy="10" r="1.2" fill="white" opacity="0.85"/>
-    
-    <!-- Sword Tip Glow -->
-    <ellipse cx="0" cy="-7" rx="0.5" ry="1" fill="white" opacity="0.6"/>
+    <!-- X Glow -->
+    <path d="M-5 -6 L-2 -6 L0 -3 L2 -6 L5 -6 L1.5 -0.5 L5 5 L2 5 L0 2 L-2 5 L-5 5 L-1.5 -0.5 Z" 
+          fill="none" 
+          stroke="white"
+          stroke-width="1"
+          opacity="0.3"
+          filter="url(#glow)"/>
   </g>
   
-  <!-- Decorative Elements (representing strategy/organization) -->
-  <circle cx="8" cy="10" r="1" fill="white" opacity="0.5"/>
-  <circle cx="24" cy="10" r="1" fill="white" opacity="0.5"/>
-  
-  <!-- Small chevrons representing progress/proactivity -->
-  <path d="M7 17 L9 15 L7 13" stroke="white" stroke-width="0.8" fill="none" opacity="0.4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M25 17 L23 15 L25 13" stroke="white" stroke-width="0.8" fill="none" opacity="0.4" stroke-linecap="round" stroke-linejoin="round"/>
-  
-  <!-- Gradients -->
+  <!-- Gradients and Filters -->
   <defs>
     <linearGradient id="shieldGradient" x1="16" y1="2" x2="16" y2="28" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#22c55e"/>
-      <stop offset="100%" stop-color="#15803d"/>
+      <stop offset="0%" stop-color="#14b8a6"/>
+      <stop offset="50%" stop-color="#0d9488"/>
+      <stop offset="100%" stop-color="#0f766e"/>
     </linearGradient>
+    
+    <linearGradient id="shieldStroke" x1="16" y1="2" x2="16" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5eead4" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0f766e" stop-opacity="0.8"/>
+    </linearGradient>
+    
     <linearGradient id="innerGradient" x1="16" y1="4" x2="16" y2="26" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#16a34a"/>
-      <stop offset="100%" stop-color="#166534"/>
+      <stop offset="0%" stop-color="#2dd4bf"/>
+      <stop offset="100%" stop-color="#0d9488"/>
     </linearGradient>
+    
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 </svg>

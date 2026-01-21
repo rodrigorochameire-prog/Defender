@@ -82,7 +82,7 @@ import Link from "next/link";
 // Novos componentes estruturais
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { PageHeader } from "@/components/shared/section-header";
-import { FilterChip, FilterChipGroup } from "@/components/shared/filter-chips";
+import { FilterTab, FilterTabsGroup } from "@/components/shared/filter-tabs";
 import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
 import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -810,17 +810,17 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
           </div>
         </div>
 
-        {/* CAMADA C: GAVETA EXPANSÍVEL - DESIGN SUÍÇO EXPANDIDO */}
+        {/* CAMADA C: GAVETA EXPANSÍVEL - ESPAÇAMENTO CORRIGIDO */}
         <CollapsibleContent>
-          <div className="px-3 sm:px-5 pb-4 sm:pb-5 space-y-3 sm:space-y-4 border-t border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/30 dark:to-zinc-950">
+          <div className="px-4 sm:px-5 py-4 sm:py-5 space-y-4 border-t border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/30 dark:to-zinc-950">
             
             {/* Teoria da Defesa */}
             {caso.teoriaResumo && (
-              <div className="mt-3 sm:mt-4 p-3 rounded-lg bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
-                <h4 className="text-xs uppercase font-semibold text-emerald-600 dark:text-emerald-400 tracking-wider flex items-center gap-2 mb-1.5">
-                  <Shield className="w-3 h-3" /> Teoria da Defesa
+              <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border-2 border-emerald-200/60 dark:border-emerald-900/50">
+                <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tracking-wide flex items-center gap-2 mb-2">
+                  <Shield className="w-4 h-4" /> Teoria da Defesa
                 </h4>
-                <p className="text-xs sm:text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed font-serif italic">
+                <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed font-serif italic">
                   &ldquo;{caso.teoriaResumo}&rdquo;
                 </p>
               </div>
@@ -828,11 +828,11 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
 
             {/* Tese da Acusação */}
             {caso.teseAcusacao && (
-              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-rose-50/80 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/20 border border-rose-100 dark:border-rose-900/50">
-                <h4 className="text-xs uppercase font-semibold text-rose-600 dark:text-rose-400 tracking-wider flex items-center gap-2 mb-1.5">
-                  <Swords className="w-3 h-3" /> Tese da Acusação
+              <div className="p-4 rounded-xl bg-gradient-to-br from-rose-50/80 to-rose-100/50 dark:from-rose-950/30 dark:to-rose-900/20 border-2 border-rose-200/60 dark:border-rose-900/50">
+                <h4 className="text-sm font-bold text-rose-600 dark:text-rose-400 tracking-wide flex items-center gap-2 mb-2">
+                  <Swords className="w-4 h-4" /> Tese da Acusação
                 </h4>
-                <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 leading-relaxed">
+                <p className="text-sm text-rose-700 dark:text-rose-300 leading-relaxed">
                   {caso.teseAcusacao}
                 </p>
               </div>
@@ -840,11 +840,11 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
 
             {/* Versão do Réu */}
             {caso.versaoReu && (
-              <div className="p-2.5 sm:p-3 rounded-lg bg-gradient-to-br from-blue-50/80 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border border-blue-100 dark:border-blue-900/50">
-                <h4 className="text-xs uppercase font-semibold text-blue-600 dark:text-blue-400 tracking-wider flex items-center gap-2 mb-1.5">
-                  <User className="w-3 h-3" /> Versão do Réu
+              <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50/80 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border-2 border-blue-200/60 dark:border-blue-900/50">
+                <h4 className="text-sm font-bold text-blue-600 dark:text-blue-400 tracking-wide flex items-center gap-2 mb-2">
+                  <User className="w-4 h-4" /> Versão do Réu
                 </h4>
-                <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
                   {caso.versaoReu}
                 </p>
               </div>
@@ -852,19 +852,19 @@ function CasoCardDossier({ caso }: { caso: Caso }) {
 
             {/* Testemunhas */}
             {caso.testemunhas && caso.testemunhas.length > 0 && (
-              <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-                <h4 className="text-xs uppercase font-semibold text-zinc-500 tracking-wider flex items-center gap-2 mb-2">
-                  <Users className="w-3 h-3" /> 
+              <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border-2 border-zinc-200/60 dark:border-zinc-800">
+                <h4 className="text-sm font-bold text-foreground tracking-wide flex items-center gap-2 mb-3">
+                  <Users className="w-4 h-4" /> 
                   Testemunhas ({caso.testemunhas.filter(t => t.ouvida).length}/{caso.testemunhas.length})
                 </h4>
                 
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium">
-                    <UserCheck className="w-2.5 h-2.5" />
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
+                    <UserCheck className="w-3.5 h-3.5" />
                     {caso.testemunhas.filter(t => t.ouvida).length} ouvidas
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium">
-                    <UserX className="w-2.5 h-2.5" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold">
+                    <UserX className="w-3.5 h-3.5" />
                     {caso.testemunhas.filter(t => !t.ouvida).length} pendentes
                   </span>
                   {caso.interrogatorioRealizado !== undefined && (
@@ -1247,15 +1247,15 @@ export default function CasosPage() {
           }
         />
 
-        {/* Filtros por Atribuição - Filter Chips */}
-        <FilterChipGroup label="Filtrar por Atribuição">
+        {/* Filtros por Atribuição - Tabs Premium */}
+        <FilterTabsGroup label="Filtrar por Atribuição">
           {ATRIBUICAO_OPTIONS.map((option) => {
             const count = option.value === "all" 
               ? MOCK_CASOS.length 
               : MOCK_CASOS.filter(c => c.atribuicao === option.value).length;
             
             return (
-              <FilterChip
+              <FilterTab
                 key={option.value}
                 label={option.label}
                 value={option.value}
@@ -1263,11 +1263,10 @@ export default function CasosPage() {
                 onSelect={setFilterAtribuicao}
                 count={count}
                 icon={ATRIBUICAO_ICONS[option.value]}
-                size="md"
               />
             );
           })}
-        </FilterChipGroup>
+        </FilterTabsGroup>
 
         {/* Stats Cards - Padronizado */}
         <StatsGrid columns={5}>
