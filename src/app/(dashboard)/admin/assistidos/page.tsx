@@ -80,7 +80,6 @@ import {
   Circle,
   Target,
   Lock,
-  Unlock,
   AlertCircle,
   Copy,
 } from "lucide-react";
@@ -981,14 +980,6 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
           size="sm"
           showTooltip={true}
         />
-        {!isPreso && (
-          <Tooltip>
-            <TooltipTrigger>
-              <Unlock className="w-4 h-4 text-emerald-500" />
-            </TooltipTrigger>
-            <TooltipContent>Solto</TooltipContent>
-          </Tooltip>
-        )}
       </SwissTableCell>
 
       {/* Crime - Fonte serifada */}

@@ -60,7 +60,6 @@ import {
   Target,
   Zap,
   Lock,
-  Unlock,
   Info,
   ChevronRight,
   Copy,
