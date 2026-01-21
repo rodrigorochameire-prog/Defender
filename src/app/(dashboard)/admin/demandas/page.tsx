@@ -2275,7 +2275,7 @@ export default function DemandasPage() {
             </Select>
 
             <Button
-              variant={reuPresoFilter === true ? "destructive" : "outline"}
+              variant={reuPresoFilter === true ? "danger" : "outline"}
               size="sm"
               onClick={() => setReuPresoFilter(reuPresoFilter === true ? null : true)}
               className="gap-1 h-8 text-xs flex-shrink-0 px-2 sm:px-3"

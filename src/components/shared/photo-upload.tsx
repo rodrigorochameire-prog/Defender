@@ -126,7 +126,7 @@ export function PhotoUpload({
       {previewUrl && !isUploading && onRemove && (
         <Button
           type="button"
-          variant="destructive"
+          variant="danger"
           size="icon"
           className="absolute -top-2 -right-2 w-6 h-6 rounded-full"
           onClick={(e) => {

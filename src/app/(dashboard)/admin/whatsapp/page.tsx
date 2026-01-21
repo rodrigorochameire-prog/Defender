@@ -563,7 +563,7 @@ export default function WhatsAppPage() {
                           </span>
                         </div>
                       </div>
-                      <Badge variant={msg.status === "sent" ? "default" : "destructive"}>
+                      <Badge variant={msg.status === "sent" ? "default" : "danger"}>
                         {msg.status === "sent" ? "Enviada" : "Erro"}
                       </Badge>
                     </div>

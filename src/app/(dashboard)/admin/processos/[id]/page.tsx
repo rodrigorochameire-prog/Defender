@@ -440,7 +440,7 @@ export default function ProcessoDetalhesPage() {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleDelete}>Confirmar Exclusão</Button>
+            <Button variant="danger" onClick={handleDelete}>Confirmar Exclusão</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
