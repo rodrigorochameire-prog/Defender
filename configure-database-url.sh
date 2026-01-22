@@ -14,7 +14,9 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-# DATABASE_URL com a senha fornecida
+# DATABASE_URL com Transaction Pooler (porta 6543) - Otimizado para Vercel/Serverless
+# Porta 6543 = Transaction Pooler (recomendado para Vercel)
+# Porta 5432 = Session Pooler ou Direct Connection (para local)
 DATABASE_URL="postgresql://postgres.hxfvlaeqhkmelvyzgfqp:401bFr505@@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
 
 # Verificar Vercel CLI
