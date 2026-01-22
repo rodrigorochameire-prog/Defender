@@ -242,8 +242,13 @@
   }
 
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary-hover;
-    @apply shadow-sm hover:shadow-md;
+    @apply bg-primary text-primary-foreground shadow-sm;
+    @apply hover:shadow-md;
+    transition: all var(--transition-base);
+  }
+
+  .btn-primary:hover {
+    background-color: hsl(var(--primary-hover));
   }
 
   .btn-secondary {
