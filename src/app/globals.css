@@ -3,621 +3,292 @@
 @tailwind utilities;
 
 /* ========================================
-   DEFENDER - DESIGN SYSTEM v8.0 MANUS
-   Swiss Design • Institucional • Inteligente
-   Visual limpo, profissional, funcional
-   Aprimoramentos: Tipografia precisa, espaçamentos perfeitos,
-   paleta robusta verde/preta/cinza/branca
-   CACHE BUST: 2026-01-21-MANUS
+   DEFENDER - DESIGN SYSTEM v9.0 MANUS
+   Sistema de Design Profissional e Robusto
+   Paleta: Verde-esmeralda, Preto, Cinza, Branco
+   Tipografia precisa, espaçamentos perfeitos
+   Animações sutis, micro-interações fluidas
+   CACHE BUST: 2026-01-22-V9-MANUS
    ======================================== */
 
 @layer base {
   :root {
-    /* BASE: Fundo off-white premium - Não cansa a vista */
-    font-size: 16px;
-    
-    --background: 0 0% 98%; /* Off-white mais definido (#FAFAFA) */
-    --foreground: 240 10% 10%; /* Preto mais preciso e robusto */
+    /* ===== BASE COLORS ===== */
+    --background: 0 0% 98%; /* Off-white premium #FAFAFA */
+    --foreground: 240 10% 10%; /* Preto robusto #1A1A1A */
 
-    /* PRIMÁRIA: Verde Esmeralda Profissional - Mais robusto */
-    --primary: 162 52% 30%; /* Verde mais saturado e maduro */
+    /* ===== PRIMARY: Verde Esmeralda Profissional ===== */
+    --primary: 162 63% 35%; /* #10b981 - Verde esmeralda vibrante */
     --primary-foreground: 0 0% 100%;
+    --primary-hover: 162 63% 30%; /* Hover mais escuro */
+    --primary-light: 162 63% 95%; /* Background sutil */
 
-    /* CARDS & SURFACES - Elevação sutil estilo Linear */
-    --card: 0 0% 100%; /* Branco puro apenas para cards */
+    /* ===== CARDS & SURFACES ===== */
+    --card: 0 0% 100%; /* Branco puro */
     --card-foreground: 240 8% 12%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 8% 12%;
 
-    /* SECONDARY & NEUTROS - Escala precisa */
+    /* ===== SECONDARY & NEUTRALS ===== */
     --secondary: 240 5% 97%;
     --secondary-foreground: 240 6% 14%;
-
-    --muted: 240 5% 97%; /* Cinza quase branco */
-    --muted-foreground: 240 4% 48%; /* Cinza médio */
-
+    --muted: 240 5% 97%;
+    --muted-foreground: 240 4% 48%;
     --accent: 240 5% 97%;
     --accent-foreground: 240 8% 12%;
 
-    /* SEMANTIC - Cores desaturadas e profissionais */
-    --success: 162 48% 38%; /* Verde desaturado */
+    /* ===== SEMANTIC COLORS ===== */
+    --success: 162 63% 35%;
     --success-foreground: 0 0% 100%;
-    --destructive: 0 55% 50%; /* Vermelho desaturado */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --warning: 38 85% 52%; /* Laranja desaturado */
+    --warning: 38 92% 50%;
     --warning-foreground: 38 95% 12%;
-    --info: 210 80% 50%; /* Azul desaturado */
+    --info: 210 100% 50%;
     --info-foreground: 0 0% 100%;
 
-    /* BORDAS & INPUTS - Mais definidas e precisas */
-    --border: 240 8% 90%; /* Bordas sutis mas visíveis */
+    /* ===== BORDERS & INPUTS ===== */
+    --border: 240 8% 90%;
     --input: 240 8% 90%;
-    --ring: 162 52% 30%;
+    --ring: 162 63% 35%;
+    --radius: 0.5rem; /* 8px */
 
-    --radius: 0.5rem; /* 8px - Raio preciso e consistente */
-
-    /* SIDEBAR - Integrada com contraste sutil */
-    --sidebar-background: 0 0% 97%; /* Levemente diferenciada */
+    /* ===== SIDEBAR ===== */
+    --sidebar-background: 0 0% 97%;
     --sidebar-foreground: 240 10% 10%;
-    --sidebar-primary: 162 52% 30%;
+    --sidebar-primary: 162 63% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 96%; /* Hover sutil */
+    --sidebar-accent: 240 5% 96%;
     --sidebar-accent-foreground: 240 8% 12%;
-    --sidebar-border: 240 6% 94%; /* Borda quase invisível */
-    --sidebar-ring: 162 48% 32%;
+    --sidebar-border: 240 6% 94%;
+    --sidebar-ring: 162 63% 35%;
+
+    /* ===== SPACING SYSTEM (múltiplos de 4px) ===== */
+    --spacing-xs: 0.25rem; /* 4px */
+    --spacing-sm: 0.5rem; /* 8px */
+    --spacing-md: 1rem; /* 16px */
+    --spacing-lg: 1.5rem; /* 24px */
+    --spacing-xl: 2rem; /* 32px */
+    --spacing-2xl: 3rem; /* 48px */
+    --spacing-3xl: 4rem; /* 64px */
+
+    /* ===== TYPOGRAPHY ===== */
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+    
+    /* Font Sizes */
+    --text-xs: 0.75rem; /* 12px */
+    --text-sm: 0.875rem; /* 14px */
+    --text-base: 1rem; /* 16px */
+    --text-lg: 1.125rem; /* 18px */
+    --text-xl: 1.25rem; /* 20px */
+    --text-2xl: 1.5rem; /* 24px */
+    --text-3xl: 1.875rem; /* 30px */
+    --text-4xl: 2.25rem; /* 36px */
+
+    /* Line Heights */
+    --leading-tight: 1.25;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.75;
+
+    /* Letter Spacing */
+    --tracking-tight: -0.025em;
+    --tracking-normal: 0;
+    --tracking-wide: 0.025em;
+
+    /* ===== SHADOWS ===== */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+    /* ===== TRANSITIONS ===== */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    /* Modo Escuro Premium - Tom Verde-Esmeralda */
-    /* Inspirado em aplicativos profissionais premium */
-    --background: 240 10% 8%; /* Preto suave elegante */
-    --foreground: 240 5% 98%; /* Branco quase puro */
-    
-    /* CARDS & SURFACES - Elevação sofisticada */
-    --card: 240 8% 11%; /* Card elevado */
+    --background: 240 10% 8%;
+    --foreground: 240 5% 98%;
+    --card: 240 8% 11%;
     --card-foreground: 240 5% 98%;
     --popover: 240 8% 13%;
     --popover-foreground: 240 5% 98%;
-    
-    /* PRIMÁRIA: Verde-esmeralda vibrante para modo escuro */
-    --primary: 162 60% 48%; /* Verde mais luminoso e sofisticado */
+    --primary: 162 70% 50%;
     --primary-foreground: 240 10% 8%;
-    
-    /* SECONDARY & NEUTROS - Escala refinada */
+    --primary-hover: 162 70% 45%;
+    --primary-light: 162 70% 15%;
     --secondary: 240 6% 15%;
     --secondary-foreground: 240 5% 96%;
-    
     --muted: 240 6% 15%;
-    --muted-foreground: 240 5% 64%; /* Cinza médio com bom contraste */
-    
-    --accent: 162 55% 20%; /* Toque do verde primário */
+    --muted-foreground: 240 5% 64%;
+    --accent: 162 55% 20%;
     --accent-foreground: 162 60% 88%;
-    
-    /* SEMANTIC - Cores vibrantes para modo escuro */
-    --success: 162 65% 50%;
+    --success: 162 70% 50%;
     --success-foreground: 240 10% 8%;
     --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
-    --warning: 38 95% 55%;
-    --warning-foreground: 38 100% 10%;
-    --info: 205 95% 55%;
-    --info-foreground: 240 10% 8%;
-    
-    /* BORDAS & INPUTS - Sutis mas visíveis */
+    --warning: 38 92% 55%;
+    --warning-foreground: 38 95% 12%;
+    --info: 210 100% 55%;
+    --info-foreground: 0 0% 100%;
     --border: 240 6% 20%;
-    --input: 240 6% 18%;
-    --ring: 162 60% 48%;
-    
-    /* SIDEBAR - Tom escuro premium */
-    --sidebar-background: 240 10% 6%;
-    --sidebar-foreground: 240 5% 90%;
-    --sidebar-primary: 162 60% 48%;
-    --sidebar-primary-foreground: 240 10% 6%;
-    --sidebar-accent: 240 6% 12%;
-    --sidebar-accent-foreground: 162 60% 48%;
-    --sidebar-border: 240 6% 15%;
-    --sidebar-ring: 162 60% 48%;
+    --input: 240 6% 20%;
+    --ring: 162 70% 50%;
+    --sidebar-background: 240 10% 10%;
+    --sidebar-foreground: 240 5% 98%;
+    --sidebar-primary: 162 70% 50%;
+    --sidebar-primary-foreground: 240 10% 8%;
+    --sidebar-accent: 240 6% 15%;
+    --sidebar-accent-foreground: 240 5% 96%;
+    --sidebar-border: 240 6% 18%;
+    --sidebar-ring: 162 70% 50%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
-  html {
-    /* BASE: 16px = 1rem (padrão dos browsers) */
-    font-size: 16px;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    transition: font-size 0.25s ease-out;
-  }
-
-  /* MODO AMPLIADO: Aumenta base em 12.5% (tudo escala proporcionalmente) */
-  html.font-large {
-    font-size: 18px; /* 1rem = 18px neste modo */
-  }
-
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    letter-spacing: -0.008em;
-    line-height: 1.7;
   }
 
-  /* ==========================================
-     HIERARQUIA TIPOGRÁFICA APRIMORADA
-     Sistema ampliado, mais legível e com destaque
-     ========================================== */
-  
-  /* H1 - Títulos de Página (DESTAQUE MÁXIMO) */
-  h1 { 
-    @apply text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4;
-    letter-spacing: -0.032em;
-    line-height: 1.1;
-    font-weight: 700;
-  }
-  
-  /* H2 - Seções Principais (DESTAQUE FORTE) */
-  h2 { 
-    @apply text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-foreground mb-3;
-    letter-spacing: -0.028em;
-    line-height: 1.15;
-    font-weight: 700;
-  }
-  
-  /* H3 - Subseções (DESTAQUE MÉDIO) */
-  h3 { 
-    @apply text-xl md:text-2xl lg:text-3xl font-semibold text-foreground mb-3;
-    letter-spacing: -0.024em;
-    line-height: 1.2;
-    font-weight: 600;
-  }
-  
-  /* H4 - Títulos de Cards (DESTAQUE LEVE) */
-  h4 { 
-    @apply text-lg md:text-xl font-semibold text-foreground mb-2;
-    letter-spacing: -0.02em;
-    line-height: 1.25;
-    font-weight: 600;
-  }
-  
-  /* H5 - Sub-títulos */
-  h5 { 
-    @apply text-base md:text-lg font-medium text-foreground mb-2;
-    letter-spacing: -0.01em;
-    line-height: 1.3;
-    font-weight: 500;
-  }
-  
-  /* H6 - Labels de seção */
-  h6 { 
-    @apply text-sm md:text-base font-medium text-muted-foreground mb-2;
-    letter-spacing: 0em;
-    line-height: 1.4;
-    font-weight: 500;
-  }
-  
-  /* Parágrafo - Texto corpo */
-  p { 
-    @apply text-base leading-relaxed text-foreground;
-    line-height: 1.65;
-    letter-spacing: -0.005em;
+  /* ===== TYPOGRAPHY BASE ===== */
+  h1 {
+    @apply text-4xl font-bold tracking-tight leading-tight;
   }
 
-  /* Label - Formulários e descrições */
-  label { 
-    @apply text-sm font-medium text-muted-foreground;
-    letter-spacing: 0em;
+  h2 {
+    @apply text-3xl font-bold tracking-tight leading-tight;
   }
 
-  /* Small - Texto auxiliar */
-  small { 
-    @apply text-xs text-muted-foreground;
-    letter-spacing: 0em;
+  h3 {
+    @apply text-2xl font-semibold tracking-tight leading-normal;
   }
 
-  /* Ajustes para modo fonte grande */
-  html.font-large h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl;
+  h4 {
+    @apply text-xl font-semibold tracking-tight leading-normal;
   }
-  html.font-large h2 {
-    @apply text-3xl md:text-4xl lg:text-5xl;
+
+  h5 {
+    @apply text-lg font-medium tracking-normal leading-normal;
   }
-  html.font-large h3 {
-    @apply text-2xl md:text-3xl lg:text-4xl;
+
+  h6 {
+    @apply text-base font-medium tracking-normal leading-normal;
   }
-  html.font-large h4 {
-    @apply text-xl md:text-2xl lg:text-3xl;
+
+  p {
+    @apply text-base leading-relaxed;
   }
-  html.font-large h5 {
-    @apply text-lg md:text-xl lg:text-2xl;
-  }
-  html.font-large h6 {
-    @apply text-base md:text-lg lg:text-xl;
-  }
-  html.font-large p {
-    @apply text-lg md:text-xl;
-  }
-  html.font-large label {
-    @apply text-base md:text-lg;
+
+  small {
+    @apply text-sm leading-normal;
   }
 }
 
-/* ==========================================
-   COMPONENTES ESTRUTURAIS
-   Para hierarquia e organização - ELEGANTE
-   ========================================== */
 @layer components {
-  /* PAGE HEADER - Com fundo para destaque */
-  .page-header {
-    @apply pb-6 mb-6 border-b-2 border-border/70;
-    @apply bg-gradient-to-r from-muted/30 to-transparent;
-    @apply -mx-6 px-6 pt-6 rounded-t-xl;
-  }
-  .page-title {
-    @apply text-3xl md:text-4xl font-bold text-foreground tracking-tight;
-    letter-spacing: -0.032em;
-    line-height: 1.1;
-  }
-  .page-description {
-    @apply text-base text-muted-foreground mt-3 max-w-3xl;
-    line-height: 1.65;
-  }
-
-  /* SECTION - Com fundo para organização */
-  .section {
-    @apply mb-8;
-  }
-  .section-header {
-    @apply flex items-center justify-between mb-5 pb-4 border-b-2 border-border/50;
-    @apply bg-muted/20 -mx-4 px-4 py-4 rounded-t-lg;
-  }
-  .section-title {
-    @apply text-xl md:text-2xl font-bold text-foreground flex items-center gap-3;
-    letter-spacing: -0.024em;
-  }
-  .section-subtitle {
-    @apply text-xs uppercase tracking-wider text-muted-foreground font-semibold;
-  }
-
-  /* CARDS - With refined elevation and smooth animations */
+  /* ===== CARDS ===== */
   .card-elevated {
-    @apply rounded-xl border border-border/60 bg-card text-card-foreground transition-all duration-300 ease-out;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    @apply bg-card border border-border rounded-lg shadow-md;
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
   }
+
   .card-elevated:hover {
-    @apply border-border;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    @apply shadow-lg;
     transform: translateY(-2px);
   }
 
-  .card-raised {
-    @apply rounded-xl border border-border/50 bg-card text-card-foreground;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  }
-
-  .card-inset {
-    @apply rounded-lg bg-muted/30 border border-border/30 p-6;
-  }
-
-  /* PANELS - For grouping related content */
-  .panel {
-    @apply rounded-xl border border-border/60 bg-card p-6;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04);
-  }
-  .panel-header {
-    @apply flex items-center justify-between pb-4 mb-6 border-b border-border/50;
-  }
-  .panel-title {
-    @apply text-lg md:text-xl font-semibold text-foreground;
-    letter-spacing: -0.02em;
-  }
-  .panel-content {
-    @apply space-y-5;
-  }
-
-  /* DATA DISPLAY */
-  .data-row {
-    @apply flex items-center justify-between py-3 border-b border-border/30 last:border-0;
-  }
-  .data-label {
-    @apply text-sm text-muted-foreground;
-  }
-  .data-value {
-    @apply text-sm font-medium text-foreground;
-  }
-
-  /* STAT CARDS - Equilibrado e preciso */
-  .stat-card {
-    @apply rounded-xl border border-border/60 bg-card p-6;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  }
-  .stat-value {
-    @apply text-4xl md:text-5xl font-bold text-foreground tracking-tight;
-    letter-spacing: -0.03em;
-    line-height: 1;
-  }
-  .stat-label {
-    @apply text-sm text-muted-foreground mt-2;
-    letter-spacing: 0em;
-  }
-
-  /* ==========================================
-     BADGES APRIMORADOS - Maiores e mais legíveis
-     Apenas cores FUNCIONAIS
-     ========================================== */
-  
-  /* Badge base - Tamanho otimizado e preciso com animação */
+  /* ===== BADGES ===== */
   .badge {
-    @apply inline-flex items-center gap-2 rounded-lg px-3 py-1.5;
-    @apply text-sm font-semibold;
-    @apply transition-all duration-200 ease-out;
-    letter-spacing: -0.01em;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium;
+    transition: transform var(--transition-fast);
   }
+
   .badge:hover {
     transform: scale(1.05);
   }
-  
-  /* Badge Status - Vermelho (Urgente/Preso) - Mais robusto */
-  .badge-danger {
-    @apply bg-red-50 text-red-800 border border-red-300 
-           dark:bg-red-950/60 dark:text-red-300 dark:border-red-800;
-  }
-  
-  /* Badge Status - Laranja (Ação) - Mais robusto */
-  .badge-warning {
-    @apply bg-orange-50 text-orange-800 border border-orange-300
-           dark:bg-orange-950/60 dark:text-orange-300 dark:border-orange-800;
-  }
-  
-  /* Badge Status - Verde (Concluído) - Mais robusto */
+
   .badge-success {
-    @apply bg-emerald-50 text-emerald-800 border border-emerald-300
-           dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800;
+    @apply bg-success/10 text-success border border-success/20;
   }
-  
-  /* Badge Status - Azul (Informação) - Mais robusto */
+
+  .badge-warning {
+    @apply bg-warning/10 text-warning border border-warning/20;
+  }
+
+  .badge-destructive {
+    @apply bg-destructive/10 text-destructive border border-destructive/20;
+  }
+
   .badge-info {
-    @apply bg-blue-50 text-blue-800 border border-blue-300
-           dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800;
-  }
-  
-  /* Badge Status - Cinza (Neutro) - Mais robusto */
-  .badge-neutral {
-    @apply bg-zinc-100 text-zinc-800 border border-zinc-300
-           dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700;
+    @apply bg-info/10 text-info border border-info/20;
   }
 
-  /* EMPTY STATE */
+  /* ===== BUTTONS ===== */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-medium;
+    @apply transition-all duration-300 ease-out;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+
+  .btn:active {
+    transform: scale(0.96);
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary-hover;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    @apply border border-border;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-accent hover:text-accent-foreground;
+  }
+
+  /* ===== INPUTS ===== */
+  .input {
+    @apply flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2;
+    @apply text-sm ring-offset-background;
+    @apply transition-all duration-300 ease-out;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+
+  .input:focus {
+    @apply border-primary;
+  }
+
+  /* ===== EMPTY STATES ===== */
   .empty-state {
-    @apply flex flex-col items-center justify-center py-12 px-6 text-center;
+    @apply flex flex-col items-center justify-center py-12 px-4 text-center;
   }
+
   .empty-state-icon {
-    @apply w-12 h-12 text-muted-foreground/50 mb-4;
+    @apply w-12 h-12 mb-4 text-muted-foreground opacity-50;
   }
+
   .empty-state-title {
-    @apply text-base font-medium text-foreground mb-1;
+    @apply text-lg font-semibold mb-2;
   }
+
   .empty-state-description {
-    @apply text-sm text-muted-foreground max-w-sm;
+    @apply text-sm text-muted-foreground max-w-md;
   }
+}
 
-  /* INTERACTIVE STATES - Com animações sutis */
-  .interactive {
-    @apply cursor-pointer transition-all duration-200 ease-out;
-    @apply hover:bg-muted/50 active:bg-muted active:scale-[0.98];
-  }
-  .interactive-card {
-    @apply cursor-pointer transition-all duration-300 ease-out;
-    @apply hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5;
-  }
-
-  /* LOADING STATES */
-  .skeleton {
-    @apply animate-pulse bg-muted rounded;
-  }
-  .skeleton-text {
-    @apply h-4 w-full bg-muted rounded animate-pulse;
-  }
-  .skeleton-avatar {
-    @apply w-10 h-10 bg-muted rounded-full animate-pulse;
-  }
-
-  /* ==========================================
-     UTILITY CLASSES
-     ========================================== */
+@layer utilities {
+  /* ===== ANIMATIONS ===== */
   
-  /* Textos de sidebar */
-  .text-sidebar-item {
-    @apply text-sm font-medium transition-colors duration-200;
-  }
-  
-  .text-sidebar-section {
-    @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground/80;
-  }
-
-  /* Badge texto */
-  .text-badge {
-    @apply text-xs font-semibold uppercase tracking-wide;
-  }
-
-  /* Micro texto */
-  .text-ui-micro {
-    @apply text-xs text-muted-foreground/80;
-  }
-
-  /* Modo fonte grande - utilidades */
-  html.font-large .text-sidebar-item {
-    @apply text-base;
-  }
-  html.font-large .text-sidebar-section {
-    @apply text-sm;
-  }
-  html.font-large .text-badge {
-    @apply text-sm;
-  }
-  html.font-large .text-ui-micro {
-    @apply text-sm;
-  }
-
-  /* ==========================================
-     MELHORIAS DE TABELAS - SWISS DESIGN
-     Visualização otimizada para ambos os modos
-     ========================================== */
-  
-  /* Container de tabela com scroll suave */
-  .table-container {
-    @apply relative rounded-xl border border-border/60 bg-card overflow-hidden;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
-  }
-  
-  .dark .table-container {
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
-  }
-
-  /* Header de tabela - melhor contraste */
-  .table-header-enhanced {
-    @apply bg-muted/80 dark:bg-muted/60 backdrop-blur-sm;
-    @apply border-b-2 border-border/70 dark:border-border;
-  }
-
-  /* Células com melhor espaçamento */
-  .table-cell-enhanced {
-    @apply py-4 px-4 first:pl-6 last:pr-6;
-    @apply align-middle;
-  }
-
-  /* Linhas com hover melhorado */
-  .table-row-enhanced {
-    @apply transition-colors duration-150;
-    @apply hover:bg-muted/50 dark:hover:bg-muted/30;
-    @apply border-b border-border/30 last:border-0;
-  }
-
-  /* Badge de status melhorado para ambos os modos */
-  .status-badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider;
-    @apply transition-all duration-200;
-  }
-
-  .status-badge-urgent {
-    @apply bg-rose-100 text-rose-700 border border-rose-200;
-    @apply dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/50;
-  }
-
-  .status-badge-warning {
-    @apply bg-amber-100 text-amber-700 border border-amber-200;
-    @apply dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/50;
-  }
-
-  .status-badge-success {
-    @apply bg-emerald-100 text-emerald-700 border border-emerald-200;
-    @apply dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/50;
-  }
-
-  .status-badge-info {
-    @apply bg-blue-100 text-blue-700 border border-blue-200;
-    @apply dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800/50;
-  }
-
-  .status-badge-neutral {
-    @apply bg-zinc-100 text-zinc-700 border border-zinc-200;
-    @apply dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700;
-  }
-
-  /* Indicador de réu preso - melhorado */
-  .prisoner-indicator {
-    @apply inline-flex items-center justify-center rounded-full;
-    @apply transition-all duration-200;
-  }
-
-  .prisoner-indicator-active {
-    @apply bg-rose-100 text-rose-600 border border-rose-200;
-    @apply dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800/50;
-  }
-
-  /* Tooltips melhorados */
-  .tooltip-enhanced {
-    @apply bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900;
-    @apply px-3 py-1.5 rounded-lg text-xs font-medium;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  .dark .tooltip-enhanced {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
-
-  /* Cards de estatísticas melhorados */
-  .stat-card-enhanced {
-    @apply rounded-xl border border-border/60 bg-card p-5;
-    @apply transition-all duration-200 hover:shadow-md;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  }
-
-  .dark .stat-card-enhanced {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  }
-
-  .stat-card-enhanced:hover {
-    @apply border-border;
-  }
-
-  /* Borda lateral semântica - réu preso */
-  .border-semantic-prisoner {
-    @apply border-l-[3px] border-l-rose-500 dark:border-l-rose-400;
-  }
-
-  /* Borda lateral semântica - livre */
-  .border-semantic-free {
-    @apply border-l-[3px] border-l-zinc-300 dark:border-l-zinc-600;
-  }
-
-  /* Texto mono para números de processo */
-  .process-number {
-    @apply font-mono text-sm tracking-tight;
-    @apply text-zinc-600 dark:text-zinc-400;
-    @apply hover:text-blue-600 dark:hover:text-blue-400;
-    @apply transition-colors cursor-pointer;
-  }
-
-  /* Badges de área/atribuição melhorados */
-  .area-badge {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium;
-    @apply bg-zinc-200/80 text-zinc-700 border border-zinc-300/50;
-    @apply dark:bg-zinc-700 dark:text-zinc-200 dark:border-zinc-600/50;
-  }
-
-  /* Scrollbar customizada para tabelas */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-zinc-100 dark:bg-zinc-800 rounded-lg;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-zinc-300 dark:bg-zinc-600 rounded-lg;
-    @apply hover:bg-zinc-400 dark:hover:bg-zinc-500;
-  }
-
-  /* Animações suaves para expansão e entrada */
-  @keyframes expand-row {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
+  /* Fade In */
   @keyframes fade-in {
     from {
       opacity: 0;
@@ -627,6 +298,11 @@
     }
   }
 
+  .animate-fade-in {
+    animation: fade-in var(--transition-base);
+  }
+
+  /* Slide In Right */
   @keyframes slide-in-right {
     from {
       opacity: 0;
@@ -638,6 +314,11 @@
     }
   }
 
+  .animate-slide-in-right {
+    animation: slide-in-right var(--transition-base);
+  }
+
+  /* Slide In Left */
   @keyframes slide-in-left {
     from {
       opacity: 0;
@@ -649,6 +330,11 @@
     }
   }
 
+  .animate-slide-in-left {
+    animation: slide-in-left var(--transition-base);
+  }
+
+  /* Scale In */
   @keyframes scale-in {
     from {
       opacity: 0;
@@ -660,214 +346,28 @@
     }
   }
 
-  .row-expand-animation {
-    animation: expand-row 0.2s ease-out;
+  .animate-scale-in {
+    animation: scale-in var(--transition-base);
   }
 
-  .fade-in-animation {
-    animation: fade-in 0.3s ease-out;
-  }
-
-  .slide-in-right-animation {
-    animation: slide-in-right 0.3s ease-out;
-  }
-
-  .slide-in-left-animation {
-    animation: slide-in-left 0.3s ease-out;
-  }
-
-  .scale-in-animation {
-    animation: scale-in 0.25s ease-out;
-  }
-
-  /* ==========================================
-     TABS E ABAS - Organizadas com fundo
-     ========================================== */
-  
-  .tabs-container {
-    @apply border-b-2 border-border/60 mb-6;
-    @apply bg-muted/20 -mx-4 px-4 py-2 rounded-t-lg;
-  }
-  
-  .tab-button {
-    @apply relative px-4 py-2.5 text-sm md:text-base font-semibold;
-    @apply transition-all duration-200 ease-out;
-    @apply text-muted-foreground hover:text-foreground;
-    @apply border-b-2 border-transparent;
-  }
-  .tab-button:hover {
-    transform: translateY(-1px);
-  }
-  
-  .tab-button-active {
-    @apply text-primary border-b-primary bg-primary/5 rounded-t-md;
-  }
-  
-  .tab-indicator {
-    @apply absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full;
-  }
-
-  /* ==========================================
-     FILTER SECTION - Com fundo para organização
-     ========================================== */
-  
-  .filter-section {
-    @apply bg-muted/20 border-2 border-border/40 rounded-xl p-4;
-    @apply space-y-3;
-  }
-  
-  .filter-section-label {
-    @apply text-xs font-semibold text-muted-foreground uppercase tracking-wider;
-    @apply mb-2;
-  }
-  
-  .filter-chip {
-    @apply inline-flex items-center gap-2 px-3 py-2;
-    @apply text-sm font-medium rounded-lg;
-    @apply transition-all duration-200 ease-out;
-    @apply border border-border/40 bg-background;
-    @apply hover:border-primary/50 hover:bg-primary/5;
-    @apply cursor-pointer;
-  }
-  .filter-chip:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  }
-  .filter-chip:active {
-    transform: scale(0.97);
-  }
-  
-  .filter-chip-active {
-    @apply border-primary bg-primary/10 text-primary;
-    @apply font-semibold shadow-sm;
-  }
-  
-  .filter-chip-count {
-    @apply inline-flex items-center justify-center;
-    @apply min-w-[20px] h-5 px-1.5 rounded-full;
-    @apply text-xs font-bold;
-    @apply bg-muted text-muted-foreground;
-  }
-  
-  .filter-chip-active .filter-chip-count {
-    @apply bg-primary/20 text-primary;
-  }
-
-  /* ==========================================
-     STAT BLOCKS - Cards de estatísticas maiores
-     ========================================== */
-  
-  .stat-block {
-    @apply rounded-xl border-2 border-border/60 bg-card;
-    @apply p-6 space-y-3;
-    @apply transition-all duration-300 ease-out;
-    @apply hover:shadow-lg hover:border-border;
-  }
-  .stat-block:hover {
-    transform: translateY(-3px);
-  }
-  
-  .stat-block-value {
-    @apply text-4xl md:text-5xl lg:text-6xl font-bold;
-    @apply tracking-tight;
-    letter-spacing: -0.02em;
-  }
-  
-  .stat-block-label {
-    @apply text-sm md:text-base lg:text-lg;
-    @apply text-muted-foreground font-medium;
-  }
-  
-  .stat-block-icon {
-    @apply w-12 h-12 md:w-14 md:h-14 rounded-xl;
-    @apply flex items-center justify-center;
-    @apply bg-primary/10 text-primary;
-  }
-
-  /* ==========================================
-     SPACING OTIMIZADO - Apenas o necessário
-     ========================================== */
-  
-  .page-spacing {
-    @apply space-y-6 md:space-y-8;
-  }
-  
-  .section-spacing {
-    @apply space-y-5 md:space-y-6;
-  }
-  
-  .card-spacing {
-    @apply space-y-3 md:space-y-4;
-  }
-  
-  .compact-spacing {
-    @apply space-y-2 md:space-y-3;
-  }
-
-  /* ==========================================
-     HEADINGS COM ÍCONE - Destaque visual
-     ========================================== */
-  
-  .heading-with-icon {
-    @apply flex items-center gap-4;
-  }
-  
-  .heading-icon-wrapper {
-    @apply flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-2xl;
-    @apply bg-primary/10 flex items-center justify-center;
-  }
-  
-  .heading-icon {
-    @apply w-7 h-7 md:w-8 md:h-8 text-primary;
-  }
-}
-
-  /* ==========================================
-     MICRO-INTERAÇÕES - Feedback visual sutil
-     ========================================== */
-  
-  /* Botões com feedback tátil */
-  .btn-press {
-    @apply transition-transform duration-100 ease-out;
-  }
-  .btn-press:active {
-    transform: scale(0.96);
-  }
-
-  /* Hover suave com elevação */
-  .hover-lift {
-    @apply transition-all duration-300 ease-out;
-  }
-  .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-
-  /* Hover com brilho sutil */
-  .hover-glow {
-    @apply transition-all duration-300 ease-out;
-  }
-  .hover-glow:hover {
-    box-shadow: 0 0 20px rgba(var(--primary), 0.15);
-  }
-
-  /* Pulsação suave para notificações */
-  @keyframes pulse-soft {
-    0%, 100% {
+  /* Expand Row */
+  @keyframes expand-row {
+    from {
+      opacity: 0;
+      transform: scaleY(0.8);
+    }
+    to {
       opacity: 1;
-      transform: scale(1);
+      transform: scaleY(1);
     }
-    50% {
-      opacity: 0.9;
-      transform: scale(1.02);
-    }
-  }
-  
-  .pulse-soft-animation {
-    animation: pulse-soft 2s ease-in-out infinite;
   }
 
-  /* Shimmer para loading states */
+  .animate-expand-row {
+    animation: expand-row var(--transition-base);
+    transform-origin: top;
+  }
+
+  /* Shimmer Loading */
   @keyframes shimmer {
     0% {
       background-position: -1000px 0;
@@ -877,32 +377,32 @@
     }
   }
 
-  .shimmer-animation {
+  .animate-shimmer {
     background: linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.4) 50%,
-      rgba(255, 255, 255, 0) 100%
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted-foreground) / 0.1) 50%,
+      hsl(var(--muted)) 100%
     );
     background-size: 1000px 100%;
-    animation: shimmer 2s infinite;
+    animation: shimmer 2s infinite linear;
   }
 
-  /* Bounce suave para elementos de atenção */
-  @keyframes bounce-soft {
+  /* Pulse Soft */
+  @keyframes pulse-soft {
     0%, 100% {
-      transform: translateY(0);
+      opacity: 1;
     }
     50% {
-      transform: translateY(-4px);
+      opacity: 0.7;
     }
   }
 
-  .bounce-soft-animation {
-    animation: bounce-soft 1s ease-in-out infinite;
+  .animate-pulse-soft {
+    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
-  /* Rotação suave para ícones de loading */
+  /* Spin Smooth */
   @keyframes spin-smooth {
     from {
       transform: rotate(0deg);
@@ -912,1294 +412,87 @@
     }
   }
 
-  .spin-smooth-animation {
+  .animate-spin-smooth {
     animation: spin-smooth 1s linear infinite;
   }
 
-  /* ==========================================
-     SISTEMA DE GRID RIGOROSO
-     Alinhamento vertical preciso e consistente
-     ========================================== */
-  
-  /* Grid base com 8px baseline */
-  .grid-baseline {
-    display: grid;
-    grid-auto-rows: minmax(8px, auto);
-  }
-
-  /* Container com alinhamento vertical */
-  .vertical-rhythm {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem; /* 24px - múltiplo de 8 */
-  }
-
-  .vertical-rhythm-tight {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem; /* 16px */
-  }
-
-  .vertical-rhythm-loose {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem; /* 32px */
-  }
-
-  /* Grid de cards responsivo com alinhamento preciso */
-  .cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
-    align-items: start;
-  }
-
-  .cards-grid-2 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.5rem;
-  }
-
-  .cards-grid-3 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-  }
-
-  /* Layout de duas colunas com proporção áurea */
-  .layout-golden {
-    display: grid;
-    grid-template-columns: 1.618fr 1fr;
-    gap: 2rem;
-  }
-
-  @media (max-width: 768px) {
-    .layout-golden {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  /* ==========================================
-     ESTADOS DE FOCO APRIMORADOS
-     Acessibilidade e navegação por teclado
-     ========================================== */
-  
-  /* Foco padrão com ring visível */
-  *:focus {
-    outline: none;
-  }
-
-  *:focus-visible {
-    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
-    transition: box-shadow 0.2s ease-out;
-  }
-
-  /* Foco em botões */
-  button:focus-visible,
-  .btn:focus-visible {
-    @apply ring-2 ring-primary ring-offset-2 ring-offset-background;
-  }
-
-  /* Foco em inputs */
-  input:focus-visible,
-  textarea:focus-visible,
-  select:focus-visible {
-    @apply ring-2 ring-primary ring-offset-0;
-    border-color: hsl(var(--primary));
-  }
-
-  /* Foco em cards interativos */
-  .interactive-card:focus-visible {
-    @apply ring-2 ring-primary ring-offset-2;
-  }
-
-  /* Foco em links */
-  a:focus-visible {
-    @apply ring-2 ring-primary ring-offset-2 ring-offset-background rounded-sm;
-  }
-
-  /* Skip to content para acessibilidade */
-  .skip-to-content {
-    @apply absolute -top-full left-0 bg-primary text-primary-foreground px-4 py-2 rounded-md;
-    @apply transition-all duration-200;
-    z-index: 9999;
-  }
-
-  .skip-to-content:focus {
-    @apply top-4 left-4;
-  }
-
-  /* Indicador de navegação por teclado */
-  .keyboard-navigation-active *:focus-visible {
-    @apply ring-2 ring-primary ring-offset-2;
-  }
-
-  /* ==========================================
-     MODO DE ALTO CONTRASTE
-     Acessibilidade visual aprimorada
-     ========================================== */
-  
-  .high-contrast {
-    /* Cores com contraste máximo */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --primary: 162 100% 25%;
-    --primary-foreground: 0 0% 100%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-    --muted: 0 0% 90%;
-    --muted-foreground: 0 0% 10%;
-  }
-
-  .high-contrast.dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --primary: 162 100% 50%;
-    --primary-foreground: 0 0% 0%;
-    --border: 0 0% 80%;
-    --input: 0 0% 80%;
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 90%;
-  }
-
-  /* Bordas mais fortes em modo alto contraste */
-  .high-contrast .card-elevated,
-  .high-contrast .panel,
-  .high-contrast .stat-card {
-    border-width: 2px;
-    border-color: hsl(var(--border));
-  }
-
-  /* Texto mais forte */
-  .high-contrast h1,
-  .high-contrast h2,
-  .high-contrast h3,
-  .high-contrast h4 {
-    font-weight: 800;
-  }
-
-  /* ==========================================
-     VARIANTES DE DENSIDADE
-     Controle de espaçamento e informação
-     ========================================== */
-  
-  /* Densidade Compacta - Máxima informação */
-  .density-compact {
-    --spacing-unit: 0.75rem; /* 12px */
-  }
-
-  .density-compact .card-elevated,
-  .density-compact .panel {
-    @apply p-4;
-  }
-
-  .density-compact .stat-card {
-    @apply p-4;
-  }
-
-  .density-compact .section-header {
-    @apply mb-3 pb-2;
-  }
-
-  .density-compact .page-header {
-    @apply pb-4 mb-4 pt-4;
-  }
-
-  .density-compact h1 {
-    @apply text-2xl md:text-3xl mb-2;
-  }
-
-  .density-compact h2 {
-    @apply text-xl md:text-2xl mb-2;
-  }
-
-  .density-compact h3 {
-    @apply text-lg md:text-xl mb-2;
-  }
-
-  .density-compact .vertical-rhythm {
-    gap: 1rem;
-  }
-
-  /* Densidade Confortável - Padrão balanceado */
-  .density-comfortable {
-    --spacing-unit: 1rem; /* 16px */
-  }
-
-  /* Densidade Espaçosa - Máximo conforto visual */
-  .density-spacious {
-    --spacing-unit: 1.5rem; /* 24px */
-  }
-
-  .density-spacious .card-elevated,
-  .density-spacious .panel {
-    @apply p-8;
-  }
-
-  .density-spacious .stat-card {
-    @apply p-8;
-  }
-
-  .density-spacious .section-header {
-    @apply mb-6 pb-5;
-  }
-
-  .density-spacious .page-header {
-    @apply pb-8 mb-8 pt-8;
-  }
-
-  .density-spacious h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl mb-5;
-  }
-
-  .density-spacious h2 {
-    @apply text-3xl md:text-4xl lg:text-5xl mb-4;
-  }
-
-  .density-spacious h3 {
-    @apply text-2xl md:text-3xl lg:text-4xl mb-4;
-  }
-
-  .density-spacious .vertical-rhythm {
-    gap: 2rem;
-  }
-
-  /* Tabelas com densidade variável */
-  .density-compact .table-cell-enhanced {
-    @apply py-2 px-3;
-  }
-
-  .density-spacious .table-cell-enhanced {
-    @apply py-6 px-6;
-  }
-
-  /* ==========================================
-     COMMAND PALETTE - Busca Global Inteligente
-     Estilo Spotlight/Cmd+K
-     ========================================== */
-  
-  /* Overlay do command palette */
-  .command-palette-overlay {
-    @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-50;
-    animation: fade-in 0.2s ease-out;
-  }
-
-  /* Container do command palette */
-  .command-palette {
-    @apply fixed top-[15%] left-1/2 -translate-x-1/2;
-    @apply w-full max-w-2xl;
-    @apply bg-card border-2 border-border/80 rounded-2xl shadow-2xl;
-    @apply overflow-hidden;
-    animation: scale-in 0.2s ease-out;
-    z-index: 51;
-  }
-
-  /* Input de busca */
-  .command-palette-input {
-    @apply w-full px-6 py-5 text-lg;
-    @apply bg-transparent border-0 border-b-2 border-border/50;
-    @apply focus:outline-none focus:ring-0 focus:border-primary;
-    @apply placeholder:text-muted-foreground/60;
-  }
-
-  /* Lista de resultados */
-  .command-palette-results {
-    @apply max-h-96 overflow-y-auto;
-    @apply py-2;
-  }
-
-  /* Item de resultado */
-  .command-palette-item {
-    @apply flex items-center gap-4 px-6 py-3;
-    @apply cursor-pointer transition-all duration-150;
-    @apply hover:bg-muted/50;
-  }
-
-  .command-palette-item-active {
-    @apply bg-primary/10 border-l-4 border-primary;
-  }
-
-  /* Ícone do item */
-  .command-palette-icon {
-    @apply w-10 h-10 rounded-lg;
-    @apply flex items-center justify-center;
-    @apply bg-muted text-muted-foreground;
-  }
-
-  /* Texto do item */
-  .command-palette-text {
-    @apply flex-1;
-  }
-
-  .command-palette-title {
-    @apply text-base font-semibold text-foreground;
-  }
-
-  .command-palette-subtitle {
-    @apply text-sm text-muted-foreground;
-  }
-
-  /* Badge de atalho */
-  .command-palette-shortcut {
-    @apply flex items-center gap-1;
-  }
-
-  /* Footer com dicas */
-  .command-palette-footer {
-    @apply border-t-2 border-border/50 px-6 py-3;
-    @apply flex items-center justify-between;
-    @apply text-xs text-muted-foreground;
-  }
-
-  /* ==========================================
-     ATALHOS DE TECLADO - Keyboard Shortcuts
-     Indicadores visuais e tooltips
-     ========================================== */
-  
-  /* Badge de tecla */
-  .kbd {
-    @apply inline-flex items-center justify-center;
-    @apply min-w-[24px] h-6 px-2;
-    @apply text-xs font-semibold;
-    @apply bg-muted border border-border rounded;
-    @apply shadow-sm;
-    font-family: ui-monospace, monospace;
-  }
-
-  .kbd-lg {
-    @apply min-w-[32px] h-8 px-3 text-sm;
-  }
-
-  /* Combinação de teclas */
-  .kbd-combo {
-    @apply inline-flex items-center gap-1;
-  }
-
-  /* Tooltip de atalho */
-  .shortcut-tooltip {
-    @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2;
-    @apply px-3 py-2 rounded-lg;
-    @apply bg-foreground text-background;
-    @apply text-xs font-medium whitespace-nowrap;
-    @apply opacity-0 pointer-events-none;
-    @apply transition-opacity duration-200;
-    z-index: 100;
-  }
-
-  .shortcut-tooltip::after {
-    content: '';
-    @apply absolute top-full left-1/2 -translate-x-1/2;
-    @apply border-4 border-transparent border-t-foreground;
-  }
-
-  *:hover > .shortcut-tooltip {
-    @apply opacity-100;
-  }
-
-  /* Indicador de atalho disponível */
-  .has-shortcut {
-    @apply relative;
-  }
-
-  .has-shortcut::after {
-    content: '⌘';
-    @apply absolute -top-1 -right-1;
-    @apply w-4 h-4 rounded-full;
-    @apply bg-primary text-primary-foreground;
-    @apply text-xs flex items-center justify-center;
-    @apply opacity-0 transition-opacity duration-200;
-  }
-
-  .has-shortcut:hover::after {
-    @apply opacity-100;
-  }
-
-  /* Lista de atalhos */
-  .shortcuts-list {
-    @apply space-y-2;
-  }
-
-  .shortcut-item {
-    @apply flex items-center justify-between;
-    @apply px-4 py-3 rounded-lg;
-    @apply hover:bg-muted/50 transition-colors;
-  }
-
-  .shortcut-label {
-    @apply text-sm font-medium text-foreground;
-  }
-
-  .shortcut-keys {
-    @apply flex items-center gap-1;
-  }
-
-  /* ==========================================
-     SISTEMA DE NOTIFICAÇÕES TOAST
-     Feedback visual não-intrusivo
-     ========================================== */
-  
-  /* Container de toasts */
-  .toast-container {
-    @apply fixed bottom-6 right-6 z-50;
-    @apply flex flex-col gap-3;
-    @apply pointer-events-none;
-  }
-
-  .toast-container-top {
-    @apply top-6 bottom-auto;
-  }
-
-  .toast-container-center {
-    @apply left-1/2 -translate-x-1/2;
-  }
-
-  /* Toast individual */
-  .toast {
-    @apply flex items-start gap-4 p-4 pr-12;
-    @apply min-w-[320px] max-w-md;
-    @apply bg-card border-2 border-border rounded-xl shadow-lg;
-    @apply pointer-events-auto;
-    animation: slide-in-right 0.3s ease-out;
-  }
-
-  .toast-exit {
-    animation: slide-out-right 0.2s ease-out forwards;
-  }
-
-  @keyframes slide-out-right {
-    from {
-      opacity: 1;
-      transform: translateX(0);
-    }
-    to {
-      opacity: 0;
-      transform: translateX(100%);
-    }
-  }
-
-  /* Variantes de toast */
-  .toast-success {
-    @apply border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/50;
-  }
-
-  .toast-error {
-    @apply border-red-500/50 bg-red-50 dark:bg-red-950/50;
-  }
-
-  .toast-warning {
-    @apply border-orange-500/50 bg-orange-50 dark:bg-orange-950/50;
-  }
-
-  .toast-info {
-    @apply border-blue-500/50 bg-blue-50 dark:bg-blue-950/50;
-  }
-
-  /* Ícone do toast */
-  .toast-icon {
-    @apply w-6 h-6 flex-shrink-0;
-  }
-
-  .toast-success .toast-icon {
-    @apply text-emerald-600 dark:text-emerald-400;
-  }
-
-  .toast-error .toast-icon {
-    @apply text-red-600 dark:text-red-400;
-  }
-
-  .toast-warning .toast-icon {
-    @apply text-orange-600 dark:text-orange-400;
-  }
-
-  .toast-info .toast-icon {
-    @apply text-blue-600 dark:text-blue-400;
-  }
-
-  /* Conteúdo do toast */
-  .toast-content {
-    @apply flex-1;
-  }
-
-  .toast-title {
-    @apply text-sm font-semibold text-foreground mb-1;
-  }
-
-  .toast-message {
-    @apply text-sm text-muted-foreground;
-  }
-
-  /* Botão de fechar */
-  .toast-close {
-    @apply absolute top-3 right-3;
-    @apply w-6 h-6 rounded-md;
-    @apply flex items-center justify-center;
-    @apply text-muted-foreground hover:text-foreground;
-    @apply hover:bg-muted/50;
-    @apply transition-colors duration-150;
-  }
-
-  /* Barra de progresso */
-  .toast-progress {
-    @apply absolute bottom-0 left-0 right-0 h-1;
-    @apply bg-primary/30 rounded-b-xl overflow-hidden;
-  }
-
-  .toast-progress-bar {
-    @apply h-full bg-primary;
-    animation: toast-progress-animation 5s linear forwards;
-  }
-
-  @keyframes toast-progress-animation {
-    from {
-      width: 100%;
-    }
-    to {
-      width: 0%;
-    }
-  }
-
-  /* ==========================================
-     TRANSIÇÕES DE PÁGINA
-     Navegação fluida entre rotas
-     ========================================== */
-  
-  /* Container de transição */
-  .page-transition-container {
-    @apply relative;
-  }
-
-  /* Fade transition */
-  .page-fade-enter {
-    opacity: 0;
-  }
-
-  .page-fade-enter-active {
-    opacity: 1;
-    transition: opacity 0.3s ease-out;
-  }
-
-  .page-fade-exit {
-    opacity: 1;
-  }
-
-  .page-fade-exit-active {
-    opacity: 0;
-    transition: opacity 0.2s ease-out;
-  }
-
-  /* Slide transition */
-  .page-slide-enter {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-
-  .page-slide-enter-active {
-    opacity: 1;
-    transform: translateX(0);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-  }
-
-  .page-slide-exit {
-    opacity: 1;
-    transform: translateX(0);
-  }
-
-  .page-slide-exit-active {
-    opacity: 0;
-    transform: translateX(-20px);
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-  }
-
-  /* Scale transition */
-  .page-scale-enter {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-
-  .page-scale-enter-active {
-    opacity: 1;
-    transform: scale(1);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-  }
-
-  .page-scale-exit {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  .page-scale-exit-active {
-    opacity: 0;
-    transform: scale(1.02);
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-  }
-
-  /* Loading bar no topo */
-  .page-loading-bar {
-    @apply fixed top-0 left-0 right-0 h-1 bg-primary z-50;
-    animation: page-loading-animation 2s ease-in-out infinite;
-  }
-
-  @keyframes page-loading-animation {
-    0% {
-      transform: translateX(-100%);
-    }
-    50% {
-      transform: translateX(0%);
-    }
-    100% {
-      transform: translateX(100%);
-    }
-  }
-
-  /* ==========================================
-     DRAG AND DROP
-     Reorganização visual de elementos
-     ========================================== */
-  
-  /* Item arrastável */
-  .draggable {
-    @apply cursor-grab transition-all duration-200;
-  }
-
-  .draggable:active {
-    @apply cursor-grabbing;
-  }
-
-  /* Estado durante arrasto */
-  .dragging {
-    @apply opacity-50 scale-105 rotate-2;
-    @apply shadow-2xl;
-    @apply cursor-grabbing;
-    z-index: 1000;
-  }
-
-  /* Área de drop */
-  .drop-zone {
-    @apply relative;
-    @apply transition-all duration-200;
-  }
-
-  .drop-zone-active {
-    @apply bg-primary/5 border-2 border-dashed border-primary;
-    @apply ring-2 ring-primary/20;
-  }
-
-  .drop-zone-hover {
-    @apply bg-primary/10;
-  }
-
-  /* Indicador de posição de drop */
-  .drop-indicator {
-    @apply absolute left-0 right-0 h-0.5 bg-primary;
-    @apply transition-all duration-150;
-  }
-
-  .drop-indicator-top {
-    @apply top-0;
-  }
-
-  .drop-indicator-bottom {
-    @apply bottom-0;
-  }
-
-  /* Placeholder durante drag */
-  .drag-placeholder {
-    @apply border-2 border-dashed border-muted-foreground/30;
-    @apply bg-muted/20 rounded-lg;
-    @apply transition-all duration-200;
-  }
-
-  /* Handle de arrasto */
-  .drag-handle {
-    @apply cursor-grab;
-    @apply text-muted-foreground hover:text-foreground;
-    @apply transition-colors duration-150;
-  }
-
-  .drag-handle:active {
-    @apply cursor-grabbing;
-  }
-
-  /* Ghost durante drag */
-  .drag-ghost {
-    @apply opacity-80 shadow-2xl;
-    @apply bg-card border-2 border-primary;
-    @apply rotate-3 scale-105;
-  }
-
-  /* ==========================================
-     FILTROS AVANÇADOS
-     Sistema de filtragem complexo
-     ========================================== */
-  
-  /* Container de filtros avançados */
-  .advanced-filters {
-    @apply bg-muted/20 border-2 border-border/40 rounded-xl p-6;
-    @apply space-y-5;
-  }
-
-  /* Grupo de filtros */
-  .filter-group {
-    @apply space-y-3;
-  }
-
-  .filter-group-header {
-    @apply flex items-center justify-between mb-3;
-  }
-
-  .filter-group-title {
-    @apply text-sm font-semibold text-foreground uppercase tracking-wider;
-  }
-
-  .filter-group-clear {
-    @apply text-xs text-primary hover:underline cursor-pointer;
-  }
-
-  /* Operadores lógicos */
-  .filter-operator {
-    @apply inline-flex items-center gap-2 px-3 py-1.5;
-    @apply text-xs font-bold uppercase;
-    @apply bg-muted border border-border rounded-md;
-    @apply transition-all duration-150;
-  }
-
-  .filter-operator-and {
-    @apply bg-blue-50 text-blue-700 border-blue-200;
-    @apply dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800;
-  }
-
-  .filter-operator-or {
-    @apply bg-purple-50 text-purple-700 border-purple-200;
-    @apply dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800;
-  }
-
-  .filter-operator-not {
-    @apply bg-red-50 text-red-700 border-red-200;
-    @apply dark:bg-red-950/50 dark:text-red-300 dark:border-red-800;
-  }
-
-  /* Filtro individual */
-  .filter-item {
-    @apply flex items-center gap-3 p-3;
-    @apply bg-background border border-border rounded-lg;
-    @apply transition-all duration-150;
-  }
-
-  .filter-item-active {
-    @apply border-primary bg-primary/5;
-  }
-
-  /* Badge de contagem */
-  .filter-count-badge {
-    @apply inline-flex items-center justify-center;
-    @apply min-w-[24px] h-6 px-2;
-    @apply text-xs font-bold;
-    @apply bg-primary text-primary-foreground rounded-full;
-  }
-
-  /* Filtros salvos */
-  .saved-filters {
-    @apply space-y-2;
-  }
-
-  .saved-filter-item {
-    @apply flex items-center justify-between p-3;
-    @apply bg-background border border-border rounded-lg;
-    @apply hover:border-primary/50 hover:bg-primary/5;
-    @apply cursor-pointer transition-all duration-150;
-  }
-
-  .saved-filter-name {
-    @apply text-sm font-medium text-foreground;
-  }
-
-  .saved-filter-meta {
-    @apply text-xs text-muted-foreground;
-  }
-
-  /* Botão de aplicar filtros */
-  .apply-filters-button {
-    @apply w-full py-3 px-4;
-    @apply bg-primary text-primary-foreground;
-    @apply rounded-lg font-semibold;
-    @apply hover:bg-primary/90;
-    @apply transition-all duration-150;
-    @apply shadow-md hover:shadow-lg;
-  }
-
-  /* Indicador de filtros ativos */
-  .active-filters-indicator {
-    @apply inline-flex items-center gap-2 px-3 py-1.5;
-    @apply bg-primary/10 text-primary border border-primary/30 rounded-full;
-    @apply text-xs font-semibold;
-  }
-
-  /* Tags de filtro aplicado */
-  .filter-tag {
-    @apply inline-flex items-center gap-2 px-3 py-1.5;
-    @apply bg-muted text-foreground border border-border rounded-lg;
-    @apply text-sm transition-all duration-150;
-  }
-
-  .filter-tag-remove {
-    @apply w-4 h-4 rounded-full;
-    @apply flex items-center justify-center;
-    @apply hover:bg-destructive hover:text-destructive-foreground;
-    @apply cursor-pointer transition-colors duration-150;
-  }
-
-  /* ==========================================
-     LAZY LOADING E PERFORMANCE
-     Otimização de carregamento
-     ========================================== */
-  
-  /* Placeholder de imagem com blur-up */
-  .image-placeholder {
-    @apply relative overflow-hidden bg-muted;
-    @apply animate-pulse;
-  }
-
-  .image-placeholder::before {
-    content: '';
-    @apply absolute inset-0;
-    @apply bg-gradient-to-br from-muted to-muted-foreground/10;
-  }
-
-  /* Imagem com lazy loading */
-  .lazy-image {
-    @apply opacity-0 transition-opacity duration-500;
-  }
-
-  .lazy-image-loaded {
-    @apply opacity-100;
-  }
-
-  /* Blur-up effect */
-  .blur-up {
-    @apply filter blur-xl scale-110;
-    @apply transition-all duration-500;
-  }
-
-  .blur-up-loaded {
-    @apply filter-none scale-100;
-  }
-
-  /* Skeleton screens */
-  .skeleton-screen {
-    @apply space-y-4;
-  }
-
-  .skeleton-header {
-    @apply h-8 w-3/4 bg-muted rounded animate-pulse;
-  }
-
-  .skeleton-text {
-    @apply h-4 bg-muted rounded animate-pulse;
-  }
-
-  .skeleton-text-short {
-    @apply w-2/3;
-  }
-
-  .skeleton-text-long {
-    @apply w-full;
-  }
-
-  .skeleton-card {
-    @apply rounded-xl border border-border bg-card p-6;
-    @apply space-y-4;
-  }
-
-  .skeleton-avatar {
-    @apply w-12 h-12 rounded-full bg-muted animate-pulse;
-  }
-
-  .skeleton-button {
-    @apply h-10 w-24 bg-muted rounded-lg animate-pulse;
-  }
-
-  /* Stagger animation para skeletons */
-  .skeleton-stagger > * {
-    animation: skeleton-pulse 1.5s ease-in-out infinite;
-  }
-
-  .skeleton-stagger > *:nth-child(1) {
-    animation-delay: 0s;
-  }
-
-  .skeleton-stagger > *:nth-child(2) {
-    animation-delay: 0.1s;
-  }
-
-  .skeleton-stagger > *:nth-child(3) {
-    animation-delay: 0.2s;
-  }
-
-  .skeleton-stagger > *:nth-child(4) {
-    animation-delay: 0.3s;
-  }
-
-  @keyframes skeleton-pulse {
+  /* Bounce Soft */
+  @keyframes bounce-soft {
     0%, 100% {
-      opacity: 1;
+      transform: translateY(0);
     }
     50% {
-      opacity: 0.5;
+      transform: translateY(-10px);
     }
   }
 
-  /* ==========================================
-     VIRTUALIZAÇÃO DE LISTAS
-     Renderização otimizada
-     ========================================== */
-  
-  /* Container de lista virtualizada */
-  .virtual-list {
-    @apply relative overflow-auto;
-    @apply will-change-scroll;
+  .animate-bounce-soft {
+    animation: bounce-soft 1s ease-in-out infinite;
   }
 
-  /* Viewport da lista */
-  .virtual-list-viewport {
-    @apply relative;
+  /* ===== HOVER EFFECTS ===== */
+  .hover-lift {
+    @apply transition-transform duration-300 ease-out;
   }
 
-  /* Item virtualizado */
-  .virtual-list-item {
-    @apply absolute left-0 right-0;
-    @apply will-change-transform;
+  .hover-lift:hover {
+    transform: translateY(-2px);
   }
 
-  /* Spacer para altura total */
-  .virtual-list-spacer {
-    @apply pointer-events-none;
+  .hover-glow {
+    @apply transition-shadow duration-300 ease-out;
   }
 
-  /* Scroll suave */
-  .smooth-scroll {
-    scroll-behavior: smooth;
+  .hover-glow:hover {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
   }
 
-  /* Scroll snap */
-  .scroll-snap-y {
-    scroll-snap-type: y mandatory;
+  .btn-press:active {
+    transform: scale(0.96);
   }
 
-  .scroll-snap-x {
-    scroll-snap-type: x mandatory;
+  /* ===== GLASS MORPHISM ===== */
+  .glass {
+    @apply bg-background/80 backdrop-blur-md border border-border/50;
   }
 
-  .scroll-snap-item {
-    scroll-snap-align: start;
+  /* ===== GRADIENT TEXT ===== */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
   }
 
-  /* ==========================================
-     OTIMIZAÇÕES DE PERFORMANCE
-     Will-change e GPU acceleration
-     ========================================== */
-  
-  /* Aceleração GPU para animações */
-  .gpu-accelerated {
-    @apply will-change-transform;
-    transform: translateZ(0);
-    backface-visibility: hidden;
+  /* ===== SCROLLBAR ===== */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
 
-  /* Otimização de scroll */
-  .optimized-scroll {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-muted rounded-full;
   }
 
-  /* Contenção de layout */
-  .contain-layout {
-    contain: layout;
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
   }
 
-  .contain-paint {
-    contain: paint;
+  /* ===== FOCUS VISIBLE ===== */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 
-  .contain-strict {
-    contain: strict;
+  /* ===== TRUNCATE ===== */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
-  /* Lazy rendering */
-  .lazy-render {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 500px;
+  .truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-
-  /* ==========================================
-     PROGRESSIVE ENHANCEMENT
-     Melhorias progressivas
-     ========================================== */
-  
-  /* Suporte a reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-
-    .scroll-snap-y,
-    .scroll-snap-x {
-      scroll-behavior: auto;
-    }
-  }
-
-  /* Suporte a high contrast */
-  @media (prefers-contrast: high) {
-    * {
-      border-width: 2px;
-    }
-
-    .card-elevated,
-    .panel,
-    .stat-card {
-      border-width: 3px;
-    }
-  }
-
-  /* Suporte a dark mode */
-  @media (prefers-color-scheme: dark) {
-    :root:not(.light) {
-      color-scheme: dark;
-    }
-  }
-
-  /* Print styles */
-  @media print {
-    .no-print {
-      display: none !important;
-    }
-
-    .card-elevated,
-    .panel {
-      box-shadow: none;
-      border: 1px solid #000;
-    }
-
-    a[href]::after {
-      content: " (" attr(href) ")";
-    }
-  }
-
-  /* ==========================================
-     LOGO INTELEX - Integração Premium
-     Sidebar e Header com design profissional
-     ========================================== */
-  
-  /* Logo na sidebar - Ícone compacto */
-  .sidebar-logo {
-    @apply flex items-center gap-3 px-4 py-4;
-    @apply border-b border-sidebar-border;
-    @apply transition-all duration-300;
-  }
-
-  .sidebar-logo-icon {
-    @apply w-10 h-10 flex-shrink-0;
-    @apply rounded-lg;
-    @apply transition-all duration-300;
-  }
-
-  .sidebar-logo-icon img {
-    @apply w-full h-full object-contain;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  }
-
-  .sidebar-logo-text {
-    @apply flex flex-col;
-    @apply transition-all duration-300;
-  }
-
-  .sidebar-logo-title {
-    @apply text-base font-bold text-sidebar-foreground;
-    @apply tracking-tight;
-    letter-spacing: -0.02em;
-  }
-
-  .sidebar-logo-subtitle {
-    @apply text-xs text-sidebar-foreground/60;
-    @apply font-medium uppercase tracking-wider;
-  }
-
-  /* Sidebar colapsada - Apenas ícone */
-  .sidebar-collapsed .sidebar-logo {
-    @apply justify-center px-2;
-  }
-
-  .sidebar-collapsed .sidebar-logo-icon {
-    @apply w-8 h-8;
-  }
-
-  .sidebar-collapsed .sidebar-logo-text {
-    @apply hidden;
-  }
-
-  /* Logo no header - Versão completa */
-  .header-logo {
-    @apply flex items-center gap-4;
-    @apply transition-all duration-300;
-  }
-
-  .header-logo-icon {
-    @apply w-12 h-12;
-    @apply rounded-xl;
-    @apply bg-gradient-to-br from-primary/10 to-primary/5;
-    @apply p-2;
-    @apply transition-all duration-300;
-  }
-
-  .header-logo-icon img {
-    @apply w-full h-full object-contain;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-  }
-
-  .header-logo-icon:hover {
-    @apply scale-105;
-    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
-  }
-
-  .header-logo-text {
-    @apply flex flex-col;
-  }
-
-  .header-logo-title {
-    @apply text-2xl font-bold text-foreground;
-    @apply tracking-tight;
-    letter-spacing: -0.03em;
-  }
-
-  .header-logo-subtitle {
-    @apply text-sm text-muted-foreground;
-    @apply font-semibold uppercase tracking-wider;
-    letter-spacing: 0.1em;
-  }
-
-  /* Logo centralizada - Landing page */
-  .logo-centered {
-    @apply flex flex-col items-center gap-4;
-    @apply text-center;
-  }
-
-  .logo-centered-icon {
-    @apply w-24 h-24 md:w-32 md:h-32;
-    @apply rounded-2xl;
-    @apply bg-gradient-to-br from-primary/10 to-primary/5;
-    @apply p-4;
-    @apply shadow-lg;
-    @apply transition-all duration-300;
-  }
-
-  .logo-centered-icon img {
-    @apply w-full h-full object-contain;
-    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.1));
-  }
-
-  .logo-centered-icon:hover {
-    @apply scale-105 shadow-xl;
-    transform: translateY(-4px);
-  }
-
-  .logo-centered-text {
-    @apply flex flex-col gap-2;
-  }
-
-  .logo-centered-title {
-    @apply text-4xl md:text-5xl font-bold text-foreground;
-    @apply tracking-tight;
-    letter-spacing: -0.04em;
-  }
-
-  .logo-centered-subtitle {
-    @apply text-base md:text-lg text-muted-foreground;
-    @apply font-semibold uppercase tracking-wider;
-    letter-spacing: 0.15em;
-  }
-
-  /* Logo mobile - Compacta */
-  .mobile-logo {
-    @apply flex items-center gap-2;
-  }
-
-  .mobile-logo-icon {
-    @apply w-8 h-8;
-    @apply rounded-lg;
-  }
-
-  .mobile-logo-icon img {
-    @apply w-full h-full object-contain;
-  }
-
-  .mobile-logo-text {
-    @apply text-lg font-bold text-foreground;
-    @apply tracking-tight;
-  }
-
-  /* Favicon e meta tags */
-  .logo-favicon {
-    @apply w-16 h-16;
-    @apply rounded-lg;
-    @apply bg-primary;
-    @apply p-2;
-  }
-
-  /* Loading spinner com logo */
-  .logo-loading {
-    @apply w-16 h-16;
-    @apply animate-pulse;
-  }
-
-  .logo-loading img {
-    @apply w-full h-full object-contain;
-    animation: logo-pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes logo-pulse {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.7;
-      transform: scale(0.95);
-    }
-  }
-
-  /* Watermark sutil */
-  .logo-watermark {
-    @apply fixed bottom-4 right-4;
-    @apply w-12 h-12 opacity-20;
-    @apply pointer-events-none;
-    @apply transition-opacity duration-300;
-  }
-
-  .logo-watermark:hover {
-    @apply opacity-30;
-  }
-
-  /* Dark mode adjustments */
-  .dark .sidebar-logo-icon img,
-  .dark .header-logo-icon img,
-  .dark .logo-centered-icon img {
-    filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.1));
-  }
-
-  /* High contrast mode */
-  .high-contrast .sidebar-logo,
-  .high-contrast .header-logo {
-    @apply border-2 border-foreground/20;
-  }
-
-  .high-contrast .sidebar-logo-icon,
-  .high-contrast .header-logo-icon {
-    @apply bg-foreground/10;
-  }
+}
