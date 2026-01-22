@@ -3,22 +3,24 @@
 @tailwind utilities;
 
 /* ========================================
-   INTELEX - DESIGN SYSTEM v7.0
+   DEFENDER - DESIGN SYSTEM v8.0 MANUS
    Swiss Design • Institucional • Inteligente
    Visual limpo, profissional, funcional
-   CACHE BUST: 2026-01-21-INTELEX
+   Aprimoramentos: Tipografia precisa, espaçamentos perfeitos,
+   paleta robusta verde/preta/cinza/branca
+   CACHE BUST: 2026-01-21-MANUS
    ======================================== */
 
 @layer base {
   :root {
-    /* BASE: Fundo off-white estilo Linear - Não cansa a vista */
+    /* BASE: Fundo off-white premium - Não cansa a vista */
     font-size: 16px;
     
-    --background: 0 0% 99%; /* Off-white suave (#FCFCFC) */
-    --foreground: 240 8% 12%; /* Preto desaturado */
+    --background: 0 0% 98%; /* Off-white mais definido (#FAFAFA) */
+    --foreground: 240 10% 10%; /* Preto mais preciso e robusto */
 
-    /* PRIMÁRIA: Verde Esmeralda Desaturado - Profissional */
-    --primary: 162 48% 32%; /* Verde desaturado, maduro */
+    /* PRIMÁRIA: Verde Esmeralda Profissional - Mais robusto */
+    --primary: 162 52% 30%; /* Verde mais saturado e maduro */
     --primary-foreground: 0 0% 100%;
 
     /* CARDS & SURFACES - Elevação sutil estilo Linear */
@@ -47,17 +49,17 @@
     --info: 210 80% 50%; /* Azul desaturado */
     --info-foreground: 0 0% 100%;
 
-    /* BORDAS & INPUTS - Ultra sutis estilo Linear */
-    --border: 240 6% 92%; /* Bordas quase invisíveis */
-    --input: 240 6% 92%;
-    --ring: 162 48% 32%;
+    /* BORDAS & INPUTS - Mais definidas e precisas */
+    --border: 240 8% 90%; /* Bordas sutis mas visíveis */
+    --input: 240 8% 90%;
+    --ring: 162 52% 30%;
 
-    --radius: 0.5rem; /* 8px - Mais preciso estilo Linear */
+    --radius: 0.5rem; /* 8px - Raio preciso e consistente */
 
-    /* SIDEBAR - Integrada ao fundo estilo Linear */
-    --sidebar-background: 0 0% 99%; /* Mesmo tom do fundo */
-    --sidebar-foreground: 240 8% 12%;
-    --sidebar-primary: 162 48% 32%;
+    /* SIDEBAR - Integrada com contraste sutil */
+    --sidebar-background: 0 0% 97%; /* Levemente diferenciada */
+    --sidebar-foreground: 240 10% 10%;
+    --sidebar-primary: 162 52% 30%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 5% 96%; /* Hover sutil */
     --sidebar-accent-foreground: 240 8% 12%;
@@ -153,64 +155,69 @@
   
   /* H1 - Títulos de Página (DESTAQUE MÁXIMO) */
   h1 { 
-    @apply text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-3;
-    letter-spacing: -0.03em;
-    line-height: 1.15;
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4;
+    letter-spacing: -0.032em;
+    line-height: 1.1;
     font-weight: 700;
   }
   
   /* H2 - Seções Principais (DESTAQUE FORTE) */
   h2 { 
-    @apply text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-foreground mb-3;
-    letter-spacing: -0.025em;
-    line-height: 1.2;
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-foreground mb-3;
+    letter-spacing: -0.028em;
+    line-height: 1.15;
     font-weight: 700;
   }
   
   /* H3 - Subseções (DESTAQUE MÉDIO) */
   h3 { 
-    @apply text-lg md:text-xl lg:text-2xl font-semibold text-foreground mb-2;
-    letter-spacing: -0.02em;
-    line-height: 1.25;
+    @apply text-xl md:text-2xl lg:text-3xl font-semibold text-foreground mb-3;
+    letter-spacing: -0.024em;
+    line-height: 1.2;
     font-weight: 600;
   }
   
   /* H4 - Títulos de Cards (DESTAQUE LEVE) */
   h4 { 
-    @apply text-base md:text-lg font-semibold text-foreground mb-2;
-    letter-spacing: -0.015em;
-    line-height: 1.3;
+    @apply text-lg md:text-xl font-semibold text-foreground mb-2;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
     font-weight: 600;
   }
   
   /* H5 - Sub-títulos */
   h5 { 
-    @apply text-base md:text-lg lg:text-xl font-medium text-foreground mb-2;
-    line-height: 1.35;
+    @apply text-base md:text-lg font-medium text-foreground mb-2;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
     font-weight: 500;
   }
   
   /* H6 - Labels de seção */
   h6 { 
-    @apply text-sm md:text-base lg:text-lg font-medium text-muted-foreground mb-1;
+    @apply text-sm md:text-base font-medium text-muted-foreground mb-2;
+    letter-spacing: 0em;
     line-height: 1.4;
     font-weight: 500;
   }
   
   /* Parágrafo - Texto corpo */
   p { 
-    @apply text-base md:text-lg leading-relaxed text-foreground;
-    line-height: 1.7;
+    @apply text-base leading-relaxed text-foreground;
+    line-height: 1.65;
+    letter-spacing: -0.005em;
   }
 
   /* Label - Formulários e descrições */
   label { 
-    @apply text-sm md:text-base font-medium text-muted-foreground;
+    @apply text-sm font-medium text-muted-foreground;
+    letter-spacing: 0em;
   }
 
   /* Small - Texto auxiliar */
   small { 
-    @apply text-sm md:text-base text-muted-foreground;
+    @apply text-xs text-muted-foreground;
+    letter-spacing: 0em;
   }
 
   /* Ajustes para modo fonte grande */
@@ -247,18 +254,18 @@
 @layer components {
   /* PAGE HEADER - Com fundo para destaque */
   .page-header {
-    @apply pb-5 mb-5 border-b-2 border-border/70;
+    @apply pb-6 mb-6 border-b-2 border-border/70;
     @apply bg-gradient-to-r from-muted/30 to-transparent;
-    @apply -mx-6 px-6 pt-5 rounded-t-xl;
+    @apply -mx-6 px-6 pt-6 rounded-t-xl;
   }
   .page-title {
     @apply text-3xl md:text-4xl font-bold text-foreground tracking-tight;
-    letter-spacing: -0.03em;
-    line-height: 1.15;
+    letter-spacing: -0.032em;
+    line-height: 1.1;
   }
   .page-description {
-    @apply text-base md:text-lg text-muted-foreground mt-2 max-w-3xl;
-    line-height: 1.6;
+    @apply text-base text-muted-foreground mt-3 max-w-3xl;
+    line-height: 1.65;
   }
 
   /* SECTION - Com fundo para organização */
@@ -266,12 +273,12 @@
     @apply mb-8;
   }
   .section-header {
-    @apply flex items-center justify-between mb-4 pb-3 border-b-2 border-border/50;
-    @apply bg-muted/20 -mx-4 px-4 py-3 rounded-t-lg;
+    @apply flex items-center justify-between mb-5 pb-4 border-b-2 border-border/50;
+    @apply bg-muted/20 -mx-4 px-4 py-4 rounded-t-lg;
   }
   .section-title {
-    @apply text-lg md:text-xl font-bold text-foreground flex items-center gap-3;
-    letter-spacing: -0.02em;
+    @apply text-xl md:text-2xl font-bold text-foreground flex items-center gap-3;
+    letter-spacing: -0.024em;
   }
   .section-subtitle {
     @apply text-xs uppercase tracking-wider text-muted-foreground font-semibold;
@@ -279,37 +286,37 @@
 
   /* CARDS - With refined elevation */
   .card-elevated {
-    @apply rounded-xl border border-border/50 bg-card text-card-foreground transition-all duration-200;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    @apply rounded-xl border border-border/60 bg-card text-card-foreground transition-all duration-200;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
   .card-elevated:hover {
     @apply border-border;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   }
 
   .card-raised {
-    @apply rounded-xl border border-border/40 bg-card text-card-foreground;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    @apply rounded-xl border border-border/50 bg-card text-card-foreground;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   }
 
   .card-inset {
-    @apply rounded-lg bg-muted/30 border border-border/20 p-5;
+    @apply rounded-lg bg-muted/30 border border-border/30 p-6;
   }
 
   /* PANELS - For grouping related content */
   .panel {
-    @apply rounded-xl border border-border/50 bg-card p-6;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.02);
+    @apply rounded-xl border border-border/60 bg-card p-6;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04);
   }
   .panel-header {
-    @apply flex items-center justify-between pb-4 mb-5 border-b border-border/40;
+    @apply flex items-center justify-between pb-4 mb-6 border-b border-border/50;
   }
   .panel-title {
-    @apply text-base md:text-lg font-semibold text-foreground;
-    letter-spacing: -0.01em;
+    @apply text-lg md:text-xl font-semibold text-foreground;
+    letter-spacing: -0.02em;
   }
   .panel-content {
-    @apply space-y-4;
+    @apply space-y-5;
   }
 
   /* DATA DISPLAY */
@@ -323,17 +330,19 @@
     @apply text-sm font-medium text-foreground;
   }
 
-  /* STAT CARDS - Equilibrado */
+  /* STAT CARDS - Equilibrado e preciso */
   .stat-card {
-    @apply rounded-xl border border-border/60 bg-card p-5;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    @apply rounded-xl border border-border/60 bg-card p-6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
   .stat-value {
-    @apply text-3xl md:text-4xl font-bold text-foreground tracking-tight;
-    letter-spacing: -0.02em;
+    @apply text-4xl md:text-5xl font-bold text-foreground tracking-tight;
+    letter-spacing: -0.03em;
+    line-height: 1;
   }
   .stat-label {
-    @apply text-sm md:text-base text-muted-foreground mt-1;
+    @apply text-sm text-muted-foreground mt-2;
+    letter-spacing: 0em;
   }
 
   /* ==========================================
@@ -341,40 +350,41 @@
      Apenas cores FUNCIONAIS
      ========================================== */
   
-  /* Badge base - Tamanho ampliado */
+  /* Badge base - Tamanho otimizado e preciso */
   .badge {
-    @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5;
-    @apply text-sm md:text-base font-semibold;
+    @apply inline-flex items-center gap-2 rounded-lg px-3 py-1.5;
+    @apply text-sm font-semibold;
     @apply transition-all duration-200;
+    letter-spacing: -0.01em;
   }
   
-  /* Badge Status - Vermelho (Urgente/Preso) */
+  /* Badge Status - Vermelho (Urgente/Preso) - Mais robusto */
   .badge-danger {
-    @apply bg-red-50 text-red-700 border-2 border-red-200 
-           dark:bg-red-950/50 dark:text-red-300 dark:border-red-800;
+    @apply bg-red-50 text-red-800 border border-red-300 
+           dark:bg-red-950/60 dark:text-red-300 dark:border-red-800;
   }
   
-  /* Badge Status - Laranja (Ação) */
+  /* Badge Status - Laranja (Ação) - Mais robusto */
   .badge-warning {
-    @apply bg-orange-50 text-orange-700 border-2 border-orange-200
-           dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800;
+    @apply bg-orange-50 text-orange-800 border border-orange-300
+           dark:bg-orange-950/60 dark:text-orange-300 dark:border-orange-800;
   }
   
-  /* Badge Status - Verde (Concluído) */
+  /* Badge Status - Verde (Concluído) - Mais robusto */
   .badge-success {
-    @apply bg-emerald-50 text-emerald-700 border-2 border-emerald-200
-           dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800;
+    @apply bg-emerald-50 text-emerald-800 border border-emerald-300
+           dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800;
   }
   
-  /* Badge Status - Azul (Informação) */
+  /* Badge Status - Azul (Informação) - Mais robusto */
   .badge-info {
-    @apply bg-blue-50 text-blue-700 border-2 border-blue-200
-           dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800;
+    @apply bg-blue-50 text-blue-800 border border-blue-300
+           dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800;
   }
   
-  /* Badge Status - Cinza (Neutro) */
+  /* Badge Status - Cinza (Neutro) - Mais robusto */
   .badge-neutral {
-    @apply bg-zinc-100 text-zinc-700 border-2 border-zinc-200
+    @apply bg-zinc-100 text-zinc-800 border border-zinc-300
            dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700;
   }
 
