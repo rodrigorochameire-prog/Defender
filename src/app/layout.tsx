@@ -27,13 +27,58 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Intelex | Advocacia Estratégica",
-    template: "%s | Intelex"
+    default: "INTELEX | Defesa Inteligente",
+    template: "%s | INTELEX"
   },
-  description: "Sistema de gestão jurídica de alta performance.",
+  description: "Sistema de gestão jurídica criminal de alta performance com inteligência artificial. Gerencie processos, prazos, casos e demandas com eficiência profissional.",
+  keywords: ["gestão jurídica", "advocacia criminal", "defesa inteligente", "processos criminais", "prazos processuais", "gestão de casos"],
+  authors: [{ name: "INTELEX" }],
+  creator: "INTELEX",
+  publisher: "INTELEX",
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/logo-intelex.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/logo-intelex.png", sizes: "180x180", type: "image/png" },
+    ],
   },
+  manifest: "/manifest.json",
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    title: "INTELEX | Defesa Inteligente",
+    description: "Sistema de gestão jurídica criminal de alta performance",
+    siteName: "INTELEX",
+    images: [
+      {
+        url: "/logo-intelex.png",
+        width: 1200,
+        height: 630,
+        alt: "INTELEX - Defesa Inteligente",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "INTELEX | Defesa Inteligente",
+    description: "Sistema de gestão jurídica criminal de alta performance",
+    images: ["/logo-intelex.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+  },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 const themeScript = `
