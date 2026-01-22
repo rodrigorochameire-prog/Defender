@@ -284,14 +284,15 @@
     @apply text-xs uppercase tracking-wider text-muted-foreground font-semibold;
   }
 
-  /* CARDS - With refined elevation */
+  /* CARDS - With refined elevation and smooth animations */
   .card-elevated {
-    @apply rounded-xl border border-border/60 bg-card text-card-foreground transition-all duration-200;
+    @apply rounded-xl border border-border/60 bg-card text-card-foreground transition-all duration-300 ease-out;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
   .card-elevated:hover {
     @apply border-border;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
   }
 
   .card-raised {
@@ -350,12 +351,15 @@
      Apenas cores FUNCIONAIS
      ========================================== */
   
-  /* Badge base - Tamanho otimizado e preciso */
+  /* Badge base - Tamanho otimizado e preciso com animação */
   .badge {
     @apply inline-flex items-center gap-2 rounded-lg px-3 py-1.5;
     @apply text-sm font-semibold;
-    @apply transition-all duration-200;
+    @apply transition-all duration-200 ease-out;
     letter-spacing: -0.01em;
+  }
+  .badge:hover {
+    transform: scale(1.05);
   }
   
   /* Badge Status - Vermelho (Urgente/Preso) - Mais robusto */
@@ -402,14 +406,14 @@
     @apply text-sm text-muted-foreground max-w-sm;
   }
 
-  /* INTERACTIVE STATES */
+  /* INTERACTIVE STATES - Com animações sutis */
   .interactive {
-    @apply cursor-pointer transition-all duration-200;
-    @apply hover:bg-muted/50 active:bg-muted;
+    @apply cursor-pointer transition-all duration-200 ease-out;
+    @apply hover:bg-muted/50 active:bg-muted active:scale-[0.98];
   }
   .interactive-card {
-    @apply cursor-pointer transition-all duration-200;
-    @apply hover:shadow-md hover:border-primary/30;
+    @apply cursor-pointer transition-all duration-300 ease-out;
+    @apply hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5;
   }
 
   /* LOADING STATES */
@@ -602,7 +606,7 @@
     @apply hover:bg-zinc-400 dark:hover:bg-zinc-500;
   }
 
-  /* Animação suave para expansão de linhas */
+  /* Animações suaves para expansão e entrada */
   @keyframes expand-row {
     from {
       opacity: 0;
@@ -614,8 +618,66 @@
     }
   }
 
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slide-in-left {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   .row-expand-animation {
     animation: expand-row 0.2s ease-out;
+  }
+
+  .fade-in-animation {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  .slide-in-right-animation {
+    animation: slide-in-right 0.3s ease-out;
+  }
+
+  .slide-in-left-animation {
+    animation: slide-in-left 0.3s ease-out;
+  }
+
+  .scale-in-animation {
+    animation: scale-in 0.25s ease-out;
   }
 
   /* ==========================================
@@ -629,9 +691,12 @@
   
   .tab-button {
     @apply relative px-4 py-2.5 text-sm md:text-base font-semibold;
-    @apply transition-all duration-200;
+    @apply transition-all duration-200 ease-out;
     @apply text-muted-foreground hover:text-foreground;
     @apply border-b-2 border-transparent;
+  }
+  .tab-button:hover {
+    transform: translateY(-1px);
   }
   
   .tab-button-active {
@@ -659,10 +724,17 @@
   .filter-chip {
     @apply inline-flex items-center gap-2 px-3 py-2;
     @apply text-sm font-medium rounded-lg;
-    @apply transition-all duration-200;
+    @apply transition-all duration-200 ease-out;
     @apply border border-border/40 bg-background;
     @apply hover:border-primary/50 hover:bg-primary/5;
     @apply cursor-pointer;
+  }
+  .filter-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+  .filter-chip:active {
+    transform: scale(0.97);
   }
   
   .filter-chip-active {
@@ -688,8 +760,11 @@
   .stat-block {
     @apply rounded-xl border-2 border-border/60 bg-card;
     @apply p-6 space-y-3;
-    @apply transition-all duration-200;
+    @apply transition-all duration-300 ease-out;
     @apply hover:shadow-lg hover:border-border;
+  }
+  .stat-block:hover {
+    transform: translateY(-3px);
   }
   
   .stat-block-value {
@@ -746,3 +821,97 @@
     @apply w-7 h-7 md:w-8 md:h-8 text-primary;
   }
 }
+
+  /* ==========================================
+     MICRO-INTERAÇÕES - Feedback visual sutil
+     ========================================== */
+  
+  /* Botões com feedback tátil */
+  .btn-press {
+    @apply transition-transform duration-100 ease-out;
+  }
+  .btn-press:active {
+    transform: scale(0.96);
+  }
+
+  /* Hover suave com elevação */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Hover com brilho sutil */
+  .hover-glow {
+    @apply transition-all duration-300 ease-out;
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 20px rgba(var(--primary), 0.15);
+  }
+
+  /* Pulsação suave para notificações */
+  @keyframes pulse-soft {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+  }
+  
+  .pulse-soft-animation {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+
+  /* Shimmer para loading states */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .shimmer-animation {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Bounce suave para elementos de atenção */
+  @keyframes bounce-soft {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  .bounce-soft-animation {
+    animation: bounce-soft 1s ease-in-out infinite;
+  }
+
+  /* Rotação suave para ícones de loading */
+  @keyframes spin-smooth {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .spin-smooth-animation {
+    animation: spin-smooth 1s linear infinite;
+  }
