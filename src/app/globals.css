@@ -1991,3 +1991,215 @@
       content: " (" attr(href) ")";
     }
   }
+
+  /* ==========================================
+     LOGO INTELEX - Integração Premium
+     Sidebar e Header com design profissional
+     ========================================== */
+  
+  /* Logo na sidebar - Ícone compacto */
+  .sidebar-logo {
+    @apply flex items-center gap-3 px-4 py-4;
+    @apply border-b border-sidebar-border;
+    @apply transition-all duration-300;
+  }
+
+  .sidebar-logo-icon {
+    @apply w-10 h-10 flex-shrink-0;
+    @apply rounded-lg;
+    @apply transition-all duration-300;
+  }
+
+  .sidebar-logo-icon img {
+    @apply w-full h-full object-contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  }
+
+  .sidebar-logo-text {
+    @apply flex flex-col;
+    @apply transition-all duration-300;
+  }
+
+  .sidebar-logo-title {
+    @apply text-base font-bold text-sidebar-foreground;
+    @apply tracking-tight;
+    letter-spacing: -0.02em;
+  }
+
+  .sidebar-logo-subtitle {
+    @apply text-xs text-sidebar-foreground/60;
+    @apply font-medium uppercase tracking-wider;
+  }
+
+  /* Sidebar colapsada - Apenas ícone */
+  .sidebar-collapsed .sidebar-logo {
+    @apply justify-center px-2;
+  }
+
+  .sidebar-collapsed .sidebar-logo-icon {
+    @apply w-8 h-8;
+  }
+
+  .sidebar-collapsed .sidebar-logo-text {
+    @apply hidden;
+  }
+
+  /* Logo no header - Versão completa */
+  .header-logo {
+    @apply flex items-center gap-4;
+    @apply transition-all duration-300;
+  }
+
+  .header-logo-icon {
+    @apply w-12 h-12;
+    @apply rounded-xl;
+    @apply bg-gradient-to-br from-primary/10 to-primary/5;
+    @apply p-2;
+    @apply transition-all duration-300;
+  }
+
+  .header-logo-icon img {
+    @apply w-full h-full object-contain;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+  }
+
+  .header-logo-icon:hover {
+    @apply scale-105;
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
+  }
+
+  .header-logo-text {
+    @apply flex flex-col;
+  }
+
+  .header-logo-title {
+    @apply text-2xl font-bold text-foreground;
+    @apply tracking-tight;
+    letter-spacing: -0.03em;
+  }
+
+  .header-logo-subtitle {
+    @apply text-sm text-muted-foreground;
+    @apply font-semibold uppercase tracking-wider;
+    letter-spacing: 0.1em;
+  }
+
+  /* Logo centralizada - Landing page */
+  .logo-centered {
+    @apply flex flex-col items-center gap-4;
+    @apply text-center;
+  }
+
+  .logo-centered-icon {
+    @apply w-24 h-24 md:w-32 md:h-32;
+    @apply rounded-2xl;
+    @apply bg-gradient-to-br from-primary/10 to-primary/5;
+    @apply p-4;
+    @apply shadow-lg;
+    @apply transition-all duration-300;
+  }
+
+  .logo-centered-icon img {
+    @apply w-full h-full object-contain;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.1));
+  }
+
+  .logo-centered-icon:hover {
+    @apply scale-105 shadow-xl;
+    transform: translateY(-4px);
+  }
+
+  .logo-centered-text {
+    @apply flex flex-col gap-2;
+  }
+
+  .logo-centered-title {
+    @apply text-4xl md:text-5xl font-bold text-foreground;
+    @apply tracking-tight;
+    letter-spacing: -0.04em;
+  }
+
+  .logo-centered-subtitle {
+    @apply text-base md:text-lg text-muted-foreground;
+    @apply font-semibold uppercase tracking-wider;
+    letter-spacing: 0.15em;
+  }
+
+  /* Logo mobile - Compacta */
+  .mobile-logo {
+    @apply flex items-center gap-2;
+  }
+
+  .mobile-logo-icon {
+    @apply w-8 h-8;
+    @apply rounded-lg;
+  }
+
+  .mobile-logo-icon img {
+    @apply w-full h-full object-contain;
+  }
+
+  .mobile-logo-text {
+    @apply text-lg font-bold text-foreground;
+    @apply tracking-tight;
+  }
+
+  /* Favicon e meta tags */
+  .logo-favicon {
+    @apply w-16 h-16;
+    @apply rounded-lg;
+    @apply bg-primary;
+    @apply p-2;
+  }
+
+  /* Loading spinner com logo */
+  .logo-loading {
+    @apply w-16 h-16;
+    @apply animate-pulse;
+  }
+
+  .logo-loading img {
+    @apply w-full h-full object-contain;
+    animation: logo-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes logo-pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(0.95);
+    }
+  }
+
+  /* Watermark sutil */
+  .logo-watermark {
+    @apply fixed bottom-4 right-4;
+    @apply w-12 h-12 opacity-20;
+    @apply pointer-events-none;
+    @apply transition-opacity duration-300;
+  }
+
+  .logo-watermark:hover {
+    @apply opacity-30;
+  }
+
+  /* Dark mode adjustments */
+  .dark .sidebar-logo-icon img,
+  .dark .header-logo-icon img,
+  .dark .logo-centered-icon img {
+    filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.1));
+  }
+
+  /* High contrast mode */
+  .high-contrast .sidebar-logo,
+  .high-contrast .header-logo {
+    @apply border-2 border-foreground/20;
+  }
+
+  .high-contrast .sidebar-logo-icon,
+  .high-contrast .header-logo-icon {
+    @apply bg-foreground/10;
+  }
