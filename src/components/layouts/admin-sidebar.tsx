@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
+// Clerk removido - usando autenticação customizada
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Calendar, Bell, FileText, LogOut, PanelLeft, User,
@@ -179,7 +179,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   userEmail?: string;
 }) {
   const pathname = usePathname();
-  const { signOut } = useClerk();
+  // Logout via ação customizada
   const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { config, modules, isLoading } = useAssignment();
@@ -197,7 +197,6 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   
   async function handleLogout() { 
     await logoutAction(); 
-    await signOut({ redirectUrl: "/" }); 
   }
 
   return (

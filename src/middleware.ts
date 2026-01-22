@@ -1,37 +1,44 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-const isPublicRoute = createRouteMatcher([
+// Rotas públicas que não requerem autenticação
+const publicRoutes = [
   "/",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/auth-redirect",
   "/login",
   "/register",
-  "/api/webhooks(.*)",
-  "/api/auth(.*)",
-]);
+  "/forgot-password",
+  "/reset-password",
+  "/auth-redirect",
+  "/api/webhooks",
+  "/api/auth",
+];
 
-export default clerkMiddleware(async (auth, req) => {
-  // Permitir rotas públicas sem verificação
-  if (isPublicRoute(req)) {
+// Verifica se a rota é pública
+function isPublicRoute(pathname: string): boolean {
+  return publicRoutes.some((route) => pathname.startsWith(route));
+}
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Permitir rotas públicas
+  if (isPublicRoute(pathname)) {
     return NextResponse.next();
   }
 
-  // Proteger todas as outras rotas - verificar autenticação
-  const { userId } = await auth();
+  // Verificar se tem cookie de sessão
+  const sessionCookie = request.cookies.get("defesahub_session");
 
-  // Se não estiver autenticado, redirecionar para sign-in
-  if (!userId) {
-    const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("redirect_url", req.url);
-    return NextResponse.redirect(signInUrl);
+  // Se não estiver autenticado, redirecionar para login
+  if (!sessionCookie) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Usuário autenticado - permitir acesso
-  // A verificação de role é feita nos layouts
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
