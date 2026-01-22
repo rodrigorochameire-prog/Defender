@@ -915,3 +915,1079 @@
   .spin-smooth-animation {
     animation: spin-smooth 1s linear infinite;
   }
+
+  /* ==========================================
+     SISTEMA DE GRID RIGOROSO
+     Alinhamento vertical preciso e consistente
+     ========================================== */
+  
+  /* Grid base com 8px baseline */
+  .grid-baseline {
+    display: grid;
+    grid-auto-rows: minmax(8px, auto);
+  }
+
+  /* Container com alinhamento vertical */
+  .vertical-rhythm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* 24px - múltiplo de 8 */
+  }
+
+  .vertical-rhythm-tight {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* 16px */
+  }
+
+  .vertical-rhythm-loose {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem; /* 32px */
+  }
+
+  /* Grid de cards responsivo com alinhamento preciso */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .cards-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .cards-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Layout de duas colunas com proporção áurea */
+  .layout-golden {
+    display: grid;
+    grid-template-columns: 1.618fr 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .layout-golden {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ==========================================
+     ESTADOS DE FOCO APRIMORADOS
+     Acessibilidade e navegação por teclado
+     ========================================== */
+  
+  /* Foco padrão com ring visível */
+  *:focus {
+    outline: none;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+    transition: box-shadow 0.2s ease-out;
+  }
+
+  /* Foco em botões */
+  button:focus-visible,
+  .btn:focus-visible {
+    @apply ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  /* Foco em inputs */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    @apply ring-2 ring-primary ring-offset-0;
+    border-color: hsl(var(--primary));
+  }
+
+  /* Foco em cards interativos */
+  .interactive-card:focus-visible {
+    @apply ring-2 ring-primary ring-offset-2;
+  }
+
+  /* Foco em links */
+  a:focus-visible {
+    @apply ring-2 ring-primary ring-offset-2 ring-offset-background rounded-sm;
+  }
+
+  /* Skip to content para acessibilidade */
+  .skip-to-content {
+    @apply absolute -top-full left-0 bg-primary text-primary-foreground px-4 py-2 rounded-md;
+    @apply transition-all duration-200;
+    z-index: 9999;
+  }
+
+  .skip-to-content:focus {
+    @apply top-4 left-4;
+  }
+
+  /* Indicador de navegação por teclado */
+  .keyboard-navigation-active *:focus-visible {
+    @apply ring-2 ring-primary ring-offset-2;
+  }
+
+  /* ==========================================
+     MODO DE ALTO CONTRASTE
+     Acessibilidade visual aprimorada
+     ========================================== */
+  
+  .high-contrast {
+    /* Cores com contraste máximo */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --primary: 162 100% 25%;
+    --primary-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 10%;
+  }
+
+  .high-contrast.dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --primary: 162 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --border: 0 0% 80%;
+    --input: 0 0% 80%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 90%;
+  }
+
+  /* Bordas mais fortes em modo alto contraste */
+  .high-contrast .card-elevated,
+  .high-contrast .panel,
+  .high-contrast .stat-card {
+    border-width: 2px;
+    border-color: hsl(var(--border));
+  }
+
+  /* Texto mais forte */
+  .high-contrast h1,
+  .high-contrast h2,
+  .high-contrast h3,
+  .high-contrast h4 {
+    font-weight: 800;
+  }
+
+  /* ==========================================
+     VARIANTES DE DENSIDADE
+     Controle de espaçamento e informação
+     ========================================== */
+  
+  /* Densidade Compacta - Máxima informação */
+  .density-compact {
+    --spacing-unit: 0.75rem; /* 12px */
+  }
+
+  .density-compact .card-elevated,
+  .density-compact .panel {
+    @apply p-4;
+  }
+
+  .density-compact .stat-card {
+    @apply p-4;
+  }
+
+  .density-compact .section-header {
+    @apply mb-3 pb-2;
+  }
+
+  .density-compact .page-header {
+    @apply pb-4 mb-4 pt-4;
+  }
+
+  .density-compact h1 {
+    @apply text-2xl md:text-3xl mb-2;
+  }
+
+  .density-compact h2 {
+    @apply text-xl md:text-2xl mb-2;
+  }
+
+  .density-compact h3 {
+    @apply text-lg md:text-xl mb-2;
+  }
+
+  .density-compact .vertical-rhythm {
+    gap: 1rem;
+  }
+
+  /* Densidade Confortável - Padrão balanceado */
+  .density-comfortable {
+    --spacing-unit: 1rem; /* 16px */
+  }
+
+  /* Densidade Espaçosa - Máximo conforto visual */
+  .density-spacious {
+    --spacing-unit: 1.5rem; /* 24px */
+  }
+
+  .density-spacious .card-elevated,
+  .density-spacious .panel {
+    @apply p-8;
+  }
+
+  .density-spacious .stat-card {
+    @apply p-8;
+  }
+
+  .density-spacious .section-header {
+    @apply mb-6 pb-5;
+  }
+
+  .density-spacious .page-header {
+    @apply pb-8 mb-8 pt-8;
+  }
+
+  .density-spacious h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl mb-5;
+  }
+
+  .density-spacious h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl mb-4;
+  }
+
+  .density-spacious h3 {
+    @apply text-2xl md:text-3xl lg:text-4xl mb-4;
+  }
+
+  .density-spacious .vertical-rhythm {
+    gap: 2rem;
+  }
+
+  /* Tabelas com densidade variável */
+  .density-compact .table-cell-enhanced {
+    @apply py-2 px-3;
+  }
+
+  .density-spacious .table-cell-enhanced {
+    @apply py-6 px-6;
+  }
+
+  /* ==========================================
+     COMMAND PALETTE - Busca Global Inteligente
+     Estilo Spotlight/Cmd+K
+     ========================================== */
+  
+  /* Overlay do command palette */
+  .command-palette-overlay {
+    @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-50;
+    animation: fade-in 0.2s ease-out;
+  }
+
+  /* Container do command palette */
+  .command-palette {
+    @apply fixed top-[15%] left-1/2 -translate-x-1/2;
+    @apply w-full max-w-2xl;
+    @apply bg-card border-2 border-border/80 rounded-2xl shadow-2xl;
+    @apply overflow-hidden;
+    animation: scale-in 0.2s ease-out;
+    z-index: 51;
+  }
+
+  /* Input de busca */
+  .command-palette-input {
+    @apply w-full px-6 py-5 text-lg;
+    @apply bg-transparent border-0 border-b-2 border-border/50;
+    @apply focus:outline-none focus:ring-0 focus:border-primary;
+    @apply placeholder:text-muted-foreground/60;
+  }
+
+  /* Lista de resultados */
+  .command-palette-results {
+    @apply max-h-96 overflow-y-auto;
+    @apply py-2;
+  }
+
+  /* Item de resultado */
+  .command-palette-item {
+    @apply flex items-center gap-4 px-6 py-3;
+    @apply cursor-pointer transition-all duration-150;
+    @apply hover:bg-muted/50;
+  }
+
+  .command-palette-item-active {
+    @apply bg-primary/10 border-l-4 border-primary;
+  }
+
+  /* Ícone do item */
+  .command-palette-icon {
+    @apply w-10 h-10 rounded-lg;
+    @apply flex items-center justify-center;
+    @apply bg-muted text-muted-foreground;
+  }
+
+  /* Texto do item */
+  .command-palette-text {
+    @apply flex-1;
+  }
+
+  .command-palette-title {
+    @apply text-base font-semibold text-foreground;
+  }
+
+  .command-palette-subtitle {
+    @apply text-sm text-muted-foreground;
+  }
+
+  /* Badge de atalho */
+  .command-palette-shortcut {
+    @apply flex items-center gap-1;
+  }
+
+  /* Footer com dicas */
+  .command-palette-footer {
+    @apply border-t-2 border-border/50 px-6 py-3;
+    @apply flex items-center justify-between;
+    @apply text-xs text-muted-foreground;
+  }
+
+  /* ==========================================
+     ATALHOS DE TECLADO - Keyboard Shortcuts
+     Indicadores visuais e tooltips
+     ========================================== */
+  
+  /* Badge de tecla */
+  .kbd {
+    @apply inline-flex items-center justify-center;
+    @apply min-w-[24px] h-6 px-2;
+    @apply text-xs font-semibold;
+    @apply bg-muted border border-border rounded;
+    @apply shadow-sm;
+    font-family: ui-monospace, monospace;
+  }
+
+  .kbd-lg {
+    @apply min-w-[32px] h-8 px-3 text-sm;
+  }
+
+  /* Combinação de teclas */
+  .kbd-combo {
+    @apply inline-flex items-center gap-1;
+  }
+
+  /* Tooltip de atalho */
+  .shortcut-tooltip {
+    @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2;
+    @apply px-3 py-2 rounded-lg;
+    @apply bg-foreground text-background;
+    @apply text-xs font-medium whitespace-nowrap;
+    @apply opacity-0 pointer-events-none;
+    @apply transition-opacity duration-200;
+    z-index: 100;
+  }
+
+  .shortcut-tooltip::after {
+    content: '';
+    @apply absolute top-full left-1/2 -translate-x-1/2;
+    @apply border-4 border-transparent border-t-foreground;
+  }
+
+  *:hover > .shortcut-tooltip {
+    @apply opacity-100;
+  }
+
+  /* Indicador de atalho disponível */
+  .has-shortcut {
+    @apply relative;
+  }
+
+  .has-shortcut::after {
+    content: '⌘';
+    @apply absolute -top-1 -right-1;
+    @apply w-4 h-4 rounded-full;
+    @apply bg-primary text-primary-foreground;
+    @apply text-xs flex items-center justify-center;
+    @apply opacity-0 transition-opacity duration-200;
+  }
+
+  .has-shortcut:hover::after {
+    @apply opacity-100;
+  }
+
+  /* Lista de atalhos */
+  .shortcuts-list {
+    @apply space-y-2;
+  }
+
+  .shortcut-item {
+    @apply flex items-center justify-between;
+    @apply px-4 py-3 rounded-lg;
+    @apply hover:bg-muted/50 transition-colors;
+  }
+
+  .shortcut-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .shortcut-keys {
+    @apply flex items-center gap-1;
+  }
+
+  /* ==========================================
+     SISTEMA DE NOTIFICAÇÕES TOAST
+     Feedback visual não-intrusivo
+     ========================================== */
+  
+  /* Container de toasts */
+  .toast-container {
+    @apply fixed bottom-6 right-6 z-50;
+    @apply flex flex-col gap-3;
+    @apply pointer-events-none;
+  }
+
+  .toast-container-top {
+    @apply top-6 bottom-auto;
+  }
+
+  .toast-container-center {
+    @apply left-1/2 -translate-x-1/2;
+  }
+
+  /* Toast individual */
+  .toast {
+    @apply flex items-start gap-4 p-4 pr-12;
+    @apply min-w-[320px] max-w-md;
+    @apply bg-card border-2 border-border rounded-xl shadow-lg;
+    @apply pointer-events-auto;
+    animation: slide-in-right 0.3s ease-out;
+  }
+
+  .toast-exit {
+    animation: slide-out-right 0.2s ease-out forwards;
+  }
+
+  @keyframes slide-out-right {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+  }
+
+  /* Variantes de toast */
+  .toast-success {
+    @apply border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/50;
+  }
+
+  .toast-error {
+    @apply border-red-500/50 bg-red-50 dark:bg-red-950/50;
+  }
+
+  .toast-warning {
+    @apply border-orange-500/50 bg-orange-50 dark:bg-orange-950/50;
+  }
+
+  .toast-info {
+    @apply border-blue-500/50 bg-blue-50 dark:bg-blue-950/50;
+  }
+
+  /* Ícone do toast */
+  .toast-icon {
+    @apply w-6 h-6 flex-shrink-0;
+  }
+
+  .toast-success .toast-icon {
+    @apply text-emerald-600 dark:text-emerald-400;
+  }
+
+  .toast-error .toast-icon {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  .toast-warning .toast-icon {
+    @apply text-orange-600 dark:text-orange-400;
+  }
+
+  .toast-info .toast-icon {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+
+  /* Conteúdo do toast */
+  .toast-content {
+    @apply flex-1;
+  }
+
+  .toast-title {
+    @apply text-sm font-semibold text-foreground mb-1;
+  }
+
+  .toast-message {
+    @apply text-sm text-muted-foreground;
+  }
+
+  /* Botão de fechar */
+  .toast-close {
+    @apply absolute top-3 right-3;
+    @apply w-6 h-6 rounded-md;
+    @apply flex items-center justify-center;
+    @apply text-muted-foreground hover:text-foreground;
+    @apply hover:bg-muted/50;
+    @apply transition-colors duration-150;
+  }
+
+  /* Barra de progresso */
+  .toast-progress {
+    @apply absolute bottom-0 left-0 right-0 h-1;
+    @apply bg-primary/30 rounded-b-xl overflow-hidden;
+  }
+
+  .toast-progress-bar {
+    @apply h-full bg-primary;
+    animation: toast-progress-animation 5s linear forwards;
+  }
+
+  @keyframes toast-progress-animation {
+    from {
+      width: 100%;
+    }
+    to {
+      width: 0%;
+    }
+  }
+
+  /* ==========================================
+     TRANSIÇÕES DE PÁGINA
+     Navegação fluida entre rotas
+     ========================================== */
+  
+  /* Container de transição */
+  .page-transition-container {
+    @apply relative;
+  }
+
+  /* Fade transition */
+  .page-fade-enter {
+    opacity: 0;
+  }
+
+  .page-fade-enter-active {
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+  }
+
+  .page-fade-exit {
+    opacity: 1;
+  }
+
+  .page-fade-exit-active {
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+  }
+
+  /* Slide transition */
+  .page-slide-enter {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  .page-slide-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  }
+
+  .page-slide-exit {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .page-slide-exit-active {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  }
+
+  /* Scale transition */
+  .page-scale-enter {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  .page-scale-enter-active {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  }
+
+  .page-scale-exit {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .page-scale-exit-active {
+    opacity: 0;
+    transform: scale(1.02);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  }
+
+  /* Loading bar no topo */
+  .page-loading-bar {
+    @apply fixed top-0 left-0 right-0 h-1 bg-primary z-50;
+    animation: page-loading-animation 2s ease-in-out infinite;
+  }
+
+  @keyframes page-loading-animation {
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* ==========================================
+     DRAG AND DROP
+     Reorganização visual de elementos
+     ========================================== */
+  
+  /* Item arrastável */
+  .draggable {
+    @apply cursor-grab transition-all duration-200;
+  }
+
+  .draggable:active {
+    @apply cursor-grabbing;
+  }
+
+  /* Estado durante arrasto */
+  .dragging {
+    @apply opacity-50 scale-105 rotate-2;
+    @apply shadow-2xl;
+    @apply cursor-grabbing;
+    z-index: 1000;
+  }
+
+  /* Área de drop */
+  .drop-zone {
+    @apply relative;
+    @apply transition-all duration-200;
+  }
+
+  .drop-zone-active {
+    @apply bg-primary/5 border-2 border-dashed border-primary;
+    @apply ring-2 ring-primary/20;
+  }
+
+  .drop-zone-hover {
+    @apply bg-primary/10;
+  }
+
+  /* Indicador de posição de drop */
+  .drop-indicator {
+    @apply absolute left-0 right-0 h-0.5 bg-primary;
+    @apply transition-all duration-150;
+  }
+
+  .drop-indicator-top {
+    @apply top-0;
+  }
+
+  .drop-indicator-bottom {
+    @apply bottom-0;
+  }
+
+  /* Placeholder durante drag */
+  .drag-placeholder {
+    @apply border-2 border-dashed border-muted-foreground/30;
+    @apply bg-muted/20 rounded-lg;
+    @apply transition-all duration-200;
+  }
+
+  /* Handle de arrasto */
+  .drag-handle {
+    @apply cursor-grab;
+    @apply text-muted-foreground hover:text-foreground;
+    @apply transition-colors duration-150;
+  }
+
+  .drag-handle:active {
+    @apply cursor-grabbing;
+  }
+
+  /* Ghost durante drag */
+  .drag-ghost {
+    @apply opacity-80 shadow-2xl;
+    @apply bg-card border-2 border-primary;
+    @apply rotate-3 scale-105;
+  }
+
+  /* ==========================================
+     FILTROS AVANÇADOS
+     Sistema de filtragem complexo
+     ========================================== */
+  
+  /* Container de filtros avançados */
+  .advanced-filters {
+    @apply bg-muted/20 border-2 border-border/40 rounded-xl p-6;
+    @apply space-y-5;
+  }
+
+  /* Grupo de filtros */
+  .filter-group {
+    @apply space-y-3;
+  }
+
+  .filter-group-header {
+    @apply flex items-center justify-between mb-3;
+  }
+
+  .filter-group-title {
+    @apply text-sm font-semibold text-foreground uppercase tracking-wider;
+  }
+
+  .filter-group-clear {
+    @apply text-xs text-primary hover:underline cursor-pointer;
+  }
+
+  /* Operadores lógicos */
+  .filter-operator {
+    @apply inline-flex items-center gap-2 px-3 py-1.5;
+    @apply text-xs font-bold uppercase;
+    @apply bg-muted border border-border rounded-md;
+    @apply transition-all duration-150;
+  }
+
+  .filter-operator-and {
+    @apply bg-blue-50 text-blue-700 border-blue-200;
+    @apply dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800;
+  }
+
+  .filter-operator-or {
+    @apply bg-purple-50 text-purple-700 border-purple-200;
+    @apply dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800;
+  }
+
+  .filter-operator-not {
+    @apply bg-red-50 text-red-700 border-red-200;
+    @apply dark:bg-red-950/50 dark:text-red-300 dark:border-red-800;
+  }
+
+  /* Filtro individual */
+  .filter-item {
+    @apply flex items-center gap-3 p-3;
+    @apply bg-background border border-border rounded-lg;
+    @apply transition-all duration-150;
+  }
+
+  .filter-item-active {
+    @apply border-primary bg-primary/5;
+  }
+
+  /* Badge de contagem */
+  .filter-count-badge {
+    @apply inline-flex items-center justify-center;
+    @apply min-w-[24px] h-6 px-2;
+    @apply text-xs font-bold;
+    @apply bg-primary text-primary-foreground rounded-full;
+  }
+
+  /* Filtros salvos */
+  .saved-filters {
+    @apply space-y-2;
+  }
+
+  .saved-filter-item {
+    @apply flex items-center justify-between p-3;
+    @apply bg-background border border-border rounded-lg;
+    @apply hover:border-primary/50 hover:bg-primary/5;
+    @apply cursor-pointer transition-all duration-150;
+  }
+
+  .saved-filter-name {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .saved-filter-meta {
+    @apply text-xs text-muted-foreground;
+  }
+
+  /* Botão de aplicar filtros */
+  .apply-filters-button {
+    @apply w-full py-3 px-4;
+    @apply bg-primary text-primary-foreground;
+    @apply rounded-lg font-semibold;
+    @apply hover:bg-primary/90;
+    @apply transition-all duration-150;
+    @apply shadow-md hover:shadow-lg;
+  }
+
+  /* Indicador de filtros ativos */
+  .active-filters-indicator {
+    @apply inline-flex items-center gap-2 px-3 py-1.5;
+    @apply bg-primary/10 text-primary border border-primary/30 rounded-full;
+    @apply text-xs font-semibold;
+  }
+
+  /* Tags de filtro aplicado */
+  .filter-tag {
+    @apply inline-flex items-center gap-2 px-3 py-1.5;
+    @apply bg-muted text-foreground border border-border rounded-lg;
+    @apply text-sm transition-all duration-150;
+  }
+
+  .filter-tag-remove {
+    @apply w-4 h-4 rounded-full;
+    @apply flex items-center justify-center;
+    @apply hover:bg-destructive hover:text-destructive-foreground;
+    @apply cursor-pointer transition-colors duration-150;
+  }
+
+  /* ==========================================
+     LAZY LOADING E PERFORMANCE
+     Otimização de carregamento
+     ========================================== */
+  
+  /* Placeholder de imagem com blur-up */
+  .image-placeholder {
+    @apply relative overflow-hidden bg-muted;
+    @apply animate-pulse;
+  }
+
+  .image-placeholder::before {
+    content: '';
+    @apply absolute inset-0;
+    @apply bg-gradient-to-br from-muted to-muted-foreground/10;
+  }
+
+  /* Imagem com lazy loading */
+  .lazy-image {
+    @apply opacity-0 transition-opacity duration-500;
+  }
+
+  .lazy-image-loaded {
+    @apply opacity-100;
+  }
+
+  /* Blur-up effect */
+  .blur-up {
+    @apply filter blur-xl scale-110;
+    @apply transition-all duration-500;
+  }
+
+  .blur-up-loaded {
+    @apply filter-none scale-100;
+  }
+
+  /* Skeleton screens */
+  .skeleton-screen {
+    @apply space-y-4;
+  }
+
+  .skeleton-header {
+    @apply h-8 w-3/4 bg-muted rounded animate-pulse;
+  }
+
+  .skeleton-text {
+    @apply h-4 bg-muted rounded animate-pulse;
+  }
+
+  .skeleton-text-short {
+    @apply w-2/3;
+  }
+
+  .skeleton-text-long {
+    @apply w-full;
+  }
+
+  .skeleton-card {
+    @apply rounded-xl border border-border bg-card p-6;
+    @apply space-y-4;
+  }
+
+  .skeleton-avatar {
+    @apply w-12 h-12 rounded-full bg-muted animate-pulse;
+  }
+
+  .skeleton-button {
+    @apply h-10 w-24 bg-muted rounded-lg animate-pulse;
+  }
+
+  /* Stagger animation para skeletons */
+  .skeleton-stagger > * {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+
+  .skeleton-stagger > *:nth-child(1) {
+    animation-delay: 0s;
+  }
+
+  .skeleton-stagger > *:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+
+  .skeleton-stagger > *:nth-child(3) {
+    animation-delay: 0.2s;
+  }
+
+  .skeleton-stagger > *:nth-child(4) {
+    animation-delay: 0.3s;
+  }
+
+  @keyframes skeleton-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* ==========================================
+     VIRTUALIZAÇÃO DE LISTAS
+     Renderização otimizada
+     ========================================== */
+  
+  /* Container de lista virtualizada */
+  .virtual-list {
+    @apply relative overflow-auto;
+    @apply will-change-scroll;
+  }
+
+  /* Viewport da lista */
+  .virtual-list-viewport {
+    @apply relative;
+  }
+
+  /* Item virtualizado */
+  .virtual-list-item {
+    @apply absolute left-0 right-0;
+    @apply will-change-transform;
+  }
+
+  /* Spacer para altura total */
+  .virtual-list-spacer {
+    @apply pointer-events-none;
+  }
+
+  /* Scroll suave */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+
+  /* Scroll snap */
+  .scroll-snap-y {
+    scroll-snap-type: y mandatory;
+  }
+
+  .scroll-snap-x {
+    scroll-snap-type: x mandatory;
+  }
+
+  .scroll-snap-item {
+    scroll-snap-align: start;
+  }
+
+  /* ==========================================
+     OTIMIZAÇÕES DE PERFORMANCE
+     Will-change e GPU acceleration
+     ========================================== */
+  
+  /* Aceleração GPU para animações */
+  .gpu-accelerated {
+    @apply will-change-transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Otimização de scroll */
+  .optimized-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Contenção de layout */
+  .contain-layout {
+    contain: layout;
+  }
+
+  .contain-paint {
+    contain: paint;
+  }
+
+  .contain-strict {
+    contain: strict;
+  }
+
+  /* Lazy rendering */
+  .lazy-render {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+
+  /* ==========================================
+     PROGRESSIVE ENHANCEMENT
+     Melhorias progressivas
+     ========================================== */
+  
+  /* Suporte a reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+
+    .scroll-snap-y,
+    .scroll-snap-x {
+      scroll-behavior: auto;
+    }
+  }
+
+  /* Suporte a high contrast */
+  @media (prefers-contrast: high) {
+    * {
+      border-width: 2px;
+    }
+
+    .card-elevated,
+    .panel,
+    .stat-card {
+      border-width: 3px;
+    }
+  }
+
+  /* Suporte a dark mode */
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) {
+      color-scheme: dark;
+    }
+  }
+
+  /* Print styles */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+
+    .card-elevated,
+    .panel {
+      box-shadow: none;
+      border: 1px solid #000;
+    }
+
+    a[href]::after {
+      content: " (" attr(href) ")";
+    }
+  }
