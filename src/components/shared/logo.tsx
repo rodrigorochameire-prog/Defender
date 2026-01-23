@@ -14,15 +14,15 @@ interface LogoProps {
 
 /**
  * Logo INTELEX Premium
- * 
+ *
  * Componente unificado para exibição da logo em diferentes contextos.
  * Integrado com design system v9.0 MANUS
- * 
+ *
  * Variantes:
  * - full: Logo completa com texto e subtítulo
  * - icon: Apenas o ícone do escudo
  * - centered: Logo centralizada para landing pages
- * 
+ *
  * Tamanhos:
  * - sm: Pequeno (mobile, sidebar collapsed)
  * - md: Médio (sidebar expandida)
@@ -79,23 +79,15 @@ export function Logo({
 
     if (variant === "centered") {
       return (
-        <div className={cn("logo-centered", className)}>
-          <div className="logo-centered-icon">
-            <Image
-              src="/logo-shield.png"
-              alt="INTELEX - Defesa Inteligente"
-              width={iconSize}
-              height={iconSize}
-              priority
-              className="object-contain"
-            />
-          </div>
-          <div className="logo-centered-text">
-            <h1 className="logo-centered-title">INTELEX</h1>
-            {showSubtitle && (
-              <p className="logo-centered-subtitle">Defesa Inteligente</p>
-            )}
-          </div>
+        <div className={cn("logo-centered flex flex-col items-center gap-6", className)}>
+          <Image
+            src="/logo-full.png"
+            alt="INTELEX - Defesa Inteligente"
+            width={iconSize * 3}
+            height={iconSize}
+            priority
+            className="object-contain"
+          />
         </div>
       );
     }
@@ -106,7 +98,7 @@ export function Logo({
         <Image
           src="/logo-full.png"
           alt="INTELEX - Defesa Inteligente"
-          width={iconSize * 4}
+          width={iconSize * 3}
           height={iconSize}
           priority
           className="object-contain"
@@ -142,14 +134,14 @@ export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) 
   return (
     <div className={cn("sidebar-logo", collapsed && "sidebar-collapsed", className)}>
       {collapsed ? (
-        <Logo 
-          variant="icon" 
-          size="sm" 
+        <Logo
+          variant="icon"
+          size="sm"
           href="/admin/dashboard"
           showSubtitle={false}
         />
       ) : (
-        <div className="flex items-center gap-3">
+        <Link href="/admin/dashboard" className="flex items-center gap-3">
           <div className="sidebar-logo-icon">
             <Image
               src="/logo-shield.png"
@@ -164,7 +156,7 @@ export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) 
             <div className="sidebar-logo-title">INTELEX</div>
             <div className="sidebar-logo-subtitle">Defesa Inteligente</div>
           </div>
-        </div>
+        </Link>
       )}
     </div>
   );
@@ -242,7 +234,7 @@ export function LogoLoading({ className }: { className?: string }) {
         width={64}
         height={64}
         priority
-        className="object-contain"
+        className="object-contain animate-pulse"
       />
     </div>
   );
