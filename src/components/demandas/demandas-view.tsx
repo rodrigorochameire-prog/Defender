@@ -145,9 +145,9 @@ type ViewMode = "lista" | "grid" | "kanban";
 // --- COMPONENTE: LISTA VIEW ---
 function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; onEdit: (id: number) => void }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-card">
+    <SwissCard className="divide-y divide-stone-100 dark:divide-zinc-800">
       {/* Cabeçalho */}
-      <div className="grid grid-cols-12 gap-4 p-4 bg-muted/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/40">
+      <div className="grid grid-cols-12 gap-4 p-3 bg-stone-50/80 dark:bg-zinc-900/50 text-[11px] font-semibold text-stone-500 dark:text-zinc-400 uppercase tracking-wider border-b border-stone-100 dark:border-zinc-800">
         <div className="col-span-2">Status</div>
         <div className="col-span-4">Assistido / Autos</div>
         <div className="col-span-2">Ato / Prazo</div>
@@ -155,9 +155,8 @@ function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; o
         <div className="col-span-1 text-right">Ações</div>
       </div>
 
-      <div className="divide-y divide-border/30">
-        {/* Linhas */}
-        {demandas.map((item) => {
+      {/* Linhas */}
+      {demandas.map((item) => {
         const config = STATUS_CONFIG[item.status] || STATUS_CONFIG["a_fazer"];
         const StatusIcon = config.icon;
 
@@ -165,55 +164,49 @@ function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; o
           <div 
             key={item.id} 
             className={cn(
-              "group grid grid-cols-12 gap-4 p-5 items-center hover:bg-muted/30 transition-colors duration-200",
-              "border-l-4",
-              item.status === "urgente" && "border-l-red-500",
-              item.status === "protocolar" && "border-l-orange-500",
-              item.status === "a_fazer" && "border-l-yellow-500",
-              item.status === "monitorar" && "border-l-blue-500",
-              item.status === "fila" && "border-l-purple-500",
-              item.status === "concluido" && "border-l-zinc-300"
+              "group grid grid-cols-12 gap-4 p-3 items-center hover:bg-stone-50 dark:hover:bg-zinc-900/50 transition-colors duration-200 text-sm",
+              config.rowColor
             )}
           >
             {/* 1. Status + Data */}
-            <div className="col-span-2 flex flex-col gap-2 items-start">
-              <Badge variant="outline" className={cn("px-3 py-1.5 text-xs md:text-sm font-bold shadow-none rounded-lg", config.badgeColor)}>
-                <StatusIcon className="w-4 h-4 mr-1.5" />
+            <div className="col-span-2 flex flex-col gap-1.5 items-start">
+              <Badge variant="outline" className={cn("px-2 py-0.5 text-[10px] font-bold shadow-none rounded-md", config.badgeColor)}>
+                <StatusIcon className="w-3 h-3 mr-1" />
                 {config.label}
               </Badge>
-              <span className="text-xs text-muted-foreground font-mono flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5" /> {item.data}
+              <span className="text-[10px] text-stone-400 dark:text-zinc-500 font-mono flex items-center gap-1 pl-1">
+                <Calendar className="w-3 h-3" /> {item.data}
               </span>
             </div>
 
             {/* 2. Assistido + Cadeado + Autos */}
-            <div className="col-span-4 flex flex-col justify-center gap-1">
+            <div className="col-span-4 flex flex-col justify-center">
               <div className="flex items-center gap-2">
                 <span className={cn(
-                  "font-semibold text-base text-foreground truncate",
-                  item.status === "concluido" && "line-through text-muted-foreground"
+                  "font-semibold text-stone-800 dark:text-stone-200 truncate",
+                  item.status === "concluido" && "line-through text-stone-400"
                 )}>
                   {item.assistido}
                 </span>
                 {/* Ícone de Cadeado */}
                 {item.preso && (
-                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-2 border-red-200 dark:border-red-800 shrink-0" title="Réu Preso">
-                    <Lock className="w-3.5 h-3.5" />
+                  <div className="flex items-center justify-center w-5 h-5 rounded bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 shrink-0" title="Réu Preso">
+                    <Lock className="w-3 h-3" />
                   </div>
                 )}
               </div>
-              <span className="text-sm text-muted-foreground font-mono select-all hover:text-foreground transition-colors cursor-pointer">
+              <span className="text-xs text-stone-500 dark:text-zinc-400 font-mono mt-0.5 select-all hover:text-stone-900 dark:hover:text-zinc-200 transition-colors cursor-pointer">
                 {item.autos}
               </span>
             </div>
 
             {/* 3. Ato */}
-            <div className="col-span-2 text-foreground font-semibold text-base leading-snug">
+            <div className="col-span-2 text-stone-700 dark:text-stone-300 font-medium leading-snug">
               {item.ato}
             </div>
 
             {/* 4. Providências */}
-            <div className="col-span-3 text-muted-foreground text-sm leading-relaxed line-clamp-2">
+            <div className="col-span-3 text-stone-500 dark:text-zinc-400 text-xs leading-relaxed line-clamp-2">
               {item.providencia}
             </div>
 
@@ -241,8 +234,7 @@ function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; o
           </div>
         );
       })}
-      </div>
-    </div>
+    </SwissCard>
   );
 }
 
@@ -255,16 +247,16 @@ function DemandasGrid({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; on
         const StatusIcon = config.icon;
 
         return (
-          <div 
+          <SwissCard 
             key={item.id} 
             className={cn(
-              "rounded-xl border bg-card p-5 shadow-card hover:shadow-card-hover transition-all duration-200 cursor-pointer border-l-4",
+              "p-4 hover:shadow-lg transition-all duration-200 border-l-4",
               item.status === "urgente" && "border-l-red-500",
               item.status === "protocolar" && "border-l-orange-500",
               item.status === "a_fazer" && "border-l-yellow-500",
               item.status === "monitorar" && "border-l-blue-500",
               item.status === "fila" && "border-l-purple-500",
-              item.status === "concluido" && "border-l-zinc-300 dark:border-l-zinc-600 opacity-75"
+              item.status === "concluido" && "border-l-stone-300 opacity-75"
             )}
           >
             {/* Header */}
@@ -282,25 +274,25 @@ function DemandasGrid({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; on
 
             {/* Assistido */}
             <h3 className={cn(
-              "font-serif font-semibold text-lg text-foreground mb-2",
-              item.status === "concluido" && "line-through text-muted-foreground"
+              "font-serif font-semibold text-lg text-stone-900 dark:text-stone-100 mb-2",
+              item.status === "concluido" && "line-through text-stone-400"
             )}>
               {item.assistido}
             </h3>
 
             {/* Ato */}
-            <p className="text-sm font-medium text-foreground/90 mb-2">
+            <p className="text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
               {item.ato}
             </p>
 
             {/* Providências */}
-            <p className="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-3">
+            <p className="text-xs text-stone-500 dark:text-zinc-400 leading-relaxed mb-3 line-clamp-3">
               {item.providencia}
             </p>
 
             {/* Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-border/30">
-              <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
+            <div className="flex items-center justify-between pt-3 border-t border-stone-100 dark:border-zinc-800">
+              <span className="text-xs text-stone-400 dark:text-zinc-500 font-mono flex items-center gap-1">
                 <Calendar className="w-3 h-3" /> {item.data}
               </span>
               <Button 
@@ -314,10 +306,10 @@ function DemandasGrid({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; on
             </div>
 
             {/* Autos (pequeno) */}
-            <p className="text-[10px] text-muted-foreground font-mono mt-2 truncate">
+            <p className="text-[10px] text-stone-400 dark:text-zinc-500 font-mono mt-2 truncate">
               {item.autos}
             </p>
-          </div>
+          </SwissCard>
         );
       })}
     </div>
@@ -366,17 +358,17 @@ function DemandasKanban({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; 
             </div>
 
             {/* Column Content */}
-            <div className="space-y-3 p-3 bg-muted/30 rounded-b-xl min-h-[400px]">
+            <div className="space-y-3 p-3 bg-stone-50/50 dark:bg-zinc-900/50 rounded-b-xl min-h-[400px]">
               {items.map((item) => (
-                <div 
+                <SwissCard 
                   key={item.id} 
-                  className="rounded-lg border border-border/60 bg-card p-3 shadow-sm hover:shadow-md transition-all cursor-move"
+                  className="p-3 hover:shadow-md transition-shadow cursor-move"
                 >
                   {/* Assistido */}
                   <div className="flex items-start justify-between mb-2">
                     <h4 className={cn(
-                      "font-serif font-semibold text-sm text-foreground",
-                      status === "concluido" && "line-through text-muted-foreground"
+                      "font-serif font-semibold text-sm text-stone-900 dark:text-stone-100",
+                      status === "concluido" && "line-through text-stone-400"
                     )}>
                       {item.assistido}
                     </h4>
@@ -388,18 +380,18 @@ function DemandasKanban({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; 
                   </div>
 
                   {/* Ato */}
-                  <p className="text-xs font-medium text-foreground/90 mb-2">
+                  <p className="text-xs font-medium text-stone-700 dark:text-stone-300 mb-2">
                     {item.ato}
                   </p>
 
                   {/* Providências */}
-                  <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                  <p className="text-xs text-stone-500 dark:text-zinc-400 line-clamp-2 mb-2">
                     {item.providencia}
                   </p>
 
                   {/* Data */}
-                  <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                    <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
+                  <div className="flex items-center justify-between pt-2 border-t border-stone-100 dark:border-zinc-800">
+                    <span className="text-xs text-stone-400 dark:text-zinc-500 font-mono flex items-center gap-1">
                       <Calendar className="w-3 h-3" /> {item.data}
                     </span>
                     <Button 
@@ -411,11 +403,11 @@ function DemandasKanban({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; 
                       <Edit className="w-3 h-3" />
                     </Button>
                   </div>
-                </div>
+                </SwissCard>
               ))}
 
               {items.length === 0 && (
-                <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                <div className="flex items-center justify-center h-32 text-stone-400 dark:text-zinc-500 text-sm">
                   Nenhuma demanda
                 </div>
               )}
@@ -429,7 +421,7 @@ function DemandasKanban({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; 
 
 // --- COMPONENTE PRINCIPAL ---
 export function DemandasView() {
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("lista");
   const [filter, setFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -467,100 +459,75 @@ export function DemandasView() {
   };
 
   return (
-    <div className="space-y-5">
-      {/* Estatísticas Rápidas - PROPORCIONAIS */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 bg-muted/10 rounded-xl border-2 border-border/30">
-        {Object.entries(STATUS_CONFIG).map(([key, config]) => {
-          const count = MOCK_DEMANDAS.filter(d => d.status === key).length;
-          const StatusIcon = config.icon;
-          
-          return (
-            <div
-              key={key}
-              className={cn(
-                "rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer",
-                "hover:shadow-md hover:scale-[1.01]",
-                statusFilter === key 
-                  ? "border-primary bg-primary/5 shadow-sm" 
-                  : "border-border/60 bg-card hover:border-border"
-              )}
-              onClick={() => setStatusFilter(statusFilter === key ? "all" : key)}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <div className={cn(
-                  "p-1.5 rounded-lg",
-                  statusFilter === key ? "bg-primary/10" : "bg-muted"
-                )}>
-                  <StatusIcon className={cn(
-                    "w-4 h-4",
-                    statusFilter === key ? "text-primary" : "text-muted-foreground"
-                  )} />
-                </div>
-                <span className="text-2xl md:text-3xl font-bold tracking-tight">{count}</span>
-              </div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {config.label}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-
+    <div className="space-y-4">
       {/* Barra de Ferramentas */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl bg-muted/20 border-2 border-border/40">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Busca */}
-        <div className="relative flex-1 max-w-2xl w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <div className="relative flex-1 max-w-md w-full">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-stone-400 dark:text-zinc-500" />
           <Input 
-            placeholder="Buscar por assistido, autos ou ato..." 
-            className="pl-12 bg-card border-2 h-11 text-base rounded-xl"
+            placeholder="Filtrar por nome, autos ou ato..." 
+            className="pl-9 bg-white dark:bg-zinc-900 border-stone-200 dark:border-zinc-800"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
         </div>
 
-        {/* Ações */}
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-11 px-4 border-2 rounded-xl text-sm font-semibold">
+        {/* Filtros e Ações */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* Filtro de Status */}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[160px] bg-white dark:bg-zinc-900 border-stone-200 dark:border-zinc-800">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos Status</SelectItem>
+              {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                <SelectItem key={key} value={key}>{config.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Botões de Ação */}
+          <Button variant="outline" size="sm" className="text-stone-600 dark:text-zinc-400 border-stone-200 dark:border-zinc-800">
             <Upload className="w-4 h-4 mr-2" /> Importar
           </Button>
-          <Button size="sm" className="h-11 px-5 rounded-xl text-sm font-semibold">
+          <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 text-white">
             <Plus className="w-4 h-4 mr-2" /> Nova Demanda
           </Button>
         </div>
       </div>
 
-      {/* Seletor de Visualização - COMPACTO */}
+      {/* Seletor de Visualização */}
       <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-full">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/30 bg-muted/10 -mx-4 px-4 pt-3 rounded-t-lg">
-          <TabsList className="bg-background border-2 border-border/40 p-1">
-            <TabsTrigger value="grid" className="gap-2 text-sm">
-              <Grid3x3 className="w-4 h-4" />
-              Grid
-            </TabsTrigger>
-            <TabsTrigger value="lista" className="gap-2 text-sm">
-              <List className="w-4 h-4" />
+        <div className="flex items-center justify-between mb-4">
+          <TabsList className="bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800">
+            <TabsTrigger value="lista" className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800">
+              <List className="w-4 h-4 mr-2" />
               Lista
             </TabsTrigger>
-            <TabsTrigger value="kanban" className="gap-2 text-sm">
-              <Columns3 className="w-4 h-4" />
+            <TabsTrigger value="grid" className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800">
+              <Grid3x3 className="w-4 h-4 mr-2" />
+              Grid
+            </TabsTrigger>
+            <TabsTrigger value="kanban" className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800">
+              <Columns3 className="w-4 h-4 mr-2" />
               Kanban
             </TabsTrigger>
           </TabsList>
 
-          <div className="text-sm md:text-base font-semibold text-muted-foreground">
-            {filteredDemandas.length} {filteredDemandas.length === 1 ? 'demanda' : 'demandas'}
-            {statusFilter !== "all" && " filtrada" + (filteredDemandas.length !== 1 ? "s" : "")}
+          <div className="text-sm text-stone-500 dark:text-zinc-400">
+            {filteredDemandas.length} demanda{filteredDemandas.length !== 1 ? 's' : ''}
           </div>
         </div>
 
         {/* Conteúdo das Tabs */}
-        <TabsContent value="grid" className="mt-0">
-          <DemandasGrid demandas={filteredDemandas} onEdit={handleEdit} />
-        </TabsContent>
-        
         <TabsContent value="lista" className="mt-0">
           <DemandasLista demandas={filteredDemandas} onEdit={handleEdit} />
+        </TabsContent>
+
+        <TabsContent value="grid" className="mt-0">
+          <DemandasGrid demandas={filteredDemandas} onEdit={handleEdit} />
         </TabsContent>
 
         <TabsContent value="kanban" className="mt-0">
