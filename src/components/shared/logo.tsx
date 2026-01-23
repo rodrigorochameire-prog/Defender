@@ -66,7 +66,7 @@ export function Logo({
       return (
         <div className={cn("sidebar-logo-icon", className)}>
           <Image
-            src="/logo-intelex.png"
+            src="/logo-shield.png"
             alt="INTELEX"
             width={iconSize}
             height={iconSize}
@@ -82,7 +82,7 @@ export function Logo({
         <div className={cn("logo-centered", className)}>
           <div className="logo-centered-icon">
             <Image
-              src="/logo-intelex.png"
+              src="/logo-shield.png"
               alt="INTELEX - Defesa Inteligente"
               width={iconSize}
               height={iconSize}
@@ -103,22 +103,14 @@ export function Logo({
     // variant === "full"
     return (
       <div className={cn("header-logo", className)}>
-        <div className="header-logo-icon">
-          <Image
-            src="/logo-intelex.png"
-            alt="INTELEX"
-            width={iconSize}
-            height={iconSize}
-            priority
-            className="object-contain"
-          />
-        </div>
-        <div className="header-logo-text">
-          <h2 className="header-logo-title">INTELEX</h2>
-          {showSubtitle && (
-            <p className="header-logo-subtitle">Defesa Inteligente</p>
-          )}
-        </div>
+        <Image
+          src="/logo-full.png"
+          alt="INTELEX - Defesa Inteligente"
+          width={iconSize * 4}
+          height={iconSize}
+          priority
+          className="object-contain"
+        />
       </div>
     );
   };
@@ -160,7 +152,7 @@ export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) 
         <div className="flex items-center gap-3">
           <div className="sidebar-logo-icon">
             <Image
-              src="/logo-intelex.png"
+              src="/logo-shield.png"
               alt="INTELEX"
               width={40}
               height={40}
@@ -224,7 +216,7 @@ export function MobileLogo({ className }: { className?: string }) {
     <Link href="/admin/dashboard" className={cn("mobile-logo", className)}>
       <div className="mobile-logo-icon">
         <Image
-          src="/logo-intelex.png"
+          src="/logo-shield.png"
           alt="INTELEX"
           width={32}
           height={32}
@@ -245,7 +237,7 @@ export function LogoLoading({ className }: { className?: string }) {
   return (
     <div className={cn("logo-loading", className)}>
       <Image
-        src="/logo-intelex.png"
+        src="/logo-shield.png"
         alt="Carregando..."
         width={64}
         height={64}
