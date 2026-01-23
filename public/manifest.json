@@ -9,19 +9,13 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/logo-intelex-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/logo-intelex.png",
+      "src": "/logo-shield.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logo-intelex.png",
+      "src": "/logo-shield.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

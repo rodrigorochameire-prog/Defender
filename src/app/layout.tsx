@@ -39,10 +39,10 @@ export const metadata: Metadata = {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/logo-intelex-icon.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/logo-shield.png", type: "image/png", sizes: "512x512" },
     ],
     apple: [
-      { url: "/logo-intelex-icon.svg", sizes: "180x180", type: "image/svg+xml" },
+      { url: "/logo-shield.png", sizes: "180x180", type: "image/png" },
     ],
   },
   manifest: "/manifest.json",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     siteName: "INTELEX",
     images: [
       {
-        url: "/logo-intelex-full.svg",
+        url: "/logo-full.png",
         width: 1200,
         height: 400,
         alt: "INTELEX - Defesa Inteligente",
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "INTELEX | Defesa Inteligente",
     description: "Sistema de gestão jurídica criminal de alta performance",
-    images: ["/logo-intelex-full.svg"],
+    images: ["/logo-full.png"],
   },
   robots: {
     index: true,
@@ -102,15 +102,13 @@ const themeScript = `
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode; }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${inter.className} ${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} bg-stone-50 dark:bg-zinc-950`}>
+      <body className={`${inter.className} ${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} bg-stone-50 dark:bg-zinc-950`}> 
         <Providers>
           {children}
         </Providers>

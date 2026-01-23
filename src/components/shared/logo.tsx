@@ -14,15 +14,15 @@ interface LogoProps {
 
 /**
  * Logo INTELEX Premium
- * 
+ *
  * Componente unificado para exibição da logo em diferentes contextos.
  * Integrado com design system v9.0 MANUS
- * 
+ *
  * Variantes:
  * - full: Logo completa com texto e subtítulo
  * - icon: Apenas o ícone do escudo
  * - centered: Logo centralizada para landing pages
- * 
+ *
  * Tamanhos:
  * - sm: Pequeno (mobile, sidebar collapsed)
  * - md: Médio (sidebar expandida)
@@ -66,7 +66,7 @@ export function Logo({
       return (
         <div className={cn("sidebar-logo-icon", className)}>
           <Image
-            src="/logo-intelex-icon.svg"
+            src="/logo-shield.png"
             alt="INTELEX"
             width={iconSize}
             height={iconSize}
@@ -81,7 +81,7 @@ export function Logo({
       return (
         <div className={cn("logo-centered flex flex-col items-center gap-6", className)}>
           <Image
-            src="/logo-intelex-full.svg"
+            src="/logo-full.png"
             alt="INTELEX - Defesa Inteligente"
             width={iconSize * 3}
             height={iconSize}
@@ -96,9 +96,9 @@ export function Logo({
     return (
       <div className={cn("header-logo", className)}>
         <Image
-          src="/logo-intelex-full.svg"
+          src="/logo-full.png"
           alt="INTELEX - Defesa Inteligente"
-          width={iconSize * 2.5}
+          width={iconSize * 3}
           height={iconSize}
           priority
           className="object-contain"
@@ -144,7 +144,7 @@ export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) 
         <Link href="/admin/dashboard" className="flex items-center gap-3">
           <div className="sidebar-logo-icon">
             <Image
-              src="/logo-intelex-icon.svg"
+              src="/logo-shield.png"
               alt="INTELEX"
               width={40}
               height={40}
@@ -208,7 +208,7 @@ export function MobileLogo({ className }: { className?: string }) {
     <Link href="/admin/dashboard" className={cn("mobile-logo", className)}>
       <div className="mobile-logo-icon">
         <Image
-          src="/logo-intelex-icon.svg"
+          src="/logo-shield.png"
           alt="INTELEX"
           width={32}
           height={32}
@@ -229,7 +229,7 @@ export function LogoLoading({ className }: { className?: string }) {
   return (
     <div className={cn("logo-loading", className)}>
       <Image
-        src="/logo-intelex-icon.svg"
+        src="/logo-shield.png"
         alt="Carregando..."
         width={64}
         height={64}
