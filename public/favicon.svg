@@ -1,33 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <!-- Shield Background -->
-  <path d="M16 2L4 7v8c0 7.5 5.1 14.5 12 16 6.9-1.5 12-8.5 12-16V7L16 2z" 
-        fill="url(#shieldGradient)" 
-        stroke="url(#shieldStroke)" 
+  <path d="M16 2L4 7v8c0 7.5 5.1 14.5 12 16 6.9-1.5 12-8.5 12-16V7L16 2z"
+        fill="url(#shieldGradient)"
+        stroke="url(#shieldStroke)"
         stroke-width="0.5"/>
-  
+
   <!-- Inner Shield Highlight -->
-  <path d="M16 4L6 8.5v6.5c0 6.5 4.3 12.3 10 13.5 5.7-1.2 10-7 10-13.5V8.5L16 4z" 
-        fill="url(#innerGradient)" 
+  <path d="M16 4L6 8.5v6.5c0 6.5 4.3 12.3 10 13.5 5.7-1.2 10-7 10-13.5V8.5L16 4z"
+        fill="url(#innerGradient)"
         opacity="0.9"/>
-  
-  <!-- X Symbol - Bold and Centered -->
+
+  <!-- Owl Symbol -->
   <g transform="translate(16, 15)">
-    <path d="M-5 -6 L-2 -6 L0 -3 L2 -6 L5 -6 L1.5 -0.5 L5 5 L2 5 L0 2 L-2 5 L-5 5 L-1.5 -0.5 Z" 
-          fill="white" 
-          opacity="0.95"
-          stroke="white"
-          stroke-width="0.5"
-          stroke-linejoin="round"/>
-    
-    <!-- X Glow -->
-    <path d="M-5 -6 L-2 -6 L0 -3 L2 -6 L5 -6 L1.5 -0.5 L5 5 L2 5 L0 2 L-2 5 L-5 5 L-1.5 -0.5 Z" 
-          fill="none" 
-          stroke="white"
-          stroke-width="1"
-          opacity="0.3"
-          filter="url(#glow)"/>
+    <!-- Eyes -->
+    <ellipse cx="-2.5" cy="-3" rx="1.8" ry="2.5" fill="white" opacity="0.95"/>
+    <ellipse cx="2.5" cy="-3" rx="1.8" ry="2.5" fill="white" opacity="0.95"/>
+    <circle cx="-2.5" cy="-2.5" r="0.9" fill="#0f766e"/>
+    <circle cx="2.5" cy="-2.5" r="0.9" fill="#0f766e"/>
+
+    <!-- Beak -->
+    <path d="M-0.8,0 L0,1.2 L0.8,0 Z" fill="#f59e0b" opacity="0.9"/>
+
+    <!-- Wings -->
+    <path d="M-5.5,-1.5 L-7,2.5 L-4.5,3.2 L-3,1 Z" fill="white" opacity="0.6"/>
+    <path d="M5.5,-1.5 L7,2.5 L4.5,3.2 L3,1 Z" fill="white" opacity="0.6"/>
+
+    <!-- Body Chevron -->
+    <path d="M-3.5,1.5 L0,5 L3.5,1.5" stroke="white" stroke-width="0.7" fill="none" opacity="0.7" stroke-linecap="round"/>
+    <path d="M-2.5,3 L0,6.5 L2.5,3" stroke="white" stroke-width="0.5" fill="none" opacity="0.5" stroke-linecap="round"/>
   </g>
-  
+
   <!-- Gradients and Filters -->
   <defs>
     <linearGradient id="shieldGradient" x1="16" y1="2" x2="16" y2="28" gradientUnits="userSpaceOnUse">
@@ -35,23 +37,15 @@
       <stop offset="50%" stop-color="#0d9488"/>
       <stop offset="100%" stop-color="#0f766e"/>
     </linearGradient>
-    
+
     <linearGradient id="shieldStroke" x1="16" y1="2" x2="16" y2="28" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#5eead4" stop-opacity="0.5"/>
       <stop offset="100%" stop-color="#0f766e" stop-opacity="0.8"/>
     </linearGradient>
-    
+
     <linearGradient id="innerGradient" x1="16" y1="4" x2="16" y2="26" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#2dd4bf"/>
       <stop offset="100%" stop-color="#0d9488"/>
     </linearGradient>
-    
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
   </defs>
 </svg>

@@ -1,6 +1,6 @@
 import { RegisterForm } from "./register-form";
 import Link from "next/link";
-import { Shield } from "lucide-react";
+import Image from "next/image";
 
 // Forçar renderização dinâmica
 export const dynamic = "force-dynamic";
@@ -11,8 +11,15 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         {/* Logo e Título */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 mb-4">
-            <Shield className="w-8 h-8 text-primary" />
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/logo-intelex-full.svg"
+              alt="INTELEX - Defesa Inteligente"
+              width={300}
+              height={100}
+              priority
+              className="object-contain"
+            />
           </div>
           <h1 className="text-3xl font-bold tracking-tight mb-2">
             Criar Conta
