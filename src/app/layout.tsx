@@ -37,11 +37,12 @@ export const metadata: Metadata = {
   publisher: "INTELEX",
   icons: {
     icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/logo-intelex.png", type: "image/png", sizes: "512x512" },
+      { url: "/logo-intelex-icon.svg", type: "image/svg+xml", sizes: "any" },
     ],
     apple: [
-      { url: "/logo-intelex.png", sizes: "180x180", type: "image/png" },
+      { url: "/logo-intelex-icon.svg", sizes: "180x180", type: "image/svg+xml" },
     ],
   },
   manifest: "/manifest.json",
@@ -53,9 +54,9 @@ export const metadata: Metadata = {
     siteName: "INTELEX",
     images: [
       {
-        url: "/logo-intelex.png",
+        url: "/logo-intelex-full.svg",
         width: 1200,
-        height: 630,
+        height: 400,
         alt: "INTELEX - Defesa Inteligente",
       },
     ],
@@ -64,7 +65,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "INTELEX | Defesa Inteligente",
     description: "Sistema de gestão jurídica criminal de alta performance",
-    images: ["/logo-intelex.png"],
+    images: ["/logo-intelex-full.svg"],
   },
   robots: {
     index: true,
