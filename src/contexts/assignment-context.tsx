@@ -507,10 +507,8 @@ const STORAGE_KEY = "defesahub_current_assignment";
 export function AssignmentProvider({ children }: { children: ReactNode }) {
   const [currentAssignment, setCurrentAssignment] = useState<Assignment>("SUBSTITUICAO");
   const [isLoading, setIsLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved && saved in ASSIGNMENT_CONFIGS) {
       setCurrentAssignment(saved as Assignment);
@@ -523,19 +521,17 @@ export function AssignmentProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, assignment);
   }, []);
 
-  // Durante SSR, sempre usa SUBSTITUICAO para evitar hydration mismatch
-  const effectiveAssignment = mounted ? currentAssignment : "SUBSTITUICAO";
-  const config = ASSIGNMENT_CONFIGS[effectiveAssignment];
-  const modules = SPECIALTY_MODULES[effectiveAssignment];
+  const config = ASSIGNMENT_CONFIGS[currentAssignment];
+  const modules = SPECIALTY_MODULES[currentAssignment];
 
   return (
     <AssignmentContext.Provider
       value={{
-        currentAssignment: effectiveAssignment,
+        currentAssignment,
         config,
         modules,
         setAssignment,
-        isLoading: !mounted || isLoading,
+        isLoading,
       }}
     >
       {children}

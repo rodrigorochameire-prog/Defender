@@ -65,25 +65,25 @@ const variantStyles = {
 
 const sizeStyles = {
   sm: {
-    container: "p-4",
-    icon: "w-9 h-9",
-    iconInner: "w-5 h-5",
-    value: "text-2xl md:text-3xl font-bold",
-    label: "text-xs md:text-sm",
+    container: "p-3",
+    icon: "w-8 h-8",
+    iconInner: "w-4 h-4",
+    value: "text-xl font-bold",
+    label: "text-xs",
   },
   md: {
-    container: "p-6 md:p-7",
-    icon: "w-12 h-12 md:w-14 md:h-14",
-    iconInner: "w-6 h-6 md:w-7 md:h-7",
-    value: "text-4xl md:text-5xl font-bold",
-    label: "text-base md:text-lg",
+    container: "p-4",
+    icon: "w-10 h-10",
+    iconInner: "w-5 h-5",
+    value: "text-2xl font-bold",
+    label: "text-sm",
   },
   lg: {
-    container: "p-7 md:p-8",
-    icon: "w-14 h-14 md:w-16 md:h-16",
-    iconInner: "w-7 h-7 md:w-8 md:h-8",
-    value: "text-5xl md:text-6xl font-bold",
-    label: "text-lg md:text-xl",
+    container: "p-5",
+    icon: "w-12 h-12",
+    iconInner: "w-6 h-6",
+    value: "text-3xl font-bold",
+    label: "text-base",
   },
 };
 
@@ -103,28 +103,28 @@ export function StatsCard({
   return (
     <div
       className={cn(
-        "rounded-xl border-2 shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.02]",
+        "rounded-xl border shadow-sm transition-all duration-200 hover:shadow-md",
         styles.container,
         sizes.container,
         className
       )}
     >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 min-w-0 space-y-2">
-          <p className={cn("font-sans font-bold tabular-nums tracking-tight leading-none", sizes.value, styles.value)}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className={cn("font-sans font-bold tabular-nums", sizes.value, styles.value)}>
             {value}
           </p>
-          <p className={cn("uppercase tracking-[0.06em] font-semibold", sizes.label, styles.label)}>
+          <p className={cn("uppercase tracking-[0.06em] font-semibold mt-1", sizes.label, styles.label)}>
             {label}
           </p>
           {subtitle && (
-            <p className="text-xs md:text-sm text-muted-foreground truncate">{subtitle}</p>
+            <p className="text-xs text-muted-foreground mt-1 truncate">{subtitle}</p>
           )}
           {trend && (
-            <div className="flex items-center gap-1.5 mt-2">
+            <div className="flex items-center gap-1 mt-1.5">
               <span
                 className={cn(
-                  "text-sm md:text-base font-semibold",
+                  "text-xs font-medium",
                   trend.direction === "up" && "text-emerald-600",
                   trend.direction === "down" && "text-rose-600",
                   trend.direction === "neutral" && "text-muted-foreground"
@@ -135,7 +135,7 @@ export function StatsCard({
                 {trend.value}%
               </span>
               {trend.label && (
-                <span className="text-xs md:text-sm text-muted-foreground">{trend.label}</span>
+                <span className="text-xs text-muted-foreground">{trend.label}</span>
               )}
             </div>
           )}
@@ -143,7 +143,7 @@ export function StatsCard({
         {Icon && (
           <div
             className={cn(
-              "rounded-xl flex items-center justify-center flex-shrink-0",
+              "rounded-lg flex items-center justify-center flex-shrink-0",
               sizes.icon,
               styles.icon
             )}
@@ -168,16 +168,16 @@ interface StatsGridProps {
 
 export function StatsGrid({ children, columns = 4, className }: StatsGridProps) {
   const gridCols = {
-    2: "grid-cols-1 md:grid-cols-2",
-    3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-    4: "grid-cols-2 md:grid-cols-4",
-    5: "grid-cols-2 md:grid-cols-3 lg:grid-cols-5",
-    6: "grid-cols-2 md:grid-cols-3 lg:grid-cols-6",
-    8: "grid-cols-2 md:grid-cols-4 lg:grid-cols-8",
+    2: "grid-cols-2",
+    3: "grid-cols-2 sm:grid-cols-3",
+    4: "grid-cols-2 sm:grid-cols-4",
+    5: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
+    6: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6",
+    8: "grid-cols-2 sm:grid-cols-4 lg:grid-cols-8",
   };
 
   return (
-    <div className={cn("grid gap-4 md:gap-5 lg:gap-6", gridCols[columns], className)}>
+    <div className={cn("grid gap-3 sm:gap-4", gridCols[columns], className)}>
       {children}
     </div>
   );
@@ -199,24 +199,24 @@ interface StatRowProps {
 
 export function StatRow({ items, className }: StatRowProps) {
   return (
-    <div className={cn("flex items-center gap-5 flex-wrap", className)}>
+    <div className={cn("flex items-center gap-4 flex-wrap", className)}>
       {items.map((item, index) => {
         const Icon = item.icon;
         return (
           <div
             key={index}
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl border-2",
-              item.variant === "warning" && "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800",
-              item.variant === "danger" && "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800",
-              item.variant === "success" && "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800",
-              !item.variant && "bg-muted border-border"
+              "flex items-center gap-2 px-3 py-1.5 rounded-lg",
+              item.variant === "warning" && "bg-amber-50 dark:bg-amber-950/30",
+              item.variant === "danger" && "bg-rose-50 dark:bg-rose-950/30",
+              item.variant === "success" && "bg-emerald-50 dark:bg-emerald-950/30",
+              !item.variant && "bg-muted"
             )}
           >
             {Icon && (
               <Icon
                 className={cn(
-                  "w-5 h-5 md:w-6 md:h-6",
+                  "w-4 h-4",
                   item.variant === "warning" && "text-amber-600",
                   item.variant === "danger" && "text-rose-600",
                   item.variant === "success" && "text-emerald-600",
@@ -226,7 +226,7 @@ export function StatRow({ items, className }: StatRowProps) {
             )}
             <span
               className={cn(
-                "font-bold text-lg md:text-xl",
+                "font-semibold text-sm",
                 item.variant === "warning" && "text-amber-700 dark:text-amber-400",
                 item.variant === "danger" && "text-rose-700 dark:text-rose-400",
                 item.variant === "success" && "text-emerald-700 dark:text-emerald-400",
@@ -235,7 +235,7 @@ export function StatRow({ items, className }: StatRowProps) {
             >
               {item.value}
             </span>
-            <span className="text-sm md:text-base text-muted-foreground font-medium">{item.label}</span>
+            <span className="text-xs text-muted-foreground">{item.label}</span>
           </div>
         );
       })}

@@ -28,13 +28,14 @@ export function SwissTableContainer({
   return (
     <div 
       className={cn(
-        "table-container custom-scrollbar",
+        "relative rounded-xl border border-border/60 bg-card overflow-hidden",
+        "shadow-[0_1px_3px_0_rgb(0_0_0/0.04),0_1px_2px_-1px_rgb(0_0_0/0.04)]",
         className
       )}
     >
       <div 
         className={cn(
-          "overflow-auto custom-scrollbar",
+          "overflow-auto",
           stickyHeader && "[&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10"
         )}
         style={{ maxHeight }}
@@ -67,7 +68,8 @@ export function SwissTableHeader({
   return (
     <TableHeader 
       className={cn(
-        "table-header-enhanced",
+        "bg-muted/70 dark:bg-muted/30 backdrop-blur-sm",
+        "border-b-2 border-border/60",
         className
       )} 
       {...props} 
@@ -82,11 +84,10 @@ export function SwissTableHead({
   return (
     <TableHead
       className={cn(
-        "text-xs uppercase tracking-[0.08em] font-semibold",
-        "text-zinc-600 dark:text-zinc-300", // Melhor contraste
-        "py-3.5 px-4 first:pl-6 last:pr-6",
-        "bg-muted/80 dark:bg-muted/60",
-        "font-sans whitespace-nowrap",
+        "text-xs uppercase tracking-[0.08em] font-semibold text-muted-foreground",
+        "py-3.5 px-4 first:pl-5 last:pr-5",
+        "bg-muted/70 dark:bg-muted/30",
+        "font-sans",
         className
       )}
       {...props}
@@ -117,8 +118,9 @@ export function SwissTableRow({
   return (
     <TableRow
       className={cn(
-        "table-row-enhanced",
-        "data-[state=selected]:bg-muted dark:data-[state=selected]:bg-muted/40",
+        "transition-colors duration-150",
+        "hover:bg-muted/40 dark:hover:bg-muted/20",
+        "data-[state=selected]:bg-muted",
         className
       )}
       {...props}
@@ -133,8 +135,8 @@ export function SwissTableCell({
   return (
     <TableCell 
       className={cn(
-        "table-cell-enhanced",
-        "text-zinc-700 dark:text-zinc-300", // Melhor contraste
+        "py-3.5 px-4 first:pl-5 last:pr-5",
+        "align-middle",
         className
       )} 
       {...props} 
@@ -159,12 +161,12 @@ export function SwissTableEmpty({
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
       {icon && (
-        <div className="w-12 h-12 text-muted-foreground/50 dark:text-muted-foreground/70 mb-4">
+        <div className="w-12 h-12 text-muted-foreground/40 mb-4">
           {icon}
         </div>
       )}
-      <h3 className="text-base font-medium text-foreground dark:text-zinc-200 mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground dark:text-zinc-400 max-w-sm mb-4">{description}</p>
+      <h3 className="text-base font-medium text-foreground mb-1">{title}</h3>
+      <p className="text-sm text-muted-foreground max-w-sm mb-4">{description}</p>
       {action}
     </div>
   );

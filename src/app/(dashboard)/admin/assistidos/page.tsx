@@ -90,19 +90,10 @@ import Link from "next/link";
 // Componentes estruturais padronizados
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { PageHeader } from "@/components/shared/section-header";
-import { FilterTab, FilterTabsGroup } from "@/components/shared/filter-tabs";
+import { FilterChip, FilterChipGroup } from "@/components/shared/filter-chips";
 import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
 import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
 import { EmptyState } from "@/components/shared/empty-state";
-import { FilterBar } from "@/components/shared/filter-bar";
-import { 
-  PageContainer, 
-  PageSection, 
-  ContentGrid,
-  Divider,
-  StatBlock,
-  InfoBlock
-} from "@/components/shared/page-structure";
 
 // Cores alinhadas com os workspaces
 // Cores de atribuicao NEUTRAS para reduzir poluicao visual
@@ -960,168 +951,84 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
   const prazoUrgente = prazoInfo && prazoInfo.urgent;
   const testemunhasOuvidas = assistido.testemunhasArroladas.filter(t => t.ouvida).length;
   const totalTestemunhas = assistido.testemunhasArroladas.length;
-  const tempoPreso = calcularTempoPreso(assistido.dataPrisao);
-  const idade = calcularIdade(assistido.dataNascimento);
-  const statusCfg = statusConfig[assistido.statusPrisional];
-  const faseCfg = faseConfig[assistido.faseProcessual];
 
   return (
     <SwissTableRow className={cn(
       "group transition-colors",
-      // Borda lateral semantica - usando nova classe
-      isPreso ? "border-semantic-prisoner" : "border-semantic-free",
+      // Borda lateral semantica
+      isPreso ? "border-l-[3px] border-l-rose-500" : "border-l-[3px] border-l-zinc-300 dark:border-l-zinc-600",
       isPinned && "bg-amber-50/30 dark:bg-amber-950/10"
     )}>
-      {/* Nome + Avatar */}
-      <SwissTableCell className="min-w-[200px]">
+      {/* Nome */}
+      <SwissTableCell className="py-3">
         <div className="flex items-center gap-3">
-          <Avatar 
-            className={cn(
-              "h-9 w-9 ring-2 cursor-pointer transition-all hover:scale-105",
-              isPreso ? "ring-rose-400 dark:ring-rose-500" : "ring-zinc-200 dark:ring-zinc-700"
-            )}
-            onClick={onPhotoClick}
-          >
-            <AvatarImage src={assistido.photoUrl || undefined} alt={assistido.nome} />
-            <AvatarFallback 
-              className={cn(
-                "text-xs font-semibold",
-                isPreso 
-                  ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
-                  : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-              )}
-            >
-              {getInitials(assistido.nome)}
-            </AvatarFallback>
-          </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <Link href={`/admin/assistidos/${assistido.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link href={`/admin/assistidos/${assistido.id}`} className="hover:text-zinc-600 dark:hover:text-zinc-300">
                 <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">{assistido.nome}</p>
               </Link>
               {isPinned && <BookmarkCheck className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
             </div>
-            {assistido.vulgo && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 italic truncate">&ldquo;{assistido.vulgo}&rdquo;</p>
-            )}
           </div>
         </div>
       </SwissTableCell>
 
-      {/* Idade */}
-      <SwissTableCell className="text-center">
-        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{idade}</span>
-        <span className="text-xs text-zinc-400 ml-0.5">a</span>
-      </SwissTableCell>
-
-      {/* Status Prisional + Tempo */}
-      <SwissTableCell className="min-w-[140px]">
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <PrisonerIndicator 
-              preso={isPreso} 
-              size="sm"
-              showTooltip={false}
-            />
-            <Badge 
-              variant="outline" 
-              className={cn(
-                "text-xs px-1.5 py-0 font-medium border-0",
-                statusCfg?.bgColor,
-                statusCfg?.color
-              )}
-            >
-              {statusCfg?.label}
-            </Badge>
-          </div>
-          {tempoPreso && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
-              {tempoPreso}
-            </p>
-          )}
-        </div>
-      </SwissTableCell>
-
-      {/* Fase Processual */}
+      {/* Status - Cadeado sutil */}
       <SwissTableCell>
-        {assistido.faseProcessual && faseCfg && (
-          <Badge 
-            variant="outline" 
-            className={cn(
-              "text-xs px-1.5 py-0 font-medium border-0 area-badge"
-            )}
-          >
-            {faseCfg.label}
-          </Badge>
-        )}
+        <PrisonerIndicator 
+          preso={isPreso} 
+          size="sm"
+          showTooltip={true}
+        />
       </SwissTableCell>
 
       {/* Crime - Fonte serifada */}
-      <SwissTableCell className="max-w-[200px]">
+      <SwissTableCell className="max-w-[180px]">
         <p className="text-xs font-legal text-zinc-600 dark:text-zinc-400 truncate">
           {assistido.crimePrincipal || "-"}
         </p>
       </SwissTableCell>
 
-      {/* Processo - Fonte mono com copy */}
-      <SwissTableCell className="min-w-[180px]">
-        <div 
-          className="process-number group/copy cursor-pointer inline-flex items-center gap-1.5"
-          onClick={() => {
-            navigator.clipboard.writeText(assistido.numeroProcesso);
-          }}
-        >
-          <span className="truncate">{assistido.numeroProcesso}</span>
-          <Copy className="w-3 h-3 opacity-0 group-hover/copy:opacity-100 transition-opacity" />
-        </div>
+      {/* Processo - Fonte mono */}
+      <SwissTableCell className="max-w-[200px]">
+        <p className="text-xs font-data text-zinc-500 dark:text-zinc-400 truncate">
+          {assistido.numeroProcesso}
+        </p>
       </SwissTableCell>
 
-      {/* Defensor */}
-      <SwissTableCell>
-        <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate">{assistido.defensor}</p>
-      </SwissTableCell>
-
-      {/* Processos Ativos */}
+      {/* Testemunhas */}
       <SwissTableCell className="text-center">
-        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{assistido.processosAtivos}</span>
-      </SwissTableCell>
-
-      {/* Demandas */}
-      <SwissTableCell className="text-center">
-        <Badge 
-          variant="outline" 
-          className={cn(
-            "text-xs px-2 py-0.5 font-medium",
-            assistido.demandasAbertas > 0 
-              ? "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/50"
-              : "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
-          )}
-        >
-          {assistido.demandasAbertas}
-        </Badge>
-      </SwissTableCell>
-
-      {/* Próximo Prazo */}
-      <SwissTableCell className="min-w-[100px]">
-        {prazoInfo ? (
-          <div className="space-y-0.5">
-            <Badge 
-              variant="outline" 
-              className={cn(
-                "text-xs px-1.5 py-0 font-medium border-0",
-                prazoUrgente 
-                  ? "status-badge-urgent"
-                  : "status-badge-neutral"
-              )}
-            >
-              {prazoInfo.text}
-            </Badge>
-            {assistido.atoProximoPrazo && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{assistido.atoProximoPrazo}</p>
-            )}
-          </div>
+        {totalTestemunhas > 0 ? (
+          <span className="text-xs text-zinc-500">
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">{testemunhasOuvidas}</span>
+            /{totalTestemunhas}
+          </span>
         ) : (
-          <span className="text-xs text-zinc-300 dark:text-zinc-600 italic">-</span>
+          <span className="text-zinc-300 dark:text-zinc-700">-</span>
+        )}
+      </SwissTableCell>
+
+      {/* Interrogatorio */}
+      <SwissTableCell className="text-center">
+        <span className={cn(
+          "text-xs font-medium",
+          assistido.interrogatorioRealizado ? "text-emerald-600" : "text-amber-500"
+        )}>
+          {assistido.interrogatorioRealizado ? "?" : "?"}
+        </span>
+      </SwissTableCell>
+
+      {/* Prazo */}
+      <SwissTableCell>
+        {prazoInfo ? (
+          <span className={cn(
+            "text-xs font-medium",
+            prazoUrgente ? "text-rose-600 dark:text-rose-400" : "text-zinc-500"
+          )}>
+            {prazoInfo.text}
+          </span>
+        ) : (
+          <span className="text-zinc-300 dark:text-zinc-700">-</span>
         )}
       </SwissTableCell>
 
@@ -1225,48 +1132,29 @@ export default function AssistidosPage() {
   // Visual config da atribuicao selecionada
   const atribuicaoColors = ATRIBUICAO_COLORS[atribuicaoFilter] || ATRIBUICAO_COLORS.all;
 
-  // Preparar filtros ativos
-  const activeFilters = [
-    statusFilter !== "all" && { 
-      key: "status", 
-      label: "Status", 
-      value: statusConfig[statusFilter]?.label || statusFilter 
-    },
-    areaFilter !== "all" && { 
-      key: "area", 
-      label: "Área", 
-      value: areaConfig[areaFilter]?.labelFull || areaFilter 
-    },
-    sortBy !== "prioridade" && { 
-      key: "sort", 
-      label: "Ordenação", 
-      value: sortBy === "nome" ? "Nome" : "Prazo" 
-    },
-  ].filter(Boolean) as Array<{ key: string; label: string; value: string }>;
-
   return (
-    <PageContainer maxWidth="wide">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Breadcrumbs */}
-      <Breadcrumbs className="mb-4" />
+      <Breadcrumbs className="mb-2" />
       
       {/* Page Header */}
       <PageHeader
         title="Assistidos"
-        description={`${stats.total} cadastrados • ${stats.presos} presos${pinnedIds.size > 0 ? ` • ${pinnedIds.size} fixados` : ""}`}
+        description={`${stats.total} cadastrados o ${stats.presos} presos${pinnedIds.size > 0 ? ` o ${pinnedIds.size} fixados` : ""}`}
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Link href="/admin/inteligencia">
-              <Button variant="outline" className="gap-2 h-12 px-5 text-base font-semibold text-violet-600 border-2 border-violet-200 hover:bg-violet-50 rounded-xl">
-                <Brain className="h-5 w-5 md:h-6 md:w-6" />
-                <span className="hidden sm:inline">Inteligência</span>
+              <Button variant="outline" className="gap-2 text-violet-600 border-violet-200 hover:bg-violet-50">
+                <Brain className="h-4 w-4" />
+                <span className="hidden sm:inline">Inteligencia</span>
               </Button>
             </Link>
-            <Button variant="outline" size="icon" className="h-12 w-12 border-2 rounded-xl">
-              <Download className="h-5 w-5 md:h-6 md:w-6" />
+            <Button variant="outline" size="icon">
+              <Download className="h-4 w-4" />
             </Button>
             <Link href="/admin/assistidos/novo">
-              <Button className="gap-2 h-12 px-6 text-base md:text-lg font-semibold rounded-xl">
-                <Plus className="h-5 w-5 md:h-6 md:w-6" />
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Novo Assistido</span>
                 <span className="sm:hidden">Novo</span>
               </Button>
@@ -1275,15 +1163,15 @@ export default function AssistidosPage() {
         }
       />
 
-      {/* Filtros por Atribuição - Tabs Premium */}
-      <FilterTabsGroup label="Filtrar por Área">
+      {/* Filtros por Atribuicao */}
+      <FilterChipGroup label="Filtrar por Area">
         {ATRIBUICAO_OPTIONS.map((option) => {
           const count = option.value === "all" 
             ? mockAssistidos.length 
             : mockAssistidos.filter(a => a.area === option.value).length;
           
           return (
-            <FilterTab
+            <FilterChip
               key={option.value}
               label={option.label}
               value={option.value}
@@ -1291,10 +1179,11 @@ export default function AssistidosPage() {
               onSelect={setAtribuicaoFilter}
               count={count}
               icon={ATRIBUICAO_ICONS[option.value]}
+              size="md"
             />
           );
         })}
-      </FilterTabsGroup>
+      </FilterChipGroup>
 
       {/* Stats Cards - Padronizado */}
       <StatsGrid columns={5}>
@@ -1412,18 +1301,15 @@ export default function AssistidosPage() {
         <SwissTableContainer className="max-h-[calc(100vh-320px)]">
           <SwissTable>
             <SwissTableHeader>
-              <SwissTableRow>
-                <SwissTableHead>Assistido</SwissTableHead>
-                <SwissTableHead className="text-center">Idade</SwissTableHead>
-                <SwissTableHead>Status Prisional</SwissTableHead>
-                <SwissTableHead>Fase</SwissTableHead>
-                <SwissTableHead>Crime</SwissTableHead>
-                <SwissTableHead>Nº Processo</SwissTableHead>
-                <SwissTableHead>Defensor</SwissTableHead>
-                <SwissTableHead className="text-center">Proc.</SwissTableHead>
-                <SwissTableHead className="text-center">Dem.</SwissTableHead>
-                <SwissTableHead>Próximo Prazo</SwissTableHead>
-                <SwissTableHead className="text-right">Ações</SwissTableHead>
+              <SwissTableRow className="bg-muted/50">
+                <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Assistido</SwissTableHead>
+                <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Fase</SwissTableHead>
+                <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Crime</SwissTableHead>
+                <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Status</SwissTableHead>
+                <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Test.</SwissTableHead>
+                <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Interr.</SwissTableHead>
+                <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Prazo</SwissTableHead>
+                <SwissTableHead className="text-right font-semibold text-xs uppercase tracking-wider">Acoes</SwissTableHead>
               </SwissTableRow>
             </SwissTableHeader>
             <SwissTableBody>
@@ -1451,6 +1337,6 @@ export default function AssistidosPage() {
           onUpload={(file) => console.log("Upload:", file)}
         />
       )}
-    </PageContainer>
+    </div>
   );
 }

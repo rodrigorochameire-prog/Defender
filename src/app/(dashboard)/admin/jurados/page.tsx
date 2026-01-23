@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SwissCard, SwissCardContent, SwissCardHeader, SwissCardTitle } from "@/components/ui/swiss-card";
+import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -16,15 +16,9 @@ import {
   User,
   Briefcase,
   MapPin,
-  TrendingUp,
-  Users,
-  Brain,
-  Sparkles,
 } from "lucide-react";
 import { useAssignment } from "@/contexts/assignment-context";
 import { cn } from "@/lib/utils";
-import { DonutChart, DonutChartGroup } from "@/components/shared/donut-chart";
-import { PageLayout } from "@/components/shared/page-layout";
 
 // Dados mockados
 const mockJurados = [
@@ -96,75 +90,26 @@ export default function JuradosPage() {
       j.bairro.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Cálculos para os gráficos de inteligência
-  const totalVotos = mockJurados.reduce((acc, j) => acc + j.totalSessoes, 0);
-  const totalAbsolvicoes = mockJurados.reduce((acc, j) => acc + j.votosAbsolvicao, 0);
-  const tendenciaAbsolutoria = totalVotos > 0 ? Math.round((totalAbsolvicoes / totalVotos) * 100) : 0;
-  
-  const homens = Math.round(mockJurados.length * 0.45); // Simulado
-  const mulheres = mockJurados.length - homens;
-  const percHomens = mockJurados.length > 0 ? Math.round((homens / mockJurados.length) * 100) : 0;
-  const percMulheres = mockJurados.length > 0 ? Math.round((mulheres / mockJurados.length) * 100) : 0;
-  
-  const perfilConservador = mockJurados.filter(j => j.perfilTendencia === "condenatorio").length;
-  const percConservador = mockJurados.length > 0 ? Math.round((perfilConservador / mockJurados.length) * 100) : 0;
-
   return (
-    <PageLayout
-      header="Banco de Jurados"
-      description="Inteligência e perfilamento do conselho de sentença"
-      actions={
-        <Button className="gap-2">
+    <div className="p-3 sm:p-4 lg:p-6 space-y-6">
+      {/* Header - Padrão Swiss */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+            <UserCheck className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Banco de Jurados</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              Análise e estatísticas de jurados
+            </p>
+          </div>
+        </div>
+        <Button className="gap-2 h-9">
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Adicionar Jurado</span>
           <span className="sm:hidden">Adicionar</span>
         </Button>
-      }
-    >
-
-      {/* Seção de Inteligência Visual - NOVA */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <SwissCard className="p-6 flex flex-col items-center justify-center">
-          <SwissCardHeader className="w-full p-0 border-0 mb-4">
-            <SwissCardTitle className="text-sm font-serif font-bold text-stone-900 dark:text-stone-100 flex items-center justify-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-              Tendência de Absolvição
-            </SwissCardTitle>
-          </SwissCardHeader>
-          <DonutChart value={tendenciaAbsolutoria} color="#059669" label="Favorável à Defesa" />
-          <p className="text-xs text-stone-500 dark:text-zinc-400 text-center mt-3 max-w-[200px]">
-            Baseado em {totalVotos} votos históricos
-          </p>
-        </SwissCard>
-
-        <SwissCard className="p-6 flex flex-col items-center justify-center">
-          <SwissCardHeader className="w-full p-0 border-0 mb-4">
-            <SwissCardTitle className="text-sm font-serif font-bold text-stone-900 dark:text-stone-100 flex items-center justify-center gap-2">
-              <Users className="w-4 h-4 text-blue-600" />
-              Composição de Gênero
-            </SwissCardTitle>
-          </SwissCardHeader>
-          <DonutChartGroup>
-            <DonutChart value={percHomens} color="#2563eb" label="Homens" size="sm" />
-            <DonutChart value={percMulheres} color="#db2777" label="Mulheres" size="sm" />
-          </DonutChartGroup>
-          <p className="text-xs text-stone-500 dark:text-zinc-400 text-center mt-3">
-            {homens} homens / {mulheres} mulheres
-          </p>
-        </SwissCard>
-
-        <SwissCard className="p-6 flex flex-col items-center justify-center">
-          <SwissCardHeader className="w-full p-0 border-0 mb-4">
-            <SwissCardTitle className="text-sm font-serif font-bold text-stone-900 dark:text-stone-100 flex items-center justify-center gap-2">
-              <Brain className="w-4 h-4 text-purple-600" />
-              Perfil Condenatório
-            </SwissCardTitle>
-          </SwissCardHeader>
-          <DonutChart value={percConservador} color="#7c3aed" label="Risco Alto" />
-          <p className="text-xs text-stone-500 dark:text-zinc-400 text-center mt-3 max-w-[200px]">
-            {perfilConservador} de {mockJurados.length} jurados
-          </p>
-        </SwissCard>
       </div>
 
       {/* Stats - Padrão Swiss */}
@@ -330,6 +275,6 @@ export default function JuradosPage() {
           </SwissCardContent>
         </SwissCard>
       )}
-    </PageLayout>
+    </div>
   );
 }

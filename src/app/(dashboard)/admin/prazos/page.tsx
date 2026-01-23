@@ -288,29 +288,35 @@ export default function PrazosPage() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6 p-6">
-        {/* Header - COM FUNDO */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-5 mb-5 border-b-2 border-border/70 bg-gradient-to-r from-muted/30 via-muted/10 to-transparent -mx-6 px-6 pt-4 rounded-t-xl">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-primary/10 flex items-center justify-center shadow-md flex-shrink-0">
-              <Clock className="w-7 h-7 md:w-8 md:h-8 text-primary" />
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight">
-                Prazos Urgentes
-              </h1>
-              <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-                Acompanhamento de prazos e demandas
-              </p>
+      <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+        {/* Header - Design Suíço */}
+        <div className="space-y-4">
+          {/* Linha superior: Título + Ações */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "p-2 sm:p-2.5 rounded-lg flex-shrink-0",
+                atribuicaoColors.bg
+              )}>
+                <Clock className={cn("w-5 h-5 sm:w-6 sm:h-6", atribuicaoColors.text)} />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                  Prazos Urgentes
+                </h1>
+                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                  Acompanhamento de prazos e demandas
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-          {/* Seletor de Atribuição - Tabs Premium */}
-          <div className="overflow-x-auto scrollbar-hide -mx-6 px-3 sm:px-6">
-            <div className="flex gap-0 min-w-max border-b-2 border-border/50 bg-muted/10 px-3 pt-2 rounded-t-lg">
+          {/* Seletor de Atribuição - Tabs com cores dos workspaces */}
+          <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+            <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-zinc-200 dark:border-zinc-800 pb-px">
               {ATRIBUICAO_OPTIONS.map((option) => {
                 const isActive = areaFilter === option.value;
+                const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
                 const count = option.value === "all" 
                   ? mockPrazos.length 
                   : mockPrazos.filter(p => p.area === option.value).length;
@@ -320,121 +326,124 @@ export default function PrazosPage() {
                     key={option.value}
                     onClick={() => setAreaFilter(option.value)}
                     className={cn(
-                      "relative px-4 py-2.5 text-sm font-medium transition-all duration-200 flex items-center gap-2 flex-shrink-0",
-                      "border-b-2",
+                      "relative px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 rounded-t-md",
                       isActive 
-                        ? "text-primary border-b-primary font-semibold"
-                        : "text-muted-foreground border-b-transparent hover:text-foreground hover:border-b-border"
+                        ? cn("text-zinc-900 dark:text-zinc-100", optionColors.bg)
+                        : cn("text-zinc-500 dark:text-zinc-400", optionColors.hoverBg)
                     )}
                   >
-                    <span className={cn(
-                      "flex-shrink-0 [&>svg]:w-4 [&>svg]:h-4",
-                      isActive ? "text-primary" : "text-muted-foreground"
-                    )}>{ATRIBUICAO_ICONS[option.value]}</span>
+                    <span className={cn(isActive ? optionColors.text : "text-zinc-400")}>{ATRIBUICAO_ICONS[option.value]}</span>
                     <span className="hidden sm:inline">{option.label}</span>
                     <span className="sm:hidden">{option.shortLabel}</span>
                     <span className={cn(
-                      "flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold",
+                      "ml-0.5 px-1.5 py-0.5 text-xs font-semibold rounded-full",
                       isActive 
-                        ? "bg-primary/15 text-primary"
-                        : "bg-muted text-muted-foreground"
+                        ? cn(optionColors.text, "bg-white/60 dark:bg-black/20")
+                        : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
                     )}>
                       {count}
                     </span>
+                    {isActive && (
+                      <span className={cn(
+                        "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
+                        optionColors.indicator
+                      )} />
+                    )}
                   </button>
                 );
               })}
             </div>
           </div>
+        </div>
 
-        {/* Stats Cards - PROPORCIONAIS */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <SwissCard className="border-l-[3px] border-l-rose-600 border-2 border-border/60 hover:shadow-md transition-all hover:scale-[1.01]">
-            <SwissCardContent className="p-4">
+        {/* Stats Cards - Design Suíço com borda lateral */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          <SwissCard className="border-l-2 border-l-rose-600">
+            <SwissCardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-2 rounded-lg bg-rose-100 dark:bg-rose-900/30 shadow-sm flex-shrink-0">
-                  <AlertOctagon className="w-5 h-5 text-rose-600" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <AlertOctagon className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
                 </div>
                 <div>
-                  <p className="text-2xl md:text-3xl font-bold text-rose-700 dark:text-rose-400 tracking-tight">{stats.vencidos}</p>
-                  <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider mt-0.5">Vencidos</p>
+                  <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.vencidos}</p>
+                  <p className="text-xs sm:text-xs text-rose-600 dark:text-rose-400">Vencidos</p>
                 </div>
               </div>
             </SwissCardContent>
           </SwissCard>
           
-          <SwissCard className="border-l-[4px] border-l-rose-500 border-2 border-border/60 hover:shadow-lg transition-all hover:scale-[1.02]">
-            <SwissCardContent className="p-5 sm:p-6">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="p-3 rounded-xl bg-rose-100 dark:bg-rose-900/30 shadow-sm flex-shrink-0">
-                  <Timer className="w-6 h-6 md:w-7 md:h-7 text-rose-600" />
+          <SwissCard className="border-l-2 border-l-rose-500">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Timer className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
                 </div>
                 <div>
-                  <p className="text-3xl md:text-4xl font-bold text-rose-700 dark:text-rose-400 tracking-tight">{stats.hoje}</p>
-                  <p className="text-sm md:text-base text-rose-600 dark:text-rose-400 font-semibold mt-1">Hoje</p>
+                  <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.hoje}</p>
+                  <p className="text-xs sm:text-xs text-rose-600 dark:text-rose-400">Hoje</p>
                 </div>
               </div>
             </SwissCardContent>
           </SwissCard>
           
-          <SwissCard className="border-l-[4px] border-l-amber-500 border-2 border-border/60 hover:shadow-lg transition-all hover:scale-[1.02]">
-            <SwissCardContent className="p-5 sm:p-6">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="p-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 shadow-sm flex-shrink-0">
-                  <Clock className="w-6 h-6 md:w-7 md:h-7 text-amber-600" />
+          <SwissCard className="border-l-2 border-l-amber-500">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
                 </div>
                 <div>
-                  <p className="text-3xl md:text-4xl font-bold text-amber-700 dark:text-amber-400 tracking-tight">{stats.amanha}</p>
-                  <p className="text-sm md:text-base text-amber-600 dark:text-amber-400 font-semibold mt-1">Amanhã</p>
+                  <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.amanha}</p>
+                  <p className="text-xs sm:text-xs text-amber-600 dark:text-amber-400">Amanhã</p>
                 </div>
               </div>
             </SwissCardContent>
           </SwissCard>
           
-          <SwissCard className="border-l-[4px] border-l-sky-500 border-2 border-border/60 hover:shadow-lg transition-all hover:scale-[1.02] hidden sm:block">
-            <SwissCardContent className="p-5 sm:p-6">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="p-3 rounded-xl bg-sky-100 dark:bg-sky-900/30 shadow-sm flex-shrink-0">
-                  <Calendar className="w-6 h-6 md:w-7 md:w-7 text-sky-600" />
+          <SwissCard className="border-l-2 border-l-sky-500 hidden sm:block">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-sky-500" />
                 </div>
                 <div>
-                  <p className="text-3xl md:text-4xl font-bold text-sky-700 dark:text-sky-400 tracking-tight">{stats.semana}</p>
-                  <p className="text-sm md:text-base text-sky-600 dark:text-sky-400 font-semibold mt-1">7 dias</p>
+                  <p className="text-xl sm:text-2xl font-bold text-sky-700 dark:text-sky-400">{stats.semana}</p>
+                  <p className="text-xs sm:text-xs text-sky-600 dark:text-sky-400">7 dias</p>
                 </div>
               </div>
             </SwissCardContent>
           </SwissCard>
 
-          <SwissCard className="border-l-[4px] border-l-rose-500 border-2 border-border/60 hover:shadow-lg transition-all hover:scale-[1.02] hidden lg:block">
-            <SwissCardContent className="p-5 sm:p-6">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="p-3 rounded-xl bg-rose-100 dark:bg-rose-900/30 shadow-sm flex-shrink-0">
-                  <Lock className="w-6 h-6 md:w-7 md:h-7 text-rose-600" />
+          <SwissCard className="border-l-2 border-l-rose-500 hidden lg:block">
+            <SwissCardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
                 </div>
                 <div>
-                  <p className="text-3xl md:text-4xl font-bold text-rose-700 dark:text-rose-400 tracking-tight">{stats.reuPreso}</p>
-                  <p className="text-sm md:text-base text-rose-600 dark:text-rose-400 font-semibold mt-1">Réu Preso</p>
+                  <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">{stats.reuPreso}</p>
+                  <p className="text-xs sm:text-xs text-rose-600 dark:text-rose-400">Réu Preso</p>
                 </div>
               </div>
             </SwissCardContent>
           </SwissCard>
         </div>
 
-        {/* Filters - EQUILIBRADOS */}
-        <div className="flex flex-col gap-3 p-4 rounded-xl bg-muted/30 border-2 border-border/40">
-          <div className="flex items-center gap-3">
+        {/* Filters - Design Suíço */}
+        <div className="flex flex-col gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
               <Input
                 placeholder="Buscar por assistido, processo ou ato..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-card border-2 border-border/60 h-10 text-sm md:text-base rounded-lg"
+                className="pl-10 bg-white dark:bg-zinc-950 h-9 text-sm"
               />
             </div>
 
             <Select value={periodoFilter} onValueChange={setPeriodoFilter}>
-              <SelectTrigger className="w-[130px] sm:w-[160px] h-10 text-sm flex-shrink-0 border-2 rounded-lg">
+              <SelectTrigger className="w-[120px] sm:w-[160px] h-9 text-xs sm:text-sm flex-shrink-0">
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
@@ -448,7 +457,7 @@ export default function PrazosPage() {
           </div>
         </div>
 
-        {/* Lista de Prazos - EQUILIBRADA */}
+        {/* Lista de Prazos - Design Suíço */}
         <div className="space-y-3">
           {filteredPrazos.map((prazo) => {
             const prazoInfo = getPrazoInfo(prazo.prazo);
@@ -459,31 +468,31 @@ export default function PrazosPage() {
               <SwissCard 
                 key={prazo.id} 
                 className={cn(
-                  "transition-all duration-200 hover:shadow-md hover:scale-[1.005]",
-                  "border-l-[3px] border-2 border-border/60 hover:border-border",
+                  "transition-all duration-200 hover:shadow-md",
+                  "border-l-[3px]",
                   prazo.reuPreso 
                     ? "border-l-rose-500 dark:border-l-rose-400" 
                     : "border-l-zinc-300 dark:border-l-zinc-600",
                   prazoInfo.urgent && "ring-1 ring-rose-200 dark:ring-rose-900/50"
                 )}
               >
-                <SwissCardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
+                <SwissCardContent className="p-3 sm:p-4">
+                  <div className="flex items-start justify-between gap-3 sm:gap-4">
                     <div className="flex-1 space-y-2 min-w-0">
                       {/* Badges */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                         <Badge className={cn(
-                          "text-xs px-2.5 py-1 rounded-lg border-0 font-bold",
+                          "text-[9px] sm:text-xs px-1.5 py-0 rounded-md border-0",
                           prazoInfo.className
                         )}>
-                          <PrazoIcon className="w-3.5 h-3.5 mr-1" />
+                          <PrazoIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
                           {prazoInfo.text}
                         </Badge>
                         
                         <PrisonerIndicator preso={prazo.reuPreso} size="sm" />
                         
                         <Badge className={cn(
-                          "text-xs px-2.5 py-1 rounded-lg border-0 font-semibold",
+                          "text-[9px] sm:text-xs px-1.5 py-0 rounded-md border-0",
                           areaColors.bg, areaColors.text
                         )}>
                           {ATRIBUICAO_OPTIONS.find(o => o.value === prazo.area)?.shortLabel || prazo.area}
@@ -491,32 +500,32 @@ export default function PrazosPage() {
                       </div>
                       
                       {/* Ato e Assistido */}
-                      <div className="space-y-0.5">
-                        <h3 className="font-bold text-base md:text-lg">{prazo.ato}</h3>
-                        <p className="text-sm md:text-base text-muted-foreground">{prazo.assistido}</p>
-                        <p className="text-xs md:text-sm font-mono text-muted-foreground/80">{prazo.processo}</p>
+                      <div>
+                        <h3 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">{prazo.ato}</h3>
+                        <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">{prazo.assistido}</p>
+                        <p className="text-xs sm:text-xs font-mono text-zinc-500 dark:text-zinc-500">{prazo.processo}</p>
                       </div>
                       
                       {/* Providências */}
                       {prazo.providencias && (
-                        <div className="p-3 rounded-lg bg-muted/50 border border-border/40">
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            <span className="font-semibold text-foreground">Providências:</span> {prazo.providencias}
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
+                          <p className="text-xs sm:text-xs text-zinc-600 dark:text-zinc-400">
+                            <span className="font-medium text-zinc-700 dark:text-zinc-300">Providências:</span> {prazo.providencias}
                           </p>
                         </div>
                       )}
                     </div>
                     
                     {/* Ações */}
-                    <div className="flex flex-col gap-2 flex-shrink-0">
+                    <div className="flex flex-col gap-1.5 sm:gap-2 flex-shrink-0">
                       <Link href={`/admin/demandas/${prazo.id}`}>
-                        <Button variant="outline" size="sm" className="h-9 text-sm gap-1.5 px-3 border-2">
+                        <Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs sm:text-xs gap-1">
                           Ver
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </Button>
                       </Link>
-                      <Button size="sm" className="h-9 text-sm gap-1.5 px-3">
-                        <CheckCircle2 className="w-4 h-4" />
+                      <Button size="sm" className="h-7 sm:h-8 text-xs sm:text-xs gap-1">
+                        <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         Concluir
                       </Button>
                     </div>
@@ -528,15 +537,15 @@ export default function PrazosPage() {
           
           {/* Empty State */}
           {filteredPrazos.length === 0 && (
-            <SwissCard className="border-dashed border-2">
+            <SwissCard className="border-dashed">
               <SwissCardContent className="text-center py-16">
-                <div className="mx-auto w-16 h-16 md:w-20 md:h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-5">
-                  <CheckCircle2 className="w-8 h-8 md:w-10 md:h-10 text-emerald-500" />
+                <div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                 </div>
-                <h3 className="text-lg md:text-xl font-bold mb-2">
+                <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Nenhum prazo urgente
                 </h3>
-                <p className="text-sm md:text-base text-muted-foreground">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   Todos os prazos estão em dia!
                 </p>
               </SwissCardContent>

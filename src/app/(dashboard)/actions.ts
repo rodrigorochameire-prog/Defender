@@ -1,12 +1,13 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { destroySession } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
 
 export async function logoutAction() {
-  // Limpa a sessão (cookies JWT)
+  // Limpa a sessão customizada (cookies JWT)
   await destroySession();
   
-  // Redireciona para login
-  redirect("/login");
+  // O signOut do Clerk será feito no cliente
+  // Retorna sucesso para o cliente redirecionar
+  return { success: true };
 }

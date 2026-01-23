@@ -8,7 +8,8 @@ import { trpc } from "@/lib/trpc/client";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { AssignmentProvider } from "@/contexts/assignment-context";
 import { Toaster } from "sonner";
-// Clerk removido - usando autenticação customizada
+import { ClerkProvider } from "@clerk/nextjs";
+import { ptBR } from "@clerk/localizations";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") return "";
@@ -60,24 +61,30 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <AssignmentProvider>
-            <Suspense fallback={<LoadingSpinner />}>
-              {children}
-            </Suspense>
-            <Toaster 
-              richColors 
-              position="top-right" 
-              toastOptions={{
-                className: "glass",
-                duration: 3000,
-              }}
-            />
-          </AssignmentProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </trpc.Provider>
+    <ClerkProvider
+      localization={ptBR}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+    >
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AssignmentProvider>
+              <Suspense fallback={<LoadingSpinner />}>
+                {children}
+              </Suspense>
+              <Toaster 
+                richColors 
+                position="top-right" 
+                toastOptions={{
+                  className: "glass",
+                  duration: 3000,
+                }}
+              />
+            </AssignmentProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </trpc.Provider>
+    </ClerkProvider>
   );
 }

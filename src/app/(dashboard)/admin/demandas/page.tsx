@@ -1,23 +1,32 @@
-import { DemandasView } from "@/components/demandas/demandas-view";
-import { PageLayout } from "@/components/shared/page-layout";
-import { FileText } from "lucide-react";
+import { DemandasTable } from "@/components/demandas/demandas-table";
+import { Button } from "@/components/ui/button";
+import { Download, Upload } from "lucide-react";
 
 export default function DemandasPage() {
   return (
-    <div className="p-6">
-      <div className="space-y-5 max-w-[1600px] mx-auto">
-        {/* Header com fundo */}
-        <div className="pb-5 mb-5 border-b-2 border-border/70 bg-gradient-to-r from-muted/30 via-muted/10 to-transparent -mx-6 px-6 pt-4 rounded-t-xl">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight">
+    <div className="space-y-6">
+      {/* Cabeçalho da Página (PageLayout simplificado) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-5">
+        <div>
+          <h1 className="text-2xl font-serif font-bold text-stone-900 tracking-tight flex items-center gap-2">
             Demandas & Prazos
           </h1>
-          <p className="text-base md:text-lg text-muted-foreground mt-2 leading-relaxed">
-            Gestão unificada de intimações com visualização em Lista, Grid ou Kanban
+          <p className="text-sm text-stone-500 mt-1">
+            Gestão unificada de intimações do Júri e Execução Penal.
           </p>
         </div>
-        
-        <DemandasView />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="bg-white border-stone-200 text-stone-600">
+            <Upload className="w-4 h-4 mr-2" /> Importar CSV
+          </Button>
+          <Button variant="outline" className="bg-white border-stone-200 text-stone-600">
+            <Download className="w-4 h-4 mr-2" /> Exportar Relatório
+          </Button>
+        </div>
       </div>
+
+      {/* Conteúdo Principal */}
+      <DemandasTable />
     </div>
   );
 }

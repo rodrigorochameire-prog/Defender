@@ -3,16 +3,14 @@
 import { useState, useMemo } from "react";
 import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import {
-  DataTable,
-  DataTableHeader,
-  DataTableBody,
-  DataTableRow,
-  DataTableCell,
-  DataTableCellMono,
-  DataTableActions,
-} from "@/components/shared/data-table";
-import { StatusIndicator, StatusBadge } from "@/components/shared/status-indicator";
-import { PremiumCard, PremiumCardHeader, PremiumCardContent, PremiumCardFooter } from "@/components/shared/premium-card";
+  SwissTable,
+  SwissTableBody,
+  SwissTableCell,
+  SwissTableHead,
+  SwissTableHeader,
+  SwissTableRow,
+  SwissTableContainer,
+} from "@/components/shared/swiss-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -77,18 +75,10 @@ import { ptBR } from "date-fns/locale";
 // Componentes estruturais padronizados
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { PageHeader } from "@/components/shared/section-header";
-import { FilterTab, FilterTabsGroup } from "@/components/shared/filter-tabs";
+import { FilterChip, FilterChipGroup } from "@/components/shared/filter-chips";
 import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
 import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
 import { EmptyState } from "@/components/shared/empty-state";
-import { FilterBar } from "@/components/shared/filter-bar";
-import { 
-  PageContainer, 
-  PageSection, 
-  ContentGrid,
-  Divider,
-  StatBlock
-} from "@/components/shared/page-structure";
 
 // ==========================================
 // TIPOS
@@ -322,8 +312,6 @@ function ProcessoCard({ processo }: { processo: Processo }) {
     ? differenceInDays(processo.proximoPrazo, new Date())
     : null;
   const prazoUrgente = diasPrazo !== null && diasPrazo <= 3;
-  const prazoHoje = diasPrazo === 0;
-  const prazoVencido = diasPrazo !== null && diasPrazo < 0;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(processo.numeroAutos);
@@ -332,45 +320,51 @@ function ProcessoCard({ processo }: { processo: Processo }) {
   };
 
   return (
-    <PremiumCard 
-      hoverable
-      padding="none"
-      className={cn(
-        processo.assistido.preso && "border-l-[3px] border-l-rose-500"
-      )}
-    >
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <SwissCard className={cn(
+        "group",
+        "transition-all duration-200",
+        "hover:shadow-md",
+        // Borda lateral semântica - réu preso ou solto
+        "border-l-[3px]",
+        processo.assistido.preso 
+          ? "border-l-rose-500 dark:border-l-rose-400" 
+          : "border-l-zinc-300 dark:border-l-zinc-600"
+      )}>
         {/* Cabeçalho */}
-        <div className="p-4 space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0 space-y-2">
-              {/* Status Indicators - PREMIUM */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Réu Preso - PULSANTE */}
-                {processo.assistido.preso && (
-                  <StatusBadge status="critical" label="Réu Preso" pulsing />
-                )}
-                
-                {/* Prazo - PULSANTE se urgente */}
-                {prazoVencido && (
-                  <StatusBadge status="critical" label="Vencido" pulsing />
-                )}
-                {prazoHoje && (
-                  <StatusBadge status="urgent" label="Hoje" pulsing />
-                )}
-                {diasPrazo === 1 && (
-                  <StatusBadge status="warning" label="Amanhã" />
-                )}
-                {diasPrazo !== null && diasPrazo > 1 && diasPrazo <= 3 && (
-                  <StatusBadge status="info" label={`${diasPrazo}d`} />
-                )}
-
-                {/* Área - Neutro */}
-                <Badge className="text-xs px-2 py-0.5 rounded-md bg-muted/60 text-muted-foreground border-0">
-                  {ATRIBUICAO_OPTIONS.find(o => o.value === processo.area)?.shortLabel || processo.area}
+        <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
+          <div className="flex items-start justify-between gap-2 sm:gap-3">
+            <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+              {/* Badges - ORDENAÇÃO: Situação → Área → Réu Preso → Prazo */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                {/* 1. SITUAÇÃO/STATUS */}
+                <Badge className={cn(
+                  "text-xs px-1.5 py-0 font-semibold uppercase rounded-md border-0",
+                  situacaoConfig.bg, situacaoConfig.color
+                )}>
+                  {situacaoConfig.label}
                 </Badge>
 
-                {/* Júri */}
+                {/* 2. ÁREA */}
+                <Badge className={cn(
+                  "text-xs px-1.5 py-0 rounded-md border-0",
+                  atribuicaoColors.bg, atribuicaoColors.text
+                )}>
+                  {ATRIBUICAO_OPTIONS.find(o => o.value === processo.area)?.shortLabel || processo.area}
+                </Badge>
+                
+                {/* 3. RÉU PRESO */}
+                <PrisonerIndicator preso={processo.assistido.preso} size="sm" />
+
+                {/* 4. PRAZO URGENTE */}
+                {prazoUrgente && diasPrazo !== null && (
+                  <Badge className="text-xs px-1.5 py-0 rounded-md bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200 border-0">
+                    <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
+                    {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : `${diasPrazo}d`}
+                  </Badge>
+                )}
+
+                {/* 5. JÚRI */}
                 {processo.isJuri && (
                   <Tooltip>
                     <TooltipTrigger>
@@ -382,56 +376,65 @@ function ProcessoCard({ processo }: { processo: Processo }) {
               </div>
 
               {/* Número do Processo (Mono) */}
-              <div className="flex items-center gap-2 group/copy cursor-pointer" onClick={handleCopy}>
-                <span className="font-mono text-xs sm:text-sm text-foreground hover:text-primary transition-colors truncate">
-                  {processo.numeroAutos}
+              <div className="flex items-center gap-1.5 sm:gap-2 group/copy cursor-pointer" onClick={handleCopy}>
+                <span className="font-mono text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <span className="hidden sm:inline">{processo.numeroAutos}</span>
+                  <span className="sm:hidden">{processo.numeroAutos.split('.')[0]}...</span>
                 </span>
                 {copied ? (
-                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
                 ) : (
-                  <Copy className="w-3 h-3 text-muted-foreground opacity-0 group-hover/copy:opacity-100 transition-opacity" />
+                  <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-300 dark:text-zinc-600 sm:opacity-0 sm:group-hover/copy:opacity-100 transition-opacity" />
                 )}
               </div>
 
               {/* Assunto (Fonte serifada) */}
-              <p className="font-serif text-xs sm:text-sm text-muted-foreground line-clamp-2">
+              <p className="font-legal text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 sm:line-clamp-1">
                 {processo.assunto}
               </p>
 
               {/* Localização */}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <MapPin className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{processo.vara} • {processo.comarca}</span>
+              <div className="flex items-center gap-2 sm:gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
+                  <span className="truncate max-w-[120px] sm:max-w-none">{processo.vara}</span>
+                  <span className="hidden sm:inline">• {processo.comarca}</span>
+                </span>
               </div>
             </div>
 
-            {/* Ações - Sempre visível em mobile */}
-            <div className="flex items-start gap-1 flex-shrink-0">
-              <Link href={`/admin/processos/${processo.id}`}>
-                <Button variant="ghost" size="icon" className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                  <Eye className="w-4 h-4" />
-                </Button>
-              </Link>
+            {/* Ações */}
+            <div className="flex items-start gap-0.5 sm:gap-1 flex-shrink-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={`/admin/processos/${processo.id}`}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Ver Detalhes</TooltipContent>
+              </Tooltip>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <MoreHorizontal className="w-4 h-4" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <MoreHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <Link href={`/admin/processos/${processo.id}`}>
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem className="cursor-pointer text-sm">
                       <Eye className="w-4 h-4 mr-2" /> Ver Detalhes
                     </DropdownMenuItem>
                   </Link>
                   <Link href={`/admin/demandas?processo=${processo.id}`}>
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem className="cursor-pointer text-sm">
                       <FileText className="w-4 h-4 mr-2" /> Ver Demandas
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer">
+                  <DropdownMenuItem className="cursor-pointer text-sm">
                     <ExternalLink className="w-4 h-4 mr-2" /> Consultar no TJ
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -440,25 +443,37 @@ function ProcessoCard({ processo }: { processo: Processo }) {
           </div>
 
           {/* Assistido */}
-          <div className="flex items-center gap-3 py-3 border-t border-border/30">
-            <Avatar className="w-9 h-9 ring-1 ring-border/50">
+          <div className="flex items-center gap-2 sm:gap-3 py-2 border-t border-zinc-100 dark:border-zinc-800/50">
+            {/* Avatar neutro - vermelho apenas se preso */}
+            <Avatar className={cn(
+              "w-8 h-8 sm:w-10 sm:h-10 ring-2 cursor-pointer hover:ring-primary/50 transition-all",
+              processo.assistido.preso ? "ring-rose-400" : "ring-zinc-200 dark:ring-zinc-700"
+            )}>
               <AvatarImage src={processo.assistido.foto || undefined} alt={processo.assistido.nome} />
-              <AvatarFallback className="text-xs font-semibold bg-muted">
+              <AvatarFallback className={cn(
+                "text-xs sm:text-sm font-semibold",
+                processo.assistido.preso
+                  ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
+                  : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+              )}>
                 {processo.assistido.nome.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             
             <div className="flex-1 min-w-0">
               <Link href={`/admin/assistidos/${processo.assistido.id}`}>
-                <p className="font-medium text-sm truncate hover:text-primary transition-colors">
+                <p className="font-medium text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   {processo.assistido.nome}
                 </p>
               </Link>
-              <div className="flex items-center gap-2 mt-0.5">
-                {processo.assistido.preso ? (
-                  <StatusIndicator status="critical" label="Preso" size="xs" pulsing />
-                ) : (
-                  <span className="text-xs text-muted-foreground">Solto</span>
+              <div className="flex items-center gap-1.5">
+                <PrisonerIndicator 
+                  preso={processo.assistido.preso} 
+                  localPrisao={processo.assistido.localPrisao}
+                  size="xs" 
+                />
+                {!processo.assistido.preso && (
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400">Solto</span>
                 )}
               </div>
             </div>
@@ -467,10 +482,13 @@ function ProcessoCard({ processo }: { processo: Processo }) {
             {processo.demandasAbertas > 0 && (
               <Tooltip>
                 <TooltipTrigger>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold">
-                    <Clock className="w-3 h-3" />
+                  <Badge variant="outline" className={cn(
+                    "text-xs font-mono px-1.5 py-0 rounded-md",
+                    "border-zinc-300 text-zinc-700 bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:bg-zinc-800"
+                  )}>
+                    <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                     {processo.demandasAbertas}
-                  </span>
+                  </Badge>
                 </TooltipTrigger>
                 <TooltipContent>{processo.demandasAbertas} demandas pendentes</TooltipContent>
               </Tooltip>
@@ -480,75 +498,85 @@ function ProcessoCard({ processo }: { processo: Processo }) {
 
         {/* Conteúdo Expansível */}
         <CollapsibleContent>
-          <div className="px-4 pb-4 space-y-3 border-t border-border/30">
-              {/* Próximo Prazo */}
-              {processo.proximoPrazo && (
-                <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-card">
-                  {prazoVencido && <StatusIndicator status="critical" size="sm" pulsing />}
-                  {prazoHoje && <StatusIndicator status="urgent" size="sm" pulsing />}
-                  {!prazoVencido && !prazoHoje && <Clock className="w-4 h-4 text-muted-foreground" />}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{processo.atoProximoPrazo}</p>
-                    <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                      {format(processo.proximoPrazo, "dd/MM/yyyy", { locale: ptBR })}
+          <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 space-y-2.5 sm:space-y-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
+            {/* Próximo Prazo */}
+            {processo.proximoPrazo && (
+              <div className={cn(
+                "flex items-start sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg mt-2.5 sm:mt-3",
+                prazoUrgente
+                  ? "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                  : "bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800"
+              )}>
+                <Clock className={cn(
+                  "w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 sm:mt-0",
+                  prazoUrgente ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-500"
+                )} />
+                <div className="flex-1 min-w-0">
+                  <p className={cn(
+                    "text-xs font-medium",
+                    prazoUrgente ? "text-amber-700 dark:text-amber-400" : "text-zinc-700 dark:text-zinc-300"
+                  )}>
+                    {processo.atoProximoPrazo}
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
+                    {format(processo.proximoPrazo, "dd/MM/yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Caso Vinculado */}
+            {processo.casoId && processo.casoTitulo && (
+              <Link href={`/admin/casos/${processo.casoId}`}>
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
+                  <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate">
+                      {processo.casoTitulo}
+                    </p>
+                    <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
+                      Vinculado ao caso
                     </p>
                   </div>
                 </div>
-              )}
+              </Link>
+            )}
 
-              {/* Caso Vinculado */}
-              {processo.casoId && processo.casoTitulo && (
-                <Link href={`/admin/casos/${processo.casoId}`}>
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-emerald-200/50 dark:border-emerald-800/50 bg-emerald-50/30 dark:bg-emerald-950/20 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-colors">
-                    <Target className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400 truncate">
-                        {processo.casoTitulo}
-                      </p>
-                      <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
-                        Vinculado ao caso
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              )}
+            {/* Último Evento */}
+            {processo.ultimoEvento && (
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                <span className="truncate">
+                  {processo.ultimoEvento}
+                  {processo.dataUltimoEvento && (
+                    <span className="ml-1 font-mono">
+                      ({format(processo.dataUltimoEvento, "dd/MM")})
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
 
-              {/* Último Evento */}
-              {processo.ultimoEvento && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span className="truncate">
-                    {processo.ultimoEvento}
-                    {processo.dataUltimoEvento && (
-                      <span className="ml-1 font-mono">
-                        ({format(processo.dataUltimoEvento, "dd/MM")})
-                      </span>
-                    )}
-                  </span>
-                </div>
-              )}
-
-              {/* Defensor */}
-              {processo.defensorNome && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Users className="w-3.5 h-3.5" />
-                  <span>{processo.defensorNome}</span>
-                </div>
+            {/* Defensor */}
+            {processo.defensorNome && (
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                <span>{processo.defensorNome}</span>
+              </div>
             )}
           </div>
         </CollapsibleContent>
 
         {/* Trigger de Expansão */}
         <CollapsibleTrigger asChild>
-          <button className="w-full flex justify-center py-2 cursor-pointer hover:bg-muted/20 transition-colors border-t border-border/30">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              <span>{isOpen ? "Recolher" : "Ver detalhes"}</span>
+          <div className="flex justify-center py-1.5 sm:py-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-1 text-xs text-zinc-400">
+              {isOpen ? <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </div>
-          </button>
+          </div>
         </CollapsibleTrigger>
-      </Collapsible>
-    </PremiumCard>
+      </SwissCard>
+    </Collapsible>
   );
 }
 
@@ -560,13 +588,6 @@ function ProcessoRow({ processo }: { processo: Processo }) {
   const [copied, setCopied] = useState(false);
   const atribuicaoColors = ATRIBUICAO_COLORS[processo.area] || ATRIBUICAO_COLORS.SUBSTITUICAO;
   const situacaoConfig = SITUACAO_CONFIGS[processo.situacao] || SITUACAO_CONFIGS.ativo;
-  
-  const diasPrazo = processo.proximoPrazo 
-    ? differenceInDays(processo.proximoPrazo, new Date())
-    : null;
-  const prazoVencido = diasPrazo !== null && diasPrazo < 0;
-  const prazoHoje = diasPrazo === 0;
-  const prazoUrgente = diasPrazo !== null && diasPrazo <= 3;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(processo.numeroAutos);
@@ -575,146 +596,80 @@ function ProcessoRow({ processo }: { processo: Processo }) {
   };
 
   return (
-    <DataTableRow selected={false} className={cn(
-      processo.assistido.preso && "border-l-rose-500"
+    <SwissTableRow className={cn(
+      "group transition-colors",
+      processo.assistido.preso && "border-l-[3px] border-l-rose-500"
     )}>
-      {/* Número do Processo */}
-      <DataTableCellMono className="min-w-[200px]">
-        <div 
-          className="flex items-center gap-2 cursor-pointer group/copy" 
-          onClick={handleCopy}
-        >
-          <span className="truncate hover:text-primary transition-colors">
+      <SwissTableCell>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={handleCopy}>
+          <span className="font-mono text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             {processo.numeroAutos}
           </span>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {processo.isJuri && (
-              <Tooltip>
-                <TooltipTrigger>
-                  <Gavel className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                </TooltipTrigger>
-                <TooltipContent>Processo do Júri</TooltipContent>
-              </Tooltip>
-            )}
-            {copied ? (
-              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-            ) : (
-              <Copy className="w-3 h-3 opacity-0 group-hover/copy:opacity-100 transition-opacity" />
-            )}
-          </div>
+          {processo.isJuri && <Gavel className="w-3.5 h-3.5 text-emerald-600" />}
+          {copied && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
         </div>
-      </DataTableCellMono>
-
-      {/* Assistido */}
-      <DataTableCell className="min-w-[180px]">
+      </SwissTableCell>
+      <SwissTableCell>
         <div className="flex items-center gap-2">
-          <Avatar className="w-8 h-8 ring-1 ring-border/50 flex-shrink-0">
+          {/* Avatar neutro - vermelho apenas se preso */}
+          <Avatar className={cn(
+            "w-8 h-8 ring-2 cursor-pointer hover:ring-primary/50 transition-all",
+            processo.assistido.preso ? "ring-rose-400" : "ring-zinc-200 dark:ring-zinc-700"
+          )}>
             <AvatarImage src={processo.assistido.foto || undefined} alt={processo.assistido.nome} />
-            <AvatarFallback className="text-xs font-semibold bg-muted text-foreground">
+            <AvatarFallback className={cn(
+              "text-xs font-semibold",
+              processo.assistido.preso
+                ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
+                : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+            )}>
               {processo.assistido.nome.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <Link href={`/admin/assistidos/${processo.assistido.id}`} className="hover:text-primary transition-colors">
-              <span className="text-sm font-medium block truncate">{processo.assistido.nome}</span>
-            </Link>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              {processo.assistido.preso && (
-                <StatusIndicator status="critical" size="xs" pulsing />
-              )}
-            </div>
-          </div>
+          <Link href={`/admin/assistidos/${processo.assistido.id}`} className="hover:text-blue-600 dark:hover:text-blue-400">
+            <span className="text-sm font-medium">{processo.assistido.nome}</span>
+          </Link>
         </div>
-      </DataTableCell>
-
-      {/* Comarca/Vara */}
-      <DataTableCell className="min-w-[160px]">
+      </SwissTableCell>
+      <SwissTableCell>
         <div>
-          <p className="text-sm font-medium truncate">{processo.comarca}</p>
-          <p className="text-xs text-muted-foreground truncate">{processo.vara}</p>
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{processo.comarca}</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{processo.vara}</p>
         </div>
-      </DataTableCell>
-
-      {/* Área */}
-      <DataTableCell>
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 text-xs font-medium">
+      </SwissTableCell>
+      <SwissTableCell>
+        <Badge className={cn("text-xs border-0", atribuicaoColors.bg, atribuicaoColors.text)}>
           {ATRIBUICAO_OPTIONS.find(o => o.value === processo.area)?.shortLabel || processo.area}
-        </span>
-      </DataTableCell>
-
-      {/* Classe/Assunto */}
-      <DataTableCell className="min-w-[180px]">
-        <div>
-          <p className="text-xs font-medium truncate">{processo.classeProcessual}</p>
-          <p className="text-xs font-serif text-muted-foreground truncate">
-            {processo.assunto}
-          </p>
-        </div>
-      </DataTableCell>
-
-      {/* Defensor */}
-      <DataTableCell>
-        <p className="text-xs truncate">
-          {processo.defensorNome || "-"}
+        </Badge>
+      </SwissTableCell>
+      <SwissTableCell>
+        <p className="text-xs font-legal text-zinc-600 dark:text-zinc-400 max-w-[200px] truncate">
+          {processo.assunto}
         </p>
-      </DataTableCell>
-
-      {/* Situação */}
-      <DataTableCell>
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 text-xs font-medium">
-          {situacaoConfig.label}
-        </span>
-      </DataTableCell>
-
-      {/* Demandas */}
-      <DataTableCell align="center">
+      </SwissTableCell>
+      <SwissTableCell className="text-center">
         <span className={cn(
-          "inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-md text-xs font-semibold",
-          processo.demandasAbertas > 0 
-            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-            : "bg-muted/60 text-muted-foreground"
+          "font-mono text-sm font-medium",
+          processo.demandasAbertas > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-400"
         )}>
           {processo.demandasAbertas}
         </span>
-      </DataTableCell>
-
-      {/* Próximo Prazo */}
-      <DataTableCell className="min-w-[120px]">
-        {processo.proximoPrazo ? (
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5">
-              {prazoVencido && <StatusIndicator status="critical" size="xs" pulsing />}
-              {prazoHoje && <StatusIndicator status="urgent" size="xs" pulsing />}
-              {diasPrazo === 1 && <StatusIndicator status="warning" size="xs" />}
-              <span className={cn(
-                "text-xs font-mono font-semibold",
-                prazoVencido && "text-rose-600",
-                prazoHoje && "text-orange-600",
-                diasPrazo === 1 && "text-amber-600"
-              )}>
-                {diasPrazo === 0 ? "Hoje" : diasPrazo === 1 ? "Amanhã" : diasPrazo !== null && diasPrazo < 0 ? "Vencido" : `${diasPrazo}d`}
-              </span>
-            </div>
-            {processo.atoProximoPrazo && (
-              <p className="text-xs text-muted-foreground truncate">{processo.atoProximoPrazo}</p>
-            )}
-          </div>
-        ) : (
-          <span className="text-xs text-muted-foreground italic">-</span>
-        )}
-      </DataTableCell>
-
-      {/* Ações */}
-      <DataTableCell align="right">
-        <DataTableActions>
+      </SwissTableCell>
+      <SwissTableCell>
+        <Badge className={cn("text-xs border-0", situacaoConfig.bg, situacaoConfig.color)}>
+          {situacaoConfig.label}
+        </Badge>
+      </SwissTableCell>
+      <SwissTableCell className="text-right">
+        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Link href={`/admin/processos/${processo.id}`}>
-            <Button variant="ghost" size="icon" className="h-7 w-7">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
               <Eye className="w-4 h-4" />
             </Button>
           </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -729,9 +684,9 @@ function ProcessoRow({ processo }: { processo: Processo }) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </DataTableActions>
-      </DataTableCell>
-    </DataTableRow>
+        </div>
+      </SwissTableCell>
+    </SwissTableRow>
   );
 }
 
@@ -768,38 +723,24 @@ export default function ProcessosPage() {
   // Configuração visual da atribuição selecionada
   const atribuicaoColors = ATRIBUICAO_COLORS[areaFilter] || ATRIBUICAO_COLORS.all;
 
-  // Preparar filtros ativos
-  const activeFilters = [
-    situacaoFilter !== "all" && { 
-      key: "situacao", 
-      label: "Situação", 
-      value: SITUACAO_CONFIGS[situacaoFilter]?.label || situacaoFilter 
-    },
-    areaFilter !== "all" && { 
-      key: "area", 
-      label: "Área", 
-      value: ATRIBUICAO_OPTIONS.find(o => o.value === areaFilter)?.label || areaFilter 
-    },
-  ].filter(Boolean) as Array<{ key: string; label: string; value: string }>;
-
   return (
     <TooltipProvider>
-      <PageContainer maxWidth="wide">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Breadcrumbs */}
-        <Breadcrumbs className="mb-4" />
+        <Breadcrumbs className="mb-2" />
         
         {/* Page Header */}
         <PageHeader
           title="Processos"
-          description={`Gerenciamento integrado de processos judiciais • ${stats.total} processos cadastrados`}
+          description={`Gerenciamento integrado • ${stats.total} processos`}
           actions={
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" className="h-12 w-12 border-2 rounded-xl">
-                <Download className="w-5 h-5 md:w-6 md:h-6" />
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon">
+                <Download className="w-4 h-4" />
               </Button>
               <Link href="/admin/processos/novo">
-                <Button className="gap-2 h-12 px-6 text-base md:text-lg font-semibold rounded-xl">
-                  <Plus className="w-5 h-5 md:w-6 md:h-6" />
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
                   <span className="hidden sm:inline">Novo Processo</span>
                   <span className="sm:hidden">Novo</span>
                 </Button>
@@ -808,185 +749,140 @@ export default function ProcessosPage() {
           }
         />
 
-        {/* Seção de Estatísticas */}
-        <PageSection
-          subtitle="Visão Geral"
-          title="Estatísticas"
-          icon={<Target className="w-6 h-6" />}
-        >
-          <ContentGrid columns={5} gap="sm">
-            <StatBlock
-              label="Total de Processos"
-              value={stats.total}
-              icon={<Scale className="w-5 h-5 text-muted-foreground" />}
-              variant="default"
-            />
-            <StatBlock
-              label="Processos do Júri"
-              value={stats.juri}
-              icon={<Gavel className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
-              variant="success"
-            />
-            <StatBlock
-              label="Com Demandas"
-              value={stats.comDemandas}
-              icon={<Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
-              variant={stats.comDemandas > 0 ? "warning" : "default"}
-            />
-            <StatBlock
-              label="Réu Preso"
-              value={stats.reuPreso}
-              icon={<Lock className="w-5 h-5 text-rose-600 dark:text-rose-400" />}
-              variant={stats.reuPreso > 0 ? "danger" : "default"}
-            />
-            <StatBlock
-              label="Comarcas"
-              value={stats.comarcas}
-              icon={<Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
-              variant="primary"
-            />
-          </ContentGrid>
-        </PageSection>
+        {/* Filtros por Atribuição */}
+        <FilterChipGroup label="Filtrar por Área">
+          {ATRIBUICAO_OPTIONS.map((option) => {
+            const count = option.value === "all" 
+              ? mockProcessos.length 
+              : mockProcessos.filter(p => p.area === option.value).length;
+            
+            return (
+              <FilterChip
+                key={option.value}
+                label={option.label}
+                value={option.value}
+                selected={areaFilter === option.value}
+                onSelect={setAreaFilter}
+                count={count}
+                icon={ATRIBUICAO_ICONS[option.value]}
+                size="md"
+              />
+            );
+          })}
+        </FilterChipGroup>
 
-        {/* Seção de Filtros e Listagem */}
-        <PageSection
-          subtitle="Gestão"
-          title="Listagem de Processos"
-          icon={<FileText className="w-6 h-6" />}
-        >
-          {/* Filtros Rápidos - Tabs Premium */}
-          <FilterTabsGroup label="Filtrar por Área">
-            {ATRIBUICAO_OPTIONS.map((option) => {
-              const count = option.value === "all" 
-                ? mockProcessos.length 
-                : mockProcessos.filter(p => p.area === option.value).length;
-              
-              return (
-                <FilterTab
-                  key={option.value}
-                  label={option.label}
-                  value={option.value}
-                  selected={areaFilter === option.value}
-                  onSelect={setAreaFilter}
-                  count={count}
-                  icon={ATRIBUICAO_ICONS[option.value]}
-                />
-              );
-            })}
-          </FilterTabsGroup>
-
-          {/* Barra de Filtros Principal */}
-          <FilterBar
-            searchValue={searchTerm}
-            onSearchChange={setSearchTerm}
-            searchPlaceholder="Buscar por número, assistido ou assunto..."
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            showViewToggle={true}
-            sortOptions={[
-              { value: "recente", label: "Mais Recentes" },
-              { value: "antigo", label: "Mais Antigos" },
-              { value: "numero", label: "Número do Processo" },
-              { value: "assistido", label: "Nome do Assistido" },
-            ]}
-            sortValue="recente"
-            advancedFilters={
-              <>
-                <FilterSelect
-                  label="Situação"
-                  placeholder="Todas as situações"
-                  value={situacaoFilter}
-                  onValueChange={setSituacaoFilter}
-                  options={[
-                    { value: "all", label: "Todas" },
-                    { value: "ativo", label: "Ativos" },
-                    { value: "suspenso", label: "Suspensos" },
-                    { value: "arquivado", label: "Arquivados" },
-                    { value: "baixado", label: "Baixados" },
-                  ]}
-                />
-                <FilterSelect
-                  label="Comarca"
-                  placeholder="Todas as comarcas"
-                  value="all"
-                  onValueChange={() => {}}
-                  options={[
-                    { value: "all", label: "Todas" },
-                    { value: "camacari", label: "Camaçari" },
-                    { value: "salvador", label: "Salvador" },
-                  ]}
-                />
-                <FilterSelect
-                  label="Defensor"
-                  placeholder="Todos os defensores"
-                  value="all"
-                  onValueChange={() => {}}
-                  options={[
-                    { value: "all", label: "Todos" },
-                    { value: "rodrigo", label: "Dr. Rodrigo Rocha" },
-                    { value: "maria", label: "Dra. Maria Oliveira" },
-                  ]}
-                />
-              </>
-            }
-            activeFilters={activeFilters}
-            onRemoveFilter={(key) => {
-              if (key === "situacao") setSituacaoFilter("all");
-              if (key === "area") setAreaFilter("all");
-            }}
-            onClearFilters={() => {
-              setSituacaoFilter("all");
-              setAreaFilter("all");
-              setSearchTerm("");
-            }}
+        {/* Stats Cards - Padronizado */}
+        <StatsGrid columns={5}>
+          <StatsCard
+            label="Total"
+            value={stats.total}
+            icon={Scale}
+            variant="default"
+            size="sm"
           />
+          <StatsCard
+            label="Júri"
+            value={stats.juri}
+            icon={Gavel}
+            variant="success"
+            size="sm"
+          />
+          <StatsCard
+            label="Com Demandas"
+            value={stats.comDemandas}
+            icon={Clock}
+            variant={stats.comDemandas > 0 ? "warning" : "default"}
+            size="sm"
+          />
+          <StatsCard
+            label="Réu Preso"
+            value={stats.reuPreso}
+            icon={Lock}
+            variant={stats.reuPreso > 0 ? "danger" : "default"}
+            size="sm"
+            className="hidden sm:flex"
+          />
+          <StatsCard
+            label="Comarcas"
+            value={stats.comarcas}
+            icon={Building2}
+            variant="info"
+            size="sm"
+            className="hidden lg:flex"
+          />
+        </StatsGrid>
 
-          {/* Content */}
-          {filteredProcessos.length === 0 ? (
-            <EmptyState
-              icon={Scale}
-              title="Nenhum processo encontrado"
-              description="Crie um novo processo ou ajuste os filtros de busca."
-              action={{
-                label: "Novo Processo",
-                onClick: () => {},
-                icon: Plus,
-              }}
-              variant={searchTerm ? "search" : "default"}
+        {/* Search & Filters - Padronizado */}
+        <SearchToolbar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Buscar por número, assistido..."
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          filters={
+            <FilterSelect
+              label="Situação"
+              value={situacaoFilter}
+              onValueChange={setSituacaoFilter}
+              options={[
+                { value: "all", label: "Todas" },
+                { value: "ativo", label: "Ativos" },
+                { value: "suspenso", label: "Suspensos" },
+                { value: "arquivado", label: "Arquivados" },
+              ]}
+              width="md"
             />
-          ) : viewMode === "grid" ? (
-            <ContentGrid columns={3} gap="md">
-              {filteredProcessos.map((processo) => (
-                <ProcessoCard key={processo.id} processo={processo} />
-              ))}
-            </ContentGrid>
-          ) : (
-            <div className="max-h-[calc(100vh-400px)] overflow-auto">
-              <DataTable>
-                <DataTableHeader>
-                  <tr>
-                    <DataTableCell header>Nº Processo</DataTableCell>
-                    <DataTableCell header>Assistido</DataTableCell>
-                    <DataTableCell header>Comarca/Vara</DataTableCell>
-                    <DataTableCell header>Área</DataTableCell>
-                    <DataTableCell header>Classe/Assunto</DataTableCell>
-                    <DataTableCell header>Defensor</DataTableCell>
-                    <DataTableCell header>Situação</DataTableCell>
-                    <DataTableCell header align="center">Dem.</DataTableCell>
-                    <DataTableCell header>Próximo Prazo</DataTableCell>
-                    <DataTableCell header align="right">Ações</DataTableCell>
-                  </tr>
-                </DataTableHeader>
-                <DataTableBody>
-                  {filteredProcessos.map((processo) => (
-                    <ProcessoRow key={processo.id} processo={processo} />
-                  ))}
-                </DataTableBody>
-              </DataTable>
-            </div>
-          )}
-        </PageSection>
-      </PageContainer>
+          }
+          activeFiltersCount={situacaoFilter !== "all" ? 1 : 0}
+          onClearFilters={() => setSituacaoFilter("all")}
+        />
+
+        {/* Content */}
+        {viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredProcessos.map((processo) => (
+              <ProcessoCard key={processo.id} processo={processo} />
+            ))}
+          </div>
+        ) : (
+          <SwissTableContainer className="max-h-[calc(100vh-320px)]">
+            <SwissTable>
+              <SwissTableHeader>
+                <SwissTableRow className="bg-muted/50">
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Número</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Assistido</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Comarca/Vara</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Área</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Assunto</SwissTableHead>
+                  <SwissTableHead className="text-center font-semibold text-xs uppercase tracking-wider">Dem.</SwissTableHead>
+                  <SwissTableHead className="font-semibold text-xs uppercase tracking-wider">Situação</SwissTableHead>
+                  <SwissTableHead className="text-right font-semibold text-xs uppercase tracking-wider">Ações</SwissTableHead>
+                </SwissTableRow>
+              </SwissTableHeader>
+              <SwissTableBody>
+                {filteredProcessos.map((processo) => (
+                  <ProcessoRow key={processo.id} processo={processo} />
+                ))}
+              </SwissTableBody>
+            </SwissTable>
+          </SwissTableContainer>
+        )}
+
+        {/* Empty State */}
+        {filteredProcessos.length === 0 && (
+          <EmptyState
+            icon={Scale}
+            title="Nenhum processo encontrado"
+            description="Crie um novo processo ou ajuste os filtros de busca."
+            action={{
+              label: "Novo Processo",
+              onClick: () => {},
+              icon: Plus,
+            }}
+            variant={searchTerm ? "search" : "default"}
+          />
+        )}
+      </div>
     </TooltipProvider>
   );
 }

@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/session";
+import { currentUser } from "@clerk/nextjs/server";
+import { db, users } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import { AdminSidebar } from "@/components/layouts/admin-sidebar";
 
 export default async function AdminLayout({
@@ -7,14 +9,24 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getSession();
+  const clerkUser = await currentUser();
 
-  if (!user) {
-    redirect("/login");
+  if (!clerkUser) {
+    redirect("/sign-in");
+  }
+
+  // Buscar usuário no banco de dados pelo email do Clerk
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.email, clerkUser.emailAddresses[0]?.emailAddress || ""),
+  });
+
+  if (!dbUser) {
+    // Usuário existe no Clerk mas não no banco - redirecionar para sincronizar
+    redirect("/auth-redirect");
   }
 
   return (
-    <AdminSidebar userName={user.name} userEmail={user.email}>
+    <AdminSidebar userName={dbUser.name} userEmail={dbUser.email}>
       {children}
     </AdminSidebar>
   );
