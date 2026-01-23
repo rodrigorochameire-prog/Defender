@@ -5,7 +5,7 @@
 1. Acesse https://github.com e faça login
 2. Clique no botão "+" no canto superior direito
 3. Selecione "New repository"
-4. Escolha um nome para o repositório (ex: `TeteCareHub`)
+4. Escolha um nome para o repositório (ex: `Defender`)
 5. **NÃO** inicialize com README, .gitignore ou licença (já temos esses arquivos)
 6. Clique em "Create repository"
 
@@ -15,7 +15,7 @@ Execute os seguintes comandos no terminal, dentro da pasta do projeto:
 
 ```bash
 # Navegar para a pasta do projeto
-cd "/Users/rodrigorochameire/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/Pessoal/Tuco Care/TeteCareHub"
+cd "/Users/rodrigorochameire/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/Pessoal/DefesaHub/Defender"
 
 # Inicializar o repositório Git
 git init
@@ -24,10 +24,10 @@ git init
 git add .
 
 # Fazer o primeiro commit
-git commit -m "Initial commit: TeteCareHub project"
+git commit -m "Initial commit: Defender project"
 
 # Adicionar o remote do GitHub (substitua SEU_USUARIO pelo seu username do GitHub)
-git remote add origin https://github.com/SEU_USUARIO/TeteCareHub.git
+git remote add origin https://github.com/SEU_USUARIO/Defender.git
 
 # Verificar se o remote foi adicionado corretamente
 git remote -v
@@ -47,7 +47,7 @@ Se você usar HTTPS, o GitHub pode pedir suas credenciais:
 
 1. Vá em GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
 2. Clique em "Generate new token (classic)"
-3. Dê um nome (ex: "TeteCareHub")
+3. Dê um nome (ex: "Defender")
 4. Selecione os escopos: `repo` (acesso completo aos repositórios)
 5. Clique em "Generate token"
 6. **Copie o token imediatamente** (você não poderá vê-lo novamente)
@@ -59,7 +59,7 @@ Se preferir usar SSH (mais seguro e não precisa digitar credenciais):
 
 ```bash
 # Adicionar remote usando SSH (substitua SEU_USUARIO)
-git remote set-url origin git@github.com:SEU_USUARIO/TeteCareHub.git
+git remote set-url origin git@github.com:SEU_USUARIO/Defender.git
 ```
 
 Para usar SSH, você precisa ter uma chave SSH configurada no GitHub. Veja: https://docs.github.com/en/authentication/connecting-to-github-with-ssh

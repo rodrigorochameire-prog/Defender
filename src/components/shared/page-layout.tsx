@@ -9,12 +9,14 @@ import { cn } from "@/lib/utils";
 /**
  * ========================================
  * SISTEMA DE LAYOUT UNIFICADO
- * Minimalismo Institucional
+ * Design Premium - Defensoria Pública
  * 
- * Todas as páginas seguem o mesmo esqueleto:
- * 1. Cabeçalho Unificado (título + ações)
- * 2. Área de Filtros (opcional)
- * 3. Conteúdo Principal
+ * Estrutura padronizada para todas as páginas:
+ * 1. Cabeçalho Elegante (título + descrição + ações)
+ * 2. Barra de Estatísticas (opcional)
+ * 3. Filtros e Controles (opcional)
+ * 4. Conteúdo Principal em Blocos
+ * 5. Rodapé contextual (opcional)
  * ========================================
  */
 
@@ -26,12 +28,18 @@ interface PageLayoutProps {
   description?: string;
   /** Botões de ação no canto superior direito */
   actions?: ReactNode;
-  /** Área de filtros abaixo do header */
+  /** Ícone do cabeçalho (opcional) */
+  icon?: LucideIcon;
+  /** Barra de estatísticas abaixo do header */
+  stats?: ReactNode;
+  /** Área de filtros abaixo das stats */
   filters?: ReactNode;
   /** Classe adicional para customização */
   className?: string;
   /** Largura máxima do conteúdo (default: 1600px) */
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
+  /** Espaçamento interno reduzido */
+  compact?: boolean;
 }
 
 const maxWidthClasses = {
@@ -53,35 +61,46 @@ export function PageLayout({
   children, 
   header, 
   description,
+  icon: Icon,
   actions, 
+  stats,
   filters,
   className,
   maxWidth = "2xl",
+  compact = false,
 }: PageLayoutProps) {
   return (
     <div 
       className={cn(
-        "flex flex-col h-full space-y-6",
-        "p-4 sm:p-6 md:p-8",
+        "flex flex-col h-full",
+        compact ? "space-y-4" : "space-y-6",
+        compact ? "p-4 sm:p-5 md:p-6" : "p-4 sm:p-6 md:p-8",
         maxWidthClasses[maxWidth],
         "mx-auto w-full",
         className
       )}
     >
-      {/* 1. Cabeçalho Unificado */}
+      {/* 1. Cabeçalho Elegante */}
       {(header || actions) && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 dark:border-zinc-800 pb-5">
-          <div>
-            {header && (
-              <h1 className="text-2xl font-serif font-semibold text-stone-900 dark:text-stone-100 tracking-tight">
-                {header}
-              </h1>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-border/60">
+          <div className="flex items-start gap-4">
+            {Icon && (
+              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Icon className="w-6 h-6 text-primary" />
+              </div>
             )}
-            {description && (
-              <p className="text-sm text-stone-500 dark:text-stone-400 mt-1 max-w-2xl">
-                {description}
-              </p>
-            )}
+            <div className="flex-1">
+              {header && (
+                <h1 className="text-2xl md:text-3xl font-serif font-semibold text-foreground tracking-tight leading-tight">
+                  {header}
+                </h1>
+              )}
+              {description && (
+                <p className="text-sm md:text-base text-muted-foreground mt-1.5 max-w-3xl leading-relaxed">
+                  {description}
+                </p>
+              )}
+            </div>
           </div>
           {actions && (
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -91,14 +110,21 @@ export function PageLayout({
         </div>
       )}
 
-      {/* 2. Área de Filtros (Contexto) */}
+      {/* 2. Barra de Estatísticas */}
+      {stats && (
+        <div className="w-full">
+          {stats}
+        </div>
+      )}
+
+      {/* 3. Área de Filtros */}
       {filters && (
-        <div className="w-full bg-stone-100/50 dark:bg-zinc-800/50 p-2 rounded-lg border border-stone-200 dark:border-zinc-700 flex flex-wrap items-center gap-2">
+        <div className="w-full rounded-xl bg-muted/30 border border-border/40 p-4">
           {filters}
         </div>
       )}
 
-      {/* 3. Conteúdo Principal */}
+      {/* 4. Conteúdo Principal */}
       <div className="flex-1 min-h-0">
         {children}
       </div>

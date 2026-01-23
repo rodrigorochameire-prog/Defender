@@ -232,23 +232,23 @@ export default function DashboardPage() {
 
   return (
     <TooltipProvider>
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       {/* Mode Selector - Todos vs Específico */}
-      <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/40">
-        <div className="flex items-center gap-1 p-1.5 bg-muted/60 dark:bg-muted/30 rounded-xl border border-border/50">
+      <div className="flex items-center justify-between gap-4 pb-4 border-b-2 border-border/50 bg-muted/10 -mx-6 px-6 pt-4 rounded-t-xl">
+        <div className="flex items-center gap-1.5 p-2 bg-muted/60 dark:bg-muted/30 rounded-xl border-2 border-border/40">
           <UITooltip>
             <TooltipTrigger asChild>
               <Button
                 variant={dashboardMode === "all_workspaces" ? "accent" : "ghost"}
                 size="sm"
                 onClick={() => setDashboardMode("all_workspaces")}
-                className={`gap-2 rounded-lg transition-all font-semibold ${
+                className={`gap-2 rounded-lg transition-all font-semibold px-4 py-2.5 text-sm md:text-base ${
                   dashboardMode === "all_workspaces" 
                     ? "shadow-lg text-white" 
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Layers className="h-4 w-4" />
+                <Layers className="h-5 w-5" />
                 <span className="hidden sm:inline">Central Integrada</span>
               </Button>
             </TooltipTrigger>
@@ -263,13 +263,13 @@ export default function DashboardPage() {
                 variant={dashboardMode === "current_workspace" ? "accent" : "ghost"}
                 size="sm"
                 onClick={() => setDashboardMode("current_workspace")}
-                className={`gap-2 rounded-lg transition-all font-semibold ${
+                className={`gap-2 rounded-lg transition-all font-semibold px-4 py-2.5 text-sm md:text-base ${
                   dashboardMode === "current_workspace" 
                     ? "shadow-lg text-white" 
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Building2 className="h-4 w-4" />
+                <Building2 className="h-5 w-5" />
                 <span className="hidden sm:inline">{config.shortName}</span>
               </Button>
             </TooltipTrigger>
@@ -284,7 +284,7 @@ export default function DashboardPage() {
             variant={activeView === "overview" ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveView("overview")}
-            className={`rounded-lg font-semibold ${activeView === "overview" ? "text-white shadow-md" : ""}`}
+            className={`rounded-lg font-semibold px-5 py-2.5 text-sm md:text-base ${activeView === "overview" ? "text-white shadow-md" : ""}`}
           >
             Visão Geral
           </Button>
@@ -292,18 +292,18 @@ export default function DashboardPage() {
             variant={activeView === "analytics" ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveView("analytics")}
-            className={`rounded-lg font-semibold ${activeView === "analytics" ? "text-white shadow-md" : ""}`}
+            className={`rounded-lg font-semibold px-5 py-2.5 text-sm md:text-base ${activeView === "analytics" ? "text-white shadow-md" : ""}`}
           >
             Análises
           </Button>
         </div>
       </div>
 
-      {/* Header - Dinâmico por atribuição */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header - COM FUNDO ORGANIZACIONAL */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 mb-5 border-b-2 border-border/50 bg-gradient-to-r from-muted/30 via-muted/10 to-transparent -mx-6 px-6 pt-4 rounded-t-xl">
         <div className="flex items-center gap-4">
           <div 
-            className={`h-16 w-16 rounded-2xl flex items-center justify-center shadow-lg transition-all ${
+            className={`h-14 w-14 md:h-16 md:w-16 rounded-2xl flex items-center justify-center shadow-md transition-all ${
               dashboardMode === "all_workspaces" ? "ring-2 ring-offset-2 ring-offset-background" : ""
             }`}
             style={{
@@ -314,17 +314,17 @@ export default function DashboardPage() {
             }}
           >
             {dashboardMode === "all_workspaces" ? (
-              <Layers className="h-8 w-8 text-white" />
+              <Layers className="h-7 w-7 md:h-8 md:w-8 text-white" />
             ) : (
-              <BarChart3 className="h-8 w-8 text-white" />
+              <BarChart3 className="h-7 w-7 md:h-8 md:w-8 text-white" />
             )}
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{dashboardInfo.title}</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">
+          <div className="space-y-1">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight">{dashboardInfo.title}</h1>
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
               {dashboardInfo.subtitle}
             </p>
-            <p className="text-xs text-muted-foreground/70 mt-1">
+            <p className="text-sm text-muted-foreground/70">
               {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
             </p>
           </div>
@@ -333,23 +333,23 @@ export default function DashboardPage() {
 
       {activeView === "overview" ? (
         <>
-          {/* SEÇÃO 1: INDICADORES RÁPIDOS - Padrão Swiss */}
+          {/* SEÇÃO 1: INDICADORES RÁPIDOS - EQUILIBRADOS */}
           <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
             {/* Prazos Hoje */}
-            <SwissCard className="border-l-[3px] border-l-orange-500 dark:border-l-orange-400 group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl sm:text-3xl font-bold text-orange-600">{mockStats.prazosHoje}</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Prazos Hoje</p>
+            <SwissCard className="border-l-[3px] border-l-orange-500 dark:border-l-orange-400 group hover:shadow-md transition-all hover:scale-[1.01]">
+              <SwissCardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                    <Timer className="h-5 w-5 text-orange-600" />
                   </div>
-                  <Timer className="hidden sm:block h-7 w-7 text-orange-200 dark:text-orange-900" />
+                  <p className="text-3xl md:text-4xl font-bold text-orange-600 tracking-tight">{mockStats.prazosHoje}</p>
                 </div>
+                <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Prazos Hoje</p>
                 <div className="flex items-center gap-1 mt-2">
                   <span className="text-xs text-muted-foreground">{mockStats.prazosSemana} na semana</span>
                   {mockStats.prazosVencidos > 0 && (
-                    <Badge className="text-xs px-1 py-0 h-3.5 sm:h-4 bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-0">
-                      {mockStats.prazosVencidos} vencidos
+                    <Badge className="text-xs px-1.5 py-0 bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-0">
+                      {mockStats.prazosVencidos} venc.
                     </Badge>
                   )}
                 </div>
@@ -357,15 +357,15 @@ export default function DashboardPage() {
             </SwissCard>
 
             {/* Audiências Hoje */}
-            <SwissCard className="border-l-[3px] border-l-blue-500 dark:border-l-blue-400 group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl sm:text-3xl font-bold text-blue-600">{mockStats.audienciasHoje}</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Audiências Hoje</p>
+            <SwissCard className="border-l-[3px] border-l-blue-500 dark:border-l-blue-400 group hover:shadow-md transition-all hover:scale-[1.01]">
+              <SwissCardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <Briefcase className="h-5 w-5 text-blue-600" />
                   </div>
-                  <Briefcase className="hidden sm:block h-7 w-7 text-blue-200 dark:text-blue-900" />
+                  <p className="text-3xl md:text-4xl font-bold text-blue-600 tracking-tight">{mockStats.audienciasHoje}</p>
                 </div>
+                <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Audiências Hoje</p>
                 <div className="flex items-center gap-1 mt-2">
                   <span className="text-xs text-muted-foreground">{mockStats.audienciasSemana} na semana</span>
                 </div>
@@ -373,15 +373,15 @@ export default function DashboardPage() {
             </SwissCard>
 
             {/* Atendimentos Hoje */}
-            <SwissCard className="border-l-[3px] border-l-purple-500 dark:border-l-purple-400 group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl sm:text-3xl font-bold text-purple-600">{mockStats.atendimentosHoje}</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Atendimentos</p>
+            <SwissCard className="border-l-[3px] border-l-purple-500 dark:border-l-purple-400 group hover:shadow-md transition-all hover:scale-[1.01]">
+              <SwissCardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                    <UserCheck className="h-5 w-5 text-purple-600" />
                   </div>
-                  <UserCheck className="hidden sm:block h-7 w-7 text-purple-200 dark:text-purple-900" />
+                  <p className="text-3xl md:text-4xl font-bold text-purple-600 tracking-tight">{mockStats.atendimentosHoje}</p>
                 </div>
+                <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Atendimentos</p>
                 <div className="flex items-center gap-1 mt-2">
                   <span className="text-xs text-muted-foreground">{mockStats.atendimentosSemana} na semana</span>
                 </div>
@@ -389,15 +389,15 @@ export default function DashboardPage() {
             </SwissCard>
 
             {/* Júris do Mês */}
-            <SwissCard className="border-l-[3px] border-l-emerald-500 dark:border-l-emerald-400 group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl sm:text-3xl font-bold text-emerald-600">{mockStats.jurisMes}</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Júris no Mês</p>
+            <SwissCard className="border-l-[3px] border-l-emerald-500 dark:border-l-emerald-400 group hover:shadow-md transition-all hover:scale-[1.01]">
+              <SwissCardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                    <Gavel className="h-5 w-5 text-emerald-600" />
                   </div>
-                  <Gavel className="hidden sm:block h-7 w-7 text-emerald-200 dark:text-emerald-900" />
+                  <p className="text-3xl md:text-4xl font-bold text-emerald-600 tracking-tight">{mockStats.jurisMes}</p>
                 </div>
+                <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Júris no Mês</p>
                 <div className="flex items-center gap-1 mt-2">
                   <span className="text-xs text-muted-foreground">Sessões plenárias</span>
                 </div>
@@ -405,15 +405,15 @@ export default function DashboardPage() {
             </SwissCard>
 
             {/* Taxa de Cumprimento */}
-            <SwissCard className="border-l-[3px] border-l-teal-500 dark:border-l-teal-400 group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl sm:text-3xl font-bold text-teal-600">{mockStats.taxaCumprimento}%</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Cumprimento</p>
+            <SwissCard className="border-l-[3px] border-l-teal-500 dark:border-l-teal-400 group hover:shadow-md transition-all hover:scale-[1.01]">
+              <SwissCardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30">
+                    <CheckCircle2 className="h-5 w-5 text-teal-600" />
                   </div>
-                  <CheckCircle2 className="hidden sm:block h-7 w-7 text-teal-200 dark:text-teal-900" />
+                  <p className="text-3xl md:text-4xl font-bold text-teal-600 tracking-tight">{mockStats.taxaCumprimento}%</p>
                 </div>
+                <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Cumprimento</p>
                 <div className="flex items-center gap-1 mt-2">
                   <span className="text-xs text-muted-foreground">Prazos em dia</span>
                 </div>
@@ -421,15 +421,15 @@ export default function DashboardPage() {
             </SwissCard>
 
             {/* Tempo Médio de Resposta */}
-            <SwissCard className="border-l-[3px] border-l-slate-400 dark:border-l-slate-500 group hover:shadow-md transition-shadow">
-              <SwissCardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl sm:text-3xl font-bold">{mockStats.mediaTempoResposta}d</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5">Tempo Médio</p>
+            <SwissCard className="border-l-[3px] border-l-slate-400 dark:border-l-slate-500 group hover:shadow-md transition-all hover:scale-[1.01]">
+              <SwissCardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
+                    <Activity className="h-5 w-5 text-slate-600" />
                   </div>
-                  <Activity className="hidden sm:block h-7 w-7 text-slate-200 dark:text-slate-700" />
+                  <p className="text-3xl md:text-4xl font-bold tracking-tight">{mockStats.mediaTempoResposta}d</p>
                 </div>
+                <p className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tempo Médio</p>
                 <div className="flex items-center gap-1 mt-2">
                   <span className="text-xs text-muted-foreground">Para protocolar</span>
                 </div>
@@ -438,47 +438,47 @@ export default function DashboardPage() {
           </div>
 
           {/* SEÇÃO 2: PRIORIDADES DO DIA - Grid Principal */}
-          <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+          <div className="grid gap-5 lg:grid-cols-3">
             {/* Coluna 1: Prazos e Demandas Urgentes */}
-            <SwissCard className="lg:col-span-2">
+            <SwissCard className="lg:col-span-2 border-2 border-border/60">
               <SwissCardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center flex-shrink-0">
-                      <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-rose-600" />
+                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center flex-shrink-0">
+                      <AlertCircle className="h-5 w-5 md:h-6 md:w-6 text-rose-600" />
                     </div>
                     <div>
-                      <SwissCardTitle className="text-sm sm:text-base">Prazos e Demandas Urgentes</SwissCardTitle>
-                      <SwissCardDescription className="mt-0.5">
+                      <SwissCardTitle className="text-base md:text-lg font-bold">Prazos e Demandas Urgentes</SwissCardTitle>
+                      <SwissCardDescription className="mt-1 text-sm">
                         Atenção imediata necessária
                       </SwissCardDescription>
                     </div>
                   </div>
                   <Link href="/admin/demandas?urgente=true">
-                    <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-xs h-8">
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-sm h-9 px-3">
                       Ver todos
-                      <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                      <ArrowUpRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
               </SwissCardHeader>
-              <SwissCardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
+              <SwissCardContent className="p-4 pt-0">
                 <div className="space-y-2">
                   {mockPrazosUrgentes.map((prazo) => {
                     const style = getPrioridadeStyle(prazo.prioridade);
                     return (
                       <Link key={prazo.id} href={`/admin/demandas/${prazo.id}`}>
-                        <div className={`flex items-center gap-3 p-3 rounded-xl ${style.bg} hover:opacity-90 transition-all cursor-pointer`}>
-                          <div className={`w-1 h-10 rounded-full ${style.dot}`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-semibold text-sm truncate">{prazo.assistido}</p>
-                              <Badge variant="outline" className={`text-xs font-semibold ${style.text} px-1.5 py-0`}>
+                        <div className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer">
+                          <div className={`w-1 h-10 rounded-full ${style.dot} flex-shrink-0`} />
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-bold text-sm md:text-base truncate">{prazo.assistido}</p>
+                              <Badge variant="outline" className={`text-xs font-bold ${style.text} px-2 py-0.5`}>
                                 {style.label}
                               </Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground truncate">{prazo.ato}</p>
-                            <p className="text-xs font-mono text-muted-foreground/80 mt-0.5 truncate">{prazo.processo}</p>
+                            <p className="text-sm text-muted-foreground truncate">{prazo.ato}</p>
+                            <p className="text-xs font-mono text-muted-foreground/80 truncate">{prazo.processo}</p>
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className={`text-sm font-bold ${prazo.diasRestantes === 0 ? "text-red-600" : prazo.diasRestantes === 1 ? "text-orange-600" : "text-muted-foreground"}`}>
@@ -494,25 +494,25 @@ export default function DashboardPage() {
             </SwissCard>
 
             {/* Coluna 2: Atendimentos do Dia */}
-            <SwissCard>
+            <SwissCard className="border-2 border-border/60">
               <SwissCardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                      <UserCheck className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                      <UserCheck className="h-5 w-5 md:h-6 md:w-6 text-purple-600" />
                     </div>
                     <div>
-                      <SwissCardTitle className="text-sm sm:text-base">Atendimentos</SwissCardTitle>
-                      <SwissCardDescription className="mt-0.5">
+                      <SwissCardTitle className="text-base md:text-lg font-bold">Atendimentos</SwissCardTitle>
+                      <SwissCardDescription className="mt-1 text-sm">
                         {mockAtendimentos.length} agendados hoje
                       </SwissCardDescription>
                     </div>
                   </div>
                 </div>
               </SwissCardHeader>
-              <SwissCardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
+              <SwissCardContent className="p-4 pt-0">
                 {mockAtendimentos.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
                     <UserCheck className="h-10 w-10 text-muted-foreground/30 mb-2" />
                     <p className="text-sm text-muted-foreground">Sem atendimentos hoje</p>
                   </div>
@@ -521,16 +521,16 @@ export default function DashboardPage() {
                     {mockAtendimentos.slice(0, 5).map((atendimento) => (
                       <div
                         key={atendimento.id}
-                        className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg bg-slate-50/60 dark:bg-slate-900/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+                        className="flex items-center gap-2 sm:gap-3 p-3 rounded-lg border border-border/40 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer"
                       >
-                        <div className="text-center min-w-[38px] sm:min-w-[42px] bg-purple-100 dark:bg-purple-900/30 rounded-md py-1 px-1.5 sm:px-2">
-                          <p className="text-xs sm:text-sm font-bold font-mono text-purple-700 dark:text-purple-300">{atendimento.hora}</p>
+                        <div className="text-center min-w-[44px] bg-purple-100 dark:bg-purple-900/30 rounded-md py-1.5 px-2">
+                          <p className="text-xs md:text-sm font-bold font-mono text-purple-700 dark:text-purple-300">{atendimento.hora}</p>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-xs sm:text-sm truncate">{atendimento.assistido}</p>
+                          <p className="font-semibold text-sm md:text-base truncate">{atendimento.assistido}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-muted-foreground">{getTipoAtendimentoIcon(atendimento.tipo)}</span>
-                            <p className="text-xs text-muted-foreground truncate">{atendimento.assunto}</p>
+                            <p className="text-xs md:text-sm text-muted-foreground truncate">{atendimento.assunto}</p>
                           </div>
                         </div>
                       </div>
@@ -542,31 +542,31 @@ export default function DashboardPage() {
           </div>
 
           {/* SEÇÃO 3: AUDIÊNCIAS E JÚRIS PRÓXIMOS */}
-          <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          <div className="grid gap-5 lg:grid-cols-2">
             {/* Audiências Próximas */}
-            <SwissCard>
+            <SwissCard className="border-2 border-border/60">
               <SwissCardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                      <CalendarClock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                      <CalendarClock className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
                     </div>
                     <div>
-                      <SwissCardTitle className="text-sm sm:text-base">Audiências Próximas</SwissCardTitle>
-                      <SwissCardDescription className="mt-0.5">
+                      <SwissCardTitle className="text-base md:text-lg font-bold">Audiências Próximas</SwissCardTitle>
+                      <SwissCardDescription className="mt-1 text-sm">
                         Compromissos agendados
                       </SwissCardDescription>
                     </div>
                   </div>
                   <Link href="/admin/audiencias">
-                    <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-xs h-8">
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-sm h-9 px-3">
                       Ver todas
-                      <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                      <ArrowUpRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
               </SwissCardHeader>
-              <SwissCardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
+              <SwissCardContent className="p-4 pt-0">
                 <div className="space-y-2">
                   {mockAudienciasProximas.map((audiencia) => {
                     const statusStyle = getStatusAudienciaStyle(audiencia.status);
@@ -575,8 +575,10 @@ export default function DashboardPage() {
                       <div
                         key={audiencia.id}
                         className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer",
-                          isToday ? "bg-blue-50 dark:bg-blue-950/30" : "bg-muted/30 hover:bg-muted/50"
+                          "flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer",
+                          isToday 
+                            ? "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30 hover:border-blue-400 dark:hover:border-blue-600" 
+                            : "border-border/40 hover:border-primary/50 hover:bg-primary/5"
                         )}
                       >
                         <div className={cn(
@@ -593,15 +595,15 @@ export default function DashboardPage() {
                           )}>{audiencia.hora}</p>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{audiencia.assistido}</p>
-                          <p className="text-xs text-muted-foreground truncate">{audiencia.vara}</p>
+                          <p className="font-semibold text-sm md:text-base truncate">{audiencia.assistido}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground truncate">{audiencia.vara}</p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5">
                             {audiencia.tipo}
                           </Badge>
                           <span className={cn(
-                            "text-xs px-1.5 py-0.5 rounded",
+                            "text-xs px-2 py-0.5 rounded-md font-medium",
                             statusStyle.bg, statusStyle.text
                           )}>
                             {audiencia.status}
@@ -615,47 +617,47 @@ export default function DashboardPage() {
             </SwissCard>
 
             {/* Júris Próximos */}
-            <SwissCard>
+            <SwissCard className="border-2 border-border/60">
               <SwissCardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
-                      <Gavel className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
+                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                      <Gavel className="h-5 w-5 md:h-6 md:w-6 text-emerald-600" />
                     </div>
                     <div>
-                      <SwissCardTitle className="text-sm sm:text-base">Próximos Júris</SwissCardTitle>
-                      <SwissCardDescription className="mt-0.5">
+                      <SwissCardTitle className="text-base md:text-lg font-bold">Próximos Júris</SwissCardTitle>
+                      <SwissCardDescription className="mt-1 text-sm">
                         Sessões plenárias do mês
                       </SwissCardDescription>
                     </div>
                   </div>
                   <Link href="/admin/juri">
-                    <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-xs h-8">
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-sm h-9 px-3">
                       Ver todos
-                      <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                      <ArrowUpRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
               </SwissCardHeader>
-              <SwissCardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
-                <div className="grid gap-2 sm:gap-3 sm:grid-cols-2">
+              <SwissCardContent className="p-4 pt-0">
+                <div className="grid gap-2 sm:grid-cols-2">
                   {mockJurisProximos.map((juri) => (
                     <Link key={juri.id} href={`/admin/juri/${juri.id}`}>
-                      <div className="p-2.5 sm:p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-800/30 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors cursor-pointer group">
-                        <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                          <div className="flex items-center gap-1.5 sm:gap-2">
-                            <div className="bg-emerald-100 dark:bg-emerald-900/50 rounded-md px-1.5 sm:px-2 py-0.5">
-                              <p className="text-xs sm:text-sm font-bold font-mono text-emerald-700 dark:text-emerald-300">{juri.data}</p>
+                      <div className="p-3 rounded-lg border border-emerald-200/60 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm transition-all cursor-pointer group">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <div className="bg-emerald-100 dark:bg-emerald-900/50 rounded-md px-2 py-1">
+                              <p className="text-xs md:text-sm font-bold font-mono text-emerald-700 dark:text-emerald-300">{juri.data}</p>
                             </div>
-                            <span className="text-xs text-muted-foreground font-mono">{juri.hora}</span>
+                            <span className="text-xs md:text-sm text-muted-foreground font-mono font-semibold">{juri.hora}</span>
                           </div>
-                          <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                         </div>
-                        <p className="font-semibold text-xs sm:text-sm truncate">{juri.assistido}</p>
-                        <p className="text-xs text-muted-foreground truncate">{juri.crime}</p>
-                        <div className="flex items-center justify-between mt-1 sm:mt-1.5">
+                        <p className="font-bold text-sm md:text-base truncate mt-2">{juri.assistido}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground truncate mt-0.5">{juri.crime}</p>
+                        <div className="flex items-center justify-between mt-2">
                           <p className="text-xs text-muted-foreground">{juri.defensor}</p>
-                          <Badge className="text-xs px-1 py-0 bg-white/60 dark:bg-zinc-900/40 text-muted-foreground border-0">{juri.comarca}</Badge>
+                          <Badge className="text-xs px-1.5 py-0 bg-white/60 dark:bg-zinc-900/40 text-muted-foreground border-0">{juri.comarca}</Badge>
                         </div>
                       </div>
                     </Link>
@@ -665,88 +667,88 @@ export default function DashboardPage() {
             </SwissCard>
           </div>
 
-          {/* SEÇÃO 4: INFORMAÇÕES CONDENSADAS - Padrão Swiss */}
-          <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+          {/* SEÇÃO 4: INFORMAÇÕES CONDENSADAS - PROPORCIONAIS */}
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
             {/* Réus Presos */}
-            <SwissCard className="group hover:shadow-md transition-all border-l-[3px] border-l-rose-500 dark:border-l-rose-400">
-              <SwissCardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center flex-shrink-0">
-                    <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-rose-600" />
+            <SwissCard className="group hover:shadow-md transition-all hover:scale-[1.01] border-l-[3px] border-l-rose-500 dark:border-l-rose-400 border-2 border-border/60">
+              <SwissCardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center flex-shrink-0">
+                    <Lock className="h-5 w-5 text-rose-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xl sm:text-2xl font-bold">{mockStats.reusPresos}</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground">Réus Presos</p>
+                    <p className="text-2xl md:text-3xl font-bold tracking-tight">{mockStats.reusPresos}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">Réus Presos</p>
                   </div>
                   <Link href="/admin/assistidos?preso=true">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Link>
                 </div>
               </SwissCardContent>
             </SwissCard>
 
             {/* Casos Ativos */}
-            <SwissCard className="group hover:shadow-md transition-all border-l-[3px] border-l-blue-500 dark:border-l-blue-400">
-              <SwissCardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                    <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+            <SwissCard className="group hover:shadow-md transition-all hover:scale-[1.01] border-l-[3px] border-l-blue-500 dark:border-l-blue-400 border-2 border-border/60">
+              <SwissCardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                    <Briefcase className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xl sm:text-2xl font-bold">{mockStats.casosAtivos}</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground">Casos Ativos</p>
+                    <p className="text-2xl md:text-3xl font-bold tracking-tight">{mockStats.casosAtivos}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">Casos Ativos</p>
                   </div>
                   <Link href="/admin/casos">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Link>
                 </div>
               </SwissCardContent>
             </SwissCard>
 
             {/* Total Assistidos */}
-            <SwissCard className="group hover:shadow-md transition-all border-l-[3px] border-l-purple-500 dark:border-l-purple-400">
-              <SwissCardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+            <SwissCard className="group hover:shadow-md transition-all hover:scale-[1.01] border-l-[3px] border-l-purple-500 dark:border-l-purple-400 border-2 border-border/60">
+              <SwissCardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                    <Users className="h-5 w-5 text-purple-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xl sm:text-2xl font-bold">{mockStats.totalAssistidos}</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground">Assistidos</p>
+                    <p className="text-2xl md:text-3xl font-bold tracking-tight">{mockStats.totalAssistidos}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">Assistidos</p>
                   </div>
                   <Link href="/admin/assistidos">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Link>
                 </div>
               </SwissCardContent>
             </SwissCard>
 
             {/* Total Processos */}
-            <SwissCard className="group hover:shadow-md transition-all border-l-[3px] border-l-emerald-500 dark:border-l-emerald-400">
-              <SwissCardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
-                    <Scale className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
+            <SwissCard className="group hover:shadow-md transition-all hover:scale-[1.01] border-l-[3px] border-l-emerald-500 dark:border-l-emerald-400 border-2 border-border/60">
+              <SwissCardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                    <Scale className="h-5 w-5 text-emerald-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xl sm:text-2xl font-bold">{mockStats.totalProcessos}</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground">Processos</p>
+                    <p className="text-2xl md:text-3xl font-bold tracking-tight">{mockStats.totalProcessos}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">Processos</p>
                   </div>
                   <Link href="/admin/processos">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Link>
                 </div>
               </SwissCardContent>
             </SwissCard>
           </div>
 
-          {/* SEÇÃO 5: INFOGRÁFICOS - Padrão Swiss */}
-          <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+          {/* SEÇÃO 5: INFOGRÁFICOS - AMPLIADOS */}
+          <div className="grid gap-6 lg:grid-cols-3">
             {/* Gráfico de Pizza - Status das Demandas */}
-            <SwissCard>
-              <SwissCardHeader className="pb-2">
-                <SwissCardTitle className="text-xs sm:text-sm flex items-center gap-2">
-                  <ClipboardList className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+            <SwissCard className="border-2 border-border/60">
+              <SwissCardHeader className="pb-3">
+                <SwissCardTitle className="text-base md:text-lg lg:text-xl font-bold flex items-center gap-3">
+                  <ClipboardList className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                   Status das Demandas
                 </SwissCardTitle>
               </SwissCardHeader>
@@ -791,10 +793,10 @@ export default function DashboardPage() {
             </SwissCard>
 
             {/* Gráfico de Linha - Evolução Semanal */}
-            <SwissCard>
-              <SwissCardHeader className="pb-2">
-                <SwissCardTitle className="text-xs sm:text-sm flex items-center gap-2">
-                  <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+            <SwissCard className="border-2 border-border/60">
+              <SwissCardHeader className="pb-3">
+                <SwissCardTitle className="text-base md:text-lg lg:text-xl font-bold flex items-center gap-3">
+                  <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                   Evolução Semanal
                 </SwissCardTitle>
               </SwissCardHeader>
@@ -872,30 +874,30 @@ export default function DashboardPage() {
             </SwissCard>
           </div>
 
-          {/* SEÇÃO 6: AÇÕES RÁPIDAS - Padrão Swiss */}
-          <div className="grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-4">
+          {/* SEÇÃO 6: AÇÕES RÁPIDAS - EQUILIBRADAS */}
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
             <Link href="/admin/assistidos/novo">
-              <Button variant="outline" className="w-full h-auto py-2.5 sm:py-3 flex-col gap-1 sm:gap-1.5 hover:bg-primary hover:text-primary-foreground transition-colors rounded-lg">
-                <Users className="h-4 w-4" />
-                <span className="text-xs sm:text-xs font-medium">Novo Assistido</span>
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-primary hover:text-primary-foreground transition-all rounded-xl border-2 hover:shadow-md">
+                <Users className="h-5 w-5" />
+                <span className="text-sm font-semibold">Novo Assistido</span>
               </Button>
             </Link>
             <Link href="/admin/demandas/nova">
-              <Button variant="outline" className="w-full h-auto py-2.5 sm:py-3 flex-col gap-1 sm:gap-1.5 hover:bg-primary hover:text-primary-foreground transition-colors rounded-lg">
-                <FileText className="h-4 w-4" />
-                <span className="text-xs sm:text-xs font-medium">Nova Demanda</span>
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-primary hover:text-primary-foreground transition-all rounded-xl border-2 hover:shadow-md">
+                <FileText className="h-5 w-5" />
+                <span className="text-sm font-semibold">Nova Demanda</span>
               </Button>
             </Link>
             <Link href="/admin/kanban">
-              <Button variant="outline" className="w-full h-auto py-2.5 sm:py-3 flex-col gap-1 sm:gap-1.5 hover:bg-primary hover:text-primary-foreground transition-colors rounded-lg">
-                <Target className="h-4 w-4" />
-                <span className="text-xs sm:text-xs font-medium">Kanban</span>
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-primary hover:text-primary-foreground transition-all rounded-xl border-2 hover:shadow-md">
+                <Target className="h-5 w-5" />
+                <span className="text-sm font-semibold">Kanban</span>
               </Button>
             </Link>
             <Link href="/admin/calendar">
-              <Button variant="outline" className="w-full h-auto py-2.5 sm:py-3 flex-col gap-1 sm:gap-1.5 hover:bg-primary hover:text-primary-foreground transition-colors rounded-lg">
-                <CalendarDays className="h-4 w-4" />
-                <span className="text-xs sm:text-xs font-medium">Calendário</span>
+              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2 hover:bg-primary hover:text-primary-foreground transition-all rounded-xl border-2 hover:shadow-md">
+                <CalendarDays className="h-5 w-5" />
+                <span className="text-sm font-semibold">Calendário</span>
               </Button>
             </Link>
           </div>

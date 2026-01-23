@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   useAssignment,
@@ -39,10 +39,17 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 export function AssignmentSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const { currentAssignment, config, setAssignment, isLoading } = useAssignment();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Previne hydration mismatch - só mostra o conteúdo real após montar no cliente
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const Icon = iconMap[config.icon] || Briefcase;
 
-  if (isLoading) {
+  // Durante SSR e hidratação inicial, sempre mostra o skeleton
+  if (!mounted || isLoading) {
     return (
       <div className="h-14 px-3 flex items-center">
         <div className="h-10 w-10 rounded-xl bg-muted animate-pulse" />

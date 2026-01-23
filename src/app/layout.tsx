@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -27,13 +27,60 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Intelex | Advocacia Estratégica",
-    template: "%s | Intelex"
+    default: "INTELEX | Defesa Inteligente",
+    template: "%s | INTELEX"
   },
-  description: "Sistema de gestão jurídica de alta performance.",
+  description: "Sistema de gestão jurídica criminal de alta performance com inteligência artificial. Gerencie processos, prazos, casos e demandas com eficiência profissional.",
+  keywords: ["gestão jurídica", "advocacia criminal", "defesa inteligente", "processos criminais", "prazos processuais", "gestão de casos"],
+  authors: [{ name: "INTELEX" }],
+  creator: "INTELEX",
+  publisher: "INTELEX",
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/logo-intelex-icon.svg", type: "image/svg+xml", sizes: "any" },
+    ],
+    apple: [
+      { url: "/logo-intelex-icon.svg", sizes: "180x180", type: "image/svg+xml" },
+    ],
   },
+  manifest: "/manifest.json",
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    title: "INTELEX | Defesa Inteligente",
+    description: "Sistema de gestão jurídica criminal de alta performance",
+    siteName: "INTELEX",
+    images: [
+      {
+        url: "/logo-intelex-full.svg",
+        width: 1200,
+        height: 400,
+        alt: "INTELEX - Defesa Inteligente",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "INTELEX | Defesa Inteligente",
+    description: "Sistema de gestão jurídica criminal de alta performance",
+    images: ["/logo-intelex-full.svg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 const themeScript = `

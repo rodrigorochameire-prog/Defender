@@ -66,7 +66,7 @@ export function Logo({
       return (
         <div className={cn("sidebar-logo-icon", className)}>
           <Image
-            src="/logo-intelex.png"
+            src="/logo-intelex-icon.svg"
             alt="INTELEX"
             width={iconSize}
             height={iconSize}
@@ -79,23 +79,15 @@ export function Logo({
 
     if (variant === "centered") {
       return (
-        <div className={cn("logo-centered", className)}>
-          <div className="logo-centered-icon">
-            <Image
-              src="/logo-intelex.png"
-              alt="INTELEX - Defesa Inteligente"
-              width={iconSize}
-              height={iconSize}
-              priority
-              className="object-contain"
-            />
-          </div>
-          <div className="logo-centered-text">
-            <h1 className="logo-centered-title">INTELEX</h1>
-            {showSubtitle && (
-              <p className="logo-centered-subtitle">Defesa Inteligente</p>
-            )}
-          </div>
+        <div className={cn("logo-centered flex flex-col items-center gap-6", className)}>
+          <Image
+            src="/logo-intelex-full.svg"
+            alt="INTELEX - Defesa Inteligente"
+            width={iconSize * 3}
+            height={iconSize}
+            priority
+            className="object-contain"
+          />
         </div>
       );
     }
@@ -103,22 +95,14 @@ export function Logo({
     // variant === "full"
     return (
       <div className={cn("header-logo", className)}>
-        <div className="header-logo-icon">
-          <Image
-            src="/logo-intelex.png"
-            alt="INTELEX"
-            width={iconSize}
-            height={iconSize}
-            priority
-            className="object-contain"
-          />
-        </div>
-        <div className="header-logo-text">
-          <h2 className="header-logo-title">INTELEX</h2>
-          {showSubtitle && (
-            <p className="header-logo-subtitle">Defesa Inteligente</p>
-          )}
-        </div>
+        <Image
+          src="/logo-intelex-full.svg"
+          alt="INTELEX - Defesa Inteligente"
+          width={iconSize * 2.5}
+          height={iconSize}
+          priority
+          className="object-contain"
+        />
       </div>
     );
   };
@@ -150,17 +134,17 @@ export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) 
   return (
     <div className={cn("sidebar-logo", collapsed && "sidebar-collapsed", className)}>
       {collapsed ? (
-        <Logo 
-          variant="icon" 
-          size="sm" 
+        <Logo
+          variant="icon"
+          size="sm"
           href="/admin/dashboard"
           showSubtitle={false}
         />
       ) : (
-        <div className="flex items-center gap-3">
+        <Link href="/admin/dashboard" className="flex items-center gap-3">
           <div className="sidebar-logo-icon">
             <Image
-              src="/logo-intelex.png"
+              src="/logo-intelex-icon.svg"
               alt="INTELEX"
               width={40}
               height={40}
@@ -172,7 +156,7 @@ export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) 
             <div className="sidebar-logo-title">INTELEX</div>
             <div className="sidebar-logo-subtitle">Defesa Inteligente</div>
           </div>
-        </div>
+        </Link>
       )}
     </div>
   );
@@ -224,7 +208,7 @@ export function MobileLogo({ className }: { className?: string }) {
     <Link href="/admin/dashboard" className={cn("mobile-logo", className)}>
       <div className="mobile-logo-icon">
         <Image
-          src="/logo-intelex.png"
+          src="/logo-intelex-icon.svg"
           alt="INTELEX"
           width={32}
           height={32}
@@ -245,12 +229,12 @@ export function LogoLoading({ className }: { className?: string }) {
   return (
     <div className={cn("logo-loading", className)}>
       <Image
-        src="/logo-intelex.png"
+        src="/logo-intelex-icon.svg"
         alt="Carregando..."
         width={64}
         height={64}
         priority
-        className="object-contain"
+        className="object-contain animate-pulse"
       />
     </div>
   );

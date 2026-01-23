@@ -24,24 +24,24 @@ export function SectionHeader({
 }: SectionHeaderProps) {
   const sizeStyles = {
     sm: {
-      container: "pb-2 mb-4",
-      number: "w-5 h-5 text-xs",
-      icon: "w-4 h-4",
-      title: "text-sm font-semibold tracking-[-0.01em]",
+      container: "mb-4",
+      number: "w-6 h-6 text-sm",
+      icon: "w-5 h-5",
+      title: "text-base md:text-lg font-bold tracking-[-0.015em]",
       subtitle: "text-xs uppercase tracking-[0.05em]",
     },
     md: {
-      container: "pb-3 mb-5",
-      number: "w-7 h-7 text-sm",
-      icon: "w-5 h-5",
-      title: "text-base font-semibold tracking-[-0.01em]",
+      container: "mb-5",
+      number: "w-7 h-7 text-base",
+      icon: "w-6 h-6",
+      title: "text-lg md:text-xl font-bold tracking-[-0.02em]",
       subtitle: "text-xs uppercase tracking-[0.05em]",
     },
     lg: {
-      container: "pb-4 mb-6",
-      number: "w-9 h-9 text-base",
-      icon: "w-6 h-6",
-      title: "font-serif text-xl font-semibold tracking-[-0.015em]",
+      container: "mb-6",
+      number: "w-8 h-8 text-lg",
+      icon: "w-7 h-7",
+      title: "text-xl md:text-2xl font-bold tracking-[-0.025em]",
       subtitle: "text-xs uppercase tracking-[0.05em]",
     },
   };
@@ -51,7 +51,7 @@ export function SectionHeader({
   return (
     <div
       className={cn(
-        "flex items-center justify-between border-b border-border/40",
+        "flex items-center justify-between border-b-2 border-border/50 bg-muted/20 -mx-4 px-4 py-3 rounded-t-lg",
         styles.container,
         className
       )}
@@ -61,7 +61,7 @@ export function SectionHeader({
         {number !== undefined && (
           <div
             className={cn(
-              "flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold font-mono",
+              "flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold font-mono shadow-sm",
               styles.number
             )}
           >
@@ -71,14 +71,14 @@ export function SectionHeader({
 
         {/* Ícone */}
         {icon && number === undefined && (
-          <div className={cn("text-muted-foreground", styles.icon)}>{icon}</div>
+          <div className={cn("text-primary", styles.icon)}>{icon}</div>
         )}
 
         {/* Textos */}
         <div>
           <h3 className={cn("text-foreground", styles.title)}>{title}</h3>
           {subtitle && (
-            <p className={cn("text-muted-foreground font-medium mt-1", styles.subtitle)}>
+            <p className={cn("text-muted-foreground font-semibold mt-1", styles.subtitle)}>
               {subtitle}
             </p>
           )}
@@ -108,18 +108,18 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-3", className)}>
       {/* Breadcrumbs */}
       {breadcrumbs && <div className="mb-2">{breadcrumbs}</div>}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border/60">
-        <div className="max-w-2xl">
-          <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-foreground tracking-[-0.02em]">
+      {/* Header - COM FUNDO ORGANIZACIONAL */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 mb-5 border-b-2 border-border/70 bg-gradient-to-r from-muted/30 via-muted/10 to-transparent -mx-6 px-6 pt-4 rounded-t-xl">
+        <div className="max-w-3xl space-y-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-sm sm:text-base text-muted-foreground mt-2 leading-relaxed">
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
               {description}
             </p>
           )}

@@ -8,7 +8,7 @@ Abra o terminal e execute na ordem:
 
 ```bash
 # 1. Navegar para a pasta do projeto
-cd "/Users/rodrigorochameire/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/Pessoal/Tuco Care/TeteCareHub"
+cd "/Users/rodrigorochameire/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/Pessoal/DefesaHub/Defender"
 
 # 2. Verificar status atual
 git status
@@ -49,7 +49,7 @@ Se pedir credenciais, use:
 ### Como criar Personal Access Token:
 1. GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
 2. Generate new token (classic)
-3. Nome: "TeteCareHub"
+3. Nome: "Defender"
 4. Escopo: `repo` (marcar tudo em repo)
 5. Generate e copie o token
 6. Use este token como senha
@@ -69,4 +69,4 @@ git log --oneline -5
 
 ## 🎯 Repositório GitHub:
 
-Seu repositório está em: https://github.com/rodrigorochameire-prog/TeteCareHub
+Seu repositório está em: https://github.com/rodrigorochameire-prog/Defender
