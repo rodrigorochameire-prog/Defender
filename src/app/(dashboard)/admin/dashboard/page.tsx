@@ -38,6 +38,7 @@ import {
   Percent,
   Bell,
   Activity,
+  MapPin,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -740,6 +741,105 @@ export default function DashboardPage() {
                 </div>
               </SwissCardContent>
             </SwissCard>
+          </div>
+
+          {/* SEÇÃO 4.5: DASHBOARDS ESPECIALIZADOS */}
+          <div className="grid gap-4 lg:grid-cols-3">
+            {/* Dashboard Assistidos */}
+            <Link href="/admin/dashboard/assistidos">
+              <SwissCard className="group hover:shadow-lg transition-all hover:scale-[1.02] border-2 border-border/60 hover:border-purple-500 cursor-pointer">
+                <SwissCardContent className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                      <Users className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Dashboard de Assistidos</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Análise completa de vulnerabilidades, distribuição regional e atividades
+                  </p>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5" />
+                      Regiões
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Vulnerabilidades
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Activity className="h-3.5 w-3.5" />
+                      Timeline
+                    </span>
+                  </div>
+                </SwissCardContent>
+              </SwissCard>
+            </Link>
+
+            {/* Dashboard Demandas */}
+            <Link href="/admin/dashboard/demandas">
+              <SwissCard className="group hover:shadow-lg transition-all hover:scale-[1.02] border-2 border-border/60 hover:border-orange-500 cursor-pointer">
+                <SwissCardContent className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                      <FileText className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-orange-600 group-hover:translate-x-1 transition-all" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Dashboard de Demandas</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Status, prioridades, prazos e evolução das demandas processuais
+                  </p>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Target className="h-3.5 w-3.5" />
+                      Status
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      Prazos
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      Evolução
+                    </span>
+                  </div>
+                </SwissCardContent>
+              </SwissCard>
+            </Link>
+
+            {/* Dashboard Processos */}
+            <Link href="/admin/dashboard/processos">
+              <SwissCard className="group hover:shadow-lg transition-all hover:scale-[1.02] border-2 border-border/60 hover:border-emerald-500 cursor-pointer">
+                <SwissCardContent className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                      <Scale className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Dashboard de Processos</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Fases processuais, prazos, audiências e timeline de andamentos
+                  </p>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Gavel className="h-3.5 w-3.5" />
+                      Fases
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      Audiências
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <BarChart3 className="h-3.5 w-3.5" />
+                      Áreas
+                    </span>
+                  </div>
+                </SwissCardContent>
+              </SwissCard>
+            </Link>
           </div>
 
           {/* SEÇÃO 5: INFOGRÁFICOS - AMPLIADOS */}
