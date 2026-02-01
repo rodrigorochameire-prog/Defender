@@ -82,6 +82,9 @@ import {
   PROFISSIONAIS_CONFIG,
 } from "@/contexts/profissional-context";
 import { CompartilharDemandaModal } from "@/components/shared/compartilhar-demanda-modal";
+import { usePermissions, type UserRole } from "@/hooks/use-permissions";
+import { DashboardPorPerfil } from "@/components/dashboard/dashboard-por-perfil";
+import { RegistroRapidoAprimorado } from "@/components/dashboard/registro-rapido-aprimorado";
 
 // ============================================
 // CONFIGURAÇÕES DE ATRIBUIÇÃO
@@ -184,6 +187,9 @@ function ResponsavelBadge({ responsavelId }: { responsavelId: number | null }) {
 // ============================================
 
 export default function DashboardJuriPage() {
+  // Hook de permissões para detectar o perfil do usuário
+  const { user, isLoading: loadingUser } = usePermissions();
+  
   // Usar contexto de profissional
   const {
     profissionalAtivo,
@@ -222,6 +228,21 @@ export default function DashboardJuriPage() {
     dias: 60,
   });
   const juris = jurisData ?? [];
+  
+  // Processos (para registro rápido)
+  const { data: processos = [] } = trpc.processos.list.useQuery({
+    limit: 100,
+  });
+  
+  // ==========================================
+  // VERIFICAR TIPO DE DASHBOARD (calculado, sem early return)
+  // ==========================================
+  
+  // Para perfis não-defensor (estagiário, servidor, triagem), usar dashboard por perfil
+  const isPerfilAlternativo = user && ["estagiario", "servidor", "triagem"].includes(user.role);
+  
+  // Verificar se é defensor de vara criminal (não-especializado)
+  const isDefensorCriminalGeral = user && user.role === "defensor" && !isGrupoJuriEpVvd;
 
   // Audiências (para o dashboard)
   const { data: audienciasData, isLoading: loadingAudiencias } = trpc.audiencias.proximas.useQuery({
@@ -526,6 +547,33 @@ export default function DashboardJuriPage() {
     { name: "Sem dados", value: 1, color: "#9CA3AF" },
   ];
 
+  // ==========================================
+  // RENDERIZAR DASHBOARD POR PERFIL (se aplicável)
+  // ==========================================
+  
+  // Para perfis não-defensor ou defensor criminal geral, usar dashboard específico
+  if (!loadingUser && (isPerfilAlternativo || isDefensorCriminalGeral)) {
+    return (
+      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11] p-4 md:p-6">
+        <DashboardPorPerfil
+          userRole={user?.role as UserRole || "defensor"}
+          userName={user?.name}
+          supervisorName={undefined}
+          demandas={demandas}
+          delegacoes={[]}
+          assistidos={assistidos}
+          processos={processos}
+          audiencias={[]}
+          isLoading={loadingDemandas || loadingAssistidos}
+        />
+      </div>
+    );
+  }
+
+  // ==========================================
+  // DASHBOARD PRINCIPAL (Defensores Especializados - Júri/EP/VVD)
+  // ==========================================
+  
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       
