@@ -126,12 +126,13 @@ function ImportarJuradosModal({
 }: { 
   open: boolean; 
   onOpenChange: (open: boolean) => void;
-  onImport: (jurados: JuradoImportado[]) => void;
+  onImport: (jurados: JuradoImportado[]) => Promise<void>;
 }) {
   const [textoColado, setTextoColado] = useState("");
   const [juradosAgrupados, setJuradosAgrupados] = useState<JuradoAgrupado[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [tabAtiva, setTabAtiva] = useState("1");
+  const [isImporting, setIsImporting] = useState(false);
 
   // Parser inteligente que identifica seções automaticamente
   const parseAtaCompleta = () => {
@@ -292,7 +293,7 @@ function ImportarJuradosModal({
     return jurados;
   };
 
-  const handleImportar = () => {
+  const handleImportar = async () => {
     const todosJurados: JuradoImportado[] = [];
     for (const grupo of juradosAgrupados) {
       todosJurados.push(...grupo.titulares, ...grupo.suplentes);
@@ -303,11 +304,18 @@ function ImportarJuradosModal({
       return;
     }
     
-    onImport(todosJurados);
-    toast.success(`${todosJurados.length} jurados importados com sucesso!`);
-    setTextoColado("");
-    setJuradosAgrupados([]);
-    onOpenChange(false);
+    setIsImporting(true);
+    try {
+      await onImport(todosJurados);
+      setTextoColado("");
+      setJuradosAgrupados([]);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Erro ao importar:", error);
+      toast.error("Erro ao importar jurados");
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const limpar = () => {
@@ -489,11 +497,20 @@ Suplentes
           </Button>
           <Button 
             onClick={handleImportar}
-            disabled={totalJurados === 0}
+            disabled={totalJurados === 0 || isImporting}
             className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
           >
-            <Upload className="w-4 h-4 mr-2" />
-            Importar Todos ({totalJurados})
+            {isImporting ? (
+              <>
+                <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Importando...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Importar Todos ({totalJurados})
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
