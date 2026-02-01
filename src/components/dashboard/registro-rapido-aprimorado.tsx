@@ -555,12 +555,12 @@ export function RegistroRapidoAprimorado({
           </div>
         )}
 
-        {/* Linha 2: Tipo de Registro */}
+        {/* Linha 2: Tipo de Registro - Layout compacto */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
-            Tipo de Registro
+            Tipo
           </label>
-          <div className="grid grid-cols-6 gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             {Object.entries(TIPOS_REGISTRO).map(([id, config]) => {
               const Icon = config.icon;
               const isSelected = data.tipo === id;
@@ -580,19 +580,17 @@ export function RegistroRapidoAprimorado({
                       setData(prev => ({ ...prev, tipo: id as TipoRegistro }));
                     }
                   }}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all text-xs font-medium ${
                     isSelected && !isDelegacaoBtn
-                      ? config.bgActive + " border"
+                      ? config.bgActive + " border " + config.color
                       : isDelegacaoBtn
-                        ? "border border-rose-200 dark:border-rose-800 hover:border-rose-400 bg-rose-50 dark:bg-rose-900/20"
-                        : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 bg-white dark:bg-zinc-800"
+                        ? "border border-rose-200 dark:border-rose-800 hover:border-rose-400 bg-rose-50 dark:bg-rose-900/20 text-rose-600"
+                        : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
                   }`}
                   title={config.description}
                 >
-                  <Icon className={`w-4 h-4 ${isSelected && !isDelegacaoBtn ? config.color : isDelegacaoBtn ? "text-rose-500" : "text-zinc-400"}`} />
-                  <span className={`text-[9px] font-medium ${isSelected && !isDelegacaoBtn ? config.color : "text-zinc-500"}`}>
-                    {config.label}
-                  </span>
+                  <Icon className={`w-3.5 h-3.5 ${isSelected && !isDelegacaoBtn ? config.color : isDelegacaoBtn ? "text-rose-500" : "text-zinc-400"}`} />
+                  {config.label}
                 </button>
               );
             })}
