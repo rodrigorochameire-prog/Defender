@@ -282,26 +282,19 @@ function JuradoCardExpandivel({
         className="p-2 cursor-pointer"
       >
         <div className="flex items-center gap-2">
-          <Avatar className={cn("h-8 w-8 ring-1 ring-offset-1", tendencia.ring)}>
+          {/* Avatar neutro (a menos que tenha foto) */}
+          <Avatar className="h-8 w-8">
             {jurado.foto && <AvatarImage src={jurado.foto} />}
-            <AvatarFallback className={cn(
-              "text-[10px] font-semibold",
-              jurado.genero === "F" ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700"
-            )}>
+            <AvatarFallback className="text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
               {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
-              <Link
-                href={`/admin/juri/jurados/${jurado.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="hover:underline"
-              >
-                <p className={cn("text-[11px] font-semibold truncate", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
-                  {jurado.nome.split(" ").slice(0, 2).join(" ")}
-                </p>
-              </Link>
+              {/* Nome sem link direto - evita cliques acidentais */}
+              <p className={cn("text-[11px] font-semibold truncate", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
+                {jurado.nome.split(" ").slice(0, 2).join(" ")}
+              </p>
               <span className={cn("text-[9px] font-bold px-1 py-0.5 rounded text-white", tendencia.bg)}>
                 {jurado.taxaAbsolvicao}%
               </span>
@@ -314,13 +307,19 @@ function JuradoCardExpandivel({
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Link
-              href={`/admin/juri/jurados/${jurado.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              <ExternalLink className="w-3 h-3 text-zinc-400" />
-            </Link>
+            {/* Botão de perfil separado para evitar cliques acidentais */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={`/admin/juri/jurados/${jurado.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1.5 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                >
+                  <Eye className="w-3 h-3 text-zinc-500" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-[10px]">Ver perfil completo</TooltipContent>
+            </Tooltip>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -587,12 +586,8 @@ function CadeiraVisual({
             {jurado.foto ? (
               <AvatarImage src={jurado.foto} alt={jurado.nome} />
             ) : null}
-            <AvatarFallback className={cn(
-              "text-base font-bold",
-              jurado.genero === "F"
-                ? "bg-gradient-to-br from-pink-100 to-rose-100 text-pink-700"
-                : "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700"
-            )}>
+            {/* Avatar neutro - cor só aparece se tiver foto */}
+            <AvatarFallback className="text-base font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
               {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
             </AvatarFallback>
           </Avatar>
@@ -685,6 +680,15 @@ function CadeiraVisual({
 }
 
 // ============================================
+// STORAGE KEYS
+// ============================================
+const STORAGE_KEYS = {
+  CONSELHO: "defender_cockpit_conselho",
+  ANOTACOES: "defender_cockpit_anotacoes",
+  RECUSADOS: "defender_cockpit_recusados",
+};
+
+// ============================================
 // COMPONENTE PRINCIPAL
 // ============================================
 export default function PlenarioCockpitPage() {
@@ -696,6 +700,7 @@ export default function PlenarioCockpitPage() {
   const [activeTab, setActiveTab] = useState<"conselho" | "anotacoes">("conselho");
   const [searchJurado, setSearchJurado] = useState("");
   const [showRecusados, setShowRecusados] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Estado dos jurados
   const [corpoAtual, setCorpoAtual] = useState<JuradoCorpo[]>(corpoJurados);
@@ -714,6 +719,67 @@ export default function PlenarioCockpitPage() {
   const [novaAnotacao, setNovaAnotacao] = useState("");
   const [categoriaAnotacao, setCategoriaAnotacao] = useState("geral");
   const [filtroCategoria, setFiltroCategoria] = useState("todas");
+
+  // Carregar dados salvos
+  useEffect(() => {
+    try {
+      const savedConselho = localStorage.getItem(STORAGE_KEYS.CONSELHO);
+      const savedAnotacoes = localStorage.getItem(STORAGE_KEYS.ANOTACOES);
+      const savedRecusados = localStorage.getItem(STORAGE_KEYS.RECUSADOS);
+      
+      if (savedConselho) {
+        const parsed = JSON.parse(savedConselho);
+        setConselhoSentenca(parsed);
+      }
+      if (savedAnotacoes) {
+        setAnotacoes(JSON.parse(savedAnotacoes));
+      }
+      if (savedRecusados) {
+        const recusados: Record<number, "mp" | "defesa"> = JSON.parse(savedRecusados);
+        setCorpoAtual(prev => prev.map(j => ({
+          ...j,
+          recusadoPor: recusados[j.id] || null
+        })));
+      }
+    } catch (e) {
+      console.error("Erro ao carregar dados salvos:", e);
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Salvar conselho automaticamente
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem(STORAGE_KEYS.CONSELHO, JSON.stringify(conselhoSentenca));
+    } catch (e) {
+      console.error("Erro ao salvar conselho:", e);
+    }
+  }, [conselhoSentenca, isLoaded]);
+
+  // Salvar anotações automaticamente
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem(STORAGE_KEYS.ANOTACOES, JSON.stringify(anotacoes));
+    } catch (e) {
+      console.error("Erro ao salvar anotações:", e);
+    }
+  }, [anotacoes, isLoaded]);
+
+  // Salvar recusados automaticamente
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      const recusados: Record<number, "mp" | "defesa"> = {};
+      corpoAtual.forEach(j => {
+        if (j.recusadoPor) recusados[j.id] = j.recusadoPor;
+      });
+      localStorage.setItem(STORAGE_KEYS.RECUSADOS, JSON.stringify(recusados));
+    } catch (e) {
+      console.error("Erro ao salvar recusados:", e);
+    }
+  }, [corpoAtual, isLoaded]);
 
   const faseSelecionada = useMemo(
     () => phases.find((fase) => fase.id === faseAtual) ?? phases[0],
@@ -1001,9 +1067,18 @@ export default function PlenarioCockpitPage() {
 
           {/* Tab: Conselho de Sentença */}
           {activeTab === "conselho" && (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-              {/* Layout das Cadeiras */}
-              <div className={cn("lg:col-span-3 p-6", cardClass)}>
+            <div className="space-y-4">
+              {/* Grid Principal: Cadeiras + Lista (ou só cadeiras se completo) */}
+              <div className={cn(
+                "grid gap-4",
+                juradosAtivos.length < 7 ? "grid-cols-1 lg:grid-cols-5" : "grid-cols-1"
+              )}>
+                {/* Layout das Cadeiras - Expande quando conselho completo */}
+                <div className={cn(
+                  "p-6",
+                  cardClass,
+                  juradosAtivos.length < 7 ? "lg:col-span-3" : ""
+                )}>
                 {/* Jurado Selecionado para Arrastar */}
                 {juradoSelecionado && (
                   <div className={cn(
@@ -1120,8 +1195,9 @@ export default function PlenarioCockpitPage() {
                 </div>
               </div>
 
-              {/* Lista de Jurados */}
-              <div className={cn("lg:col-span-1 p-4", cardClass)}>
+              {/* Lista de Jurados - Só aparece enquanto não completou 7 */}
+              {juradosAtivos.length < 7 && (
+              <div className={cn("lg:col-span-2 p-4", cardClass)}>
                 <div className="mb-3">
                   <h3 className="text-sm font-semibold flex items-center gap-2">
                     <Users className="w-4 h-4 text-violet-600" />
@@ -1160,7 +1236,7 @@ export default function PlenarioCockpitPage() {
                 )}
 
                 {/* Lista */}
-                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                   {juradosFiltrados.map((jurado) => (
                     <JuradoCardExpandivel
                       key={jurado.id}
@@ -1174,6 +1250,102 @@ export default function PlenarioCockpitPage() {
                   ))}
                 </div>
               </div>
+              )}
+              </div>
+
+              {/* Seção de Comportamentos - Aparece quando conselho está completo */}
+              {juradosAtivos.length === 7 && (
+                <div className={cn("p-6", cardClass)}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-base font-semibold flex items-center gap-2">
+                        <PenLine className="w-4 h-4 text-violet-600" />
+                        Anotações de Comportamento
+                      </h3>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        Conselho completo • Registre o comportamento de cada jurado
+                      </p>
+                    </div>
+                    <Badge className="bg-emerald-500">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      7/7 Jurados
+                    </Badge>
+                  </div>
+
+                  {/* Grid de jurados para anotações */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {juradosAtivos.map((jurado) => {
+                      const tendencia = getTendenciaColor(jurado.taxaAbsolvicao);
+                      return (
+                        <div
+                          key={jurado.id}
+                          className={cn(
+                            "p-4 rounded-xl border",
+                            isDarkMode ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
+                          )}
+                        >
+                          <div className="flex items-center gap-3 mb-3">
+                            <Avatar className="h-10 w-10">
+                              {jurado.foto && <AvatarImage src={jurado.foto} />}
+                              <AvatarFallback className="text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                                {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate">{jurado.nome.split(" ").slice(0, 2).join(" ")}</p>
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] text-zinc-500">Cadeira {jurado.cadeira}</span>
+                                <span className={cn("text-[9px] font-bold px-1 py-0.5 rounded text-white", tendencia.bg)}>
+                                  {jurado.taxaAbsolvicao}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Observações existentes */}
+                          {jurado.observacoesRapidas.length > 0 && (
+                            <div className="mb-3 space-y-1">
+                              {jurado.observacoesRapidas.map((obs, i) => (
+                                <p key={i} className={cn("text-[10px] px-2 py-1 rounded", isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-zinc-100 text-zinc-600")}>
+                                  • {obs}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Input de nova observação */}
+                          <div className="flex gap-1">
+                            <Input
+                              placeholder="Comportamento observado..."
+                              className={cn("h-8 text-xs flex-1", isDarkMode ? "bg-zinc-800 border-zinc-700" : "")}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
+                                  handleAddObservacaoJurado(jurado.cadeira, (e.target as HTMLInputElement).value.trim());
+                                  (e.target as HTMLInputElement).value = "";
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2"
+                              onClick={(e) => {
+                                const input = (e.target as HTMLButtonElement).previousElementSibling as HTMLInputElement;
+                                if (input?.value.trim()) {
+                                  handleAddObservacaoJurado(jurado.cadeira, input.value.trim());
+                                  input.value = "";
+                                }
+                              }}
+                            >
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
