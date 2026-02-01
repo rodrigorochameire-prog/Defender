@@ -372,16 +372,16 @@ export default function DrivePage() {
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header - Padrão Processos */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      {/* Header Padrão Defender */}
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <FolderOpen className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <FolderOpen className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Drive</span>
-              <span className="text-xs text-zinc-400 dark:text-zinc-500">• {stats?.totalFiles || 0} arquivos</span>
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Drive</h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Gestão de documentos • {stats?.totalFiles || 0} arquivos</p>
             </div>
           </div>
           

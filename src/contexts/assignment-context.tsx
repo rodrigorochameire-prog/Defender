@@ -258,7 +258,7 @@ export const CONTEXT_MENU_ITEMS: AssignmentMenuItem[] = [
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
   { label: "Processos", path: "/admin/processos", icon: "Scale", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Drive", path: "/admin/drive", icon: "FolderOpen", description: "Arquivos e documentos", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
-  { label: "Diligências", path: "/admin/diligencias", icon: "FileSearch", description: "Painel de investigações", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Investigação", path: "/admin/diligencias", icon: "Radar", description: "Radar e diligências", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Equipe", path: "/admin/equipe", icon: "UsersRound", description: "Gestão da equipe", requiredRoles: ["admin", "defensor", "servidor"] },
 ];
 
