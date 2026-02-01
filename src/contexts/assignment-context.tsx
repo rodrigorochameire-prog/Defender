@@ -291,6 +291,7 @@ export const UTILITIES_MENU: MenuSection[] = [
     items: [
       { label: "Usuários", path: "/admin/usuarios", icon: "Users", description: "Gerenciar acessos" },
       { label: "Configurações", path: "/admin/settings", icon: "Settings" },
+      { label: "Banco de Dados", path: "/admin/settings/dados", icon: "FolderOpen", description: "Monitor e gestão de dados" },
       { label: "Workspaces", path: "/admin/workspaces", icon: "Building2", description: "Acessos e universos de dados" },
       { label: "Relatórios", path: "/admin/relatorios", icon: "BarChart3" },
     ],

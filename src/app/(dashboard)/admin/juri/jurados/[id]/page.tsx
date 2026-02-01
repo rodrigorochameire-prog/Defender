@@ -59,7 +59,20 @@ import {
   Flame,
   BookOpen,
   Compass,
+  Sparkles,
+  ThumbsUp,
+  ThumbsDown,
+  Minus,
+  Zap,
+  Star,
+  Quote,
+  Camera,
+  Edit,
+  FileText,
+  ExternalLink,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 // Dados mockados do jurado (em produção viria do banco)
@@ -254,79 +267,222 @@ export default function JuradoPerfilPage({ params }: { params: Promise<{ id: str
       : { text: "Favorável à Acusação", color: "text-rose-600 dark:text-rose-400", icon: <TrendingDown className="w-5 h-5" /> };
 
   return (
+    <TooltipProvider>
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* SUB-HEADER - Padrão Defender */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/admin/juri/jurados">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className={cn(
-                "text-sm font-semibold",
-                jurado.genero === "F" 
-                  ? "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-400"
-                  : "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400"
-              )}>
-                {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{jurado.nome}</h1>
-              <div className="flex items-center gap-2 text-[10px] text-zinc-500">
-                <Briefcase className="w-3 h-3" />
-                <span>{jurado.profissao}</span>
-                <span>•</span>
-                <MapPin className="w-3 h-3" />
-                <span>{jurado.bairro}</span>
-                <span>•</span>
-                <span>{jurado.idade} anos</span>
+      {/* HEADER APRIMORADO */}
+      <div className="relative overflow-hidden">
+        {/* Background com gradiente sutil */}
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 via-transparent to-amber-500/5" />
+        <div className="absolute inset-0 opacity-[0.02]" style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
+          backgroundSize: '20px 20px'
+        }} />
+        
+        <div className="relative px-4 md:px-6 py-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-start justify-between gap-4">
+            {/* Lado Esquerdo - Info do Jurado */}
+            <div className="flex items-start gap-4">
+              <Link href="/admin/juri/jurados">
+                <Button variant="ghost" size="icon" className="h-8 w-8 mt-1">
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              </Link>
+              
+              {/* Avatar com indicador de tendência */}
+              <div className="relative group">
+                <Avatar className="h-16 w-16 ring-4 ring-white dark:ring-zinc-800 shadow-lg">
+                  <AvatarFallback className={cn(
+                    "text-lg font-semibold",
+                    jurado.genero === "F" 
+                      ? "bg-gradient-to-br from-pink-400 to-rose-500 text-white"
+                      : "bg-gradient-to-br from-blue-400 to-indigo-500 text-white"
+                  )}>
+                    {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Indicador de tendência */}
+                <div className={cn(
+                  "absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white dark:ring-zinc-800",
+                  jurado.taxaAbsolvicao >= 60 ? "bg-emerald-500" : jurado.taxaAbsolvicao >= 40 ? "bg-amber-500" : "bg-rose-500"
+                )}>
+                  {jurado.taxaAbsolvicao >= 60 ? <ThumbsUp className="w-3 h-3 text-white" /> : 
+                   jurado.taxaAbsolvicao >= 40 ? <Minus className="w-3 h-3 text-white" /> : 
+                   <ThumbsDown className="w-3 h-3 text-white" />}
+                </div>
+                {/* Botão de editar foto */}
+                <button className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 rounded-full transition-opacity">
+                  <Camera className="w-5 h-5 text-white" />
+                </button>
+              </div>
+              
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">{jurado.nome}</h1>
+                  {jurado.ativo && (
+                    <Badge className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                      Ativo
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 text-xs text-zinc-500">
+                  <span className="flex items-center gap-1">
+                    <Briefcase className="w-3 h-3" />
+                    {jurado.profissao}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {jurado.bairro}, {jurado.cidade}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {jurado.idade} anos
+                  </span>
+                </div>
+                {/* Tags rápidas */}
+                <div className="flex items-center gap-1.5 pt-1">
+                  <Badge variant="outline" className={cn("text-[10px] px-2 py-0", perfilConfig.color)}>
+                    {perfilConfig.icon}
+                    <span className="ml-1">{perfilConfig.label}</span>
+                  </Badge>
+                  <Badge variant="outline" className={cn("text-[10px] px-2 py-0", orientacaoConfig.color)}>
+                    {orientacaoConfig.label}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px] px-2 py-0">
+                    {jurado.escolaridade}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            
+            {/* Lado Direito - Stats e Ações */}
+            <div className="flex items-start gap-4">
+              {/* Mini Stats */}
+              <div className="hidden md:flex items-center gap-3">
+                <div className="text-center px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                  <div className="text-lg font-bold text-zinc-800 dark:text-zinc-200">{jurado.totalSessoes}</div>
+                  <div className="text-[9px] text-zinc-500 uppercase">Sessões</div>
+                </div>
+                <div className="text-center px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+                  <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{jurado.absolvicoes}</div>
+                  <div className="text-[9px] text-emerald-600 dark:text-emerald-400 uppercase">Absolvições</div>
+                </div>
+                <div className="text-center px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20">
+                  <div className="text-lg font-bold text-rose-600 dark:text-rose-400">{jurado.condenacoes}</div>
+                  <div className="text-[9px] text-rose-600 dark:text-rose-400 uppercase">Condenações</div>
+                </div>
+              </div>
+              
+              {/* Ações */}
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8">
+                      <FileText className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Gerar Relatório</TooltipContent>
+                </Tooltip>
+                <Button size="sm" className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/20">
+                  <Save className="w-3.5 h-3.5 mr-1.5" />
+                  Salvar
+                </Button>
               </div>
             </div>
           </div>
-          <Button size="sm" className="h-8 text-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-            <Save className="w-3.5 h-3.5 mr-1.5" />
-            Salvar
-          </Button>
         </div>
       </div>
 
       <div className="p-4 md:p-6 space-y-4">
 
-        {/* Resumo rápido */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className={cn("p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-3", perfilConfig.color)}>
-            {perfilConfig.icon}
-            <div>
-              <div className="text-[10px] text-zinc-500 uppercase">Perfil</div>
-              <div className="font-semibold text-sm">{perfilConfig.label}</div>
+        {/* Painel de Insights Estratégicos com IA */}
+        <Card className="overflow-hidden border-0 shadow-lg">
+          <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-white">
+                <Sparkles className="w-4 h-4" />
+                <span className="text-sm font-semibold">Análise Estratégica</span>
+              </div>
+              <Badge className="bg-white/20 text-white text-[10px] border-0">
+                Atualizado hoje
+              </Badge>
             </div>
           </div>
-          <div className={cn("p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-3")}>
-            {tendenciaLabel.icon}
-            <div>
-              <div className="text-[10px] text-zinc-500 uppercase">Tendência</div>
-              <div className={cn("font-semibold text-sm", tendenciaLabel.color)}>{tendenciaLabel.text}</div>
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Tendência Visual */}
+              <div className="p-4 rounded-xl bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-800 dark:to-zinc-900 border border-zinc-100 dark:border-zinc-700">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-medium text-zinc-500 uppercase">Taxa de Absolvição</span>
+                  <span className={cn("text-2xl font-bold", tendenciaLabel.color)}>{jurado.taxaAbsolvicao}%</span>
+                </div>
+                <div className="h-3 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+                  <div 
+                    className={cn(
+                      "h-full rounded-full transition-all",
+                      jurado.taxaAbsolvicao >= 60 ? "bg-gradient-to-r from-emerald-500 to-emerald-400" :
+                      jurado.taxaAbsolvicao >= 40 ? "bg-gradient-to-r from-amber-500 to-amber-400" :
+                      "bg-gradient-to-r from-rose-500 to-rose-400"
+                    )}
+                    style={{ width: `${jurado.taxaAbsolvicao}%` }}
+                  />
+                </div>
+                <div className="flex justify-between mt-2 text-[10px] text-zinc-400">
+                  <span>Condenação</span>
+                  <span>Absolvição</span>
+                </div>
+              </div>
+
+              {/* Recomendação Principal */}
+              <div className="lg:col-span-2 p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-100 dark:border-amber-800/30">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <Lightbulb className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">
+                      Estratégia Recomendada
+                    </h4>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                      {jurado.taxaAbsolvicao >= 60 
+                        ? `Jurada com perfil ${perfilConfig.label.toLowerCase()} e alta taxa de absolvição. Valoriza argumentos racionais e contexto social. Investir em narrativa humanizada com dados concretos. Evitar apelos puramente emocionais.`
+                        : jurado.taxaAbsolvicao >= 40
+                        ? `Jurada equilibrada com perfil ${perfilConfig.label.toLowerCase()}. Responde bem a argumentos bem fundamentados. Combinar lógica com elementos emocionais moderados.`
+                        : `Jurada com tendência punitiva. Focar em falhas processuais e dúvidas técnicas. Evitar narrativas que minimizem a gravidade.`
+                      }
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        <Check className="w-2.5 h-2.5 mr-1" />
+                        Usar: Dados estatísticos
+                      </Badge>
+                      <Badge className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        <Check className="w-2.5 h-2.5 mr-1" />
+                        Usar: Contexto social
+                      </Badge>
+                      <Badge className="text-[9px] bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                        <X className="w-2.5 h-2.5 mr-1" />
+                        Evitar: Vitimização excessiva
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-3">
-            <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <div>
-              <div className="text-[10px] text-zinc-500 uppercase">Taxa Absolvição</div>
-              <div className="font-semibold text-sm text-blue-600 dark:text-blue-400">{jurado.taxaAbsolvicao}%</div>
-            </div>
-          </div>
-          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-3">
-            <History className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-            <div>
-              <div className="text-[10px] text-zinc-500 uppercase">Sessões</div>
-              <div className="font-semibold text-sm text-violet-600 dark:text-violet-400">{jurado.totalSessoes} participações</div>
-            </div>
-          </div>
-        </div>
+
+            {/* Citação do Jurado */}
+            {jurado.descobertasOnline && jurado.descobertasOnline.length > 0 && (
+              <div className="mt-4 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700 flex items-start gap-3">
+                <Quote className="w-4 h-4 text-zinc-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 italic">
+                    &quot;{jurado.descobertasOnline[3] || jurado.descobertasOnline[0]}&quot;
+                  </p>
+                  <p className="text-[10px] text-zinc-400 mt-1">— Encontrado em redes sociais</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -905,5 +1061,6 @@ export default function JuradoPerfilPage({ params }: { params: Promise<{ id: str
         </Tabs>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
