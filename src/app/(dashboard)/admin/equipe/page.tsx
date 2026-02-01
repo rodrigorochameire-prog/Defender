@@ -355,19 +355,17 @@ export default function EquipePage() {
             >
               <Download className="w-3.5 h-3.5" />
             </Button>
-            {canManageTeam() && (
-              <Button 
-                size="sm" 
-                className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
-                onClick={() => {
-                  resetForm();
-                  setAddModalOpen(true);
-                }}
-              >
-                <UserPlus className="w-3.5 h-3.5 mr-1" />
-                Novo
-              </Button>
-            )}
+            <Button 
+              size="sm" 
+              className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+              onClick={() => {
+                resetForm();
+                setAddModalOpen(true);
+              }}
+            >
+              <UserPlus className="w-3.5 h-3.5 mr-1" />
+              Novo Membro
+            </Button>
           </div>
         </div>
       </div>

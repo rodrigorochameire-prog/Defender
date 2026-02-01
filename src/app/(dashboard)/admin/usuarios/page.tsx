@@ -214,133 +214,137 @@ export default function UsuariosPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-teal-500/10 rounded-lg">
-            <Users className="h-6 w-6 text-teal-500" />
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Header - Padrão Processos */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Users className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Usuários</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">• {stats?.total ?? 0} cadastrados</span>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Usuários</h1>
-            <p className="text-muted-foreground text-sm">
-              Gerencie os usuários do sistema
-            </p>
+          
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              className="h-7 px-2.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <UserPlus className="w-3.5 h-3.5 mr-1" />
+              Novo Usuário
+            </Button>
           </div>
         </div>
-        <Button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Novo Usuário
-        </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-zinc-800 rounded-lg">
-                <Users className="h-4 w-4 text-zinc-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.total ?? "-"}</p>
-                <p className="text-xs text-muted-foreground">Total</p>
-              </div>
+      {/* Conteúdo */}
+      <div className="p-4 md:p-6 space-y-4">
+      
+      {/* Stats Cards - Padrão Demandas */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Total</p>
+              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.total ?? 0}</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/10 rounded-lg">
-                <Crown className="h-4 w-4 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.admins ?? "-"}</p>
-                <p className="text-xs text-muted-foreground">Admins</p>
-              </div>
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Users className="w-4 h-4 text-zinc-500" />
             </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-teal-500/10 rounded-lg">
-                <Briefcase className="h-4 w-4 text-teal-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.defensores ?? "-"}</p>
-                <p className="text-xs text-muted-foreground">Defensores</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <GraduationCap className="h-4 w-4 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.estagiarios ?? "-"}</p>
-                <p className="text-xs text-muted-foreground">Estagiários</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 rounded-lg">
-                <Building className="h-4 w-4 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.servidores ?? "-"}</p>
-                <p className="text-xs text-muted-foreground">Servidores</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome, email ou OAB..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-zinc-900/50 border-zinc-800"
-          />
+          </div>
         </div>
-        <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-full sm:w-48 bg-zinc-900/50 border-zinc-800">
-            <SelectValue placeholder="Filtrar por cargo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os cargos</SelectItem>
-            <SelectItem value="admin">Administradores</SelectItem>
-            <SelectItem value="defensor">Defensores</SelectItem>
-            <SelectItem value="estagiario">Estagiários</SelectItem>
-            <SelectItem value="servidor">Servidores</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Admins</p>
+              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.admins ?? 0}</p>
+            </div>
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Crown className="w-4 h-4 text-zinc-500" />
+            </div>
+          </div>
+        </div>
+        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Defensores</p>
+              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.defensores ?? 0}</p>
+            </div>
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Briefcase className="w-4 h-4 text-zinc-500" />
+            </div>
+          </div>
+        </div>
+        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Estagiários</p>
+              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.estagiarios ?? 0}</p>
+            </div>
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <GraduationCap className="w-4 h-4 text-zinc-500" />
+            </div>
+          </div>
+        </div>
+        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Servidores</p>
+              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.servidores ?? 0}</p>
+            </div>
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Building className="w-4 h-4 text-zinc-500" />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Users List */}
-      <Card className="bg-zinc-900/50 border-zinc-800">
-        <CardHeader>
-          <CardTitle className="text-lg">Lista de Usuários</CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* Filters - Padrão Demandas */}
+      <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl p-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <Input
+              placeholder="Buscar por nome, email ou OAB..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-9 text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+            />
+          </div>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-full sm:w-48 h-9 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+              <SelectValue placeholder="Todos os cargos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os cargos</SelectItem>
+              <SelectItem value="admin">Administradores</SelectItem>
+              <SelectItem value="defensor">Defensores</SelectItem>
+              <SelectItem value="estagiario">Estagiários</SelectItem>
+              <SelectItem value="servidor">Servidores</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
+
+      {/* Users List - Padrão Demandas */}
+      <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl">
+        <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+          <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Lista de Usuários</h3>
+        </div>
+        <div className="p-4">
           {isLoading ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 bg-zinc-900 rounded-lg">
+                <div key={i} className="flex items-center gap-4 p-4 rounded-lg border border-zinc-100 dark:border-zinc-800">
                   <Skeleton className="h-10 w-10 rounded-full" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-48" />
@@ -355,22 +359,22 @@ export default function UsuariosPage() {
               {users.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center gap-4 p-4 bg-zinc-900 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-colors"
+                  className="group flex items-center gap-4 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all bg-zinc-50/50 dark:bg-zinc-800/30"
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-gradient-to-br from-teal-500 to-emerald-600 text-white text-sm">
+                    <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-sm font-medium">
                       {getInitials(user.name)}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium truncate">{user.name}</p>
+                      <p className="font-medium text-zinc-800 dark:text-zinc-200 truncate">{user.name}</p>
                       {user.emailVerified && (
-                        <CheckCircle className="h-3.5 w-3.5 text-teal-500 flex-shrink-0" />
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-3 text-xs text-zinc-500">
                       <span className="flex items-center gap-1 truncate">
                         <Mail className="h-3 w-3" />
                         {user.email}
@@ -384,28 +388,22 @@ export default function UsuariosPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <Badge
                       variant="outline"
-                      className={cn("gap-1", roleColors[user.role])}
+                      className={cn("gap-1 text-[10px]", roleColors[user.role])}
                     >
                       {roleIcons[user.role]}
                       {roleLabels[user.role]}
                     </Badge>
 
-                    {user.workspaceName && (
-                      <Badge variant="secondary" className="hidden sm:flex">
-                        {user.workspaceName}
-                      </Badge>
-                    )}
-
-                    <span className="text-xs text-muted-foreground hidden md:block">
-                      {format(new Date(user.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+                    <span className="text-[10px] text-zinc-400 hidden md:block">
+                      {format(new Date(user.createdAt), "dd/MM/yy", { locale: ptBR })}
                     </span>
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -431,7 +429,7 @@ export default function UsuariosPage() {
                             setSelectedUserId(user.id);
                             setIsDeleteModalOpen(true);
                           }}
-                          className="text-red-500 focus:text-red-500"
+                          className="text-rose-500 focus:text-rose-500"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Remover Usuário
@@ -443,13 +441,18 @@ export default function UsuariosPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Nenhum usuário encontrado</p>
+            <div className="text-center py-16">
+              <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mx-auto mb-4 flex items-center justify-center">
+                <Users className="w-8 h-8 text-zinc-400" />
+              </div>
+              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nenhum usuário encontrado</p>
+              <p className="text-xs text-zinc-500">Ajuste os filtros ou adicione um novo usuário</p>
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
+
+      </div>
 
       {/* Create User Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
