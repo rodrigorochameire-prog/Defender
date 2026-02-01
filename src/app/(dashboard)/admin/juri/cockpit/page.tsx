@@ -48,6 +48,16 @@ import {
   Play,
   Moon,
   Sun,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Heart,
+  GraduationCap,
+  Church,
+  FileText,
+  MessageSquare,
+  Vote,
+  Info,
   Users,
   Gavel,
   Mic,
@@ -94,6 +104,14 @@ interface JuradoCorpo {
   ultimaParticipacao?: string;
   foto?: string;
   recusadoPor?: "mp" | "defesa" | null;
+  // Campos adicionais para informações detalhadas
+  estadoCivil?: string;
+  escolaridade?: string;
+  religiao?: string;
+  observacoesPerfil?: string;
+  comportamentoNotado?: string;
+  ultimoVoto?: "absolvicao" | "condenacao" | null;
+  notasComportamentais?: string[];
 }
 
 interface JuradoSorteado extends JuradoCorpo {
@@ -112,21 +130,21 @@ interface Anotacao {
 
 // Corpo de jurados disponíveis
 const corpoJurados: JuradoCorpo[] = [
-  { id: 1, nome: "Maria Helena Silva", genero: "F", profissao: "Professora", idade: 45, bairro: "Centro", taxaAbsolvicao: 75, perfilDominante: "empatico", participacoes: 8, ultimaParticipacao: "2025-11-15", recusadoPor: null },
-  { id: 2, nome: "José Carlos Mendes", genero: "M", profissao: "Empresário", idade: 52, bairro: "Pituba", taxaAbsolvicao: 25, perfilDominante: "autoritario", participacoes: 12, ultimaParticipacao: "2025-12-10", recusadoPor: null },
-  { id: 3, nome: "Ana Paula Ferreira", genero: "F", profissao: "Enfermeira", idade: 38, bairro: "Brotas", taxaAbsolvicao: 80, perfilDominante: "empatico", participacoes: 5, ultimaParticipacao: "2025-10-20", recusadoPor: null },
-  { id: 4, nome: "Pedro Henrique Lima", genero: "M", profissao: "Engenheiro", idade: 41, bairro: "Imbuí", taxaAbsolvicao: 50, perfilDominante: "analitico", participacoes: 7, ultimaParticipacao: "2025-12-05", recusadoPor: null },
-  { id: 5, nome: "Fernanda Costa Santos", genero: "F", profissao: "Designer", idade: 34, bairro: "Paralela", taxaAbsolvicao: 67, perfilDominante: "impulsivo", participacoes: 3, ultimaParticipacao: "2025-09-18", recusadoPor: null },
-  { id: 6, nome: "Roberto Almeida Junior", genero: "M", profissao: "Militar Ref.", idade: 58, bairro: "Stella Maris", taxaAbsolvicao: 27, perfilDominante: "autoritario", participacoes: 15, ultimaParticipacao: "2026-01-08", recusadoPor: null },
-  { id: 7, nome: "Juliana Ribeiro Melo", genero: "F", profissao: "Assist. Social", idade: 42, bairro: "Liberdade", taxaAbsolvicao: 86, perfilDominante: "empatico", participacoes: 9, ultimaParticipacao: "2025-12-18", recusadoPor: null },
-  { id: 8, nome: "Carlos Eduardo Pinto", genero: "M", profissao: "Contador", idade: 48, bairro: "Itaigara", taxaAbsolvicao: 45, perfilDominante: "analitico", participacoes: 6, ultimaParticipacao: "2025-11-25", recusadoPor: null },
-  { id: 9, nome: "Patrícia Moura Lima", genero: "F", profissao: "Médica", idade: 50, bairro: "Horto", taxaAbsolvicao: 55, perfilDominante: "conciliador", participacoes: 4, ultimaParticipacao: "2025-10-30", recusadoPor: null },
-  { id: 10, nome: "Marcos Antônio Silva", genero: "M", profissao: "Comerciante", idade: 55, bairro: "Cajazeiras", taxaAbsolvicao: 35, perfilDominante: "conservador", participacoes: 10, ultimaParticipacao: "2025-12-22", recusadoPor: null },
-  { id: 11, nome: "Luciana Teixeira", genero: "F", profissao: "Psicóloga", idade: 39, bairro: "Graça", taxaAbsolvicao: 72, perfilDominante: "empatico", participacoes: 6, ultimaParticipacao: "2025-11-10", recusadoPor: null },
-  { id: 12, nome: "Fernando Gomes", genero: "M", profissao: "Advogado", idade: 44, bairro: "Campo Grande", taxaAbsolvicao: 60, perfilDominante: "analitico", participacoes: 8, ultimaParticipacao: "2025-12-15", recusadoPor: null },
-  { id: 13, nome: "Camila Soares", genero: "F", profissao: "Bancária", idade: 36, bairro: "Barra", taxaAbsolvicao: 58, perfilDominante: "conciliador", participacoes: 4, ultimaParticipacao: "2025-09-28", recusadoPor: null },
-  { id: 14, nome: "Ricardo Nunes", genero: "M", profissao: "Professor", idade: 47, bairro: "Rio Vermelho", taxaAbsolvicao: 70, perfilDominante: "empatico", participacoes: 11, ultimaParticipacao: "2026-01-05", recusadoPor: null },
-  { id: 15, nome: "Beatriz Campos", genero: "F", profissao: "Funcionária Pública", idade: 51, bairro: "Ondina", taxaAbsolvicao: 48, perfilDominante: "analitico", participacoes: 7, ultimaParticipacao: "2025-11-20", recusadoPor: null },
+  { id: 1, nome: "Maria Helena Silva", genero: "F", profissao: "Professora", idade: 45, bairro: "Centro", taxaAbsolvicao: 75, perfilDominante: "empatico", participacoes: 8, ultimaParticipacao: "2025-11-15", recusadoPor: null, estadoCivil: "Casada", escolaridade: "Superior", religiao: "Católica", observacoesPerfil: "Demonstra compaixão, atenta às questões sociais", comportamentoNotado: "Faz anotações frequentes", ultimoVoto: "absolvicao", notasComportamentais: ["Sensível a argumentos emocionais", "Prestou atenção especial às testemunhas de defesa"] },
+  { id: 2, nome: "José Carlos Mendes", genero: "M", profissao: "Empresário", idade: 52, bairro: "Pituba", taxaAbsolvicao: 25, perfilDominante: "autoritario", participacoes: 12, ultimaParticipacao: "2025-12-10", recusadoPor: null, estadoCivil: "Casado", escolaridade: "Superior", religiao: "Evangélico", observacoesPerfil: "Valoriza ordem e disciplina, rigoroso", comportamentoNotado: "Mantém expressão séria, braços cruzados", ultimoVoto: "condenacao", notasComportamentais: ["Tendência a concordar com o MP", "Demonstra impaciência com réus"] },
+  { id: 3, nome: "Ana Paula Ferreira", genero: "F", profissao: "Enfermeira", idade: 38, bairro: "Brotas", taxaAbsolvicao: 80, perfilDominante: "empatico", participacoes: 5, ultimaParticipacao: "2025-10-20", recusadoPor: null, estadoCivil: "Solteira", escolaridade: "Superior", religiao: "Espírita", observacoesPerfil: "Muito sensível, trabalha com cuidado de pessoas", comportamentoNotado: "Demonstra emoção visível", ultimoVoto: "absolvicao", notasComportamentais: ["Chora facilmente", "Receptiva a histórias de vida"] },
+  { id: 4, nome: "Pedro Henrique Lima", genero: "M", profissao: "Engenheiro", idade: 41, bairro: "Imbuí", taxaAbsolvicao: 50, perfilDominante: "analitico", participacoes: 7, ultimaParticipacao: "2025-12-05", recusadoPor: null, estadoCivil: "Casado", escolaridade: "Pós-graduação", religiao: "Agnóstico", observacoesPerfil: "Baseia decisões em lógica e provas", comportamentoNotado: "Analisa documentos com atenção", ultimoVoto: null, notasComportamentais: ["Imparcial", "Valoriza provas técnicas", "Questiona contradições"] },
+  { id: 5, nome: "Fernanda Costa Santos", genero: "F", profissao: "Designer", idade: 34, bairro: "Paralela", taxaAbsolvicao: 67, perfilDominante: "impulsivo", participacoes: 3, ultimaParticipacao: "2025-09-18", recusadoPor: null, estadoCivil: "União Estável", escolaridade: "Superior", religiao: "Sem religião", observacoesPerfil: "Criativa, reage rapidamente", comportamentoNotado: "Expressões faciais reveladoras", ultimoVoto: "absolvicao", notasComportamentais: ["Pode mudar de opinião rapidamente", "Influenciável por argumentos finais"] },
+  { id: 6, nome: "Roberto Almeida Junior", genero: "M", profissao: "Militar Ref.", idade: 58, bairro: "Stella Maris", taxaAbsolvicao: 27, perfilDominante: "autoritario", participacoes: 15, ultimaParticipacao: "2026-01-08", recusadoPor: null, estadoCivil: "Casado", escolaridade: "Superior", religiao: "Católico", observacoesPerfil: "Extremamente conservador, valoriza hierarquia", comportamentoNotado: "Postura rígida, pouca expressão", ultimoVoto: "condenacao", notasComportamentais: ["Histórico de condenações", "Desconfia de réus", "Muito difícil de convencer"] },
+  { id: 7, nome: "Juliana Ribeiro Melo", genero: "F", profissao: "Assist. Social", idade: 42, bairro: "Liberdade", taxaAbsolvicao: 86, perfilDominante: "empatico", participacoes: 9, ultimaParticipacao: "2025-12-18", recusadoPor: null, estadoCivil: "Divorciada", escolaridade: "Pós-graduação", religiao: "Católica", observacoesPerfil: "Trabalha com vulneráveis, muito compreensiva", comportamentoNotado: "Olha para o réu com compaixão", ultimoVoto: "absolvicao", notasComportamentais: ["Excelente para defesa", "Considera contexto social", "Acredita em recuperação"] },
+  { id: 8, nome: "Carlos Eduardo Pinto", genero: "M", profissao: "Contador", idade: 48, bairro: "Itaigara", taxaAbsolvicao: 45, perfilDominante: "analitico", participacoes: 6, ultimaParticipacao: "2025-11-25", recusadoPor: null, estadoCivil: "Casado", escolaridade: "Superior", religiao: "Evangélico", observacoesPerfil: "Metódico, analisa detalhes", comportamentoNotado: "Faz cálculos mentais visíveis", ultimoVoto: "condenacao", notasComportamentais: ["Valoriza provas documentais", "Desconfia de testemunhos orais"] },
+  { id: 9, nome: "Patrícia Moura Lima", genero: "F", profissao: "Médica", idade: 50, bairro: "Horto", taxaAbsolvicao: 55, perfilDominante: "conciliador", participacoes: 4, ultimaParticipacao: "2025-10-30", recusadoPor: null, estadoCivil: "Casada", escolaridade: "Mestrado", religiao: "Católica", observacoesPerfil: "Equilibrada, busca justiça", comportamentoNotado: "Atenta a laudos médicos", ultimoVoto: null, notasComportamentais: ["Neutra inicialmente", "Pode ser persuadida com bons argumentos"] },
+  { id: 10, nome: "Marcos Antônio Silva", genero: "M", profissao: "Comerciante", idade: 55, bairro: "Cajazeiras", taxaAbsolvicao: 35, perfilDominante: "conservador", participacoes: 10, ultimaParticipacao: "2025-12-22", recusadoPor: null, estadoCivil: "Casado", escolaridade: "Médio", religiao: "Evangélico", observacoesPerfil: "Tradicional, valores familiares fortes", comportamentoNotado: "Balança a cabeça negativamente", ultimoVoto: "condenacao", notasComportamentais: ["Tendência punitiva", "Influenciado por religião", "Desconfia de jovens réus"] },
+  { id: 11, nome: "Luciana Teixeira", genero: "F", profissao: "Psicóloga", idade: 39, bairro: "Graça", taxaAbsolvicao: 72, perfilDominante: "empatico", participacoes: 6, ultimaParticipacao: "2025-11-10", recusadoPor: null, estadoCivil: "Solteira", escolaridade: "Pós-graduação", religiao: "Espiritualista", observacoesPerfil: "Analisa comportamento, busca entender motivações", comportamentoNotado: "Observa linguagem corporal do réu", ultimoVoto: "absolvicao", notasComportamentais: ["Excelente para defesa", "Valoriza histórico psicológico", "Considera traumas"] },
+  { id: 12, nome: "Fernando Gomes", genero: "M", profissao: "Advogado", idade: 44, bairro: "Campo Grande", taxaAbsolvicao: 60, perfilDominante: "analitico", participacoes: 8, ultimaParticipacao: "2025-12-15", recusadoPor: null, estadoCivil: "Casado", escolaridade: "Pós-graduação", religiao: "Católico", observacoesPerfil: "Conhece o sistema, analisa técnica jurídica", comportamentoNotado: "Atento aos procedimentos", ultimoVoto: "absolvicao", notasComportamentais: ["Valoriza due process", "Crítico de erros processuais", "Pode identificar falhas na acusação"] },
+  { id: 13, nome: "Camila Soares", genero: "F", profissao: "Bancária", idade: 36, bairro: "Barra", taxaAbsolvicao: 58, perfilDominante: "conciliador", participacoes: 4, ultimaParticipacao: "2025-09-28", recusadoPor: null, estadoCivil: "Casada", escolaridade: "Superior", religiao: "Católica", observacoesPerfil: "Equilibrada, busca consenso", comportamentoNotado: "Olha para outros jurados", ultimoVoto: null, notasComportamentais: ["Pode ser influenciada pelo grupo", "Busca posição intermediária"] },
+  { id: 14, nome: "Ricardo Nunes", genero: "M", profissao: "Professor", idade: 47, bairro: "Rio Vermelho", taxaAbsolvicao: 70, perfilDominante: "empatico", participacoes: 11, ultimaParticipacao: "2026-01-05", recusadoPor: null, estadoCivil: "Casado", escolaridade: "Mestrado", religiao: "Católico", observacoesPerfil: "Educador, acredita em segunda chance", comportamentoNotado: "Faz perguntas mentais", ultimoVoto: "absolvicao", notasComportamentais: ["Favorável à defesa", "Considera idade e contexto", "Acredita em ressocialização"] },
+  { id: 15, nome: "Beatriz Campos", genero: "F", profissao: "Funcionária Pública", idade: 51, bairro: "Ondina", taxaAbsolvicao: 48, perfilDominante: "analitico", participacoes: 7, ultimaParticipacao: "2025-11-20", recusadoPor: null, estadoCivil: "Viúva", escolaridade: "Superior", religiao: "Católica", observacoesPerfil: "Burocrática, segue regras", comportamentoNotado: "Anota tudo metodicamente", ultimoVoto: "condenacao", notasComportamentais: ["Imparcial", "Segue a lei estritamente", "Difícil de prever"] },
 ];
 
 // Categorias de anotações
@@ -179,6 +197,293 @@ function getTendenciaColor(taxa: number) {
   if (taxa >= 60) return { bg: "bg-emerald-500", text: "text-emerald-600", border: "border-emerald-300", ring: "ring-emerald-400", light: "bg-emerald-50" };
   if (taxa >= 40) return { bg: "bg-amber-500", text: "text-amber-600", border: "border-amber-300", ring: "ring-amber-400", light: "bg-amber-50" };
   return { bg: "bg-rose-500", text: "text-rose-600", border: "border-rose-300", ring: "ring-rose-400", light: "bg-rose-50" };
+}
+
+// ============================================
+// COMPONENTE: Card Expansível do Jurado
+// ============================================
+function JuradoCardExpandivel({
+  jurado,
+  isDarkMode,
+  isNoConselho,
+  isSelecionado,
+  onSelect,
+  onRecusar,
+}: {
+  jurado: JuradoCorpo;
+  isDarkMode: boolean;
+  isNoConselho: boolean;
+  isSelecionado: boolean;
+  onSelect: () => void;
+  onRecusar: (por: "mp" | "defesa") => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const tendencia = getTendenciaColor(jurado.taxaAbsolvicao);
+
+  // Card para jurado recusado
+  if (jurado.recusadoPor) {
+    return (
+      <div className="p-2 rounded-lg border border-dashed opacity-50 flex items-center gap-2">
+        <Avatar className="h-7 w-7 grayscale">
+          <AvatarFallback className="text-[10px] bg-zinc-200 text-zinc-500">
+            {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-medium line-through truncate">{jurado.nome}</p>
+        </div>
+        <Badge variant="outline" className={cn(
+          "text-[9px] px-1",
+          jurado.recusadoPor === "mp" ? "text-rose-500" : "text-blue-500"
+        )}>
+          {jurado.recusadoPor === "mp" ? "MP" : "Def"}
+        </Badge>
+      </div>
+    );
+  }
+
+  // Card para jurado no conselho
+  if (isNoConselho) {
+    return (
+      <div className="p-2 rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 flex items-center gap-2">
+        <Avatar className="h-7 w-7">
+          <AvatarFallback className={cn(
+            "text-[10px]",
+            jurado.genero === "F" ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700"
+          )}>
+            {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <Link href={`/admin/juri/jurados/${jurado.id}`} className="hover:underline">
+            <p className="text-[11px] font-medium text-emerald-700 truncate">{jurado.nome}</p>
+          </Link>
+        </div>
+        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+      </div>
+    );
+  }
+
+  // Card normal expandível
+  return (
+    <div
+      className={cn(
+        "rounded-lg border transition-all",
+        isSelecionado
+          ? "border-violet-400 bg-violet-50 dark:bg-violet-950/30 ring-2 ring-violet-300"
+          : isDarkMode
+            ? "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
+            : "border-zinc-200 bg-white hover:border-zinc-300"
+      )}
+    >
+      {/* Header clicável para selecionar */}
+      <div
+        onClick={onSelect}
+        className="p-2 cursor-pointer"
+      >
+        <div className="flex items-center gap-2">
+          <Avatar className={cn("h-8 w-8 ring-1 ring-offset-1", tendencia.ring)}>
+            {jurado.foto && <AvatarImage src={jurado.foto} />}
+            <AvatarFallback className={cn(
+              "text-[10px] font-semibold",
+              jurado.genero === "F" ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700"
+            )}>
+              {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1">
+              <Link
+                href={`/admin/juri/jurados/${jurado.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="hover:underline"
+              >
+                <p className={cn("text-[11px] font-semibold truncate", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
+                  {jurado.nome.split(" ").slice(0, 2).join(" ")}
+                </p>
+              </Link>
+              <span className={cn("text-[9px] font-bold px-1 py-0.5 rounded text-white", tendencia.bg)}>
+                {jurado.taxaAbsolvicao}%
+              </span>
+            </div>
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className="text-[9px] text-zinc-500">{jurado.profissao}</span>
+              <span className={cn("text-[9px] px-1 py-0.5 rounded border", getPerfilColor(jurado.perfilDominante))}>
+                {getPerfilLabel(jurado.perfilDominante)}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <Link
+              href={`/admin/juri/jurados/${jurado.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              <ExternalLink className="w-3 h-3 text-zinc-400" />
+            </Link>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(!expanded);
+              }}
+              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Conteúdo expandido */}
+      {expanded && (
+        <div className={cn(
+          "px-2 pb-2 border-t text-[10px]",
+          isDarkMode ? "border-zinc-800" : "border-zinc-100"
+        )}>
+          {/* Dados básicos */}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
+            <div className="flex items-center gap-1">
+              <Calendar className="w-3 h-3 text-zinc-400" />
+              <span className="text-zinc-500">Idade:</span>
+              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.idade} anos</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Briefcase className="w-3 h-3 text-zinc-400" />
+              <span className="text-zinc-500">Bairro:</span>
+              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.bairro}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Heart className="w-3 h-3 text-zinc-400" />
+              <span className="text-zinc-500">Estado:</span>
+              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.estadoCivil || "-"}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <GraduationCap className="w-3 h-3 text-zinc-400" />
+              <span className="text-zinc-500">Escolar:</span>
+              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.escolaridade || "-"}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Church className="w-3 h-3 text-zinc-400" />
+              <span className="text-zinc-500">Religião:</span>
+              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.religiao || "-"}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <History className="w-3 h-3 text-zinc-400" />
+              <span className="text-zinc-500">Sessões:</span>
+              <span className={isDarkMode ? "text-zinc-300" : "text-zinc-700"}>{jurado.participacoes}</span>
+            </div>
+          </div>
+
+          {/* Último voto */}
+          {jurado.ultimoVoto && (
+            <div className="mt-2 flex items-center gap-1">
+              <Vote className="w-3 h-3 text-zinc-400" />
+              <span className="text-zinc-500">Último voto:</span>
+              <Badge variant="outline" className={cn(
+                "text-[9px] px-1",
+                jurado.ultimoVoto === "absolvicao" ? "text-emerald-600 border-emerald-300" : "text-rose-600 border-rose-300"
+              )}>
+                {jurado.ultimoVoto === "absolvicao" ? "Absolvição" : "Condenação"}
+              </Badge>
+            </div>
+          )}
+
+          {/* Observações do perfil */}
+          {jurado.observacoesPerfil && (
+            <div className="mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <Info className="w-3 h-3 text-violet-500" />
+                <span className="text-violet-600 font-medium">Perfil:</span>
+              </div>
+              <p className={cn("text-[9px] p-1.5 rounded", isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-zinc-50 text-zinc-600")}>
+                {jurado.observacoesPerfil}
+              </p>
+            </div>
+          )}
+
+          {/* Comportamento notado */}
+          {jurado.comportamentoNotado && (
+            <div className="mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <Eye className="w-3 h-3 text-blue-500" />
+                <span className="text-blue-600 font-medium">Comportamento:</span>
+              </div>
+              <p className={cn("text-[9px] p-1.5 rounded", isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-zinc-50 text-zinc-600")}>
+                {jurado.comportamentoNotado}
+              </p>
+            </div>
+          )}
+
+          {/* Notas comportamentais */}
+          {jurado.notasComportamentais && jurado.notasComportamentais.length > 0 && (
+            <div className="mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <MessageSquare className="w-3 h-3 text-amber-500" />
+                <span className="text-amber-600 font-medium">Notas:</span>
+              </div>
+              <div className="space-y-0.5">
+                {jurado.notasComportamentais.map((nota, i) => (
+                  <p key={i} className={cn("text-[9px] px-1.5 py-0.5 rounded", isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-amber-50 text-amber-700")}>
+                    • {nota}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Botões de ação */}
+          <div className="flex items-center gap-1 mt-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[9px] text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRecusar("mp");
+                    }}
+                  >
+                    <Shield className="w-3 h-3 mr-1" />
+                    Recusar MP
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Recusar pelo Ministério Público</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[9px] text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRecusar("defesa");
+                    }}
+                  >
+                    <Scale className="w-3 h-3 mr-1" />
+                    Recusar Defesa
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Recusar pela Defesa</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <div className="flex-1" />
+            <Link
+              href={`/admin/juri/jurados/${jurado.id}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button variant="outline" size="sm" className="h-6 px-2 text-[9px]">
+                <ExternalLink className="w-3 h-3 mr-1" />
+                Ver Perfil
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ============================================
@@ -855,143 +1160,18 @@ export default function PlenarioCockpitPage() {
                 )}
 
                 {/* Lista */}
-                <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                  {juradosFiltrados.map((jurado) => {
-                    const tendencia = getTendenciaColor(jurado.taxaAbsolvicao);
-                    const isNoConselho = juradosSelecionadosIds.includes(jurado.id);
-                    const isSelecionado = juradoSelecionado?.id === jurado.id;
-
-                    if (jurado.recusadoPor) {
-                      return (
-                        <div key={jurado.id} className="p-2 rounded-lg border border-dashed opacity-50 flex items-center gap-2">
-                          <Avatar className="h-7 w-7 grayscale">
-                            <AvatarFallback className="text-[10px] bg-zinc-200 text-zinc-500">
-                              {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[11px] font-medium line-through truncate">{jurado.nome}</p>
-                          </div>
-                          <Badge variant="outline" className={cn(
-                            "text-[9px] px-1",
-                            jurado.recusadoPor === "mp" ? "text-rose-500" : "text-blue-500"
-                          )}>
-                            {jurado.recusadoPor === "mp" ? "MP" : "Def"}
-                          </Badge>
-                        </div>
-                      );
-                    }
-
-                    if (isNoConselho) {
-                      return (
-                        <div key={jurado.id} className="p-2 rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 flex items-center gap-2">
-                          <Avatar className="h-7 w-7">
-                            <AvatarFallback className={cn(
-                              "text-[10px]",
-                              jurado.genero === "F" ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700"
-                            )}>
-                              {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[11px] font-medium text-emerald-700 truncate">{jurado.nome}</p>
-                          </div>
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div
-                        key={jurado.id}
-                        onClick={() => setJuradoSelecionado(isSelecionado ? null : jurado)}
-                        className={cn(
-                          "p-2 rounded-lg border cursor-pointer transition-all",
-                          isSelecionado
-                            ? "border-violet-400 bg-violet-50 dark:bg-violet-950/30 ring-2 ring-violet-300"
-                            : isDarkMode
-                              ? "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
-                              : "border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm"
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Avatar className={cn("h-8 w-8 ring-1 ring-offset-1", tendencia.ring)}>
-                            <AvatarFallback className={cn(
-                              "text-[10px] font-semibold",
-                              jurado.genero === "F" ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700"
-                            )}>
-                              {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1">
-                              <p className={cn("text-[11px] font-semibold truncate", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
-                                {jurado.nome.split(" ").slice(0, 2).join(" ")}
-                              </p>
-                              <span className={cn("text-[9px] font-bold px-1 py-0.5 rounded text-white", tendencia.bg)}>
-                                {jurado.taxaAbsolvicao}%
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <span className="text-[9px] text-zinc-500">{jurado.profissao}</span>
-                              <span className={cn("text-[9px] px-1 py-0.5 rounded border", getPerfilColor(jurado.perfilDominante))}>
-                                {getPerfilLabel(jurado.perfilDominante)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Informações extras */}
-                        <div className="flex items-center gap-2 mt-2 text-[9px] text-zinc-500">
-                          <span>{jurado.idade} anos</span>
-                          <span>•</span>
-                          <span>{jurado.bairro}</span>
-                          <span>•</span>
-                          <span>{jurado.participacoes} sessões</span>
-                        </div>
-
-                        {/* Botões de recusa */}
-                        <div className="flex items-center gap-1 mt-2">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-5 px-1.5 text-[9px] text-rose-500 hover:text-rose-600 hover:bg-rose-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRecusarJurado(jurado.id, "mp");
-                                  }}
-                                >
-                                  <Shield className="w-3 h-3 mr-0.5" />
-                                  MP
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Recusar pelo MP</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-5 px-1.5 text-[9px] text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRecusarJurado(jurado.id, "defesa");
-                                  }}
-                                >
-                                  <Scale className="w-3 h-3 mr-0.5" />
-                                  Defesa
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Recusar pela Defesa</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                  {juradosFiltrados.map((jurado) => (
+                    <JuradoCardExpandivel
+                      key={jurado.id}
+                      jurado={jurado}
+                      isDarkMode={isDarkMode}
+                      isNoConselho={juradosSelecionadosIds.includes(jurado.id)}
+                      isSelecionado={juradoSelecionado?.id === jurado.id}
+                      onSelect={() => setJuradoSelecionado(juradoSelecionado?.id === jurado.id ? null : jurado)}
+                      onRecusar={(por) => handleRecusarJurado(jurado.id, por)}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
