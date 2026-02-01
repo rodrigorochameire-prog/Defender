@@ -57,6 +57,12 @@ import {
   Trash2,
   Edit,
   Loader2,
+  Activity,
+  FileText,
+  TrendingUp,
+  BarChart3,
+  ListTodo,
+  FolderOpen,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -116,6 +122,10 @@ export default function EquipePage() {
   const { data: statsData } = trpc.users.stats.useQuery();
   const { data: delegacoesEnviadas, isLoading: isLoadingDelegacoes } = trpc.delegacao.delegacoesEnviadas.useQuery({});
   const { data: estatisticasDelegacoes } = trpc.delegacao.estatisticas.useQuery();
+  
+  // Logs de atividade da equipe
+  const { data: teamActivity, isLoading: isLoadingActivity } = trpc.activityLogs.teamStats.useQuery({ days: 30 });
+  const { data: recentLogs, isLoading: isLoadingLogs } = trpc.activityLogs.recentTeamActivity.useQuery({ limit: 30, excludeAdmins: true });
   
   // tRPC mutations
   const createUserMutation = trpc.users.create.useMutation({
@@ -436,6 +446,18 @@ export default function EquipePage() {
             <Send className="w-4 h-4 mr-2" />
             Delegações
           </TabsTrigger>
+          <TabsTrigger 
+            value="atividade"
+            className={cn(
+              "rounded-lg px-4 py-2 text-sm font-medium transition-all",
+              activeTab === "atividade" 
+                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md" 
+                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+            )}
+          >
+            <Activity className="w-4 h-4 mr-2" />
+            Atividade
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab: Visão Geral (Membros) */}
@@ -625,6 +647,183 @@ export default function EquipePage() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* Tab: Atividade da Equipe */}
+        <TabsContent value="atividade" className="space-y-6">
+          {/* Cards de estatísticas por membro */}
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Produtividade da Equipe (30 dias)
+            </h3>
+            
+            {isLoadingActivity ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-40 rounded-xl" />
+                ))}
+              </div>
+            ) : teamActivity && teamActivity.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {teamActivity.map((member) => (
+                  <Card
+                    key={member.userId}
+                    className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all"
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar className="w-10 h-10">
+                        <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-semibold">
+                          {member.userName?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h4 className="font-semibold text-zinc-900 dark:text-zinc-50 text-sm">{member.userName}</h4>
+                        <Badge className={cn("text-[9px]", getRoleColorLocal(member.userRole as string))}>
+                          {getRoleLabelLocal(member.userRole as string)}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30">
+                        <div className="flex items-center gap-2 mb-1">
+                          <ListTodo className="w-3.5 h-3.5 text-amber-600" />
+                          <span className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Demandas</span>
+                        </div>
+                        <p className="text-xl font-bold text-amber-700 dark:text-amber-400">{member.demandas}</p>
+                      </div>
+                      
+                      <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Users className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">Assistidos</span>
+                        </div>
+                        <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{member.assistidos}</p>
+                      </div>
+                      
+                      <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Scale className="w-3.5 h-3.5 text-blue-600" />
+                          <span className="text-[10px] text-blue-700 dark:text-blue-400 font-medium">Processos</span>
+                        </div>
+                        <p className="text-xl font-bold text-blue-700 dark:text-blue-400">{member.processos}</p>
+                      </div>
+                      
+                      <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-900/30">
+                        <div className="flex items-center gap-2 mb-1">
+                          <FolderOpen className="w-3.5 h-3.5 text-violet-600" />
+                          <span className="text-[10px] text-violet-700 dark:text-violet-400 font-medium">Documentos</span>
+                        </div>
+                        <p className="text-xl font-bold text-violet-700 dark:text-violet-400">{member.documentos}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-500">Total de ações</span>
+                        <span className="font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3 text-emerald-500" />
+                          {member.total}
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="p-12 text-center border-dashed">
+                <Activity className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-4" />
+                <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  Nenhuma atividade registrada
+                </h3>
+                <p className="text-sm text-zinc-500">
+                  As atividades da equipe aparecerão aqui
+                </p>
+              </Card>
+            )}
+          </div>
+
+          {/* Timeline de atividades recentes */}
+          <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                Atividades Recentes da Equipe
+              </h3>
+            </div>
+            
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[400px] overflow-y-auto">
+              {isLoadingLogs ? (
+                <div className="p-4 space-y-3">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Skeleton key={i} className="h-14 w-full rounded-lg" />
+                  ))}
+                </div>
+              ) : recentLogs && recentLogs.length > 0 ? (
+                recentLogs.map((log) => {
+                  const acaoIcons: Record<string, React.ReactNode> = {
+                    CREATE: <CheckCircle2 className="w-4 h-4 text-emerald-500" />,
+                    UPDATE: <Edit className="w-4 h-4 text-blue-500" />,
+                    DELETE: <Trash2 className="w-4 h-4 text-rose-500" />,
+                    COMPLETE: <CheckCircle2 className="w-4 h-4 text-emerald-500" />,
+                    DELEGATE: <Send className="w-4 h-4 text-amber-500" />,
+                    UPLOAD: <FolderOpen className="w-4 h-4 text-violet-500" />,
+                  };
+                  
+                  const acaoLabels: Record<string, string> = {
+                    CREATE: "criou",
+                    UPDATE: "atualizou",
+                    DELETE: "excluiu",
+                    COMPLETE: "concluiu",
+                    DELEGATE: "delegou",
+                    UPLOAD: "enviou",
+                    VIEW: "visualizou",
+                    SYNC: "sincronizou",
+                  };
+                  
+                  const entidadeLabels: Record<string, string> = {
+                    demanda: "demanda",
+                    assistido: "assistido",
+                    processo: "processo",
+                    documento: "documento",
+                    audiencia: "audiência",
+                    delegacao: "delegação",
+                    caso: "caso",
+                    jurado: "jurado",
+                  };
+                  
+                  return (
+                    <div key={log.id} className="flex items-center gap-4 px-5 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                        {acaoIcons[log.acao] || <Activity className="w-4 h-4 text-zinc-500" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                          <span className="font-medium">{log.user?.name}</span>
+                          {" "}
+                          <span className="text-zinc-500">{acaoLabels[log.acao] || log.acao}</span>
+                          {" "}
+                          <span className="font-medium">{entidadeLabels[log.entidadeTipo] || log.entidadeTipo}</span>
+                        </p>
+                        {log.descricao && (
+                          <p className="text-xs text-zinc-500 truncate">{log.descricao}</p>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-zinc-400 flex-shrink-0">
+                        {format(new Date(log.createdAt), "dd/MM HH:mm", { locale: ptBR })}
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-8 text-center">
+                  <Activity className="w-8 h-8 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
+                  <p className="text-sm text-zinc-500">Nenhuma atividade recente</p>
+                </div>
+              )}
+            </div>
+          </Card>
         </TabsContent>
       </Tabs>
 

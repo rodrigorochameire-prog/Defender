@@ -2603,3 +2603,58 @@ export const compartilhamentosRelations = relations(compartilhamentos, ({ one })
   compartilhadoPor: one(profissionais, { fields: [compartilhamentos.compartilhadoPorId], references: [profissionais.id] }),
   compartilhadoCom: one(profissionais, { fields: [compartilhamentos.compartilhadoComId], references: [profissionais.id] }),
 }));
+
+// ==========================================
+// LOGS DE ATIVIDADE (Auditoria)
+// ==========================================
+
+// Tipos de ação para logs
+export const acaoLogEnum = pgEnum("acao_log", [
+  "CREATE",       // Criação
+  "UPDATE",       // Atualização
+  "DELETE",       // Exclusão
+  "VIEW",         // Visualização
+  "COMPLETE",     // Conclusão de demanda
+  "DELEGATE",     // Delegação
+  "UPLOAD",       // Upload de arquivo
+  "SYNC",         // Sincronização
+]);
+
+// Tipos de entidade
+export const entidadeLogEnum = pgEnum("entidade_log", [
+  "demanda",
+  "assistido",
+  "processo",
+  "documento",
+  "audiencia",
+  "delegacao",
+  "caso",
+  "jurado",
+]);
+
+// Tabela de logs de atividade
+export const activityLogs = pgTable("activity_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  acao: varchar("acao", { length: 20 }).notNull(), // CREATE, UPDATE, DELETE, etc.
+  entidadeTipo: varchar("entidade_tipo", { length: 30 }).notNull(), // demanda, assistido, processo, etc.
+  entidadeId: integer("entidade_id"),
+  descricao: text("descricao"), // Descrição legível da ação
+  detalhes: jsonb("detalhes"), // Metadados adicionais (nome do assistido, número do processo, etc.)
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("activity_logs_user_idx").on(table.userId),
+  index("activity_logs_entidade_idx").on(table.entidadeTipo, table.entidadeId),
+  index("activity_logs_acao_idx").on(table.acao),
+  index("activity_logs_created_idx").on(table.createdAt),
+]);
+
+export type ActivityLog = typeof activityLogs.$inferSelect;
+export type InsertActivityLog = typeof activityLogs.$inferInsert;
+
+// Relações de logs
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+  user: one(users, { fields: [activityLogs.userId], references: [users.id] }),
+}));
