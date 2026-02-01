@@ -352,6 +352,17 @@ export default function Demandas() {
     },
   });
 
+  // Mutation para deletar demanda (soft delete)
+  const deleteDemandaMutation = trpc.demandas.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Demanda deletada!");
+      utils.demandas.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao deletar: " + error.message);
+    },
+  });
+
   // Mapear dados do banco para o formato do componente
   // Por enquanto, mantemos os mocks como base e adicionamos dados do banco se existirem
   useEffect(() => {
@@ -467,27 +478,48 @@ export default function Demandas() {
   };
 
   const handleArchiveDemanda = (id: string) => {
-    setDemandas((prev) =>
-      prev.map((d) =>
-        d.id === id
-          ? { ...d, arquivado: true, dataArquivamento: new Date().toISOString() }
-          : d
-      )
-    );
-    toast.success("Demanda arquivada!");
+    // Arquivar = mudar status para ARQUIVADO no banco
+    const numericId = parseInt(id, 10);
+    if (!isNaN(numericId)) {
+      updateDemandaMutation.mutate({ id: numericId, status: "ARQUIVADO" });
+    } else {
+      // Para demandas mock (string id), apenas atualiza estado local
+      setDemandas((prev) =>
+        prev.map((d) =>
+          d.id === id
+            ? { ...d, arquivado: true, dataArquivamento: new Date().toISOString() }
+            : d
+        )
+      );
+      toast.success("Demanda arquivada!");
+    }
   };
 
   const handleUnarchiveDemanda = (id: string) => {
-    setDemandas((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, arquivado: false, dataArquivamento: undefined } : d))
-    );
-    toast.success("Demanda desarquivada!");
+    // Desarquivar = mudar status de volta para FILA
+    const numericId = parseInt(id, 10);
+    if (!isNaN(numericId)) {
+      updateDemandaMutation.mutate({ id: numericId, status: "5_FILA" });
+    } else {
+      // Para demandas mock (string id), apenas atualiza estado local
+      setDemandas((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, arquivado: false, dataArquivamento: undefined } : d))
+      );
+      toast.success("Demanda desarquivada!");
+    }
   };
 
   const handleDeleteDemanda = (id: string) => {
     if (confirm("Deseja deletar esta demanda? Esta ação não pode ser desfeita.")) {
-      setDemandas((prev) => prev.filter((d) => d.id !== id));
-      toast.success("Demanda deletada!");
+      const numericId = parseInt(id, 10);
+      if (!isNaN(numericId)) {
+        // Deletar no banco de dados (soft delete)
+        deleteDemandaMutation.mutate({ id: numericId });
+      } else {
+        // Para demandas mock (string id), apenas atualiza estado local
+        setDemandas((prev) => prev.filter((d) => d.id !== id));
+        toast.success("Demanda deletada!");
+      }
     }
   };
 
