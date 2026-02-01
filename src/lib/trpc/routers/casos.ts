@@ -137,6 +137,7 @@ export const casosRouter = router({
   // ==========================================
   // LISTAR CASOS
   // ==========================================
+  // Casos são COMPARTILHADOS - todos os defensores têm acesso
   list: protectedProcedure
     .input(
       z.object({
@@ -149,7 +150,7 @@ export const casosRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      getWorkspaceScope(ctx.user); // Validar autenticação
       const conditions = [isNull(casos.deletedAt)];
       
       if (input.atribuicao) {
@@ -168,9 +169,7 @@ export const casosRouter = router({
         conditions.push(ilike(casos.titulo, `%${input.search}%`));
       }
 
-      if (!isAdmin) {
-        conditions.push(eq(casos.workspaceId, workspaceId));
-      }
+      // Casos são compartilhados - não filtrar por workspace
 
       const result = await db
         .select({
@@ -204,15 +203,14 @@ export const casosRouter = router({
   // ==========================================
   // BUSCAR CASO POR ID
   // ==========================================
+  // Casos são COMPARTILHADOS
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      getWorkspaceScope(ctx.user); // Validar autenticação
       const conditions = [eq(casos.id, input.id), isNull(casos.deletedAt)];
 
-      if (!isAdmin) {
-        conditions.push(eq(casos.workspaceId, workspaceId));
-      }
+      // Casos são compartilhados - não filtrar por workspace
 
       const [caso] = await db
         .select()

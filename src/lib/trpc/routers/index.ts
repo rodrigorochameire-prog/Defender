@@ -12,7 +12,9 @@ import { processosRouter } from "./processos";
 import { demandasRouter } from "./demandas";
 import { juriRouter } from "./juri";
 import { avaliacaoJuriRouter } from "./avaliacaoJuri";
+import { audienciasRouter } from "./audiencias";
 import { driveRouter } from "./drive";
+import { profissionaisRouter } from "./profissionais";
 
 // Routers compartilhados
 import { calendarRouter } from "./calendar";
@@ -40,7 +42,9 @@ export const appRouter = router({
   demandas: demandasRouter,
   juri: juriRouter,
   avaliacaoJuri: avaliacaoJuriRouter,
+  audiencias: audienciasRouter,
   drive: driveRouter,
+  profissionais: profissionaisRouter,
   
   // ==========================================
   // COMPARTILHADOS

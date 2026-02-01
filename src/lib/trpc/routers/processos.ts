@@ -56,6 +56,7 @@ export const processosRouter = router({
           assunto: processos.assunto,
           isJuri: processos.isJuri,
           assistidoId: processos.assistidoId,
+          situacao: processos.situacao,
           createdAt: processos.createdAt,
           assistido: {
             id: assistidos.id,

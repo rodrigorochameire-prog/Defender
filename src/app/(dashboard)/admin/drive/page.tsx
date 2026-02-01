@@ -528,45 +528,51 @@ export default function DrivePage() {
 
   return (
     <TooltipProvider>
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30">
-              <FolderOpen className="w-6 h-6 text-blue-700 dark:text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                Google Drive
-              </h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+        {/* Sub-header unificado */}
+        <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+                <FolderOpen className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+              </div>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                 {stats.total} arquivos • {formatFileSize(stats.totalSize)}
-              </p>
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-0.5">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                title="Sincronizar"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </Button>
+              <Button 
+                size="sm"
+                className="h-7 px-2.5 ml-1.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+              >
+                <Upload className="w-3.5 h-3.5 mr-1" />
+                Upload
+              </Button>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Sincronizar
+        {/* Conteúdo Principal */}
+        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm">
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
+              <Home className="w-4 h-4" />
             </Button>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload
+            <ChevronRight className="w-4 h-4 text-zinc-400" />
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-zinc-500">
+              Meu Drive
             </Button>
           </div>
-        </div>
-
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm">
-          <Button variant="ghost" size="sm" className="h-7 px-2">
-            <Home className="w-4 h-4" />
-          </Button>
-          <ChevronRight className="w-4 h-4 text-zinc-400" />
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-zinc-500">
-            Meu Drive
-          </Button>
-        </div>
 
         {/* Quick Access Folders */}
         <div>
@@ -680,6 +686,7 @@ export default function DrivePage() {
           open={previewOpen} 
           onClose={() => setPreviewOpen(false)} 
         />
+        </div>
       </div>
     </TooltipProvider>
   );

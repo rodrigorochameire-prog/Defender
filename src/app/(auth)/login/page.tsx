@@ -55,7 +55,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-8">
-          © 2026 INTELEX | Defesa Inteligente
+          © 2026 OMBUDS | Gestão para Defesa Criminal
         </p>
       </div>
     </div>

@@ -82,10 +82,16 @@ import {
   Lock,
   AlertCircle,
   Copy,
+  Filter,
+  XCircle,
+  ArrowUpDown,
+  FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
 import Link from "next/link";
+import { trpc } from "@/lib/trpc/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Componentes estruturais padronizados
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
@@ -104,60 +110,12 @@ import {
   InfoBlock
 } from "@/components/shared/page-structure";
 
-// Cores alinhadas com os workspaces
-// Cores de atribuicao NEUTRAS para reduzir poluicao visual
-const ATRIBUICAO_COLORS: Record<string, { 
-  border: string; 
-  bg: string; 
-  text: string;
-  hoverBg: string;
-  indicator: string;
-}> = {
-  all: { 
-    border: "border-l-zinc-300", 
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-    indicator: "bg-zinc-500"
-  },
-  JURI: { 
-    border: "border-l-zinc-400", 
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
-    indicator: "bg-zinc-500"
-  },
-  VVD: { 
-    border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
-    indicator: "bg-zinc-500"
-  },
-  EXECUCAO: { 
-    border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
-    indicator: "bg-zinc-500"
-  },
-  CRIMINAL: { 
-    border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
-    indicator: "bg-zinc-500"
-  },
-  CIVEL: { 
-    border: "border-l-zinc-400",
-    bg: "bg-zinc-100 dark:bg-zinc-800",
-    text: "text-zinc-600 dark:text-zinc-400",
-    hoverBg: "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
-    indicator: "bg-zinc-500"
-  },
-};
+import { 
+  ATRIBUICAO_OPTIONS,
+  getAtribuicaoColors,
+  SOLID_COLOR_MAP,
+} from "@/lib/config/atribuicoes";
 
-// Atribuicoes disponiveis para o filtro
 // Icones para cada atribuicao (Lucide icons)
 const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
   all: <Users className="w-3.5 h-3.5" />,
@@ -165,17 +123,11 @@ const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
   VVD: <AlertTriangle className="w-3.5 h-3.5" />,
   EXECUCAO: <Lock className="w-3.5 h-3.5" />,
   CRIMINAL: <Scale className="w-3.5 h-3.5" />,
+  SUBSTITUICAO: <Scale className="w-3.5 h-3.5" />,
+  SUBSTITUICAO_CIVEL: <FileText className="w-3.5 h-3.5" />,
   CIVEL: <FileText className="w-3.5 h-3.5" />,
+  CURADORIA: <Users className="w-3.5 h-3.5" />,
 };
-
-const ATRIBUICAO_OPTIONS = [
-  { value: "all", label: "Todas", shortLabel: "Todas" },
-  { value: "JURI", label: "Juri", shortLabel: "Juri" },
-  { value: "VVD", label: "Violencia Domestica", shortLabel: "V.D." },
-  { value: "EXECUCAO", label: "Exec. Penal", shortLabel: "EP" },
-  { value: "CRIMINAL", label: "Subst. Criminal", shortLabel: "Crim" },
-  { value: "CIVEL", label: "Subst. Civel", shortLabel: "Civel" },
-];
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -188,270 +140,46 @@ import { format, differenceInDays, parseISO, differenceInYears } from "date-fns"
 import { ptBR } from "date-fns/locale";
 import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
 
-// Dados mockados expandidos com informacoes processuais detalhadas
-const mockAssistidos = [
-  { 
-    id: 1, 
-    nome: "Diego Bonfim Almeida",
-    vulgo: "Diegao",
-    cpf: "123.456.789-00",
-    rg: "12.345.678-90 SSP/BA",
-    dataNascimento: "1990-05-15",
-    nomeMae: "Maria Almeida Santos",
-    naturalidade: "Salvador/BA",
-    endereco: "Rua das Flores, 123, Centro, Camacari/BA",
-    bairro: "Centro",
-    cidade: "Camacari",
-    statusPrisional: "CADEIA_PUBLICA",
-    unidadePrisional: "Cadeia Publica de Candeias",
-    dataPrisao: "2024-11-20",
-    crimePrincipal: "Homicidio Qualificado (Art. 121, ?2o, CP)",
-    artigos: ["121, ?2o", "14, II"],
-    telefone: "(71) 99999-1234",
-    telefoneContato: "(71) 98888-5678",
-    nomeContato: "Maria Almeida (Mae)",
-    processosAtivos: 2,
-    demandasAbertas: 3,
-    proximoPrazo: "2026-01-15",
-    atoProximoPrazo: "Resposta a Acusacao",
-    defensor: "Dr. Rodrigo",
-    area: "JURI",
-    photoUrl: null,
-    // Informacoes processuais detalhadas
-    faseProcessual: "INSTRUCAO",
-    numeroProcesso: "8012906-74.2025.8.05.0039",
-    dataFato: "2024-11-15",
-    resumoFato: "Suposto homicidio ocorrido no bairro Centro, durante discussao em bar. Vitima: Joao da Silva.",
-    teseDaDefesa: "Legitima defesa. Reu agiu para proteger sua vida apos ser atacado com faca.",
-    ultimaAudiencia: "2026-01-10",
-    tipoUltimaAudiencia: "Instrucao e Julgamento",
-    proximaAudiencia: "2026-02-20",
-    tipoProximaAudiencia: "Continuacao de Instrucao",
-    testemunhasArroladas: [
-      { nome: "Maria Silva", tipo: "defesa", ouvida: true, data: "2026-01-10" },
-      { nome: "Pedro Santos", tipo: "defesa", ouvida: false, data: null },
-      { nome: "Jose Oliveira", tipo: "acusacao", ouvida: true, data: "2026-01-10" },
-      { nome: "Ana Costa", tipo: "acusacao", ouvida: false, data: null },
-    ],
-    interrogatorioRealizado: false,
-    observacoesProcesso: "Reu nega autoria. Alega que estava em legitima defesa apos ser atacado primeiro.",
-    estrategiaDefesaAtual: "Focar na producao de prova testemunhal que comprove a agressao previa da vitima. Solicitar pericia nas imagens de camera de seguranca do bar. Preparar quesitacao para tese de legitima defesa.",
-  },
-  { 
-    id: 2, 
-    nome: "Maria Silva Santos",
-    vulgo: null,
-    cpf: "987.654.321-00",
-    rg: "98.765.432-10 SSP/BA",
-    dataNascimento: "1985-08-22",
-    nomeMae: "Ana Santos Costa",
-    naturalidade: "Lauro de Freitas/BA",
-    endereco: "Av. Principal, 456, Itinga, Lauro de Freitas/BA",
-    bairro: "Itinga",
-    cidade: "Lauro de Freitas",
-    statusPrisional: "SOLTO",
-    unidadePrisional: null,
-    dataPrisao: null,
-    crimePrincipal: "Lesao Corporal (Art. 129, ?9o, CP)",
-    artigos: ["129, ?9o"],
-    telefone: "(71) 97777-4321",
-    telefoneContato: null,
-    nomeContato: null,
-    processosAtivos: 1,
-    demandasAbertas: 1,
-    proximoPrazo: "2026-01-20",
-    atoProximoPrazo: "Alegacoes Finais",
-    defensor: "Dra. Juliane",
-    area: "VIOLENCIA_DOMESTICA",
-    photoUrl: null,
-    faseProcessual: "ALEGACOES_FINAIS",
-    numeroProcesso: "0001234-56.2025.8.05.0039",
-    dataFato: "2025-06-10",
-    resumoFato: "Discussao com companheiro que a agrediu. Assistida reagiu causando lesoes no agressor.",
-    teseDaDefesa: "Legitima defesa da mulher agredida. Excludente de ilicitude.",
-    ultimaAudiencia: "2025-12-15",
-    tipoUltimaAudiencia: "Instrucao",
-    proximaAudiencia: null,
-    tipoProximaAudiencia: null,
-    testemunhasArroladas: [
-      { nome: "Vizinha Clara", tipo: "defesa", ouvida: true, data: "2025-12-15" },
-      { nome: "Filho menor", tipo: "informante", ouvida: true, data: "2025-12-15" },
-    ],
-    interrogatorioRealizado: true,
-    observacoesProcesso: "Instrucao encerrada. Aguardando prazo para alegacoes finais.",
-    estrategiaDefesaAtual: "Alegacoes finais por memoriais. Enfatizar historico de agressoes sofridas pela assistida e laudo pericial que comprova lesoes antigas. Requerer absolvicao por legitima defesa.",
-  },
-  { 
-    id: 3, 
-    nome: "Jose Carlos Oliveira",
-    vulgo: "Ze do Morro",
-    cpf: "456.789.123-00",
-    rg: "45.678.912-30 SSP/BA",
-    dataNascimento: "1978-12-03",
-    nomeMae: "Francisca Oliveira",
-    naturalidade: "Camacari/BA",
-    endereco: "Trav. do Comercio, 78, Phoc II, Camacari/BA",
-    bairro: "Phoc II",
-    cidade: "Camacari",
-    statusPrisional: "PENITENCIARIA",
-    unidadePrisional: "Conjunto Penal de Candeias",
-    dataPrisao: "2023-06-15",
-    crimePrincipal: "Trafico de Drogas (Art. 33, Lei 11.343/06)",
-    artigos: ["33, caput", "35"],
-    telefone: null,
-    telefoneContato: "(71) 96666-9999",
-    nomeContato: "Ana Oliveira (Esposa)",
-    processosAtivos: 3,
-    demandasAbertas: 5,
-    proximoPrazo: "2026-01-14",
-    atoProximoPrazo: "Agravo em Execucao",
-    defensor: "Dr. Rodrigo",
-    area: "EXECUCAO_PENAL",
-    photoUrl: null,
-    faseProcessual: "EXECUCAO",
-    numeroProcesso: "0005678-90.2024.8.05.0039",
-    dataFato: "2023-06-10",
-    resumoFato: "Preso em flagrante com 50g de cocaina em residencia. Alega ser usuario.",
-    teseDaDefesa: "Desclassificacao para porte para uso pessoal. Quantidade compativel com consumo.",
-    ultimaAudiencia: null,
-    tipoUltimaAudiencia: null,
-    proximaAudiencia: null,
-    tipoProximaAudiencia: null,
-    testemunhasArroladas: [],
-    interrogatorioRealizado: true,
-    observacoesProcesso: "Condenado em 1o grau. Cumpre pena. Aguardando progressao de regime (2/5 cumprido).",
-    estrategiaDefesaAtual: "Acompanhar calculo de pena na VEP. Preparar pedido de progressao para regime semiaberto (data prevista: Marco/2026). Verificar remicao por trabalho e estudo.",
-  },
-  { 
-    id: 4, 
-    nome: "Ana Paula Costa Ferreira",
-    vulgo: "Paulinha",
-    cpf: "321.654.987-00",
-    rg: "32.165.498-70 SSP/BA",
-    dataNascimento: "1995-03-28",
-    nomeMae: "Teresa Costa",
-    naturalidade: "Salvador/BA",
-    endereco: "Rua Nova, 200, Centro, Dias D'Avila/BA",
-    bairro: "Centro",
-    cidade: "Dias D'Avila",
-    statusPrisional: "MONITORADO",
-    unidadePrisional: null,
-    dataPrisao: null,
-    crimePrincipal: "Ameaca (Art. 147, CP)",
-    artigos: ["147"],
-    telefone: "(71) 95555-1111",
-    telefoneContato: "(71) 94444-2222",
-    nomeContato: "Pedro Costa (Irmao)",
-    processosAtivos: 1,
-    demandasAbertas: 2,
-    proximoPrazo: "2026-01-18",
-    atoProximoPrazo: "Pedido de Revogacao",
-    defensor: "Dra. Juliane",
-    area: "VIOLENCIA_DOMESTICA",
-    photoUrl: null,
-    faseProcessual: "INSTRUCAO",
-    numeroProcesso: "0002345-67.2025.8.05.0039",
-    dataFato: "2025-09-20",
-    resumoFato: "Acusada de ameacar ex-companheiro apos termino conturbado.",
-    teseDaDefesa: "Atipicidade. Discussao verbal sem grave ameaca.",
-    ultimaAudiencia: "2025-11-20",
-    tipoUltimaAudiencia: "Audiencia de Custodia",
-    proximaAudiencia: "2026-02-10",
-    tipoProximaAudiencia: "Instrucao",
-    testemunhasArroladas: [
-      { nome: "Amiga Carla", tipo: "defesa", ouvida: false, data: null },
-      { nome: "Ex-companheiro", tipo: "vitima", ouvida: false, data: null },
-    ],
-    interrogatorioRealizado: false,
-    observacoesProcesso: "Monitoramento eletronico ha 3 meses. Pedido de revogacao em andamento.",
-    estrategiaDefesaAtual: "Insistir no pedido de revogacao do monitoramento (bom comportamento). Na instrucao, demonstrar atipicidade da conduta - discussao verbal sem ameaca grave.",
-  },
-  { 
-    id: 5, 
-    nome: "Roberto Ferreira Lima",
-    vulgo: "Betao",
-    cpf: "654.321.987-00",
-    rg: "65.432.198-70 SSP/BA",
-    dataNascimento: "1982-07-10",
-    nomeMae: "Joana Lima",
-    naturalidade: "Dias D'Avila/BA",
-    endereco: "Av. Central, 500, Centro, Dias D'Avila/BA",
-    bairro: "Centro",
-    cidade: "Dias D'Avila",
-    statusPrisional: "DOMICILIAR",
-    unidadePrisional: null,
-    dataPrisao: null,
-    crimePrincipal: "Homicidio Simples (Art. 121, CP)",
-    artigos: ["121, caput"],
-    telefone: "(71) 93333-3333",
-    telefoneContato: null,
-    nomeContato: null,
-    processosAtivos: 2,
-    demandasAbertas: 1,
-    proximoPrazo: null,
-    atoProximoPrazo: null,
-    defensor: "Dr. Rodrigo",
-    area: "JURI",
-    photoUrl: null,
-    faseProcessual: "SUMARIO_CULPA",
-    numeroProcesso: "0003456-78.2025.8.05.0039",
-    dataFato: "2025-01-05",
-    resumoFato: "Acidente de transito com vitima fatal. Reu conduzia veiculo embriagado.",
-    teseDaDefesa: "Culpa consciente vs. dolo eventual. Negativa de embriaguez ao volante.",
-    ultimaAudiencia: "2025-10-15",
-    tipoUltimaAudiencia: "Sumario da Culpa",
-    proximaAudiencia: "2026-03-10",
-    tipoProximaAudiencia: "Plenario do Juri",
-    testemunhasArroladas: [
-      { nome: "Perito transito", tipo: "acusacao", ouvida: true, data: "2025-10-15" },
-      { nome: "Passageiro", tipo: "defesa", ouvida: true, data: "2025-10-15" },
-    ],
-    interrogatorioRealizado: true,
-    observacoesProcesso: "Pronuncia mantida. Plenario designado. Prisao domiciliar por saude.",
-    estrategiaDefesaAtual: "Preparar sustentacao oral para plenario. Focar em culpa consciente vs. dolo eventual. Estudar perfil dos jurados. Preparar testemunha de defesa (passageiro) para depor novamente em plenario.",
-  },
-  { 
-    id: 6, 
-    nome: "Carlos Eduardo Mendes",
-    vulgo: "Cadu",
-    cpf: "789.123.456-00",
-    rg: "78.912.345-60 SSP/BA",
-    dataNascimento: "1988-11-18",
-    nomeMae: "Regina Mendes",
-    naturalidade: "Simoes Filho/BA",
-    endereco: "Rua do Sol, 89, Centro, Simoes Filho/BA",
-    bairro: "Centro",
-    cidade: "Simoes Filho",
-    statusPrisional: "CADEIA_PUBLICA",
-    unidadePrisional: "Cadeia Publica de Simoes Filho",
-    dataPrisao: "2025-12-01",
-    crimePrincipal: "Roubo Majorado (Art. 157, ?2o, CP)",
-    artigos: ["157, ?2o"],
-    telefone: null,
-    telefoneContato: "(71) 92222-4444",
-    nomeContato: "Joao Mendes (Pai)",
-    processosAtivos: 1,
-    demandasAbertas: 4,
-    proximoPrazo: "2026-01-15",
-    atoProximoPrazo: "Habeas Corpus",
-    defensor: "Dr. Rodrigo",
-    area: "JURI",
-    photoUrl: null,
-    faseProcessual: "INQUERITO",
-    numeroProcesso: "0006789-01.2025.8.05.0039",
-    dataFato: "2025-11-28",
-    resumoFato: "Acusado de roubo a transeunte com uso de arma branca.",
-    teseDaDefesa: "Negativa de autoria. Reconhecimento fotografico irregular.",
-    ultimaAudiencia: "2025-12-02",
-    tipoUltimaAudiencia: "Custodia",
-    proximaAudiencia: null,
-    tipoProximaAudiencia: null,
-    testemunhasArroladas: [],
-    interrogatorioRealizado: false,
-    observacoesProcesso: "Preso em flagrante. Excesso de prazo na conclusao do IP. HC impetrado.",
-    estrategiaDefesaAtual: "Prioridade: obter liberdade via HC por excesso de prazo. Subsidiariamente, questionar validade do reconhecimento fotografico (sumula 52 SDJE). Preparar defesa para eventual denuncia.",
-  },
-];
+// Interface para o tipo Assistido usado na UI
+interface AssistidoUI {
+  id: number;
+  nome: string;
+  cpf: string;
+  rg: string;
+  dataNascimento: string;
+  naturalidade: string;
+  statusPrisional: string;
+  localPrisao: string;
+  unidadePrisional: string;
+  telefone: string;
+  telefoneContato: string;
+  nomeContato: string;
+  endereco: string;
+  photoUrl: string;
+  observacoes: string;
+  area: string;
+  areas?: string[]; // Lista de áreas para múltiplas cores
+  atribuicoes?: string[]; // Lista de atribuições para múltiplas cores
+  vulgo: string;
+  crimePrincipal: string;
+  defensor: string;
+  processoPrincipal: string;
+  processosAtivos?: number;
+  demandasAbertas: number;
+  proximoPrazo: string | null;
+  prioridadeAI: string;
+  createdAt: string;
+  // Campos adicionais para compatibilidade com o componente
+  testemunhasArroladas: Array<{ nome: string; ouvida: boolean }>;
+  interrogatorioRealizado: boolean;
+  tipoProximaAudiencia: string;
+  proximaAudiencia: string | null;
+  // Novos campos
+  comarcas?: string[];
+  scoreComplexidade?: number;
+  ultimoEvento?: { tipo: string; data: string; titulo: string } | null;
+  atoProximoPrazo?: string;
+}
 
 // Configuracoes de status e fases
 const statusConfig: Record<string, { label: string; color: string; bgColor: string; borderColor: string; iconBg: string; priority: number }> = {
@@ -496,8 +224,15 @@ function getPrazoInfo(prazoStr: string | null) {
   return { text: `${dias}d`, urgent: false, color: "text-muted-foreground", bgColor: "" };
 }
 
-function calcularIdade(dataNascimento: string) {
-  return differenceInYears(new Date(), parseISO(dataNascimento));
+function calcularIdade(dataNascimento: string | null | undefined) {
+  if (!dataNascimento) return null;
+  try {
+    const data = parseISO(dataNascimento);
+    if (isNaN(data.getTime())) return null;
+    return differenceInYears(new Date(), data);
+  } catch {
+    return null;
+  }
 }
 
 function calcularTempoPreso(dataPrisao: string | null) {
@@ -568,22 +303,24 @@ function PhotoUploadDialog({ isOpen, onClose, assistidoNome, currentPhoto, onUpl
 }
 
 // ========================================
-// CARD DO ASSISTIDO - DESIGN SUICO
-// Com Foto o Containers Organizados o Cores Funcionais
+// CARD DO ASSISTIDO - DESIGN PREMIUM
+// Quick Actions + Mini Dashboard + Indicadores
 // ========================================
 
 interface AssistidoCardProps {
-  assistido: typeof mockAssistidos[0];
+  assistido: AssistidoUI;
   onPhotoClick: () => void;
   isPinned: boolean;
   onTogglePin: () => void;
+  hasDuplicates?: boolean;
+  duplicateCount?: number;
 }
 
-function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: AssistidoCardProps) {
+function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDuplicates, duplicateCount }: AssistidoCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   
-  // Logica Semantica: Determina se reu esta preso
+  // Lógica Semântica: Determina se réu está preso
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
   const isMonitorado = ["MONITORADO", "DOMICILIAR"].includes(assistido.statusPrisional);
   
@@ -591,355 +328,409 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin }: Assis
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
   const prazoUrgente = prazoInfo && prazoInfo.urgent;
   
-  // Telefone para contato
-  const telefoneDisplay = assistido.telefone || assistido.telefoneContato;
+  // Audiência hoje ou amanhã
+  const audienciaHoje = assistido.proximaAudiencia 
+    ? differenceInDays(parseISO(assistido.proximaAudiencia), new Date()) === 0 
+    : false;
+  const audienciaAmanha = assistido.proximaAudiencia 
+    ? differenceInDays(parseISO(assistido.proximaAudiencia), new Date()) === 1 
+    : false;
   
-  // Copiar numero do processo
+  // Urgência combinada: prazo vencendo OU audiência próxima OU preso
+  const isUrgente = prazoUrgente || audienciaHoje || audienciaAmanha || isPreso;
+  
+  // Score de complexidade (visual)
+  const score = assistido.scoreComplexidade || 0;
+  const scoreLevel = score >= 50 ? "alto" : score >= 25 ? "medio" : "baixo";
+  const scoreColor = score >= 50 ? "text-rose-600" : score >= 25 ? "text-amber-600" : "text-emerald-600";
+  const scoreBg = score >= 50 ? "bg-rose-100 dark:bg-rose-900/30" : score >= 25 ? "bg-amber-100 dark:bg-amber-900/30" : "bg-emerald-100 dark:bg-emerald-900/30";
+  
+  // Telefone para contato (WhatsApp)
+  const telefoneDisplay = assistido.telefone || assistido.telefoneContato;
+  const whatsappUrl = telefoneDisplay 
+    ? `https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}` 
+    : null;
+  
+  // Tempo de prisão
+  const tempoPreso = calcularTempoPreso(assistido.dataPrisao);
+  
+  // Idade
+  const idade = calcularIdade(assistido.dataNascimento);
+  
+  // Copiar número do processo
   const handleCopyProcesso = () => {
+    if (!assistido.numeroProcesso) return;
     navigator.clipboard.writeText(assistido.numeroProcesso);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Cor da borda lateral - UNICA cor estrutural do card
-  // Borda colorida apenas para reu preso (informacao critica)
-  const statusBorderColor = isPreso 
-    ? "border-l-rose-600 dark:border-l-rose-500" 
-    : "border-l-zinc-300 dark:border-l-zinc-600";
+  // Cores das atribuições/áreas
+  const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
+  const atribuicoesColors = atribuicoesUnicas.map(attr => {
+    const normalizedAttr = attr.toUpperCase().replace(/_/g, ' ');
+    const option = ATRIBUICAO_OPTIONS.find(o => 
+      o.value.toUpperCase() === normalizedAttr || 
+      o.label.toUpperCase().includes(normalizedAttr) ||
+      normalizedAttr.includes(o.value.toUpperCase())
+    );
+    return option ? SOLID_COLOR_MAP[option.value] || '#6b7280' : '#6b7280';
+  });
 
   return (
     <Card className={cn(
-      // Base: Fundo limpo, sem gradientes
+      // Base: Design limpo e minimalista (padrão Defender)
       "group relative flex flex-col justify-between overflow-hidden transition-all duration-200",
-      "bg-white dark:bg-zinc-950",
-      "border border-zinc-200 dark:border-zinc-800",
+      "bg-white dark:bg-zinc-900/80",
+      "border border-zinc-200/80 dark:border-zinc-800/80",
       "hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md",
-      // Borda lateral colorida - unica cor estrutural
-      "border-l-[3px]", statusBorderColor,
+      "rounded-lg",
       // Fixado
-      isPinned && "ring-1 ring-amber-400/60 dark:ring-amber-500/40"
+      isPinned && "ring-1 ring-amber-400/40 dark:ring-amber-500/20 bg-amber-50/30 dark:bg-amber-900/5"
     )}>
       
-      <div className="p-3 sm:p-4 space-y-3">
+      {/* Indicador sutil de status no topo */}
+      {(audienciaHoje || audienciaAmanha) && (
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-400 to-orange-400" />
+      )}
+      
+      {/* Quick Actions - Discretos no hover */}
+      <div className={cn(
+        "absolute top-2 right-2 flex items-center gap-0.5 z-10",
+        "opacity-0 group-hover:opacity-100 transition-all duration-150"
+      )}>
+        {whatsappUrl && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-zinc-500 hover:text-emerald-600" />
+                </Button>
+              </a>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">WhatsApp</TooltipContent>
+          </Tooltip>
+        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href={`/admin/processos?assistido=${assistido.id}`}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                <Scale className="w-3.5 h-3.5 text-zinc-500 hover:text-violet-600" />
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">Processos</TooltipContent>
+        </Tooltip>
+      </div>
+
+      <div className="p-3 space-y-3">
         
-        {/* 1. TOPO: Foto + Identidade + Status */}
+        {/* 1. TOPO: Foto + Identidade */}
         <div className="flex gap-3 items-start">
-          {/* Avatar com botao de upload */}
-          <div className="relative group/avatar flex-shrink-0">
-            {/* Avatar neutro - vermelho apenas se preso */}
+          {/* Avatar - Clean design */}
+          <div className="relative flex-shrink-0">
             <Avatar 
-              className={cn(
-                "h-12 w-12 sm:h-14 sm:w-14 ring-2 cursor-pointer transition-all hover:scale-105 hover:ring-primary/50",
-                isPreso ? "ring-rose-400 dark:ring-rose-500" : "ring-zinc-200 dark:ring-zinc-700"
-              )}
+              className="h-10 w-10 cursor-pointer transition-all hover:scale-105 ring-1 ring-zinc-200 dark:ring-zinc-700"
               onClick={onPhotoClick}
             >
               <AvatarImage src={assistido.photoUrl || undefined} alt={assistido.nome} />
-              <AvatarFallback 
-                className={cn(
-                  "text-sm sm:text-base font-semibold",
-                  isPreso 
-                    ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
-                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                )}
-              >
+              <AvatarFallback className="text-xs font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
                 {getInitials(assistido.nome)}
               </AvatarFallback>
             </Avatar>
-            {/* Botao de camera sobreposto */}
-            <button
-              onClick={onPhotoClick}
-              className="absolute -bottom-1 -right-1 h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity shadow-md hover:scale-110"
-            >
-              <Camera className="w-3 h-3" />
-            </button>
+            {/* Status indicator - pequeno e sutil */}
+            {isPreso && (
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-rose-500 border border-white dark:border-zinc-900" />
+            )}
           </div>
           
-          {/* Info Principal */}
-          <div className="flex-1 min-w-0 space-y-1">
+          {/* Info Principal - Design limpo */}
+          <div className="flex-1 min-w-0 pr-12">
             {/* Nome */}
             <Link href={`/admin/assistidos/${assistido.id}`}>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm sm:text-base leading-tight hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors line-clamp-1">
+              <h3 className="font-medium text-zinc-900 dark:text-zinc-100 text-sm leading-tight hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors line-clamp-1">
                 {assistido.nome}
               </h3>
             </Link>
             
-            {/* Badges - ORDENACAO: Fase Processual -> Area -> Status Prisional */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {/* 1. FASE PROCESSUAL - Primeiro */}
-              {assistido.faseProcessual && faseConfig[assistido.faseProcessual] && (
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "rounded-md px-1.5 py-0 text-xs uppercase font-semibold",
-                    faseConfig[assistido.faseProcessual].bgColor,
-                    faseConfig[assistido.faseProcessual].color,
-                    "border-transparent"
-                  )}
-                >
-                  {faseConfig[assistido.faseProcessual].label}
-                </Badge>
+            {/* Status badge sutil */}
+            <div className="flex items-center gap-2 mt-1">
+              <span className={cn(
+                "text-[10px] font-medium",
+                isPreso 
+                  ? "text-rose-600 dark:text-rose-400"
+                  : isMonitorado
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-zinc-500 dark:text-zinc-400"
+              )}>
+                {statusConfig[assistido.statusPrisional]?.label || "Solto"}
+              </span>
+              
+              {/* Tempo de prisão - discreto */}
+              {isPreso && tempoPreso && (
+                <span className="text-[10px] text-zinc-400">
+                  · {tempoPreso}
+                </span>
               )}
-
-              {/* 2. AREA - Segundo */}
-              {assistido.area && areaConfig[assistido.area] && (
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "rounded-md px-1.5 py-0 text-xs uppercase font-medium",
-                    areaConfig[assistido.area].bgColor,
-                    areaConfig[assistido.area].color,
-                    "border-transparent"
-                  )}
-                >
-                  {areaConfig[assistido.area].label}
-                </Badge>
-              )}
-
-              {/* 3. STATUS PRISIONAL - Cadeado sutil após o nome */}
-              <PrisonerIndicator 
-                preso={isPreso} 
-                localPrisao={assistido.unidadePrisional}
-                size="xs"
-                showTooltip={true}
-              />
-              {isMonitorado && !isPreso && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                  </TooltipTrigger>
-                  <TooltipContent>Monitorado</TooltipContent>
-                </Tooltip>
+              
+              {/* Idade */}
+              {idade && (
+                <span className="text-[10px] text-zinc-400">
+                  · {idade} anos
+                </span>
               )}
             </div>
             
-            {/* Local de prisao - mais compacto */}
+            {/* Local de prisão */}
             {assistido.unidadePrisional && (
-              <span className="flex items-center text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 flex-shrink-0" /> 
-                {assistido.unidadePrisional}
-              </span>
+              <div className="flex items-center gap-1 text-[10px] text-zinc-400 mt-0.5 truncate">
+                <MapPin className="w-2.5 h-2.5 flex-shrink-0" /> 
+                <span className="truncate">{assistido.unidadePrisional}</span>
+              </div>
             )}
           </div>
 
-          {/* Acoes */}
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <Button 
-              size="icon" 
-              variant="ghost" 
-              className={cn(
-                "h-6 w-6 sm:h-7 sm:w-7 transition-opacity",
-                isPinned 
-                  ? "text-amber-500 opacity-100" 
-                  : "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 opacity-0 group-hover:opacity-100"
-              )}
-              onClick={onTogglePin}
-            >
-              {isPinned ? <BookmarkCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Bookmark className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  className="h-6 w-6 sm:h-7 sm:w-7 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                >
-                  <MoreHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="cursor-pointer text-sm" onClick={onPhotoClick}>
-                  <Camera className="h-4 w-4 mr-2" />Alterar Foto
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <Link href={`/admin/assistidos/${assistido.id}`}>
-                  <DropdownMenuItem className="cursor-pointer text-sm">
-                    <Eye className="h-4 w-4 mr-2" />Perfil Completo
-                  </DropdownMenuItem>
-                </Link>
-                <Link href={`/admin/inteligencia?assistido=${assistido.id}`}>
-                  <DropdownMenuItem className="cursor-pointer text-sm">
-                    <Brain className="h-4 w-4 mr-2" />Inteligencia
-                  </DropdownMenuItem>
-                </Link>
-                <DropdownMenuSeparator />
-                {telefoneDisplay && (
-                  <DropdownMenuItem 
-                    className="cursor-pointer text-sm" 
-                    onClick={() => window.open(`https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}`, '_blank')}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />WhatsApp
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* 2. CONTAINER: Dados do Processo */}
-        <div className="p-2.5 sm:p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 space-y-2">
-          {/* Tipificacao - Fonte Serifada = Documento Juridico */}
-          {assistido.crimePrincipal && (
-            <div className="flex items-start gap-2">
-              <Gavel className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-400 mt-0.5 flex-shrink-0" />
-              <span className="text-xs sm:text-sm font-legal text-zinc-700 dark:text-zinc-300 line-clamp-2">
-                {assistido.crimePrincipal}
-              </span>
-            </div>
-          )}
-
-          {/* Numero do Processo - Clicavel para copiar */}
-          <div 
-            className="flex items-center justify-between group/copy cursor-pointer py-1 px-2 rounded bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800"
-            onClick={handleCopyProcesso}
+          {/* Ação de Pin (sempre visível no mobile) */}
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className={cn(
+              "h-6 w-6 absolute top-3 right-3 z-0 transition-all",
+              isPinned 
+                ? "text-amber-500 opacity-100" 
+                : "text-zinc-300 hover:text-amber-500 opacity-0 group-hover:opacity-100"
+            )}
+            onClick={onTogglePin}
           >
-            <div className="flex items-center gap-1.5">
-              <Scale className="w-3 h-3 text-zinc-400" />
-              <span className="text-xs font-data text-zinc-600 dark:text-zinc-400 tracking-tight">
-                {assistido.numeroProcesso}
-              </span>
-            </div>
-            <Copy className={cn(
-              "w-3 h-3 transition-all",
-              copied 
-                ? "text-emerald-500" 
-                : "text-zinc-300 dark:text-zinc-600 group-hover/copy:text-zinc-500"
-            )} />
-          </div>
+            {isPinned ? <BookmarkCheck className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+          </Button>
         </div>
 
-      </div>
-
-      {/* 3. RODAPE: Prazo / Acao */}
-      <div className={cn(
-        "px-3 sm:px-4 py-2 sm:py-2.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between",
-        "bg-zinc-50/50 dark:bg-zinc-900/50"
-      )}>
-        
-        {/* Logica de Urgencia no Prazo */}
-        {prazoInfo ? (
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-            <Clock className={cn(
-              "w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0",
-              prazoUrgente ? "text-rose-600 dark:text-rose-500" : "text-zinc-400"
-            )} />
-            <span className={cn(
-              "text-xs font-medium truncate",
-              prazoUrgente 
-                ? "text-rose-700 dark:text-rose-400" 
-                : "text-zinc-600 dark:text-zinc-400"
-            )}>
-              {assistido.atoProximoPrazo} 
-              <span className="opacity-70 ml-1">o {prazoInfo.text}</span>
-            </span>
+        {/* 2. Indicador de Atribuições - bolinhas coloridas sutis */}
+        {atribuicoesColors.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center -space-x-0.5">
+              {atribuicoesColors.slice(0, 3).map((color, idx) => (
+                <Tooltip key={idx}>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className="w-2.5 h-2.5 rounded-full ring-1 ring-white dark:ring-zinc-900 cursor-help"
+                      style={{ backgroundColor: color }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-[10px]">
+                    {atribuicoesUnicas[idx]?.toLowerCase().replace(/_/g, ' ')}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+            {atribuicoesColors.length > 3 && (
+              <span className="text-[9px] text-zinc-400">+{atribuicoesColors.length - 3}</span>
+            )}
           </div>
-        ) : (
-          <span className="text-xs text-zinc-400 italic">Sem prazos</span>
         )}
 
-        {/* Botao expandir */}
-        <Button 
-          size="icon"
-          variant="ghost" 
-          className="h-6 w-6 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex-shrink-0"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-        </Button>
+        {/* 3. Contadores e Próxima Audiência */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 text-xs text-zinc-500">
+            <Link href={`/admin/processos?assistido=${assistido.id}`} className="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+              <Scale className="w-3 h-3" />
+              <span className="font-medium">{assistido.processosAtivos || 0}</span>
+              <span className="text-zinc-400">proc</span>
+            </Link>
+            <span className="text-zinc-300 dark:text-zinc-700">·</span>
+            <Link href={`/admin/demandas?assistido=${assistido.id}`} className="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+              <FileText className="w-3 h-3" />
+              <span className="font-medium">{assistido.demandasAbertas || 0}</span>
+              <span className="text-zinc-400">dem</span>
+            </Link>
+          </div>
+          
+          {/* Ações rápidas: WhatsApp e Drive */}
+          <div className="flex items-center gap-1">
+            {whatsappUrl && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-400 hover:text-emerald-600">
+                      <MessageCircle className="w-3.5 h-3.5" />
+                    </Button>
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-[10px]">WhatsApp</TooltipContent>
+              </Tooltip>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href={`/admin/drive?assistido=${assistido.id}`}>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-400 hover:text-blue-600">
+                    <FolderOpen className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-[10px]">Pasta Drive</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+        
+        {/* 4. Próxima Audiência - Destaque sutil */}
+        {assistido.proximaAudiencia && (
+          <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-800/20">
+            <Calendar className="w-3.5 h-3.5 text-blue-500" />
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                {format(parseISO(assistido.proximaAudiencia), "dd/MM 'às' HH:mm")}
+              </span>
+              {assistido.tipoProximaAudiencia && (
+                <span className="text-[10px] text-blue-500 ml-1.5">
+                  · {assistido.tipoProximaAudiencia}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 5. Processo (se houver) */}
+        {assistido.numeroProcesso && (
+          <div 
+            className="flex items-center gap-1.5 group/copy cursor-pointer"
+            onClick={handleCopyProcesso}
+          >
+            <span className="font-mono text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors truncate">
+              {assistido.numeroProcesso}
+            </span>
+            <Copy className={cn(
+              "w-2.5 h-2.5 flex-shrink-0 transition-all",
+              copied ? "text-emerald-500" : "text-zinc-300 group-hover/copy:text-zinc-400"
+            )} />
+          </div>
+        )}
       </div>
 
-      {/* SECAO EXPANDIDA - Containers Organizados */}
+      {/* Rodapé minimalista */}
+      <div className="px-3 py-2 border-t border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between">
+        <button 
+          className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <span>{isExpanded ? "Menos" : "Mais"}</span>
+          <ChevronDown className={cn(
+            "w-3 h-3 transition-transform",
+            isExpanded && "rotate-180"
+          )} />
+        </button>
+      </div>
+
+      {/* Seção Expandida */}
       <Collapsible open={isExpanded}>
         <CollapsibleContent>
-          <div className="px-3 sm:px-4 py-3 space-y-2.5 sm:space-y-3 bg-zinc-50/80 dark:bg-zinc-900/80 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="px-3 py-3 space-y-3 border-t border-zinc-100 dark:border-zinc-800/50">
             
-            {/* Resumo do Fato - Container */}
-            {assistido.resumoFato && (
-              <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
-                <p className="swiss-label">Resumo do Fato</p>
-                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{assistido.resumoFato}</p>
+            {/* Crime */}
+            {assistido.crimePrincipal && (
+              <div>
+                <p className="text-[10px] text-zinc-400 uppercase tracking-wide mb-0.5">Crime</p>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">{assistido.crimePrincipal}</p>
               </div>
             )}
 
-            {/* Tese da Defesa - Container Destacado (Verde sutil) */}
-            {assistido.teseDaDefesa && (
-              <div className="p-2.5 rounded-lg bg-gradient-to-br from-emerald-50/80 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Gavel className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Tese da Defesa</p>
-                </div>
-                <p className="text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-200 leading-relaxed italic">&ldquo;{assistido.teseDaDefesa}&rdquo;</p>
-              </div>
-            )}
-
-            {/* Estrategia - Container */}
-            {assistido.estrategiaDefesaAtual && (
-              <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Target className="h-3 w-3 text-zinc-400" />
-                  <p className="swiss-label">Estrategia Atual</p>
-                </div>
-                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{assistido.estrategiaDefesaAtual}</p>
-              </div>
-            )}
-
-            {/* Audiencias - Grid de Cards */}
-            {(assistido.ultimaAudiencia || assistido.proximaAudiencia) && (
-              <div className="grid grid-cols-2 gap-2">
-                {assistido.ultimaAudiencia && (
-                  <div className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
-                    <p className="text-xs sm:text-xs uppercase text-zinc-400 font-semibold tracking-wider mb-0.5">Ultima Audiencia</p>
-                    <p className="text-xs sm:text-sm font-data font-semibold text-zinc-700 dark:text-zinc-300">
-                      {format(parseISO(assistido.ultimaAudiencia), "dd/MM/yy")}
-                    </p>
-                    <p className="text-xs text-zinc-500 truncate">{assistido.tipoUltimaAudiencia}</p>
-                  </div>
-                )}
-                {assistido.proximaAudiencia && (
-                  <div className="p-2 rounded-lg bg-blue-50/80 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50">
-                    <p className="text-xs sm:text-xs uppercase text-blue-600 dark:text-blue-400 font-semibold tracking-wider mb-0.5">Proxima Audiencia</p>
-                    <p className="text-xs sm:text-sm font-data font-semibold text-blue-700 dark:text-blue-300">
-                      {format(parseISO(assistido.proximaAudiencia), "dd/MM/yy")}
-                    </p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 truncate">{assistido.tipoProximaAudiencia}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Testemunhas e Interrogatorio - Pills */}
-            {assistido.testemunhasArroladas.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs text-zinc-600 dark:text-zinc-400">
-                  <UserCheck className="h-3 w-3" />
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                    {assistido.testemunhasArroladas.filter(t => t.ouvida).length}
+            {/* Contato com WhatsApp */}
+            {(assistido.telefone || assistido.telefoneContato) && (
+              <div>
+                <p className="text-[10px] text-zinc-400 uppercase tracking-wide mb-1">Contato</p>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-3 h-3 text-zinc-400" />
+                  <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                    {assistido.telefone || assistido.telefoneContato}
                   </span>
-                  <span>/{assistido.testemunhasArroladas.length} testemunhas</span>
+                  {whatsappUrl && (
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700">
+                      <MessageCircle className="w-3 h-3" />
+                      <span>WhatsApp</span>
+                    </a>
+                  )}
                 </div>
-                <div className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-full text-xs",
-                  assistido.interrogatorioRealizado 
-                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                    : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                )}>
-                  <User className="h-3 w-3" />
-                  <span>{assistido.interrogatorioRealizado ? "Interrogado" : "Interrog. Pendente"}</span>
-                </div>
+                {assistido.nomeContato && (
+                  <p className="text-[10px] text-zinc-400 mt-0.5">Responsável: {assistido.nomeContato}</p>
+                )}
               </div>
             )}
 
-            {/* Footer com Defensor */}
-            <div className="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-zinc-800">
-              <span className="text-xs sm:text-xs text-zinc-400">{assistido.defensor}</span>
+            {/* Timeline de Atendimentos */}
+            <div>
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                <Clock className="w-2.5 h-2.5" />
+                Timeline
+              </p>
+              <div className="relative pl-3 space-y-2 border-l border-zinc-200 dark:border-zinc-700">
+                {/* Próxima audiência */}
+                {assistido.proximaAudiencia && (
+                  <div className="relative">
+                    <div className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-blue-500" />
+                    <div className="ml-2">
+                      <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                        {format(parseISO(assistido.proximaAudiencia), "dd/MM/yyyy")}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">
+                        {assistido.tipoProximaAudiencia || "Audiência"} (próxima)
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {/* Último evento (placeholder - dados reais viriam do banco) */}
+                <div className="relative">
+                  <div className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+                  <div className="ml-2">
+                    <p className="text-[10px] text-zinc-400">
+                      {format(new Date(assistido.createdAt), "dd/MM/yyyy")}
+                    </p>
+                    <p className="text-[10px] text-zinc-500">Cadastro no sistema</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Ações */}
+            <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={`/admin/drive?assistido=${assistido.id}`}>
+                      <Button variant="ghost" size="sm" className="h-6 text-[10px] text-zinc-400 hover:text-blue-600 px-2 gap-1">
+                        <FolderOpen className="w-3 h-3" />
+                        Drive
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-[10px]">Pasta do assistido</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
+                      <Button variant="ghost" size="sm" className="h-6 text-[10px] text-zinc-400 hover:text-emerald-600 px-2 gap-1">
+                        <Plus className="w-3 h-3" />
+                        Demanda
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-[10px]">Nova demanda</TooltipContent>
+                </Tooltip>
+              </div>
               <Link href={`/admin/assistidos/${assistido.id}`}>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-6 sm:h-7 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 px-2"
+                  className="h-6 text-[10px] text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 px-2"
                 >
-                  Ver Perfil <ChevronRight className="h-3 w-3 ml-0.5" />
+                  Ver perfil <ChevronRight className="w-3 h-3 ml-0.5" />
                 </Button>
               </Link>
             </div>
@@ -1010,8 +801,14 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
 
       {/* Idade */}
       <SwissTableCell className="text-center">
-        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{idade}</span>
-        <span className="text-xs text-zinc-400 ml-0.5">a</span>
+        {idade !== null ? (
+          <>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{idade}</span>
+            <span className="text-xs text-zinc-400 ml-0.5">a</span>
+          </>
+        ) : (
+          <span className="text-xs text-zinc-400">-</span>
+        )}
       </SwissTableCell>
 
       {/* Status Prisional + Tempo */}
@@ -1150,9 +947,397 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
   );
 }
 
+// ========================================
+// FILTROS - PADRÃO DEMANDAS
+// ========================================
+
+const estadosPrisionais = [
+  { value: "CADEIA_PUBLICA", label: "Preso", color: "#ef4444" },
+  { value: "PENITENCIARIA", label: "Penitenciária", color: "#dc2626" },
+  { value: "MONITORADO", label: "Monitorado", color: "#3b82f6" },
+  { value: "DOMICILIAR", label: "Domiciliar", color: "#f59e0b" },
+  { value: "SOLTO", label: "Solto", color: "#22c55e" },
+];
+
+interface FilterSectionAssistidosProps {
+  selectedAtribuicao: string;
+  setSelectedAtribuicao: (value: string) => void;
+  selectedStatus: string;
+  setSelectedStatus: (value: string) => void;
+  selectedComarca: string;
+  setSelectedComarca: (value: string) => void;
+  comarcas: string[];
+  sortBy: string;
+  setSortBy: (value: string) => void;
+  groupBy: string;
+  setGroupBy: (value: string) => void;
+  viewMode: "grid" | "list";
+  setViewMode: (value: "grid" | "list") => void;
+}
+
+function FilterSectionAssistidos({
+  selectedAtribuicao,
+  setSelectedAtribuicao,
+  selectedStatus,
+  setSelectedStatus,
+  selectedComarca,
+  setSelectedComarca,
+  comarcas,
+  sortBy,
+  setSortBy,
+  groupBy,
+  setGroupBy,
+  viewMode,
+  setViewMode,
+}: FilterSectionAssistidosProps) {
+  const [isMainExpanded, setIsMainExpanded] = useState(true);
+  const [expandedSections, setExpandedSections] = useState({
+    atribuicoes: false,
+    status: false,
+    comarca: false,
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const totalFilters =
+    (selectedAtribuicao !== "all" ? 1 : 0) +
+    (selectedStatus !== "all" ? 1 : 0) +
+    (selectedComarca !== "all" ? 1 : 0);
+
+  const handleClearAll = () => {
+    setSelectedAtribuicao("all");
+    setSelectedStatus("all");
+    setSelectedComarca("all");
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div 
+          onClick={() => setIsMainExpanded(!isMainExpanded)}
+          className="flex items-center gap-3 cursor-pointer flex-1 group"
+        >
+          <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+            <Filter className="w-3.5 h-3.5 text-zinc-500" />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Filtros</h3>
+            <p className="text-[10px] text-zinc-400">
+              {totalFilters > 0 ? `${totalFilters} ativo${totalFilters > 1 ? 's' : ''}` : 'Nenhum filtro aplicado'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {totalFilters > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleClearAll}
+              className="h-7 text-[10px] px-2 text-zinc-400 hover:text-zinc-600"
+            >
+              <XCircle className="w-3 h-3 mr-1" />
+              Limpar
+            </Button>
+          )}
+          <div 
+            onClick={() => setIsMainExpanded(!isMainExpanded)}
+            className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+          >
+            {isMainExpanded ? (
+              <ChevronUp className="w-4 h-4 text-zinc-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-zinc-400" />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Seções de Filtro */}
+      {isMainExpanded && (
+        <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          {/* Atribuição */}
+          <div>
+            <button
+              onClick={() => toggleSection('atribuicoes')}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Atribuição</span>
+                {selectedAtribuicao !== "all" && (
+                  <span 
+                    className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
+                    style={{ backgroundColor: SOLID_COLOR_MAP[selectedAtribuicao] || '#71717a' }}
+                  >
+                    {ATRIBUICAO_OPTIONS.find(o => o.value === selectedAtribuicao)?.shortLabel}
+                  </span>
+                )}
+              </div>
+              {expandedSections.atribuicoes ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
+            </button>
+            
+            {expandedSections.atribuicoes && (
+              <div className="mt-1.5 px-2 flex flex-wrap gap-1.5">
+                {ATRIBUICAO_OPTIONS.filter(o => o.value !== "all").map((option) => {
+                  const isSelected = selectedAtribuicao === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => setSelectedAtribuicao(isSelected ? "all" : option.value)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all",
+                        isSelected
+                          ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
+                          : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                      )}
+                    >
+                      <div 
+                        className="w-2 h-2 rounded-full" 
+                        style={{ backgroundColor: SOLID_COLOR_MAP[option.value] || '#71717a' }} 
+                      />
+                      {option.shortLabel}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Estado Prisional */}
+          <div>
+            <button
+              onClick={() => toggleSection('status')}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Estado Prisional</span>
+                {selectedStatus !== "all" && (
+                  <span 
+                    className="px-2 py-0.5 rounded text-[10px] font-medium text-white"
+                    style={{ backgroundColor: estadosPrisionais.find(e => e.value === selectedStatus)?.color }}
+                  >
+                    {estadosPrisionais.find(e => e.value === selectedStatus)?.label}
+                  </span>
+                )}
+              </div>
+              {expandedSections.status ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
+            </button>
+            
+            {expandedSections.status && (
+              <div className="mt-1.5 px-2 flex flex-wrap gap-1.5">
+                {estadosPrisionais.map((estado) => {
+                  const isSelected = selectedStatus === estado.value;
+                  return (
+                    <button
+                      key={estado.value}
+                      onClick={() => setSelectedStatus(isSelected ? "all" : estado.value)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all",
+                        isSelected
+                          ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
+                          : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                      )}
+                    >
+                      <div 
+                        className="w-2 h-2 rounded-full" 
+                        style={{ backgroundColor: estado.color }} 
+                      />
+                      {estado.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Comarca */}
+          {comarcas.length > 0 && (
+            <div>
+              <button
+                onClick={() => toggleSection('comarca')}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Comarca</span>
+                  {selectedComarca !== "all" && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
+                      {selectedComarca}
+                    </span>
+                  )}
+                </div>
+                {expandedSections.comarca ? <ChevronUp className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
+              </button>
+              
+              {expandedSections.comarca && (
+                <div className="mt-1.5 px-2 flex flex-wrap gap-1.5">
+                  {comarcas.map((comarca) => {
+                    const isSelected = selectedComarca === comarca;
+                    return (
+                      <button
+                        key={comarca}
+                        onClick={() => setSelectedComarca(isSelected ? "all" : comarca)}
+                        className={cn(
+                          "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all",
+                          isSelected
+                            ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100"
+                            : "bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300"
+                        )}
+                      >
+                        <MapPin className="w-2.5 h-2.5" />
+                        {comarca}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Barra de Ações (Ordenação, Agrupamento, View) */}
+      <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center gap-2">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[110px] h-8 text-xs">
+              <ArrowUpDown className="w-3 h-3 mr-1 text-zinc-400" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="prioridade">Prioridade</SelectItem>
+              <SelectItem value="complexidade">Complexidade</SelectItem>
+              <SelectItem value="nome">Nome</SelectItem>
+              <SelectItem value="prazo">Prazo</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={groupBy} onValueChange={setGroupBy}>
+            <SelectTrigger className="w-[120px] h-8 text-xs">
+              <Target className="w-3 h-3 mr-1 text-zinc-400" />
+              <SelectValue placeholder="Agrupar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem grupo</SelectItem>
+              <SelectItem value="comarca">Por Comarca</SelectItem>
+              <SelectItem value="area">Por Área</SelectItem>
+              <SelectItem value="status">Por Status</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={cn(
+              "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
+              viewMode === "grid"
+                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                : "text-zinc-500 hover:text-zinc-700"
+            )}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            className={cn(
+              "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
+              viewMode === "list"
+                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                : "text-zinc-500 hover:text-zinc-700"
+            )}
+          >
+            <List className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AssistidosPage() {
   // Atribuicao do contexto global
   const { currentAssignment } = useAssignment();
+  
+  // Buscar assistidos do banco de dados
+  const { data: assistidosData, isLoading } = trpc.assistidos.list.useQuery({
+    limit: 100,
+  });
+  
+  // Transformar dados do banco para o formato esperado pela UI
+  const realAssistidos = useMemo(() => {
+    if (!assistidosData) return [];
+    return assistidosData.map((a) => {
+      // Extrair atribuições e áreas como arrays (suporte para snake_case e camelCase)
+      const atribuicoesStr = ((a as any).atribuicoes || "") as string;
+      const areasStr = ((a as any).areas || "") as string;
+      const atribuicoes = atribuicoesStr ? atribuicoesStr.split(',').filter(Boolean) : [];
+      const areas = areasStr ? areasStr.split(',').filter(Boolean) : [];
+      const comarcasStr = ((a as any).comarcas || "") as string;
+      
+      return {
+        id: a.id,
+        nome: a.nome,
+        cpf: a.cpf || "",
+        rg: a.rg || "",
+        dataNascimento: a.dataNascimento || "",
+        naturalidade: a.naturalidade || "",
+        statusPrisional: a.statusPrisional || "SOLTO",
+        localPrisao: a.localPrisao || "",
+        unidadePrisional: a.unidadePrisional || "",
+        telefone: a.telefone || "",
+        telefoneContato: a.telefoneContato || "",
+        nomeContato: a.nomeContato || "",
+        endereco: a.endereco || "",
+        photoUrl: a.photoUrl || "",
+        observacoes: a.observacoes || "",
+        // Campos derivados usando dados reais do banco
+        area: areas[0] || "CRIMINAL",
+        areas: areas, // Lista de áreas para múltiplas cores
+        atribuicoes: atribuicoes, // Lista de atribuições para múltiplas cores
+        vulgo: "",
+        crimePrincipal: (a as any).crimePrincipal || "",
+        defensor: "Não atribuído",
+        processoPrincipal: (a as any).processoPrincipal || "",
+        // Usar dados reais da query (Drizzle retorna camelCase)
+        demandasAbertas: (a as any).demandasAbertasCount || 0,
+        processosAtivos: (a as any).processosCount || 0,
+        proximoPrazo: (a as any).proximoPrazo || null,
+        proximaAudiencia: (a as any).proximaAudiencia || null,
+        prioridadeAI: "NORMAL" as const,
+        createdAt: a.createdAt?.toISOString() || new Date().toISOString(),
+        // Campos adicionais para compatibilidade com o componente
+        testemunhasArroladas: [] as Array<{ nome: string; ouvida: boolean }>,
+        interrogatorioRealizado: false,
+        tipoProximaAudiencia: "",
+        dataPrisao: a.dataPrisao || null,
+        faseProcessual: "INSTRUCAO" as const,
+        numeroProcesso: (a as any).processoPrincipal || "",
+        dataFato: null as string | null,
+        resumoFato: "",
+        teseDaDefesa: "",
+        ultimaAudiencia: null as string | null,
+        tipoUltimaAudiencia: "",
+        observacoesProcesso: "",
+        estrategiaDefesaAtual: "",
+        atoProximoPrazo: "",
+        nomeMae: a.nomeMae || "",
+        bairro: "",
+        cidade: "Camaçari",
+        // Novos campos
+        comarcas: comarcasStr ? comarcasStr.split(',').filter(Boolean) : [],
+        // Score calculado no cliente para evitar query pesada
+        scoreComplexidade: ((a as any).processosCount || 0) * 10 + 
+          ((a as any).demandasAbertasCount || 0) * 5 + 
+          (["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional || "") ? 20 : 0),
+        ultimoEvento: null,
+      };
+    });
+  }, [assistidosData]);
   
   // Estados
   const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>("all");
@@ -1160,13 +1345,24 @@ export default function AssistidosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [areaFilter, setAreaFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<"nome" | "prioridade" | "prazo">("prioridade");
+  const [comarcaFilter, setComarcaFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"nome" | "prioridade" | "prazo" | "complexidade">("prioridade");
+  const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "status">("none");
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
   const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set());
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
-  const [selectedAssistido, setSelectedAssistido] = useState<typeof mockAssistidos[0] | null>(null);
+  const [selectedAssistido, setSelectedAssistido] = useState<typeof realAssistidos[0] | null>(null);
 
-  const handlePhotoClick = (assistido: typeof mockAssistidos[0]) => {
+  // Extrair comarcas únicas dos assistidos
+  const comarcasUnicas = useMemo(() => {
+    const allComarcas = new Set<string>();
+    realAssistidos.forEach(a => {
+      (a.comarcas || []).forEach(c => allComarcas.add(c));
+    });
+    return Array.from(allComarcas).sort();
+  }, [realAssistidos]);
+
+  const handlePhotoClick = (assistido: typeof realAssistidos[0]) => {
     setSelectedAssistido(assistido);
     setPhotoDialogOpen(true);
   };
@@ -1181,13 +1377,14 @@ export default function AssistidosPage() {
   }, []);
 
   const filteredAssistidos = useMemo(() => {
-    let result = mockAssistidos.filter((a) => {
-      const matchesSearch = a.nome.toLowerCase().includes(searchTerm.toLowerCase()) || a.cpf.includes(searchTerm) || (a.vulgo?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.crimePrincipal?.toLowerCase().includes(searchTerm.toLowerCase()));
+    let result = realAssistidos.filter((a) => {
+      const matchesSearch = a.nome.toLowerCase().includes(searchTerm.toLowerCase()) || a.cpf.includes(searchTerm) || (a.vulgo?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.crimePrincipal?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.numeroProcesso?.includes(searchTerm));
       const matchesStatus = statusFilter === "all" || a.statusPrisional === statusFilter;
       const matchesArea = areaFilter === "all" || a.area === areaFilter;
       const matchesPinned = !showPinnedOnly || pinnedIds.has(a.id);
       const matchesAtribuicao = atribuicaoFilter === "all" || a.area === atribuicaoFilter;
-      return matchesSearch && matchesStatus && matchesArea && matchesPinned && matchesAtribuicao;
+      const matchesComarca = comarcaFilter === "all" || (a.comarcas || []).includes(comarcaFilter);
+      return matchesSearch && matchesStatus && matchesArea && matchesPinned && matchesAtribuicao && matchesComarca;
     });
 
     result.sort((a, b) => {
@@ -1196,6 +1393,9 @@ export default function AssistidosPage() {
       if (aPinned && !bPinned) return -1;
       if (!aPinned && bPinned) return 1;
       if (sortBy === "nome") return a.nome.localeCompare(b.nome);
+      if (sortBy === "complexidade") {
+        return (b.scoreComplexidade || 0) - (a.scoreComplexidade || 0);
+      }
       if (sortBy === "prioridade") {
         const prioA = statusConfig[a.statusPrisional]?.priority || 99;
         const prioB = statusConfig[b.statusPrisional]?.priority || 99;
@@ -1212,18 +1412,142 @@ export default function AssistidosPage() {
     });
 
     return result;
-  }, [searchTerm, statusFilter, areaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter]);
+  }, [realAssistidos, searchTerm, statusFilter, areaFilter, comarcaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter]);
+
+  // Detectar potenciais duplicados (nomes muito similares) - Otimizado com hash map
+  const potentialDuplicates = useMemo(() => {
+    const duplicateMap: Record<number, number[]> = {};
+    
+    // Agrupar por primeiro+último nome usando hash map (O(n) em vez de O(n²))
+    const firstLastNameMap: Record<string, number[]> = {};
+    
+    const normalizeName = (name: string) => {
+      return name.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    };
+    
+    const getFirstLastName = (name: string) => {
+      const parts = name.split(" ");
+      if (parts.length < 2) return name;
+      return `${parts[0]} ${parts[parts.length - 1]}`;
+    };
+    
+    // Primeira passada: agrupar por primeiro+último nome
+    realAssistidos.forEach((a) => {
+      const key = getFirstLastName(normalizeName(a.nome));
+      if (!firstLastNameMap[key]) firstLastNameMap[key] = [];
+      firstLastNameMap[key].push(a.id);
+    });
+    
+    // Segunda passada: marcar duplicados (apenas grupos com 2+ itens)
+    Object.values(firstLastNameMap).forEach(ids => {
+      if (ids.length > 1) {
+        ids.forEach(id => {
+          duplicateMap[id] = ids.filter(otherId => otherId !== id);
+        });
+      }
+    });
+    
+    return duplicateMap;
+  }, [realAssistidos]);
+
+  // Agrupamento inteligente
+  const groupedAssistidos = useMemo(() => {
+    if (groupBy === "none") return null;
+    
+    const groups: Record<string, typeof filteredAssistidos> = {};
+    
+    filteredAssistidos.forEach(a => {
+      let key = "";
+      if (groupBy === "comarca") {
+        key = (a.comarcas || [])[0] || "Sem comarca";
+      } else if (groupBy === "area") {
+        key = (a.areas || [])[0] || a.area || "Sem área";
+      } else if (groupBy === "status") {
+        key = statusConfig[a.statusPrisional]?.label || a.statusPrisional;
+      }
+      
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(a);
+    });
+    
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredAssistidos, groupBy]);
 
   const stats = useMemo(() => ({
-    total: mockAssistidos.length,
-    presos: mockAssistidos.filter(a => ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional)).length,
-    monitorados: mockAssistidos.filter(a => ["MONITORADO", "DOMICILIAR"].includes(a.statusPrisional)).length,
-    soltos: mockAssistidos.filter(a => a.statusPrisional === "SOLTO").length,
+    total: realAssistidos.length,
+    presos: realAssistidos.filter(a => ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional)).length,
+    monitorados: realAssistidos.filter(a => ["MONITORADO", "DOMICILIAR"].includes(a.statusPrisional)).length,
+    soltos: realAssistidos.filter(a => a.statusPrisional === "SOLTO").length,
     pinned: pinnedIds.size,
-  }), [pinnedIds]);
+  }), [realAssistidos, pinnedIds]);
+  
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+        {/* Header skeleton */}
+        <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-7 w-7 rounded-md" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 flex-1 max-w-md rounded-lg" />
+            <Skeleton className="h-7 w-20 rounded-md" />
+          </div>
+        </div>
+        
+        <div className="p-4 md:p-6 space-y-4">
+          {/* Stats skeleton */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+            {[1, 2, 3, 4, 5].map(i => (
+              <Skeleton key={i} className="h-16 rounded-lg" />
+            ))}
+          </div>
+          
+          {/* Cards skeleton */}
+          <Card className="border border-zinc-200 dark:border-zinc-800">
+            <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-24 rounded-md" />
+                <Skeleton className="h-8 w-24 rounded-md" />
+              </div>
+            </div>
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </div>
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   // Visual config da atribuicao selecionada
-  const atribuicaoColors = ATRIBUICAO_COLORS[atribuicaoFilter] || ATRIBUICAO_COLORS.all;
+  const atribuicaoColors = getAtribuicaoColors(atribuicaoFilter);
 
   // Preparar filtros ativos
   const activeFilters = [
@@ -1245,145 +1569,203 @@ export default function AssistidosPage() {
   ].filter(Boolean) as Array<{ key: string; label: string; value: string }>;
 
   return (
-    <PageContainer maxWidth="wide">
-      {/* Breadcrumbs */}
-      <Breadcrumbs className="mb-4" />
-      
-      {/* Page Header */}
-      <PageHeader
-        title="Assistidos"
-        description={`${stats.total} cadastrados • ${stats.presos} presos${pinnedIds.size > 0 ? ` • ${pinnedIds.size} fixados` : ""}`}
-        actions={
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Sub-header com Busca Global */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center gap-3">
+          {/* Info + Stats */}
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Users className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+            </div>
+            <div className="hidden sm:flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{stats.total}</span>
+              <span className="text-[10px] text-zinc-400">total</span>
+              <span className="text-zinc-300 dark:text-zinc-600">•</span>
+              <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">{stats.presos}</span>
+              <span className="text-[10px] text-zinc-400">presos</span>
+            </div>
+          </div>
+          
+          {/* Busca Global - Sempre Visível */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por nome, CPF, vulgo..."
+              className="pl-9 h-8 text-xs border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 rounded-lg focus:ring-1 focus:ring-emerald-500/30"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+              >
+                <Circle className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+          
+          {/* Ações */}
+          <div className="flex items-center gap-0.5 flex-shrink-0">
             <Link href="/admin/inteligencia">
-              <Button variant="outline" className="gap-2 h-12 px-5 text-base font-semibold text-violet-600 border-2 border-violet-200 hover:bg-violet-50 rounded-xl">
-                <Brain className="h-5 w-5 md:h-6 md:w-6" />
-                <span className="hidden sm:inline">Inteligência</span>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="h-7 w-7 p-0 text-zinc-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                title="Inteligência"
+              >
+                <Brain className="w-3.5 h-3.5" />
               </Button>
             </Link>
-            <Button variant="outline" size="icon" className="h-12 w-12 border-2 rounded-xl">
-              <Download className="h-5 w-5 md:h-6 md:w-6" />
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              title="Exportar"
+            >
+              <Download className="w-3.5 h-3.5" />
             </Button>
             <Link href="/admin/assistidos/novo">
-              <Button className="gap-2 h-12 px-6 text-base md:text-lg font-semibold rounded-xl">
-                <Plus className="h-5 w-5 md:h-6 md:w-6" />
-                <span className="hidden sm:inline">Novo Assistido</span>
-                <span className="sm:hidden">Novo</span>
+              <Button 
+                size="sm"
+                className="h-7 px-2.5 ml-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-md transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                <span className="hidden sm:inline">Novo</span>
               </Button>
             </Link>
           </div>
-        }
-      />
-
-      {/* Filtros por Atribuição - Tabs Premium */}
-      <FilterTabsGroup label="Filtrar por Área">
-        {ATRIBUICAO_OPTIONS.map((option) => {
-          const count = option.value === "all" 
-            ? mockAssistidos.length 
-            : mockAssistidos.filter(a => a.area === option.value).length;
-          
-          return (
-            <FilterTab
-              key={option.value}
-              label={option.label}
-              value={option.value}
-              selected={atribuicaoFilter === option.value}
-              onSelect={setAtribuicaoFilter}
-              count={count}
-              icon={ATRIBUICAO_ICONS[option.value]}
-            />
-          );
-        })}
-      </FilterTabsGroup>
-
-      {/* Stats Cards - Padronizado */}
-      <StatsGrid columns={5}>
-        <StatsCard
-          label="Total"
-          value={stats.total}
-          icon={Users}
-          variant="default"
-          size="sm"
-        />
-        <StatsCard
-          label="Presos"
-          value={stats.presos}
-          icon={AlertOctagon}
-          variant={stats.presos > 0 ? "danger" : "default"}
-          size="sm"
-        />
-        <StatsCard
-          label="Monitorados"
-          value={stats.monitorados}
-          icon={Timer}
-          variant={stats.monitorados > 0 ? "warning" : "default"}
-          size="sm"
-        />
-        <StatsCard
-          label="Soltos"
-          value={stats.soltos}
-          icon={CheckCircle2}
-          variant="success"
-          size="sm"
-          className="hidden sm:flex"
-        />
-        <div 
-          onClick={() => setShowPinnedOnly(!showPinnedOnly)}
-          className="hidden lg:block cursor-pointer"
-        >
-          <StatsCard
-            label="Fixados"
-            value={stats.pinned}
-            icon={BookmarkCheck}
-            variant={showPinnedOnly ? "highlight" : "default"}
-            size="sm"
-            className={cn(showPinnedOnly && "ring-2 ring-amber-400")}
-          />
-        </div>
-      </StatsGrid>
-
-      {/* Filters */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="CADEIA_PUBLICA">Cadeia</SelectItem>
-            <SelectItem value="PENITENCIARIA">Penitenciaria</SelectItem>
-            <SelectItem value="MONITORADO">Monitorado</SelectItem>
-            <SelectItem value="DOMICILIAR">Domiciliar</SelectItem>
-            <SelectItem value="SOLTO">Solto</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={areaFilter} onValueChange={setAreaFilter}>
-          <SelectTrigger className="w-[100px] h-9"><SelectValue placeholder="Area" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="JURI">Juri</SelectItem>
-            <SelectItem value="EXECUCAO_PENAL">EP</SelectItem>
-            <SelectItem value="VIOLENCIA_DOMESTICA">Violencia Domestica</SelectItem>
-            <SelectItem value="FAMILIA">Familia</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sortBy} onValueChange={(v: "nome" | "prioridade" | "prazo") => setSortBy(v)}>
-          <SelectTrigger className="w-[110px] h-9"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="prioridade">Prioridade</SelectItem>
-            <SelectItem value="nome">Nome</SelectItem>
-            <SelectItem value="prazo">Prazo</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex items-center border rounded-md">
-          <Button variant={viewMode === "grid" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-r-none" onClick={() => setViewMode("grid")}>
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button variant={viewMode === "list" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-l-none" onClick={() => setViewMode("list")}>
-            <List className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Conteúdo Principal */}
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+
+      {/* Stats Cards - Grid compacto e interativo */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+        {[
+          { label: "Total", value: stats.total, icon: Users, filter: "all", color: "zinc" },
+          { label: "Presos", value: stats.presos, icon: Lock, filter: "preso", color: "rose", highlight: stats.presos > 0 },
+          { label: "Monitorados", value: stats.monitorados, icon: Timer, filter: "monitorado", color: "amber" },
+          { label: "Soltos", value: stats.soltos, icon: CheckCircle2, filter: "solto", color: "emerald" },
+          { label: "Fixados", value: stats.pinned, icon: BookmarkCheck, filter: "pinned", color: "amber" },
+        ].map((stat, idx) => {
+          const isActive = (stat.filter === "preso" && statusFilter === "CADEIA_PUBLICA") ||
+                          (stat.filter === "monitorado" && statusFilter === "MONITORADO") ||
+                          (stat.filter === "solto" && statusFilter === "SOLTO") ||
+                          (stat.filter === "pinned" && showPinnedOnly) ||
+                          (stat.filter === "all" && statusFilter === "all" && !showPinnedOnly);
+          
+          const handleClick = () => {
+            if (stat.filter === "pinned") {
+              setShowPinnedOnly(!showPinnedOnly);
+              setStatusFilter("all");
+            } else if (stat.filter === "preso") {
+              setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA");
+              setShowPinnedOnly(false);
+            } else if (stat.filter === "monitorado") {
+              setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO");
+              setShowPinnedOnly(false);
+            } else if (stat.filter === "solto") {
+              setStatusFilter(statusFilter === "SOLTO" ? "all" : "SOLTO");
+              setShowPinnedOnly(false);
+            } else {
+              setStatusFilter("all");
+              setShowPinnedOnly(false);
+            }
+          };
+          
+          return (
+            <button
+              key={idx}
+              onClick={handleClick}
+              className={cn(
+                "group relative text-left p-2.5 rounded-lg bg-white dark:bg-zinc-900 border transition-all duration-200",
+                isActive
+                  ? stat.color === "rose" 
+                    ? "border-rose-300 dark:border-rose-700 ring-1 ring-rose-200/50 dark:ring-rose-800/30 bg-rose-50/50 dark:bg-rose-900/10"
+                    : stat.color === "amber"
+                      ? "border-amber-300 dark:border-amber-700 ring-1 ring-amber-200/50 dark:ring-amber-800/30 bg-amber-50/50 dark:bg-amber-900/10"
+                      : stat.color === "emerald"
+                        ? "border-emerald-300 dark:border-emerald-700 ring-1 ring-emerald-200/50 dark:ring-emerald-800/30 bg-emerald-50/50 dark:bg-emerald-900/10"
+                        : "border-zinc-300 dark:border-zinc-600 ring-1 ring-zinc-200/50"
+                  : "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
+                "cursor-pointer hover:shadow-sm",
+                idx === 4 && "hidden lg:block"
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">{stat.label}</p>
+                  <p className={cn(
+                    "text-lg font-bold",
+                    stat.highlight && stat.value > 0 ? "text-rose-600 dark:text-rose-400" : 
+                    isActive ? (
+                      stat.color === "rose" ? "text-rose-600 dark:text-rose-400" :
+                      stat.color === "amber" ? "text-amber-600 dark:text-amber-400" :
+                      stat.color === "emerald" ? "text-emerald-600 dark:text-emerald-400" :
+                      "text-zinc-700 dark:text-zinc-300"
+                    ) : "text-zinc-700 dark:text-zinc-300"
+                  )}>{stat.value}</p>
+                </div>
+                <div className={cn(
+                  "w-7 h-7 rounded-md flex items-center justify-center transition-all",
+                  isActive ? (
+                    stat.color === "rose" ? "bg-rose-100 dark:bg-rose-900/30" :
+                    stat.color === "amber" ? "bg-amber-100 dark:bg-amber-900/30" :
+                    stat.color === "emerald" ? "bg-emerald-100 dark:bg-emerald-900/30" :
+                    "bg-zinc-100 dark:bg-zinc-800"
+                  ) : "bg-zinc-100 dark:bg-zinc-800"
+                )}>
+                  <stat.icon className={cn(
+                    "w-3.5 h-3.5",
+                    isActive ? (
+                      stat.color === "rose" ? "text-rose-600 dark:text-rose-400" :
+                      stat.color === "amber" ? "text-amber-600 dark:text-amber-400" :
+                      stat.color === "emerald" ? "text-emerald-600 dark:text-emerald-400" :
+                      "text-zinc-600 dark:text-zinc-400"
+                    ) : "text-zinc-400 dark:text-zinc-500"
+                  )} />
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Card de Filtros - Padrão Demandas */}
+      <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl p-5">
+        <FilterSectionAssistidos
+          selectedAtribuicao={atribuicaoFilter}
+          setSelectedAtribuicao={setAtribuicaoFilter}
+          selectedStatus={statusFilter}
+          setSelectedStatus={setStatusFilter}
+          selectedComarca={comarcaFilter}
+          setSelectedComarca={setComarcaFilter}
+          comarcas={comarcasUnicas}
+          sortBy={sortBy}
+          setSortBy={(v) => setSortBy(v as "nome" | "prioridade" | "prazo" | "complexidade")}
+          groupBy={groupBy}
+          setGroupBy={(v) => setGroupBy(v as "none" | "comarca" | "area" | "status")}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+        />
+      </Card>
+
+      {/* Card de Listagem */}
+      <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {filteredAssistidos.length} assistido{filteredAssistidos.length !== 1 && 's'}
+            </span>
+          </div>
+        </div>
+        
+        {/* Content */}
+        <div className="p-4">
       {filteredAssistidos.length === 0 ? (
         <EmptyState
           icon={Users}
@@ -1397,17 +1779,57 @@ export default function AssistidosPage() {
           variant={searchTerm ? "search" : "default"}
         />
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
-          {filteredAssistidos.map((a) => (
-            <AssistidoCard 
-              key={a.id}
-              assistido={a} 
-              onPhotoClick={() => handlePhotoClick(a)}
-              isPinned={pinnedIds.has(a.id)}
-              onTogglePin={() => togglePin(a.id)}
-            />
-          ))}
-        </div>
+        groupedAssistidos ? (
+          // Exibição agrupada
+          <div className="space-y-6">
+            {groupedAssistidos.map(([groupName, items]) => (
+              <div key={groupName}>
+                {/* Cabeçalho do Grupo */}
+                <div className="flex items-center gap-3 mb-3 px-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 rounded-full bg-emerald-500" />
+                    <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 capitalize">
+                      {groupName}
+                    </h3>
+                  </div>
+                  <span className="text-xs text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+                    {items.length}
+                  </span>
+                  <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-700" />
+                </div>
+                {/* Cards do Grupo */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
+                  {items.map((a) => (
+                    <AssistidoCard 
+                      key={a.id}
+                      assistido={a} 
+                      onPhotoClick={() => handlePhotoClick(a)}
+                      isPinned={pinnedIds.has(a.id)}
+                      onTogglePin={() => togglePin(a.id)}
+                      hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
+                      duplicateCount={potentialDuplicates[a.id]?.length || 0}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Exibição normal (sem agrupamento)
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
+            {filteredAssistidos.map((a) => (
+              <AssistidoCard 
+                key={a.id}
+                assistido={a} 
+                onPhotoClick={() => handlePhotoClick(a)}
+                isPinned={pinnedIds.has(a.id)}
+                onTogglePin={() => togglePin(a.id)}
+                hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
+                duplicateCount={potentialDuplicates[a.id]?.length || 0}
+              />
+            ))}
+          </div>
+        )
       ) : (
         <SwissTableContainer className="max-h-[calc(100vh-320px)]">
           <SwissTable>
@@ -1440,6 +1862,8 @@ export default function AssistidosPage() {
           </SwissTable>
         </SwissTableContainer>
       )}
+        </div>
+      </Card>
 
       {/* Photo Dialog */}
       {selectedAssistido && (
@@ -1451,6 +1875,7 @@ export default function AssistidosPage() {
           onUpload={(file) => console.log("Upload:", file)}
         />
       )}
-    </PageContainer>
+      </div>
+    </div>
   );
 }

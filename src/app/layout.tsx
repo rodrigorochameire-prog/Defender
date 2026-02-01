@@ -27,45 +27,44 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "INTELEX | Defesa Inteligente",
-    template: "%s | INTELEX"
+    default: "OMBUDS | Gestão para Defesa Criminal",
+    template: "%s | OMBUDS"
   },
-  description: "Sistema de gestão jurídica criminal de alta performance com inteligência artificial. Gerencie processos, prazos, casos e demandas com eficiência profissional.",
-  keywords: ["gestão jurídica", "advocacia criminal", "defesa inteligente", "processos criminais", "prazos processuais", "gestão de casos"],
-  authors: [{ name: "INTELEX" }],
-  creator: "INTELEX",
-  publisher: "INTELEX",
+  description: "Sistema de gestão jurídica criminal de alta performance. Gerencie processos, prazos, casos e demandas com eficiência profissional para a defensoria pública.",
+  keywords: ["gestão jurídica", "defesa criminal", "defensoria pública", "processos criminais", "prazos processuais", "gestão de casos", "tribunal do júri"],
+  authors: [{ name: "OMBUDS" }],
+  creator: "OMBUDS",
+  publisher: "OMBUDS",
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/logo-shield.png", type: "image/png", sizes: "512x512" },
+      { url: "/logo-light.png", type: "image/png", sizes: "512x512" },
     ],
     apple: [
-      { url: "/logo-shield.png", sizes: "180x180", type: "image/png" },
+      { url: "/logo-light.png", sizes: "180x180", type: "image/png" },
     ],
   },
   manifest: "/manifest.json",
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    title: "INTELEX | Defesa Inteligente",
+    title: "OMBUDS | Gestão para Defesa Criminal",
     description: "Sistema de gestão jurídica criminal de alta performance",
-    siteName: "INTELEX",
+    siteName: "OMBUDS",
     images: [
       {
-        url: "/logo-full.png",
+        url: "/logo-light.png",
         width: 1200,
-        height: 400,
-        alt: "INTELEX - Defesa Inteligente",
+        height: 630,
+        alt: "OMBUDS - Gestão para Defesa Criminal",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "INTELEX | Defesa Inteligente",
+    title: "OMBUDS | Gestão para Defesa Criminal",
     description: "Sistema de gestão jurídica criminal de alta performance",
-    images: ["/logo-full.png"],
+    images: ["/logo-light.png"],
   },
   robots: {
     index: true,
@@ -87,7 +86,7 @@ const themeScript = `
   (function() {
     try {
       var theme = localStorage.getItem('theme');
-      var fontSize = localStorage.getItem('defesahub-font-size');
+      var fontSize = localStorage.getItem('ombuds-font-size');
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
       } else {
@@ -102,13 +101,15 @@ const themeScript = `
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode; }>) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${inter.className} ${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} bg-stone-50 dark:bg-zinc-950`}> 
+      <body className={`${inter.className} ${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} bg-stone-50 dark:bg-zinc-950`}>
         <Providers>
           {children}
         </Providers>

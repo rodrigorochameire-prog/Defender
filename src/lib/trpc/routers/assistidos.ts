@@ -8,6 +8,7 @@ import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 
 export const assistidosRouter = router({
   // Listar todos os assistidos
+  // Assistidos são COMPARTILHADOS - todos os defensores têm acesso
   list: protectedProcedure
     .input(
       z.object({
@@ -19,10 +20,11 @@ export const assistidosRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const { search, statusPrisional, limit = 50, offset = 0 } = input || {};
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      // Assistidos são compartilhados - não filtrar por workspace
+      getWorkspaceScope(ctx.user); // Apenas para validar autenticação
       
-      // Construir condições
-      const conditions = [isNull(assistidos.deletedAt)];
+      // Construir condições (assistidos não tem soft delete)
+      const conditions: ReturnType<typeof eq>[] = [];
       
       if (search) {
         conditions.push(
@@ -37,36 +39,147 @@ export const assistidosRouter = router({
         conditions.push(eq(assistidos.statusPrisional, statusPrisional as any));
       }
 
-      if (!isAdmin) {
-        conditions.push(eq(assistidos.workspaceId, workspaceId));
-      }
+      // Dados compartilhados - não filtrar por workspace
       
+      // Query principal - buscar assistidos
       const result = await db
         .select()
         .from(assistidos)
-        .where(and(...conditions))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(assistidos.createdAt))
         .limit(limit)
         .offset(offset);
+
+      if (result.length === 0) {
+        return [];
+      }
+
+      // Buscar dados agregados usando Drizzle ORM
+      const assistidoIds = result.map(a => a.id);
       
-      return result;
+      // Contagem de processos por assistido
+      const processosCountData = await db
+        .select({
+          assistidoId: processos.assistidoId,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(processos)
+        .where(and(
+          inArray(processos.assistidoId, assistidoIds),
+          isNull(processos.deletedAt)
+        ))
+        .groupBy(processos.assistidoId);
+      
+      const processosCountMap = new Map(processosCountData.map(p => [p.assistidoId, p.count]));
+      
+      // Contagem de demandas por assistido
+      const demandasCountData = await db
+        .select({
+          assistidoId: demandas.assistidoId,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(demandas)
+        .where(and(
+          inArray(demandas.assistidoId, assistidoIds),
+          sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO')`,
+          isNull(demandas.deletedAt)
+        ))
+        .groupBy(demandas.assistidoId);
+      
+      const demandasCountMap = new Map(demandasCountData.map(d => [d.assistidoId, d.count]));
+      
+      // Próxima audiência por assistido
+      const audienciasData = await db
+        .select({
+          assistidoId: audiencias.assistidoId,
+          dataAudiencia: audiencias.dataAudiencia,
+        })
+        .from(audiencias)
+        .where(and(
+          inArray(audiencias.assistidoId!, assistidoIds),
+          sql`${audiencias.dataAudiencia} >= NOW()`
+        ))
+        .orderBy(audiencias.dataAudiencia);
+      
+      // Agrupar por assistido (pegar a primeira - mais próxima)
+      const audienciasMap = new Map<number, Date>();
+      for (const a of audienciasData) {
+        if (a.assistidoId && !audienciasMap.has(a.assistidoId)) {
+          audienciasMap.set(a.assistidoId, a.dataAudiencia);
+        }
+      }
+      
+      // Dados dos processos por assistido
+      const processosData = await db
+        .select({
+          assistidoId: processos.assistidoId,
+          area: processos.area,
+          atribuicao: processos.atribuicao,
+          comarca: processos.comarca,
+          numeroAutos: processos.numeroAutos,
+          assunto: processos.assunto,
+        })
+        .from(processos)
+        .where(and(
+          inArray(processos.assistidoId, assistidoIds),
+          isNull(processos.deletedAt)
+        ))
+        .orderBy(desc(processos.createdAt));
+      
+      // Agrupar por assistido - coletar todas as áreas e atribuições
+      const processosDataMap = new Map<number, {
+        areas: Set<string>;
+        atribuicoes: Set<string>;
+        comarcas: Set<string>;
+        numeroAutos: string | null;
+        assunto: string | null;
+      }>();
+      
+      for (const p of processosData) {
+        if (!processosDataMap.has(p.assistidoId)) {
+          processosDataMap.set(p.assistidoId, {
+            areas: new Set(),
+            atribuicoes: new Set(),
+            comarcas: new Set(),
+            numeroAutos: p.numeroAutos,
+            assunto: p.assunto,
+          });
+        }
+        const data = processosDataMap.get(p.assistidoId)!;
+        if (p.area) data.areas.add(p.area);
+        if (p.atribuicao) data.atribuicoes.add(p.atribuicao);
+        if (p.comarca) data.comarcas.add(p.comarca);
+      }
+
+      return result.map(a => {
+        const processoData = processosDataMap.get(a.id);
+        return {
+          ...a,
+          // Dados agregados
+          processosCount: processosCountMap.get(a.id) || 0,
+          demandasAbertasCount: demandasCountMap.get(a.id) || 0,
+          proximaAudiencia: audienciasMap.get(a.id)?.toISOString() || null,
+          areas: processoData ? Array.from(processoData.areas).join(',') : null,
+          atribuicoes: processoData ? Array.from(processoData.atribuicoes).join(',') : null,
+          comarcas: processoData ? Array.from(processoData.comarcas).join(',') : null,
+          processoPrincipal: processoData?.numeroAutos || null,
+          crimePrincipal: processoData?.assunto || null,
+          proximoPrazo: null as string | null,
+        };
+      });
     }),
 
   // Buscar assistido por ID
+  // Assistidos são COMPARTILHADOS
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
-      const conditions = [eq(assistidos.id, input.id)];
-
-      if (!isAdmin) {
-        conditions.push(eq(assistidos.workspaceId, workspaceId));
-      }
-
+      getWorkspaceScope(ctx.user); // Validar autenticação
+      
       const [assistido] = await db
         .select()
         .from(assistidos)
-        .where(and(...conditions));
+        .where(eq(assistidos.id, input.id));
       
       return assistido || null;
     }),
@@ -110,6 +223,51 @@ export const assistidosRouter = router({
         });
       }
 
+      // Verificar se já existe assistido com mesmo CPF
+      if (input.cpf) {
+        const cpfLimpo = input.cpf.replace(/\D/g, "");
+        const [existenteCpf] = await db
+          .select({ id: assistidos.id, nome: assistidos.nome })
+          .from(assistidos)
+          .where(sql`REPLACE(REPLACE(REPLACE(${assistidos.cpf}, '.', ''), '-', ''), ' ', '') = ${cpfLimpo}`)
+          .limit(1);
+        
+        if (existenteCpf) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: `Já existe um assistido cadastrado com este CPF: ${existenteCpf.nome} (ID: ${existenteCpf.id})`,
+          });
+        }
+      }
+
+      // Verificar nomes muito similares
+      const primeiroNome = input.nome.split(" ")[0];
+      const candidatosSimilares = await db
+        .select({ id: assistidos.id, nome: assistidos.nome, cpf: assistidos.cpf })
+        .from(assistidos)
+        .where(ilike(assistidos.nome, `${primeiroNome}%`))
+        .limit(20);
+      
+      // Função para normalizar e comparar nomes
+      const normalizarNome = (nome: string): string => {
+        return nome
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, " ");
+      };
+
+      const nomeNormalizado = normalizarNome(input.nome);
+      const duplicadoExato = candidatosSimilares.find(c => normalizarNome(c.nome) === nomeNormalizado);
+      
+      if (duplicadoExato) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `Já existe um assistido com nome idêntico: ${duplicadoExato.nome} (ID: ${duplicadoExato.id})${duplicadoExato.cpf ? ` - CPF: ${duplicadoExato.cpf}` : ''}. Se for outra pessoa, adicione algum diferenciador ao nome.`,
+        });
+      }
+
       const [novoAssistido] = await db
         .insert(assistidos)
         .values({
@@ -137,6 +295,103 @@ export const assistidosRouter = router({
         .returning();
       
       return novoAssistido;
+    }),
+  
+  // Verificar duplicados potenciais antes de criar
+  checkDuplicates: protectedProcedure
+    .input(z.object({
+      nome: z.string().min(2),
+      cpf: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      getWorkspaceScope(ctx.user); // Validar autenticação
+      
+      const normalizarNome = (nome: string): string => {
+        return nome
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, " ");
+      };
+
+      const calcularSimilaridade = (str1: string, str2: string): number => {
+        const s1 = normalizarNome(str1);
+        const s2 = normalizarNome(str2);
+        if (s1 === s2) return 1;
+        
+        const palavras1 = s1.split(" ");
+        const palavras2 = s2.split(" ");
+        const palavrasComuns = palavras1.filter(p => palavras2.includes(p));
+        
+        return palavrasComuns.length / Math.max(palavras1.length, palavras2.length);
+      };
+
+      const duplicados: Array<{
+        id: number;
+        nome: string;
+        cpf: string | null;
+        similaridade: number;
+        tipo: "exato" | "cpf" | "similar";
+      }> = [];
+
+      // Verificar CPF
+      if (input.cpf) {
+        const cpfLimpo = input.cpf.replace(/\D/g, "");
+        const [existenteCpf] = await db
+          .select({ id: assistidos.id, nome: assistidos.nome, cpf: assistidos.cpf })
+          .from(assistidos)
+          .where(sql`REPLACE(REPLACE(REPLACE(${assistidos.cpf}, '.', ''), '-', ''), ' ', '') = ${cpfLimpo}`)
+          .limit(1);
+        
+        if (existenteCpf) {
+          duplicados.push({
+            id: existenteCpf.id,
+            nome: existenteCpf.nome,
+            cpf: existenteCpf.cpf,
+            similaridade: 1,
+            tipo: "cpf",
+          });
+        }
+      }
+
+      // Verificar nomes similares
+      const primeiroNome = input.nome.split(" ")[0];
+      const candidatos = await db
+        .select({ id: assistidos.id, nome: assistidos.nome, cpf: assistidos.cpf })
+        .from(assistidos)
+        .where(ilike(assistidos.nome, `%${primeiroNome}%`))
+        .limit(20);
+
+      for (const candidato of candidatos) {
+        // Evitar duplicar se já encontrado por CPF
+        if (duplicados.find(d => d.id === candidato.id)) continue;
+
+        const similaridade = calcularSimilaridade(candidato.nome, input.nome);
+        
+        if (similaridade === 1) {
+          duplicados.push({
+            id: candidato.id,
+            nome: candidato.nome,
+            cpf: candidato.cpf,
+            similaridade: 1,
+            tipo: "exato",
+          });
+        } else if (similaridade >= 0.6) {
+          duplicados.push({
+            id: candidato.id,
+            nome: candidato.nome,
+            cpf: candidato.cpf,
+            similaridade,
+            tipo: "similar",
+          });
+        }
+      }
+
+      return {
+        hasDuplicates: duplicados.length > 0,
+        duplicados: duplicados.sort((a, b) => b.similaridade - a.similaridade),
+      };
     }),
 
   // Atualizar assistido
@@ -212,6 +467,92 @@ export const assistidosRouter = router({
         .returning();
       
       return excluido;
+    }),
+
+  // Buscar processos de um assistido
+  getProcessos: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      getWorkspaceScope(ctx.user); // Validar autenticação
+      
+      const result = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          area: processos.area,
+          atribuicao: processos.atribuicao,
+          classeProcessual: processos.classeProcessual,
+          vara: processos.vara,
+          situacao: processos.situacao,
+          isJuri: processos.isJuri,
+          createdAt: processos.createdAt,
+        })
+        .from(processos)
+        .where(and(
+          eq(processos.assistidoId, input.assistidoId),
+          isNull(processos.deletedAt)
+        ))
+        .orderBy(desc(processos.createdAt));
+      
+      return result;
+    }),
+
+  // Buscar audiências de um assistido
+  getAudiencias: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      getWorkspaceScope(ctx.user);
+      
+      const result = await db
+        .select({
+          id: audiencias.id,
+          dataAudiencia: audiencias.dataAudiencia,
+          tipo: audiencias.tipo,
+          titulo: audiencias.titulo,
+          local: audiencias.local,
+          status: audiencias.status,
+          processoId: audiencias.processoId,
+          processo: {
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+          },
+        })
+        .from(audiencias)
+        .leftJoin(processos, eq(audiencias.processoId, processos.id))
+        .where(eq(audiencias.assistidoId, input.assistidoId))
+        .orderBy(desc(audiencias.dataAudiencia));
+      
+      return result;
+    }),
+
+  // Buscar demandas de um assistido
+  getDemandas: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      getWorkspaceScope(ctx.user);
+      
+      const result = await db
+        .select({
+          id: demandas.id,
+          ato: demandas.ato,
+          prazo: demandas.prazo,
+          status: demandas.status,
+          prioridade: demandas.prioridade,
+          processoId: demandas.processoId,
+          processo: {
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+          },
+        })
+        .from(demandas)
+        .leftJoin(processos, eq(demandas.processoId, processos.id))
+        .where(and(
+          eq(demandas.assistidoId, input.assistidoId),
+          isNull(demandas.deletedAt)
+        ))
+        .orderBy(desc(demandas.prazo));
+      
+      return result;
     }),
 
   // Estatísticas

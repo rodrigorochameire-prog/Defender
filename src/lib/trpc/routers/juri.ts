@@ -8,6 +8,7 @@ import { getWorkspaceScope } from "../workspace";
 
 export const juriRouter = router({
   // Listar todas as sessões do júri
+  // Júris são filtrados pela atribuição, não por workspace
   list: protectedProcedure
     .input(
       z.object({
@@ -19,7 +20,7 @@ export const juriRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const { status, defensor, limit = 50, offset = 0 } = input || {};
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      getWorkspaceScope(ctx.user); // Validar autenticação
       
       let conditions = [];
       
@@ -31,9 +32,7 @@ export const juriRouter = router({
         conditions.push(eq(sessoesJuri.defensorNome, defensor));
       }
 
-      if (!isAdmin) {
-        conditions.push(eq(sessoesJuri.workspaceId, workspaceId));
-      }
+      // Júris são compartilhados (filtrados no frontend pela atribuição)
       
       const result = await db
         .select({
@@ -69,7 +68,7 @@ export const juriRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const { dias = 30 } = input || {};
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      getWorkspaceScope(ctx.user); // Validar autenticação
       const hoje = new Date();
       
       const result = await db
@@ -86,12 +85,7 @@ export const juriRouter = router({
         })
         .from(sessoesJuri)
         .leftJoin(processos, eq(sessoesJuri.processoId, processos.id))
-        .where(
-          and(
-            gte(sessoesJuri.dataSessao, hoje),
-            ...(isAdmin ? [] : [eq(sessoesJuri.workspaceId, workspaceId)])
-          )
-        )
+        .where(gte(sessoesJuri.dataSessao, hoje))
         .orderBy(sessoesJuri.dataSessao)
         .limit(10);
       

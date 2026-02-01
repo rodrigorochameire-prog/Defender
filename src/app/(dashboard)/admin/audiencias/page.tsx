@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { AudienciasHub } from "@/components/casos/audiencias-hub";
 import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -25,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
 import { isToday, isTomorrow, addDays, isPast } from "date-fns";
+import { trpc } from "@/lib/trpc/client";
 
 // ==========================================
 // CONSTANTES - DESIGN SUÍÇO
@@ -124,160 +126,6 @@ interface Audiencia {
 }
 
 // ==========================================
-// DADOS MOCK
-// ==========================================
-
-const MOCK_AUDIENCIAS: Audiencia[] = [
-  {
-    id: 1,
-    dataAudiencia: new Date(),
-    horario: "09:00",
-    tipo: "INSTRUCAO",
-    status: "DESIGNADA",
-    sala: "3",
-    local: "Fórum de Camaçari",
-    juiz: "Dr. Carlos Mendes",
-    promotor: "Dr. Fernando Costa",
-    resumoDefesa: "Focar na nulidade da busca domiciliar sem mandado",
-    casoId: 1,
-    casoTitulo: "Homicídio Qualificado - Operação Reuso",
-    assistidoId: 1,
-    assistidoNome: "José Carlos Santos",
-    assistidoPreso: true,
-    processoId: 1,
-    numeroAutos: "8002341-90.2025.8.05.0039",
-    vara: "Vara do Júri",
-    comarca: "Camaçari",
-    defensorNome: "Dr. João Silva",
-  },
-  {
-    id: 2,
-    dataAudiencia: addDays(new Date(), 1),
-    horario: "14:00",
-    tipo: "CUSTODIA",
-    status: "DESIGNADA",
-    sala: "1",
-    local: "Fórum de Camaçari",
-    casoId: 2,
-    casoTitulo: "Flagrante - Tráfico",
-    assistidoId: 3,
-    assistidoNome: "Maria Aparecida Silva",
-    assistidoPreso: true,
-    processoId: 3,
-    numeroAutos: "8002500-10.2025.8.05.0039",
-    vara: "Vara Criminal",
-    comarca: "Camaçari",
-    defensorNome: "Dra. Ana Paula",
-  },
-  {
-    id: 3,
-    dataAudiencia: addDays(new Date(), 3),
-    horario: "10:00",
-    tipo: "INSTRUCAO",
-    status: "DESIGNADA",
-    sala: "2",
-    local: "Fórum de Camaçari",
-    casoId: 1,
-    casoTitulo: "Homicídio Qualificado - Operação Reuso",
-    assistidoId: 2,
-    assistidoNome: "Pedro Oliveira Lima",
-    assistidoPreso: true,
-    processoId: 2,
-    numeroAutos: "8002342-75.2025.8.05.0039",
-    vara: "Vara do Júri",
-    comarca: "Camaçari",
-    defensorNome: "Dr. João Silva",
-  },
-  {
-    id: 4,
-    dataAudiencia: addDays(new Date(), 7),
-    horario: "09:30",
-    tipo: "CONCILIACAO",
-    status: "DESIGNADA",
-    local: "CEJUSC Camaçari",
-    assistidoId: 4,
-    assistidoNome: "Carlos Eduardo",
-    assistidoPreso: false,
-    processoId: 4,
-    numeroAutos: "8003100-50.2025.8.05.0039",
-    vara: "Vara Cível",
-    comarca: "Camaçari",
-    defensorNome: "Dra. Maria Oliveira",
-  },
-  {
-    id: 5,
-    dataAudiencia: addDays(new Date(), -2),
-    horario: "14:00",
-    tipo: "INSTRUCAO",
-    status: "REALIZADA",
-    sala: "3",
-    local: "Fórum de Camaçari",
-    anotacoes: "Testemunha de acusação não compareceu. Juiz redesignou para nova data.",
-    casoId: 3,
-    casoTitulo: "Roubo Qualificado",
-    assistidoId: 5,
-    assistidoNome: "Roberto Silva",
-    assistidoPreso: false,
-    processoId: 5,
-    numeroAutos: "8001200-30.2025.8.05.0039",
-    vara: "Vara Criminal",
-    comarca: "Camaçari",
-    defensorNome: "Dr. João Silva",
-  },
-  {
-    id: 6,
-    dataAudiencia: addDays(new Date(), -1),
-    horario: "10:00",
-    tipo: "INSTRUCAO",
-    status: "AGUARDANDO_ATA",
-    sala: "2",
-    local: "Fórum de Camaçari",
-    assistidoId: 6,
-    assistidoNome: "Antônio Pereira",
-    assistidoPreso: true,
-    processoId: 6,
-    numeroAutos: "8001500-80.2025.8.05.0039",
-    vara: "Vara do Júri",
-    comarca: "Camaçari",
-    defensorNome: "Dr. João Silva",
-  },
-  {
-    id: 7,
-    dataAudiencia: addDays(new Date(), 15),
-    horario: "09:00",
-    tipo: "PLENARIO_JURI",
-    status: "DESIGNADA",
-    sala: "Plenário",
-    local: "Fórum de Camaçari",
-    resumoDefesa: "Tese principal: legítima defesa. Quesito específico preparado.",
-    casoId: 4,
-    casoTitulo: "Tentativa de Homicídio - Brigas de Bar",
-    assistidoId: 7,
-    assistidoNome: "Fernando Costa",
-    assistidoPreso: true,
-    processoId: 7,
-    numeroAutos: "8000800-20.2024.8.05.0039",
-    vara: "Vara do Júri",
-    comarca: "Camaçari",
-    defensorNome: "Dr. João Silva",
-  },
-  {
-    id: 8,
-    dataAudiencia: addDays(new Date(), 10),
-    horario: "14:30",
-    tipo: "JUSTIFICACAO",
-    status: "A_DESIGNAR",
-    assistidoId: 8,
-    assistidoNome: "Lucas Mendes",
-    assistidoPreso: false,
-    processoId: 8,
-    numeroAutos: "8002800-15.2025.8.05.0039",
-    vara: "Vara Criminal",
-    comarca: "Camaçari",
-  },
-];
-
-// ==========================================
 // PÁGINA PRINCIPAL - DESIGN SUÍÇO
 // ==========================================
 
@@ -285,8 +133,48 @@ export default function AudienciasPage() {
   const { currentAssignment } = useAssignment();
   const [areaFilter, setAreaFilter] = useState("all");
   
-  // Filtrar por workspace se necessário
-  const audiencias = MOCK_AUDIENCIAS;
+  // Buscar audiências do banco de dados via tRPC
+  const { data: audienciasData, isLoading, refetch } = trpc.audiencias.list.useQuery({
+    limit: 100,
+  });
+  
+  // Mutation para atualizar audiências
+  const updateAudiencia = trpc.audiencias.update.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  // Transformar dados do banco para o formato esperado pelo componente
+  const audiencias: Audiencia[] = useMemo(() => {
+    if (!audienciasData) return [];
+    
+    return audienciasData.map((a) => ({
+      id: a.id,
+      dataAudiencia: new Date(a.dataHora),
+      horario: a.horario,
+      tipo: a.tipo?.toUpperCase() || "OUTRA",
+      status: (a.status?.toUpperCase() || "DESIGNADA") as Audiencia["status"],
+      sala: a.sala,
+      local: a.local,
+      juiz: a.juiz,
+      promotor: a.promotor,
+      anotacoes: null,
+      resumoDefesa: a.descricao,
+      googleCalendarEventId: null,
+      casoId: null,
+      casoTitulo: a.titulo,
+      assistidoId: null,
+      assistidoNome: null,
+      assistidoFoto: null,
+      assistidoPreso: false,
+      processoId: a.processoId,
+      numeroAutos: a.processo?.numero || null,
+      vara: null,
+      comarca: null,
+      defensorNome: null,
+    }));
+  }, [audienciasData]);
 
   // Estatísticas
   const stats = useMemo(() => {
@@ -298,14 +186,50 @@ export default function AudienciasPage() {
   }, [audiencias]);
 
   const handleAudienciaUpdate = async (id: number, data: Partial<Audiencia>) => {
-    console.log("Atualizando audiência", id, "com:", data);
-    // Implementar via tRPC
+    try {
+      await updateAudiencia.mutateAsync({
+        id,
+        ...data,
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar audiência:", error);
+    }
   };
 
   const handleCreateTask = (audiencia: Audiencia, taskType: string) => {
     console.log("Criando tarefa", taskType, "para audiência", audiencia.id);
-    // Implementar via tRPC - criar demanda
+    // TODO: Implementar via tRPC - criar demanda
   };
+  
+  // Loading state
+  if (isLoading) {
+    return (
+      <TooltipProvider>
+        <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-12 h-12 rounded-lg" />
+              <div>
+                <Skeleton className="h-6 w-48 mb-2" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {[1,2,3,4].map(i => (
+                <Skeleton key={i} className="h-8 w-24" />
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+            {[1,2,3,4].map(i => (
+              <Skeleton key={i} className="h-20" />
+            ))}
+          </div>
+          <Skeleton className="h-[400px]" />
+        </div>
+      </TooltipProvider>
+    );
+  }
 
   // Configuração visual da atribuição selecionada
   const atribuicaoColors = ATRIBUICAO_COLORS[areaFilter] || ATRIBUICAO_COLORS.all;

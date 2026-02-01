@@ -199,27 +199,34 @@ export default function InteligenciaPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
-            <Brain className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Inteligência Defensiva</h1>
-            <p className="text-muted-foreground text-sm">
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Sub-header unificado */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Brain className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+            </div>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
               Ferramentas de investigação e OSINT
-            </p>
+            </span>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" />
-            Exportar Relatório
-          </Button>
+          
+          <div className="flex items-center gap-0.5">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              title="Exportar Relatório"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Conteúdo Principal */}
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
 
       {/* Assistido Context (se selecionado) */}
       {assistido && (
@@ -517,6 +524,7 @@ export default function InteligenciaPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

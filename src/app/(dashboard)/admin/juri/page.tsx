@@ -238,35 +238,44 @@ export default function JuriPage() {
     .slice(0, 3);
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-6">
-      {/* Header - Padrão Swiss */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-            <Gavel className="w-5 h-5 text-purple-600" />
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Sub-header unificado */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Gavel className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+            </div>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+              {stats.total} sessões • {stats.agendadas} agendadas
+            </span>
           </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Tribunal do Júri</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm">
-              Gestão de sessões e análise de jurados
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-9 w-9">
-            <Download className="h-4 w-4" />
-          </Button>
-          <Link href="/admin/juri/nova">
-            <Button className="gap-2 h-9">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Nova Sessão</span>
-              <span className="sm:hidden">Nova</span>
+          
+          <div className="flex items-center gap-0.5">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              title="Exportar"
+            >
+              <Download className="w-3.5 h-3.5" />
             </Button>
-          </Link>
+            <Link href="/admin/juri/nova-sessao">
+              <Button 
+                size="sm"
+                className="h-7 px-2.5 ml-1.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Nova Sessão
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Stats Cards - Padrão Swiss */}
+      {/* Conteúdo Principal */}
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        {/* Stats Cards */}
       <div className="grid gap-3 sm:gap-4 grid-cols-3">
         <SwissCard className="border-l-[3px] border-l-purple-500 dark:border-l-purple-400">
           <SwissCardContent className="p-3 sm:p-4">
@@ -556,6 +565,7 @@ export default function JuriPage() {
           )}
         </SwissCardContent>
       </SwissCard>
+      </div>
     </div>
   );
 }

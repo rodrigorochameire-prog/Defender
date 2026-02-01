@@ -7,12 +7,27 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 // ==========================================
 
 export type Assignment = 
-  | "JURI_CAMACARI"      // Vara do Júri Camaçari
-  | "VVD_CAMACARI"       // Violência Doméstica
-  | "EXECUCAO_PENAL"     // Execução Penal
-  | "GRUPO_JURI"         // Grupo Especial do Júri (após Execução Penal)
-  | "SUBSTITUICAO"       // Substituição Criminal
-  | "SUBSTITUICAO_CIVEL"; // Substituições Não Penais (Cível, Família, etc.)
+  | "JURI_CAMACARI"        // Vara do Júri Camaçari
+  | "VVD_CAMACARI"         // Violência Doméstica
+  | "EXECUCAO_PENAL"       // Execução Penal
+  | "GRUPO_JURI"           // Grupo Especial do Júri (após Execução Penal)
+  | "SUBSTITUICAO"         // Substituição Criminal
+  | "SUBSTITUICAO_CIVEL"   // Substituições Não Penais (Cível, Família, etc.)
+  | "CURADORIA"            // Curadoria Especial
+  | "PETICIONAMENTO";      // Peticionamento Integrado (PJe, SAJ, etc.)
+
+// ==========================================
+// CATEGORIAS DE ATRIBUIÇÃO
+// ==========================================
+
+export type AssignmentCategory = "ORDINARIA" | "SUBSTITUICAO" | "FERRAMENTA";
+
+export interface AssignmentCategoryConfig {
+  id: AssignmentCategory;
+  label: string;
+  description: string;
+  assignments: Assignment[];
+}
 
 // ==========================================
 // ESTRUTURA DE MENU
@@ -121,14 +136,7 @@ const EP_MODULES: MenuSection[] = [
 
 // 🔄 SUBSTITUIÇÃO CRIMINAL
 const SUBSTITUICAO_MODULES: MenuSection[] = [
-  {
-    id: "ferramentas",
-    title: "Ferramentas",
-    items: [
-      { label: "Kanban", path: "/admin/kanban", icon: "Columns3", description: "Visão em cards" },
-      { label: "Banco de Teses", path: "/admin/templates", icon: "FileText" },
-    ],
-  },
+  // Módulos específicos removidos - usando apenas menu principal
 ];
 
 // 🏆 GRUPO ESPECIAL DO JÚRI
@@ -182,9 +190,56 @@ const CIVEL_MODULES: MenuSection[] = [
     id: "ferramentas",
     title: "Ferramentas",
     items: [
-      { label: "Kanban", path: "/admin/kanban", icon: "Columns3" },
       { label: "Conciliações", path: "/admin/audiencias?tipo=CONCILIACAO", icon: "Handshake" },
       { label: "Documentos", path: "/admin/documentos", icon: "FileText" },
+    ],
+  },
+];
+
+// 🎓 CURADORIA ESPECIAL
+const CURADORIA_MODULES: MenuSection[] = [
+  {
+    id: "curatelados",
+    title: "Curatelados",
+    items: [
+      { label: "Painel de Curatelados", path: "/admin/curadoria", icon: "Users", description: "Gestão de curatelados" },
+      { label: "Relatórios Mensais", path: "/admin/curadoria/relatorios", icon: "FileText", description: "Prestação de contas" },
+      { label: "Patrimônio", path: "/admin/curadoria/patrimonio", icon: "Building2", description: "Bens e imóveis" },
+    ],
+  },
+  {
+    id: "audiencias_curadoria",
+    title: "Audiências",
+    collapsible: true,
+    defaultOpen: false,
+    items: [
+      { label: "Interdições", path: "/admin/curadoria/interdicoes", icon: "Scale" },
+      { label: "Tomadas de Decisão", path: "/admin/curadoria/decisoes", icon: "ClipboardCheck" },
+    ],
+  },
+];
+
+// 📝 PETICIONAMENTO INTEGRADO
+const PETICIONAMENTO_MODULES: MenuSection[] = [
+  {
+    id: "sistemas",
+    title: "Sistemas Judiciais",
+    items: [
+      { label: "PJe", path: "/admin/peticionamento/pje", icon: "Scale", description: "Processo Judicial Eletrônico" },
+      { label: "SAJ", path: "/admin/peticionamento/saj", icon: "FileText", description: "Sistema de Automação da Justiça" },
+      { label: "e-SAJ", path: "/admin/peticionamento/esaj", icon: "Zap", description: "Portal de Serviços" },
+      { label: "SEEU", path: "/admin/peticionamento/seeu", icon: "Lock", description: "Execução Penal Unificado" },
+    ],
+  },
+  {
+    id: "modelos",
+    title: "Modelos & Templates",
+    collapsible: true,
+    defaultOpen: true,
+    items: [
+      { label: "Banco de Peças", path: "/admin/pecas", icon: "FolderOpen", description: "Templates organizados" },
+      { label: "Gerador IA", path: "/admin/peticionamento/ia", icon: "Sparkles", description: "Geração assistida por IA", isPremium: true },
+      { label: "Histórico de Envios", path: "/admin/peticionamento/historico", icon: "History" },
     ],
   },
 ];
@@ -196,11 +251,12 @@ const CIVEL_MODULES: MenuSection[] = [
 
 export const CONTEXT_MENU_ITEMS: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
+  { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
+  { label: "Agenda", path: "/admin/agenda", icon: "Calendar", description: "Agenda completa de eventos" },
   { label: "Casos", path: "/admin/casos", icon: "Briefcase" },
-  { label: "Demandas", path: "/admin/demandas", icon: "Clock" },
-  { label: "Processos", path: "/admin/processos", icon: "Scale" },
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
-  { label: "Agenda", path: "/admin/audiencias", icon: "Calendar" },
+  { label: "Processos", path: "/admin/processos", icon: "Scale" },
+  { label: "Drive", path: "/admin/drive", icon: "FolderOpen", description: "Arquivos e documentos" },
 ];
 
 // ==========================================
@@ -257,7 +313,34 @@ export const SPECIALTY_MODULES: Record<Assignment, MenuSection[]> = {
   SUBSTITUICAO: SUBSTITUICAO_MODULES,
   SUBSTITUICAO_CIVEL: CIVEL_MODULES,
   GRUPO_JURI: GRUPO_JURI_MODULES,
+  CURADORIA: CURADORIA_MODULES,
+  PETICIONAMENTO: PETICIONAMENTO_MODULES,
 };
+
+// ==========================================
+// CATEGORIAS DE ATRIBUIÇÃO (para o switcher)
+// ==========================================
+
+export const ASSIGNMENT_CATEGORIES: AssignmentCategoryConfig[] = [
+  {
+    id: "ORDINARIA",
+    label: "Atribuições Ordinárias",
+    description: "Funções regulares da Defensoria",
+    assignments: ["JURI_CAMACARI", "VVD_CAMACARI", "EXECUCAO_PENAL"],
+  },
+  {
+    id: "SUBSTITUICAO",
+    label: "Substituições",
+    description: "Atuação em substituição temporária",
+    assignments: ["SUBSTITUICAO", "SUBSTITUICAO_CIVEL", "GRUPO_JURI"],
+  },
+  {
+    id: "FERRAMENTA",
+    label: "Ferramentas Especiais",
+    description: "Módulos de produtividade",
+    assignments: ["CURADORIA", "PETICIONAMENTO"],
+  },
+];
 
 // ==========================================
 // CONFIGURAÇÃO VISUAL DE CADA ATRIBUIÇÃO
@@ -307,9 +390,9 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     description: "Processos do Tribunal do Júri da Comarca de Camaçari",
     icon: "Gavel",
     emoji: "🏛️",
-    accentColor: "hsl(158, 55%, 42%)",
-    accentColorLight: "hsl(158, 45%, 94%)",
-    accentColorDark: "hsl(158, 50%, 32%)",
+    accentColor: "hsl(220, 10%, 45%)",
+    accentColorLight: "hsl(220, 8%, 95%)",
+    accentColorDark: "hsl(220, 12%, 35%)",
     bgGradient: "from-emerald-50/50 to-slate-50",
     borderColor: "border-emerald-200/60",
     sidebarBg: "linear-gradient(to bottom, hsl(155, 20%, 97%), hsl(155, 18%, 96%), hsl(158, 22%, 94%))",
@@ -338,9 +421,9 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     description: "Vara de Violência Doméstica e Familiar",
     icon: "Shield",
     emoji: "💜",
-    accentColor: "hsl(45, 85%, 48%)",
-    accentColorLight: "hsl(45, 80%, 94%)",
-    accentColorDark: "hsl(45, 80%, 38%)",
+    accentColor: "hsl(220, 10%, 48%)",
+    accentColorLight: "hsl(220, 8%, 95%)",
+    accentColorDark: "hsl(220, 12%, 38%)",
     bgGradient: "from-amber-50/50 to-slate-50",
     borderColor: "border-amber-200/60",
     sidebarBg: "linear-gradient(to bottom, hsl(48, 25%, 97%), hsl(45, 22%, 96%), hsl(42, 28%, 94%))",
@@ -369,9 +452,9 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     description: "Vara de Execução Penal - Benefícios e Incidentes",
     icon: "Lock",
     emoji: "⛓️",
-    accentColor: "hsl(210, 65%, 50%)",
-    accentColorLight: "hsl(210, 60%, 94%)",
-    accentColorDark: "hsl(210, 60%, 38%)",
+    accentColor: "hsl(220, 10%, 50%)",
+    accentColorLight: "hsl(220, 8%, 95%)",
+    accentColorDark: "hsl(220, 12%, 40%)",
     bgGradient: "from-blue-50/50 to-slate-50",
     borderColor: "border-blue-200/60",
     sidebarBg: "linear-gradient(to bottom, hsl(210, 22%, 97%), hsl(215, 20%, 96%), hsl(205, 25%, 94%))",
@@ -400,9 +483,9 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     description: "Atuação em substituição na área criminal",
     icon: "RefreshCw",
     emoji: "🔄",
-    accentColor: "hsl(0, 65%, 50%)",
-    accentColorLight: "hsl(0, 60%, 94%)",
-    accentColorDark: "hsl(0, 60%, 38%)",
+    accentColor: "hsl(220, 10%, 47%)",
+    accentColorLight: "hsl(220, 8%, 95%)",
+    accentColorDark: "hsl(220, 12%, 37%)",
     bgGradient: "from-red-50/50 to-slate-50",
     borderColor: "border-red-200/60",
     sidebarBg: "linear-gradient(to bottom, hsl(0, 18%, 97%), hsl(355, 16%, 96%), hsl(5, 22%, 94%))",
@@ -421,7 +504,7 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     sidebarTextMutedDark: "hsl(355, 8%, 60%)",
     sidebarDivider: "hsl(0, 28%, 86%)",
     sidebarDividerDark: "hsl(0, 14%, 16%)",
-    features: ["kanban", "prazos", "multicomarca"],
+    features: ["prazos", "multicomarca"],
     menuItems: SUBSTITUICAO_MODULES.flatMap(s => s.items),
   },
   GRUPO_JURI: {
@@ -431,9 +514,9 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     description: "Atuação em plenários pelo Estado da Bahia",
     icon: "Award",
     emoji: "🏆",
-    accentColor: "hsl(25, 85%, 52%)",
-    accentColorLight: "hsl(25, 80%, 94%)",
-    accentColorDark: "hsl(25, 80%, 40%)",
+    accentColor: "hsl(220, 10%, 52%)",
+    accentColorLight: "hsl(220, 8%, 95%)",
+    accentColorDark: "hsl(220, 12%, 42%)",
     bgGradient: "from-orange-50/50 to-slate-50",
     borderColor: "border-orange-200/60",
     sidebarBg: "linear-gradient(to bottom, hsl(25, 22%, 97%), hsl(20, 20%, 96%), hsl(30, 26%, 94%))",
@@ -462,9 +545,9 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     description: "Atuação em substituição nas áreas cível, família e outras",
     icon: "Scale",
     emoji: "⚖️",
-    accentColor: "hsl(270, 55%, 55%)",
-    accentColorLight: "hsl(270, 50%, 94%)",
-    accentColorDark: "hsl(270, 50%, 42%)",
+    accentColor: "hsl(220, 10%, 50%)",
+    accentColorLight: "hsl(220, 8%, 95%)",
+    accentColorDark: "hsl(220, 12%, 40%)",
     bgGradient: "from-violet-50/50 to-slate-50",
     borderColor: "border-violet-200/60",
     sidebarBg: "linear-gradient(to bottom, hsl(270, 18%, 97%), hsl(265, 16%, 96%), hsl(275, 22%, 94%))",
@@ -483,8 +566,70 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     sidebarTextMutedDark: "hsl(265, 10%, 60%)",
     sidebarDivider: "hsl(270, 30%, 84%)",
     sidebarDividerDark: "hsl(270, 14%, 16%)",
-    features: ["kanban", "prazos", "multicomarca", "civel", "familia"],
+    features: ["prazos", "multicomarca", "civel", "familia"],
     menuItems: CIVEL_MODULES.flatMap(s => s.items),
+  },
+  CURADORIA: {
+    id: "CURADORIA",
+    name: "Curadoria Especial",
+    shortName: "Curadoria",
+    description: "Gestão de curatelados e interdições",
+    icon: "UserCheck",
+    emoji: "🎓",
+    accentColor: "hsl(220, 10%, 48%)",
+    accentColorLight: "hsl(220, 8%, 95%)",
+    accentColorDark: "hsl(220, 12%, 38%)",
+    bgGradient: "from-cyan-50/50 to-slate-50",
+    borderColor: "border-cyan-200/60",
+    sidebarBg: "linear-gradient(to bottom, hsl(180, 20%, 97%), hsl(175, 18%, 96%), hsl(185, 24%, 94%))",
+    sidebarBgDark: "linear-gradient(to bottom, hsl(180, 16%, 7%), hsl(175, 14%, 6%), hsl(185, 18%, 8%))",
+    sidebarBorder: "hsl(180, 28%, 84%)",
+    sidebarBorderDark: "hsl(180, 18%, 18%)",
+    sidebarHeaderBg: "linear-gradient(to right, hsl(180, 38%, 93%), hsl(175, 32%, 94%), hsl(185, 28%, 95%))",
+    sidebarHeaderBgDark: "linear-gradient(to right, hsl(180, 24%, 10%), hsl(175, 20%, 9%), hsl(185, 22%, 8%))",
+    sidebarHover: "hsl(180, 32%, 90%)",
+    sidebarHoverDark: "hsl(180, 18%, 14%)",
+    sidebarActiveBg: "linear-gradient(to right, hsl(180, 42%, 89%), hsl(175, 38%, 91%))",
+    sidebarActiveBgDark: "linear-gradient(to right, hsl(180, 30%, 14%), hsl(175, 26%, 12%))",
+    sidebarActiveRing: "hsl(180, 42%, 80%)",
+    sidebarActiveRingDark: "hsl(180, 26%, 22%)",
+    sidebarTextMuted: "hsl(180, 18%, 35%)",
+    sidebarTextMutedDark: "hsl(175, 12%, 60%)",
+    sidebarDivider: "hsl(180, 32%, 84%)",
+    sidebarDividerDark: "hsl(180, 16%, 16%)",
+    features: ["curatelados", "patrimonio", "relatorios", "interdicoes"],
+    menuItems: CURADORIA_MODULES.flatMap(s => s.items),
+  },
+  PETICIONAMENTO: {
+    id: "PETICIONAMENTO",
+    name: "Peticionamento Integrado",
+    shortName: "Peticionamento",
+    description: "Integração com sistemas judiciais (PJe, SAJ, SEEU)",
+    icon: "FileText",
+    emoji: "📝",
+    accentColor: "hsl(220, 10%, 53%)",
+    accentColorLight: "hsl(220, 8%, 95%)",
+    accentColorDark: "hsl(220, 12%, 43%)",
+    bgGradient: "from-indigo-50/50 to-slate-50",
+    borderColor: "border-indigo-200/60",
+    sidebarBg: "linear-gradient(to bottom, hsl(220, 22%, 97%), hsl(225, 20%, 96%), hsl(215, 26%, 94%))",
+    sidebarBgDark: "linear-gradient(to bottom, hsl(220, 18%, 7%), hsl(225, 16%, 6%), hsl(215, 20%, 8%))",
+    sidebarBorder: "hsl(220, 30%, 84%)",
+    sidebarBorderDark: "hsl(220, 20%, 18%)",
+    sidebarHeaderBg: "linear-gradient(to right, hsl(220, 40%, 93%), hsl(225, 34%, 94%), hsl(215, 30%, 95%))",
+    sidebarHeaderBgDark: "linear-gradient(to right, hsl(220, 26%, 10%), hsl(225, 22%, 9%), hsl(215, 24%, 8%))",
+    sidebarHover: "hsl(220, 34%, 90%)",
+    sidebarHoverDark: "hsl(220, 20%, 14%)",
+    sidebarActiveBg: "linear-gradient(to right, hsl(220, 44%, 89%), hsl(225, 40%, 91%))",
+    sidebarActiveBgDark: "linear-gradient(to right, hsl(220, 32%, 14%), hsl(225, 28%, 12%))",
+    sidebarActiveRing: "hsl(220, 44%, 80%)",
+    sidebarActiveRingDark: "hsl(220, 28%, 22%)",
+    sidebarTextMuted: "hsl(220, 20%, 35%)",
+    sidebarTextMutedDark: "hsl(225, 14%, 60%)",
+    sidebarDivider: "hsl(220, 34%, 84%)",
+    sidebarDividerDark: "hsl(220, 18%, 16%)",
+    features: ["pje", "saj", "seeu", "pecas", "ia"],
+    menuItems: PETICIONAMENTO_MODULES.flatMap(s => s.items),
   },
 };
 

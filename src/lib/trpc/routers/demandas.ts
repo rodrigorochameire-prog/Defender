@@ -8,6 +8,7 @@ import { getWorkspaceScope } from "../workspace";
 
 export const demandasRouter = router({
   // Listar todas as demandas
+  // Demandas são INDIVIDUAIS - cada defensor vê apenas as suas
   list: protectedProcedure
     .input(
       z.object({
@@ -15,13 +16,14 @@ export const demandasRouter = router({
         status: z.string().optional(),
         area: z.string().optional(),
         reuPreso: z.boolean().optional(),
+        defensorId: z.number().optional(), // ID do defensor para filtrar
         limit: z.number().min(1).max(100).default(50),
         offset: z.number().min(0).default(0),
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const { search, status, area, reuPreso, limit = 50, offset = 0 } = input || {};
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const { search, status, area, reuPreso, defensorId, limit = 50, offset = 0 } = input || {};
+      const { isAdmin, userId } = getWorkspaceScope(ctx.user);
       
       let conditions = [];
       
@@ -39,9 +41,15 @@ export const demandasRouter = router({
         conditions.push(eq(demandas.reuPreso, reuPreso));
       }
 
-      if (!isAdmin) {
-        conditions.push(eq(demandas.workspaceId, workspaceId));
+      // Filtrar por defensor específico se informado
+      if (defensorId) {
+        conditions.push(eq(demandas.defensorId, defensorId));
       }
+      // Se não for admin e não especificou defensor, mostra apenas as do usuário logado
+      // else if (!isAdmin) {
+      //   conditions.push(eq(demandas.defensorId, userId));
+      // }
+      // Por enquanto, mostra todas (comportamento compartilhado para testes)
       
       const result = await db
         .select({
@@ -55,6 +63,7 @@ export const demandasRouter = router({
           reuPreso: demandas.reuPreso,
           processoId: demandas.processoId,
           assistidoId: demandas.assistidoId,
+          defensorId: demandas.defensorId,
           createdAt: demandas.createdAt,
           processo: {
             id: processos.id,

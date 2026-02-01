@@ -1,193 +1,64 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { TeoriaDoCaso } from "@/components/casos/teoria-do-caso";
-import { AudienciasHub } from "@/components/casos/audiencias-hub";
 import { PrisonerIndicator, StatusPrisionalDot } from "@/components/shared/prisoner-indicator";
 import {
   Briefcase,
   ArrowLeft,
+  ArrowRight,
   Scale,
   Users,
   Calendar,
   Clock,
   FileText,
-  ExternalLink,
   FolderOpen,
-  Lock,
   Plus,
   MoreHorizontal,
   MapPin,
   CheckCircle2,
-  MessageCircle,
   Gavel,
   AlertTriangle,
-  Target,
   Activity,
   FileSearch,
   User,
-  UserCheck,
   Swords,
   Shield,
-  Eye,
   Scroll,
-  AlertCircle,
-  Circle,
-  CircleDot,
-  ChevronRight,
-  Mic,
-  Camera,
-  FileQuestion,
-  Bookmark,
-  Copy,
   BookOpen,
+  Save,
+  Edit3,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { format, formatDistanceToNow, isToday, isTomorrow, differenceInDays, parseISO } from "date-fns";
+import { trpc } from "@/lib/trpc/client";
+import { format, formatDistanceToNow, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-// ==========================================
-// TIPOS
-// ==========================================
-
-interface Envolvido {
-  id: number;
-  nome: string;
-  tipo: "reu" | "correu" | "testemunha_defesa" | "testemunha_acusacao" | "vitima" | "perito" | "informante";
-  foto: string | null;
-  preso: boolean;
-  localPrisao?: string | null;
-  status: "pendente" | "localizada" | "intimada" | "ouvida" | "falecido";
-  descricao?: string | null;
-  oitiva?: {
-    data: Date | null;
-    resumo: string | null;
-  } | null;
-}
-
-interface ProcessoVinculado {
-  id: number;
-  numeroAutos: string;
-  vara: string;
-  fase: "INQUERITO" | "INSTRUCAO" | "PLENARIO" | "RECURSO" | "EXECUCAO";
-  status: string;
-  reus: string[];
-  proximaAudiencia?: Date | null;
-  proximoPrazo?: Date | null;
-}
-
-interface MovimentacaoProcessual {
-  id: string;
-  data: Date;
-  tipo: "intimacao" | "decisao" | "despacho" | "audiencia" | "peticao" | "juntada" | "sentenca" | "acordao";
-  titulo: string;
-  descricao: string;
-  processoId?: number;
-  processoNumero?: string;
-  urgente?: boolean;
-  prazo?: Date | null;
-}
-
-interface PecaImportante {
-  id: number;
-  nome: string;
-  tipo: "denuncia" | "resposta_acusacao" | "alegacoes_finais" | "laudo" | "interrogatorio" | "oitiva" | "decisao" | "sentenca" | "recurso";
-  data: Date;
-  resumo?: string | null;
-  linkDrive?: string | null;
-  favoravel?: boolean | null;
-}
-
-interface Diligencia {
-  id: number;
-  tipo: string;
-  descricao: string;
-  status: "pendente" | "em_andamento" | "concluida" | "frustrada";
-  responsavel?: string | null;
-  resultado?: string | null;
-  dataLimite?: Date | null;
-}
-
-interface Laudo {
-  id: number;
-  tipo: string;
-  descricao: string;
-  data?: Date | null;
-  perito?: string | null;
-  conclusao?: string | null;
-  favoravel?: boolean | null;
-  linkDrive?: string | null;
-}
-
-interface Caso {
-  id: number;
-  titulo: string;
-  codigo?: string | null;
-  atribuicao: string;
-  comarca: string;
-  vara?: string | null;
-  status: "ativo" | "suspenso" | "arquivado";
-  fase: string;
-  faseProgresso: number;
-  prioridade: string;
-  tags?: string[];
-  // Teoria do Caso
-  teseAcusacao?: string | null;
-  versaoReu?: string | null;
-  teoriaDefesa?: string | null;
-  pontosFortes?: string[];
-  pontosFracos?: string[];
-  // Dados
-  envolvidos: Envolvido[];
-  processos: ProcessoVinculado[];
-  movimentacoes: MovimentacaoProcessual[];
-  pecas: PecaImportante[];
-  diligencias: Diligencia[];
-  laudos: Laudo[];
-  // Meta
-  linkDrive?: string | null;
-  defensorNome?: string | null;
-  observacoes?: string | null;
-  createdAt: Date;
-}
+import { toast } from "sonner";
 
 // ==========================================
 // CONSTANTES
 // ==========================================
 
-const FASES_CASO = {
-  INQUERITO: { label: "Inquérito", color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300", progress: 10 },
-  INSTRUCAO: { label: "Instrução", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", progress: 35 },
-  PLENARIO: { label: "Plenário", color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", progress: 60 },
-  RECURSO: { label: "Recurso", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", progress: 80 },
-  EXECUCAO: { label: "Execução", color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400", progress: 90 },
-  ARQUIVADO: { label: "Arquivado", color: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400", progress: 100 },
-};
-
-const TIPO_ENVOLVIDO_CONFIG = {
-  reu: { label: "Réu", color: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", icon: User },
-  correu: { label: "Corréu", color: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", icon: Users },
-  testemunha_defesa: { label: "Testemunha (Defesa)", color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400", icon: UserCheck },
-  testemunha_acusacao: { label: "Testemunha (Acusação)", color: "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400", icon: User },
-  vitima: { label: "Vítima", color: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", icon: AlertCircle },
-  perito: { label: "Perito", color: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", icon: FileSearch },
-  informante: { label: "Informante", color: "bg-zinc-50 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400", icon: MessageCircle },
+const FASES_CASO: Record<string, { label: string; color: string }> = {
+  inquerito: { label: "Inquérito", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400" },
+  instrucao: { label: "Instrução", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  plenario: { label: "Plenário", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
+  recurso: { label: "Recurso", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
+  execucao: { label: "Execução", color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400" },
 };
 
 const ATRIBUICAO_LABELS: Record<string, string> = {
@@ -199,424 +70,273 @@ const ATRIBUICAO_LABELS: Record<string, string> = {
   SUBSTITUICAO_CIVEL: "Cível",
 };
 
-const FASE_LABELS = ["Inquérito", "Instrução", "Plenário", "Recurso", "Execução"];
-
 // ==========================================
-// DADOS MOCK - ESTUDO DE CASO COMPLETO
+// DADOS MOCKADOS (REMOVER DEPOIS)
 // ==========================================
 
-const MOCK_CASO: Caso = {
-  id: 1,
-  titulo: "Homicídio Qualificado - Operação Reuso",
-  codigo: "CASO-2025-001",
-  atribuicao: "JURI_CAMACARI",
-  comarca: "Camaçari",
-  vara: "1ª Vara do Júri",
-  status: "ativo",
-  fase: "INSTRUCAO",
-  faseProgresso: 35,
-  prioridade: "REU_PRESO",
-  tags: ["NulidadeBusca", "ExcessoPrazo", "LegitimaDefesa"],
-  
-  // Teoria do Caso
-  teseAcusacao: "O Ministério Público sustenta que o réu, de forma premeditada e mediante recurso que impossibilitou a defesa da vítima, desferiu golpes de arma branca que resultaram no óbito. Alega motivo torpe relacionado a desavenças por dívida de drogas.",
-  versaoReu: "O assistido alega legítima defesa própria. Afirma que foi surpreendido pela vítima em sua residência, armada com uma faca, e que apenas reagiu para defender sua vida. Sustenta não haver premeditação e que a discussão foi iniciada pela vítima.",
-  teoriaDefesa: "Legítima defesa real. Ausência de provas de premeditação. Nulidade da busca domiciliar por ausência de mandado judicial. Excesso de prazo na instrução criminal com réu preso.",
-  pontosFortes: [
-    "Vítima tinha histórico de violência e ameaças ao réu",
-    "Depoimento de vizinha corrobora versão de que vítima iniciou agressão",
-    "Busca domiciliar sem mandado - possível nulidade",
-    "Réu preso há mais de 90 dias sem instrução concluída"
-  ],
-  pontosFracos: [
-    "Réu não acionou a polícia imediatamente",
-    "Arma do crime era do próprio réu",
-    "Algumas testemunhas de acusação são consistentes"
-  ],
-
-  // Envolvidos
-  envolvidos: [
-    { 
-      id: 1, 
-      nome: "José Carlos da Silva", 
-      tipo: "reu", 
-      foto: null, 
-      preso: true, 
-      localPrisao: "Cadeia Pública de Candeias",
-      status: "ouvida",
-      descricao: "Réu principal. 32 anos, pedreiro. Primeiro processo criminal.",
-      oitiva: { data: new Date("2025-01-15"), resumo: "Manteve versão de legítima defesa. Demonstrou-se nervoso mas coerente." }
-    },
-    { 
-      id: 2, 
-      nome: "Pedro Oliveira Santos", 
-      tipo: "correu", 
-      foto: null, 
-      preso: true, 
-      localPrisao: "Penitenciária Lemos Brito",
-      status: "pendente",
-      descricao: "Corréu em processo desmembrado. Acusado de participação no crime."
-    },
-    { 
-      id: 3, 
-      nome: "Maria Aparecida Lima", 
-      tipo: "testemunha_defesa", 
-      foto: null, 
-      preso: false,
-      status: "ouvida",
-      descricao: "Vizinha. Presenciou início da discussão.",
-      oitiva: { data: new Date("2025-01-10"), resumo: "Confirmou que vítima estava alterada e iniciou agressão verbal." }
-    },
-    { 
-      id: 4, 
-      nome: "Antonio Ferreira", 
-      tipo: "testemunha_acusacao", 
-      foto: null, 
-      preso: false,
-      status: "ouvida",
-      descricao: "Amigo da vítima. Versão conflitante.",
-      oitiva: { data: new Date("2025-01-10"), resumo: "Afirmou que réu tinha desavenças antigas com vítima. Contradições sobre horário." }
-    },
-    { 
-      id: 5, 
-      nome: "João Souza Almeida", 
-      tipo: "vitima", 
-      foto: null, 
-      preso: false,
-      status: "falecido",
-      descricao: "Vítima fatal. 28 anos. Histórico de violência e processos por lesão corporal."
-    },
-    { 
-      id: 6, 
-      nome: "Carla Regina Santos", 
-      tipo: "testemunha_defesa", 
-      foto: null, 
-      preso: false,
-      status: "pendente",
-      descricao: "Irmã do réu. Testemunha de caráter e conduta."
-    },
-  ],
-
-  // Processos Vinculados
-  processos: [
-    { 
-      id: 1, 
-      numeroAutos: "8002341-90.2025.8.05.0039", 
-      vara: "1ª Vara do Júri - Camaçari",
-      fase: "INSTRUCAO", 
-      status: "Aguardando Audiência de Instrução",
-      reus: ["José Carlos da Silva"],
-      proximaAudiencia: new Date("2025-01-25"),
-      proximoPrazo: new Date("2025-01-20")
-    },
-    { 
-      id: 2, 
-      numeroAutos: "8002342-75.2025.8.05.0039", 
-      vara: "1ª Vara do Júri - Camaçari",
-      fase: "INQUERITO", 
-      status: "Desmembrado - Aguardando Denúncia",
-      reus: ["Pedro Oliveira Santos"],
-      proximoPrazo: new Date("2025-02-15")
-    },
-  ],
-
-  // Movimentações (Linha do Tempo)
-  movimentacoes: [
-    { id: "1", data: new Date("2025-01-18"), tipo: "intimacao", titulo: "Intimação para Audiência", descricao: "Intimação do réu José Carlos para audiência de instrução designada para 25/01/2025 às 09:00.", processoId: 1, processoNumero: "8002341-90.2025", urgente: true, prazo: new Date("2025-01-25") },
-    { id: "2", data: new Date("2025-01-15"), tipo: "audiencia", titulo: "Interrogatório do Réu", descricao: "Realizado interrogatório de José Carlos. Manteve versão de legítima defesa. Próxima audiência para oitiva de testemunhas.", processoId: 1, processoNumero: "8002341-90.2025" },
-    { id: "3", data: new Date("2025-01-10"), tipo: "audiencia", titulo: "Oitiva de Testemunhas", descricao: "Ouvidas testemunhas Maria Aparecida (defesa) e Antonio Ferreira (acusação).", processoId: 1, processoNumero: "8002341-90.2025" },
-    { id: "4", data: new Date("2025-01-05"), tipo: "peticao", titulo: "Resposta à Acusação Protocolada", descricao: "Apresentada resposta à acusação com pedido de absolvição sumária por legítima defesa.", processoId: 1, processoNumero: "8002341-90.2025" },
-    { id: "5", data: new Date("2024-12-20"), tipo: "decisao", titulo: "Recebimento da Denúncia", descricao: "Juiz recebeu a denúncia e determinou citação do réu.", processoId: 1, processoNumero: "8002341-90.2025" },
-    { id: "6", data: new Date("2024-12-15"), tipo: "juntada", titulo: "Laudo de Exame de Corpo de Delito", descricao: "Juntado laudo pericial apontando causa da morte por perfuração.", processoId: 1, processoNumero: "8002341-90.2025" },
-    { id: "7", data: new Date("2024-11-20"), tipo: "decisao", titulo: "Prisão Preventiva Decretada", descricao: "Decretada prisão preventiva do réu por garantia da ordem pública.", processoId: 1, processoNumero: "8002341-90.2025", urgente: true },
-  ],
-
-  // Peças Importantes
-  pecas: [
-    { id: 1, nome: "Denúncia", tipo: "denuncia", data: new Date("2024-12-15"), resumo: "Homicídio qualificado por motivo torpe e recurso que dificultou defesa (Art. 121, §2º, I e IV, CP).", linkDrive: "#", favoravel: false },
-    { id: 2, nome: "Resposta à Acusação", tipo: "resposta_acusacao", data: new Date("2025-01-05"), resumo: "Alegada legítima defesa, nulidade da busca, excesso de prazo.", linkDrive: "#", favoravel: true },
-    { id: 3, nome: "Laudo de Necropsia", tipo: "laudo", data: new Date("2024-12-10"), resumo: "Morte por perfuração no tórax. Três golpes identificados.", linkDrive: "#", favoravel: null },
-    { id: 4, nome: "Auto de Prisão em Flagrante", tipo: "decisao", data: new Date("2024-11-20"), resumo: "Prisão do réu no local dos fatos.", linkDrive: "#", favoravel: false },
-    { id: 5, nome: "Interrogatório Policial", tipo: "interrogatorio", data: new Date("2024-11-20"), resumo: "Réu manteve silêncio, mas afirmou que se defendeu.", linkDrive: "#", favoravel: null },
-    { id: 6, nome: "Termo de Oitiva - Maria Aparecida", tipo: "oitiva", data: new Date("2025-01-10"), resumo: "Testemunha da defesa confirmou agressão iniciada pela vítima.", linkDrive: "#", favoravel: true },
-  ],
-
-  // Diligências
-  diligencias: [
-    { id: 1, tipo: "Busca de Câmeras", descricao: "Localizar câmeras de segurança nas proximidades do local dos fatos", status: "concluida", resultado: "Localizadas 2 câmeras. Uma sem imagens do horário. Outra com imagens parciais - já anexadas.", responsavel: "Defensor" },
-    { id: 2, tipo: "Localização de Testemunha", descricao: "Encontrar Carla Regina Santos (irmã do réu) para intimação", status: "em_andamento", responsavel: "Oficial de Justiça", dataLimite: new Date("2025-01-22") },
-    { id: 3, tipo: "Antecedentes da Vítima", descricao: "Obter certidões criminais da vítima para demonstrar histórico de violência", status: "concluida", resultado: "Vítima tinha 2 processos por lesão corporal e 1 por ameaça. Anexado aos autos.", responsavel: "Defensor" },
-    { id: 4, tipo: "Exame Complementar", descricao: "Solicitar exame de local de crime complementar", status: "pendente", dataLimite: new Date("2025-02-01") },
-  ],
-
-  // Laudos
-  laudos: [
-    { id: 1, tipo: "Necropsia", descricao: "Exame de corpo de delito cadavérico", data: new Date("2024-12-10"), perito: "Dr. Paulo Mendes", conclusao: "Morte por hemorragia interna causada por perfuração torácica", favoravel: null, linkDrive: "#" },
-    { id: 2, tipo: "Local de Crime", descricao: "Perícia no local dos fatos", data: new Date("2024-11-21"), perito: "Dr. Carlos Ferraz", conclusao: "Sinais de luta. Vestígios de sangue na entrada e sala.", favoravel: null, linkDrive: "#" },
-    { id: 3, tipo: "Papiloscopia", descricao: "Exame de impressões digitais na arma", data: new Date("2024-12-05"), perito: "Dra. Maria Santos", conclusao: "Digitais do réu e da vítima identificadas na arma", favoravel: true, linkDrive: "#" },
-  ],
-
-  // Meta
-  linkDrive: "https://drive.google.com/drive/folders/example",
-  defensorNome: "Dr. Rodrigo Rocha",
-  observacoes: "Caso prioritário - réu preso com excesso de prazo iminente.",
-  createdAt: new Date("2024-11-20"),
+const MOCK_CASOS_DETAIL: Record<number, any> = {
+  1: {
+    id: 1,
+    titulo: "Homicídio Qualificado - Art. 121, §2º, I e IV do CP",
+    codigo: "CASO-2024-001",
+    atribuicao: "JURI_CAMACARI",
+    status: "ativo",
+    fase: "plenario",
+    prioridade: "REU_PRESO",
+    tags: '["homicídio","júri","preso","qualificado"]',
+    linkDrive: "https://drive.google.com/folder/exemplo1",
+    createdAt: new Date("2024-01-15"),
+    observacoes: "Caso de alta complexidade. Julgamento pelo Tribunal do Júri agendado. Tese principal: legítima defesa. Subsidiária: desclassificação para homicídio culposo.",
+    teoriaFatos: "O assistido, na data dos fatos, encontrava-se em sua residência quando foi surpreendido pela vítima, que invadiu o local portando arma branca. Diante da agressão iminente, o assistido reagiu em legítima defesa, utilizando instrumento que estava ao seu alcance.",
+    teoriaProvas: "1. Laudo pericial demonstra lesões defensivas no assistido\n2. Testemunhas confirmam o comportamento agressivo prévio da vítima\n3. Exame toxicológico revela que a vítima estava sob efeito de entorpecentes\n4. Imagens de câmeras de segurança corroboram a versão defensiva",
+    teoriaDireito: "Art. 23, II do CP - Legítima Defesa\n\nRequisitos presentes:\n- Agressão injusta e atual\n- Uso moderado dos meios necessários\n- Defesa de direito próprio (vida e integridade física)\n\nSubsidiariamente: Art. 121, §3º do CP - Homicídio culposo",
+    assistidos: [
+      { 
+        id: 1, 
+        nome: "Nathan Gonçalves dos Santos", 
+        preso: true, 
+        localPrisao: "Conjunto Penal de Feira de Santana",
+        photoUrl: null 
+      },
+    ],
+    processos: [
+      {
+        id: 1,
+        numeroAutos: "6005582-31.2024.8.05.0039",
+        vara: "1ª Vara do Tribunal do Júri",
+        comarca: "Camaçari",
+        fase: "Plenário",
+      },
+    ],
+    audiencias: [
+      { id: 1, tipo: "Plenário do Júri", data: new Date("2024-03-15") },
+    ],
+  },
+  2: {
+    id: 2,
+    titulo: "Tentativa de Homicídio - Legítima Defesa",
+    codigo: "CASO-2024-002",
+    atribuicao: "JURI_CAMACARI",
+    status: "ativo",
+    fase: "instrucao",
+    prioridade: null,
+    tags: '["tentativa","legítima defesa"]',
+    linkDrive: "https://drive.google.com/folder/exemplo2",
+    createdAt: new Date("2024-02-20"),
+    observacoes: "Fase de instrução. Aguardando oitiva das testemunhas de defesa.",
+    teoriaFatos: "O assistido foi abordado de forma agressiva pela vítima em via pública, sendo necessário reagir para defender sua integridade física.",
+    teoriaProvas: null,
+    teoriaDireito: "Art. 23, II c/c Art. 14, II do CP",
+    assistidos: [
+      { id: 2, nome: "Carlos Alberto Ferreira", preso: false, localPrisao: null, photoUrl: null },
+    ],
+    processos: [
+      {
+        id: 2,
+        numeroAutos: "0012345-67.2024.8.05.0039",
+        vara: "2ª Vara do Tribunal do Júri",
+        comarca: "Camaçari",
+        fase: "Instrução",
+      },
+    ],
+    audiencias: [
+      { id: 2, tipo: "Instrução e Julgamento", data: new Date("2024-04-10") },
+    ],
+  },
+  3: {
+    id: 3,
+    titulo: "Feminicídio Tentado - Art. 121, §2º-A do CP",
+    codigo: "CASO-2024-003",
+    atribuicao: "VVD_CAMACARI",
+    status: "ativo",
+    fase: "instrucao",
+    prioridade: "REU_PRESO",
+    tags: '["feminicídio","maria da penha","preso"]',
+    linkDrive: null,
+    createdAt: new Date("2024-03-10"),
+    observacoes: "Caso sensível. Medidas protetivas deferidas. Réu preso preventivamente.",
+    teoriaFatos: "Conflito conjugal que resultou em lesões. A defesa sustenta ausência de animus necandi.",
+    teoriaProvas: "1. Laudo pericial das lesões\n2. Depoimento da vítima\n3. Histórico de conflitos anteriores",
+    teoriaDireito: null,
+    assistidos: [
+      { id: 3, nome: "José Maria da Silva", preso: true, localPrisao: "Presídio de Salvador", photoUrl: null },
+    ],
+    processos: [
+      {
+        id: 3,
+        numeroAutos: "8004123-45.2026.8.05.0039",
+        vara: "Juizado de Violência Doméstica",
+        comarca: "Camaçari",
+        fase: "Instrução",
+      },
+    ],
+    audiencias: [],
+  },
 };
 
+const MOCK_TIMELINE = [
+  { id: 1, type: "audiencia", title: "Audiência de Instrução", description: "Oitiva das testemunhas de acusação", date: new Date("2024-02-15") },
+  { id: 2, type: "demanda", title: "Resposta à Acusação", description: "Apresentada resposta à acusação tempestivamente", date: new Date("2024-02-01") },
+  { id: 3, type: "documento", title: "Laudo Pericial", description: "Juntada de laudo pericial necroscópico", date: new Date("2024-01-25") },
+  { id: 4, type: "movimentacao", title: "Citação", description: "Citação do réu realizada", date: new Date("2024-01-20") },
+  { id: 5, type: "nota", title: "Observação", description: "Verificar se há testemunhas de defesa a arrolar", date: new Date("2024-01-18") },
+];
+
+const MOCK_PERSONAS = [
+  { id: 1, nome: "João Carlos de Souza", tipo: "Testemunha de Defesa", status: "pendente", observacoes: "Vizinho do assistido, presenciou os fatos" },
+  { id: 2, nome: "Maria Helena Costa", tipo: "Testemunha de Defesa", status: "ouvida", observacoes: "Colega de trabalho, comprova o bom comportamento" },
+  { id: 3, nome: "Dr. Roberto Almeida", tipo: "Perito", status: "ouvida", observacoes: "Perito médico legista responsável pelo laudo" },
+];
+
 // ==========================================
-// COMPONENTES AUXILIARES
+// COMPONENTE DE TEORIA EDITÁVEL
 // ==========================================
 
-// Card de Envolvido
-function EnvolvidoCard({ envolvido }: { envolvido: Envolvido }) {
-  const config = TIPO_ENVOLVIDO_CONFIG[envolvido.tipo];
+function TeoriaSection({ 
+  casoId, 
+  field, 
+  title, 
+  icon: Icon, 
+  value,
+  colorClass,
+  refetch 
+}: { 
+  casoId: number;
+  field: "teoriaFatos" | "teoriaProvas" | "teoriaDireito";
+  title: string;
+  icon: React.ElementType;
+  value: string | null;
+  colorClass: string;
+  refetch: () => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value || "");
+  
+  const updateMutation = trpc.casos.updateTeoria.useMutation({
+    onSuccess: () => {
+      toast.success("Teoria atualizada!");
+      setIsEditing(false);
+      refetch();
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar");
+    },
+  });
+
+  const handleSave = () => {
+    updateMutation.mutate({
+      casoId,
+      field,
+      value: editValue,
+    });
+  };
+
+  return (
+    <Card className={cn("p-5", colorClass)}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className={cn("p-1.5 rounded-md", colorClass.replace("border-", "bg-").replace("/30", "/50"))}>
+            <Icon className="w-4 h-4" />
+          </div>
+          <h3 className="font-semibold text-sm">{title}</h3>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-7 w-7"
+          onClick={() => {
+            if (isEditing) {
+              setEditValue(value || "");
+            }
+            setIsEditing(!isEditing);
+          }}
+        >
+          <Edit3 className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+      
+      {isEditing ? (
+        <div className="space-y-3">
+          <Textarea
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            placeholder={`Descreva ${title.toLowerCase()}...`}
+            className="min-h-[100px] text-sm"
+          />
+          <div className="flex gap-2">
+            <Button 
+              size="sm" 
+              onClick={handleSave}
+              disabled={updateMutation.isPending}
+            >
+              <Save className="w-3.5 h-3.5 mr-1.5" />
+              Salvar
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => {
+                setEditValue(value || "");
+                setIsEditing(false);
+              }}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <p className={cn(
+          "text-sm leading-relaxed",
+          value ? "text-foreground" : "text-muted-foreground italic"
+        )}>
+          {value || "Clique no ícone de edição para adicionar..."}
+        </p>
+      )}
+    </Card>
+  );
+}
+
+// ==========================================
+// COMPONENTE DE TIMELINE
+// ==========================================
+
+function TimelineItem({ item }: { item: any }) {
+  const iconConfig: Record<string, { icon: React.ElementType; color: string }> = {
+    audiencia: { icon: Users, color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" },
+    demanda: { icon: Clock, color: "text-amber-500 bg-amber-50 dark:bg-amber-900/20" },
+    nota: { icon: FileText, color: "text-blue-500 bg-blue-50 dark:bg-blue-900/20" },
+    documento: { icon: FileSearch, color: "text-violet-500 bg-violet-50 dark:bg-violet-900/20" },
+    movimentacao: { icon: Gavel, color: "text-zinc-500 bg-zinc-50 dark:bg-zinc-800" },
+  };
+  
+  const config = iconConfig[item.type] || iconConfig.movimentacao;
   const Icon = config.icon;
   
   return (
-    <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:shadow-sm transition-shadow">
-      <div className="flex items-start gap-3">
-        <div className="relative">
-          <Avatar className="h-12 w-12 border border-zinc-200 dark:border-zinc-700">
-            <AvatarImage src={envolvido.foto || undefined} />
-            <AvatarFallback className="text-sm font-bold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-              {getInitials(envolvido.nome)}
-            </AvatarFallback>
-          </Avatar>
-          {envolvido.preso && (
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700">
-              <StatusPrisionalDot preso={true} size="sm" />
-            </span>
-          )}
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
-              {envolvido.nome}
-            </h4>
-            <PrisonerIndicator preso={envolvido.preso} localPrisao={envolvido.localPrisao} size="xs" />
-          </div>
-          
-          <div className="flex items-center gap-2 mt-0.5">
-            <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 border-0", config.color)}>
-              {config.label}
-            </Badge>
-            {envolvido.status === "ouvida" && (
-              <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0">
-                ✓ Ouvida
-              </Badge>
-            )}
-            {envolvido.status === "pendente" && (
-              <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0">
-                Pendente
-              </Badge>
-            )}
-            {envolvido.status === "falecido" && (
-              <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500 border-0">
-                Falecido
-              </Badge>
-            )}
-          </div>
-          
-          {envolvido.descricao && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 line-clamp-2">
-              {envolvido.descricao}
-            </p>
-          )}
-          
-          {envolvido.oitiva && (
-            <div className="mt-2 p-2 rounded bg-zinc-50 dark:bg-zinc-900 text-xs">
-              <div className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400 mb-0.5">
-                <Mic className="w-3 h-3" />
-                <span>Oitiva em {envolvido.oitiva.data ? format(envolvido.oitiva.data, "dd/MM/yyyy") : "N/A"}</span>
-              </div>
-              {envolvido.oitiva.resumo && (
-                <p className="text-zinc-600 dark:text-zinc-300 line-clamp-2">{envolvido.oitiva.resumo}</p>
-              )}
-            </div>
-          )}
-        </div>
+    <div className="relative pl-10">
+      <div className={cn(
+        "absolute left-2 w-5 h-5 rounded-full flex items-center justify-center",
+        config.color.split(" ").slice(1).join(" ")
+      )}>
+        <Icon className={cn("w-3 h-3", config.color.split(" ")[0])} />
       </div>
-    </div>
-  );
-}
-
-// Timeline de Movimentações
-function TimelineMovimentacoes({ movimentacoes }: { movimentacoes: MovimentacaoProcessual[] }) {
-  const tipoConfig = {
-    intimacao: { icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20" },
-    decisao: { icon: Gavel, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
-    despacho: { icon: FileText, color: "text-zinc-500", bg: "bg-zinc-50 dark:bg-zinc-900" },
-    audiencia: { icon: Users, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
-    peticao: { icon: FileText, color: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-900/20" },
-    juntada: { icon: Plus, color: "text-zinc-500", bg: "bg-zinc-50 dark:bg-zinc-900" },
-    sentenca: { icon: Scale, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-900/20" },
-    acordao: { icon: Scale, color: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-900/20" },
-  };
-
-  return (
-    <div className="relative">
-      {/* Linha vertical */}
-      <div className="absolute left-5 top-0 bottom-0 w-px bg-zinc-200 dark:bg-zinc-800" />
       
-      <div className="space-y-4">
-        {movimentacoes.map((mov, idx) => {
-          const config = tipoConfig[mov.tipo] || tipoConfig.despacho;
-          const Icon = config.icon;
-          const isUrgente = mov.urgente || (mov.prazo && differenceInDays(mov.prazo, new Date()) <= 3);
-          
-          return (
-            <div key={mov.id} className="relative pl-12">
-              {/* Ícone no timeline */}
-              <div className={cn(
-                "absolute left-2.5 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-950",
-                config.bg
-              )}>
-                <Icon className={cn("w-3 h-3", config.color)} />
-              </div>
-              
-              {/* Conteúdo */}
-              <div className={cn(
-                "p-3 rounded-lg border",
-                isUrgente 
-                  ? "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10" 
-                  : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
-              )}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
-                        {mov.titulo}
-                      </h4>
-                      {isUrgente && (
-                        <Badge className="text-[9px] px-1.5 py-0 bg-amber-500 text-white">
-                          Urgente
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                      {mov.descricao}
-                    </p>
-                    {mov.processoNumero && (
-                      <p className="text-xs font-mono text-zinc-400 dark:text-zinc-500 mt-1">
-                        Autos: {mov.processoNumero}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
-                      {format(mov.data, "dd/MM/yyyy")}
-                    </p>
-                    {mov.prazo && (
-                      <p className={cn(
-                        "text-xs font-medium mt-0.5",
-                        differenceInDays(mov.prazo, new Date()) <= 0 
-                          ? "text-rose-500" 
-                          : differenceInDays(mov.prazo, new Date()) <= 3 
-                            ? "text-amber-500" 
-                            : "text-zinc-400"
-                      )}>
-                        Prazo: {format(mov.prazo, "dd/MM")}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// Card de Peça
-function PecaCard({ peca }: { peca: PecaImportante }) {
-  const tipoIcon = {
-    denuncia: Swords,
-    resposta_acusacao: Shield,
-    alegacoes_finais: FileText,
-    laudo: FileSearch,
-    interrogatorio: Mic,
-    oitiva: Users,
-    decisao: Gavel,
-    sentenca: Scale,
-    recurso: FileText,
-  };
-  
-  const Icon = tipoIcon[peca.tipo] || FileText;
-  
-  return (
-    <div className={cn(
-      "p-3 rounded-lg border transition-colors",
-      peca.favoravel === true && "border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10",
-      peca.favoravel === false && "border-rose-200 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-900/10",
-      peca.favoravel === null && "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
-    )}>
-      <div className="flex items-start gap-3">
-        <div className={cn(
-          "p-2 rounded-md",
-          peca.favoravel === true && "bg-emerald-100 dark:bg-emerald-900/30",
-          peca.favoravel === false && "bg-rose-100 dark:bg-rose-900/30",
-          peca.favoravel === null && "bg-zinc-100 dark:bg-zinc-800"
-        )}>
-          <Icon className={cn(
-            "w-4 h-4",
-            peca.favoravel === true && "text-emerald-600 dark:text-emerald-400",
-            peca.favoravel === false && "text-rose-600 dark:text-rose-400",
-            peca.favoravel === null && "text-zinc-600 dark:text-zinc-400"
-          )} />
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
+      <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
             <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
-              {peca.nome}
+              {item.title}
             </h4>
-            <span className="text-xs font-mono text-zinc-400">
-              {format(peca.data, "dd/MM/yyyy")}
-            </span>
-          </div>
-          
-          {peca.resumo && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
-              {peca.resumo}
-            </p>
-          )}
-          
-          {peca.linkDrive && (
-            <a 
-              href={peca.linkDrive} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline mt-2"
-            >
-              <FolderOpen className="w-3 h-3" />
-              Abrir no Drive
-            </a>
-          )}
-        </div>
-        
-        {peca.favoravel !== null && (
-          <div className="flex-shrink-0">
-            {peca.favoravel ? (
-              <Tooltip>
-                <TooltipTrigger>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                </TooltipTrigger>
-                <TooltipContent>Favorável à defesa</TooltipContent>
-              </Tooltip>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger>
-                  <AlertCircle className="w-4 h-4 text-rose-500" />
-                </TooltipTrigger>
-                <TooltipContent>Desfavorável</TooltipContent>
-              </Tooltip>
+            {item.description && (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
+                {item.description}
+              </p>
             )}
           </div>
-        )}
+          <span className="text-xs font-mono text-zinc-400 flex-shrink-0">
+            {item.date ? format(new Date(item.date), "dd/MM/yyyy") : "N/A"}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -628,24 +348,72 @@ function PecaCard({ peca }: { peca: PecaImportante }) {
 
 export default function CasoDetailPage() {
   const params = useParams();
-  const caso = MOCK_CASO;
-  const faseConfig = FASES_CASO[caso.fase as keyof typeof FASES_CASO] || FASES_CASO.INSTRUCAO;
-  const [activeTab, setActiveTab] = useState("estudo");
+  const casoId = Number(params.id);
+  const [activeTab, setActiveTab] = useState("resumo");
 
-  // Contadores
-  const reusCount = caso.envolvidos.filter(e => e.tipo === "reu" || e.tipo === "correu").length;
-  const reusPresos = caso.envolvidos.filter(e => (e.tipo === "reu" || e.tipo === "correu") && e.preso).length;
-  const testemunhasOuvidas = caso.envolvidos.filter(e => (e.tipo === "testemunha_defesa" || e.tipo === "testemunha_acusacao") && e.status === "ouvida").length;
-  const testemunhasTotal = caso.envolvidos.filter(e => e.tipo === "testemunha_defesa" || e.tipo === "testemunha_acusacao").length;
-  const diligenciasConcluidas = caso.diligencias.filter(d => d.status === "concluida").length;
-  const diligenciasTotal = caso.diligencias.length;
+  // Query do caso
+  const { data: casoFromDB, isLoading, refetch } = trpc.casos.getById.useQuery(
+    { id: casoId },
+    { enabled: !isNaN(casoId) }
+  );
+
+  // Query da timeline
+  const { data: timelineFromDB = [] } = trpc.casos.listTimeline.useQuery(
+    { casoId },
+    { enabled: !isNaN(casoId) }
+  );
+
+  // Query das personas
+  const { data: personasFromDB = [] } = trpc.casos.listPersonas.useQuery(
+    { casoId },
+    { enabled: !isNaN(casoId) }
+  );
+
+  // ==========================================
+  // USAR MOCK DATA SE O BANCO ESTIVER VAZIO
+  // ==========================================
+  const useMockData = !casoFromDB && !isLoading;
+  const caso = useMockData ? MOCK_CASOS_DETAIL[casoId] : casoFromDB;
+  const timeline = useMockData ? MOCK_TIMELINE : timelineFromDB;
+  const personas = useMockData ? MOCK_PERSONAS : personasFromDB;
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-12 w-full" />
+        <div className="grid grid-cols-3 gap-4">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!caso) {
+    return (
+      <div className="p-6 text-center">
+        <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          Caso não encontrado
+        </h1>
+        <Link href="/admin/casos">
+          <Button variant="outline" className="mt-4">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const faseConfig = caso.fase ? FASES_CASO[caso.fase.toLowerCase()] : null;
+  const isReuPreso = caso.prioridade === "REU_PRESO";
+  const assistidosPresos = caso.assistidos?.filter(a => a.preso)?.length || 0;
 
   return (
     <TooltipProvider>
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
-        {/* ========================================
-            HEADER LIMPO
-            ======================================== */}
+        {/* Header */}
         <div className="flex flex-col gap-5">
           {/* Navigation */}
           <div className="flex items-center justify-between">
@@ -678,16 +446,18 @@ export default function CasoDetailPage() {
                 <Badge variant="outline" className="text-xs font-normal">
                   {ATRIBUICAO_LABELS[caso.atribuicao] || caso.atribuicao}
                 </Badge>
-                <Badge variant="secondary" className={cn("text-xs font-normal", faseConfig.color)}>
-                  {faseConfig.label}
-                </Badge>
+                {faseConfig && (
+                  <Badge variant="secondary" className={cn("text-xs font-normal", faseConfig.color)}>
+                    {faseConfig.label}
+                  </Badge>
+                )}
                 {caso.codigo && (
                   <span className="text-xs font-mono text-zinc-400">{caso.codigo}</span>
                 )}
-                {reusPresos > 0 && (
+                {isReuPreso && (
                   <span className="flex items-center gap-1.5 text-xs text-rose-500">
                     <StatusPrisionalDot preso={true} size="sm" />
-                    {reusPresos} preso{reusPresos > 1 ? "s" : ""}
+                    Réu preso
                   </span>
                 )}
               </div>
@@ -696,75 +466,75 @@ export default function CasoDetailPage() {
               </h1>
               <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5" /> {caso.vara} • {caso.comarca}
+                  <Clock className="w-3.5 h-3.5" /> 
+                  {formatDistanceToNow(new Date(caso.createdAt), { locale: ptBR, addSuffix: true })}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" /> {caso.defensorNome}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" /> {formatDistanceToNow(caso.createdAt, { locale: ptBR, addSuffix: true })}
-                </span>
+                {caso.assistidos?.length > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5" /> 
+                    {caso.assistidos.length} assistido{caso.assistidos.length > 1 ? "s" : ""}
+                  </span>
+                )}
+                {caso.processos?.length > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <Scale className="w-3.5 h-3.5" /> 
+                    {caso.processos.length} processo{caso.processos.length > 1 ? "s" : ""}
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Avatares dos Réus */}
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-muted-foreground">Réus:</span>
-            <div className="flex -space-x-2">
-              {caso.envolvidos.filter(e => e.tipo === "reu" || e.tipo === "correu").map((reu) => (
-                <Tooltip key={reu.id}>
-                  <TooltipTrigger>
-                    <div className="relative">
-                      <Avatar className="h-10 w-10 border-2 border-white dark:border-zinc-950">
-                        <AvatarImage src={reu.foto || undefined} />
-                        <AvatarFallback className="text-xs font-bold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                          {getInitials(reu.nome)}
-                        </AvatarFallback>
-                      </Avatar>
-                      {reu.preso && (
-                        <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-zinc-950">
-                          <StatusPrisionalDot preso={true} size="sm" />
-                        </span>
-                      )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="text-center">
-                      <div className="flex items-center gap-1.5 justify-center">
-                        <p className="font-medium">{reu.nome}</p>
-                        <PrisonerIndicator preso={reu.preso} size="xs" />
+          {/* Avatares dos Assistidos */}
+          {caso.assistidos && caso.assistidos.length > 0 && (
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-muted-foreground">Assistidos:</span>
+              <div className="flex -space-x-2">
+                {caso.assistidos.slice(0, 5).map((assistido) => (
+                  <Tooltip key={assistido.id}>
+                    <TooltipTrigger>
+                      <div className="relative">
+                        <Avatar className="h-10 w-10 border-2 border-white dark:border-zinc-950">
+                          <AvatarImage src={assistido.photoUrl || undefined} />
+                          <AvatarFallback className="text-xs font-bold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                            {getInitials(assistido.nome)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {assistido.preso && (
+                          <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-zinc-950">
+                            <StatusPrisionalDot preso={true} size="sm" />
+                          </span>
+                        )}
                       </div>
-                      {reu.localPrisao && (
-                        <p className="text-xs text-muted-foreground">{reu.localPrisao}</p>
-                      )}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="text-center">
+                        <p className="font-medium">{assistido.nome}</p>
+                        {assistido.localPrisao && (
+                          <p className="text-xs text-muted-foreground">{assistido.localPrisao}</p>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+                {caso.assistidos.length > 5 && (
+                  <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-600 dark:text-zinc-300 border-2 border-white dark:border-zinc-950">
+                    +{caso.assistidos.length - 5}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-[9px] uppercase font-semibold text-muted-foreground tracking-widest">
-              {FASE_LABELS.map((label, idx) => (
-                <span key={label} className={cn((caso.faseProgresso / 100) * (FASE_LABELS.length - 1) >= idx && "text-primary")}>
-                  {label}
-                </span>
-              ))}
-            </div>
-            <Progress value={caso.faseProgresso} className="h-1.5 bg-muted" />
-          </div>
+          )}
         </div>
 
-        {/* ========================================
-            TABS DE CONTEÚDO
-            ======================================== */}
+        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-muted p-1 h-auto flex-wrap w-full justify-start">
-            <TabsTrigger value="estudo" className="gap-2">
-              <BookOpen className="w-4 h-4" /> Estudo de Caso
+            <TabsTrigger value="resumo" className="gap-2">
+              <BookOpen className="w-4 h-4" /> Resumo
+            </TabsTrigger>
+            <TabsTrigger value="teoria" className="gap-2">
+              <Shield className="w-4 h-4" /> Teoria do Caso
             </TabsTrigger>
             <TabsTrigger value="envolvidos" className="gap-2">
               <Users className="w-4 h-4" /> Envolvidos
@@ -772,383 +542,381 @@ export default function CasoDetailPage() {
             <TabsTrigger value="timeline" className="gap-2">
               <Activity className="w-4 h-4" /> Timeline
             </TabsTrigger>
-            <TabsTrigger value="pecas" className="gap-2">
-              <FileText className="w-4 h-4" /> Peças
-            </TabsTrigger>
-            <TabsTrigger value="diligencias" className="gap-2">
-              <FileSearch className="w-4 h-4" /> Diligências
-            </TabsTrigger>
-            <TabsTrigger value="audiencias" className="gap-2">
-              <Calendar className="w-4 h-4" /> Audiências
+            <TabsTrigger value="processos" className="gap-2">
+              <Scale className="w-4 h-4" /> Processos
             </TabsTrigger>
           </TabsList>
 
-          {/* ========================================
-              TAB: ESTUDO DE CASO (Principal)
-              ======================================== */}
-          <TabsContent value="estudo" className="mt-6 space-y-6">
-            {/* Cards de Estatísticas Rápidas */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Réus</p>
-                    <p className="text-2xl font-bold mt-1">{reusCount}</p>
+          {/* Tab: Resumo */}
+          <TabsContent value="resumo" className="mt-6 space-y-6">
+            {/* Stats Cards - Design Defender */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* Assistidos */}
+              <div className="group relative bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md hover:border-rose-200 dark:hover:border-rose-900/50 transition-all duration-200">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Assistidos</span>
+                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mt-1 tracking-tight">
+                      {caso.assistidos?.length || 0}
+                    </p>
                   </div>
-                  <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-900/20">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-900/10 group-hover:scale-105 transition-transform">
                     <User className="w-5 h-5 text-rose-500" />
                   </div>
                 </div>
-                {reusPresos > 0 && (
-                  <p className="text-xs text-rose-500 mt-2 flex items-center gap-1.5">
-                    <StatusPrisionalDot preso={true} size="sm" /> {reusPresos} preso{reusPresos > 1 ? "s" : ""}
-                  </p>
+                {assistidosPresos > 0 && (
+                  <div className="mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800">
+                    <p className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1.5 font-medium">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                      </span>
+                      {assistidosPresos} preso{assistidosPresos > 1 ? "s" : ""}
+                    </p>
+                  </div>
                 )}
-              </Card>
-              
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Testemunhas</p>
-                    <p className="text-2xl font-bold mt-1">{testemunhasOuvidas}/{testemunhasTotal}</p>
-                  </div>
-                  <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
-                    <Users className="w-5 h-5 text-emerald-500" />
-                  </div>
-                </div>
-                <p className="text-xs text-emerald-500 mt-2">
-                  {testemunhasTotal - testemunhasOuvidas} pendentes
-                </p>
-              </Card>
-              
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Diligências</p>
-                    <p className="text-2xl font-bold mt-1">{diligenciasConcluidas}/{diligenciasTotal}</p>
-                  </div>
-                  <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                    <FileSearch className="w-5 h-5 text-blue-500" />
-                  </div>
-                </div>
-                <Progress value={(diligenciasConcluidas / diligenciasTotal) * 100} className="h-1 mt-3" />
-              </Card>
-              
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Laudos</p>
-                    <p className="text-2xl font-bold mt-1">{caso.laudos.length}</p>
-                  </div>
-                  <div className="p-2 rounded-lg bg-violet-50 dark:bg-violet-900/20">
-                    <Scroll className="w-5 h-5 text-violet-500" />
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {caso.laudos.filter(l => l.favoravel === true).length} favoráveis
-                </p>
-              </Card>
-            </div>
-
-            {/* Tese vs Versão - Side by Side */}
-            <div className="grid md:grid-cols-2 gap-4">
-              {/* Tese da Acusação */}
-              <Card className="p-5 border-rose-100 dark:border-rose-900/30">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded-md bg-rose-100 dark:bg-rose-900/30">
-                    <Swords className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                  </div>
-                  <h3 className="font-semibold text-sm">Tese da Acusação</h3>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {caso.teseAcusacao || "Não documentada"}
-                </p>
-              </Card>
-              
-              {/* Versão do Réu */}
-              <Card className="p-5 border-blue-100 dark:border-blue-900/30">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30">
-                    <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <h3 className="font-semibold text-sm">Versão do Réu</h3>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {caso.versaoReu || "Não documentada"}
-                </p>
-              </Card>
-            </div>
-
-            {/* Teoria da Defesa */}
-            <Card className="p-5 border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-zinc-950">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-900/30">
-                  <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <h3 className="font-semibold text-sm">Teoria da Defesa</h3>
               </div>
-              <p className="text-sm text-foreground leading-relaxed font-medium italic">
-                &ldquo;{caso.teoriaDefesa || "Em desenvolvimento"}&rdquo;
-              </p>
-            </Card>
-
-            {/* Pontos Fortes e Fracos */}
-            <div className="grid md:grid-cols-2 gap-4">
-              {/* Pontos Fortes */}
-              <Card className="p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  <h3 className="font-semibold text-sm">Pontos Fortes da Defesa</h3>
-                </div>
-                <ul className="space-y-2">
-                  {(caso.pontosFortes || []).map((ponto, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm">
-                      <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                        {idx + 1}
-                      </span>
-                      <span className="text-muted-foreground">{ponto}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
               
-              {/* Pontos Fracos */}
-              <Card className="p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  <h3 className="font-semibold text-sm">Pontos de Atenção</h3>
-                </div>
-                <ul className="space-y-2">
-                  {(caso.pontosFracos || []).map((ponto, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm">
-                      <span className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                        !
-                      </span>
-                      <span className="text-muted-foreground">{ponto}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </div>
-
-            {/* Processos Vinculados */}
-            <Card className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Scale className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-sm">Processos Vinculados</h3>
+              {/* Processos */}
+              <div className="group relative bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900/50 transition-all duration-200">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Processos</span>
+                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mt-1 tracking-tight">
+                      {caso.processos?.length || 0}
+                    </p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 group-hover:scale-105 transition-transform">
+                    <Scale className="w-5 h-5 text-blue-500" />
+                  </div>
                 </div>
               </div>
               
-              <div className="space-y-3">
-                {caso.processos.map((proc) => (
-                  <div key={proc.id} className="p-4 rounded-lg bg-muted/30 border border-border/50">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-mono text-sm font-medium">{proc.numeroAutos}</p>
-                          <Badge variant="outline" className="text-[9px]">
-                            {FASES_CASO[proc.fase]?.label || proc.fase}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{proc.vara}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Réus: {proc.reus.join(", ")}
-                        </p>
-                      </div>
-                      
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-xs text-muted-foreground">{proc.status}</p>
-                        {proc.proximaAudiencia && (
-                          <p className={cn(
-                            "text-xs font-medium mt-1 flex items-center gap-1 justify-end",
-                            isToday(proc.proximaAudiencia) && "text-rose-500",
-                            isTomorrow(proc.proximaAudiencia) && "text-amber-500"
-                          )}>
-                            <Calendar className="w-3 h-3" />
-                            {isToday(proc.proximaAudiencia) ? "HOJE" : format(proc.proximaAudiencia, "dd/MM")}
-                          </p>
-                        )}
-                        {proc.proximoPrazo && (
-                          <p className={cn(
-                            "text-xs font-medium mt-1 flex items-center gap-1 justify-end",
-                            differenceInDays(proc.proximoPrazo, new Date()) <= 3 && "text-amber-500"
-                          )}>
-                            <Clock className="w-3 h-3" />
-                            Prazo: {format(proc.proximoPrazo, "dd/MM")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+              {/* Audiências */}
+              <div className="group relative bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-900/50 transition-all duration-200">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Audiências</span>
+                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mt-1 tracking-tight">
+                      {caso.audiencias?.length || 0}
+                    </p>
                   </div>
-                ))}
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-900/10 group-hover:scale-105 transition-transform">
+                    <Calendar className="w-5 h-5 text-emerald-500" />
+                  </div>
+                </div>
               </div>
-            </Card>
+              
+              {/* Personas */}
+              <div className="group relative bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/50 transition-all duration-200">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Personas</span>
+                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mt-1 tracking-tight">
+                      {personas.length}
+                    </p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-900/10 group-hover:scale-105 transition-transform">
+                    <Users className="w-5 h-5 text-violet-500" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Observações */}
+            {caso.observacoes && (
+              <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-3">Observações</h3>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{caso.observacoes}</p>
+              </div>
+            )}
 
             {/* Tags */}
-            {caso.tags && caso.tags.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <Bookmark className="w-4 h-4 text-muted-foreground" />
-                {caso.tags.map((tag, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs border-dashed">
-                    #{tag}
-                  </Badge>
-                ))}
+            {caso.tags && (
+              <div className="flex flex-wrap gap-2">
+                {(() => {
+                  try {
+                    const tags = JSON.parse(caso.tags);
+                    return Array.isArray(tags) ? tags.map((tag: string, idx: number) => (
+                      <Badge key={idx} variant="outline" className="text-xs">
+                        #{tag}
+                      </Badge>
+                    )) : null;
+                  } catch {
+                    return null;
+                  }
+                })()}
               </div>
             )}
           </TabsContent>
 
-          {/* ========================================
-              TAB: ENVOLVIDOS
-              ======================================== */}
-          <TabsContent value="envolvidos" className="mt-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {caso.envolvidos.map((envolvido) => (
-                <EnvolvidoCard key={envolvido.id} envolvido={envolvido} />
-              ))}
-            </div>
+          {/* Tab: Teoria do Caso */}
+          <TabsContent value="teoria" className="mt-6 space-y-4">
+            <TeoriaSection
+              casoId={casoId}
+              field="teoriaFatos"
+              title="Fatos"
+              icon={FileText}
+              value={caso.teoriaFatos}
+              colorClass="border-blue-100 dark:border-blue-900/30"
+              refetch={refetch}
+            />
+            <TeoriaSection
+              casoId={casoId}
+              field="teoriaProvas"
+              title="Provas"
+              icon={FileSearch}
+              value={caso.teoriaProvas}
+              colorClass="border-amber-100 dark:border-amber-900/30"
+              refetch={refetch}
+            />
+            <TeoriaSection
+              casoId={casoId}
+              field="teoriaDireito"
+              title="Direito"
+              icon={Scale}
+              value={caso.teoriaDireito}
+              colorClass="border-emerald-100 dark:border-emerald-900/30"
+              refetch={refetch}
+            />
           </TabsContent>
 
-          {/* ========================================
-              TAB: TIMELINE
-              ======================================== */}
-          <TabsContent value="timeline" className="mt-6">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Activity className="w-5 h-5" /> Linha do Tempo Processual
-                </h3>
-              </div>
-              <TimelineMovimentacoes movimentacoes={caso.movimentacoes} />
-            </Card>
-          </TabsContent>
-
-          {/* ========================================
-              TAB: PEÇAS IMPORTANTES
-              ======================================== */}
-          <TabsContent value="pecas" className="mt-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              {caso.pecas.map((peca) => (
-                <PecaCard key={peca.id} peca={peca} />
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* ========================================
-              TAB: DILIGÊNCIAS
-              ======================================== */}
-          <TabsContent value="diligencias" className="mt-6">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <FileSearch className="w-5 h-5" /> Diligências Investigativas
-                </h3>
-                <Button size="sm">
-                  <Plus className="w-4 h-4 mr-2" /> Nova Diligência
-                </Button>
-              </div>
-              
-              <div className="space-y-4">
-                {caso.diligencias.map((dil) => {
-                  const statusConfig = {
-                    pendente: { color: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", label: "Pendente" },
-                    em_andamento: { color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", label: "Em Andamento" },
-                    concluida: { color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400", label: "Concluída" },
-                    frustrada: { color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", label: "Frustrada" },
-                  };
-                  const config = statusConfig[dil.status];
-                  
-                  return (
-                    <div key={dil.id} className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm">{dil.tipo}</h4>
-                          <Badge variant="outline" className={cn("text-[9px] border-0", config.color)}>
-                            {config.label}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{dil.descricao}</p>
-                        {dil.resultado && (
-                          <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2 p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded">
-                            <strong>Resultado:</strong> {dil.resultado}
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div className="text-right flex-shrink-0 ml-4">
-                        {dil.responsavel && (
-                          <p className="text-xs text-muted-foreground">{dil.responsavel}</p>
-                        )}
-                        {dil.dataLimite && (
-                          <p className={cn(
-                            "text-xs font-medium mt-1",
-                            differenceInDays(dil.dataLimite, new Date()) <= 3 && "text-amber-500"
-                          )}>
-                            Limite: {format(dil.dataLimite, "dd/MM")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Laudos */}
-              <Separator className="my-6" />
-              
-              <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-                <Scroll className="w-5 h-5" /> Laudos Periciais
-              </h3>
-              
-              <div className="space-y-3">
-                {caso.laudos.map((laudo) => (
-                  <div key={laudo.id} className={cn(
-                    "p-4 rounded-lg border",
-                    laudo.favoravel === true && "border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10",
-                    laudo.favoravel === false && "border-rose-200 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-900/10",
-                    laudo.favoravel === null && "border-zinc-200 dark:border-zinc-800"
-                  )}>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-medium text-sm">{laudo.tipo}</h4>
-                        <p className="text-xs text-muted-foreground mt-0.5">{laudo.descricao}</p>
-                        {laudo.perito && (
-                          <p className="text-xs text-muted-foreground mt-1">Perito: {laudo.perito}</p>
-                        )}
-                        {laudo.conclusao && (
-                          <p className="text-xs mt-2 p-2 bg-muted/50 rounded">
-                            <strong>Conclusão:</strong> {laudo.conclusao}
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                        {laudo.favoravel === true && (
-                          <Badge className="text-[9px] bg-emerald-500 text-white">Favorável</Badge>
-                        )}
-                        {laudo.favoravel === false && (
-                          <Badge className="text-[9px] bg-rose-500 text-white">Desfavorável</Badge>
-                        )}
-                        {laudo.linkDrive && (
-                          <a href={laudo.linkDrive} target="_blank" rel="noopener noreferrer">
-                            <Button size="icon" variant="ghost" className="h-7 w-7">
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </Button>
-                          </a>
-                        )}
-                      </div>
-                    </div>
+          {/* Tab: Envolvidos (Assistidos + Personas) */}
+          <TabsContent value="envolvidos" className="mt-6 space-y-8">
+            {/* Assistidos */}
+            {caso.assistidos && caso.assistidos.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20">
+                    <User className="w-4 h-4 text-rose-500" />
                   </div>
-                ))}
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                    Assistidos
+                  </h3>
+                  <span className="text-xs text-zinc-400 ml-1">({caso.assistidos.length})</span>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {caso.assistidos.map((assistido) => (
+                    <div 
+                      key={assistido.id} 
+                      className={cn(
+                        "group bg-white dark:bg-zinc-900 rounded-lg border overflow-hidden",
+                        "hover:shadow-md transition-all duration-200 cursor-pointer",
+                        assistido.preso 
+                          ? "border-l-[3px] border-l-red-500 border-zinc-200 dark:border-zinc-800" 
+                          : "border-zinc-200 dark:border-zinc-800"
+                      )}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-11 w-11 border-2 border-zinc-100 dark:border-zinc-800">
+                            <AvatarImage src={assistido.photoUrl || undefined} />
+                            <AvatarFallback className="text-xs font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                              {getInitials(assistido.nome)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
+                              {assistido.nome}
+                            </h4>
+                            <PrisonerIndicator 
+                              preso={assistido.preso} 
+                              localPrisao={assistido.localPrisao}
+                              size="sm" 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      {assistido.preso && assistido.localPrisao && (
+                        <div className="px-4 py-2.5 bg-red-50/50 dark:bg-red-900/10 border-t border-red-100 dark:border-red-900/20">
+                          <p className="text-[11px] text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                            <MapPin className="w-3 h-3" />
+                            <span className="truncate">{assistido.localPrisao}</span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </Card>
+            )}
+
+            {/* Personas */}
+            {personas.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 rounded-lg bg-violet-50 dark:bg-violet-900/20">
+                    <Users className="w-4 h-4 text-violet-500" />
+                  </div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                    Outras Personas
+                  </h3>
+                  <span className="text-xs text-zinc-400 ml-1">({personas.length})</span>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {personas.map((persona) => {
+                    const tipoColors: Record<string, string> = {
+                      vitima: "border-l-amber-500",
+                      testemunha: "border-l-blue-500",
+                      perito: "border-l-emerald-500",
+                      outro: "border-l-zinc-400",
+                    };
+                    return (
+                      <div 
+                        key={persona.id} 
+                        className={cn(
+                          "group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden",
+                          "hover:shadow-md transition-all duration-200",
+                          "border-l-[3px]",
+                          tipoColors[persona.tipo?.toLowerCase()] || tipoColors.outro
+                        )}
+                      >
+                        <div className="p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                {persona.nome}
+                              </h4>
+                              <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 mt-0.5 block">
+                                {persona.tipo}
+                              </span>
+                            </div>
+                            {persona.status && (
+                              <Badge 
+                                className={cn(
+                                  "text-[10px] font-medium border-0",
+                                  persona.status === "ouvida" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                                  persona.status === "pendente" && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                )}
+                              >
+                                {persona.status}
+                              </Badge>
+                            )}
+                          </div>
+                          {persona.observacoes && (
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-3 line-clamp-2 leading-relaxed">
+                              {persona.observacoes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {(!caso.assistidos || caso.assistidos.length === 0) && personas.length === 0 && (
+              <div className="text-center py-16 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
+                  <Users className="w-6 h-6 text-zinc-400" />
+                </div>
+                <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Nenhum envolvido cadastrado</p>
+                <p className="text-xs text-zinc-400 mt-1">Adicione assistidos e testemunhas ao caso</p>
+              </div>
+            )}
           </TabsContent>
 
-          {/* ========================================
-              TAB: AUDIÊNCIAS (Reutilizado)
-              ======================================== */}
-          <TabsContent value="audiencias" className="mt-6">
-            <AudienciasHub audiencias={[]} />
+          {/* Tab: Timeline */}
+          <TabsContent value="timeline" className="mt-6">
+            <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                  <Activity className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                </div>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                  Linha do Tempo
+                </h3>
+                <span className="text-xs text-zinc-400 ml-1">({timeline.length})</span>
+              </div>
+              
+              {timeline.length === 0 ? (
+                <div className="text-center py-16 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
+                    <Activity className="w-6 h-6 text-zinc-400" />
+                  </div>
+                  <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Nenhum evento registrado</p>
+                  <p className="text-xs text-zinc-400 mt-1">Os eventos aparecerão aqui conforme o caso evolui</p>
+                </div>
+              ) : (
+                <div className="relative">
+                  <div className="absolute left-[15px] top-2 bottom-2 w-[2px] bg-gradient-to-b from-emerald-200 via-blue-200 to-zinc-200 dark:from-emerald-900 dark:via-blue-900 dark:to-zinc-800 rounded-full" />
+                  <div className="space-y-3">
+                    {timeline.slice(0, 20).map((item) => (
+                      <TimelineItem key={item.id} item={item} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Tab: Processos */}
+          <TabsContent value="processos" className="mt-6">
+            <div className="space-y-3">
+              {caso.processos && caso.processos.length > 0 ? (
+                <>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                      <Scale className="w-4 h-4 text-blue-500" />
+                    </div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                      Processos Vinculados
+                    </h3>
+                    <span className="text-xs text-zinc-400 ml-1">({caso.processos.length})</span>
+                  </div>
+                  {caso.processos.map((processo) => (
+                    <div 
+                      key={processo.id} 
+                      className="group bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 border-l-[3px] border-l-blue-500 overflow-hidden hover:shadow-md transition-all duration-200"
+                    >
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-mono text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">
+                              {processo.numeroAutos}
+                            </p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 flex items-center gap-1.5">
+                              <MapPin className="w-3 h-3" />
+                              {processo.vara} • {processo.comarca}
+                            </p>
+                            {processo.fase && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-[10px] mt-2.5 font-medium bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400"
+                              >
+                                {processo.fase}
+                              </Badge>
+                            )}
+                          </div>
+                          <Link href={`/admin/processos/${processo.id}`}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                            >
+                              Ver <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className="text-center py-16 bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
+                    <Scale className="w-6 h-6 text-zinc-400" />
+                  </div>
+                  <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Nenhum processo vinculado</p>
+                  <p className="text-xs text-zinc-400 mt-1 mb-4">Vincule processos para acompanhamento integrado</p>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Plus className="w-4 h-4" /> Vincular processo
+                  </Button>
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

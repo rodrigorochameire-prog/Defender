@@ -74,7 +74,7 @@ export function CommandPalette() {
       <Button
         variant="outline"
         size="sm"
-        className="gap-2 text-xs"
+        className="gap-2 text-xs bg-[#2a2a2f]/80 border-zinc-600/40 text-zinc-300 hover:bg-[#323238]/80 hover:text-white hover:border-emerald-600/50"
         onClick={() => setOpen(true)}
       >
         <Search className="h-4 w-4" />

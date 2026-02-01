@@ -2370,3 +2370,99 @@ export const argumentosSustentacaoRelations = relations(argumentosSustentacao, (
 export const personagensJuriRelations = relations(personagensJuri, ({ one }) => ({
   createdBy: one(users, { fields: [personagensJuri.createdById], references: [users.id] }),
 }));
+
+// ==========================================
+// SISTEMA DE PROFISSIONAIS E VISIBILIDADE
+// ==========================================
+
+// Enum para grupo de trabalho
+export const grupoTrabalhoEnum = pgEnum("grupo_trabalho", [
+  "juri_ep_vvd",      // Rodrigo + Juliane
+  "varas_criminais",  // Cristiane + Danilo
+]);
+
+// Enum para atribuição rotativa
+export const atribuicaoRotativaEnum = pgEnum("atribuicao_rotativa", [
+  "JURI_EP",  // Júri + Execução Penal
+  "VVD",      // Violência Doméstica
+]);
+
+// Profissionais (Defensores)
+export const profissionais = pgTable("profissionais", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  nome: text("nome").notNull(),
+  nomeCurto: varchar("nome_curto", { length: 50 }), // "Dr. Rodrigo", "Dra. Juliane"
+  email: text("email").unique(),
+  grupo: varchar("grupo", { length: 30 }).notNull(), // 'juri_ep_vvd' | 'varas_criminais'
+  vara: varchar("vara", { length: 50 }), // '1_vara_criminal' | '2_vara_criminal' | null
+  cor: varchar("cor", { length: 20 }).default("zinc"),
+  ativo: boolean("ativo").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("profissionais_grupo_idx").on(table.grupo),
+  index("profissionais_user_id_idx").on(table.userId),
+  index("profissionais_ativo_idx").on(table.ativo),
+]);
+
+export type Profissional = typeof profissionais.$inferSelect;
+export type InsertProfissional = typeof profissionais.$inferInsert;
+
+// Escala de Atribuições (Rodrigo/Juliane - rotação mensal)
+export const escalasAtribuicao = pgTable("escalas_atribuicao", {
+  id: serial("id").primaryKey(),
+  profissionalId: integer("profissional_id").references(() => profissionais.id, { onDelete: "cascade" }),
+  atribuicao: varchar("atribuicao", { length: 30 }).notNull(), // 'JURI_EP' | 'VVD'
+  mes: integer("mes").notNull(), // 1-12
+  ano: integer("ano").notNull(),
+  ativo: boolean("ativo").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("escalas_mes_ano_idx").on(table.mes, table.ano),
+  index("escalas_profissional_idx").on(table.profissionalId),
+]);
+
+export type EscalaAtribuicao = typeof escalasAtribuicao.$inferSelect;
+export type InsertEscalaAtribuicao = typeof escalasAtribuicao.$inferInsert;
+
+// Compartilhamentos pontuais (principalmente para Cristiane/Danilo)
+export const compartilhamentos = pgTable("compartilhamentos", {
+  id: serial("id").primaryKey(),
+  entidadeTipo: varchar("entidade_tipo", { length: 30 }).notNull(), // 'demanda' | 'audiencia' | 'processo' | 'caso'
+  entidadeId: integer("entidade_id").notNull(),
+  compartilhadoPorId: integer("compartilhado_por").references(() => profissionais.id, { onDelete: "cascade" }),
+  compartilhadoComId: integer("compartilhado_com").references(() => profissionais.id, { onDelete: "cascade" }),
+  motivo: text("motivo"),
+  dataInicio: timestamp("data_inicio").defaultNow().notNull(),
+  dataFim: timestamp("data_fim"), // null = permanente
+  ativo: boolean("ativo").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("compartilhamentos_entidade_idx").on(table.entidadeTipo, table.entidadeId),
+  index("compartilhamentos_por_idx").on(table.compartilhadoPorId),
+  index("compartilhamentos_com_idx").on(table.compartilhadoComId),
+  index("compartilhamentos_ativo_idx").on(table.ativo),
+]);
+
+export type Compartilhamento = typeof compartilhamentos.$inferSelect;
+export type InsertCompartilhamento = typeof compartilhamentos.$inferInsert;
+
+// ==========================================
+// RELAÇÕES: Sistema de Profissionais
+// ==========================================
+
+export const profissionaisRelations = relations(profissionais, ({ one, many }) => ({
+  user: one(users, { fields: [profissionais.userId], references: [users.id] }),
+  escalas: many(escalasAtribuicao),
+  compartilhamentosCriados: many(compartilhamentos),
+}));
+
+export const escalasAtribuicaoRelations = relations(escalasAtribuicao, ({ one }) => ({
+  profissional: one(profissionais, { fields: [escalasAtribuicao.profissionalId], references: [profissionais.id] }),
+}));
+
+export const compartilhamentosRelations = relations(compartilhamentos, ({ one }) => ({
+  compartilhadoPor: one(profissionais, { fields: [compartilhamentos.compartilhadoPorId], references: [profissionais.id] }),
+  compartilhadoCom: one(profissionais, { fields: [compartilhamentos.compartilhadoComId], references: [profissionais.id] }),
+}));

@@ -6,7 +6,7 @@ import { LucideIcon } from "lucide-react";
 
 // ==========================================
 // STATS CARD - Componente padronizado para métricas
-// Design System: tipografia consistente, elevação, cores funcionais
+// Design System: Visual unificado com hover emerald
 // ==========================================
 
 interface StatsCardProps {
@@ -22,68 +22,31 @@ interface StatsCardProps {
   subtitle?: string;
   className?: string;
   size?: "sm" | "md" | "lg";
+  onClick?: () => void;
+  isActive?: boolean;
 }
-
-const variantStyles = {
-  default: {
-    container: "bg-card border-border",
-    icon: "text-muted-foreground bg-muted",
-    value: "text-foreground",
-    label: "text-muted-foreground",
-  },
-  highlight: {
-    container: "bg-card border-l-4 border-l-primary border-t-0 border-r-0 border-b-0",
-    icon: "text-primary bg-primary/10",
-    value: "text-primary",
-    label: "text-muted-foreground",
-  },
-  warning: {
-    container: "bg-amber-50/50 dark:bg-amber-950/20 border-l-4 border-l-amber-500 border-t-0 border-r-0 border-b-0",
-    icon: "text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30",
-    value: "text-amber-700 dark:text-amber-400",
-    label: "text-amber-600/80 dark:text-amber-400/80",
-  },
-  danger: {
-    container: "bg-rose-50/50 dark:bg-rose-950/20 border-l-4 border-l-rose-500 border-t-0 border-r-0 border-b-0",
-    icon: "text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30",
-    value: "text-rose-700 dark:text-rose-400",
-    label: "text-rose-600/80 dark:text-rose-400/80",
-  },
-  success: {
-    container: "bg-emerald-50/50 dark:bg-emerald-950/20 border-l-4 border-l-emerald-500 border-t-0 border-r-0 border-b-0",
-    icon: "text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30",
-    value: "text-emerald-700 dark:text-emerald-400",
-    label: "text-emerald-600/80 dark:text-emerald-400/80",
-  },
-  info: {
-    container: "bg-blue-50/50 dark:bg-blue-950/20 border-l-4 border-l-blue-500 border-t-0 border-r-0 border-b-0",
-    icon: "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30",
-    value: "text-blue-700 dark:text-blue-400",
-    label: "text-blue-600/80 dark:text-blue-400/80",
-  },
-};
 
 const sizeStyles = {
   sm: {
     container: "p-4",
     icon: "w-9 h-9",
-    iconInner: "w-5 h-5",
-    value: "text-2xl md:text-3xl font-bold",
-    label: "text-xs md:text-sm",
+    iconInner: "w-4 h-4",
+    value: "text-xl font-semibold",
+    label: "text-[10px]",
   },
   md: {
-    container: "p-6 md:p-7",
-    icon: "w-12 h-12 md:w-14 md:h-14",
-    iconInner: "w-6 h-6 md:w-7 md:h-7",
-    value: "text-4xl md:text-5xl font-bold",
-    label: "text-base md:text-lg",
+    container: "p-4",
+    icon: "w-9 h-9",
+    iconInner: "w-4 h-4",
+    value: "text-xl font-semibold",
+    label: "text-[10px]",
   },
   lg: {
-    container: "p-7 md:p-8",
-    icon: "w-14 h-14 md:w-16 md:h-16",
-    iconInner: "w-7 h-7 md:w-8 md:h-8",
-    value: "text-5xl md:text-6xl font-bold",
-    label: "text-lg md:text-xl",
+    container: "p-5",
+    icon: "w-10 h-10",
+    iconInner: "w-5 h-5",
+    value: "text-2xl font-bold",
+    label: "text-xs",
   },
 };
 
@@ -96,38 +59,52 @@ export function StatsCard({
   subtitle,
   className,
   size = "md",
+  onClick,
+  isActive,
 }: StatsCardProps) {
-  const styles = variantStyles[variant];
   const sizes = sizeStyles[size];
+  const Component = onClick ? "button" : "div";
 
   return (
-    <div
+    <Component
+      onClick={onClick}
       className={cn(
-        "rounded-xl border-2 shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.02]",
-        styles.container,
+        "group relative text-left rounded-xl bg-white dark:bg-zinc-900 border transition-all duration-300",
+        isActive 
+          ? "border-emerald-200 dark:border-emerald-800/50 ring-2 ring-emerald-100 dark:ring-emerald-900/30" 
+          : "border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30",
+        onClick && "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03] dark:hover:shadow-emerald-500/[0.05]",
         sizes.container,
         className
       )}
     >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 min-w-0 space-y-2">
-          <p className={cn("font-sans font-bold tabular-nums tracking-tight leading-none", sizes.value, styles.value)}>
-            {value}
-          </p>
-          <p className={cn("uppercase tracking-[0.06em] font-semibold", sizes.label, styles.label)}>
+      {/* Linha superior sutil no hover */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+      
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0 space-y-1">
+          <p className={cn(
+            "font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300",
+            sizes.label
+          )}>
             {label}
           </p>
+          <p className={cn("text-zinc-700 dark:text-zinc-300", sizes.value)}>
+            {value}
+          </p>
           {subtitle && (
-            <p className="text-xs md:text-sm text-muted-foreground truncate">{subtitle}</p>
+            <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+              {subtitle}
+            </p>
           )}
           {trend && (
-            <div className="flex items-center gap-1.5 mt-2">
+            <div className="flex items-center gap-1.5 mt-1">
               <span
                 className={cn(
-                  "text-sm md:text-base font-semibold",
+                  "text-xs font-semibold",
                   trend.direction === "up" && "text-emerald-600",
                   trend.direction === "down" && "text-rose-600",
-                  trend.direction === "neutral" && "text-muted-foreground"
+                  trend.direction === "neutral" && "text-zinc-500"
                 )}
               >
                 {trend.direction === "up" && "↑"}
@@ -135,24 +112,24 @@ export function StatsCard({
                 {trend.value}%
               </span>
               {trend.label && (
-                <span className="text-xs md:text-sm text-muted-foreground">{trend.label}</span>
+                <span className="text-[10px] text-zinc-400">{trend.label}</span>
               )}
             </div>
           )}
         </div>
         {Icon && (
-          <div
-            className={cn(
-              "rounded-xl flex items-center justify-center flex-shrink-0",
-              sizes.icon,
-              styles.icon
-            )}
-          >
-            <Icon className={sizes.iconInner} />
+          <div className={cn(
+            "rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300",
+            sizes.icon
+          )}>
+            <Icon className={cn(
+              "text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300",
+              sizes.iconInner
+            )} />
           </div>
         )}
       </div>
-    </div>
+    </Component>
   );
 }
 
