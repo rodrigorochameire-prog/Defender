@@ -176,158 +176,227 @@ function formatFileSize(bytes?: number): string {
 }
 
 // ==========================================
-// DADOS MOCK - Estrutura de pastas
+// DADOS MOCK - Estrutura hierárquica completa
 // ==========================================
 
 const MOCK_FILES: DriveFile[] = [
-  // Pastas principais
-  {
-    id: "folder-assistidos",
-    name: "Assistidos",
-    mimeType: "application/vnd.google-apps.folder",
-    modifiedTime: new Date("2026-01-30"),
-    createdAt: new Date("2025-06-01"),
-    isFolder: true,
-  },
-  {
-    id: "folder-processos",
-    name: "Processos",
-    mimeType: "application/vnd.google-apps.folder",
-    modifiedTime: new Date("2026-01-29"),
-    createdAt: new Date("2025-06-01"),
-    isFolder: true,
-  },
-  {
-    id: "folder-pautas",
-    name: "Pautas de Audiência",
-    mimeType: "application/vnd.google-apps.folder",
-    modifiedTime: new Date("2026-01-28"),
-    createdAt: new Date("2025-06-01"),
-    isFolder: true,
-  },
-  {
-    id: "folder-peticoes",
-    name: "Petições Protocoladas",
-    mimeType: "application/vnd.google-apps.folder",
-    modifiedTime: new Date("2026-01-27"),
-    createdAt: new Date("2025-06-01"),
-    isFolder: true,
-  },
-  {
-    id: "folder-jurisprudencia",
-    name: "Jurisprudência",
-    mimeType: "application/vnd.google-apps.folder",
-    modifiedTime: new Date("2026-01-25"),
-    createdAt: new Date("2025-06-01"),
-    isFolder: true,
-  },
-  {
-    id: "folder-modelos",
-    name: "Modelos e Templates",
-    mimeType: "application/vnd.google-apps.folder",
-    modifiedTime: new Date("2026-01-20"),
-    createdAt: new Date("2025-06-01"),
-    isFolder: true,
-  },
-  // Arquivos recentes
-  {
-    id: "f1",
-    name: "Resposta à Acusação - José Carlos.pdf",
-    mimeType: "application/pdf",
-    size: 245678,
-    modifiedTime: new Date("2026-01-30T10:30:00"),
-    createdAt: new Date("2026-01-30T10:30:00"),
-    isFolder: false,
-    starred: true,
-    processoId: 1,
-    processoNumero: "8002341-90.2025.8.05.0039",
-    assistidoId: 1,
-    assistidoNome: "José Carlos Santos",
-    parentId: "folder-processos",
-  },
-  {
-    id: "f2",
-    name: "Alegações Finais - Pedro Lima.docx",
-    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    size: 156789,
-    modifiedTime: new Date("2026-01-29T15:45:00"),
-    createdAt: new Date("2026-01-29T15:45:00"),
-    isFolder: false,
-    processoId: 2,
-    processoNumero: "8002342-75.2025.8.05.0039",
-    assistidoId: 2,
-    assistidoNome: "Pedro Oliveira Lima",
-    parentId: "folder-processos",
-  },
-  {
-    id: "f3",
-    name: "Pauta Semana 05-2026.pdf",
-    mimeType: "application/pdf",
-    size: 89456,
-    modifiedTime: new Date("2026-01-28T08:00:00"),
-    createdAt: new Date("2026-01-28T08:00:00"),
-    isFolder: false,
-    starred: true,
-    parentId: "folder-pautas",
-  },
-  {
-    id: "f4",
-    name: "RG - Maria Silva.jpg",
-    mimeType: "image/jpeg",
-    size: 2345678,
-    modifiedTime: new Date("2026-01-27T14:20:00"),
-    createdAt: new Date("2026-01-27T14:20:00"),
-    isFolder: false,
-    assistidoId: 3,
-    assistidoNome: "Maria Aparecida Silva",
-    parentId: "folder-assistidos",
-  },
-  {
-    id: "f5",
-    name: "Habeas Corpus - Fernando.pdf",
-    mimeType: "application/pdf",
-    size: 178934,
-    modifiedTime: new Date("2026-01-26T09:15:00"),
-    createdAt: new Date("2026-01-26T09:15:00"),
-    isFolder: false,
-    processoId: 7,
-    processoNumero: "8000800-20.2024.8.05.0039",
-    assistidoId: 7,
-    assistidoNome: "Fernando Costa",
-    parentId: "folder-peticoes",
-  },
-  {
-    id: "f6",
-    name: "Gravação Audiência 10-01.mp4",
-    mimeType: "video/mp4",
-    size: 156789012,
-    modifiedTime: new Date("2026-01-25T16:00:00"),
-    createdAt: new Date("2026-01-25T16:00:00"),
-    isFolder: false,
-    parentId: "folder-pautas",
-  },
-  {
-    id: "f7",
-    name: "Jurisprudência STJ - Tráfico.zip",
-    mimeType: "application/zip",
-    size: 45678901,
-    modifiedTime: new Date("2026-01-24T11:30:00"),
-    createdAt: new Date("2026-01-24T11:30:00"),
-    isFolder: false,
-    parentId: "folder-jurisprudencia",
-  },
-  {
-    id: "f8",
-    name: "Modelo Alegações Finais Júri.docx",
-    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    size: 67890,
-    modifiedTime: new Date("2026-01-23T10:00:00"),
-    createdAt: new Date("2026-01-23T10:00:00"),
-    isFolder: false,
-    starred: true,
-    parentId: "folder-modelos",
-  },
+  // ===== NÍVEL 1: Pastas Raiz =====
+  { id: "root-assistidos", name: "Assistidos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-06-01"), isFolder: true },
+  { id: "root-processos", name: "Processos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-06-01"), isFolder: true },
+  { id: "root-pautas", name: "Pautas de Audiência", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-28"), createdAt: new Date("2025-06-01"), isFolder: true },
+  { id: "root-jurisprudencia", name: "Jurisprudência", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-25"), createdAt: new Date("2025-06-01"), isFolder: true },
+  { id: "root-modelos", name: "Modelos e Templates", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-20"), createdAt: new Date("2025-06-01"), isFolder: true },
+
+  // ===== NÍVEL 2: Assistidos > Atribuições =====
+  { id: "assist-juri", name: "Tribunal do Júri", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-assistidos" },
+  { id: "assist-vvd", name: "Violência Doméstica", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-assistidos" },
+  { id: "assist-ep", name: "Execução Penal", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-28"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-assistidos" },
+  { id: "assist-geral", name: "Substituição Geral", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-27"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-assistidos" },
+
+  // ===== NÍVEL 3: Assistidos > Júri > Pessoas =====
+  { id: "juri-jose", name: "José Carlos Santos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-08-15"), isFolder: true, parentId: "assist-juri", assistidoId: 1, assistidoNome: "José Carlos Santos" },
+  { id: "juri-pedro", name: "Pedro Oliveira Lima", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-07-20"), isFolder: true, parentId: "assist-juri", assistidoId: 2, assistidoNome: "Pedro Oliveira Lima" },
+  { id: "juri-marcos", name: "Marcos Antônio Reis", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-28"), createdAt: new Date("2025-09-10"), isFolder: true, parentId: "assist-juri", assistidoId: 3, assistidoNome: "Marcos Antônio Reis" },
+
+  // ===== NÍVEL 3: Assistidos > VVD > Pessoas =====
+  { id: "vvd-maria", name: "Maria Aparecida Silva", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-27"), createdAt: new Date("2025-10-05"), isFolder: true, parentId: "assist-vvd", assistidoId: 4, assistidoNome: "Maria Aparecida Silva" },
+  { id: "vvd-ana", name: "Ana Paula Ferreira", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-26"), createdAt: new Date("2025-11-12"), isFolder: true, parentId: "assist-vvd", assistidoId: 5, assistidoNome: "Ana Paula Ferreira" },
+
+  // ===== NÍVEL 3: Assistidos > EP > Pessoas =====
+  { id: "ep-fernando", name: "Fernando Costa", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-25"), createdAt: new Date("2025-06-20"), isFolder: true, parentId: "assist-ep", assistidoId: 6, assistidoNome: "Fernando Costa" },
+  { id: "ep-carlos", name: "Carlos Eduardo Santos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-24"), createdAt: new Date("2025-07-15"), isFolder: true, parentId: "assist-ep", assistidoId: 7, assistidoNome: "Carlos Eduardo Santos" },
+
+  // ===== NÍVEL 4: José Carlos > Subpastas =====
+  { id: "jose-docs", name: "Documentos Pessoais", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-08-15"), isFolder: true, parentId: "juri-jose" },
+  { id: "jose-processo", name: "Processo 8002341-90", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-08-16"), isFolder: true, parentId: "juri-jose", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+  { id: "jose-fotos", name: "Fotos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-28"), createdAt: new Date("2025-08-17"), isFolder: true, parentId: "juri-jose" },
+
+  // ===== NÍVEL 5: José Carlos > Documentos Pessoais > Arquivos =====
+  { id: "jose-rg", name: "RG.jpg", mimeType: "image/jpeg", size: 1234567, modifiedTime: new Date("2026-01-15"), createdAt: new Date("2025-08-15"), isFolder: false, parentId: "jose-docs", assistidoId: 1, assistidoNome: "José Carlos Santos", thumbnailLink: "/placeholder.jpg" },
+  { id: "jose-cpf", name: "CPF.jpg", mimeType: "image/jpeg", size: 987654, modifiedTime: new Date("2026-01-15"), createdAt: new Date("2025-08-15"), isFolder: false, parentId: "jose-docs", assistidoId: 1, assistidoNome: "José Carlos Santos" },
+  { id: "jose-comp", name: "Comprovante Residência.pdf", mimeType: "application/pdf", size: 456789, modifiedTime: new Date("2026-01-14"), createdAt: new Date("2025-08-16"), isFolder: false, parentId: "jose-docs", assistidoId: 1, assistidoNome: "José Carlos Santos" },
+
+  // ===== NÍVEL 5: José Carlos > Processo > Arquivos =====
+  { id: "jose-denuncia", name: "Denúncia.pdf", mimeType: "application/pdf", size: 345678, modifiedTime: new Date("2025-08-20"), createdAt: new Date("2025-08-20"), isFolder: false, parentId: "jose-processo", starred: true, processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+  { id: "jose-resposta", name: "Resposta à Acusação.pdf", mimeType: "application/pdf", size: 245678, modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-09-10"), isFolder: false, parentId: "jose-processo", starred: true, processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+  { id: "jose-alegacoes", name: "Alegações Finais.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 156789, modifiedTime: new Date("2026-01-28"), createdAt: new Date("2026-01-28"), isFolder: false, parentId: "jose-processo", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+  { id: "jose-laudo", name: "Laudo Pericial.pdf", mimeType: "application/pdf", size: 567890, modifiedTime: new Date("2025-10-15"), createdAt: new Date("2025-10-15"), isFolder: false, parentId: "jose-processo", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+  { id: "jose-audio", name: "Audiência Instrução.mp3", mimeType: "audio/mpeg", size: 45678901, modifiedTime: new Date("2025-11-20"), createdAt: new Date("2025-11-20"), isFolder: false, parentId: "jose-processo", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+
+  // ===== NÍVEL 5: José Carlos > Fotos > Arquivos =====
+  { id: "jose-foto1", name: "Local do Crime 01.jpg", mimeType: "image/jpeg", size: 3456789, modifiedTime: new Date("2025-08-20"), createdAt: new Date("2025-08-20"), isFolder: false, parentId: "jose-fotos" },
+  { id: "jose-foto2", name: "Local do Crime 02.jpg", mimeType: "image/jpeg", size: 3234567, modifiedTime: new Date("2025-08-20"), createdAt: new Date("2025-08-20"), isFolder: false, parentId: "jose-fotos" },
+  { id: "jose-foto3", name: "Evidência A.jpg", mimeType: "image/jpeg", size: 2345678, modifiedTime: new Date("2025-08-21"), createdAt: new Date("2025-08-21"), isFolder: false, parentId: "jose-fotos" },
+
+  // ===== NÍVEL 4: Pedro Oliveira > Subpastas =====
+  { id: "pedro-docs", name: "Documentos Pessoais", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-07-20"), isFolder: true, parentId: "juri-pedro" },
+  { id: "pedro-processo", name: "Processo 8002342-75", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-07-21"), isFolder: true, parentId: "juri-pedro", processoId: 2, processoNumero: "8002342-75.2025.8.05.0039" },
+
+  // ===== NÍVEL 5: Pedro > Processo > Arquivos =====
+  { id: "pedro-denuncia", name: "Denúncia.pdf", mimeType: "application/pdf", size: 298765, modifiedTime: new Date("2025-07-25"), createdAt: new Date("2025-07-25"), isFolder: false, parentId: "pedro-processo", processoId: 2 },
+  { id: "pedro-alegacoes", name: "Alegações Finais.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 189012, modifiedTime: new Date("2026-01-29"), createdAt: new Date("2026-01-29"), isFolder: false, parentId: "pedro-processo", starred: true, processoId: 2 },
+
+  // ===== Processos por Número =====
+  { id: "proc-2341", name: "8002341-90.2025.8.05.0039", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-08-16"), isFolder: true, parentId: "root-processos", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+  { id: "proc-2342", name: "8002342-75.2025.8.05.0039", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-07-21"), isFolder: true, parentId: "root-processos", processoId: 2, processoNumero: "8002342-75.2025.8.05.0039" },
+  { id: "proc-0800", name: "8000800-20.2024.8.05.0039", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-25"), createdAt: new Date("2024-06-10"), isFolder: true, parentId: "root-processos", processoId: 3, processoNumero: "8000800-20.2024.8.05.0039" },
+
+  // ===== Pautas =====
+  { id: "pauta-2026-05", name: "Semana 05-2026.pdf", mimeType: "application/pdf", size: 89456, modifiedTime: new Date("2026-01-28"), createdAt: new Date("2026-01-28"), isFolder: false, parentId: "root-pautas", starred: true },
+  { id: "pauta-2026-04", name: "Semana 04-2026.pdf", mimeType: "application/pdf", size: 92345, modifiedTime: new Date("2026-01-21"), createdAt: new Date("2026-01-21"), isFolder: false, parentId: "root-pautas" },
+  { id: "pauta-video", name: "Gravação Audiência 10-01.mp4", mimeType: "video/mp4", size: 156789012, modifiedTime: new Date("2026-01-25"), createdAt: new Date("2026-01-25"), isFolder: false, parentId: "root-pautas" },
+
+  // ===== Jurisprudência =====
+  { id: "juris-stj", name: "STJ - Tráfico Privilegiado.pdf", mimeType: "application/pdf", size: 234567, modifiedTime: new Date("2026-01-24"), createdAt: new Date("2026-01-24"), isFolder: false, parentId: "root-jurisprudencia" },
+  { id: "juris-stf", name: "STF - HC 123456.pdf", mimeType: "application/pdf", size: 345678, modifiedTime: new Date("2026-01-23"), createdAt: new Date("2026-01-23"), isFolder: false, parentId: "root-jurisprudencia" },
+  { id: "juris-pack", name: "Jurisprudência Completa.zip", mimeType: "application/zip", size: 45678901, modifiedTime: new Date("2026-01-22"), createdAt: new Date("2026-01-22"), isFolder: false, parentId: "root-jurisprudencia" },
+
+  // ===== Modelos =====
+  { id: "modelo-alegacoes", name: "Alegações Finais Júri.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 67890, modifiedTime: new Date("2026-01-20"), createdAt: new Date("2026-01-20"), isFolder: false, parentId: "root-modelos", starred: true },
+  { id: "modelo-hc", name: "Habeas Corpus.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 54321, modifiedTime: new Date("2026-01-19"), createdAt: new Date("2026-01-19"), isFolder: false, parentId: "root-modelos" },
+  { id: "modelo-resposta", name: "Resposta à Acusação.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 48765, modifiedTime: new Date("2026-01-18"), createdAt: new Date("2026-01-18"), isFolder: false, parentId: "root-modelos" },
 ];
+
+// Interface para árvore de navegação
+interface FolderTreeNode {
+  id: string;
+  name: string;
+  children: FolderTreeNode[];
+  isFolder: boolean;
+  parentId?: string;
+  fileCount: number;
+  icon?: React.ElementType;
+  color?: string;
+}
+
+// Função para construir árvore a partir dos arquivos
+function buildFolderTree(files: DriveFile[], parentId?: string): FolderTreeNode[] {
+  const folders = files.filter(f => f.isFolder && f.parentId === parentId);
+  return folders.map(folder => {
+    const children = buildFolderTree(files, folder.id);
+    const directFiles = files.filter(f => !f.isFolder && f.parentId === folder.id);
+    return {
+      id: folder.id,
+      name: folder.name,
+      children,
+      isFolder: true,
+      parentId: folder.parentId,
+      fileCount: directFiles.length + children.reduce((acc, c) => acc + c.fileCount, 0),
+    };
+  });
+}
+
+// Componente de item da árvore de pastas
+function FolderTreeItem({
+  node,
+  level,
+  currentFolder,
+  expandedFolders,
+  onToggleExpand,
+  onNavigate,
+}: {
+  node: FolderTreeNode;
+  level: number;
+  currentFolder: string | null;
+  expandedFolders: Set<string>;
+  onToggleExpand: (id: string) => void;
+  onNavigate: (id: string) => void;
+}) {
+  const isExpanded = expandedFolders.has(node.id);
+  const isActive = currentFolder === node.id;
+  const hasChildren = node.children.length > 0;
+
+  // Cores por nível para visual hierarchy
+  const levelColors = [
+    "text-amber-600 dark:text-amber-400",
+    "text-blue-600 dark:text-blue-400",
+    "text-emerald-600 dark:text-emerald-400",
+    "text-violet-600 dark:text-violet-400",
+    "text-rose-600 dark:text-rose-400",
+  ];
+  const iconColor = levelColors[level % levelColors.length];
+
+  return (
+    <div>
+      <div
+        className={cn(
+          "flex items-center gap-1 py-1.5 px-2 rounded-lg cursor-pointer transition-all group",
+          isActive
+            ? "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300"
+            : "hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
+        )}
+        style={{ paddingLeft: `${8 + level * 16}px` }}
+      >
+        {/* Expand/Collapse button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand(node.id);
+          }}
+          className={cn(
+            "w-5 h-5 rounded flex items-center justify-center transition-all",
+            hasChildren 
+              ? "hover:bg-zinc-200 dark:hover:bg-zinc-700" 
+              : "opacity-0"
+          )}
+        >
+          {hasChildren && (
+            <ChevronRight className={cn(
+              "w-3.5 h-3.5 text-zinc-400 transition-transform",
+              isExpanded && "rotate-90"
+            )} />
+          )}
+        </button>
+
+        {/* Folder icon and name */}
+        <button
+          onClick={() => onNavigate(node.id)}
+          className="flex-1 flex items-center gap-2 min-w-0"
+        >
+          <FolderOpen className={cn("w-4 h-4 flex-shrink-0", iconColor)} />
+          <span className={cn(
+            "text-sm truncate",
+            isActive ? "font-medium" : "text-zinc-700 dark:text-zinc-300"
+          )}>
+            {node.name}
+          </span>
+        </button>
+
+        {/* File count badge */}
+        {node.fileCount > 0 && (
+          <span className={cn(
+            "text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500",
+            "opacity-0 group-hover:opacity-100 transition-opacity"
+          )}>
+            {node.fileCount}
+          </span>
+        )}
+      </div>
+
+      {/* Children */}
+      {isExpanded && hasChildren && (
+        <div className="relative">
+          {/* Linha de conexão vertical */}
+          <div 
+            className="absolute left-[18px] top-0 bottom-2 w-px bg-zinc-200 dark:bg-zinc-700"
+            style={{ marginLeft: `${level * 16}px` }}
+          />
+          {node.children.map((child) => (
+            <FolderTreeItem
+              key={child.id}
+              node={child}
+              level={level + 1}
+              currentFolder={currentFolder}
+              expandedFolders={expandedFolders}
+              onToggleExpand={onToggleExpand}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ==========================================
 // COMPONENTES
@@ -857,6 +926,11 @@ export default function DrivePage() {
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([{ id: "root", name: "Meu Drive" }]);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [previewMode, setPreviewMode] = useState<"grid" | "list" | "preview">("list");
+
+  // Árvore de pastas
+  const folderTree = useMemo(() => buildFolderTree(MOCK_FILES, undefined), []);
 
   // Navegação
   const navigateToFolder = useCallback((folderId: string) => {
@@ -985,86 +1059,120 @@ export default function DrivePage() {
         {/* Conteúdo Principal - Layout com Sidebar */}
         <div className="p-4 md:p-6">
           <div className="flex gap-6">
-            {/* Sidebar de Navegação */}
-            <div className="hidden lg:block w-56 flex-shrink-0 space-y-4">
-              {/* Navegação Rápida */}
-              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
-                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                  Navegação
-                </h3>
-                <nav className="space-y-1">
-                  {[
-                    { id: null, name: "Todos os Arquivos", icon: HardDrive, count: stats.total },
-                    { id: "folder-assistidos", name: "Assistidos", icon: Users, count: 12 },
-                    { id: "folder-processos", name: "Processos", icon: Scale, count: 23 },
-                    { id: "folder-peticoes", name: "Petições", icon: FileText, count: 8 },
-                    { id: "folder-pautas", name: "Pautas", icon: Clock, count: 5 },
-                  ].map((item) => (
-                    <button
-                      key={item.id || "root"}
-                      onClick={() => {
-                        if (item.id) {
-                          navigateToFolder(item.id);
-                        } else {
-                          setCurrentFolder(null);
-                          setBreadcrumbs([{ id: "root", name: "Meu Drive" }]);
-                        }
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all",
-                        currentFolder === item.id
-                          ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-medium"
-                          : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                      )}
+            {/* Sidebar de Navegação Hierárquica */}
+            <div className="hidden lg:block w-72 flex-shrink-0">
+              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden sticky top-4">
+                {/* Header da Sidebar */}
+                <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold text-amber-800 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Folder className="w-3.5 h-3.5" />
+                      Explorador
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                      onClick={() => setExpandedFolders(new Set())}
                     >
-                      <item.icon className="w-4 h-4" />
-                      <span className="flex-1 text-left">{item.name}</span>
-                      <span className="text-[10px] text-zinc-400">{item.count}</span>
-                    </button>
-                  ))}
-                </nav>
-              </div>
-
-              {/* Favoritos */}
-              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
-                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <Star className="w-3 h-3 text-amber-500" />
-                  Favoritos
-                </h3>
-                <div className="space-y-1">
-                  {MOCK_FILES.filter(f => f.starred && !f.isFolder).slice(0, 4).map((file) => {
-                    const fileType = getFileType(file.mimeType);
-                    const Icon = FILE_ICONS[fileType];
-                    const colorClass = FILE_COLORS[fileType];
-                    return (
-                      <button
-                        key={file.id}
-                        onClick={() => handlePreview(file)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                      >
-                        <Icon className={cn("w-3.5 h-3.5", colorClass)} />
-                        <span className="flex-1 text-left truncate">{file.name.split('.')[0]}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Armazenamento */}
-              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
-                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                  Armazenamento
-                </h3>
-                <div className="space-y-2">
-                  <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
-                      style={{ width: "23%" }}
-                    />
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
-                  <div className="flex justify-between text-[10px] text-zinc-500">
-                    <span>{formatFileSize(stats.totalSize)} usado</span>
-                    <span>15 GB disponível</span>
+                </div>
+
+                {/* Árvore de Navegação */}
+                <div className="p-2 max-h-[calc(100vh-280px)] overflow-y-auto">
+                  {/* Raiz */}
+                  <button
+                    onClick={() => {
+                      setCurrentFolder(null);
+                      setBreadcrumbs([{ id: "root", name: "Meu Drive" }]);
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all mb-1",
+                      currentFolder === null
+                        ? "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 font-medium"
+                        : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    )}
+                  >
+                    <HardDrive className="w-4 h-4 text-amber-500" />
+                    <span className="flex-1 text-left">Meu Drive</span>
+                    <Badge variant="secondary" className="text-[9px] px-1.5 py-0">{stats.total}</Badge>
+                  </button>
+
+                  {/* Árvore de Pastas */}
+                  <div className="space-y-0.5">
+                    {folderTree.map((node) => (
+                      <FolderTreeItem
+                        key={node.id}
+                        node={node}
+                        level={0}
+                        currentFolder={currentFolder}
+                        expandedFolders={expandedFolders}
+                        onToggleExpand={(id) => {
+                          setExpandedFolders(prev => {
+                            const next = new Set(prev);
+                            if (next.has(id)) {
+                              next.delete(id);
+                            } else {
+                              next.add(id);
+                            }
+                            return next;
+                          });
+                        }}
+                        onNavigate={navigateToFolder}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Favoritos */}
+                <div className="border-t border-zinc-100 dark:border-zinc-800 p-3">
+                  <Collapsible defaultOpen>
+                    <CollapsibleTrigger className="w-full flex items-center justify-between text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 hover:text-zinc-700 dark:hover:text-zinc-300">
+                      <span className="flex items-center gap-1.5">
+                        <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                        Favoritos
+                      </span>
+                      <ChevronDown className="w-3 h-3 transition-transform ui-open:rotate-180" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-1">
+                      {MOCK_FILES.filter(f => f.starred && !f.isFolder).slice(0, 5).map((file) => {
+                        const fileType = getFileType(file.mimeType);
+                        const Icon = FILE_ICONS[fileType];
+                        const colorClass = FILE_COLORS[fileType];
+                        return (
+                          <button
+                            key={file.id}
+                            onClick={() => handlePreview(file)}
+                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <Icon className={cn("w-3.5 h-3.5", colorClass)} />
+                            <span className="flex-1 text-left truncate">{file.name.split('.')[0]}</span>
+                          </button>
+                        );
+                      })}
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+
+                {/* Armazenamento */}
+                <div className="border-t border-zinc-100 dark:border-zinc-800 p-3">
+                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <HardDrive className="w-3 h-3" />
+                    Armazenamento
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
+                        style={{ width: "23%" }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-zinc-500">
+                      <span>{formatFileSize(stats.totalSize)} usado</span>
+                      <span>15 GB</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1099,23 +1207,46 @@ export default function DrivePage() {
                       <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatFileSize(stats.totalSize)}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant={viewMode === "list" ? "secondary" : "ghost"}
-                      size="sm"
-                      className="h-7 w-7 p-0"
-                      onClick={() => setViewMode("list")}
-                    >
-                      <List className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === "grid" ? "secondary" : "ghost"}
-                      size="sm"
-                      className="h-7 w-7 p-0"
-                      onClick={() => setViewMode("grid")}
-                    >
-                      <LayoutGrid className="w-4 h-4" />
-                    </Button>
+                  <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={viewMode === "list" ? "secondary" : "ghost"}
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => setViewMode("list")}
+                        >
+                          <List className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Lista</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={viewMode === "grid" ? "secondary" : "ghost"}
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => setViewMode("grid")}
+                        >
+                          <LayoutGrid className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Grade</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={previewMode === "preview" ? "secondary" : "ghost"}
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => setPreviewMode(previewMode === "preview" ? "list" : "preview")}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Preview</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               </div>
