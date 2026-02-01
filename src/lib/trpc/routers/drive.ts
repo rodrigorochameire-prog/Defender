@@ -18,6 +18,12 @@ import {
   getFileInfo,
   isGoogleDriveConfigured,
   getRootFolderLink,
+  findExistingFile,
+  syncPautaDocument,
+  syncMultiplePautaDocuments,
+  registrarAudienciaNoDrive,
+  verificarIntegridadeSincronizacao,
+  criarPastaProcesso,
 } from "@/lib/services/google-drive";
 
 export const driveRouter = router({
@@ -461,4 +467,245 @@ export const driveRouter = router({
       };
     }, "Erro ao obter estatísticas");
   }),
+
+  // ============================================
+  // SINCRONIZAÇÃO COM PAUTA E INTIMAÇÕES
+  // ============================================
+
+  /**
+   * Verifica se um arquivo já existe no Drive (para evitar duplicação)
+   */
+  checkDuplicate: protectedProcedure
+    .input(z.object({
+      fileName: z.string(),
+      folderId: z.string(),
+    }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const existing = await findExistingFile(input.fileName, input.folderId);
+        return {
+          exists: !!existing,
+          file: existing,
+        };
+      }, "Erro ao verificar duplicação");
+    }),
+
+  /**
+   * Sincroniza um documento de pauta/intimação com o Drive
+   * Evita duplicações automaticamente
+   */
+  syncPautaDocument: protectedProcedure
+    .input(z.object({
+      processoId: z.number(),
+      driveFolderId: z.string(),
+      documento: z.object({
+        nome: z.string(),
+        tipo: z.enum(["pauta", "intimacao", "despacho", "sentenca", "outros"]),
+        url: z.string().optional(),
+        dataDocumento: z.string().optional(),
+      }),
+    }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const result = await syncPautaDocument(
+          input.processoId,
+          input.driveFolderId,
+          {
+            nome: input.documento.nome,
+            tipo: input.documento.tipo,
+            url: input.documento.url,
+            dataDocumento: input.documento.dataDocumento 
+              ? new Date(input.documento.dataDocumento) 
+              : undefined,
+          }
+        );
+        return result;
+      }, "Erro ao sincronizar documento");
+    }),
+
+  /**
+   * Sincroniza múltiplos documentos de uma pauta/intimação
+   */
+  syncMultiplePautaDocuments: protectedProcedure
+    .input(z.object({
+      processoId: z.number(),
+      driveFolderId: z.string(),
+      documentos: z.array(z.object({
+        nome: z.string(),
+        tipo: z.enum(["pauta", "intimacao", "despacho", "sentenca", "outros"]),
+        url: z.string().optional(),
+        dataDocumento: z.string().optional(),
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const result = await syncMultiplePautaDocuments(
+          input.processoId,
+          input.driveFolderId,
+          input.documentos.map(doc => ({
+            nome: doc.nome,
+            tipo: doc.tipo,
+            url: doc.url,
+            dataDocumento: doc.dataDocumento ? new Date(doc.dataDocumento) : undefined,
+          }))
+        );
+        return result;
+      }, "Erro ao sincronizar documentos");
+    }),
+
+  /**
+   * Registra uma audiência no Drive
+   */
+  registrarAudiencia: protectedProcedure
+    .input(z.object({
+      driveFolderId: z.string(),
+      audiencia: z.object({
+        data: z.string(),
+        hora: z.string(),
+        tipo: z.string(),
+        local: z.string().optional(),
+        observacoes: z.string().optional(),
+        numeroProcesso: z.string(),
+        nomeAssistido: z.string(),
+      }),
+    }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const result = await registrarAudienciaNoDrive(
+          input.driveFolderId,
+          {
+            ...input.audiencia,
+            data: new Date(input.audiencia.data),
+          }
+        );
+        return result;
+      }, "Erro ao registrar audiência no Drive");
+    }),
+
+  /**
+   * Verifica integridade da sincronização entre banco e Drive
+   */
+  verificarIntegridade: adminProcedure
+    .input(z.object({ folderId: z.string() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const result = await verificarIntegridadeSincronizacao(input.folderId);
+        return result;
+      }, "Erro ao verificar integridade");
+    }),
+
+  /**
+   * Cria pasta para um processo no Drive
+   */
+  criarPastaProcesso: protectedProcedure
+    .input(z.object({
+      processoId: z.number(),
+      nomeAssistido: z.string(),
+      numeroAutos: z.string(),
+      area: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const result = await criarPastaProcesso(
+          input.processoId,
+          input.nomeAssistido,
+          input.numeroAutos,
+          input.area
+        );
+        
+        if (!result) {
+          throw Errors.internal("Falha ao criar pasta do processo");
+        }
+        
+        return result;
+      }, "Erro ao criar pasta do processo");
+    }),
+
+  /**
+   * Upload de arquivo com prevenção de duplicação
+   */
+  uploadFileSafe: protectedProcedure
+    .input(z.object({
+      folderId: z.string(),
+      fileName: z.string(),
+      mimeType: z.string(),
+      fileBase64: z.string(),
+      description: z.string().optional(),
+      preventDuplicates: z.boolean().default(true),
+      updateIfExists: z.boolean().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        // Converter base64 para buffer
+        const base64Data = input.fileBase64.replace(/^data:[^;]+;base64,/, "");
+        const buffer = Buffer.from(base64Data, "base64");
+
+        const file = await uploadFileBuffer(
+          buffer,
+          input.fileName,
+          input.mimeType,
+          input.folderId,
+          input.description,
+          {
+            preventDuplicates: input.preventDuplicates,
+            updateIfExists: input.updateIfExists,
+          }
+        );
+
+        if (!file) {
+          throw Errors.internal("Falha ao fazer upload do arquivo");
+        }
+
+        // Inserir/atualizar no banco local
+        const existing = await db
+          .select()
+          .from(driveFiles)
+          .where(eq(driveFiles.driveFileId, file.id))
+          .limit(1);
+
+        if (existing.length === 0) {
+          await db.insert(driveFiles).values({
+            driveFileId: file.id,
+            driveFolderId: input.folderId,
+            name: file.name,
+            mimeType: file.mimeType,
+            fileSize: file.size ? parseInt(file.size) : null,
+            webViewLink: file.webViewLink,
+            webContentLink: file.webContentLink,
+            thumbnailLink: file.thumbnailLink,
+            iconLink: file.iconLink,
+            driveChecksum: file.md5Checksum,
+            isFolder: false,
+            syncStatus: "synced",
+            lastSyncAt: new Date(),
+            lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : new Date(),
+            createdById: ctx.user.id,
+          });
+        } else {
+          await db
+            .update(driveFiles)
+            .set({
+              name: file.name,
+              fileSize: file.size ? parseInt(file.size) : null,
+              driveChecksum: file.md5Checksum,
+              syncStatus: "synced",
+              lastSyncAt: new Date(),
+              lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : new Date(),
+              updatedAt: new Date(),
+            })
+            .where(eq(driveFiles.driveFileId, file.id));
+        }
+
+        // Log da ação
+        await db.insert(driveSyncLogs).values({
+          driveFileId: file.id,
+          action: existing.length === 0 ? "upload" : "update",
+          status: "success",
+          details: `Arquivo ${file.name} sincronizado`,
+          userId: ctx.user.id,
+        });
+
+        return file;
+      }, "Erro ao fazer upload do arquivo");
+    }),
 });

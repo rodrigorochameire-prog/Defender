@@ -511,13 +511,54 @@ export default function IntegracoesPage() {
               </div>
             </Card>
 
+            {/* WhatsApp Business - Destacado */}
+            <Card className="p-6 border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 rounded-xl bg-green-100 dark:bg-green-900/30">
+                    <MessageCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                        WhatsApp Business
+                      </h3>
+                      <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        Comunicação
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                      Notificações automáticas para assistidos via WhatsApp
+                    </p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                        <Bell className="w-3 h-3" /> Lembretes de prazos
+                      </span>
+                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> Avisos de audiências
+                      </span>
+                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                        <Zap className="w-3 h-3" /> Automação inteligente
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <a href="/admin/whatsapp">
+                  <Button className="bg-green-600 hover:bg-green-700 text-white">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configurar Integração
+                  </Button>
+                </a>
+              </div>
+            </Card>
+
             {/* Outras Integrações */}
             <div>
               <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">
                 Outras Integrações
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {INTEGRATIONS.map((integration) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {INTEGRATIONS.filter(i => i.id !== "whatsapp").map((integration) => (
                   <IntegrationCard key={integration.id} integration={integration} />
                 ))}
               </div>

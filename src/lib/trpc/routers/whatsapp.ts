@@ -421,4 +421,370 @@ Entre em contato para mais informações.`,
       docsUrl: "https://developers.facebook.com/docs/whatsapp/cloud-api",
     };
   }),
+
+  /**
+   * Verifica conexão com a API do WhatsApp
+   */
+  verifyConnection: adminProcedure.mutation(async ({ ctx }) => {
+    const config = await db.query.whatsappConfig.findFirst({
+      where: eq(whatsappConfig.adminId, ctx.user.id),
+    });
+
+    if (!config?.accessToken || !config?.phoneNumberId) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Configuração incompleta",
+      });
+    }
+
+    try {
+      // Verificar token buscando informações do número
+      const response = await fetch(
+        `https://graph.facebook.com/v18.0/${config.phoneNumberId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${config.accessToken}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || "Erro ao verificar conexão");
+      }
+
+      // Atualizar informações do número
+      await db
+        .update(whatsappConfig)
+        .set({
+          displayPhoneNumber: data.display_phone_number,
+          verifiedName: data.verified_name,
+          qualityRating: data.quality_rating,
+          lastVerifiedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(whatsappConfig.adminId, ctx.user.id));
+
+      return {
+        success: true,
+        phoneNumber: data.display_phone_number,
+        verifiedName: data.verified_name,
+        qualityRating: data.quality_rating,
+      };
+    } catch (error: any) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: error.message || "Erro ao verificar conexão",
+      });
+    }
+  }),
+
+  /**
+   * Envia notificação de prazo para assistido
+   */
+  sendPrazoNotification: adminProcedure
+    .input(z.object({
+      assistidoId: z.number(),
+      phone: z.string(),
+      nomeAssistido: z.string(),
+      numeroProcesso: z.string(),
+      dataPrazo: z.string(),
+      tipoAto: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const config = await db.query.whatsappConfig.findFirst({
+        where: and(
+          eq(whatsappConfig.adminId, ctx.user.id),
+          eq(whatsappConfig.isActive, true)
+        ),
+      });
+
+      if (!config?.accessToken || !config?.phoneNumberId) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "WhatsApp não está configurado",
+        });
+      }
+
+      const formattedPhone = input.phone.replace(/\D/g, "");
+      const phoneWithCountry = formattedPhone.startsWith("55") ? formattedPhone : `55${formattedPhone}`;
+
+      const message = `⚖️ *Defensoria Pública - Lembrete de Prazo*
+
+Olá, ${input.nomeAssistido}!
+
+📋 *Processo:* ${input.numeroProcesso}
+📅 *Prazo:* ${input.dataPrazo}
+📝 *Ato:* ${input.tipoAto}
+
+Em caso de dúvidas, entre em contato com a Defensoria.
+
+_Mensagem automática do DefensorHub_`;
+
+      try {
+        const response = await fetch(
+          `https://graph.facebook.com/v18.0/${config.phoneNumberId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${config.accessToken}`,
+            },
+            body: JSON.stringify({
+              messaging_product: "whatsapp",
+              to: phoneWithCountry,
+              type: "text",
+              text: { body: message },
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error?.message || "Erro ao enviar notificação");
+        }
+
+        await db.insert(whatsappMessages).values({
+          configId: config.id,
+          toPhone: phoneWithCountry,
+          assistidoId: input.assistidoId,
+          messageType: "text",
+          content: message,
+          messageId: data.messages?.[0]?.id,
+          status: "sent",
+          context: "prazo",
+          sentById: ctx.user.id,
+          sentAt: new Date(),
+        });
+
+        return { success: true, messageId: data.messages?.[0]?.id };
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+    }),
+
+  /**
+   * Envia notificação de audiência para assistido
+   */
+  sendAudienciaNotification: adminProcedure
+    .input(z.object({
+      assistidoId: z.number(),
+      phone: z.string(),
+      nomeAssistido: z.string(),
+      numeroProcesso: z.string(),
+      dataAudiencia: z.string(),
+      horaAudiencia: z.string(),
+      local: z.string().optional(),
+      sala: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const config = await db.query.whatsappConfig.findFirst({
+        where: and(
+          eq(whatsappConfig.adminId, ctx.user.id),
+          eq(whatsappConfig.isActive, true)
+        ),
+      });
+
+      if (!config?.accessToken || !config?.phoneNumberId) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "WhatsApp não está configurado",
+        });
+      }
+
+      const formattedPhone = input.phone.replace(/\D/g, "");
+      const phoneWithCountry = formattedPhone.startsWith("55") ? formattedPhone : `55${formattedPhone}`;
+
+      const message = `⚖️ *Defensoria Pública - Audiência Agendada*
+
+Olá, ${input.nomeAssistido}!
+
+📋 *Processo:* ${input.numeroProcesso}
+📅 *Data:* ${input.dataAudiencia}
+🕐 *Horário:* ${input.horaAudiencia}
+${input.local ? `📍 *Local:* ${input.local}` : ""}
+${input.sala ? `🚪 *Sala:* ${input.sala}` : ""}
+
+*IMPORTANTE:* Compareça com 30 minutos de antecedência portando documento com foto.
+
+_Mensagem automática do DefensorHub_`;
+
+      try {
+        const response = await fetch(
+          `https://graph.facebook.com/v18.0/${config.phoneNumberId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${config.accessToken}`,
+            },
+            body: JSON.stringify({
+              messaging_product: "whatsapp",
+              to: phoneWithCountry,
+              type: "text",
+              text: { body: message },
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error?.message || "Erro ao enviar notificação");
+        }
+
+        await db.insert(whatsappMessages).values({
+          configId: config.id,
+          toPhone: phoneWithCountry,
+          assistidoId: input.assistidoId,
+          messageType: "text",
+          content: message,
+          messageId: data.messages?.[0]?.id,
+          status: "sent",
+          context: "audiencia",
+          sentById: ctx.user.id,
+          sentAt: new Date(),
+        });
+
+        return { success: true, messageId: data.messages?.[0]?.id };
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+    }),
+
+  /**
+   * Envia notificação de sessão do júri
+   */
+  sendJuriNotification: adminProcedure
+    .input(z.object({
+      assistidoId: z.number(),
+      phone: z.string(),
+      nomeAssistido: z.string(),
+      numeroProcesso: z.string(),
+      dataJuri: z.string(),
+      horaJuri: z.string(),
+      sala: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const config = await db.query.whatsappConfig.findFirst({
+        where: and(
+          eq(whatsappConfig.adminId, ctx.user.id),
+          eq(whatsappConfig.isActive, true)
+        ),
+      });
+
+      if (!config?.accessToken || !config?.phoneNumberId) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "WhatsApp não está configurado",
+        });
+      }
+
+      const formattedPhone = input.phone.replace(/\D/g, "");
+      const phoneWithCountry = formattedPhone.startsWith("55") ? formattedPhone : `55${formattedPhone}`;
+
+      const message = `⚖️ *Defensoria Pública - Sessão do Júri*
+
+Olá, ${input.nomeAssistido}!
+
+📋 *Processo:* ${input.numeroProcesso}
+📅 *Data:* ${input.dataJuri}
+🕐 *Horário:* ${input.horaJuri}
+${input.sala ? `🏛️ *Sala do Júri:* ${input.sala}` : ""}
+
+*IMPORTANTE:* 
+- Compareça com 1 hora de antecedência
+- Traga documento oficial com foto
+- Vista-se adequadamente
+
+_Mensagem automática do DefensorHub_`;
+
+      try {
+        const response = await fetch(
+          `https://graph.facebook.com/v18.0/${config.phoneNumberId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${config.accessToken}`,
+            },
+            body: JSON.stringify({
+              messaging_product: "whatsapp",
+              to: phoneWithCountry,
+              type: "text",
+              text: { body: message },
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error?.message || "Erro ao enviar notificação");
+        }
+
+        await db.insert(whatsappMessages).values({
+          configId: config.id,
+          toPhone: phoneWithCountry,
+          assistidoId: input.assistidoId,
+          messageType: "text",
+          content: message,
+          messageId: data.messages?.[0]?.id,
+          status: "sent",
+          context: "juri",
+          sentById: ctx.user.id,
+          sentAt: new Date(),
+        });
+
+        return { success: true, messageId: data.messages?.[0]?.id };
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+    }),
+
+  /**
+   * Gera token para webhook
+   */
+  generateWebhookToken: adminProcedure.mutation(async ({ ctx }) => {
+    const token = crypto.randomUUID();
+    
+    await db
+      .update(whatsappConfig)
+      .set({
+        webhookVerifyToken: token,
+        updatedAt: new Date(),
+      })
+      .where(eq(whatsappConfig.adminId, ctx.user.id));
+    
+    return { token };
+  }),
+
+  /**
+   * Retorna URL do webhook e token
+   */
+  getWebhookInfo: adminProcedure.query(async ({ ctx }) => {
+    const config = await db.query.whatsappConfig.findFirst({
+      where: eq(whatsappConfig.adminId, ctx.user.id),
+    });
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
+    const webhookUrl = baseUrl ? `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/api/webhooks/whatsapp` : null;
+
+    return {
+      webhookUrl,
+      verifyToken: config?.webhookVerifyToken || null,
+      isConfigured: !!config?.webhookVerifyToken,
+    };
+  }),
 });

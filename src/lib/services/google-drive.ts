@@ -715,19 +715,79 @@ export async function uploadFileFromUrl(
 }
 
 /**
+ * Verifica se um arquivo com o mesmo nome já existe em uma pasta
+ * Retorna o arquivo existente ou null se não existir
+ */
+export async function findExistingFile(
+  fileName: string,
+  folderId: string
+): Promise<DriveFileInfo | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    const query = `name='${fileName.replace(/'/g, "\\'")}' and '${folderId}' in parents and trashed=false`;
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,size,modifiedTime,webViewLink,md5Checksum)`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Erro ao buscar arquivo existente:", await response.text());
+      return null;
+    }
+
+    const data = await response.json();
+    if (data.files && data.files.length > 0) {
+      return data.files[0];
+    }
+    return null;
+  } catch (error) {
+    console.error("Erro ao buscar arquivo existente:", error);
+    return null;
+  }
+}
+
+/**
  * Faz upload de um arquivo buffer para o Drive
+ * Opcionalmente evita duplicações verificando se arquivo já existe
  */
 export async function uploadFileBuffer(
   buffer: Buffer,
   fileName: string,
   mimeType: string,
   folderId: string,
-  description?: string
+  description?: string,
+  options?: {
+    preventDuplicates?: boolean; // Se true, não faz upload se já existe
+    updateIfExists?: boolean;    // Se true, atualiza arquivo existente
+  }
 ): Promise<DriveFileInfo | null> {
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
 
   try {
+    // Verificar duplicação se solicitado
+    if (options?.preventDuplicates || options?.updateIfExists) {
+      const existingFile = await findExistingFile(fileName, folderId);
+      
+      if (existingFile) {
+        if (options?.preventDuplicates && !options?.updateIfExists) {
+          console.log(`[Drive] Arquivo já existe, pulando upload: ${fileName}`);
+          return existingFile; // Retorna o arquivo existente
+        }
+        
+        if (options?.updateIfExists) {
+          console.log(`[Drive] Atualizando arquivo existente: ${fileName}`);
+          return await updateFileInDrive(existingFile.id, buffer, mimeType);
+        }
+      }
+    }
+
     const metadata = {
       name: fileName,
       parents: [folderId],
@@ -1125,5 +1185,311 @@ export async function getSyncLogs(
   } catch (error) {
     console.error("Erro ao obter logs de sincronização:", error);
     return [];
+  }
+}
+
+// ==========================================
+// SINCRONIZAÇÃO COM PAUTA E INTIMAÇÕES
+// ==========================================
+
+/**
+ * Sincroniza documento de pauta/intimação com o Drive
+ * Evita duplicações verificando se o arquivo já existe
+ */
+export async function syncPautaDocument(
+  processoId: number,
+  driveFolderId: string,
+  documento: {
+    nome: string;
+    tipo: "pauta" | "intimacao" | "despacho" | "sentenca" | "outros";
+    conteudo?: Buffer;
+    url?: string;
+    dataDocumento?: Date;
+  }
+): Promise<{ success: boolean; fileId?: string; message: string }> {
+  try {
+    // Verificar se pasta existe
+    const folderInfo = await getFolderInfo(driveFolderId);
+    if (!folderInfo) {
+      return { success: false, message: "Pasta do processo não encontrada no Drive" };
+    }
+
+    // Mapear tipo para subpasta
+    const subpastaMap: Record<string, string> = {
+      pauta: "04 - Audiências",
+      intimacao: "03 - Decisões e Sentenças",
+      despacho: "03 - Decisões e Sentenças",
+      sentenca: "03 - Decisões e Sentenças",
+      outros: "05 - Outros",
+    };
+
+    const subpastaNome = subpastaMap[documento.tipo] || "05 - Outros";
+    
+    // Buscar ou criar subpasta
+    const subpasta = await criarOuEncontrarPasta(subpastaNome, driveFolderId);
+    if (!subpasta) {
+      return { success: false, message: "Erro ao criar/encontrar subpasta" };
+    }
+
+    // Formatar nome do arquivo com data
+    let nomeArquivo = documento.nome;
+    if (documento.dataDocumento) {
+      const dataStr = documento.dataDocumento.toISOString().split("T")[0];
+      if (!nomeArquivo.includes(dataStr)) {
+        nomeArquivo = `${dataStr}_${nomeArquivo}`;
+      }
+    }
+
+    // Verificar duplicação
+    const arquivoExistente = await findExistingFile(nomeArquivo, subpasta.id);
+    if (arquivoExistente) {
+      console.log(`[Drive] Documento já existe, pulando: ${nomeArquivo}`);
+      return { 
+        success: true, 
+        fileId: arquivoExistente.id, 
+        message: "Documento já sincronizado anteriormente" 
+      };
+    }
+
+    // Upload do documento
+    let resultado: DriveFileInfo | null = null;
+    
+    if (documento.conteudo) {
+      resultado = await uploadFileBuffer(
+        documento.conteudo,
+        nomeArquivo,
+        "application/pdf", // Default para PDF
+        subpasta.id,
+        `Documento ${documento.tipo} - Processo ${processoId}`,
+        { preventDuplicates: true }
+      );
+    } else if (documento.url) {
+      resultado = await uploadFileFromUrl(
+        documento.url,
+        nomeArquivo,
+        "application/pdf",
+        subpasta.id,
+        `Documento ${documento.tipo} - Processo ${processoId}`
+      );
+    }
+
+    if (resultado) {
+      return {
+        success: true,
+        fileId: resultado.id,
+        message: "Documento sincronizado com sucesso",
+      };
+    }
+
+    return { success: false, message: "Falha ao fazer upload do documento" };
+  } catch (error) {
+    console.error("Erro ao sincronizar documento da pauta:", error);
+    return { 
+      success: false, 
+      message: error instanceof Error ? error.message : "Erro desconhecido" 
+    };
+  }
+}
+
+/**
+ * Sincroniza múltiplos documentos de uma pauta/intimação
+ * Processa em lote com prevenção de duplicações
+ */
+export async function syncMultiplePautaDocuments(
+  processoId: number,
+  driveFolderId: string,
+  documentos: Array<{
+    nome: string;
+    tipo: "pauta" | "intimacao" | "despacho" | "sentenca" | "outros";
+    conteudo?: Buffer;
+    url?: string;
+    dataDocumento?: Date;
+  }>
+): Promise<{
+  total: number;
+  sincronizados: number;
+  duplicados: number;
+  erros: number;
+  detalhes: Array<{ nome: string; status: string; message: string }>;
+}> {
+  const resultado = {
+    total: documentos.length,
+    sincronizados: 0,
+    duplicados: 0,
+    erros: 0,
+    detalhes: [] as Array<{ nome: string; status: string; message: string }>,
+  };
+
+  for (const documento of documentos) {
+    const sync = await syncPautaDocument(processoId, driveFolderId, documento);
+    
+    if (sync.success) {
+      if (sync.message.includes("já sincronizado")) {
+        resultado.duplicados++;
+        resultado.detalhes.push({
+          nome: documento.nome,
+          status: "duplicado",
+          message: sync.message,
+        });
+      } else {
+        resultado.sincronizados++;
+        resultado.detalhes.push({
+          nome: documento.nome,
+          status: "sucesso",
+          message: sync.message,
+        });
+      }
+    } else {
+      resultado.erros++;
+      resultado.detalhes.push({
+        nome: documento.nome,
+        status: "erro",
+        message: sync.message,
+      });
+    }
+  }
+
+  return resultado;
+}
+
+/**
+ * Cria registro de audiência no Drive (arquivo de texto com informações)
+ */
+export async function registrarAudienciaNoDrive(
+  driveFolderId: string,
+  audiencia: {
+    data: Date;
+    hora: string;
+    tipo: string;
+    local?: string;
+    observacoes?: string;
+    numeroProcesso: string;
+    nomeAssistido: string;
+  }
+): Promise<{ success: boolean; fileId?: string; message: string }> {
+  try {
+    // Buscar ou criar pasta de audiências
+    const pastaAudiencias = await criarOuEncontrarPasta("04 - Audiências", driveFolderId);
+    if (!pastaAudiencias) {
+      return { success: false, message: "Erro ao criar pasta de audiências" };
+    }
+
+    // Formatar nome do arquivo
+    const dataStr = audiencia.data.toISOString().split("T")[0];
+    const nomeArquivo = `${dataStr}_Audiencia_${audiencia.tipo.replace(/\s+/g, "_")}.txt`;
+
+    // Verificar se já existe
+    const existente = await findExistingFile(nomeArquivo, pastaAudiencias.id);
+    if (existente) {
+      return {
+        success: true,
+        fileId: existente.id,
+        message: "Registro de audiência já existe",
+      };
+    }
+
+    // Criar conteúdo do arquivo
+    const conteudo = `REGISTRO DE AUDIÊNCIA
+${"=".repeat(50)}
+
+Processo: ${audiencia.numeroProcesso}
+Assistido: ${audiencia.nomeAssistido}
+
+Data: ${dataStr}
+Horário: ${audiencia.hora}
+Tipo: ${audiencia.tipo}
+${audiencia.local ? `Local: ${audiencia.local}` : ""}
+
+${audiencia.observacoes ? `\nObservações:\n${audiencia.observacoes}` : ""}
+
+${"=".repeat(50)}
+Registrado automaticamente pelo DefensorHub
+`;
+
+    const buffer = Buffer.from(conteudo, "utf-8");
+    const resultado = await uploadFileBuffer(
+      buffer,
+      nomeArquivo,
+      "text/plain",
+      pastaAudiencias.id,
+      `Audiência ${audiencia.tipo} - ${dataStr}`,
+      { preventDuplicates: true }
+    );
+
+    if (resultado) {
+      return {
+        success: true,
+        fileId: resultado.id,
+        message: "Registro de audiência criado no Drive",
+      };
+    }
+
+    return { success: false, message: "Falha ao criar registro" };
+  } catch (error) {
+    console.error("Erro ao registrar audiência no Drive:", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
+}
+
+/**
+ * Verifica integridade da sincronização entre banco local e Drive
+ * Retorna arquivos que existem no banco mas não no Drive e vice-versa
+ */
+export async function verificarIntegridadeSincronizacao(
+  folderId: string
+): Promise<{
+  apenasNoBanco: Array<{ id: number; nome: string; driveFileId: string }>;
+  apenasNoDrive: Array<{ id: string; nome: string }>;
+  sincronizados: number;
+}> {
+  const resultado = {
+    apenasNoBanco: [] as Array<{ id: number; nome: string; driveFileId: string }>,
+    apenasNoDrive: [] as Array<{ id: string; nome: string }>,
+    sincronizados: 0,
+  };
+
+  try {
+    // Listar arquivos do banco local
+    const arquivosBanco = await db
+      .select()
+      .from(driveFiles)
+      .where(eq(driveFiles.driveFolderId, folderId));
+
+    // Listar arquivos do Drive
+    const arquivosDrive = await listAllFilesRecursively(folderId, 3);
+    
+    const driveIdsSet = new Set(arquivosDrive.map((f) => f.id));
+    const bancoIdsSet = new Set(arquivosBanco.map((f) => f.driveFileId));
+
+    // Arquivos no banco mas não no Drive
+    for (const arquivo of arquivosBanco) {
+      if (!driveIdsSet.has(arquivo.driveFileId)) {
+        resultado.apenasNoBanco.push({
+          id: arquivo.id,
+          nome: arquivo.name,
+          driveFileId: arquivo.driveFileId,
+        });
+      } else {
+        resultado.sincronizados++;
+      }
+    }
+
+    // Arquivos no Drive mas não no banco
+    for (const arquivo of arquivosDrive) {
+      if (!bancoIdsSet.has(arquivo.id)) {
+        resultado.apenasNoDrive.push({
+          id: arquivo.id,
+          nome: arquivo.name,
+        });
+      }
+    }
+
+    return resultado;
+  } catch (error) {
+    console.error("Erro ao verificar integridade:", error);
+    return resultado;
   }
 }

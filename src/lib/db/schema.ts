@@ -857,6 +857,7 @@ export const whatsappMessages = pgTable("whatsapp_messages", {
   deliveredAt: timestamp("delivered_at"),
   readAt: timestamp("read_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("whatsapp_messages_config_id_idx").on(table.configId),
   index("whatsapp_messages_assistido_id_idx").on(table.assistidoId),
