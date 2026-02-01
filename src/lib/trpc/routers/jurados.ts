@@ -89,6 +89,9 @@ export const juradosRouter = router({
         perfilPsicologico: z.string().optional(),
         perfilTendencia: z.string().optional(),
         observacoes: z.string().optional(),
+        reuniaoPeriodica: z.string().optional(),
+        tipoJurado: z.string().optional(),
+        empresa: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

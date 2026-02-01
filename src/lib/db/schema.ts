@@ -1120,6 +1120,11 @@ export const jurados = pgTable("jurados", {
   // Status
   ativo: boolean("ativo").default(true),
   
+  // Classificação da ata de sorteio
+  reuniaoPeriodica: varchar("reuniao_periodica", { length: 10 }), // '1', '2', '3'
+  tipoJurado: varchar("tipo_jurado", { length: 20 }), // 'titular' | 'suplente'
+  empresa: varchar("empresa", { length: 150 }),
+  
   // Metadados
   createdById: integer("created_by_id")
     .references(() => users.id),
@@ -1131,6 +1136,8 @@ export const jurados = pgTable("jurados", {
   index("jurados_sessao_juri_id_idx").on(table.sessaoJuriId),
   index("jurados_tendencia_voto_idx").on(table.tendenciaVoto),
   index("jurados_status_idx").on(table.status),
+  index("jurados_reuniao_idx").on(table.reuniaoPeriodica),
+  index("jurados_tipo_idx").on(table.tipoJurado),
   index("jurados_ativo_idx").on(table.ativo),
 ]);
 

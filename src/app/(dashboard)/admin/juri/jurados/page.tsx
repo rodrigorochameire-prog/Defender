@@ -78,16 +78,7 @@ interface JuradoImportado {
   reuniao: string;
 }
 
-// Dados mockados
-const juradosMock: JuradoPerfil[] = [
-  { id: 1, nome: "Maria Helena Silva", genero: "F", idade: 52, profissao: "Professora Universitária", perfilDominante: "analitico", totalSessoes: 8, absolvicoes: 6, condenacoes: 2, taxaAbsolvicao: 75, confiabilidadePerfil: "alta" },
-  { id: 2, nome: "José Carlos Mendes", genero: "M", idade: 61, profissao: "Empresário", perfilDominante: "autoritario", totalSessoes: 12, absolvicoes: 3, condenacoes: 9, taxaAbsolvicao: 25, confiabilidadePerfil: "alta" },
-  { id: 3, nome: "Ana Paula Ferreira", genero: "F", idade: 38, profissao: "Enfermeira", perfilDominante: "empatico", totalSessoes: 5, absolvicoes: 4, condenacoes: 1, taxaAbsolvicao: 80, confiabilidadePerfil: "media" },
-  { id: 4, nome: "Pedro Henrique Costa", genero: "M", idade: 45, profissao: "Engenheiro Civil", perfilDominante: "analitico", totalSessoes: 6, absolvicoes: 3, condenacoes: 3, taxaAbsolvicao: 50, confiabilidadePerfil: "media" },
-  { id: 5, nome: "Lucia Menezes", genero: "F", idade: 55, profissao: "Comerciante", perfilDominante: "conciliador", totalSessoes: 10, absolvicoes: 6, condenacoes: 4, taxaAbsolvicao: 60, confiabilidadePerfil: "alta" },
-  { id: 6, nome: "Roberto Almeida Junior", genero: "M", idade: 58, profissao: "Militar Reformado", perfilDominante: "autoritario", totalSessoes: 15, absolvicoes: 4, condenacoes: 11, taxaAbsolvicao: 27, confiabilidadePerfil: "alta" },
-  { id: 7, nome: "Juliana Ribeiro Melo", genero: "F", idade: 34, profissao: "Assistente Social", perfilDominante: "empatico", totalSessoes: 7, absolvicoes: 6, condenacoes: 1, taxaAbsolvicao: 86, confiabilidadePerfil: "alta" },
-];
+// Dados mockados removidos - agora usa apenas banco de dados
 
 // ============================================
 // HELPERS
@@ -712,8 +703,9 @@ export default function JuradosPage() {
         await createJuradoMutation.mutateAsync({
           nome: jurado.nome,
           profissao: jurado.profissao || undefined,
-          genero: undefined, // Não temos essa info na ata
-          observacoes: `Importado da ata - ${jurado.reuniao}ª Reunião - ${jurado.tipo}. Empresa: ${jurado.empresa || "-"}`,
+          empresa: jurado.empresa || undefined,
+          reuniaoPeriodica: jurado.reuniao,
+          tipoJurado: jurado.tipo,
         });
         sucessos++;
       } catch (error) {
@@ -736,7 +728,7 @@ export default function JuradosPage() {
 
   // Converter jurados do banco para o formato do componente
   const juradosDoSistema: JuradoPerfil[] = useMemo(() => {
-    if (!juradosDB) return juradosMock;
+    if (!juradosDB || juradosDB.length === 0) return [];
     
     return juradosDB.map((j: any) => ({
       id: j.id,
@@ -751,8 +743,9 @@ export default function JuradosPage() {
       votosAbsolvicao: j.votosAbsolvicao || 0,
       votosCondenacao: j.votosCondenacao || 0,
       ultimaParticipacao: j.updatedAt ? new Date(j.updatedAt).toISOString().split("T")[0] : undefined,
-      reuniao: "1", // Default
-      tipo: "titular" as const,
+      reuniao: j.reuniaoPeriodica || "1",
+      tipo: (j.tipoJurado as "titular" | "suplente") || "titular",
+      empresa: j.empresa || undefined,
     }));
   }, [juradosDB]);
 
