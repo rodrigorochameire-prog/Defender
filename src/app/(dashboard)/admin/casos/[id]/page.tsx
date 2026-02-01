@@ -370,12 +370,11 @@ export default function CasoDetailPage() {
   );
 
   // ==========================================
-  // USAR MOCK DATA SE O BANCO ESTIVER VAZIO
+  // USAR APENAS DADOS DO BANCO (sem mock)
   // ==========================================
-  const useMockData = !casoFromDB && !isLoading;
-  const caso = useMockData ? MOCK_CASOS_DETAIL[casoId] : casoFromDB;
-  const timeline = useMockData ? MOCK_TIMELINE : timelineFromDB;
-  const personas = useMockData ? MOCK_PERSONAS : personasFromDB;
+  const caso = casoFromDB;
+  const timeline = timelineFromDB;
+  const personas = personasFromDB;
 
   if (isLoading) {
     return (

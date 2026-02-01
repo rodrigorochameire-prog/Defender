@@ -1252,27 +1252,11 @@ export default function CasosPage() {
   });
 
   // ==========================================
-  // USAR MOCK DATA SE O BANCO ESTIVER VAZIO
+  // USAR APENAS DADOS DO BANCO (sem mock)
   // ==========================================
-  const useMockData = allCasosFromDB.length === 0 && !isLoading;
-  
-  // Filtrar mock data conforme os filtros selecionados
-  const filteredMockCasos = useMemo(() => {
-    return MOCK_CASOS.filter((caso) => {
-      const matchAtribuicao = filterAtribuicao === "all" || caso.atribuicao === filterAtribuicao;
-      const matchStatus = filterStatus === "all" || caso.status === filterStatus;
-      const matchFase = filterFase === "all" || caso.fase === filterFase;
-      const matchSearch = !searchTerm || 
-        caso.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (caso.codigo && caso.codigo.toLowerCase().includes(searchTerm.toLowerCase()));
-      return matchAtribuicao && matchStatus && matchFase && matchSearch;
-    });
-  }, [filterAtribuicao, filterStatus, filterFase, searchTerm]);
-
-  // Usar dados do banco ou mock
-  const casos = useMockData ? filteredMockCasos : casosFromDB;
-  const stats = useMockData ? MOCK_STATS : statsFromDB;
-  const allCasos = useMockData ? MOCK_CASOS : allCasosFromDB;
+  const casos = casosFromDB;
+  const stats = statsFromDB;
+  const allCasos = allCasosFromDB;
 
   const countByAtribuicao = useMemo(() => {
     const counts: Record<string, number> = { all: allCasos.length };
