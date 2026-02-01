@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { SwissCard, SwissCardContent, SwissCardHeader, SwissCardTitle, SwissCardDescription } from "@/components/ui/swiss-card";
-import { SwissTable, SwissTableBody, SwissTableCell, SwissTableHead, SwissTableHeader, SwissTableRow } from "@/components/shared/swiss-table";
+import { useState, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -21,8 +22,6 @@ import {
   Filter,
   Download,
   Eye,
-  Edit,
-  MoreHorizontal,
   Calendar,
   CheckCircle2,
   XCircle,
@@ -38,533 +37,557 @@ import {
   Brain,
   UserCheck,
   Sparkles,
+  Clock,
+  Scale,
+  Lock,
+  TrendingUp,
+  ChevronRight,
+  CalendarDays,
 } from "lucide-react";
 import Link from "next/link";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { format, parseISO, isFuture } from "date-fns";
+import { format, parseISO, isFuture, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { trpc } from "@/lib/trpc/client";
 
-// Dados mockados de sessões
-const mockSessoesJuri = [
-  { 
-    id: 1, 
-    dataSessao: "2026-01-17T09:00:00",
-    assistidoNome: "Roberto Silva Nascimento",
-    processo: "8012906-74.2025.8.05.0039",
-    defensorNome: "Dr. Rodrigo",
-    sala: "Plenário 1",
-    status: "agendada",
-    resultado: null,
-    assunto: "Homicídio Qualificado",
-  },
-  { 
-    id: 2, 
-    dataSessao: "2026-01-19T09:00:00",
-    assistidoNome: "Marcos Paulo Souza",
-    processo: "0001234-56.2025.8.05.0039",
-    defensorNome: "Dra. Juliane",
-    sala: "Plenário 2",
-    status: "agendada",
-    resultado: null,
-    assunto: "Tentativa de Homicídio",
-  },
-  { 
-    id: 3, 
-    dataSessao: "2026-01-10T09:00:00",
-    assistidoNome: "Carlos Eduardo Lima",
-    processo: "0005678-90.2024.8.05.0039",
-    defensorNome: "Dr. Rodrigo",
-    sala: "Plenário 1",
-    status: "realizada",
-    resultado: "absolvicao",
-    assunto: "Homicídio Simples",
-  },
-  { 
-    id: 4, 
-    dataSessao: "2026-01-08T09:00:00",
-    assistidoNome: "José Ferreira Santos",
-    processo: "0009012-34.2024.8.05.0039",
-    defensorNome: "Dra. Juliane",
-    sala: "Plenário 2",
-    status: "realizada",
-    resultado: "condenacao",
-    assunto: "Homicídio Qualificado",
-    penaAplicada: "15 anos de reclusão",
-  },
-];
-
-// Acesso rápido a ferramentas do Plenário
-const acessoPlenario = [
+// ============================================
+// FERRAMENTAS DO PLENÁRIO
+// ============================================
+const ferramentasPlenario = [
   {
     id: "cockpit",
     titulo: "Plenário Live",
-    descricao: "Cockpit para o dia do julgamento",
+    descricao: "Cockpit para o dia do julgamento com timer, anotações e controle de reações",
     href: "/admin/juri/cockpit",
     icon: Zap,
-    accent: "bg-amber-50 dark:bg-amber-950/20 border-amber-200/60",
-    iconColor: "text-amber-600",
+    gradient: "from-amber-500 to-orange-600",
+    bgLight: "bg-amber-50 dark:bg-amber-950/30",
     isPremium: true,
   },
   {
     id: "avaliacao",
     titulo: "Avaliação do Júri",
-    descricao: "Formulário de observação comportamental",
+    descricao: "Formulário de observação comportamental dos jurados",
     href: "/admin/juri/avaliacao",
     icon: ClipboardCheck,
-    accent: "bg-purple-50 dark:bg-purple-950/20 border-purple-200/60",
-    iconColor: "text-purple-600",
+    gradient: "from-purple-500 to-violet-600",
+    bgLight: "bg-purple-50 dark:bg-purple-950/30",
     isNew: true,
   },
   {
     id: "jurados",
     titulo: "Banco de Jurados",
-    descricao: "Perfil e histórico de votações",
+    descricao: "Perfil e histórico de votações de cada jurado",
     href: "/admin/jurados",
     icon: UserCheck,
-    accent: "bg-blue-50 dark:bg-blue-950/20 border-blue-200/60",
-    iconColor: "text-blue-600",
+    gradient: "from-blue-500 to-cyan-600",
+    bgLight: "bg-blue-50 dark:bg-blue-950/30",
   },
   {
     id: "profiler",
     titulo: "Profiler de Jurados",
-    descricao: "Score de empatia e análise",
+    descricao: "Score de empatia e análise comportamental com IA",
     href: "/admin/jurados/profiler",
     icon: Brain,
-    accent: "bg-violet-50 dark:bg-violet-950/20 border-violet-200/60",
-    iconColor: "text-violet-600",
+    gradient: "from-violet-500 to-purple-600",
+    bgLight: "bg-violet-50 dark:bg-violet-950/30",
     isPremium: true,
   },
 ];
 
-// Ferramentas estratégicas do Júri
-const ferramentasJuri = [
+// ============================================
+// FERRAMENTAS ESTRATÉGICAS
+// ============================================
+const ferramentasEstrategicas = [
   {
     id: "investigacao",
-    titulo: "Investigação & OSINT",
-    descricao: "Kanban de providências e diligências",
+    titulo: "Investigação Defensiva",
+    descricao: "Kanban de providências, diligências e OSINT",
     href: "/admin/juri/investigacao",
     icon: FileSearch,
-    accent: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/60",
-    iconColor: "text-emerald-600",
+    color: "text-emerald-600",
+    bgLight: "bg-emerald-50 dark:bg-emerald-950/30",
   },
   {
     id: "provas",
     titulo: "Matriz de Provas",
-    descricao: "Comparador e contradições",
+    descricao: "Comparador de versões e contradições",
     href: "/admin/juri/provas",
-    icon: ClipboardCheck,
-    accent: "bg-sky-50 dark:bg-sky-950/20 border-sky-200/60",
-    iconColor: "text-sky-600",
+    icon: Scale,
+    color: "text-sky-600",
+    bgLight: "bg-sky-50 dark:bg-sky-950/30",
   },
   {
     id: "teses",
     titulo: "Teses do Júri",
-    descricao: "Narrativa e argumentos",
+    descricao: "Narrativa, argumentos e quesitos",
     href: "/admin/juri/teses",
     icon: Target,
-    accent: "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200/60",
-    iconColor: "text-indigo-600",
+    color: "text-indigo-600",
+    bgLight: "bg-indigo-50 dark:bg-indigo-950/30",
   },
   {
     id: "laboratorio",
     titulo: "Laboratório de Oratória",
-    descricao: "Timer e análise de discurso",
+    descricao: "Timer, análise de discurso e treino",
     href: "/admin/juri/laboratorio",
     icon: Mic,
-    accent: "bg-rose-50 dark:bg-rose-950/20 border-rose-200/60",
-    iconColor: "text-rose-600",
+    color: "text-rose-600",
+    bgLight: "bg-rose-50 dark:bg-rose-950/30",
     isPremium: true,
   },
 ];
 
-function getStatusBadge(status: string) {
-  const configs: Record<string, { label: string, className: string }> = {
-    agendada: { label: "Agendada", className: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border-0" },
-    realizada: { label: "Realizada", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-0" },
-    adiada: { label: "Adiada", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-0" },
-    cancelada: { label: "Cancelada", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-0" },
+// ============================================
+// HELPERS
+// ============================================
+function getStatusConfig(status: string) {
+  const configs: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
+    AGENDADA: { label: "Agendada", color: "text-purple-700 dark:text-purple-400", bgColor: "bg-purple-100 dark:bg-purple-900/40", icon: Calendar },
+    agendada: { label: "Agendada", color: "text-purple-700 dark:text-purple-400", bgColor: "bg-purple-100 dark:bg-purple-900/40", icon: Calendar },
+    REALIZADA: { label: "Realizada", color: "text-emerald-700 dark:text-emerald-400", bgColor: "bg-emerald-100 dark:bg-emerald-900/40", icon: CheckCircle2 },
+    realizada: { label: "Realizada", color: "text-emerald-700 dark:text-emerald-400", bgColor: "bg-emerald-100 dark:bg-emerald-900/40", icon: CheckCircle2 },
+    ADIADA: { label: "Adiada", color: "text-amber-700 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/40", icon: Clock },
+    adiada: { label: "Adiada", color: "text-amber-700 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/40", icon: Clock },
+    CANCELADA: { label: "Cancelada", color: "text-rose-700 dark:text-rose-400", bgColor: "bg-rose-100 dark:bg-rose-900/40", icon: XCircle },
+    cancelada: { label: "Cancelada", color: "text-rose-700 dark:text-rose-400", bgColor: "bg-rose-100 dark:bg-rose-900/40", icon: XCircle },
   };
-  const config = configs[status] || { label: status, className: "bg-slate-100 text-slate-700 border-0" };
-  return <Badge className={cn("text-xs sm:text-xs font-medium", config.className)}>{config.label}</Badge>;
+  return configs[status] || { label: status, color: "text-zinc-700", bgColor: "bg-zinc-100", icon: Calendar };
 }
 
-function getResultadoBadge(resultado: string | null) {
+function getResultadoConfig(resultado: string | null) {
   if (!resultado) return null;
-  
-  const configs: Record<string, { label: string, className: string, icon: React.ComponentType<{ className?: string }> }> = {
-    absolvicao: { label: "Absolvição", className: "bg-emerald-600 text-white border-0", icon: CheckCircle2 },
-    condenacao: { label: "Condenação", className: "bg-rose-600 text-white border-0", icon: XCircle },
-    desclassificacao: { label: "Desclassificação", className: "bg-amber-500 text-white border-0", icon: AlertTriangle },
+  const configs: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
+    absolvicao: { label: "Absolvição", color: "text-white", bgColor: "bg-emerald-600", icon: CheckCircle2 },
+    ABSOLVICAO: { label: "Absolvição", color: "text-white", bgColor: "bg-emerald-600", icon: CheckCircle2 },
+    condenacao: { label: "Condenação", color: "text-white", bgColor: "bg-rose-600", icon: XCircle },
+    CONDENACAO: { label: "Condenação", color: "text-white", bgColor: "bg-rose-600", icon: XCircle },
+    desclassificacao: { label: "Desclassificação", color: "text-white", bgColor: "bg-amber-500", icon: AlertTriangle },
+    DESCLASSIFICACAO: { label: "Desclassificação", color: "text-white", bgColor: "bg-amber-500", icon: AlertTriangle },
   };
-  
-  const config = configs[resultado] || { label: resultado, className: "bg-slate-500 text-white border-0", icon: AlertTriangle };
-  const Icon = config.icon;
-  
-  return (
-    <Badge className={cn("gap-1 text-xs sm:text-xs font-medium", config.className)}>
-      <Icon className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-      {config.label}
-    </Badge>
-  );
+  return configs[resultado] || { label: resultado, color: "text-white", bgColor: "bg-zinc-500", icon: AlertTriangle };
 }
 
+function getProximidadeLabel(data: Date) {
+  if (isToday(data)) return { label: "Hoje", urgent: true };
+  if (isTomorrow(data)) return { label: "Amanhã", urgent: true };
+  const dias = differenceInDays(data, new Date());
+  if (dias <= 7) return { label: `${dias} dias`, urgent: dias <= 3 };
+  return { label: format(data, "dd/MM", { locale: ptBR }), urgent: false };
+}
+
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
 export default function JuriPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredSessoes = mockSessoesJuri.filter((sessao) => {
-    const matchesSearch = 
-      sessao.assistidoNome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sessao.processo.includes(searchTerm) ||
-      sessao.assunto.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || sessao.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }).sort((a, b) => new Date(a.dataSessao).getTime() - new Date(b.dataSessao).getTime());
+  // Buscar dados reais
+  const { data: sessoes, isLoading } = trpc.juri.list.useQuery({
+    status: statusFilter === "all" ? undefined : statusFilter,
+    limit: 50,
+  });
 
-  const stats = {
-    total: mockSessoesJuri.length,
-    agendadas: mockSessoesJuri.filter(s => s.status === "agendada").length,
-    absolvicoes: mockSessoesJuri.filter(s => s.resultado === "absolvicao").length,
-    condenacoes: mockSessoesJuri.filter(s => s.resultado === "condenacao").length,
-  };
+  const { data: proximasSessoes, isLoading: loadingProximas } = trpc.juri.proximas.useQuery({ dias: 30 });
 
-  const proximasSessoes = mockSessoesJuri
-    .filter(s => s.status === "agendada" && isFuture(parseISO(s.dataSessao)))
-    .slice(0, 3);
+  // Filtrar por busca
+  const sessoesFiltradas = useMemo(() => {
+    if (!sessoes) return [];
+    if (!searchTerm.trim()) return sessoes;
+    const query = searchTerm.toLowerCase();
+    return sessoes.filter((s) =>
+      s.assistidoNome?.toLowerCase().includes(query) ||
+      s.defensorNome?.toLowerCase().includes(query) ||
+      s.processo?.numeroAutos?.includes(query)
+    );
+  }, [sessoes, searchTerm]);
+
+  // Stats calculados
+  const stats = useMemo(() => {
+    if (!sessoes) return { total: 0, agendadas: 0, absolvicoes: 0, condenacoes: 0, taxaAbsolvicao: 0 };
+    const total = sessoes.length;
+    const agendadas = sessoes.filter((s) => s.status === "AGENDADA" || s.status === "agendada").length;
+    const realizadas = sessoes.filter((s) => s.status === "REALIZADA" || s.status === "realizada");
+    const absolvicoes = realizadas.filter((s) => s.resultado === "absolvicao" || s.resultado === "ABSOLVICAO").length;
+    const condenacoes = realizadas.filter((s) => s.resultado === "condenacao" || s.resultado === "CONDENACAO").length;
+    const taxaAbsolvicao = realizadas.length > 0 ? Math.round((absolvicoes / realizadas.length) * 100) : 0;
+    return { total, agendadas, absolvicoes, condenacoes, taxaAbsolvicao };
+  }, [sessoes]);
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Sub-header unificado */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <Gavel className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      {/* Header Premium */}
+      <div className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
+        <div className="px-4 md:px-6 py-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <Gavel className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">Tribunal do Júri</h1>
+                <p className="text-sm text-zinc-400">Gestão completa de sessões plenárias</p>
+              </div>
             </div>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-              {stats.total} sessões • {stats.agendadas} agendadas
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-0.5">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              title="Exportar"
-            >
-              <Download className="w-3.5 h-3.5" />
-            </Button>
-            <Link href="/admin/juri/nova-sessao">
-              <Button 
-                size="sm"
-                className="h-7 px-2.5 ml-1.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5 mr-1" />
-                Nova Sessão
+            
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="bg-transparent border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
               </Button>
-            </Link>
+              <Link href="/admin/juri/nova">
+                <Button size="sm" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-amber-500/20">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Sessão
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Stats no header */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+            <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-500/20">
+                  <Calendar className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{stats.agendadas}</p>
+                  <p className="text-xs text-zinc-400">Agendadas</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-emerald-500/20">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{stats.absolvicoes}</p>
+                  <p className="text-xs text-zinc-400">Absolvições</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-rose-500/20">
+                  <XCircle className="w-5 h-5 text-rose-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{stats.condenacoes}</p>
+                  <p className="text-xs text-zinc-400">Condenações</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/20">
+                  <TrendingUp className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{stats.taxaAbsolvicao}%</p>
+                  <p className="text-xs text-zinc-400">Taxa Absolvição</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Conteúdo Principal */}
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Cards */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-3">
-        <SwissCard className="border-l-[3px] border-l-purple-500 dark:border-l-purple-400">
-          <SwissCardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl sm:text-3xl font-bold">{stats.agendadas}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">Agendadas</p>
-              </div>
-              <div className="hidden sm:flex w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 items-center justify-center">
-                <Calendar className="h-5 w-5 text-purple-600" />
-              </div>
-            </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-[3px] border-l-emerald-500 dark:border-l-emerald-400">
-          <SwissCardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl sm:text-3xl font-bold">{stats.absolvicoes}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">Absolvições</p>
-              </div>
-              <div className="hidden sm:flex w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 items-center justify-center">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-              </div>
-            </div>
-          </SwissCardContent>
-        </SwissCard>
-        <SwissCard className="border-l-[3px] border-l-rose-500 dark:border-l-rose-400">
-          <SwissCardContent className="p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl sm:text-3xl font-bold">{stats.condenacoes}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">Condenações</p>
-              </div>
-              <div className="hidden sm:flex w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/30 items-center justify-center">
-                <XCircle className="h-5 w-5 text-rose-600" />
-              </div>
-            </div>
-          </SwissCardContent>
-        </SwissCard>
-      </div>
-
-      {/* Acesso Rápido - Plenário e Jurados - Padrão Swiss */}
-      <SwissCard>
-        <SwissCardHeader className="pb-3 sm:pb-4">
-          <SwissCardTitle className="text-sm sm:text-base">Plenário & Jurados</SwissCardTitle>
-          <SwissCardDescription>Ferramentas para o dia do julgamento</SwissCardDescription>
-        </SwissCardHeader>
-        <SwissCardContent className="p-3 sm:p-4">
-          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {acessoPlenario.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link key={item.id} href={item.href}>
-                  <div className={cn(
-                    "rounded-lg border p-3 sm:p-4 transition-all hover:shadow-md group",
-                    item.accent
-                  )}>
-                    <div className="flex items-center justify-between mb-2 sm:mb-3">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-white/70 dark:bg-zinc-900/40 flex items-center justify-center">
-                        <Icon className={cn("h-4 w-4 sm:h-5 sm:w-5", item.iconColor)} />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {item.isPremium && (
-                          <Badge className="bg-amber-500 text-white text-[9px] sm:text-xs border-0 px-1.5">Premium</Badge>
-                        )}
-                        {"isNew" in item && item.isNew && (
-                          <Badge className="bg-purple-500 text-white text-[9px] sm:text-xs border-0 px-1.5">
-                            <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
-                            Novo
-                          </Badge>
-                        )}
-                        <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                      </div>
-                    </div>
-                    <h3 className="font-semibold text-xs sm:text-sm">{item.titulo}</h3>
-                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">{item.descricao}</p>
+      {/* Conteúdo */}
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Próximas Sessões - Destaque */}
+        {(loadingProximas || (proximasSessoes && proximasSessoes.length > 0)) && (
+          <Card className="border-amber-200 dark:border-amber-800/50 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20">
+                    <CalendarDays className="w-5 h-5 text-white" />
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        </SwissCardContent>
-      </SwissCard>
-
-      {/* Ferramentas Estratégicas - Padrão Swiss */}
-      <SwissCard>
-        <SwissCardHeader className="pb-3 sm:pb-4">
-          <SwissCardTitle className="text-sm sm:text-base">Ferramentas Estratégicas</SwissCardTitle>
-          <SwissCardDescription>Mapeie provas, teses e oratória do plenário</SwissCardDescription>
-        </SwissCardHeader>
-        <SwissCardContent className="p-3 sm:p-4">
-          <div className="grid gap-3 sm:gap-4 grid-cols-2 xl:grid-cols-4">
-            {ferramentasJuri.map((ferramenta) => {
-              const Icon = ferramenta.icon;
-              return (
-                <Link key={ferramenta.id} href={ferramenta.href}>
-                  <div className={cn(
-                    "rounded-lg border p-3 sm:p-4 transition-all hover:shadow-md group",
-                    ferramenta.accent
-                  )}>
-                    <div className="flex items-center justify-between mb-2 sm:mb-3">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-white/70 dark:bg-zinc-900/40 flex items-center justify-center">
-                        <Icon className={cn("h-4 w-4 sm:h-5 sm:w-5", ferramenta.iconColor)} />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {ferramenta.isPremium && (
-                          <Badge className="bg-amber-500 text-white text-[9px] sm:text-xs border-0 px-1.5">Premium</Badge>
-                        )}
-                        <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                      </div>
-                    </div>
-                    <h3 className="font-semibold text-xs sm:text-sm">{ferramenta.titulo}</h3>
-                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">{ferramenta.descricao}</p>
+                  <div>
+                    <CardTitle className="text-base">Próximas Sessões</CardTitle>
+                    <CardDescription>Plenários agendados para os próximos 30 dias</CardDescription>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        </SwissCardContent>
-      </SwissCard>
-
-      {/* Próximas Sessões - Padrão Swiss */}
-      {proximasSessoes.length > 0 && (
-        <SwissCard>
-          <SwissCardHeader className="pb-3 sm:pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                <Gavel className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
-              </div>
-              <div>
-                <SwissCardTitle className="text-sm sm:text-base">Próximas Sessões</SwissCardTitle>
-                <SwissCardDescription>Plenários agendados</SwissCardDescription>
-              </div>
-            </div>
-          </SwissCardHeader>
-          <SwissCardContent className="p-3 sm:p-4">
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {proximasSessoes.map((sessao) => (
-                <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
-                  <div className={cn(
-                    "p-3 sm:p-4 rounded-lg border transition-all hover:shadow-md group",
-                    "bg-purple-50/50 dark:bg-purple-950/20 border-purple-200/60 dark:border-purple-800/40"
-                  )}>
-                    <div className="flex items-center justify-between mb-2 sm:mb-3">
-                      <div className="text-center bg-purple-100 dark:bg-purple-900/50 rounded-md px-2.5 py-1 sm:px-3 sm:py-1.5">
-                        <p className="text-sm sm:text-lg font-bold font-mono text-purple-600">
-                          {format(parseISO(sessao.dataSessao), "dd/MM", { locale: ptBR })}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="text-xs sm:text-xs border-0 bg-white/60 dark:bg-zinc-900/40">{sessao.sala}</Badge>
-                    </div>
-                    <p className="font-semibold text-xs sm:text-sm line-clamp-1">{sessao.assistidoNome}</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">{sessao.assunto}</p>
-                    <p className="text-xs sm:text-xs text-muted-foreground flex items-center gap-1 mt-2">
-                      <User className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                      {sessao.defensorNome}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </SwissCardContent>
-        </SwissCard>
-      )}
-
-      {/* Tabela de Sessões - Padrão Swiss */}
-      <SwissCard>
-        <SwissCardHeader className="pb-3 sm:pb-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por réu, processo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-9"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[150px] h-9">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="agendada">Agendadas</SelectItem>
-                <SelectItem value="realizada">Realizadas</SelectItem>
-                <SelectItem value="adiada">Adiadas</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </SwissCardHeader>
-        <SwissCardContent className="p-0">
-          {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto">
-            <SwissTable>
-              <SwissTableHeader>
-                <SwissTableRow>
-                  <SwissTableHead>Data</SwissTableHead>
-                  <SwissTableHead>Réu</SwissTableHead>
-                  <SwissTableHead>Processo</SwissTableHead>
-                  <SwissTableHead>Defensor</SwissTableHead>
-                  <SwissTableHead>Status</SwissTableHead>
-                  <SwissTableHead>Resultado</SwissTableHead>
-                  <SwissTableHead className="text-right">Ações</SwissTableHead>
-                </SwissTableRow>
-              </SwissTableHeader>
-              <SwissTableBody>
-                {filteredSessoes.map((sessao) => (
-                  <SwissTableRow key={sessao.id}>
-                    <SwissTableCell>
-                      <div className="font-medium font-mono text-xs">
-                        {format(parseISO(sessao.dataSessao), "dd/MM/yyyy", { locale: ptBR })}
-                      </div>
-                      <div className="text-xs text-muted-foreground font-mono">
-                        {format(parseISO(sessao.dataSessao), "HH:mm")}
-                      </div>
-                    </SwissTableCell>
-                    <SwissTableCell className="font-medium text-sm">{sessao.assistidoNome}</SwissTableCell>
-                    <SwissTableCell className="font-mono text-xs text-muted-foreground">{sessao.processo}</SwissTableCell>
-                    <SwissTableCell className="text-sm">{sessao.defensorNome}</SwissTableCell>
-                    <SwissTableCell>{getStatusBadge(sessao.status)}</SwissTableCell>
-                    <SwissTableCell>{getResultadoBadge(sessao.resultado)}</SwissTableCell>
-                    <SwissTableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <Link href={`/admin/juri/${sessao.id}`}>
-                            <DropdownMenuItem className="cursor-pointer">
-                              <Eye className="h-4 w-4 mr-2" />
-                              Ver Detalhes
-                            </DropdownMenuItem>
-                          </Link>
-                          <DropdownMenuItem className="cursor-pointer">
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </SwissTableCell>
-                  </SwissTableRow>
-                ))}
-              </SwissTableBody>
-            </SwissTable>
-          </div>
-          
-          {/* Mobile Cards */}
-          <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredSessoes.map((sessao) => (
-              <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
-                <div className="p-3 hover:bg-slate-50/60 dark:hover:bg-slate-900/40 transition-colors">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div>
-                      <p className="font-semibold text-sm">{sessao.assistidoNome}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{sessao.assunto}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      {getStatusBadge(sessao.status)}
-                      {getResultadoBadge(sessao.resultado)}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-mono">{sessao.processo}</span>
-                    <span className="font-mono">
-                      {format(parseISO(sessao.dataSessao), "dd/MM/yy HH:mm", { locale: ptBR })}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1.5">
-                    <User className="h-2.5 w-2.5" />
-                    {sessao.defensorNome}
-                  </p>
                 </div>
-              </Link>
-            ))}
-          </div>
-          
-          {filteredSessoes.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <Gavel className="h-8 w-8 mx-auto mb-3 opacity-40" />
-              <p className="text-sm">Nenhuma sessão encontrada</p>
+                <Link href="/admin/juri?status=AGENDADA">
+                  <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-800 hover:bg-amber-100">
+                    Ver todas <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingProximas ? (
+                <div className="grid gap-3 md:grid-cols-3">
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
+                </div>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-3">
+                  {proximasSessoes?.slice(0, 3).map((sessao) => {
+                    const dataSessao = sessao.dataSessao ? new Date(sessao.dataSessao) : new Date();
+                    const prox = getProximidadeLabel(dataSessao);
+                    
+                    return (
+                      <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
+                        <div className={cn(
+                          "p-4 rounded-xl border transition-all hover:shadow-lg group cursor-pointer",
+                          prox.urgent 
+                            ? "bg-white dark:bg-zinc-900 border-amber-300 dark:border-amber-700 shadow-amber-100 dark:shadow-amber-900/20" 
+                            : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                        )}>
+                          <div className="flex items-start justify-between mb-3">
+                            <div className={cn(
+                              "px-3 py-1.5 rounded-lg text-center font-mono",
+                              prox.urgent 
+                                ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400" 
+                                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                            )}>
+                              <p className="text-lg font-bold">{prox.label}</p>
+                              <p className="text-[10px] text-zinc-500">{format(dataSessao, "HH:mm")}</p>
+                            </div>
+                            <ArrowUpRight className="w-4 h-4 text-zinc-400 group-hover:text-amber-600 transition-colors" />
+                          </div>
+                          <p className="font-semibold text-sm line-clamp-1">{sessao.assistidoNome}</p>
+                          <p className="text-xs text-zinc-500 mt-1 line-clamp-1 font-mono">{sessao.processo?.numeroAutos}</p>
+                          <div className="flex items-center gap-1 mt-2 text-xs text-zinc-500">
+                            <User className="w-3 h-3" />
+                            <span>{sessao.defensorNome}</span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Ferramentas do Plenário */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                <Zap className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Ferramentas do Plenário</CardTitle>
+                <CardDescription>Recursos para o dia do julgamento</CardDescription>
+              </div>
             </div>
-          )}
-        </SwissCardContent>
-      </SwissCard>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {ferramentasPlenario.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link key={item.id} href={item.href}>
+                    <div className={cn(
+                      "p-4 rounded-xl border transition-all hover:shadow-lg group cursor-pointer",
+                      item.bgLight,
+                      "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+                    )}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className={cn("p-2.5 rounded-lg bg-gradient-to-br shadow-lg", item.gradient)}>
+                          <Icon className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {item.isPremium && (
+                            <Badge className="bg-amber-500 text-white text-[9px] border-0">Premium</Badge>
+                          )}
+                          {"isNew" in item && item.isNew && (
+                            <Badge className="bg-purple-500 text-white text-[9px] border-0">
+                              <Sparkles className="w-2.5 h-2.5 mr-0.5" />
+                              Novo
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <h3 className="font-semibold text-sm">{item.titulo}</h3>
+                      <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{item.descricao}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ferramentas Estratégicas */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                <Target className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Ferramentas Estratégicas</CardTitle>
+                <CardDescription>Mapeie provas, teses e prepare a oratória</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+              {ferramentasEstrategicas.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link key={item.id} href={item.href}>
+                    <div className={cn(
+                      "p-4 rounded-xl border transition-all hover:shadow-lg group cursor-pointer",
+                      item.bgLight,
+                      "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+                    )}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className={cn("p-2.5 rounded-lg", item.bgLight)}>
+                          <Icon className={cn("w-5 h-5", item.color)} />
+                        </div>
+                        {item.isPremium && (
+                          <Badge className="bg-amber-500 text-white text-[9px] border-0">Premium</Badge>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-sm">{item.titulo}</h3>
+                      <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{item.descricao}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lista de Sessões */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                  <Gavel className="w-5 h-5 text-zinc-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Todas as Sessões</CardTitle>
+                  <CardDescription>{stats.total} sessões registradas</CardDescription>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <Input
+                    placeholder="Buscar réu, processo..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-full sm:w-64"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="AGENDADA">Agendadas</SelectItem>
+                    <SelectItem value="REALIZADA">Realizadas</SelectItem>
+                    <SelectItem value="ADIADA">Adiadas</SelectItem>
+                    <SelectItem value="CANCELADA">Canceladas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="p-4 space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-20 rounded-lg" />
+                ))}
+              </div>
+            ) : sessoesFiltradas.length === 0 ? (
+              <div className="p-12 text-center">
+                <Gavel className="w-12 h-12 text-zinc-300 mx-auto mb-4" />
+                <p className="text-zinc-500">Nenhuma sessão encontrada</p>
+                <Link href="/admin/juri/nova">
+                  <Button className="mt-4" variant="outline">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agendar Sessão
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {sessoesFiltradas.map((sessao) => {
+                  const dataSessao = sessao.dataSessao ? new Date(sessao.dataSessao) : null;
+                  const statusConfig = getStatusConfig(sessao.status || "AGENDADA");
+                  const resultadoConfig = getResultadoConfig(sessao.resultado);
+                  const StatusIcon = statusConfig.icon;
+                  
+                  return (
+                    <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
+                      <div className="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer">
+                        <div className="flex items-center gap-4">
+                          {/* Data */}
+                          <div className="hidden sm:flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-center">
+                            <p className="text-lg font-bold font-mono">
+                              {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
+                            </p>
+                            <p className="text-[10px] text-zinc-500 uppercase">
+                              {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : "---"}
+                            </p>
+                          </div>
+                          
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-semibold truncate">{sessao.assistidoNome}</p>
+                              <Badge className={cn("text-[10px] border-0 gap-1", statusConfig.bgColor, statusConfig.color)}>
+                                <StatusIcon className="w-2.5 h-2.5" />
+                                {statusConfig.label}
+                              </Badge>
+                              {resultadoConfig && (
+                                <Badge className={cn("text-[10px] border-0 gap-1", resultadoConfig.bgColor, resultadoConfig.color)}>
+                                  {resultadoConfig.label}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-zinc-500">
+                              <span className="font-mono">{sessao.processo?.numeroAutos}</span>
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {sessao.defensorNome}
+                              </span>
+                              {dataSessao && (
+                                <span className="sm:hidden font-mono">
+                                  {format(dataSessao, "dd/MM/yy HH:mm")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Hora e Ação */}
+                          <div className="hidden sm:flex items-center gap-4">
+                            {dataSessao && (
+                              <div className="text-right">
+                                <p className="font-mono text-sm font-medium">
+                                  {format(dataSessao, "HH:mm")}
+                                </p>
+                                <p className="text-[10px] text-zinc-500">
+                                  {format(dataSessao, "yyyy")}
+                                </p>
+                              </div>
+                            )}
+                            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-zinc-600">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
