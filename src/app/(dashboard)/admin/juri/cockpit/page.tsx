@@ -559,8 +559,6 @@ function CadeiraVisual({
   const [showInput, setShowInput] = useState(false);
   const [novaObs, setNovaObs] = useState("");
 
-  const tendencia = jurado ? getTendenciaColor(jurado.taxaAbsolvicao) : null;
-
   if (!jurado) {
     return (
       <div
@@ -599,13 +597,12 @@ function CadeiraVisual({
     );
   }
 
-  // Cor de tendência para indicador
-  const getTendenciaColor = () => {
-    if (jurado.taxaAbsolvicao >= 60) return { bg: "bg-emerald-500", ring: "ring-emerald-200 dark:ring-emerald-800" };
-    if (jurado.taxaAbsolvicao >= 40) return { bg: "bg-amber-500", ring: "ring-amber-200 dark:ring-amber-800" };
-    return { bg: "bg-rose-500", ring: "ring-rose-200 dark:ring-rose-800" };
-  };
-  const tendenciaCor = getTendenciaColor();
+  // Cor de tendência para indicador (dot)
+  const tendenciaCor = jurado.taxaAbsolvicao >= 60 
+    ? { bg: "bg-emerald-500", ring: "ring-emerald-200 dark:ring-emerald-800" }
+    : jurado.taxaAbsolvicao >= 40
+      ? { bg: "bg-amber-500", ring: "ring-amber-200 dark:ring-amber-800" }
+      : { bg: "bg-rose-500", ring: "ring-rose-200 dark:ring-rose-800" };
 
   return (
     <div
