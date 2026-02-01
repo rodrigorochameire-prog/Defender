@@ -1,94 +1,76 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  AlertTriangle, 
-  ArrowLeft,
-  Shield,
-  MapPin,
-  Users,
-  Sparkles,
-  Activity,
-  Heart,
-} from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Construction,
+  Heart,
+  ShieldAlert,
+  FileWarning,
+} from "lucide-react";
 
 export default function MapaRiscoPage() {
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <Link href="/admin/medidas">
-            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            </Button>
-          </Link>
-          <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-rose-100 to-red-100 dark:from-rose-900/30 dark:to-red-900/30 flex-shrink-0">
-            <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-rose-700 dark:text-rose-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                Mapa de Risco
-              </h1>
-              <Badge className="bg-amber-500 text-white text-xs">
-                <Sparkles className="w-3 h-3 mr-0.5" />
-                Premium
-              </Badge>
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* SUB-HEADER */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/medidas">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center border border-rose-200 dark:border-rose-800">
+              <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
             </div>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
-              Avaliação de vulnerabilidade das vítimas
-            </p>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Mapa de Risco</h1>
+              <p className="text-[10px] text-zinc-500">Avaliação de vulnerabilidade</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Coming Soon */}
-      <Card className="border-rose-200 dark:border-rose-800 bg-gradient-to-br from-rose-50/50 to-red-50/50 dark:from-rose-950/20 dark:to-red-950/20">
-        <CardContent className="flex flex-col items-center justify-center py-16 sm:py-24 text-center px-4">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-rose-100 to-red-100 dark:from-rose-900/30 dark:to-red-900/30 flex items-center justify-center mb-6">
-            <AlertTriangle className="w-10 h-10 sm:w-12 sm:h-12 text-rose-600 dark:text-rose-400" />
-          </div>
-          
-          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
-            Mapa de Risco em Desenvolvimento
-          </h2>
-          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 max-w-lg mb-6">
-            Ferramenta de avaliação de risco para vítimas de violência doméstica, 
-            com indicadores de vulnerabilidade e recomendações de proteção.
-          </p>
+      <div className="p-4 md:p-6">
+        {/* Estado: Em Desenvolvimento */}
+        <Card className="border-amber-200 dark:border-amber-800/50 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
+          <CardContent className="py-16 px-8 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center mx-auto mb-6">
+              <Construction className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+            </div>
+            
+            <h2 className="text-xl font-bold text-zinc-800 dark:text-zinc-200 mb-2">
+              Em Desenvolvimento
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-md mx-auto mb-8">
+              O módulo de Mapa de Risco para avaliação de vulnerabilidade em casos de violência doméstica
+              está sendo desenvolvido com base nas melhores práticas e protocolos internacionais.
+            </p>
 
-          {/* Preview Features */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full max-w-2xl mb-8">
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-rose-100 dark:border-rose-800/50">
-              <Activity className="w-6 h-6 text-rose-600 mb-2 mx-auto" />
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Nível de Risco</p>
+            {/* Funcionalidades Planejadas */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+              {[
+                { icon: ShieldAlert, title: "Avaliação de Risco", desc: "Protocolo estruturado de análise" },
+                { icon: Heart, title: "Rede de Apoio", desc: "Mapeamento de suporte à vítima" },
+                { icon: FileWarning, title: "Relatórios", desc: "Documentação para juízo" },
+              ].map((feature, idx) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={idx} className="p-4 rounded-xl bg-white/60 dark:bg-zinc-900/40 border border-amber-200/50 dark:border-amber-800/30">
+                    <Icon className="w-5 h-5 text-amber-600 dark:text-amber-400 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{feature.title}</p>
+                    <p className="text-[10px] text-zinc-500 mt-1">{feature.desc}</p>
+                  </div>
+                );
+              })}
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-rose-100 dark:border-rose-800/50">
-              <Shield className="w-6 h-6 text-rose-600 mb-2 mx-auto" />
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Medidas Ativas</p>
-            </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-rose-100 dark:border-rose-800/50">
-              <Users className="w-6 h-6 text-rose-600 mb-2 mx-auto" />
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Rede de Apoio</p>
-            </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-rose-100 dark:border-rose-800/50">
-              <Heart className="w-6 h-6 text-rose-600 mb-2 mx-auto" />
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Acolhimento</p>
-            </div>
-          </div>
-
-          <Button variant="outline" asChild>
-            <Link href="/admin/medidas">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar para Medidas
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
