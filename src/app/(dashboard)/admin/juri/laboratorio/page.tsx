@@ -152,31 +152,34 @@ export default function LaboratorioOratoriaPage() {
   };
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/juri">
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="p-3 rounded-xl bg-rose-100 dark:bg-rose-900/30">
-            <Mic className="h-5 w-5 text-rose-600 dark:text-rose-300" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold">Laboratório de Oratória</h1>
-              <Badge className="bg-amber-500 text-white text-xs">
-                <Sparkles className="w-3 h-3 mr-0.5" />
-                Premium
-              </Badge>
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* SUB-HEADER - Padrão Defender */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/juri">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center border border-rose-200 dark:border-rose-800">
+              <Mic className="w-4 h-4 text-rose-600 dark:text-rose-400" />
             </div>
-            <p className="text-sm text-muted-foreground">
-              Treine sustentação, ritmo e impacto no plenário.
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Laboratório de Oratória</h1>
+                <Badge className="bg-violet-500 text-white text-[9px] border-0">
+                  <Sparkles className="w-2.5 h-2.5 mr-0.5" />
+                  Premium
+                </Badge>
+              </div>
+              <p className="text-[10px] text-zinc-500">Treine sustentação e impacto no plenário</p>
+            </div>
           </div>
         </div>
       </div>
+
+      <div className="p-4 md:p-6 space-y-4">
 
       <Card className="section-card">
         <CardHeader>
@@ -313,6 +316,7 @@ export default function LaboratorioOratoriaPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

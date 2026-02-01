@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -19,16 +19,14 @@ import {
   Gavel, 
   Plus,
   Search,
-  Filter,
   Download,
-  Eye,
   Calendar,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   User,
   Users,
-  ArrowUpRight,
+  ArrowRight,
   FileSearch,
   ClipboardCheck,
   Target,
@@ -36,114 +34,34 @@ import {
   Zap,
   Brain,
   UserCheck,
-  Sparkles,
   Clock,
   Scale,
   Lock,
   TrendingUp,
   ChevronRight,
-  CalendarDays,
+  LayoutGrid,
+  List,
+  Eye,
+  MoreHorizontal,
 } from "lucide-react";
 import Link from "next/link";
-import { format, parseISO, isFuture, differenceInDays, isToday, isTomorrow } from "date-fns";
+import { format, parseISO, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
-
-// ============================================
-// FERRAMENTAS DO PLENÁRIO
-// ============================================
-const ferramentasPlenario = [
-  {
-    id: "cockpit",
-    titulo: "Plenário Live",
-    descricao: "Cockpit para o dia do julgamento com timer, anotações e controle de reações",
-    href: "/admin/juri/cockpit",
-    icon: Zap,
-    gradient: "from-amber-500 to-orange-600",
-    bgLight: "bg-amber-50 dark:bg-amber-950/30",
-    isPremium: true,
-  },
-  {
-    id: "avaliacao",
-    titulo: "Avaliação do Júri",
-    descricao: "Formulário de observação comportamental dos jurados",
-    href: "/admin/juri/avaliacao",
-    icon: ClipboardCheck,
-    gradient: "from-purple-500 to-violet-600",
-    bgLight: "bg-purple-50 dark:bg-purple-950/30",
-    isNew: true,
-  },
-  {
-    id: "jurados",
-    titulo: "Banco de Jurados",
-    descricao: "Perfil e histórico de votações de cada jurado",
-    href: "/admin/jurados",
-    icon: UserCheck,
-    gradient: "from-blue-500 to-cyan-600",
-    bgLight: "bg-blue-50 dark:bg-blue-950/30",
-  },
-  {
-    id: "profiler",
-    titulo: "Profiler de Jurados",
-    descricao: "Score de empatia e análise comportamental com IA",
-    href: "/admin/jurados/profiler",
-    icon: Brain,
-    gradient: "from-violet-500 to-purple-600",
-    bgLight: "bg-violet-50 dark:bg-violet-950/30",
-    isPremium: true,
-  },
-];
-
-// ============================================
-// FERRAMENTAS ESTRATÉGICAS
-// ============================================
-const ferramentasEstrategicas = [
-  {
-    id: "investigacao",
-    titulo: "Investigação Defensiva",
-    descricao: "Kanban de providências, diligências e OSINT",
-    href: "/admin/juri/investigacao",
-    icon: FileSearch,
-    color: "text-emerald-600",
-    bgLight: "bg-emerald-50 dark:bg-emerald-950/30",
-  },
-  {
-    id: "provas",
-    titulo: "Matriz de Provas",
-    descricao: "Comparador de versões e contradições",
-    href: "/admin/juri/provas",
-    icon: Scale,
-    color: "text-sky-600",
-    bgLight: "bg-sky-50 dark:bg-sky-950/30",
-  },
-  {
-    id: "teses",
-    titulo: "Teses do Júri",
-    descricao: "Narrativa, argumentos e quesitos",
-    href: "/admin/juri/teses",
-    icon: Target,
-    color: "text-indigo-600",
-    bgLight: "bg-indigo-50 dark:bg-indigo-950/30",
-  },
-  {
-    id: "laboratorio",
-    titulo: "Laboratório de Oratória",
-    descricao: "Timer, análise de discurso e treino",
-    href: "/admin/juri/laboratorio",
-    icon: Mic,
-    color: "text-rose-600",
-    bgLight: "bg-rose-50 dark:bg-rose-950/30",
-    isPremium: true,
-  },
-];
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // ============================================
 // HELPERS
 // ============================================
 function getStatusConfig(status: string) {
   const configs: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-    AGENDADA: { label: "Agendada", color: "text-purple-700 dark:text-purple-400", bgColor: "bg-purple-100 dark:bg-purple-900/40", icon: Calendar },
-    agendada: { label: "Agendada", color: "text-purple-700 dark:text-purple-400", bgColor: "bg-purple-100 dark:bg-purple-900/40", icon: Calendar },
+    AGENDADA: { label: "Agendada", color: "text-violet-700 dark:text-violet-400", bgColor: "bg-violet-100 dark:bg-violet-900/40", icon: Calendar },
+    agendada: { label: "Agendada", color: "text-violet-700 dark:text-violet-400", bgColor: "bg-violet-100 dark:bg-violet-900/40", icon: Calendar },
     REALIZADA: { label: "Realizada", color: "text-emerald-700 dark:text-emerald-400", bgColor: "bg-emerald-100 dark:bg-emerald-900/40", icon: CheckCircle2 },
     realizada: { label: "Realizada", color: "text-emerald-700 dark:text-emerald-400", bgColor: "bg-emerald-100 dark:bg-emerald-900/40", icon: CheckCircle2 },
     ADIADA: { label: "Adiada", color: "text-amber-700 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/40", icon: Clock },
@@ -156,23 +74,24 @@ function getStatusConfig(status: string) {
 
 function getResultadoConfig(resultado: string | null) {
   if (!resultado) return null;
-  const configs: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-    absolvicao: { label: "Absolvição", color: "text-white", bgColor: "bg-emerald-600", icon: CheckCircle2 },
-    ABSOLVICAO: { label: "Absolvição", color: "text-white", bgColor: "bg-emerald-600", icon: CheckCircle2 },
-    condenacao: { label: "Condenação", color: "text-white", bgColor: "bg-rose-600", icon: XCircle },
-    CONDENACAO: { label: "Condenação", color: "text-white", bgColor: "bg-rose-600", icon: XCircle },
-    desclassificacao: { label: "Desclassificação", color: "text-white", bgColor: "bg-amber-500", icon: AlertTriangle },
-    DESCLASSIFICACAO: { label: "Desclassificação", color: "text-white", bgColor: "bg-amber-500", icon: AlertTriangle },
+  const configs: Record<string, { label: string; color: string; bgColor: string }> = {
+    absolvicao: { label: "Absolvição", color: "text-white", bgColor: "bg-emerald-600" },
+    ABSOLVICAO: { label: "Absolvição", color: "text-white", bgColor: "bg-emerald-600" },
+    condenacao: { label: "Condenação", color: "text-white", bgColor: "bg-rose-600" },
+    CONDENACAO: { label: "Condenação", color: "text-white", bgColor: "bg-rose-600" },
+    desclassificacao: { label: "Desclassificação", color: "text-white", bgColor: "bg-amber-500" },
+    DESCLASSIFICACAO: { label: "Desclassificação", color: "text-white", bgColor: "bg-amber-500" },
   };
-  return configs[resultado] || { label: resultado, color: "text-white", bgColor: "bg-zinc-500", icon: AlertTriangle };
+  return configs[resultado] || null;
 }
 
-function getProximidadeLabel(data: Date) {
-  if (isToday(data)) return { label: "Hoje", urgent: true };
-  if (isTomorrow(data)) return { label: "Amanhã", urgent: true };
+function getProximidade(data: Date) {
+  if (isToday(data)) return { label: "Hoje", color: "text-rose-600 bg-rose-100 dark:bg-rose-900/40", urgent: true };
+  if (isTomorrow(data)) return { label: "Amanhã", color: "text-amber-600 bg-amber-100 dark:bg-amber-900/40", urgent: true };
   const dias = differenceInDays(data, new Date());
-  if (dias <= 7) return { label: `${dias} dias`, urgent: dias <= 3 };
-  return { label: format(data, "dd/MM", { locale: ptBR }), urgent: false };
+  if (dias <= 3) return { label: `${dias}d`, color: "text-amber-600 bg-amber-100 dark:bg-amber-900/40", urgent: true };
+  if (dias <= 7) return { label: `${dias}d`, color: "text-violet-600 bg-violet-100 dark:bg-violet-900/40", urgent: false };
+  return { label: format(data, "dd/MM"), color: "text-zinc-600 bg-zinc-100 dark:bg-zinc-800", urgent: false };
 }
 
 // ============================================
@@ -181,6 +100,7 @@ function getProximidadeLabel(data: Date) {
 export default function JuriPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Buscar dados reais
   const { data: sessoes, isLoading } = trpc.juri.list.useQuery({
@@ -215,145 +135,124 @@ export default function JuriPage() {
   }, [sessoes]);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      {/* Header Premium */}
-      <div className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
-        <div className="px-4 md:px-6 py-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                <Gavel className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Tribunal do Júri</h1>
-                <p className="text-sm text-zinc-400">Gestão completa de sessões plenárias</p>
-              </div>
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* SUB-HEADER - Padrão Defender */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center border border-violet-200 dark:border-violet-800">
+              <Gavel className="w-4 h-4 text-violet-600 dark:text-violet-400" />
             </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="bg-transparent border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">
-                <Download className="w-4 h-4 mr-2" />
-                Exportar
-              </Button>
-              <Link href="/admin/juri/nova">
-                <Button size="sm" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-amber-500/20">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova Sessão
-                </Button>
-              </Link>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Tribunal do Júri</h1>
+              <p className="text-[10px] text-zinc-500">Gestão de sessões plenárias</p>
             </div>
           </div>
-
-          {/* Stats no header */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-            <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/20">
-                  <Calendar className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{stats.agendadas}</p>
-                  <p className="text-xs text-zinc-400">Agendadas</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/20">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{stats.absolvicoes}</p>
-                  <p className="text-xs text-zinc-400">Absolvições</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-rose-500/20">
-                  <XCircle className="w-5 h-5 text-rose-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{stats.condenacoes}</p>
-                  <p className="text-xs text-zinc-400">Condenações</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/20">
-                  <TrendingUp className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{stats.taxaAbsolvicao}%</p>
-                  <p className="text-xs text-zinc-400">Taxa Absolvição</p>
-                </div>
-              </div>
-            </div>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-8 text-xs">
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              Exportar
+            </Button>
+            <Link href="/admin/juri/nova">
+              <Button size="sm" className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Nova Sessão
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Conteúdo */}
-      <div className="p-4 md:p-6 space-y-6">
-        {/* Próximas Sessões - Destaque */}
-        {(loadingProximas || (proximasSessoes && proximasSessoes.length > 0)) && (
-          <Card className="border-amber-200 dark:border-amber-800/50 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
+      {/* CONTEÚDO PRINCIPAL */}
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: "Agendadas", value: stats.agendadas, icon: Calendar, color: "violet" },
+            { label: "Absolvições", value: stats.absolvicoes, icon: CheckCircle2, color: "emerald" },
+            { label: "Condenações", value: stats.condenacoes, icon: XCircle, color: "rose" },
+            { label: "Taxa Absolvição", value: `${stats.taxaAbsolvicao}%`, icon: TrendingUp, color: "amber" },
+          ].map((stat, idx) => {
+            const Icon = stat.icon;
+            const colorClasses = {
+              violet: "text-violet-600 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-400",
+              emerald: "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400",
+              rose: "text-rose-600 bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400",
+              amber: "text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400",
+            }[stat.color];
+            
+            return (
+              <div key={idx} className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20">
-                    <CalendarDays className="w-5 h-5 text-white" />
+                  <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", colorClasses)}>
+                    <Icon className="w-4 h-4" />
                   </div>
                   <div>
-                    <CardTitle className="text-base">Próximas Sessões</CardTitle>
-                    <CardDescription>Plenários agendados para os próximos 30 dias</CardDescription>
+                    {isLoading ? (
+                      <Skeleton className="h-6 w-10" />
+                    ) : (
+                      <p className="text-xl font-bold text-zinc-800 dark:text-zinc-200">{stat.value}</p>
+                    )}
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide">{stat.label}</p>
                   </div>
                 </div>
-                <Link href="/admin/juri?status=AGENDADA">
-                  <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-800 hover:bg-amber-100">
-                    Ver todas <ChevronRight className="w-4 h-4 ml-1" />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* PRÓXIMAS SESSÕES - Destaque */}
+        {(loadingProximas || (proximasSessoes && proximasSessoes.length > 0)) && (
+          <Card className="border-violet-200 dark:border-violet-800/50 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/20 dark:to-purple-950/20">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-violet-600" />
+                  <CardTitle className="text-sm font-semibold">Próximas Sessões</CardTitle>
+                  <Badge variant="outline" className="text-[10px] border-violet-300 text-violet-600">
+                    {proximasSessoes?.length || 0}
+                  </Badge>
+                </div>
+                <Link href="/admin/juri/cockpit">
+                  <Button variant="ghost" size="sm" className="h-7 text-xs text-violet-600 hover:text-violet-700">
+                    Abrir Cockpit <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </Link>
               </div>
             </CardHeader>
             <CardContent>
               {loadingProximas ? (
-                <div className="grid gap-3 md:grid-cols-3">
-                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
+                <div className="grid gap-3 md:grid-cols-4">
+                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
                 </div>
               ) : (
-                <div className="grid gap-3 md:grid-cols-3">
-                  {proximasSessoes?.slice(0, 3).map((sessao) => {
+                <div className="grid gap-3 md:grid-cols-4">
+                  {proximasSessoes?.slice(0, 4).map((sessao) => {
                     const dataSessao = sessao.dataSessao ? new Date(sessao.dataSessao) : new Date();
-                    const prox = getProximidadeLabel(dataSessao);
+                    const prox = getProximidade(dataSessao);
                     
                     return (
                       <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
                         <div className={cn(
-                          "p-4 rounded-xl border transition-all hover:shadow-lg group cursor-pointer",
-                          prox.urgent 
-                            ? "bg-white dark:bg-zinc-900 border-amber-300 dark:border-amber-700 shadow-amber-100 dark:shadow-amber-900/20" 
-                            : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                          "p-3 rounded-xl bg-white dark:bg-zinc-900 border transition-all hover:shadow-md group cursor-pointer",
+                          prox.urgent ? "border-violet-300 dark:border-violet-700" : "border-zinc-200 dark:border-zinc-800"
                         )}>
-                          <div className="flex items-start justify-between mb-3">
-                            <div className={cn(
-                              "px-3 py-1.5 rounded-lg text-center font-mono",
-                              prox.urgent 
-                                ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400" 
-                                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
-                            )}>
-                              <p className="text-lg font-bold">{prox.label}</p>
-                              <p className="text-[10px] text-zinc-500">{format(dataSessao, "HH:mm")}</p>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded", prox.color)}>
+                              {prox.label}
+                            </span>
+                            <span className="text-[10px] text-zinc-400">{format(dataSessao, "HH:mm")}</span>
+                          </div>
+                          <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">{sessao.assistidoNome}</p>
+                          <p className="text-[10px] text-zinc-500 truncate font-mono mt-1">{sessao.processo?.numeroAutos}</p>
+                          {sessao.defensorNome && (
+                            <div className="flex items-center gap-1 mt-2 text-[10px] text-zinc-400">
+                              <User className="w-3 h-3" />
+                              {sessao.defensorNome}
                             </div>
-                            <ArrowUpRight className="w-4 h-4 text-zinc-400 group-hover:text-amber-600 transition-colors" />
-                          </div>
-                          <p className="font-semibold text-sm line-clamp-1">{sessao.assistidoNome}</p>
-                          <p className="text-xs text-zinc-500 mt-1 line-clamp-1 font-mono">{sessao.processo?.numeroAutos}</p>
-                          <div className="flex items-center gap-1 mt-2 text-xs text-zinc-500">
-                            <User className="w-3 h-3" />
-                            <span>{sessao.defensorNome}</span>
-                          </div>
+                          )}
                         </div>
                       </Link>
                     );
@@ -364,124 +263,62 @@ export default function JuriPage() {
           </Card>
         )}
 
-        {/* Ferramentas do Plenário */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                <Zap className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Ferramentas do Plenário</CardTitle>
-                <CardDescription>Recursos para o dia do julgamento</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {ferramentasPlenario.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link key={item.id} href={item.href}>
-                    <div className={cn(
-                      "p-4 rounded-xl border transition-all hover:shadow-lg group cursor-pointer",
-                      item.bgLight,
-                      "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
-                    )}>
-                      <div className="flex items-center justify-between mb-3">
-                        <div className={cn("p-2.5 rounded-lg bg-gradient-to-br shadow-lg", item.gradient)}>
-                          <Icon className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {item.isPremium && (
-                            <Badge className="bg-amber-500 text-white text-[9px] border-0">Premium</Badge>
-                          )}
-                          {"isNew" in item && item.isNew && (
-                            <Badge className="bg-purple-500 text-white text-[9px] border-0">
-                              <Sparkles className="w-2.5 h-2.5 mr-0.5" />
-                              Novo
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-sm">{item.titulo}</h3>
-                      <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{item.descricao}</p>
+        {/* FERRAMENTAS - Grid Compacto */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            { id: "cockpit", label: "Plenário Live", desc: "Cockpit do julgamento", href: "/admin/juri/cockpit", icon: Zap, color: "violet", premium: true },
+            { id: "jurados", label: "Banco de Jurados", desc: "Perfis psicológicos", href: "/admin/juri/jurados", icon: Users, color: "blue" },
+            { id: "investigacao", label: "Investigação", desc: "OSINT e diligências", href: "/admin/juri/investigacao", icon: FileSearch, color: "emerald" },
+            { id: "teses", label: "Teses do Júri", desc: "Narrativa e argumentos", href: "/admin/juri/teses", icon: Target, color: "amber" },
+          ].map((tool) => {
+            const Icon = tool.icon;
+            const bgColor = {
+              violet: "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400",
+              blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+              emerald: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400",
+              amber: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
+            }[tool.color];
+            
+            return (
+              <Link key={tool.id} href={tool.href}>
+                <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all group">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", bgColor)}>
+                      <Icon className="w-5 h-5" />
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                    {tool.premium && (
+                      <Badge className="bg-violet-500 text-white text-[9px] border-0">Premium</Badge>
+                    )}
+                  </div>
+                  <h3 className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">{tool.label}</h3>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">{tool.desc}</p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
 
-        {/* Ferramentas Estratégicas */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                <Target className="w-5 h-5 text-indigo-600" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Ferramentas Estratégicas</CardTitle>
-                <CardDescription>Mapeie provas, teses e prepare a oratória</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-              {ferramentasEstrategicas.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link key={item.id} href={item.href}>
-                    <div className={cn(
-                      "p-4 rounded-xl border transition-all hover:shadow-lg group cursor-pointer",
-                      item.bgLight,
-                      "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
-                    )}>
-                      <div className="flex items-center justify-between mb-3">
-                        <div className={cn("p-2.5 rounded-lg", item.bgLight)}>
-                          <Icon className={cn("w-5 h-5", item.color)} />
-                        </div>
-                        {item.isPremium && (
-                          <Badge className="bg-amber-500 text-white text-[9px] border-0">Premium</Badge>
-                        )}
-                      </div>
-                      <h3 className="font-semibold text-sm">{item.titulo}</h3>
-                      <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{item.descricao}</p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Lista de Sessões */}
-        <Card>
+        {/* LISTA DE SESSÕES */}
+        <Card className="border-zinc-100 dark:border-zinc-800">
           <CardHeader className="pb-3">
             <div className="flex flex-col md:flex-row md:items-center gap-3">
-              <div className="flex items-center gap-3 flex-1">
-                <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                  <Gavel className="w-5 h-5 text-zinc-600" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">Todas as Sessões</CardTitle>
-                  <CardDescription>{stats.total} sessões registradas</CardDescription>
-                </div>
+              <div className="flex items-center gap-2 flex-1">
+                <Gavel className="w-4 h-4 text-zinc-500" />
+                <CardTitle className="text-sm font-semibold">Todas as Sessões</CardTitle>
+                <Badge variant="outline" className="text-[10px]">{sessoesFiltradas.length}</Badge>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
                   <Input
                     placeholder="Buscar réu, processo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-full sm:w-64"
+                    className="pl-9 h-8 text-xs w-full sm:w-56"
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-40">
-                    <Filter className="w-4 h-4 mr-2" />
+                  <SelectTrigger className="w-full sm:w-32 h-8 text-xs">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -489,97 +326,155 @@ export default function JuriPage() {
                     <SelectItem value="AGENDADA">Agendadas</SelectItem>
                     <SelectItem value="REALIZADA">Realizadas</SelectItem>
                     <SelectItem value="ADIADA">Adiadas</SelectItem>
-                    <SelectItem value="CANCELADA">Canceladas</SelectItem>
                   </SelectContent>
                 </Select>
+                <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={cn(
+                      "px-2 h-7 rounded-md transition-all",
+                      viewMode === "grid" ? "bg-white dark:bg-zinc-700 shadow-sm" : "text-zinc-500"
+                    )}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={cn(
+                      "px-2 h-7 rounded-md transition-all",
+                      viewMode === "list" ? "bg-white dark:bg-zinc-700 shadow-sm" : "text-zinc-500"
+                    )}
+                  >
+                    <List className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent>
             {isLoading ? (
-              <div className="p-4 space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton key={i} className="h-20 rounded-lg" />
-                ))}
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
               </div>
             ) : sessoesFiltradas.length === 0 ? (
-              <div className="p-12 text-center">
-                <Gavel className="w-12 h-12 text-zinc-300 mx-auto mb-4" />
-                <p className="text-zinc-500">Nenhuma sessão encontrada</p>
+              <div className="text-center py-12">
+                <Gavel className="w-12 h-12 mx-auto mb-3 text-zinc-300" />
+                <p className="text-sm text-zinc-500">Nenhuma sessão encontrada</p>
                 <Link href="/admin/juri/nova">
-                  <Button className="mt-4" variant="outline">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Agendar Sessão
+                  <Button size="sm" className="mt-4 bg-violet-600 hover:bg-violet-700">
+                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                    Nova Sessão
                   </Button>
                 </Link>
               </div>
-            ) : (
-              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            ) : viewMode === "grid" ? (
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {sessoesFiltradas.map((sessao) => {
                   const dataSessao = sessao.dataSessao ? new Date(sessao.dataSessao) : null;
-                  const statusConfig = getStatusConfig(sessao.status || "AGENDADA");
-                  const resultadoConfig = getResultadoConfig(sessao.resultado);
-                  const StatusIcon = statusConfig.icon;
+                  const statusCfg = getStatusConfig(sessao.status || "AGENDADA");
+                  const resultadoCfg = getResultadoConfig(sessao.resultado);
+                  const StatusIcon = statusCfg.icon;
                   
                   return (
                     <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
-                      <div className="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-4">
-                          {/* Data */}
-                          <div className="hidden sm:flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-center">
-                            <p className="text-lg font-bold font-mono">
-                              {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
-                            </p>
-                            <p className="text-[10px] text-zinc-500 uppercase">
-                              {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : "---"}
-                            </p>
-                          </div>
-                          
-                          {/* Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-semibold truncate">{sessao.assistidoNome}</p>
-                              <Badge className={cn("text-[10px] border-0 gap-1", statusConfig.bgColor, statusConfig.color)}>
-                                <StatusIcon className="w-2.5 h-2.5" />
-                                {statusConfig.label}
+                      <div className="p-4 rounded-xl bg-white dark:bg-zinc-900/80 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all group">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Badge className={cn("text-[10px] border-0", statusCfg.bgColor, statusCfg.color)}>
+                              <StatusIcon className="w-3 h-3 mr-1" />
+                              {statusCfg.label}
+                            </Badge>
+                            {resultadoCfg && (
+                              <Badge className={cn("text-[10px] border-0", resultadoCfg.bgColor, resultadoCfg.color)}>
+                                {resultadoCfg.label}
                               </Badge>
-                              {resultadoConfig && (
-                                <Badge className={cn("text-[10px] border-0 gap-1", resultadoConfig.bgColor, resultadoConfig.color)}>
-                                  {resultadoConfig.label}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-4 text-xs text-zinc-500">
-                              <span className="font-mono">{sessao.processo?.numeroAutos}</span>
-                              <span className="flex items-center gap-1">
-                                <User className="w-3 h-3" />
-                                {sessao.defensorNome}
-                              </span>
-                              {dataSessao && (
-                                <span className="sm:hidden font-mono">
-                                  {format(dataSessao, "dd/MM/yy HH:mm")}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Hora e Ação */}
-                          <div className="hidden sm:flex items-center gap-4">
-                            {dataSessao && (
-                              <div className="text-right">
-                                <p className="font-mono text-sm font-medium">
-                                  {format(dataSessao, "HH:mm")}
-                                </p>
-                                <p className="text-[10px] text-zinc-500">
-                                  {format(dataSessao, "yyyy")}
-                                </p>
-                              </div>
                             )}
-                            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-zinc-600">
-                              <Eye className="w-4 h-4" />
-                            </Button>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+                                <MoreHorizontal className="w-3.5 h-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Eye className="w-3.5 h-3.5 mr-2" />
+                                Ver detalhes
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Zap className="w-3.5 h-3.5 mr-2" />
+                                Abrir cockpit
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        
+                        <div className="flex items-center gap-3 mb-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="text-xs bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-400">
+                              {sessao.assistidoNome?.split(" ").map(n => n[0]).slice(0, 2).join("") || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">
+                              {sessao.assistidoNome || "Réu não informado"}
+                            </p>
+                            <p className="text-[10px] text-zinc-500 font-mono truncate">
+                              {sessao.processo?.numeroAutos}
+                            </p>
                           </div>
                         </div>
+                        
+                        <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                          <div className="flex items-center gap-1 text-[10px] text-zinc-500">
+                            <Calendar className="w-3 h-3" />
+                            {dataSessao ? format(dataSessao, "dd/MM/yyyy HH:mm") : "—"}
+                          </div>
+                          {sessao.defensorNome && (
+                            <div className="flex items-center gap-1 text-[10px] text-zinc-500">
+                              <User className="w-3 h-3" />
+                              {sessao.defensorNome.split(" ")[0]}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {sessoesFiltradas.map((sessao) => {
+                  const dataSessao = sessao.dataSessao ? new Date(sessao.dataSessao) : null;
+                  const statusCfg = getStatusConfig(sessao.status || "AGENDADA");
+                  const resultadoCfg = getResultadoConfig(sessao.resultado);
+                  
+                  return (
+                    <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
+                      <div className="flex items-center gap-4 p-3 rounded-lg bg-white dark:bg-zinc-900/80 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all">
+                        <Avatar className="h-9 w-9">
+                          <AvatarFallback className="text-xs bg-violet-100 text-violet-700">
+                            {sessao.assistidoNome?.split(" ").map(n => n[0]).slice(0, 2).join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{sessao.assistidoNome}</p>
+                          <p className="text-[10px] text-zinc-500 font-mono">{sessao.processo?.numeroAutos}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={cn("text-[10px] border-0", statusCfg.bgColor, statusCfg.color)}>
+                            {statusCfg.label}
+                          </Badge>
+                          {resultadoCfg && (
+                            <Badge className={cn("text-[10px] border-0", resultadoCfg.bgColor, resultadoCfg.color)}>
+                              {resultadoCfg.label}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-zinc-400">
+                          {dataSessao ? format(dataSessao, "dd/MM") : "—"}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-zinc-400" />
                       </div>
                     </Link>
                   );

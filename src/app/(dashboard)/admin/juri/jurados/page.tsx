@@ -640,87 +640,91 @@ export default function JuradosPage() {
   }, [busca, filtroTendencia, filtroPerfil]);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Link href="/admin/juri">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Users className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Banco de Jurados</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Perfis psicológicos e análise comportamental
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Estatísticas */}
-      <EstatisticasGerais jurados={juradosMock} />
-
-      {/* Filtros */}
-      <Card className="mb-6 dark:bg-zinc-900/80 dark:border-zinc-800">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <Input
-                placeholder="Buscar por nome, profissão ou bairro..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="pl-9 dark:bg-zinc-800 dark:border-zinc-700"
-              />
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* SUB-HEADER - Padrão Defender */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/juri">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center border border-blue-200 dark:border-blue-800">
+              <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
-            <Select value={filtroTendencia} onValueChange={setFiltroTendencia}>
-              <SelectTrigger className="w-full md:w-[200px] dark:bg-zinc-800 dark:border-zinc-700">
-                <SelectValue placeholder="Tendência" />
-              </SelectTrigger>
-              <SelectContent className="dark:bg-zinc-900 dark:border-zinc-800">
-                <SelectItem value="todos">Todas tendências</SelectItem>
-                <SelectItem value="favoravel_defesa">Favorável Defesa</SelectItem>
-                <SelectItem value="equilibrado">Equilibrado</SelectItem>
-                <SelectItem value="favoravel_acusacao">Favorável Acusação</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filtroPerfil} onValueChange={setFiltroPerfil}>
-              <SelectTrigger className="w-full md:w-[180px] dark:bg-zinc-800 dark:border-zinc-700">
-                <SelectValue placeholder="Perfil" />
-              </SelectTrigger>
-              <SelectContent className="dark:bg-zinc-900 dark:border-zinc-800">
-                <SelectItem value="todos">Todos perfis</SelectItem>
-                <SelectItem value="empatico">Empático</SelectItem>
-                <SelectItem value="analitico">Analítico</SelectItem>
-                <SelectItem value="autoritario">Autoritário</SelectItem>
-                <SelectItem value="conciliador">Conciliador</SelectItem>
-                <SelectItem value="impulsivo">Impulsivo</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Jurado
-            </Button>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Banco de Jurados</h1>
+              <p className="text-[10px] text-zinc-500">Perfis psicológicos e análise comportamental</p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Grid de Jurados */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {juradosFiltrados.map((jurado) => (
-          <JuradoCard key={jurado.id} jurado={jurado} />
-        ))}
+          
+          <Button size="sm" className="h-8 text-xs bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white">
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            Novo Jurado
+          </Button>
+        </div>
       </div>
 
-      {juradosFiltrados.length === 0 && (
-        <div className="text-center py-12 text-zinc-500">
-          Nenhum jurado encontrado com os filtros aplicados.
+      <div className="p-4 md:p-6 space-y-4">
+        {/* Estatísticas */}
+        <EstatisticasGerais jurados={juradosMock} />
+
+        {/* Filtros */}
+        <Card className="border-zinc-100 dark:border-zinc-800 dark:bg-zinc-900/80">
+          <CardContent className="p-3">
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                <Input
+                  placeholder="Buscar por nome, profissão ou bairro..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="pl-9 h-8 text-xs dark:bg-zinc-800 dark:border-zinc-700"
+                />
+              </div>
+              <Select value={filtroTendencia} onValueChange={setFiltroTendencia}>
+                <SelectTrigger className="w-full md:w-[180px] h-8 text-xs dark:bg-zinc-800 dark:border-zinc-700">
+                  <SelectValue placeholder="Tendência" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-zinc-900 dark:border-zinc-800">
+                  <SelectItem value="todos">Todas tendências</SelectItem>
+                  <SelectItem value="favoravel_defesa">Favorável Defesa</SelectItem>
+                  <SelectItem value="equilibrado">Equilibrado</SelectItem>
+                  <SelectItem value="favoravel_acusacao">Favorável Acusação</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filtroPerfil} onValueChange={setFiltroPerfil}>
+                <SelectTrigger className="w-full md:w-[160px] h-8 text-xs dark:bg-zinc-800 dark:border-zinc-700">
+                  <SelectValue placeholder="Perfil" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-zinc-900 dark:border-zinc-800">
+                  <SelectItem value="todos">Todos perfis</SelectItem>
+                  <SelectItem value="empatico">Empático</SelectItem>
+                  <SelectItem value="analitico">Analítico</SelectItem>
+                  <SelectItem value="autoritario">Autoritário</SelectItem>
+                  <SelectItem value="conciliador">Conciliador</SelectItem>
+                  <SelectItem value="impulsivo">Impulsivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Grid de Jurados */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {juradosFiltrados.map((jurado) => (
+            <JuradoCard key={jurado.id} jurado={jurado} />
+          ))}
         </div>
-      )}
+
+        {juradosFiltrados.length === 0 && (
+          <div className="text-center py-12">
+            <Users className="w-12 h-12 mx-auto mb-3 text-zinc-300" />
+            <p className="text-sm text-zinc-500">Nenhum jurado encontrado com os filtros aplicados</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

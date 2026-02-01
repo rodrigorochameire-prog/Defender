@@ -137,26 +137,28 @@ export default function AvaliacoesListPage() {
   };
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/juri">
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-900/30">
-            <ClipboardCheck className="h-5 w-5 text-purple-600 dark:text-purple-300" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Avaliações do Júri</h1>
-            <p className="text-sm text-muted-foreground">
-              Formulários de observação comportamental dos jurados
-            </p>
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* SUB-HEADER - Padrão Defender */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/juri">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center border border-purple-200 dark:border-purple-800">
+              <ClipboardCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Avaliações do Júri</h1>
+              <p className="text-[10px] text-zinc-500">Observação comportamental dos jurados</p>
+            </div>
           </div>
         </div>
       </div>
+
+      <div className="p-4 md:p-6 space-y-4">
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -396,6 +398,7 @@ export default function AvaliacoesListPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

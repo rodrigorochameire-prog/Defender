@@ -543,11 +543,11 @@ export default function PlenarioCockpitPage() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-              <Gavel className="h-5 w-5 text-white" />
+            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+              <Zap className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold">Cockpit do Plenário</h1>
+              <h1 className="text-lg font-bold">Plenário Live</h1>
               <p className={cn("text-xs", isDarkMode ? "text-zinc-500" : "text-zinc-500")}>
                 {juradosAtivos.length}/7 jurados no conselho
               </p>
@@ -662,7 +662,7 @@ export default function PlenarioCockpitPage() {
             variant={activeTab === "conselho" ? "default" : "ghost"}
             size="sm"
             onClick={() => setActiveTab("conselho")}
-            className={activeTab === "conselho" ? "bg-gradient-to-r from-amber-500 to-orange-600" : ""}
+            className={activeTab === "conselho" ? "bg-gradient-to-r from-violet-500 to-purple-600" : ""}
           >
             <Users className="w-4 h-4 mr-2" />
             Conselho de Sentença

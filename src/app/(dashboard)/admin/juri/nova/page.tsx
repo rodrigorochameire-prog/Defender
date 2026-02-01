@@ -41,28 +41,28 @@ export default function NovaSessaoJuriPage() {
   };
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <Link href="/admin/juri">
-            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            </Button>
-          </Link>
-          <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-900/30 dark:to-violet-900/30 flex-shrink-0">
-            <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-purple-700 dark:text-purple-400" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-              Nova Sessão do Júri
-            </h1>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">
-              Agende uma nova sessão plenária
-            </p>
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* SUB-HEADER - Padrão Defender */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/juri">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center border border-violet-200 dark:border-violet-800">
+              <Plus className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Nova Sessão do Júri</h1>
+              <p className="text-[10px] text-zinc-500">Agende uma nova sessão plenária</p>
+            </div>
           </div>
         </div>
       </div>
+
+      <div className="p-4 md:p-6 space-y-4">
 
       {/* Formulário */}
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -178,6 +178,7 @@ export default function NovaSessaoJuriPage() {
           </Button>
         </div>
       </form>
+      </div>
     </div>
   );
 }

@@ -56,28 +56,31 @@ export default function TesesJuriPage() {
   const [narrativa, setNarrativa] = useState("");
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/juri">
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
-            <Lightbulb className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* SUB-HEADER - Padrão Defender */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/juri">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center border border-amber-200 dark:border-amber-800">
+              <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Teses & Argumentos</h1>
+              <p className="text-[10px] text-zinc-500">Estruture narrativa e antecipações do MP</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Banco de Teses & Argumentos</h1>
-            <p className="text-sm text-muted-foreground">
-              Estruture narrativa, teses e antecipações do MP.
-            </p>
-          </div>
+          <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-700">
+            Estratégia Defensiva
+          </Badge>
         </div>
-        <Badge variant="outline" className="border-indigo-300 text-indigo-700">
-          Estratégia Defensiva
-        </Badge>
       </div>
+
+      <div className="p-4 md:p-6 space-y-4">
 
       <Card className="section-card">
         <CardHeader>
@@ -182,6 +185,7 @@ export default function TesesJuriPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

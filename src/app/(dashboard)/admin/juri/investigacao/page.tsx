@@ -159,28 +159,31 @@ export default function InvestigacaoJuriPage() {
   };
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/juri">
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
-            <Radar className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* SUB-HEADER - Padrão Defender */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/juri">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+              <Radar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Investigação & OSINT</h1>
+              <p className="text-[10px] text-zinc-500">Painel de diligências do júri</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Investigação & OSINT</h1>
-            <p className="text-sm text-muted-foreground">
-              Painel de providências e diligências do júri
-            </p>
-          </div>
+          <Badge variant="outline" className="text-[10px] border-emerald-300 text-emerald-700">
+            Fluxo Kanban
+          </Badge>
         </div>
-        <Badge variant="outline" className="border-emerald-300 text-emerald-700">
-          Fluxo Kanban
-        </Badge>
       </div>
+
+      <div className="p-4 md:p-6 space-y-4">
 
       <Card className="border-emerald-200/60">
         <CardHeader>
@@ -285,6 +288,7 @@ export default function InvestigacaoJuriPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
       </div>
     </div>
   );

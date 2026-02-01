@@ -254,83 +254,83 @@ export default function JuradoPerfilPage({ params }: { params: Promise<{ id: str
       : { text: "Favorável à Acusação", color: "text-rose-600 dark:text-rose-400", icon: <TrendingDown className="w-5 h-5" /> };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Link href="/admin/juri/jurados">
-            <Button variant="ghost" size="icon" className="dark:hover:bg-zinc-800">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <Avatar className="h-16 w-16">
-            <AvatarFallback className={cn(
-              "text-xl font-semibold",
-              jurado.genero === "F" 
-                ? "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-400"
-                : "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400"
-            )}>
-              {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{jurado.nome}</h1>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-              <span className="flex items-center gap-1">
-                <Briefcase className="w-3.5 h-3.5" />
-                {jurado.profissao}
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5" />
-                {jurado.bairro}
-              </span>
-              <span>•</span>
-              <span>{jurado.idade} anos</span>
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* SUB-HEADER - Padrão Defender */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/admin/juri/jurados">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Avatar className="h-10 w-10">
+              <AvatarFallback className={cn(
+                "text-sm font-semibold",
+                jurado.genero === "F" 
+                  ? "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-400"
+                  : "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400"
+              )}>
+                {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{jurado.nome}</h1>
+              <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+                <Briefcase className="w-3 h-3" />
+                <span>{jurado.profissao}</span>
+                <span>•</span>
+                <MapPin className="w-3 h-3" />
+                <span>{jurado.bairro}</span>
+                <span>•</span>
+                <span>{jurado.idade} anos</span>
+              </div>
             </div>
           </div>
-          <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
-            <Save className="w-4 h-4 mr-2" />
+          <Button size="sm" className="h-8 text-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+            <Save className="w-3.5 h-3.5 mr-1.5" />
             Salvar
           </Button>
         </div>
+      </div>
+
+      <div className="p-4 md:p-6 space-y-4">
 
         {/* Resumo rápido */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-          <div className={cn("p-3 rounded-xl border flex items-center gap-3", perfilConfig.color)}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className={cn("p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-3", perfilConfig.color)}>
             {perfilConfig.icon}
             <div>
-              <div className="text-xs opacity-70">Perfil</div>
-              <div className="font-semibold">{perfilConfig.label}</div>
+              <div className="text-[10px] text-zinc-500 uppercase">Perfil</div>
+              <div className="font-semibold text-sm">{perfilConfig.label}</div>
             </div>
           </div>
-          <div className={cn("p-3 rounded-xl border flex items-center gap-3 bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700", tendenciaLabel.color)}>
+          <div className={cn("p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-3")}>
             {tendenciaLabel.icon}
             <div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">Tendência</div>
-              <div className="font-semibold">{tendenciaLabel.text}</div>
+              <div className="text-[10px] text-zinc-500 uppercase">Tendência</div>
+              <div className={cn("font-semibold text-sm", tendenciaLabel.color)}>{tendenciaLabel.text}</div>
             </div>
           </div>
-          <div className="p-3 rounded-xl border bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 flex items-center gap-3">
+          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-3">
             <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">Taxa Absolvição</div>
-              <div className="font-semibold text-blue-600 dark:text-blue-400">{jurado.taxaAbsolvicao}%</div>
+              <div className="text-[10px] text-zinc-500 uppercase">Taxa Absolvição</div>
+              <div className="font-semibold text-sm text-blue-600 dark:text-blue-400">{jurado.taxaAbsolvicao}%</div>
             </div>
           </div>
-          <div className="p-3 rounded-xl border bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 flex items-center gap-3">
-            <History className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center gap-3">
+            <History className="w-5 h-5 text-violet-600 dark:text-violet-400" />
             <div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">Sessões</div>
-              <div className="font-semibold text-purple-600 dark:text-purple-400">{jurado.totalSessoes} participações</div>
+              <div className="text-[10px] text-zinc-500 uppercase">Sessões</div>
+              <div className="font-semibold text-sm text-violet-600 dark:text-violet-400">{jurado.totalSessoes} participações</div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 p-1">
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 p-1">
           <TabsTrigger value="perfil" className="data-[state=active]:bg-zinc-100 dark:data-[state=active]:bg-zinc-800">
             <Brain className="w-4 h-4 mr-2" />
             Perfil Psicológico
@@ -784,7 +784,8 @@ export default function JuradoPerfilPage({ params }: { params: Promise<{ id: str
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }

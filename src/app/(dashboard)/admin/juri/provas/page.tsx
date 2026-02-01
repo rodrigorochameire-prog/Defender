@@ -76,28 +76,31 @@ export default function ProvasJuriPage() {
   };
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/juri">
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="p-3 rounded-xl bg-sky-100 dark:bg-sky-900/30">
-            <Highlighter className="h-5 w-5 text-sky-600 dark:text-sky-300" />
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* SUB-HEADER - Padrão Defender */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/juri">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center border border-sky-200 dark:border-sky-800">
+              <Highlighter className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Matriz de Provas</h1>
+              <p className="text-[10px] text-zinc-500">Comparador fase policial vs judicial</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Matriz de Provas & Contradições</h1>
-            <p className="text-sm text-muted-foreground">
-              Comparador lado a lado entre fase policial e judicial.
-            </p>
-          </div>
+          <Badge variant="outline" className="text-[10px] border-sky-300 text-sky-700">
+            Tabela Comparativa
+          </Badge>
         </div>
-        <Badge variant="outline" className="border-sky-300 text-sky-700">
-          Tabela Comparativa
-        </Badge>
       </div>
+
+      <div className="p-4 md:p-6 space-y-4">
 
       <Tabs value={activeId} onValueChange={setActiveId} className="space-y-4">
         <TabsList className="bg-muted/60">
@@ -192,6 +195,7 @@ export default function ProvasJuriPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
