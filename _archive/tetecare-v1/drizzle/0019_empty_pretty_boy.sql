@@ -1,1 +1,0 @@
-ALTER TABLE `documents` MODIFY COLUMN `category` enum('vaccination_card','veterinary_document','exam','certificate','prescription','other') NOT NULL;

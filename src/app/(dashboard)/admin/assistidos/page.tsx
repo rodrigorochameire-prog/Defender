@@ -742,34 +742,48 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 }
 
 // ========================================
-// ROW DO ASSISTIDO - DESIGN SUICO (Lista)
+// ROW DO ASSISTIDO - DESIGN PREMIUM (Lista)
 // ========================================
 
 function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: AssistidoCardProps) {
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
   const prazoUrgente = prazoInfo && prazoInfo.urgent;
-  const testemunhasOuvidas = assistido.testemunhasArroladas.filter(t => t.ouvida).length;
-  const totalTestemunhas = assistido.testemunhasArroladas.length;
   const tempoPreso = calcularTempoPreso(assistido.dataPrisao);
   const idade = calcularIdade(assistido.dataNascimento);
   const statusCfg = statusConfig[assistido.statusPrisional];
-  const faseCfg = faseConfig[assistido.faseProcessual];
+  
+  // Cores de atribuição
+  const atribuicaoColorMap: Record<string, string> = {
+    "VIOLENCIA_DOMESTICA": "#eab308",
+    "JURI": "#22c55e",
+    "EXECUCAO_PENAL": "#3b82f6",
+    "SUBSTITUICAO_CRIMINAL": "#ef4444",
+    "SUBSTITUICAO_NAO_PENAL": "#f97316",
+  };
+  const atribuicaoColor = atribuicaoColorMap[assistido.area] || "#71717a";
+  
+  // WhatsApp
+  const telefone = assistido.telefone || assistido.telefoneContato;
+  const whatsappUrl = telefone ? `https://wa.me/55${telefone.replace(/\D/g, '')}` : null;
 
   return (
     <SwissTableRow className={cn(
-      "group transition-colors",
-      // Borda lateral semantica - usando nova classe
-      isPreso ? "border-semantic-prisoner" : "border-semantic-free",
+      "group transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50",
       isPinned && "bg-amber-50/30 dark:bg-amber-950/10"
     )}>
-      {/* Nome + Avatar */}
-      <SwissTableCell className="min-w-[200px]">
+      {/* Nome + Avatar + Atribuição */}
+      <SwissTableCell className="min-w-[260px]">
         <div className="flex items-center gap-3">
+          {/* Indicador de atribuição */}
+          <div 
+            className="w-1 h-10 rounded-full flex-shrink-0"
+            style={{ backgroundColor: atribuicaoColor }}
+          />
           <Avatar 
             className={cn(
-              "h-9 w-9 ring-2 cursor-pointer transition-all hover:scale-105",
-              isPreso ? "ring-rose-400 dark:ring-rose-500" : "ring-zinc-200 dark:ring-zinc-700"
+              "h-9 w-9 ring-1 cursor-pointer transition-all hover:scale-105",
+              isPreso ? "ring-rose-400" : "ring-zinc-200 dark:ring-zinc-700"
             )}
             onClick={onPhotoClick}
           >
@@ -787,144 +801,133 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <Link href={`/admin/assistidos/${assistido.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link href={`/admin/assistidos/${assistido.id}`} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                 <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">{assistido.nome}</p>
               </Link>
               {isPinned && <BookmarkCheck className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
             </div>
-            {assistido.vulgo && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 italic truncate">&ldquo;{assistido.vulgo}&rdquo;</p>
-            )}
-          </div>
-        </div>
-      </SwissTableCell>
-
-      {/* Idade */}
-      <SwissTableCell className="text-center">
-        {idade !== null ? (
-          <>
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{idade}</span>
-            <span className="text-xs text-zinc-400 ml-0.5">a</span>
-          </>
-        ) : (
-          <span className="text-xs text-zinc-400">-</span>
-        )}
-      </SwissTableCell>
-
-      {/* Status Prisional + Tempo */}
-      <SwissTableCell className="min-w-[140px]">
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <PrisonerIndicator 
-              preso={isPreso} 
-              size="sm"
-              showTooltip={false}
-            />
-            <Badge 
-              variant="outline" 
-              className={cn(
-                "text-xs px-1.5 py-0 font-medium border-0",
-                statusCfg?.bgColor,
-                statusCfg?.color
+            <div className="flex items-center gap-2 mt-0.5">
+              {assistido.vulgo && (
+                <span className="text-[10px] text-zinc-400 italic truncate">&ldquo;{assistido.vulgo}&rdquo;</span>
               )}
-            >
-              {statusCfg?.label}
-            </Badge>
+              {idade !== null && (
+                <span className="text-[10px] text-zinc-400">{idade} anos</span>
+              )}
+            </div>
           </div>
-          {tempoPreso && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
-              {tempoPreso}
-            </p>
-          )}
         </div>
       </SwissTableCell>
 
-      {/* Fase Processual */}
-      <SwissTableCell>
-        {assistido.faseProcessual && faseCfg && (
-          <Badge 
-            variant="outline" 
-            className={cn(
-              "text-xs px-1.5 py-0 font-medium border-0 area-badge"
-            )}
-          >
-            {faseCfg.label}
-          </Badge>
+      {/* Status Prisional */}
+      <SwissTableCell className="min-w-[120px]">
+        <div className="flex items-center gap-1.5">
+          <div className={cn(
+            "w-2 h-2 rounded-full flex-shrink-0",
+            isPreso ? "bg-rose-500" : "bg-emerald-500"
+          )} />
+          <span className="text-xs text-zinc-600 dark:text-zinc-400">
+            {statusCfg?.label || assistido.statusPrisional}
+          </span>
+        </div>
+        {tempoPreso && (
+          <p className="text-[10px] text-zinc-400 mt-0.5 font-mono pl-3.5">
+            {tempoPreso}
+          </p>
         )}
       </SwissTableCell>
 
-      {/* Crime - Fonte serifada */}
-      <SwissTableCell className="max-w-[200px]">
-        <p className="text-xs font-legal text-zinc-600 dark:text-zinc-400 truncate">
+      {/* Crime */}
+      <SwissTableCell className="max-w-[180px]">
+        <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate">
           {assistido.crimePrincipal || "-"}
         </p>
       </SwissTableCell>
 
-      {/* Processo - Fonte mono com copy */}
-      <SwissTableCell className="min-w-[180px]">
-        <div 
-          className="process-number group/copy cursor-pointer inline-flex items-center gap-1.5"
-          onClick={() => {
-            navigator.clipboard.writeText(assistido.numeroProcesso);
-          }}
-        >
-          <span className="truncate">{assistido.numeroProcesso}</span>
-          <Copy className="w-3 h-3 opacity-0 group-hover/copy:opacity-100 transition-opacity" />
-        </div>
-      </SwissTableCell>
-
-      {/* Defensor */}
-      <SwissTableCell>
-        <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate">{assistido.defensor}</p>
-      </SwissTableCell>
-
-      {/* Processos Ativos */}
-      <SwissTableCell className="text-center">
-        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{assistido.processosAtivos}</span>
-      </SwissTableCell>
-
-      {/* Demandas */}
-      <SwissTableCell className="text-center">
-        <Badge 
-          variant="outline" 
-          className={cn(
-            "text-xs px-2 py-0.5 font-medium",
-            assistido.demandasAbertas > 0 
-              ? "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/50"
-              : "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
-          )}
-        >
-          {assistido.demandasAbertas}
-        </Badge>
-      </SwissTableCell>
-
-      {/* Próximo Prazo */}
-      <SwissTableCell className="min-w-[100px]">
-        {prazoInfo ? (
-          <div className="space-y-0.5">
-            <Badge 
-              variant="outline" 
-              className={cn(
-                "text-xs px-1.5 py-0 font-medium border-0",
-                prazoUrgente 
-                  ? "status-badge-urgent"
-                  : "status-badge-neutral"
-              )}
-            >
-              {prazoInfo.text}
-            </Badge>
-            {assistido.atoProximoPrazo && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{assistido.atoProximoPrazo}</p>
-            )}
+      {/* Processo */}
+      <SwissTableCell className="min-w-[160px]">
+        {assistido.numeroProcesso ? (
+          <div 
+            className="group/copy cursor-pointer inline-flex items-center gap-1"
+            onClick={() => navigator.clipboard.writeText(assistido.numeroProcesso)}
+          >
+            <span className="font-mono text-[10px] text-zinc-500 truncate hover:text-zinc-700 dark:hover:text-zinc-300">
+              {assistido.numeroProcesso}
+            </span>
+            <Copy className="w-2.5 h-2.5 text-zinc-300 opacity-0 group-hover/copy:opacity-100 transition-opacity" />
           </div>
         ) : (
-          <span className="text-xs text-zinc-300 dark:text-zinc-600 italic">-</span>
+          <span className="text-xs text-zinc-300 dark:text-zinc-600">-</span>
         )}
       </SwissTableCell>
 
-      {/* Acoes */}
+      {/* Contadores */}
+      <SwissTableCell className="text-center">
+        <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center gap-1">
+            <Scale className="w-3 h-3 text-zinc-400" />
+            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{assistido.processosAtivos || 0}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <FileText className="w-3 h-3 text-zinc-400" />
+            <span className={cn(
+              "text-xs font-medium",
+              assistido.demandasAbertas > 0 ? "text-amber-600" : "text-zinc-400"
+            )}>
+              {assistido.demandasAbertas || 0}
+            </span>
+          </div>
+        </div>
+      </SwissTableCell>
+
+      {/* Próxima Audiência */}
+      <SwissTableCell className="min-w-[100px]">
+        {assistido.proximaAudiencia ? (
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3 h-3 text-blue-500" />
+            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+              {format(parseISO(assistido.proximaAudiencia), "dd/MM")}
+            </span>
+          </div>
+        ) : prazoInfo ? (
+          <Badge 
+            variant="outline" 
+            className={cn(
+              "text-[10px] px-1.5 py-0 font-medium border-0",
+              prazoUrgente ? "bg-rose-100 text-rose-600" : "bg-zinc-100 text-zinc-500"
+            )}
+          >
+            {prazoInfo.text}
+          </Badge>
+        ) : (
+          <span className="text-xs text-zinc-300 dark:text-zinc-600">-</span>
+        )}
+      </SwissTableCell>
+
+      {/* Ações */}
       <SwissTableCell className="text-right">
         <div className="flex items-center justify-end gap-0.5">
+          {whatsappUrl && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <MessageCircle className="h-3.5 w-3.5" />
+                  </Button>
+                </a>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-[10px]">WhatsApp</TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={`/admin/drive?assistido=${assistido.id}`}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <FolderOpen className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-[10px]">Drive</TooltipContent>
+          </Tooltip>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -934,11 +937,11 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
             )} 
             onClick={onTogglePin}
           >
-            {isPinned ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+            {isPinned ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
           </Button>
           <Link href={`/admin/assistidos/${assistido.id}`}>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Eye className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Eye className="h-3.5 w-3.5" />
             </Button>
           </Link>
         </div>
@@ -1346,7 +1349,7 @@ export default function AssistidosPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [areaFilter, setAreaFilter] = useState("all");
   const [comarcaFilter, setComarcaFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<"nome" | "prioridade" | "prazo" | "complexidade">("prioridade");
+  const [sortBy, setSortBy] = useState<"nome" | "prioridade" | "prazo" | "complexidade">("nome");
   const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "status">("none");
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
   const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set());
@@ -1836,15 +1839,11 @@ export default function AssistidosPage() {
             <SwissTableHeader>
               <SwissTableRow>
                 <SwissTableHead>Assistido</SwissTableHead>
-                <SwissTableHead className="text-center">Idade</SwissTableHead>
-                <SwissTableHead>Status Prisional</SwissTableHead>
-                <SwissTableHead>Fase</SwissTableHead>
+                <SwissTableHead>Status</SwissTableHead>
                 <SwissTableHead>Crime</SwissTableHead>
-                <SwissTableHead>Nº Processo</SwissTableHead>
-                <SwissTableHead>Defensor</SwissTableHead>
-                <SwissTableHead className="text-center">Proc.</SwissTableHead>
-                <SwissTableHead className="text-center">Dem.</SwissTableHead>
-                <SwissTableHead>Próximo Prazo</SwissTableHead>
+                <SwissTableHead>Processo</SwissTableHead>
+                <SwissTableHead className="text-center">Vínculos</SwissTableHead>
+                <SwissTableHead>Próxima</SwissTableHead>
                 <SwissTableHead className="text-right">Ações</SwissTableHead>
               </SwissTableRow>
             </SwissTableHeader>

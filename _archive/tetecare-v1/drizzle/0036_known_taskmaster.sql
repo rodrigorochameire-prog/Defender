@@ -1,2 +1,0 @@
-ALTER TABLE `health_behavior_logs` MODIFY COLUMN `stool` enum('perfeitas','normal','levemente_moles','moles','pastosas','diarreia','ressecadas','constipacao','com_sangue','muco');--> statement-breakpoint
-ALTER TABLE `health_behavior_logs` MODIFY COLUMN `behavior` enum('ativo','brincalhao','sociavel','calmo','relaxado','curioso','timido','protetor','destrutivo','letargico','agressivo','assustado');
