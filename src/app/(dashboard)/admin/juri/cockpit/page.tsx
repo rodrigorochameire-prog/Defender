@@ -1200,86 +1200,188 @@ export default function PlenarioCockpitPage() {
                   </div>
                 )}
 
-                {/* Juiz Presidente */}
-                <div className="text-center mb-6">
+                {/* ========== REPRESENTAÇÃO GRÁFICA DO PLENÁRIO ========== */}
+                <div className="relative">
+                  {/* Container do Plenário - Tribuna Estilizada */}
                   <div className={cn(
-                    "inline-flex items-center gap-2 px-4 py-2 rounded-full border",
-                    isDarkMode ? "bg-zinc-800 border-zinc-700" : "bg-zinc-100 border-zinc-200"
+                    "relative rounded-3xl overflow-hidden",
+                    isDarkMode 
+                      ? "bg-gradient-to-b from-zinc-800/30 to-zinc-900/50" 
+                      : "bg-gradient-to-b from-zinc-50 to-zinc-100/80"
                   )}>
-                    <Gavel className="w-4 h-4 text-violet-600" />
-                    <span className="text-sm font-medium">Juiz Presidente</span>
-                  </div>
-                </div>
+                    {/* Padrão decorativo sutil */}
+                    <div className="absolute inset-0 opacity-[0.02]" style={{
+                      backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
+                      backgroundSize: '24px 24px'
+                    }} />
+                    
+                    {/* Header do Plenário - Juiz Presidente */}
+                    <div className={cn(
+                      "relative px-8 py-5 border-b",
+                      isDarkMode ? "border-zinc-800/50" : "border-zinc-200/50"
+                    )}>
+                      <div className="flex items-center justify-center">
+                        <div className={cn(
+                          "flex items-center gap-3 px-6 py-2.5 rounded-2xl",
+                          isDarkMode 
+                            ? "bg-zinc-900/80 ring-1 ring-zinc-800" 
+                            : "bg-white ring-1 ring-zinc-200 shadow-sm"
+                        )}>
+                          <div className={cn(
+                            "w-8 h-8 rounded-xl flex items-center justify-center",
+                            isDarkMode ? "bg-violet-500/10" : "bg-violet-50"
+                          )}>
+                            <Gavel className="w-4 h-4 text-violet-600" />
+                          </div>
+                          <div>
+                            <p className={cn("text-sm font-semibold", isDarkMode ? "text-zinc-100" : "text-zinc-800")}>
+                              Juiz Presidente
+                            </p>
+                            <p className="text-[10px] text-zinc-500">Magistrado do Tribunal</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Linha decorativa */}
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-24 h-1 rounded-t-full bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
+                    </div>
 
-                {/* Fileira de Trás (4 cadeiras) */}
-                <div className="mb-8">
-                  <p className={cn("text-[10px] uppercase tracking-wider mb-3 text-center font-medium", isDarkMode ? "text-zinc-600" : "text-zinc-400")}>
-                    Fileira de Trás
-                  </p>
-                  <div className="grid grid-cols-4 gap-3 max-w-4xl mx-auto">
-                    {[4, 5, 6, 7].map((cadeira) => (
-                      <CadeiraVisual
-                        key={cadeira}
-                        jurado={conselhoSentenca[cadeira - 1]}
-                        cadeiraNum={cadeira}
-                        isDarkMode={isDarkMode}
-                        juradoSelecionado={juradoSelecionado}
-                        onClickVazio={() => {
-                          if (juradoSelecionado) {
-                            handleSelecionarJurado(cadeira, juradoSelecionado.id);
-                          } else {
-                            setModalCadeira(cadeira);
-                          }
-                        }}
-                        onRemove={() => handleRemoverJurado(cadeira)}
-                        onUploadFoto={(file) => handleUploadFoto(cadeira, file)}
-                        onAddObservacao={(obs) => handleAddObservacaoJurado(cadeira, obs)}
-                      />
-                    ))}
-                  </div>
-                </div>
+                    {/* Área das Cadeiras */}
+                    <div className="px-6 py-8 space-y-8">
+                      
+                      {/* Fileira de Trás (4 cadeiras) */}
+                      <div className="relative">
+                        {/* Label da fileira */}
+                        <div className="flex items-center justify-center gap-3 mb-5">
+                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-zinc-800" : "bg-zinc-200")} />
+                          <span className={cn(
+                            "text-[10px] uppercase tracking-widest font-medium px-3",
+                            isDarkMode ? "text-zinc-600" : "text-zinc-400"
+                          )}>
+                            Fileira de Trás
+                          </span>
+                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-zinc-800" : "bg-zinc-200")} />
+                        </div>
+                        
+                        {/* Bancada visual */}
+                        <div className={cn(
+                          "relative rounded-2xl p-4",
+                          isDarkMode 
+                            ? "bg-zinc-900/40 ring-1 ring-zinc-800/50" 
+                            : "bg-white/60 ring-1 ring-zinc-200/50 shadow-sm"
+                        )}>
+                          <div className="grid grid-cols-4 gap-4">
+                            {[4, 5, 6, 7].map((cadeira) => (
+                              <CadeiraVisual
+                                key={cadeira}
+                                jurado={conselhoSentenca[cadeira - 1]}
+                                cadeiraNum={cadeira}
+                                isDarkMode={isDarkMode}
+                                juradoSelecionado={juradoSelecionado}
+                                onClickVazio={() => {
+                                  if (juradoSelecionado) {
+                                    handleSelecionarJurado(cadeira, juradoSelecionado.id);
+                                  } else {
+                                    setModalCadeira(cadeira);
+                                  }
+                                }}
+                                onRemove={() => handleRemoverJurado(cadeira)}
+                                onUploadFoto={(file) => handleUploadFoto(cadeira, file)}
+                                onAddObservacao={(obs) => handleAddObservacaoJurado(cadeira, obs)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
 
-                {/* Fileira da Frente (3 cadeiras) */}
-                <div>
-                  <p className={cn("text-[10px] uppercase tracking-wider mb-3 text-center font-medium", isDarkMode ? "text-zinc-600" : "text-zinc-400")}>
-                    Fileira da Frente
-                  </p>
-                  <div className="grid grid-cols-3 gap-3 max-w-3xl mx-auto">
-                    {[1, 2, 3].map((cadeira) => (
-                      <CadeiraVisual
-                        key={cadeira}
-                        jurado={conselhoSentenca[cadeira - 1]}
-                        cadeiraNum={cadeira}
-                        isDarkMode={isDarkMode}
-                        juradoSelecionado={juradoSelecionado}
-                        onClickVazio={() => {
-                          if (juradoSelecionado) {
-                            handleSelecionarJurado(cadeira, juradoSelecionado.id);
-                          } else {
-                            setModalCadeira(cadeira);
-                          }
-                        }}
-                        onRemove={() => handleRemoverJurado(cadeira)}
-                        onUploadFoto={(file) => handleUploadFoto(cadeira, file)}
-                        onAddObservacao={(obs) => handleAddObservacaoJurado(cadeira, obs)}
-                      />
-                    ))}
-                  </div>
-                </div>
+                      {/* Conector visual entre fileiras */}
+                      <div className="flex justify-center">
+                        <div className={cn(
+                          "w-px h-6",
+                          isDarkMode ? "bg-gradient-to-b from-zinc-700 to-transparent" : "bg-gradient-to-b from-zinc-300 to-transparent"
+                        )} />
+                      </div>
 
-                {/* Legenda */}
-                <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                    <span>Favorável (&ge;60%)</span>
+                      {/* Fileira da Frente (3 cadeiras) */}
+                      <div className="relative">
+                        {/* Label da fileira */}
+                        <div className="flex items-center justify-center gap-3 mb-5">
+                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-zinc-800" : "bg-zinc-200")} />
+                          <span className={cn(
+                            "text-[10px] uppercase tracking-widest font-medium px-3",
+                            isDarkMode ? "text-zinc-600" : "text-zinc-400"
+                          )}>
+                            Fileira da Frente
+                          </span>
+                          <div className={cn("h-px flex-1 max-w-16", isDarkMode ? "bg-zinc-800" : "bg-zinc-200")} />
+                        </div>
+                        
+                        {/* Bancada visual - ligeiramente maior para destaque */}
+                        <div className={cn(
+                          "relative rounded-2xl p-5 max-w-4xl mx-auto",
+                          isDarkMode 
+                            ? "bg-zinc-900/60 ring-1 ring-zinc-700/50" 
+                            : "bg-white/80 ring-1 ring-zinc-200/80 shadow-md"
+                        )}>
+                          <div className="grid grid-cols-3 gap-5">
+                            {[1, 2, 3].map((cadeira) => (
+                              <CadeiraVisual
+                                key={cadeira}
+                                jurado={conselhoSentenca[cadeira - 1]}
+                                cadeiraNum={cadeira}
+                                isDarkMode={isDarkMode}
+                                juradoSelecionado={juradoSelecionado}
+                                onClickVazio={() => {
+                                  if (juradoSelecionado) {
+                                    handleSelecionarJurado(cadeira, juradoSelecionado.id);
+                                  } else {
+                                    setModalCadeira(cadeira);
+                                  }
+                                }}
+                                onRemove={() => handleRemoverJurado(cadeira)}
+                                onUploadFoto={(file) => handleUploadFoto(cadeira, file)}
+                                onAddObservacao={(obs) => handleAddObservacaoJurado(cadeira, obs)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer do Plenário - Legenda elegante */}
+                    <div className={cn(
+                      "px-8 py-4 border-t",
+                      isDarkMode ? "border-zinc-800/50 bg-zinc-900/30" : "border-zinc-200/50 bg-white/40"
+                    )}>
+                      <div className="flex items-center justify-center gap-8">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-900" />
+                          <span className="text-[11px] text-zinc-500">Favorável (&ge;60%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-amber-200 dark:ring-amber-900" />
+                          <span className="text-[11px] text-zinc-500">Neutro (40-60%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200 dark:ring-rose-900" />
+                          <span className="text-[11px] text-zinc-500">Desfavorável (&le;40%)</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <div className="w-3 h-3 rounded-full bg-amber-500" />
-                    <span>Neutro (40-60%)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <div className="w-3 h-3 rounded-full bg-rose-500" />
-                    <span>Desfavorável (&le;40%)</span>
+
+                  {/* Indicador de progresso do conselho */}
+                  <div className={cn(
+                    "absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-medium",
+                    juradosAtivos.length === 7 
+                      ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" 
+                      : isDarkMode 
+                        ? "bg-zinc-800 text-zinc-400 ring-1 ring-zinc-700" 
+                        : "bg-white text-zinc-600 ring-1 ring-zinc-200 shadow-md"
+                  )}>
+                    <Users className="w-3 h-3" />
+                    <span>{juradosAtivos.length}/7 Jurados</span>
+                    {juradosAtivos.length === 7 && <CheckCircle2 className="w-3 h-3 ml-0.5" />}
                   </div>
                 </div>
               </div>
