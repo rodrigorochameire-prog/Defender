@@ -964,7 +964,7 @@ function FilterSectionCasos({
   viewMode,
   setViewMode,
 }: FilterSectionCasosProps) {
-  const [isMainExpanded, setIsMainExpanded] = useState(true);
+  const [isMainExpanded, setIsMainExpanded] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     atribuicoes: false,
     fase: false,

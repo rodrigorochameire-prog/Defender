@@ -316,8 +316,8 @@ export default function Demandas() {
   const [showArchived, setShowArchived] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDemanda, setEditingDemanda] = useState<DemandaFormData | null>(null);
-  const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
-  const [isInfographicsExpanded, setIsInfographicsExpanded] = useState(true);
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+  const [isInfographicsExpanded, setIsInfographicsExpanded] = useState(false);
   const [isAdminConfigModalOpen, setIsAdminConfigModalOpen] = useState(false);
 
   // ==========================================

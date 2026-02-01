@@ -1206,34 +1206,32 @@ function FilterSectionAssistidos({
         </div>
       )}
 
-      {/* Barra de Ações (Ordenação, Agrupamento, View) */}
+      {/* Barra de Ações (Ordenação, View) */}
       <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
-        <div className="flex items-center gap-2">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[110px] h-8 text-xs">
-              <ArrowUpDown className="w-3 h-3 mr-1 text-zinc-400" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="prioridade">Prioridade</SelectItem>
-              <SelectItem value="complexidade">Complexidade</SelectItem>
-              <SelectItem value="nome">Nome</SelectItem>
-              <SelectItem value="prazo">Prazo</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={groupBy} onValueChange={setGroupBy}>
-            <SelectTrigger className="w-[120px] h-8 text-xs">
-              <Target className="w-3 h-3 mr-1 text-zinc-400" />
-              <SelectValue placeholder="Agrupar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Sem grupo</SelectItem>
-              <SelectItem value="comarca">Por Comarca</SelectItem>
-              <SelectItem value="area">Por Área</SelectItem>
-              <SelectItem value="status">Por Status</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Botões de Ordenação */}
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-zinc-400 mr-1">Ordenar:</span>
+          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+            {[
+              { id: "nome", label: "Nome" },
+              { id: "prioridade", label: "Prioridade" },
+              { id: "complexidade", label: "Complexidade" },
+              { id: "prazo", label: "Prazo" },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setSortBy(opt.id)}
+                className={cn(
+                  "px-2.5 py-1 text-[11px] font-medium rounded-md transition-all",
+                  sortBy === opt.id
+                    ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
         
         <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">

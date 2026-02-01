@@ -441,11 +441,20 @@ export default function DashboardJuriPage() {
     return assistidos.find((a: any) => a.id === atendimentoRapido.assistidoId);
   }, [atendimentoRapido.assistidoId, assistidos]);
 
-  // Filtrar assistidos pela busca
+  // Filtrar assistidos pela busca (excluindo "Não identificado")
   const assistidosFiltrados = useMemo(() => {
-    if (!assistidoSearchQuery.trim()) return assistidos.slice(0, 10);
+    // Primeiro exclui os não identificados
+    const assistidosValidos = assistidos.filter((a: any) => {
+      const nome = (a.nome || "").toLowerCase();
+      return !nome.includes("não identificado") && 
+             !nome.includes("nao identificado") && 
+             nome !== "" && 
+             nome !== "-";
+    });
+    
+    if (!assistidoSearchQuery.trim()) return assistidosValidos.slice(0, 10);
     const query = assistidoSearchQuery.toLowerCase();
-    return assistidos
+    return assistidosValidos
       .filter((a: any) => 
         a.nome?.toLowerCase().includes(query) ||
         a.cpf?.includes(query) ||

@@ -651,7 +651,7 @@ const AssignmentContext = createContext<AssignmentContextType | undefined>(undef
 const STORAGE_KEY = "defesahub_current_assignment";
 
 export function AssignmentProvider({ children }: { children: ReactNode }) {
-  const [currentAssignment, setCurrentAssignment] = useState<Assignment>("SUBSTITUICAO");
+  const [currentAssignment, setCurrentAssignment] = useState<Assignment>("JURI_CAMACARI");
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
