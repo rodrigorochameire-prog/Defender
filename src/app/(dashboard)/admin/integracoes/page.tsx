@@ -89,18 +89,8 @@ const INTEGRATIONS: Integration[] = [
     name: "Google Calendar",
     description: "Sincronização de audiências e prazos com seu calendário",
     icon: <Calendar className="w-6 h-6" />,
-    status: "connected",
-    lastSync: "Há 5 minutos",
+    status: "disconnected",
     features: ["Criar eventos", "Atualizar eventos", "Sincronização bidirecional"],
-  },
-  {
-    id: "google-drive",
-    name: "Google Drive",
-    description: "Armazenamento e visualização de documentos processuais",
-    icon: <FolderOpen className="w-6 h-6" />,
-    status: "connected",
-    lastSync: "Há 12 minutos",
-    features: ["Upload automático", "Pastas por processo", "Preview de documentos"],
   },
   {
     id: "whatsapp",
@@ -115,8 +105,7 @@ const INTEGRATIONS: Integration[] = [
     name: "n8n Automations",
     description: "Workflows de automação e integrações avançadas",
     icon: <Zap className="w-6 h-6" />,
-    status: "connected",
-    lastSync: "Há 1 minuto",
+    status: "disconnected",
     features: ["Monitoramento de pastas", "OCR de intimações", "Resumo por IA"],
   },
 ];
@@ -481,11 +470,57 @@ export default function IntegracoesPage() {
           </TabsList>
 
           <TabsContent value="integracoes" className="mt-6 space-y-6">
-            {/* Integrações Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {INTEGRATIONS.map((integration) => (
-                <IntegrationCard key={integration.id} integration={integration} />
-              ))}
+            {/* Google Drive - Destacado */}
+            <Card className="p-6 border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+                    <FolderOpen className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                        Google Drive
+                      </h3>
+                      <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        Principal
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                      Armazenamento e sincronização de documentos processuais
+                    </p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                        <FileText className="w-3 h-3" /> Upload automático
+                      </span>
+                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                        <FolderOpen className="w-3 h-3" /> Pastas por processo
+                      </span>
+                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                        <RefreshCw className="w-3 h-3" /> Sincronização bidirecional
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <a href="/admin/settings/drive">
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configurar Integração
+                  </Button>
+                </a>
+              </div>
+            </Card>
+
+            {/* Outras Integrações */}
+            <div>
+              <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">
+                Outras Integrações
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {INTEGRATIONS.map((integration) => (
+                  <IntegrationCard key={integration.id} integration={integration} />
+                ))}
+              </div>
             </div>
 
             {/* AI Section */}
