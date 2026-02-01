@@ -9,7 +9,7 @@ import {
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
   Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
-  FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo
+  FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -48,7 +48,7 @@ const iconMap: Record<string, React.ElementType> = {
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
   Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
-  ChevronRight, ListTodo
+  ChevronRight, ListTodo, Network
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
