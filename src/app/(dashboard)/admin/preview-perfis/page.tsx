@@ -4,93 +4,24 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   GraduationCap,
   Briefcase,
   UserCheck,
   Scale,
-  Users,
   ArrowLeft,
+  RefreshCw,
+  Database,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardPorPerfil } from "@/components/dashboard/dashboard-por-perfil";
 import { RegistroRapidoAprimorado } from "@/components/dashboard/registro-rapido-aprimorado";
-
-// ============================================
-// DADOS MOCKADOS PARA PREVIEW
-// ============================================
-
-const MOCK_DELEGACOES = [
-  {
-    id: 1,
-    titulo: "Elaborar manifestação sobre liberdade provisória",
-    instrucoes: "Verificar precedentes do STJ sobre tema de prisão preventiva",
-    prazoSugerido: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    status: "pendente",
-    delegadoDeNome: "Dr. Rodrigo",
-    delegadoParaNome: "Emilly",
-  },
-  {
-    id: 2,
-    titulo: "Pesquisar jurisprudência sobre legítima defesa",
-    instrucoes: "Buscar casos de absolvição por legítima defesa nos últimos 5 anos",
-    prazoSugerido: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-    status: "em_andamento",
-    delegadoDeNome: "Dr. Rodrigo",
-    delegadoParaNome: "Emilly",
-  },
-  {
-    id: 3,
-    titulo: "Organizar documentos do caso 2024-003",
-    instrucoes: "Digitalizar e indexar todos os documentos recebidos",
-    prazoSugerido: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    status: "pendente",
-    delegadoDeNome: "Dr. Rodrigo",
-    delegadoParaNome: "Emilly",
-  },
-];
-
-const MOCK_DEMANDAS = [
-  {
-    id: 1,
-    ato: "Contestação - Ação Penal",
-    assistido: { nome: "João da Silva" },
-    prazoFinal: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    status: "2_ATENDER",
-    reuPreso: true,
-  },
-  {
-    id: 2,
-    ato: "Alegações Finais",
-    assistido: { nome: "Maria Santos" },
-    prazoFinal: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    status: "4_MONITORAR",
-    reuPreso: false,
-  },
-  {
-    id: 3,
-    ato: "Pedido de Liberdade",
-    assistido: { nome: "Pedro Alves" },
-    prazoFinal: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    status: "URGENTE",
-    reuPreso: true,
-  },
-];
-
-const MOCK_ASSISTIDOS = [
-  { id: 1, nome: "João da Silva", situacaoPrisional: "PRESO", createdAt: new Date().toISOString() },
-  { id: 2, nome: "Maria Santos", situacaoPrisional: "SOLTO", createdAt: new Date().toISOString() },
-  { id: 3, nome: "Pedro Alves", situacaoPrisional: "PRESO", createdAt: new Date().toISOString() },
-  { id: 4, nome: "Ana Oliveira", situacaoPrisional: "MONITORADO", createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 5, nome: "Carlos Lima", situacaoPrisional: "SOLTO", createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-];
-
-const MOCK_PROCESSOS = [
-  { id: 1, numero: "0001234-45.2024.8.05.0038", tipo: "Ação Penal", assistidoId: 1 },
-  { id: 2, numero: "0005678-90.2024.8.05.0038", tipo: "Execução Penal", assistidoId: 2 },
-  { id: 3, numero: "0009012-34.2024.8.05.0038", tipo: "Habeas Corpus", assistidoId: 3 },
-];
+import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -98,6 +29,61 @@ const MOCK_PROCESSOS = [
 
 export default function PreviewPerfisPage() {
   const [activeTab, setActiveTab] = useState("estagiario");
+
+  // ==========================================
+  // BUSCAR DADOS REAIS DO BANCO
+  // ==========================================
+  
+  // Assistidos
+  const { 
+    data: assistidos = [], 
+    isLoading: loadingAssistidos,
+    refetch: refetchAssistidos 
+  } = trpc.assistidos.list.useQuery({ limit: 100 });
+
+  // Demandas
+  const { 
+    data: demandas = [], 
+    isLoading: loadingDemandas,
+    refetch: refetchDemandas 
+  } = trpc.demandas.list.useQuery({ limit: 100 });
+
+  // Processos
+  const { 
+    data: processos = [], 
+    isLoading: loadingProcessos,
+    refetch: refetchProcessos 
+  } = trpc.processos.list.useQuery({ limit: 100 });
+
+  // Delegações (para estagiários)
+  const { 
+    data: delegacoes = [], 
+    isLoading: loadingDelegacoes,
+    refetch: refetchDelegacoes 
+  } = trpc.delegacao?.minhasDelegacoes?.useQuery(undefined) ?? { data: [], isLoading: false, refetch: () => {} };
+
+  // Estados de carregamento
+  const isLoading = loadingAssistidos || loadingDemandas || loadingProcessos;
+
+  // Função para recarregar todos os dados
+  const handleRefresh = async () => {
+    toast.info("Atualizando dados...");
+    await Promise.all([
+      refetchAssistidos(),
+      refetchDemandas(),
+      refetchProcessos(),
+      refetchDelegacoes?.(),
+    ]);
+    toast.success("Dados atualizados!");
+  };
+
+  // Estatísticas do banco
+  const dbStats = {
+    assistidos: assistidos.length,
+    demandas: demandas.length,
+    processos: processos.length,
+    delegacoes: delegacoes.length,
+  };
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
@@ -120,10 +106,85 @@ export default function PreviewPerfisPage() {
               </p>
             </div>
           </div>
-          <Badge variant="outline" className="text-amber-600 border-amber-300">
-            Modo Preview
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+            <Badge 
+              variant="outline" 
+              className={dbStats.assistidos > 0 
+                ? "text-emerald-600 border-emerald-300 bg-emerald-50" 
+                : "text-amber-600 border-amber-300 bg-amber-50"
+              }
+            >
+              <Database className="w-3 h-3 mr-1" />
+              {dbStats.assistidos > 0 ? "Dados Reais" : "Sem Dados"}
+            </Badge>
+          </div>
         </div>
+      </div>
+
+      {/* Stats do Banco */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-4">
+        <Card className="p-4 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Database className="w-4 h-4 text-zinc-500" />
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Dados do Banco
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                {dbStats.assistidos > 0 ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                )}
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  {dbStats.assistidos} assistidos
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {dbStats.demandas > 0 ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                )}
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  {dbStats.demandas} demandas
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {dbStats.processos > 0 ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                )}
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  {dbStats.processos} processos
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {dbStats.delegacoes > 0 ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 text-zinc-400" />
+                )}
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  {dbStats.delegacoes} delegações
+                </span>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Tabs de Perfil */}
@@ -160,19 +221,40 @@ export default function PreviewPerfisPage() {
             </TabsTrigger>
           </TabsList>
 
+          {/* Loading State */}
+          {isLoading && (
+            <div className="space-y-4">
+              <Skeleton className="h-20 w-full" />
+              <div className="grid grid-cols-4 gap-4">
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+              </div>
+              <Skeleton className="h-64 w-full" />
+            </div>
+          )}
+
           {/* Preview Estagiário */}
           <TabsContent value="estagiario" className="space-y-6">
             <Card className="p-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
-              <div className="flex items-center gap-3">
-                <GraduationCap className="w-5 h-5 text-amber-600" />
-                <div>
-                  <p className="font-medium text-amber-800 dark:text-amber-200">
-                    Visualizando como: Emilly (Estagiária)
-                  </p>
-                  <p className="text-sm text-amber-600 dark:text-amber-400">
-                    Vinculada ao Dr. Rodrigo • Núcleo Especializados
-                  </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <GraduationCap className="w-5 h-5 text-amber-600" />
+                  <div>
+                    <p className="font-medium text-amber-800 dark:text-amber-200">
+                      Visualizando como: Emilly (Estagiária)
+                    </p>
+                    <p className="text-sm text-amber-600 dark:text-amber-400">
+                      Vinculada ao Dr. Rodrigo • Núcleo Especializados
+                    </p>
+                  </div>
                 </div>
+                <Link href="/admin/assistidos">
+                  <Button size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100">
+                    Ir para Assistidos
+                  </Button>
+                </Link>
               </div>
             </Card>
             
@@ -180,89 +262,110 @@ export default function PreviewPerfisPage() {
               userRole="estagiario"
               userName="Emilly"
               supervisorName="Dr. Rodrigo"
-              delegacoes={MOCK_DELEGACOES}
-              demandas={MOCK_DEMANDAS}
-              assistidos={MOCK_ASSISTIDOS}
-              processos={MOCK_PROCESSOS}
-              isLoading={false}
+              delegacoes={delegacoes}
+              demandas={demandas}
+              assistidos={assistidos}
+              processos={processos}
+              isLoading={isLoading}
             />
           </TabsContent>
 
           {/* Preview Servidor */}
           <TabsContent value="servidor" className="space-y-6">
             <Card className="p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-3">
-                <Briefcase className="w-5 h-5 text-blue-600" />
-                <div>
-                  <p className="font-medium text-blue-800 dark:text-blue-200">
-                    Visualizando como: Amanda (Servidora)
-                  </p>
-                  <p className="text-sm text-blue-600 dark:text-blue-400">
-                    Servidor Administrativo • Núcleo Especializados
-                  </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Briefcase className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium text-blue-800 dark:text-blue-200">
+                      Visualizando como: Amanda (Servidora)
+                    </p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400">
+                      Servidor Administrativo • Núcleo Especializados
+                    </p>
+                  </div>
                 </div>
+                <Link href="/admin/demandas">
+                  <Button size="sm" variant="outline" className="text-blue-700 border-blue-300 hover:bg-blue-100">
+                    Ir para Demandas
+                  </Button>
+                </Link>
               </div>
             </Card>
             
             <DashboardPorPerfil
               userRole="servidor"
               userName="Amanda"
-              delegacoes={MOCK_DELEGACOES}
-              demandas={MOCK_DEMANDAS}
-              assistidos={MOCK_ASSISTIDOS}
+              delegacoes={delegacoes}
+              demandas={demandas}
+              assistidos={assistidos}
               audiencias={[]}
-              isLoading={false}
+              isLoading={isLoading}
             />
           </TabsContent>
 
           {/* Preview Triagem */}
           <TabsContent value="triagem" className="space-y-6">
             <Card className="p-4 bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
-              <div className="flex items-center gap-3">
-                <UserCheck className="w-5 h-5 text-zinc-600" />
-                <div>
-                  <p className="font-medium text-zinc-800 dark:text-zinc-200">
-                    Visualizando como: Gustavo (Triagem)
-                  </p>
-                  <p className="text-sm text-zinc-500">
-                    Recepção e Cadastro • Núcleo Especializados
-                  </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <UserCheck className="w-5 h-5 text-zinc-600" />
+                  <div>
+                    <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                      Visualizando como: Gustavo (Triagem)
+                    </p>
+                    <p className="text-sm text-zinc-500">
+                      Recepção e Cadastro • Núcleo Especializados
+                    </p>
+                  </div>
                 </div>
+                <Link href="/admin/assistidos/novo">
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    Novo Cadastro
+                  </Button>
+                </Link>
               </div>
             </Card>
             
             <DashboardPorPerfil
               userRole="triagem"
               userName="Gustavo"
-              assistidos={MOCK_ASSISTIDOS}
-              isLoading={false}
+              assistidos={assistidos}
+              isLoading={isLoading}
             />
           </TabsContent>
 
           {/* Preview Defensor Criminal Geral */}
           <TabsContent value="defensor-criminal" className="space-y-6">
             <Card className="p-4 bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800">
-              <div className="flex items-center gap-3">
-                <Scale className="w-5 h-5 text-violet-600" />
-                <div>
-                  <p className="font-medium text-violet-800 dark:text-violet-200">
-                    Visualizando como: Dr. Danilo (Defensor)
-                  </p>
-                  <p className="text-sm text-violet-600 dark:text-violet-400">
-                    2ª Vara Criminal • Criminal Geral (sem Júri/EP/VD)
-                  </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Scale className="w-5 h-5 text-violet-600" />
+                  <div>
+                    <p className="font-medium text-violet-800 dark:text-violet-200">
+                      Visualizando como: Dr. Danilo (Defensor)
+                    </p>
+                    <p className="text-sm text-violet-600 dark:text-violet-400">
+                      2ª Vara Criminal • Criminal Geral (sem Júri/EP/VD)
+                    </p>
+                  </div>
                 </div>
+                <Link href="/admin/agenda">
+                  <Button size="sm" variant="outline" className="text-violet-700 border-violet-300 hover:bg-violet-100">
+                    Ir para Agenda
+                  </Button>
+                </Link>
               </div>
             </Card>
             
             <DashboardPorPerfil
               userRole="defensor"
               userName="Dr. Danilo"
-              demandas={MOCK_DEMANDAS}
-              assistidos={MOCK_ASSISTIDOS}
-              processos={MOCK_PROCESSOS}
+              demandas={demandas}
+              assistidos={assistidos}
+              processos={processos}
               audiencias={[]}
-              isLoading={false}
+              isLoading={isLoading}
             />
             
             {/* Registro Rápido Aprimorado */}
@@ -272,8 +375,8 @@ export default function PreviewPerfisPage() {
               </h3>
               <RegistroRapidoAprimorado
                 userRole="defensor"
-                assistidos={MOCK_ASSISTIDOS}
-                processos={MOCK_PROCESSOS}
+                assistidos={assistidos}
+                processos={processos}
               />
             </div>
           </TabsContent>
