@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Calendar,
   Clock,
@@ -17,6 +18,10 @@ import {
   X,
   Filter,
   Check,
+  CalendarDays,
+  CalendarCheck,
+  CalendarRange,
+  User,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -110,6 +115,36 @@ const periodoOptions = [
   { value: "proximo-mes", label: "Próximo Mês" },
 ];
 
+// Componente de botão de filtro estilo pill
+function FilterButton({
+  label,
+  icon: Icon,
+  isSelected,
+  onClick,
+  color = "emerald",
+}: {
+  label: string;
+  icon?: React.ElementType;
+  isSelected: boolean;
+  onClick: () => void;
+  color?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap",
+        isSelected
+          ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-300 dark:ring-emerald-700"
+          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+      )}
+    >
+      {Icon && <Icon className="w-3.5 h-3.5" />}
+      {label}
+    </button>
+  );
+}
+
 export function AgendaFilters({
   selectedTipo,
   setSelectedTipo,
@@ -126,17 +161,14 @@ export function AgendaFilters({
   isExpanded,
   onToggleExpand,
 }: AgendaFiltersProps) {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-
-  // Opções fixas de defensores (pode ser passado como prop no futuro)
+  // Opções fixas de defensores
   const defensorOptions = [
-    { value: "def-1", label: "Dr. Rodrigo", color: "#3B82F6" },
-    { value: "def-2", label: "Dra. Juliane", color: "#10B981" },
+    { value: "def-1", label: "Dr. Rodrigo", icon: User },
+    { value: "def-2", label: "Dra. Juliane", icon: User },
   ];
 
   const hasFilters =
     selectedTipo !== null ||
-    selectedAtribuicao !== null ||
     selectedPeriodo !== null ||
     selectedDefensor !== null;
 
@@ -149,237 +181,68 @@ export function AgendaFilters({
     setSelectedDefensor(null);
   };
 
-  const activeFiltersCount = [selectedTipo, selectedAtribuicao, selectedPeriodo, selectedDefensor].filter(Boolean).length;
-
-  const selectedPeriodoLabel = periodoOptions.find(p => p.value === selectedPeriodo)?.label;
-  const selectedTipoOption = tipoOptions.find(t => t.value === selectedTipo);
-  const selectedAtribuicaoOption = atribuicaoOptions.find(a => a.value === selectedAtribuicao);
-  const selectedDefensorOption = defensorOptions.find(d => d.value === selectedDefensor);
-
   return (
-    <div className="border-b border-zinc-200 dark:border-zinc-800">
-      {/* Header Discreto - Sempre visível */}
-      <div className="flex items-center gap-4 px-6 py-3">
-        <Filter className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-        
-        {/* Dropdowns - Distribuídos uniformemente */}
-        <div className="flex items-center gap-3 flex-1">
-          {/* Dropdown Defensor */}
-          <div className="relative flex-1 max-w-[200px]">
-            <button
-              onClick={() => setOpenDropdown(openDropdown === 'defensor' ? null : 'defensor')}
-              className={`w-full flex items-center justify-between gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                selectedDefensor
-                  ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700"
-                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-              }`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                {selectedDefensorOption ? (
-                  <>
-                    <div
-                      className="w-4 h-4 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: selectedDefensorOption.color }}
-                    />
-                    <span className="truncate">{selectedDefensorOption.label}</span>
-                  </>
-                ) : (
-                  <>
-                    <Users className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">Defensor</span>
-                  </>
-                )}
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-            </button>
-            
-            {openDropdown === 'defensor' && (
-              <>
-                <div className="fixed inset-0 z-[90]" onClick={() => setOpenDropdown(null)} />
-                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-[100] min-w-[200px] py-1">
-                  {defensorOptions.map((option) => {
-                    return (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setSelectedDefensor(selectedDefensor === option.value ? null : option.value);
-                          setOpenDropdown(null);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
-                      >
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                          style={{ backgroundColor: option.color }}
-                        >
-                          {option.label.charAt(option.label.indexOf('.') + 2).toUpperCase()}
-                        </div>
-                        <span className="flex-1">{option.label}</span>
-                        {selectedDefensor === option.value && <Check className="w-4 h-4 text-emerald-600" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Dropdown Período */}
-          <div className="relative flex-1 max-w-[240px]">
-            <button
-              onClick={() => setOpenDropdown(openDropdown === 'periodo' ? null : 'periodo')}
-              className={`w-full flex items-center justify-between gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                selectedPeriodo
-                  ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700"
-                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{selectedPeriodoLabel || "Período"}</span>
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-            </button>
-            
-            {openDropdown === 'periodo' && (
-              <>
-                <div className="fixed inset-0 z-[90]" onClick={() => setOpenDropdown(null)} />
-                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-[100] min-w-[200px] py-1">
-                  {periodoOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSelectedPeriodo(selectedPeriodo === option.value ? null : option.value);
-                        setOpenDropdown(null);
-                      }}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center justify-between"
-                    >
-                      <span>{option.label}</span>
-                      {selectedPeriodo === option.value && <Check className="w-4 h-4 text-emerald-600" />}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Dropdown Atribuição */}
-          <div className="relative flex-1 max-w-[280px]">
-            <button
-              onClick={() => setOpenDropdown(openDropdown === 'atribuicao' ? null : 'atribuicao')}
-              className={`w-full flex items-center justify-between gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                selectedAtribuicao
-                  ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700"
-                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-              }`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                {selectedAtribuicaoOption ? (
-                  <>
-                    <selectedAtribuicaoOption.icon className={`w-4 h-4 flex-shrink-0 ${selectedAtribuicaoOption.iconColor}`} />
-                    <span className="truncate">{selectedAtribuicaoOption.label}</span>
-                  </>
-                ) : (
-                  <>
-                    <Scale className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">Atribuição</span>
-                  </>
-                )}
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-            </button>
-            
-            {openDropdown === 'atribuicao' && (
-              <>
-                <div className="fixed inset-0 z-[90]" onClick={() => setOpenDropdown(null)} />
-                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-[100] min-w-[240px] py-1">
-                  {atribuicaoOptions.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setSelectedAtribuicao(selectedAtribuicao === option.value ? null : option.value);
-                          setOpenDropdown(null);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
-                      >
-                        <div className={`w-6 h-6 rounded bg-gradient-to-br ${option.gradient} flex items-center justify-center flex-shrink-0`}>
-                          <Icon className="w-3.5 h-3.5 text-white" />
-                        </div>
-                        <span className="flex-1">{option.label}</span>
-                        {selectedAtribuicao === option.value && <Check className="w-4 h-4 text-emerald-600" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Dropdown Tipo */}
-          <div className="relative flex-1 max-w-[200px]">
-            <button
-              onClick={() => setOpenDropdown(openDropdown === 'tipo' ? null : 'tipo')}
-              className={`w-full flex items-center justify-between gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                selectedTipo
-                  ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700"
-                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-              }`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                {selectedTipoOption ? (
-                  <>
-                    <selectedTipoOption.icon className={`w-4 h-4 flex-shrink-0 ${selectedTipoOption.color}`} />
-                    <span className="truncate">{selectedTipoOption.label}</span>
-                  </>
-                ) : (
-                  <>
-                    <Gavel className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">Tipo</span>
-                  </>
-                )}
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-            </button>
-            
-            {openDropdown === 'tipo' && (
-              <>
-                <div className="fixed inset-0 z-[90]" onClick={() => setOpenDropdown(null)} />
-                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-[100] min-w-[200px] py-1">
-                  {tipoOptions.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setSelectedTipo(selectedTipo === option.value ? null : option.value);
-                          setOpenDropdown(null);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
-                      >
-                        <Icon className={`w-4 h-4 ${option.color}`} />
-                        <span className="flex-1">{option.label}</span>
-                        {selectedTipo === option.value && <Check className="w-4 h-4 text-emerald-600" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
+    <div className="space-y-3">
+      {/* Linha 1: Defensor */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider w-16 flex-shrink-0">Defensor</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {defensorOptions.map((option) => (
+            <FilterButton
+              key={option.value}
+              label={option.label}
+              icon={option.icon}
+              isSelected={selectedDefensor === option.value}
+              onClick={() => setSelectedDefensor(selectedDefensor === option.value ? null : option.value)}
+            />
+          ))}
         </div>
+      </div>
 
-        {/* Botão Limpar - Discreto */}
-        {hasFilters && (
+      {/* Linha 2: Período */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider w-16 flex-shrink-0">Período</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {periodoOptions.map((option) => (
+            <FilterButton
+              key={option.value}
+              label={option.label}
+              icon={Calendar}
+              isSelected={selectedPeriodo === option.value}
+              onClick={() => setSelectedPeriodo(selectedPeriodo === option.value ? null : option.value)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Linha 3: Tipo de Evento */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider w-16 flex-shrink-0">Tipo</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {tipoOptions.map((option) => (
+            <FilterButton
+              key={option.value}
+              label={option.label}
+              icon={option.icon}
+              isSelected={selectedTipo === option.value}
+              onClick={() => setSelectedTipo(selectedTipo === option.value ? null : option.value)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Botão Limpar */}
+      {hasFilters && (
+        <div className="flex justify-end pt-1">
           <button
             onClick={handleClearAllFilters}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all flex-shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
           >
             <X className="w-3.5 h-3.5" />
-            Limpar
+            Limpar filtros
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -130,26 +130,30 @@ const FILE_ICONS: Record<string, React.ElementType> = {
   default: File,
 };
 
+// Cores por tipo de arquivo seguindo lógica:
+// - Atos processuais (pdf, document) = azul
+// - Registros de atendimento = verde
+// - Documentos pessoais / fotos = neutro
 const FILE_COLORS: Record<string, string> = {
-  folder: "text-amber-500",
-  document: "text-blue-500",
-  pdf: "text-rose-500",
-  image: "text-emerald-500",
-  video: "text-violet-500",
-  audio: "text-pink-500",
-  archive: "text-orange-500",
+  folder: "text-emerald-500",
+  document: "text-blue-500",  // Atos processuais
+  pdf: "text-blue-600",       // Atos processuais
+  image: "text-zinc-500",     // Documentos pessoais (neutro)
+  video: "text-zinc-500",     // Neutro
+  audio: "text-zinc-500",     // Neutro
+  archive: "text-zinc-500",   // Neutro
   default: "text-zinc-500",
 };
 
 const FILE_BG_COLORS: Record<string, string> = {
-  folder: "bg-amber-50 dark:bg-amber-900/20",
+  folder: "bg-emerald-50 dark:bg-emerald-900/20",
   document: "bg-blue-50 dark:bg-blue-900/20",
-  pdf: "bg-rose-50 dark:bg-rose-900/20",
-  image: "bg-emerald-50 dark:bg-emerald-900/20",
-  video: "bg-violet-50 dark:bg-violet-900/20",
-  audio: "bg-pink-50 dark:bg-pink-900/20",
-  archive: "bg-orange-50 dark:bg-orange-900/20",
-  default: "bg-zinc-50 dark:bg-zinc-900/20",
+  pdf: "bg-blue-50 dark:bg-blue-900/20",
+  image: "bg-zinc-50 dark:bg-zinc-800/20",
+  video: "bg-zinc-50 dark:bg-zinc-800/20",
+  audio: "bg-zinc-50 dark:bg-zinc-800/20",
+  archive: "bg-zinc-50 dark:bg-zinc-800/20",
+  default: "bg-zinc-50 dark:bg-zinc-800/20",
 };
 
 function getFileType(mimeType: string): string {
@@ -321,15 +325,32 @@ function FolderTreeItem({
   const isActive = currentFolder === node.id;
   const hasChildren = node.children.length > 0;
 
-  // Cores sutis e profissionais por nível
-  const levelStyles = [
-    { icon: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20", active: "bg-amber-100 dark:bg-amber-900/40 ring-1 ring-amber-200 dark:ring-amber-800" },
-    { icon: "text-sky-500", bg: "bg-sky-50 dark:bg-sky-900/20", active: "bg-sky-100 dark:bg-sky-900/40 ring-1 ring-sky-200 dark:ring-sky-800" },
-    { icon: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20", active: "bg-emerald-100 dark:bg-emerald-900/40 ring-1 ring-emerald-200 dark:ring-emerald-800" },
-    { icon: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-900/20", active: "bg-violet-100 dark:bg-violet-900/40 ring-1 ring-violet-200 dark:ring-violet-800" },
-    { icon: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-900/20", active: "bg-rose-100 dark:bg-rose-900/40 ring-1 ring-rose-200 dark:ring-rose-800" },
-  ];
-  const style = levelStyles[level % levelStyles.length];
+  // Determinar cores baseadas no nome da pasta (atribuições)
+  const getStyleForNode = (nodeName: string, nodeLevel: number) => {
+    const name = nodeName.toLowerCase();
+    // Cores por atribuição
+    if (name.includes("execução") || name.includes("ep") || name.includes("penal")) {
+      return { icon: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", active: "bg-blue-100 dark:bg-blue-900/40 ring-1 ring-blue-200 dark:ring-blue-800" };
+    }
+    if (name.includes("violência") || name.includes("vvd") || name.includes("doméstica")) {
+      return { icon: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20", active: "bg-amber-100 dark:bg-amber-900/40 ring-1 ring-amber-200 dark:ring-amber-800" };
+    }
+    if (name.includes("júri") || name.includes("juri") || name.includes("tribunal")) {
+      return { icon: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20", active: "bg-emerald-100 dark:bg-emerald-900/40 ring-1 ring-emerald-200 dark:ring-emerald-800" };
+    }
+    if (name.includes("substituição") || name.includes("criminal")) {
+      return { icon: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-900/20", active: "bg-rose-100 dark:bg-rose-900/40 ring-1 ring-rose-200 dark:ring-rose-800" };
+    }
+    // Padrão verde suave para pastas genéricas
+    const defaultStyles = [
+      { icon: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20", active: "bg-emerald-100 dark:bg-emerald-900/40 ring-1 ring-emerald-200 dark:ring-emerald-800" },
+      { icon: "text-teal-500", bg: "bg-teal-50 dark:bg-teal-900/20", active: "bg-teal-100 dark:bg-teal-900/40 ring-1 ring-teal-200 dark:ring-teal-800" },
+      { icon: "text-cyan-500", bg: "bg-cyan-50 dark:bg-cyan-900/20", active: "bg-cyan-100 dark:bg-cyan-900/40 ring-1 ring-cyan-200 dark:ring-cyan-800" },
+    ];
+    return defaultStyles[nodeLevel % defaultStyles.length];
+  };
+
+  const style = getStyleForNode(node.name, level);
 
   return (
     <div>
@@ -1138,11 +1159,11 @@ export default function DrivePage() {
                     className={cn(
                       "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all mb-1",
                       currentFolder === null
-                        ? "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 font-medium"
+                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 font-medium"
                         : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     )}
                   >
-                    <HardDrive className="w-4 h-4 text-amber-500" />
+                    <HardDrive className="w-4 h-4 text-emerald-500" />
                     <span className="flex-1 text-left">Meu Drive</span>
                     <Badge variant="secondary" className="text-[9px] px-1.5 py-0">{stats.total}</Badge>
                   </button>

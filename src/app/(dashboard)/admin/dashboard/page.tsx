@@ -782,9 +782,9 @@ export default function DashboardJuriPage() {
                 </div>
 
                 {/* Coluna 2: Tipo de Registro */}
-                <div className="lg:col-span-2 space-y-2">
+                <div className="lg:col-span-2 space-y-2 flex-shrink-0">
                   <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
-                  <div className="flex items-center gap-1 flex-wrap">
+                  <div className="flex items-center gap-1 flex-nowrap">
                     {tiposRegistro.map((tipo) => {
                       const Icon = tipo.icon;
                       const isSelected = atendimentoRapido.tipo === tipo.id;

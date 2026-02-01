@@ -28,13 +28,13 @@ export function SwissTableContainer({
   return (
     <div 
       className={cn(
-        "table-container custom-scrollbar",
+        "table-container custom-scrollbar w-full overflow-hidden",
         className
       )}
     >
       <div 
         className={cn(
-          "overflow-auto custom-scrollbar",
+          "overflow-auto custom-scrollbar w-full",
           stickyHeader && "[&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10"
         )}
         style={{ maxHeight }}
