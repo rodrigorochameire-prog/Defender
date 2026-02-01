@@ -693,6 +693,7 @@ export default function JuradoPerfilPage({ params }: { params: Promise<{ id: str
 
         {/* Tab: Afinidades */}
         <TabsContent value="afinidades" className="space-y-4">
+          {/* Visualização Gráfica de Rede */}
           <Card className="dark:bg-zinc-900/80 dark:border-zinc-800">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -702,46 +703,163 @@ export default function JuradoPerfilPage({ params }: { params: Promise<{ id: str
             </CardHeader>
             <CardContent>
               <p className="text-sm text-zinc-500 mb-4">
-                Jurados com quem frequentemente senta junto ou conversa durante as sessões.
+                Visualização das conexões e influências do jurado durante as sessões.
               </p>
               
-              <div className="space-y-3">
+              {/* Visualização em Rede */}
+              <div className="relative h-64 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800/50 dark:to-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                {/* Centro: Jurado Atual */}
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg ring-4 ring-white dark:ring-zinc-800">
+                      {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
+                    </div>
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-white dark:bg-zinc-800 rounded text-[10px] font-medium shadow whitespace-nowrap">
+                      {jurado.nome.split(" ")[0]}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Conexões em círculo */}
+                {jurado.gruposAfinidade.map((afinidade, idx) => {
+                  const totalAfinidades = jurado.gruposAfinidade.length;
+                  const angle = (idx / totalAfinidades) * 2 * Math.PI - Math.PI / 2;
+                  const radius = 90;
+                  const x = Math.cos(angle) * radius;
+                  const y = Math.sin(angle) * radius;
+                  
+                  const lineWidth = afinidade.frequencia === "alta" ? 3 : afinidade.frequencia === "media" ? 2 : 1;
+                  const lineColor = afinidade.frequencia === "alta" ? "stroke-emerald-400" : afinidade.frequencia === "media" ? "stroke-amber-400" : "stroke-zinc-300";
+                  
+                  return (
+                    <div key={afinidade.id}>
+                      {/* Linha de conexão */}
+                      <svg className="absolute left-1/2 top-1/2 w-[200px] h-[200px] -translate-x-1/2 -translate-y-1/2 z-10">
+                        <line 
+                          x1="100" y1="100" 
+                          x2={100 + x} y2={100 + y}
+                          className={lineColor}
+                          strokeWidth={lineWidth}
+                          strokeDasharray={afinidade.frequencia === "baixa" ? "4 4" : "0"}
+                        />
+                      </svg>
+                      
+                      {/* Nó do jurado conectado */}
+                      <Link href={`/admin/juri/jurados/${afinidade.id}`}>
+                        <div 
+                          className="absolute z-20 cursor-pointer group"
+                          style={{ 
+                            left: `calc(50% + ${x}px - 22px)`, 
+                            top: `calc(50% + ${y}px - 22px)` 
+                          }}
+                        >
+                          <div className={`w-11 h-11 rounded-full flex items-center justify-center text-xs font-medium shadow-md transition-transform group-hover:scale-110 ${
+                            afinidade.frequencia === "alta" 
+                              ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white ring-2 ring-emerald-300" 
+                              : afinidade.frequencia === "media"
+                                ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white ring-2 ring-amber-300"
+                                : "bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+                          }`}>
+                            {afinidade.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
+                          </div>
+                          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-0.5 bg-zinc-900 text-white text-[9px] rounded whitespace-nowrap">
+                            {afinidade.nome.split(" ").slice(0, 2).join(" ")}
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                  );
+                })}
+
+                {/* Legenda */}
+                <div className="absolute bottom-2 left-2 flex items-center gap-3 text-[9px] text-zinc-500">
+                  <span className="flex items-center gap-1">
+                    <span className="w-3 h-1 bg-emerald-400 rounded" />
+                    Alta
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-3 h-0.5 bg-amber-400 rounded" />
+                    Média
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-3 h-px bg-zinc-400 rounded border-dashed" />
+                    Baixa
+                  </span>
+                </div>
+              </div>
+              
+              {/* Lista de Afinidades com Análise */}
+              <div className="mt-6 space-y-3">
+                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Detalhamento das Conexões</h4>
+                
                 {jurado.gruposAfinidade.map((afinidade) => (
-                  <div key={afinidade.id} className="flex items-center gap-3 p-3 rounded-lg border dark:border-zinc-800">
+                  <div key={afinidade.id} className="flex items-center gap-3 p-3 rounded-lg border dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400">
+                      <AvatarFallback className={`
+                        ${afinidade.frequencia === "alta" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400" : 
+                          afinidade.frequencia === "media" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400" :
+                          "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"}
+                      `}>
                         {afinidade.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <p className="font-medium text-sm">{afinidade.nome}</p>
-                      <p className="text-xs text-zinc-500">Frequência de interação: {afinidade.frequencia}</p>
+                      <p className="text-xs text-zinc-500">
+                        {afinidade.frequencia === "alta" 
+                          ? "Sentam juntos em 80%+ das sessões" 
+                          : afinidade.frequencia === "media" 
+                            ? "Interação frequente durante intervalos"
+                            : "Contato ocasional"
+                        }
+                      </p>
                     </div>
-                    <Badge variant="outline" className={
-                      afinidade.frequencia === "alta" ? "text-emerald-600 border-emerald-300" :
-                      afinidade.frequencia === "media" ? "text-amber-600 border-amber-300" :
-                      "text-zinc-600"
-                    }>
-                      {afinidade.frequencia === "alta" ? "Alta" : afinidade.frequencia === "media" ? "Média" : "Baixa"}
-                    </Badge>
-                    <Link href={`/admin/juri/jurados/${afinidade.id}`}>
-                      <Button variant="ghost" size="icon">
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={
+                        afinidade.frequencia === "alta" ? "text-emerald-600 border-emerald-300 dark:text-emerald-400 dark:border-emerald-700" :
+                        afinidade.frequencia === "media" ? "text-amber-600 border-amber-300 dark:text-amber-400 dark:border-amber-700" :
+                        "text-zinc-600 border-zinc-300"
+                      }>
+                        {afinidade.frequencia === "alta" ? "Alta" : afinidade.frequencia === "media" ? "Média" : "Baixa"}
+                      </Badge>
+                      <Link href={`/admin/juri/jurados/${afinidade.id}`}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5" />
+              {/* Análise de Influência Inteligente */}
+              <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 border border-violet-200 dark:border-violet-800">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center flex-shrink-0">
+                    <Brain className="w-4 h-4 text-white" />
+                  </div>
                   <div>
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-400">Análise de Influência</p>
-                    <p className="text-xs text-amber-700 dark:text-amber-500 mt-1">
-                      {jurado.nome} tende a sentar com jurados de perfil similar (empáticos/progressistas). 
-                      Possível reforço mútuo de tendência à absolvição.
+                    <p className="text-sm font-semibold text-violet-900 dark:text-violet-300">Análise de Influência</p>
+                    <p className="text-xs text-violet-700 dark:text-violet-400 mt-1 leading-relaxed">
+                      <strong>{jurado.nome.split(" ")[0]}</strong> demonstra padrão de afinidade com jurados de perfil {jurado.tendenciaGeral === "favoravel" ? "empático/progressista" : jurado.tendenciaGeral === "desfavoravel" ? "conservador/punitivo" : "equilibrado"}.
+                      {jurado.gruposAfinidade.filter(a => a.frequencia === "alta").length > 0 && (
+                        <> Possui <strong>{jurado.gruposAfinidade.filter(a => a.frequencia === "alta").length}</strong> conexão(ões) forte(s) que podem reforçar sua tendência natural de voto.</>
+                      )}
                     </p>
+                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-violet-200 dark:border-violet-700">
+                      <div className="text-center">
+                        <p className="text-lg font-bold text-violet-700 dark:text-violet-400">{jurado.gruposAfinidade.length}</p>
+                        <p className="text-[9px] text-violet-600 dark:text-violet-500 uppercase">Conexões</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-bold text-emerald-600">{jurado.gruposAfinidade.filter(a => a.frequencia === "alta").length}</p>
+                        <p className="text-[9px] text-zinc-500 uppercase">Fortes</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-bold text-amber-600">{jurado.gruposAfinidade.filter(a => a.frequencia === "media").length}</p>
+                        <p className="text-[9px] text-zinc-500 uppercase">Médias</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

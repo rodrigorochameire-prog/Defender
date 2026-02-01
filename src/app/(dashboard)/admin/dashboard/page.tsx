@@ -645,7 +645,7 @@ export default function DashboardJuriPage() {
             </div>
           </Card>
 
-          {/* REGISTRO RÁPIDO DE ATENDIMENTO - APRIMORADO */}
+          {/* REGISTRO RÁPIDO DE ATENDIMENTO - LAYOUT COMPACTO */}
           <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
             <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center gap-2">
@@ -653,16 +653,18 @@ export default function DashboardJuriPage() {
                 <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Registro Rápido</h3>
               </div>
             </div>
-            <div className="p-3 space-y-3">
-              {/* Seletor de Assistido com Autocomplete */}
-              <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={assistidoSearchOpen}
-                    className="w-full h-9 justify-between text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                  >
+            <div className="p-3 space-y-2">
+              {/* Linha única: Seletor de Assistido + Tipos de Registro */}
+              <div className="flex items-center gap-2">
+                {/* Seletor de Assistido com Autocomplete - Compacto */}
+                <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={assistidoSearchOpen}
+                      className="flex-1 h-8 justify-between text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    >
                     {atendimentoRapido.assistidoId ? (
                       <span className="flex items-center gap-2 truncate">
                         <User className="w-3.5 h-3.5 text-emerald-500" />
@@ -743,81 +745,64 @@ export default function DashboardJuriPage() {
                 </PopoverContent>
               </Popover>
 
-              {/* Card do Assistido Selecionado */}
+                {/* Seletor de Tipo de Registro - Na mesma linha */}
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  {tiposRegistro.map((tipo) => {
+                    const Icon = tipo.icon;
+                    const isSelected = atendimentoRapido.tipo === tipo.id;
+                    return (
+                      <button
+                        key={tipo.id}
+                        onClick={() => setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }))}
+                        className={`flex items-center justify-center w-7 h-7 rounded transition-colors ${
+                          isSelected 
+                            ? tipo.bgActive
+                            : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                        }`}
+                        title={tipo.label}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${isSelected ? tipo.color : "text-zinc-400"}`} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Card do Assistido Selecionado - Mais compacto */}
               {assistidoSelecionado && (
-                <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
-                  <div className="flex items-start gap-2.5">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={assistidoSelecionado.photoUrl || ""} />
-                      <AvatarFallback className="text-xs bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
-                        {assistidoSelecionado.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 truncate">
-                          {assistidoSelecionado.nome}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 text-zinc-400 hover:text-red-500"
-                          onClick={() => setAtendimentoRapido(prev => ({ ...prev, assistidoId: null, assistidoNome: "" }))}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[10px] text-emerald-700 dark:text-emerald-400">
-                        {assistidoSelecionado.telefone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="w-2.5 h-2.5" />
-                            {assistidoSelecionado.telefone}
-                          </span>
-                        )}
-                        {assistidoSelecionado.cpf && (
-                          <span>CPF: {assistidoSelecionado.cpf}</span>
-                        )}
-                        {assistidoSelecionado.situacaoPrisional === "PRESO" && (
-                          <Badge variant="outline" className="h-4 px-1 text-[9px] border-red-400 text-red-600 bg-red-50 dark:bg-red-900/30">
-                            <Lock className="w-2.5 h-2.5 mr-0.5" />
-                            {assistidoSelecionado.localPrisao || "Preso"}
-                          </Badge>
-                        )}
-                      </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
+                  <Avatar className="h-7 w-7 flex-shrink-0">
+                    <AvatarImage src={assistidoSelecionado.photoUrl || ""} />
+                    <AvatarFallback className="text-[9px] bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
+                      {assistidoSelecionado.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-emerald-900 dark:text-emerald-100 truncate">
+                      {assistidoSelecionado.nome}
+                    </p>
+                    <div className="flex items-center gap-2 text-[9px] text-emerald-600 dark:text-emerald-400">
+                      {assistidoSelecionado.situacaoPrisional === "PRESO" && (
+                        <span className="flex items-center gap-0.5 text-red-600">
+                          <Lock className="w-2 h-2" />
+                          Preso
+                        </span>
+                      )}
+                      {assistidoSelecionado.telefone && (
+                        <span className="truncate">{assistidoSelecionado.telefone}</span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800/50">
-                    <Link href={`/admin/assistidos/${assistidoSelecionado.id}`} className="flex-1">
-                      <Button variant="ghost" size="sm" className="w-full h-6 text-[10px] text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 hover:bg-emerald-100 dark:hover:bg-emerald-900/40">
-                        <ExternalLink className="w-2.5 h-2.5 mr-1" />
-                        Ver perfil
-                      </Button>
-                    </Link>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 text-zinc-400 hover:text-red-500 flex-shrink-0"
+                    onClick={() => setAtendimentoRapido(prev => ({ ...prev, assistidoId: null, assistidoNome: "" }))}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
                 </div>
               )}
-
-              {/* Seletor de Tipo de Registro */}
-              <div className="flex flex-wrap gap-1">
-                {tiposRegistro.map((tipo) => {
-                  const Icon = tipo.icon;
-                  const isSelected = atendimentoRapido.tipo === tipo.id;
-                  return (
-                    <button
-                      key={tipo.id}
-                      onClick={() => setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }))}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors ${
-                        isSelected 
-                          ? tipo.bgActive
-                          : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
-                      }`}
-                    >
-                      <Icon className={`w-3 h-3 ${tipo.color}`} />
-                      <span className={isSelected ? tipo.color : "text-zinc-600 dark:text-zinc-400"}>{tipo.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
 
               {/* Descrição do Atendimento */}
               <Textarea

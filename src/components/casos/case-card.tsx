@@ -46,6 +46,10 @@ import {
   ScrollText,
   CircleDot,
   Circle,
+  FileUp,
+  Hammer,
+  ArrowUpRight,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow, differenceInDays, isToday, isTomorrow } from "date-fns";
@@ -111,6 +115,15 @@ interface Laudo {
   favoravel?: boolean | null;
 }
 
+// Ato Processual para Timeline
+interface AtoProcessual {
+  id: number;
+  tipo: "audiencia" | "peticao" | "decisao" | "sentenca" | "recurso" | "cumprimento" | "generico";
+  descricao: string;
+  data: Date;
+  importante: boolean;
+}
+
 export interface CaseCardProps {
   id: number;
   titulo: string;
@@ -140,6 +153,8 @@ export interface CaseCardProps {
   // Provas e Laudos
   provas?: Prova[];
   laudos?: Laudo[];
+  // Timeline de Atos Processuais
+  atosProcessuais?: AtoProcessual[];
   // Links
   linkDrive?: string | null;
   // Meta
@@ -709,7 +724,96 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
             )}
 
             {/* ========================================
-                SEÇÃO 8: PRAZOS PENDENTES
+                SEÇÃO 8: TIMELINE DE ATOS PROCESSUAIS
+                ======================================== */}
+            {data.atosProcessuais && data.atosProcessuais.length > 0 && (
+              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <h4 className="text-xs sm:text-sm uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide flex items-center gap-2 mb-4">
+                  <ScrollText className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                  Timeline Processual
+                  <span className="font-mono text-zinc-400">({data.atosProcessuais.length})</span>
+                </h4>
+                
+                {/* Timeline Visual */}
+                <div className="relative">
+                  {/* Linha vertical */}
+                  <div className="absolute left-3 top-2 bottom-2 w-px bg-gradient-to-b from-emerald-400 via-zinc-300 to-zinc-200 dark:from-emerald-500 dark:via-zinc-600 dark:to-zinc-700" />
+                  
+                  <div className="space-y-3">
+                    {data.atosProcessuais.slice(0, 5).map((ato, idx) => {
+                      const isFirst = idx === 0;
+                      const atoIcons: Record<string, any> = {
+                        audiencia: Gavel,
+                        peticao: FileUp,
+                        decisao: Hammer,
+                        sentenca: Scale,
+                        recurso: ArrowUpRight,
+                        cumprimento: CheckCircle2,
+                        generico: FileText,
+                      };
+                      const AtoIcon = atoIcons[ato.tipo] || FileText;
+                      
+                      return (
+                        <div key={ato.id} className="relative flex items-start gap-3 pl-1">
+                          {/* Dot/Icon */}
+                          <div className={cn(
+                            "relative z-10 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 border-2",
+                            isFirst 
+                              ? "bg-emerald-500 border-emerald-400 text-white" 
+                              : ato.importante 
+                                ? "bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600" 
+                                : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700"
+                          )}>
+                            <AtoIcon className={cn(
+                              "w-3 h-3",
+                              isFirst ? "text-white" : "text-zinc-500 dark:text-zinc-400"
+                            )} />
+                          </div>
+                          
+                          {/* Conteúdo */}
+                          <div className="flex-1 min-w-0 pb-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className={cn(
+                                "text-sm leading-snug",
+                                isFirst ? "font-medium text-zinc-800 dark:text-zinc-200" : "text-zinc-600 dark:text-zinc-400"
+                              )}>
+                                {ato.descricao}
+                              </p>
+                              <span className={cn(
+                                "text-[10px] font-mono flex-shrink-0 px-1.5 py-0.5 rounded",
+                                isFirst 
+                                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" 
+                                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                              )}>
+                                {format(ato.data, "dd/MM/yy", { locale: ptBR })}
+                              </span>
+                            </div>
+                            {ato.importante && !isFirst && (
+                              <span className="inline-flex items-center gap-1 mt-1 text-[9px] text-amber-600 dark:text-amber-400">
+                                <AlertTriangle className="w-2.5 h-2.5" />
+                                Importante
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {data.atosProcessuais.length > 5 && (
+                    <Link href={`/admin/casos/${data.id}`}>
+                      <Button variant="ghost" size="sm" className="w-full mt-2 text-xs text-zinc-500 hover:text-zinc-700">
+                        Ver todos os {data.atosProcessuais.length} atos
+                        <ChevronDown className="w-3 h-3 ml-1" />
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ========================================
+                SEÇÃO 9: PRAZOS PENDENTES
                 ======================================== */}
             {data.demandasPendentes.length > 0 && (
               <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">

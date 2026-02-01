@@ -763,7 +763,7 @@ function NewFolderDialog({
 
 export default function DrivePage() {
   const { config } = useAssignment();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"name" | "date" | "size">("date");

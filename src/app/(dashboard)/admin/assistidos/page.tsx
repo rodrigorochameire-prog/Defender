@@ -996,7 +996,7 @@ function FilterSectionAssistidos({
   viewMode,
   setViewMode,
 }: FilterSectionAssistidosProps) {
-  const [isMainExpanded, setIsMainExpanded] = useState(true);
+  const [isMainExpanded, setIsMainExpanded] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     atribuicoes: false,
     status: false,
@@ -1673,30 +1673,20 @@ export default function AssistidosPage() {
       {/* Conteúdo Principal */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
 
-      {/* Alerta de Não Identificados */}
+      {/* Alerta de Não Identificados - Discreto */}
       {naoIdentificadosCount > 0 && !showNaoIdentificados && (
-        <div className="flex items-center gap-3 p-3 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20">
-          <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-              {naoIdentificadosCount} assistido{naoIdentificadosCount !== 1 ? 's' : ''} sem identificação
-            </p>
-            <p className="text-xs text-amber-700 dark:text-amber-400">
-              Registros importados que precisam de regularização manual
-            </p>
-          </div>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="border-amber-400 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-400"
-            onClick={() => setShowNaoIdentificados(true)}
-          >
-            <Eye className="w-3.5 h-3.5 mr-2" />
-            Ver e Regularizar
-          </Button>
-        </div>
+        <button
+          onClick={() => setShowNaoIdentificados(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-colors text-left group"
+        >
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+          <span className="text-xs text-amber-700 dark:text-amber-400">
+            {naoIdentificadosCount} sem identificação
+          </span>
+          <span className="text-[10px] text-amber-500 dark:text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity">
+            Regularizar →
+          </span>
+        </button>
       )}
 
       {/* Banner modo Não Identificados */}

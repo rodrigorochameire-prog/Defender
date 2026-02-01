@@ -54,7 +54,7 @@ export function FilterSectionsCompact({
   atribuicaoOptions,
   atoOptions,
 }: FilterSectionsCompactProps) {
-  const [isMainExpanded, setIsMainExpanded] = useState(true);
+  const [isMainExpanded, setIsMainExpanded] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     atribuicoes: false,
     status: false,

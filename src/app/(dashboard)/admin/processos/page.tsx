@@ -856,7 +856,7 @@ function FilterSectionProcessos({
   searchTerm,
   setSearchTerm,
 }: FilterSectionProcessosProps) {
-  const [isMainExpanded, setIsMainExpanded] = useState(true);
+  const [isMainExpanded, setIsMainExpanded] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     atribuicoes: false,
     situacao: false,
@@ -1403,30 +1403,6 @@ export default function ProcessosPage() {
             </div>
           ))}
 
-          {/* Mini Gráfico de Distribuição - Compacto */}
-          <div className="hidden lg:flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
-            <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide whitespace-nowrap">Por área</span>
-            <div className="flex-1 flex items-center gap-0.5 h-4">
-              {statsByArea.map((area, idx) => (
-                <Tooltip key={idx}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => setAreaFilter(ATRIBUICAO_OPTIONS.find(o => o.shortLabel === area.name)?.value || "all")}
-                      className="h-full rounded-sm transition-all hover:opacity-80"
-                      style={{ 
-                        flex: area.value,
-                        backgroundColor: area.color,
-                        minWidth: area.value > 0 ? '6px' : '0'
-                      }}
-                    />
-                    </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">{area.name}: {area.value}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Card de Filtros - Padrão Demandas */}
