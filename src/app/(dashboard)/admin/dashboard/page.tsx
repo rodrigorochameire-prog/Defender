@@ -41,7 +41,26 @@ import {
   Send,
   MessageSquare,
   CalendarDays,
+  Search,
+  ChevronsUpDown,
+  X,
+  Phone,
+  ExternalLink,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ResponsiveContainer,
   PieChart,
@@ -284,7 +303,32 @@ export default function DashboardJuriPage() {
   }, [demandasFiltradas]);
 
   // Estado para registro rápido de atendimento
-  const [atendimentoRapido, setAtendimentoRapido] = useState({ assistido: "", descricao: "" });
+  const [atendimentoRapido, setAtendimentoRapido] = useState<{
+    assistidoId: number | null;
+    assistidoNome: string;
+    descricao: string;
+  }>({ assistidoId: null, assistidoNome: "", descricao: "" });
+  const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
+  const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
+
+  // Assistido selecionado para exibir detalhes
+  const assistidoSelecionado = useMemo(() => {
+    if (!atendimentoRapido.assistidoId) return null;
+    return assistidos.find((a: any) => a.id === atendimentoRapido.assistidoId);
+  }, [atendimentoRapido.assistidoId, assistidos]);
+
+  // Filtrar assistidos pela busca
+  const assistidosFiltrados = useMemo(() => {
+    if (!assistidoSearchQuery.trim()) return assistidos.slice(0, 10);
+    const query = assistidoSearchQuery.toLowerCase();
+    return assistidos
+      .filter((a: any) => 
+        a.nome?.toLowerCase().includes(query) ||
+        a.cpf?.includes(query) ||
+        a.vulgo?.toLowerCase().includes(query)
+      )
+      .slice(0, 10);
+  }, [assistidos, assistidoSearchQuery]);
 
   // Stats calculados
   const totalDemandas = demandasFiltradas.length;
@@ -468,41 +512,182 @@ export default function DashboardJuriPage() {
             </div>
           </Card>
 
-          {/* REGISTRO RÁPIDO DE ATENDIMENTO */}
+          {/* REGISTRO RÁPIDO DE ATENDIMENTO - APRIMORADO */}
           <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
             <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-zinc-500" />
+                <MessageSquare className="w-4 h-4 text-emerald-500" />
                 <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Registro Rápido</h3>
               </div>
             </div>
             <div className="p-3 space-y-3">
-              <Input
-                placeholder="Nome do assistido..."
-                value={atendimentoRapido.assistido}
-                onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, assistido: e.target.value }))}
-                className="h-9 text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
-              />
+              {/* Seletor de Assistido com Autocomplete */}
+              <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={assistidoSearchOpen}
+                    className="w-full h-9 justify-between text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  >
+                    {atendimentoRapido.assistidoId ? (
+                      <span className="flex items-center gap-2 truncate">
+                        <User className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="truncate">{atendimentoRapido.assistidoNome}</span>
+                      </span>
+                    ) : (
+                      <span className="text-zinc-500 flex items-center gap-2">
+                        <Search className="w-3.5 h-3.5" />
+                        Buscar assistido...
+                      </span>
+                    )}
+                    <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Digite o nome ou CPF..." 
+                      value={assistidoSearchQuery}
+                      onValueChange={setAssistidoSearchQuery}
+                      className="h-9"
+                    />
+                    <CommandList>
+                      <CommandEmpty>
+                        <div className="py-4 text-center">
+                          <User className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
+                          <p className="text-sm text-zinc-500">Nenhum assistido encontrado</p>
+                          <Link href="/admin/assistidos/novo">
+                            <Button variant="link" size="sm" className="mt-2 text-emerald-600">
+                              <Plus className="w-3 h-3 mr-1" />
+                              Cadastrar novo
+                            </Button>
+                          </Link>
+                        </div>
+                      </CommandEmpty>
+                      <CommandGroup heading="Assistidos">
+                        {assistidosFiltrados.map((assistido: any) => (
+                          <CommandItem
+                            key={assistido.id}
+                            value={assistido.nome}
+                            onSelect={() => {
+                              setAtendimentoRapido(prev => ({
+                                ...prev,
+                                assistidoId: assistido.id,
+                                assistidoNome: assistido.nome,
+                              }));
+                              setAssistidoSearchOpen(false);
+                              setAssistidoSearchQuery("");
+                            }}
+                            className="flex items-center gap-2 py-2"
+                          >
+                            <Avatar className="h-7 w-7">
+                              <AvatarImage src={assistido.photoUrl || ""} />
+                              <AvatarFallback className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                                {assistido.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{assistido.nome}</p>
+                              <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+                                {assistido.vulgo && <span>({assistido.vulgo})</span>}
+                                {assistido.situacaoPrisional === "PRESO" && (
+                                  <Badge variant="outline" className="h-4 px-1 text-[9px] border-red-300 text-red-600">
+                                    <Lock className="w-2.5 h-2.5 mr-0.5" />
+                                    Preso
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            {atendimentoRapido.assistidoId === assistido.id && (
+                              <Check className="w-4 h-4 text-emerald-500" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
+              {/* Card do Assistido Selecionado */}
+              {assistidoSelecionado && (
+                <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
+                  <div className="flex items-start gap-2.5">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={assistidoSelecionado.photoUrl || ""} />
+                      <AvatarFallback className="text-xs bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
+                        {assistidoSelecionado.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 truncate">
+                          {assistidoSelecionado.nome}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 text-zinc-400 hover:text-red-500"
+                          onClick={() => setAtendimentoRapido(prev => ({ ...prev, assistidoId: null, assistidoNome: "" }))}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[10px] text-emerald-700 dark:text-emerald-400">
+                        {assistidoSelecionado.telefone && (
+                          <span className="flex items-center gap-1">
+                            <Phone className="w-2.5 h-2.5" />
+                            {assistidoSelecionado.telefone}
+                          </span>
+                        )}
+                        {assistidoSelecionado.cpf && (
+                          <span>CPF: {assistidoSelecionado.cpf}</span>
+                        )}
+                        {assistidoSelecionado.situacaoPrisional === "PRESO" && (
+                          <Badge variant="outline" className="h-4 px-1 text-[9px] border-red-400 text-red-600 bg-red-50 dark:bg-red-900/30">
+                            <Lock className="w-2.5 h-2.5 mr-0.5" />
+                            {assistidoSelecionado.localPrisao || "Preso"}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800/50">
+                    <Link href={`/admin/assistidos/${assistidoSelecionado.id}`} className="flex-1">
+                      <Button variant="ghost" size="sm" className="w-full h-6 text-[10px] text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 hover:bg-emerald-100 dark:hover:bg-emerald-900/40">
+                        <ExternalLink className="w-2.5 h-2.5 mr-1" />
+                        Ver perfil
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* Descrição do Atendimento */}
               <Textarea
                 placeholder="Descrição do atendimento..."
                 value={atendimentoRapido.descricao}
                 onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, descricao: e.target.value }))}
-                className="min-h-[80px] text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none"
+                className="min-h-[70px] text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none"
               />
+
+              {/* Botão de Registrar */}
               <Button 
                 size="sm" 
-                className="w-full h-8 text-xs bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white"
+                className="w-full h-8 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm"
+                disabled={!atendimentoRapido.assistidoId || !atendimentoRapido.descricao.trim()}
                 onClick={() => {
-                  if (atendimentoRapido.assistido && atendimentoRapido.descricao) {
-                    toast.success("Atendimento registrado!");
-                    setAtendimentoRapido({ assistido: "", descricao: "" });
+                  if (atendimentoRapido.assistidoId && atendimentoRapido.descricao.trim()) {
+                    toast.success(`Atendimento de ${atendimentoRapido.assistidoNome} registrado!`);
+                    setAtendimentoRapido({ assistidoId: null, assistidoNome: "", descricao: "" });
                   } else {
-                    toast.error("Preencha todos os campos");
+                    toast.error("Selecione um assistido e descreva o atendimento");
                   }
                 }}
               >
                 <Send className="w-3 h-3 mr-1.5" />
-                Registrar
+                Registrar Atendimento
               </Button>
             </div>
           </Card>
