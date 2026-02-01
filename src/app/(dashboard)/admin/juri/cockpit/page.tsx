@@ -72,6 +72,12 @@ import {
   Search,
   MousePointer2,
   Move,
+  Activity,
+  Smile,
+  Hand,
+  Clock,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -133,14 +139,14 @@ interface ComportamentoRegistro {
   relevancia: 1 | 2 | 3; // 1 = baixa, 2 = média, 3 = alta
 }
 
-// Configuração de tipos de comportamento
+// Configuração de tipos de comportamento com ícones Lucide
 const TIPOS_COMPORTAMENTO = [
-  { id: "reacao_facial", label: "Reação Facial", icon: "😊", description: "Expressões, sorrisos, franzir testa" },
-  { id: "linguagem_corporal", label: "Linguagem Corporal", icon: "🤝", description: "Postura, gestos, movimentos" },
-  { id: "interacao", label: "Interação", icon: "💬", description: "Conversa com outros jurados, cochichos" },
-  { id: "atencao", label: "Atenção", icon: "👁", description: "Nível de atenção, distração, interesse" },
-  { id: "posicionamento", label: "Posicionamento", icon: "📍", description: "Inclinação, aproximação, afastamento" },
-  { id: "verbal", label: "Verbal", icon: "🗣", description: "Comentários, perguntas, suspiros" },
+  { id: "reacao_facial", label: "Expressão", iconId: "smile" },
+  { id: "linguagem_corporal", label: "Corporal", iconId: "hand" },
+  { id: "interacao", label: "Interação", iconId: "users" },
+  { id: "atencao", label: "Atenção", iconId: "eye" },
+  { id: "posicionamento", label: "Posição", iconId: "move" },
+  { id: "verbal", label: "Verbal", iconId: "mic" },
 ];
 
 const MOMENTOS_SUGERIDOS = [
@@ -1338,115 +1344,159 @@ export default function PlenarioCockpitPage() {
 
               {/* Seção de Comportamentos Contextualizados - Aparece quando conselho está completo */}
               {juradosAtivos.length === 7 && (
-                <div className="space-y-4">
-                  {/* Header */}
-                  <div className={cn("p-4", cardClass)}>
+                <div className="space-y-6">
+                  {/* Header Elegante */}
+                  <div className={cn("px-6 py-5", cardClass)}>
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-base font-semibold flex items-center gap-2">
-                          <Target className="w-4 h-4 text-violet-500" />
-                          Monitoramento de Comportamentos
-                        </h3>
-                        <p className="text-xs text-zinc-500 mt-0.5">
-                          Registre comportamentos com contexto para análise estratégica
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "w-10 h-10 rounded-xl flex items-center justify-center",
+                          isDarkMode ? "bg-violet-500/10" : "bg-violet-50"
+                        )}>
+                          <Activity className="w-5 h-5 text-violet-500" />
+                        </div>
+                        <div>
+                          <h3 className={cn("text-base font-semibold", isDarkMode ? "text-zinc-100" : "text-zinc-800")}>
+                            Monitoramento de Comportamentos
+                          </h3>
+                          <p className="text-xs text-zinc-500 mt-0.5">
+                            Registre comportamentos com contexto para análise estratégica
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          Conselho Formado
-                        </Badge>
-                      </div>
+                      <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50/80 dark:bg-emerald-950/30 dark:border-emerald-800">
+                        <CheckCircle2 className="w-3 h-3 mr-1.5" />
+                        Conselho Formado
+                      </Badge>
                     </div>
                   </div>
 
-                  {/* Grid de Jurados com Cards Sofisticados */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {/* Grid de Jurados - 2 por linha com mais espaço */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {juradosAtivos.map((jurado) => {
-                      const getTendenciaBorderColor = () => {
-                        if (jurado.taxaAbsolvicao >= 60) return "border-l-emerald-400";
-                        if (jurado.taxaAbsolvicao >= 40) return "border-l-amber-400";
-                        return "border-l-rose-400";
-                      };
-                      
                       const totalComportamentos = jurado.comportamentos?.length || 0;
                       const comportamentosFavoraveis = jurado.comportamentos?.filter(c => c.interpretacao === "favoravel").length || 0;
+                      const comportamentosDesfavoraveis = jurado.comportamentos?.filter(c => c.interpretacao === "desfavoravel").length || 0;
+                      
+                      // Indicador de tendência sofisticado
+                      const getTendenciaInfo = () => {
+                        if (jurado.taxaAbsolvicao >= 60) return { 
+                          label: "Favorável", 
+                          color: "text-emerald-600 dark:text-emerald-400",
+                          bg: "bg-emerald-50 dark:bg-emerald-950/30",
+                          ring: "ring-emerald-100 dark:ring-emerald-900/50"
+                        };
+                        if (jurado.taxaAbsolvicao >= 40) return { 
+                          label: "Neutro", 
+                          color: "text-amber-600 dark:text-amber-400",
+                          bg: "bg-amber-50 dark:bg-amber-950/30",
+                          ring: "ring-amber-100 dark:ring-amber-900/50"
+                        };
+                        return { 
+                          label: "Desfavorável", 
+                          color: "text-rose-600 dark:text-rose-400",
+                          bg: "bg-rose-50 dark:bg-rose-950/30",
+                          ring: "ring-rose-100 dark:ring-rose-900/50"
+                        };
+                      };
+                      const tendenciaInfo = getTendenciaInfo();
                       
                       return (
                         <div
                           key={jurado.id}
                           className={cn(
-                            "rounded-xl border border-l-4 overflow-hidden",
-                            isDarkMode ? "bg-zinc-900/80 border-zinc-800" : "bg-white border-zinc-100",
-                            getTendenciaBorderColor()
+                            "rounded-2xl overflow-hidden transition-all duration-200",
+                            isDarkMode 
+                              ? "bg-zinc-900/60 ring-1 ring-zinc-800 hover:ring-zinc-700" 
+                              : "bg-white ring-1 ring-zinc-200/80 hover:ring-zinc-300 hover:shadow-lg hover:shadow-zinc-100"
                           )}
                         >
-                          {/* Header do Card */}
-                          <div className={cn("p-4 border-b", isDarkMode ? "border-zinc-800" : "border-zinc-100")}>
-                            <div className="flex items-center gap-3">
-                              <div className="relative">
-                                <Avatar className="h-11 w-11">
+                          {/* Header do Card - Mais espaçoso */}
+                          <div className={cn("p-5", isDarkMode ? "border-b border-zinc-800/50" : "border-b border-zinc-100")}>
+                            <div className="flex items-start gap-4">
+                              {/* Avatar com indicador de cadeira */}
+                              <div className="relative flex-shrink-0">
+                                <Avatar className="h-14 w-14 ring-2 ring-offset-2 ring-zinc-100 dark:ring-zinc-800 dark:ring-offset-zinc-900">
                                   {jurado.foto && <AvatarImage src={jurado.foto} />}
-                                  <AvatarFallback className="text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+                                  <AvatarFallback className="text-base font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
                                     {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className={cn(
-                                  "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold",
-                                  isDarkMode ? "bg-zinc-700 text-zinc-300" : "bg-zinc-200 text-zinc-600"
+                                  "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ring-2",
+                                  isDarkMode 
+                                    ? "bg-zinc-800 text-zinc-300 ring-zinc-900" 
+                                    : "bg-white text-zinc-600 ring-white shadow-sm"
                                 )}>
                                   {jurado.cadeira}
                                 </div>
                               </div>
+                              
+                              {/* Info do Jurado */}
                               <div className="flex-1 min-w-0">
-                                <p className={cn("text-sm font-semibold truncate", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
-                                  {jurado.nome.split(" ").slice(0, 2).join(" ")}
-                                </p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className={cn("text-[10px]", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
-                                    {jurado.profissao}
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    <div className="w-6 h-1 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
-                                      <div 
-                                        className={cn(
-                                          "h-full rounded-full",
-                                          jurado.taxaAbsolvicao >= 60 ? "bg-emerald-400" :
-                                          jurado.taxaAbsolvicao >= 40 ? "bg-amber-400" : "bg-rose-400"
-                                        )}
-                                        style={{ width: `${jurado.taxaAbsolvicao}%` }}
-                                      />
-                                    </div>
-                                    <span className="text-[9px] font-medium text-zinc-400 tabular-nums">{jurado.taxaAbsolvicao}%</span>
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className={cn("text-sm font-semibold", isDarkMode ? "text-zinc-100" : "text-zinc-800")}>
+                                      {jurado.nome.split(" ").slice(0, 2).join(" ")}
+                                    </p>
+                                    <p className={cn("text-xs mt-0.5", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+                                      {jurado.profissao} • {jurado.idade} anos
+                                    </p>
+                                  </div>
+                                  {/* Badge de Tendência Elegante */}
+                                  <div className={cn(
+                                    "px-2.5 py-1 rounded-lg text-[10px] font-medium flex items-center gap-1.5",
+                                    tendenciaInfo.bg, tendenciaInfo.color
+                                  )}>
+                                    <span className="tabular-nums font-bold">{jurado.taxaAbsolvicao}%</span>
+                                    <span className="opacity-70">{tendenciaInfo.label}</span>
                                   </div>
                                 </div>
+                                
+                                {/* Mini stats de comportamentos */}
+                                {totalComportamentos > 0 && (
+                                  <div className="flex items-center gap-3 mt-3">
+                                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                                      <FileText className="w-3 h-3" />
+                                      <span>{totalComportamentos} registros</span>
+                                    </div>
+                                    {comportamentosFavoraveis > 0 && (
+                                      <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+                                        <TrendingUp className="w-3 h-3" />
+                                        <span>{comportamentosFavoraveis}</span>
+                                      </div>
+                                    )}
+                                    {comportamentosDesfavoraveis > 0 && (
+                                      <div className="flex items-center gap-1 text-[10px] text-rose-600 dark:text-rose-400">
+                                        <TrendingDown className="w-3 h-3" />
+                                        <span>{comportamentosDesfavoraveis}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              {totalComportamentos > 0 && (
-                                <div className="text-right">
-                                  <p className="text-lg font-bold text-zinc-700 dark:text-zinc-300">{totalComportamentos}</p>
-                                  <p className="text-[9px] text-zinc-400">registros</p>
-                                </div>
-                              )}
                             </div>
                           </div>
 
-                          {/* Timeline de Comportamentos */}
+                          {/* Timeline de Comportamentos - Mais elegante */}
                           {jurado.comportamentos && jurado.comportamentos.length > 0 && (
-                            <div className={cn("px-4 py-3 max-h-32 overflow-y-auto", isDarkMode ? "bg-zinc-900/50" : "bg-zinc-50/50")}>
-                              <div className="space-y-2">
+                            <div className={cn("px-5 py-4 max-h-36 overflow-y-auto", isDarkMode ? "bg-zinc-950/30" : "bg-zinc-50/50")}>
+                              <div className="space-y-3">
                                 {jurado.comportamentos.slice(-3).map((comp) => (
-                                  <div key={comp.id} className="flex items-start gap-2">
+                                  <div key={comp.id} className="flex items-start gap-3">
                                     <div className={cn(
-                                      "w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0",
-                                      comp.interpretacao === "favoravel" ? "bg-emerald-400" :
-                                      comp.interpretacao === "desfavoravel" ? "bg-rose-400" :
-                                      comp.interpretacao === "neutro" ? "bg-amber-400" : "bg-zinc-400"
+                                      "w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ring-2",
+                                      comp.interpretacao === "favoravel" ? "bg-emerald-500 ring-emerald-200 dark:ring-emerald-800" :
+                                      comp.interpretacao === "desfavoravel" ? "bg-rose-500 ring-rose-200 dark:ring-rose-800" :
+                                      comp.interpretacao === "neutro" ? "bg-amber-500 ring-amber-200 dark:ring-amber-800" : 
+                                      "bg-zinc-400 ring-zinc-200 dark:ring-zinc-700"
                                     )} />
                                     <div className="flex-1 min-w-0">
-                                      <p className={cn("text-[10px] leading-relaxed", isDarkMode ? "text-zinc-400" : "text-zinc-600")}>
+                                      <p className={cn("text-xs leading-relaxed", isDarkMode ? "text-zinc-300" : "text-zinc-600")}>
                                         {comp.descricao}
                                       </p>
-                                      <p className="text-[9px] text-zinc-400 mt-0.5">
+                                      <p className="text-[10px] text-zinc-400 mt-1 flex items-center gap-1.5">
+                                        <Clock className="w-2.5 h-2.5" />
                                         {comp.fase} • {comp.momento}
                                       </p>
                                     </div>
@@ -1456,12 +1506,15 @@ export default function PlenarioCockpitPage() {
                             </div>
                           )}
 
-                          {/* Formulário de Registro Contextualizado */}
-                          <div className="p-4 space-y-3">
-                            {/* Seletor de Momento/Contexto */}
+                          {/* Formulário de Registro - Layout limpo */}
+                          <div className="p-5 space-y-4">
+                            {/* Seletor de Momento */}
                             <Select defaultValue="">
-                              <SelectTrigger className={cn("h-8 text-xs", isDarkMode ? "bg-zinc-800 border-zinc-700" : "bg-zinc-50 border-zinc-200")}>
-                                <SelectValue placeholder="Momento do comportamento..." />
+                              <SelectTrigger className={cn(
+                                "h-9 text-xs",
+                                isDarkMode ? "bg-zinc-800/50 border-zinc-700/50" : "bg-zinc-50 border-zinc-200"
+                              )}>
+                                <SelectValue placeholder="Selecione o momento..." />
                               </SelectTrigger>
                               <SelectContent className={isDarkMode ? "bg-zinc-900 border-zinc-800" : ""}>
                                 {MOMENTOS_SUGERIDOS.map((momento) => (
@@ -1472,28 +1525,41 @@ export default function PlenarioCockpitPage() {
                               </SelectContent>
                             </Select>
 
-                            {/* Tipo de Comportamento */}
-                            <div className="flex flex-wrap gap-1">
-                              {TIPOS_COMPORTAMENTO.slice(0, 4).map((tipo) => (
-                                <button
-                                  key={tipo.id}
-                                  className={cn(
-                                    "text-[9px] px-2 py-1 rounded-full border transition-colors",
-                                    isDarkMode 
-                                      ? "border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300" 
-                                      : "border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
-                                  )}
-                                >
-                                  {tipo.icon} {tipo.label}
-                                </button>
-                              ))}
+                            {/* Tipo de Comportamento - Ícones Lucide */}
+                            <div className="flex flex-wrap gap-2">
+                              {TIPOS_COMPORTAMENTO.map((tipo) => {
+                                const IconComponent = tipo.iconId === "smile" ? Smile :
+                                  tipo.iconId === "hand" ? Hand :
+                                  tipo.iconId === "users" ? Users :
+                                  tipo.iconId === "eye" ? Eye :
+                                  tipo.iconId === "move" ? Move :
+                                  tipo.iconId === "mic" ? Mic : Activity;
+                                
+                                return (
+                                  <button
+                                    key={tipo.id}
+                                    className={cn(
+                                      "flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg transition-all",
+                                      isDarkMode 
+                                        ? "bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200" 
+                                        : "bg-zinc-100/80 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700"
+                                    )}
+                                  >
+                                    <IconComponent className="w-3 h-3" />
+                                    {tipo.label}
+                                  </button>
+                                );
+                              })}
                             </div>
 
-                            {/* Input de Descrição */}
-                            <div className="flex gap-1.5">
+                            {/* Input de Descrição com botões de ação */}
+                            <div className="flex gap-2">
                               <Input
                                 placeholder="Descreva o comportamento observado..."
-                                className={cn("h-8 text-xs flex-1", isDarkMode ? "bg-zinc-800 border-zinc-700" : "bg-zinc-50 border-zinc-200")}
+                                className={cn(
+                                  "h-9 text-xs flex-1",
+                                  isDarkMode ? "bg-zinc-800/50 border-zinc-700/50" : "bg-zinc-50 border-zinc-200"
+                                )}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
                                     handleAddComportamento(jurado.cadeira, {
@@ -1509,23 +1575,43 @@ export default function PlenarioCockpitPage() {
                                   }
                                 }}
                               />
-                              {/* Botões de Interpretação Rápida */}
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
-                                    <TrendingUp className="w-3.5 h-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="text-[10px]">Favorável</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30">
-                                    <TrendingDown className="w-3.5 h-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="text-[10px]">Desfavorável</TooltipContent>
-                              </Tooltip>
+                              {/* Botões de Interpretação - Design refinado */}
+                              <div className="flex gap-1">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost" 
+                                      className={cn(
+                                        "h-9 w-9 p-0 rounded-lg",
+                                        isDarkMode 
+                                          ? "hover:bg-emerald-950/50 text-emerald-400" 
+                                          : "hover:bg-emerald-50 text-emerald-600"
+                                      )}
+                                    >
+                                      <ThumbsUp className="w-4 h-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-[10px]">Favorável</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost" 
+                                      className={cn(
+                                        "h-9 w-9 p-0 rounded-lg",
+                                        isDarkMode 
+                                          ? "hover:bg-rose-950/50 text-rose-400" 
+                                          : "hover:bg-rose-50 text-rose-600"
+                                      )}
+                                    >
+                                      <ThumbsDown className="w-4 h-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-[10px]">Desfavorável</TooltipContent>
+                                </Tooltip>
+                              </div>
                             </div>
                           </div>
                         </div>
