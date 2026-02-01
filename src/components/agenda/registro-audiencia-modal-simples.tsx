@@ -865,7 +865,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                                 )}
                                 {registro.depoentes.length === 0 && (
                                   <p className="text-xs text-zinc-500 dark:text-zinc-400 italic">
-                                    Nenhum depoente cadastrado. Adicione na aba "Depoentes".
+                                    Nenhum depoente cadastrado. Adicione na aba &ldquo;Depoentes&rdquo;.
                                   </p>
                                 )}
                               </div>
@@ -2703,7 +2703,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                                       Depoimento Literal
                                     </Label>
                                     <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed italic">
-                                      "{dep.depoimentoLiteral}"
+                                      &ldquo;{dep.depoimentoLiteral}&rdquo;
                                     </p>
                                   </div>
                                 )}
@@ -3166,7 +3166,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                                                   Depoimento Literal
                                                 </Label>
                                                 <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed italic">
-                                                  "{dep.depoimentoLiteral}"
+                                                  &ldquo;{dep.depoimentoLiteral}&rdquo;
                                                 </p>
                                               </div>
                                             )}

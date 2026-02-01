@@ -396,10 +396,10 @@ export function GoogleCalendarSyncModal({
                 </p>
                 <ol className="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
                   <li>Acesse Google Calendar (calendar.google.com)</li>
-                  <li>Clique em "Configurações" (ícone de engrenagem)</li>
+                  <li>Clique em &ldquo;Configurações&rdquo; (ícone de engrenagem)</li>
                   <li>Selecione o calendário desejado</li>
-                  <li>Role até "Integrar calendário"</li>
-                  <li>Copie o "ID do calendário" ou a URL pública</li>
+                  <li>Role até &ldquo;Integrar calendário&rdquo;</li>
+                  <li>Copie o &ldquo;ID do calendário&rdquo; ou a URL pública</li>
                 </ol>
               </div>
             </div>

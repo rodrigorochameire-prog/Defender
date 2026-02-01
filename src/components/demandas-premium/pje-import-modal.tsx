@@ -279,7 +279,7 @@ export function PJeImportModal({
                     <li>Selecione todo o texto das intimações <span className="px-1.5 py-0.5 bg-blue-200 dark:bg-blue-800 rounded font-mono text-xs">Ctrl+A</span></li>
                     <li>Copie o texto <span className="px-1.5 py-0.5 bg-blue-200 dark:bg-blue-800 rounded font-mono text-xs">Ctrl+C</span></li>
                     <li>Cole no campo abaixo <span className="px-1.5 py-0.5 bg-blue-200 dark:bg-blue-800 rounded font-mono text-xs">Ctrl+V</span></li>
-                    <li>Clique em <strong>"Analisar Intimações"</strong></li>
+                    <li>Clique em <strong>&ldquo;Analisar Intimações&rdquo;</strong></li>
                   </ol>
                 </div>
               </div>

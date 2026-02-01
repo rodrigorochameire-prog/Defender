@@ -191,7 +191,7 @@ export function StatusChanger({
             <DialogHeader>
               <DialogTitle>Confirmar mudança de status</DialogTitle>
               <DialogDescription>
-                Você está mudando o status de "{demandaTitulo}" de{" "}
+                Você está mudando o status de &ldquo;{demandaTitulo}&rdquo; de{" "}
                 <span className="font-medium">{currentInfo.label}</span> para{" "}
                 <span className="font-medium">
                   {selectedStatus && statusConfig[selectedStatus].label}
@@ -298,7 +298,7 @@ export function StatusChanger({
           <DialogHeader>
             <DialogTitle>Confirmar mudança de status</DialogTitle>
             <DialogDescription>
-              Você está mudando o status de "{demandaTitulo}" de{" "}
+              Você está mudando o status de &ldquo;{demandaTitulo}&rdquo; de{" "}
               <span className="font-medium">{currentInfo.label}</span> para{" "}
               <span className="font-medium">
                 {selectedStatus && statusConfig[selectedStatus].label}

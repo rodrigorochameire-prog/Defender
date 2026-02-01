@@ -624,7 +624,7 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
             <li>Acesse a pauta de audiências no PJe</li>
             <li>Pressione <kbd className="px-1.5 py-0.5 bg-white dark:bg-zinc-800 rounded border">Ctrl+A</kbd> para selecionar tudo</li>
             <li>Pressione <kbd className="px-1.5 py-0.5 bg-white dark:bg-zinc-800 rounded border">Ctrl+C</kbd> para copiar</li>
-            <li>Cole no campo abaixo e clique em "Processar"</li>
+            <li>Cole no campo abaixo e clique em &ldquo;Processar&rdquo;</li>
           </ol>
         </div>
 
