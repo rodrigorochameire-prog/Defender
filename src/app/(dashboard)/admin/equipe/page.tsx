@@ -285,69 +285,78 @@ export default function EquipePage() {
   // Loading state
   if (isLoadingMembros) {
     return (
-      <div className="space-y-6 p-6 max-w-[1600px] mx-auto">
-        <div className="flex items-center gap-3">
-          <Skeleton className="w-11 h-11 rounded-xl" />
-          <div>
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-48 mt-1" />
+      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+        <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-11 h-11 rounded-xl" />
+            <div>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-48 mt-1" />
+            </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-32 rounded-2xl" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-48 rounded-2xl" />
-          ))}
+        <div className="p-4 md:p-6 space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-28 rounded-2xl" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-48 rounded-2xl" />
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6 max-w-[1600px] mx-auto">
-      {/* Header - Padrão Defender */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-            <Users className="w-5 h-5 text-white dark:text-zinc-900" />
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Header Padrão Defender */}
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <Users className="w-5 h-5 text-white dark:text-zinc-900" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Equipe</h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {estatisticas.total} membros cadastrados
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Equipe</h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {estatisticas.total} membros cadastrados
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <Input
-              placeholder="Buscar membro..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-[220px] h-10 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Input
+                placeholder="Buscar membro..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-[200px] h-9 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-xl"
+              />
+            </div>
+            {canManageTeam() && (
+              <Button 
+                size="sm" 
+                className="h-9 px-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-xl font-medium shadow-md"
+                onClick={() => {
+                  resetForm();
+                  setAddModalOpen(true);
+                }}
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Adicionar
+              </Button>
+            )}
           </div>
-          {canManageTeam() && (
-            <Button 
-              size="sm" 
-              className="h-10 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-xl font-medium shadow-lg"
-              onClick={() => {
-                resetForm();
-                setAddModalOpen(true);
-              }}
-            >
-              <UserPlus className="w-4 h-4 mr-2" />
-              Adicionar
-            </Button>
-          )}
         </div>
       </div>
+      
+      {/* Content */}
+      <div className="p-4 md:p-6 space-y-6">
 
       {/* Stats Cards - Padrão Defender */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -833,6 +842,7 @@ export default function EquipePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }

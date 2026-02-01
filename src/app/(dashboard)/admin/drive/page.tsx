@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,8 @@ import {
   AlertCircle,
   Loader2,
   Link2,
+  CloudOff,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -76,12 +78,12 @@ const FILE_ICONS: Record<string, React.ElementType> = {
 const FILE_COLORS: Record<string, string> = {
   folder: "text-emerald-500",
   document: "text-blue-500",
-  pdf: "text-blue-600",
-  image: "text-zinc-500",
-  video: "text-zinc-500",
-  audio: "text-zinc-500",
+  pdf: "text-rose-500",
+  image: "text-violet-500",
+  video: "text-amber-500",
+  audio: "text-cyan-500",
   archive: "text-zinc-500",
-  default: "text-zinc-500",
+  default: "text-zinc-400",
 };
 
 function getFileType(mimeType: string): string {
@@ -113,24 +115,26 @@ function formatFileSize(bytes?: number | null): string {
 
 function EmptyDriveState({ onConfigure }: { onConfigure: () => void }) {
   return (
-    <div className="min-h-[60vh] flex items-center justify-center p-6">
-      <Card className="max-w-md w-full p-8 text-center border-dashed">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-          <HardDrive className="w-8 h-8 text-zinc-400" />
+    <div className="min-h-[50vh] flex items-center justify-center p-6">
+      <Card className="max-w-md w-full p-8 text-center border-dashed border-2 bg-zinc-50/50 dark:bg-zinc-900/50">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <CloudOff className="w-10 h-10 text-zinc-400" />
         </div>
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-2">
+        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
           Google Drive não configurado
         </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-          Configure a integração com o Google Drive para armazenar e organizar os documentos da defensoria.
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">
+          Configure a integração com o Google Drive para armazenar e organizar os documentos da defensoria de forma centralizada.
         </p>
         <div className="space-y-3">
-          <Button onClick={onConfigure} className="w-full">
-            <Settings className="w-4 h-4 mr-2" />
-            Configurar Integração
-          </Button>
+          <Link href="/admin/settings/drive">
+            <Button className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-900">
+              <Settings className="w-4 h-4 mr-2" />
+              Configurar Integração
+            </Button>
+          </Link>
           <p className="text-xs text-zinc-400">
-            Você precisará de uma conta Google e credenciais de API
+            Você precisará de credenciais OAuth do Google Cloud
           </p>
         </div>
       </Card>
@@ -162,8 +166,9 @@ function FileCard({
         )}
         onClick={onPreview}
       >
-        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", 
-          file.isFolder ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-zinc-50 dark:bg-zinc-800"
+        <div className={cn(
+          "w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0", 
+          file.isFolder ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-zinc-100 dark:bg-zinc-800"
         )}>
           <Icon className={cn("w-5 h-5", colorClass)} />
         </div>
@@ -229,8 +234,22 @@ function FileCard({
         {file.thumbnailLink ? (
           <img src={file.thumbnailLink} alt={file.name} className="w-full h-full object-cover" />
         ) : (
-          <Icon className={cn("w-12 h-12", colorClass)} />
+          <Icon className={cn("w-14 h-14", colorClass)} />
         )}
+        
+        {/* Overlay de ações no hover */}
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+          {file.webViewLink && (
+            <a href={file.webViewLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+              <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
+                <ExternalLink className="w-4 h-4" />
+              </Button>
+            </a>
+          )}
+          <Button size="sm" variant="secondary" className="h-8 w-8 p-0" onClick={onPreview}>
+            <Eye className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
       <div className="p-3">
         <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">{file.name}</p>
@@ -298,12 +317,25 @@ export default function DrivePage() {
     },
   });
 
-  // Loading
+  // Loading state
   if (isCheckingConfig) {
     return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11] p-6">
-        <div className="max-w-[1600px] mx-auto space-y-6">
-          <Skeleton className="h-16 w-full rounded-xl" />
+      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+        <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-11 h-11 rounded-xl" />
+            <div>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-48 mt-1" />
+            </div>
+          </div>
+        </div>
+        <div className="p-4 md:p-6 space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-28 rounded-2xl" />
+            ))}
+          </div>
           <Skeleton className="h-[400px] w-full rounded-xl" />
         </div>
       </div>
@@ -314,7 +346,7 @@ export default function DrivePage() {
   if (!configStatus?.configured) {
     return (
       <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-        {/* Header */}
+        {/* Header Padrão Defender */}
         <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
@@ -329,13 +361,14 @@ export default function DrivePage() {
           </div>
         </div>
 
-        <EmptyDriveState onConfigure={() => toast.info("Configure as variáveis de ambiente do Google Drive")} />
+        <EmptyDriveState onConfigure={() => {}} />
       </div>
     );
   }
 
   const files = filesData?.files || [];
   const currentFolderId = selectedFolderId || syncFolders?.[0]?.driveFolderId;
+  const currentFolder = syncFolders?.find(f => f.driveFolderId === currentFolderId);
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
@@ -355,6 +388,15 @@ export default function DrivePage() {
           </div>
           
           <div className="flex items-center gap-2">
+            <Link href="/admin/settings/drive">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="h-9 w-9 p-0 border-zinc-200 dark:border-zinc-700 rounded-xl"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </Link>
             <Button 
               variant="outline" 
               size="sm"
@@ -374,11 +416,63 @@ export default function DrivePage() {
       </div>
 
       {/* Content */}
-      <div className="p-4 md:p-6">
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Stats Cards - Padrão Defender */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:shadow-zinc-900/10 dark:hover:shadow-white/5 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
+                <File className="w-5 h-5 text-white dark:text-zinc-900" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats?.totalFiles || 0}</p>
+                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Arquivos</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/30">
+                <FolderOpen className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats?.totalFolders || 0}</p>
+                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Pastas</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center shadow-md shadow-blue-500/30">
+                <Link2 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats?.syncedFolders || 0}</p>
+                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Sincronizadas</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="group relative p-5 bg-zinc-900 dark:bg-white border-zinc-800 dark:border-zinc-200 rounded-2xl hover:shadow-xl transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-md">
+                <CheckCircle2 className="w-5 h-5 text-zinc-900 dark:text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-white dark:text-zinc-900 tracking-tighter">{stats?.pendingSync || 0}</p>
+                <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Pendentes</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Main Content */}
         <div className="flex gap-6">
           {/* Sidebar */}
           <div className="hidden lg:block w-72 flex-shrink-0">
-            <Card className="overflow-hidden sticky top-4">
+            <Card className="overflow-hidden sticky top-4 rounded-xl">
               <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
                 <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
                   Pastas Sincronizadas
@@ -398,23 +492,24 @@ export default function DrivePage() {
                         key={folder.id}
                         onClick={() => setSelectedFolderId(folder.driveFolderId)}
                         className={cn(
-                          "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all",
+                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all",
                           selectedFolderId === folder.driveFolderId || (!selectedFolderId && folder.id === syncFolders[0]?.id)
-                            ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 font-medium"
+                            ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-medium shadow-md"
                             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         )}
                       >
-                        <FolderOpen className="w-4 h-4" />
+                        <FolderOpen className="w-4 h-4 flex-shrink-0" />
                         <span className="flex-1 text-left truncate">{folder.name}</span>
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 text-center text-sm text-zinc-500">
-                    <FolderOpen className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
-                    <p>Nenhuma pasta sincronizada</p>
-                    <Link href="/admin/settings/dados">
-                      <Button variant="link" size="sm" className="mt-2">
+                  <div className="p-6 text-center text-sm text-zinc-500">
+                    <FolderOpen className="w-10 h-10 mx-auto mb-3 text-zinc-300 dark:text-zinc-600" />
+                    <p className="font-medium mb-1">Nenhuma pasta</p>
+                    <p className="text-xs text-zinc-400">Configure pastas para sincronizar</p>
+                    <Link href="/admin/settings/drive">
+                      <Button variant="link" size="sm" className="mt-3">
                         Configurar
                       </Button>
                     </Link>
@@ -425,9 +520,9 @@ export default function DrivePage() {
           </div>
 
           {/* Main content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {/* Toolbar */}
-            <Card className="mb-4 p-3">
+            <Card className="mb-4 p-3 rounded-xl">
               <div className="flex items-center gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -435,14 +530,17 @@ export default function DrivePage() {
                     placeholder="Buscar arquivos..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 h-9 bg-zinc-50 dark:bg-zinc-800 border-0"
+                    className="pl-9 h-10 bg-zinc-50 dark:bg-zinc-800 border-0 rounded-xl"
                   />
                 </div>
-                <div className="flex items-center border rounded-lg overflow-hidden">
+                <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn("h-8 w-8 p-0 rounded-none", viewMode === "list" && "bg-zinc-100 dark:bg-zinc-800")}
+                    className={cn(
+                      "h-8 w-8 p-0 rounded-md",
+                      viewMode === "list" && "bg-white dark:bg-zinc-700 shadow-sm"
+                    )}
                     onClick={() => setViewMode("list")}
                   >
                     <List className="w-4 h-4" />
@@ -450,7 +548,10 @@ export default function DrivePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn("h-8 w-8 p-0 rounded-none", viewMode === "grid" && "bg-zinc-100 dark:bg-zinc-800")}
+                    className={cn(
+                      "h-8 w-8 p-0 rounded-md",
+                      viewMode === "grid" && "bg-white dark:bg-zinc-700 shadow-sm"
+                    )}
                     onClick={() => setViewMode("grid")}
                   >
                     <LayoutGrid className="w-4 h-4" />
@@ -460,7 +561,17 @@ export default function DrivePage() {
             </Card>
 
             {/* Files */}
-            <Card>
+            <Card className="rounded-xl overflow-hidden">
+              {/* Header da listagem */}
+              <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex items-center justify-between">
+                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  {currentFolder?.name || "Arquivos"}
+                </span>
+                <span className="text-xs text-zinc-500">
+                  {files.length} item{files.length !== 1 && 's'}
+                </span>
+              </div>
+
               {isLoadingFiles ? (
                 <div className="p-6 space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -469,16 +580,16 @@ export default function DrivePage() {
                 </div>
               ) : files.length === 0 ? (
                 <div className="p-12 text-center">
-                  <FolderOpen className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-4" />
-                  <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  <FolderOpen className="w-16 h-16 mx-auto text-zinc-300 dark:text-zinc-600 mb-4" />
+                  <h3 className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
                     Pasta vazia
                   </h3>
-                  <p className="text-sm text-zinc-500">
-                    {currentFolderId ? "Esta pasta não contém arquivos" : "Selecione uma pasta sincronizada"}
+                  <p className="text-sm text-zinc-500 max-w-sm mx-auto">
+                    {currentFolderId ? "Esta pasta não contém arquivos sincronizados" : "Selecione uma pasta na barra lateral"}
                   </p>
                 </div>
               ) : viewMode === "list" ? (
-                <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <div>
                   {files
                     .filter(f => !searchTerm || f.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map((file) => (
