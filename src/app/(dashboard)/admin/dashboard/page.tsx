@@ -713,7 +713,7 @@ export default function DashboardJuriPage() {
               {/* Layout horizontal em telas grandes */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 {/* Coluna 1: Seletor de Assistido + Chip do selecionado */}
-                <div className="lg:col-span-4 space-y-2">
+                <div className="lg:col-span-5 space-y-2">
                   <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Assistido</label>
                   <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
                     <PopoverTrigger asChild>
@@ -837,10 +837,10 @@ export default function DashboardJuriPage() {
                   )}
                 </div>
 
-                {/* Coluna 2: Tipo de Registro - Layout 3x2 */}
-                <div className="lg:col-span-2 space-y-2 flex-shrink-0">
+                {/* Coluna 2: Tipo de Registro - Compacto */}
+                <div className="lg:col-span-1 space-y-1.5 flex-shrink-0">
                   <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
-                  <div className="grid grid-cols-3 gap-1">
+                  <div className="grid grid-cols-2 gap-0.5">
                     {tiposRegistro.map((tipo) => {
                       const Icon = tipo.icon;
                       const isSelected = atendimentoRapido.tipo === tipo.id;
@@ -850,13 +850,12 @@ export default function DashboardJuriPage() {
                           key={tipo.id}
                           onClick={() => {
                             if (isDelegacao) {
-                              // Abrir modal de delegação ao invés de selecionar tipo
                               setDelegacaoModalOpen(true);
                             } else {
                               setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }));
                             }
                           }}
-                          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                          className={`flex items-center justify-center w-7 h-7 rounded-md transition-colors ${
                             isSelected && !isDelegacao
                               ? tipo.bgActive
                               : isDelegacao
@@ -865,7 +864,7 @@ export default function DashboardJuriPage() {
                           }`}
                           title={tipo.label}
                         >
-                          <Icon className={`w-4 h-4 ${isSelected && !isDelegacao ? tipo.color : isDelegacao ? "text-rose-500" : "text-zinc-400"}`} />
+                          <Icon className={`w-3.5 h-3.5 ${isSelected && !isDelegacao ? tipo.color : isDelegacao ? "text-rose-500" : "text-zinc-400"}`} />
                         </button>
                       );
                     })}
