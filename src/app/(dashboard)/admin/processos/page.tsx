@@ -573,15 +573,17 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
                     </div>
                   )}
                   {/* Última movimentação (placeholder) */}
-                  <div className="relative">
-                    <div className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-                    <div className="ml-2 flex items-center gap-2">
-                      <span className="text-[10px] text-zinc-400">
-                        {format(processo.dataDistribuicao, "dd/MM/yyyy")}
-                      </span>
-                      <span className="text-[10px] text-zinc-500">Distribuição</span>
+                  {processo.dataDistribuicao && !isNaN(new Date(processo.dataDistribuicao).getTime()) && (
+                    <div className="relative">
+                      <div className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+                      <div className="ml-2 flex items-center gap-2">
+                        <span className="text-[10px] text-zinc-400">
+                          {format(new Date(processo.dataDistribuicao), "dd/MM/yyyy")}
+                        </span>
+                        <span className="text-[10px] text-zinc-500">Distribuição</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
