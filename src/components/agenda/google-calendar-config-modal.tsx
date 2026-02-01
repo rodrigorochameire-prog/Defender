@@ -337,7 +337,7 @@ export function GoogleCalendarConfigModal({
                     <CustomSelect
                       options={syncIntervalOptions}
                       value={config.syncInterval}
-                      onChange={(value) => setConfig({ ...config, syncInterval: value })}
+                      onValueChange={(value) => setConfig({ ...config, syncInterval: value })}
                       placeholder="Selecione o intervalo"
                     />
                   </div>
@@ -466,7 +466,7 @@ export function GoogleCalendarConfigModal({
                                 <CustomSelect
                                   options={atribuicaoOptions}
                                   value={calendar.atribuicao}
-                                  onChange={(value) =>
+                                  onValueChange={(value) =>
                                     handleChangeCalendarAtribuicao(calendar.id, value)
                                   }
                                   placeholder="Selecione"

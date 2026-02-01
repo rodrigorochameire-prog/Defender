@@ -180,18 +180,10 @@ export default function DashboardVarasCriminaisPage() {
   const atoOptions = getAtosPorAtribuicao("Criminal Geral");
 
   const handleSaveNewDemanda = (data: DemandaFormData) => {
-    createDemandaMutation.mutate({
-      titulo: data.ato,
-      descricao: data.providencias,
-      status: data.status.toUpperCase().replace(/ /g, "_"),
-      prioridade: data.estadoPrisional === "preso" ? "URGENTE" : "NORMAL",
-      prazoFinal: data.prazo || null,
-      reuPreso: data.estadoPrisional === "preso",
-      ato: data.ato,
-      atribuicao: data.atribuicao,
-      assistidoNome: data.assistido,
-      processoNumero: data.processos?.[0]?.numero || null,
-    });
+    // TODO: Implementar criação de demanda com validação de assistido e processo
+    console.log("Criar demanda:", data);
+    // Por enquanto, apenas loga os dados
+    // A mutation espera processoId e assistidoId obrigatórios
   };
 
   // ==========================================

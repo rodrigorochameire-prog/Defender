@@ -137,6 +137,7 @@ interface Processo {
   atoProximoPrazo?: string | null;
   ultimoEvento?: string | null;
   dataUltimoEvento?: Date | null;
+  dataDistribuicao?: Date | null;
   casoId?: number | null;
   casoTitulo?: string | null;
   defensorNome?: string | null;
@@ -643,8 +644,7 @@ function ProcessoRow({ processo }: { processo: Processo }) {
   return (
     <DataTableRow 
       selected={false} 
-      className="relative"
-      style={{ borderLeft: `3px solid ${processo.assistido.preso ? '#f43f5e' : areaColor}` }}
+      className={cn("relative border-l-[3px]", processo.assistido.preso ? "border-l-rose-500" : "border-l-zinc-300 dark:border-l-zinc-600")}
     >
       {/* Número do Processo */}
       <DataTableCellMono className="min-w-[200px]">

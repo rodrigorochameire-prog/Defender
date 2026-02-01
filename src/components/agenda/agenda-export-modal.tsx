@@ -85,7 +85,7 @@ export function AgendaExportModal({ isOpen, onClose, eventos }: AgendaExportModa
             <CustomSelect
               options={formatOptions}
               value={selectedFormat}
-              onChange={setSelectedFormat}
+              onValueChange={setSelectedFormat}
               placeholder="Selecione o formato"
             />
           </div>
@@ -96,7 +96,7 @@ export function AgendaExportModal({ isOpen, onClose, eventos }: AgendaExportModa
             <CustomSelect
               options={periodoOptions}
               value={selectedPeriodo}
-              onChange={setSelectedPeriodo}
+              onValueChange={setSelectedPeriodo}
               placeholder="Selecione o período"
             />
           </div>

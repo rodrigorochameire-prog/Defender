@@ -443,7 +443,7 @@ export const assistidosRouter = router({
         .where(
           isAdmin
             ? eq(assistidos.id, id)
-            : and(eq(assistidos.id, id), eq(assistidos.workspaceId, workspaceId))
+            : and(eq(assistidos.id, id), workspaceId ? eq(assistidos.workspaceId, workspaceId as number) : undefined)
         )
         .returning();
       
@@ -462,7 +462,7 @@ export const assistidosRouter = router({
         .where(
           isAdmin
             ? eq(assistidos.id, input.id)
-            : and(eq(assistidos.id, input.id), eq(assistidos.workspaceId, workspaceId))
+            : and(eq(assistidos.id, input.id), workspaceId ? eq(assistidos.workspaceId, workspaceId as number) : undefined)
         )
         .returning();
       
@@ -560,8 +560,8 @@ export const assistidosRouter = router({
     const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
     const baseConditions = [isNull(assistidos.deletedAt)];
 
-    if (!isAdmin) {
-      baseConditions.push(eq(assistidos.workspaceId, workspaceId));
+    if (!isAdmin && workspaceId) {
+      baseConditions.push(eq(assistidos.workspaceId, workspaceId as number));
     }
 
     const total = await db
@@ -620,7 +620,7 @@ export const assistidosRouter = router({
         .where(
           isAdmin
             ? eq(assistidos.id, input.assistidoId)
-            : and(eq(assistidos.id, input.assistidoId), eq(assistidos.workspaceId, workspaceId))
+            : and(eq(assistidos.id, input.assistidoId), eq(assistidos.workspaceId, workspaceId as number))
         );
 
       if (assistidoScope.length === 0) {

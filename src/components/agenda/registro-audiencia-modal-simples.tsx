@@ -326,7 +326,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
     dataRegistro: new Date().toISOString(),
   });
 
-  const [activeTab, setActiveTab] = useState<"geral" | "depoentes" | "manifestacoes" | "anotacoes" | "historico">("geral");
+  const [activeTab, setActiveTab] = useState<"geral" | "depoentes" | "manifestacoes" | "anotacoes" | "historico" | "registro">("geral");
   const [editandoDepoente, setEditandoDepoente] = useState<Depoente | null>(null);
   const [novoDepoenteNome, setNovoDepoenteNome] = useState("");
   const [novoDepoenteTipo, setNovoDepoenteTipo] = useState<Depoente["tipo"]>("testemunha");

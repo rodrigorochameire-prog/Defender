@@ -253,7 +253,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData }: EventoC
                 <CustomSelect
                   options={tipoOptions}
                   value={formData.tipo}
-                  onChange={(value) => setFormData({ ...formData, tipo: value })}
+                  onValueChange={(value) => setFormData({ ...formData, tipo: value })}
                   placeholder="Selecione o tipo"
                 />
               </div>
@@ -263,7 +263,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData }: EventoC
                 <CustomSelect
                   options={statusOptions}
                   value={formData.status}
-                  onChange={(value) => setFormData({ ...formData, status: value })}
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
                   placeholder="Selecione o status"
                 />
               </div>
@@ -304,7 +304,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData }: EventoC
                 <CustomSelect
                   options={prioridadeOptions}
                   value={formData.prioridade}
-                  onChange={(value) => setFormData({ ...formData, prioridade: value })}
+                  onValueChange={(value) => setFormData({ ...formData, prioridade: value })}
                   placeholder="Selecione a prioridade"
                 />
               </div>
@@ -314,7 +314,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData }: EventoC
                 <CustomSelect
                   options={atribuicaoOptions}
                   value={formData.atribuicao}
-                  onChange={(value) => setFormData({ ...formData, atribuicao: value })}
+                  onValueChange={(value) => setFormData({ ...formData, atribuicao: value })}
                   placeholder="Selecione a atribuição"
                 />
               </div>
@@ -454,7 +454,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData }: EventoC
               <CustomSelect
                 options={recorrenciaOptions}
                 value={formData.recorrencia}
-                onChange={(value) => setFormData({ ...formData, recorrencia: value })}
+                onValueChange={(value) => setFormData({ ...formData, recorrencia: value })}
                 placeholder="Selecione a recorrência"
               />
             </div>

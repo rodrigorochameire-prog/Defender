@@ -4,7 +4,7 @@ import { useState } from "react";
 import { X, Save, Calendar, FileText, Scale, User, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { DemandaFormData } from "@/components/demandas/demanda-create-modal";
+import type { DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
 
 interface QuickEditModalProps {
   isOpen: boolean;

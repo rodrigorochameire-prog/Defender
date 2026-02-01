@@ -179,6 +179,9 @@ interface AssistidoUI {
   scoreComplexidade?: number;
   ultimoEvento?: { tipo: string; data: string; titulo: string } | null;
   atoProximoPrazo?: string;
+  dataPrisao?: string | null;
+  numeroProcesso?: string;
+  faseProcessual?: string;
 }
 
 // Configuracoes de status e fases
@@ -352,7 +355,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
     : null;
   
   // Tempo de prisão
-  const tempoPreso = calcularTempoPreso(assistido.dataPrisao);
+  const tempoPreso = calcularTempoPreso(assistido.dataPrisao ?? null);
   
   // Idade
   const idade = calcularIdade(assistido.dataNascimento);
@@ -749,7 +752,7 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
   const prazoUrgente = prazoInfo && prazoInfo.urgent;
-  const tempoPreso = calcularTempoPreso(assistido.dataPrisao);
+  const tempoPreso = calcularTempoPreso(assistido.dataPrisao ?? null);
   const idade = calcularIdade(assistido.dataNascimento);
   const statusCfg = statusConfig[assistido.statusPrisional];
   
@@ -848,7 +851,7 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
         {assistido.numeroProcesso ? (
           <div 
             className="group/copy cursor-pointer inline-flex items-center gap-1"
-            onClick={() => navigator.clipboard.writeText(assistido.numeroProcesso)}
+            onClick={() => navigator.clipboard.writeText(assistido.numeroProcesso || "")}
           >
             <span className="font-mono text-[10px] text-zinc-500 truncate hover:text-zinc-700 dark:hover:text-zinc-300">
               {assistido.numeroProcesso}

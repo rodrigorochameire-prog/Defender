@@ -326,16 +326,16 @@ function EventoDetalhado({
               {evento.local}
             </span>
           )}
-          {evento.processoNumero && (
+          {evento.processo && (
             <span className="flex items-center gap-1 font-mono">
               <Scale className="w-3 h-3" />
-              {evento.processoNumero.slice(-12)}
+              {evento.processo.slice(-12)}
             </span>
           )}
-          {evento.assistidoNome && (
+          {evento.assistido && (
             <span className="flex items-center gap-1">
               <Users className="w-3 h-3" />
-              {evento.assistidoNome}
+              {evento.assistido}
             </span>
           )}
         </div>

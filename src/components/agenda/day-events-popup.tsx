@@ -322,7 +322,7 @@ export function DayEventsPopup({
                           onEventClick(evento);
                           onClose();
                         }}
-                        className={`mb-2.5 rounded-xl border border-zinc-300/60 dark:border-zinc-700/60 hover:border-zinc-400/80 dark:hover:border-zinc-600/80 cursor-pointer transition-all ${atribuicaoColor.bg} ${atribuicaoColor.hover} group shadow-sm hover:shadow-md ${atribuicaoColor.borderHover}`}
+                        className={`mb-2.5 rounded-xl border border-zinc-300/60 dark:border-zinc-700/60 hover:border-zinc-400/80 dark:hover:border-zinc-600/80 cursor-pointer transition-all ${atribuicaoColor.bg} group shadow-sm hover:shadow-md`}
                       >
                         <div className="p-4 relative">
                           {/* Header do Evento */}

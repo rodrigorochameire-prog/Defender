@@ -903,27 +903,26 @@ export default function DrivePage() {
           {/* Stats Cards */}
           <StatsGrid columns={4}>
             <StatsCard
-              title="Arquivos"
+              label="Arquivos"
               value={stats.total}
               icon={File}
-              trend={{ value: formatFileSize(stats.totalSize), label: "total" }}
+              subtitle={formatFileSize(stats.totalSize)}
             />
             <StatsCard
-              title="Pastas"
+              label="Pastas"
               value={stats.folders}
               icon={Folder}
             />
             <StatsCard
-              title="Favoritos"
+              label="Favoritos"
               value={stats.starred}
               icon={Star}
-              iconColor="text-amber-500"
             />
             <StatsCard
-              title="Recentes"
+              label="Recentes"
               value={MOCK_FILES.filter(f => !f.isFolder && new Date(f.modifiedTime) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
               icon={Clock}
-              description="últimos 7 dias"
+              subtitle="últimos 7 dias"
             />
           </StatsGrid>
 

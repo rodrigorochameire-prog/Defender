@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, audiencias, processos, assistidos } from "@/lib/db";
-import { eq, and, gte, desc, asc, isNull, or, sql } from "drizzle-orm";
+import { eq, and, gte, desc, asc, isNull, or, sql, ilike } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { getWorkspaceScope } from "../workspace";
 
@@ -464,12 +464,11 @@ export const audienciasRouter = router({
               .values({
                 assistidoId: assistidoId!,
                 numeroAutos: evento.processo,
-                atribuicao: atribuicaoEnum,
-                area: areaEnum,
+                atribuicao: atribuicaoEnum as any,
+                area: areaEnum as any,
                 classeProcessual: evento.classeJudicial || "Não informado",
                 vara: evento.orgaoJulgador || "Não informado",
-                status: "ativo",
-                workspaceId: targetWorkspaceId,
+                workspaceId: targetWorkspaceId as number,
               })
               .returning({ id: processos.id });
             

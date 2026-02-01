@@ -203,7 +203,7 @@ export function DemandaCard({
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <div className="relative flex-shrink-0">
-                <AssistidoAvatar name={demanda.assistido} avatar={demanda.avatar} />
+                <AssistidoAvatar name={demanda.assistido} photoUrl={demanda.avatar} />
                 {demanda.prioridade === "URGENTE" && (
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg">
                     <Flame className="w-2.5 h-2.5 text-white" />
@@ -506,7 +506,7 @@ export function DemandaCard({
             {/* Coluna 1: Nome e Ato */}
             <div className="flex items-start gap-4 pr-6 border-r border-zinc-200/60 dark:border-zinc-700/60">
               <div className="relative">
-                <AssistidoAvatar name={demanda.assistido} avatar={demanda.avatar} />
+                <AssistidoAvatar name={demanda.assistido} photoUrl={demanda.avatar} />
                 {/* Indicador de prioridade no avatar */}
                 {demanda.prioridade === "URGENTE" && (
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg">

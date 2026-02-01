@@ -1,3 +1,4 @@
+import React from "react";
 import {
   AlertCircle,
   ClipboardList,
@@ -27,6 +28,12 @@ export type StatusGroup =
   | "fila" 
   | "diligencias" 
   | "concluida";
+
+export interface StatusConfig {
+  label: string;
+  group: StatusGroup;
+  icon: React.ComponentType<{ className?: string }>;
+}
 
 export const STATUS_GROUPS = {
   urgente: {

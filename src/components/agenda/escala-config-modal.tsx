@@ -383,7 +383,7 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
                           icon: Users,
                         }))}
                         value={defensorId || ""}
-                        onChange={(value) =>
+                        onValueChange={(value) =>
                           handleChangeAtribuicao(currentEscala.mes, atrib.value, value)
                         }
                         placeholder="Selecione"

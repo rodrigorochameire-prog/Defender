@@ -187,9 +187,13 @@ export default function AudienciasPage() {
 
   const handleAudienciaUpdate = async (id: number, data: Partial<Audiencia>) => {
     try {
+      // Converter null para undefined para compatibilidade com a mutation
+      const cleanedData = Object.fromEntries(
+        Object.entries(data).map(([k, v]) => [k, v === null ? undefined : v])
+      );
       await updateAudiencia.mutateAsync({
         id,
-        ...data,
+        ...cleanedData,
       });
     } catch (error) {
       console.error("Erro ao atualizar audiência:", error);

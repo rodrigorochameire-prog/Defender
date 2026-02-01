@@ -472,7 +472,7 @@ export default function AssistidoDetailPage() {
                           <div className="flex items-center gap-2">
                             {dem.prazo && (
                               <Badge 
-                                variant={isUrgente ? "destructive" : "outline"} 
+                                variant={isUrgente ? "danger" : "outline"} 
                                 className="text-xs"
                               >
                                 <Clock className="w-3 h-3 mr-1" />

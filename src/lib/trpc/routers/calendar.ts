@@ -102,7 +102,7 @@ export const calendarRouter = router({
             and(
               gte(calendarEvents.eventDate, startDate),
               lte(calendarEvents.eventDate, endDate),
-              ...(isAdmin ? [] : [eq(calendarEvents.workspaceId, workspaceId)])
+              ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)])
             )
           )
           .orderBy(calendarEvents.eventDate);
@@ -167,7 +167,7 @@ export const calendarRouter = router({
             and(
               gte(calendarEvents.eventDate, start),
               lte(calendarEvents.eventDate, end),
-              ...(isAdmin ? [] : [eq(calendarEvents.workspaceId, workspaceId)])
+              ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)])
             )
           )
           .orderBy(calendarEvents.eventDate);
@@ -192,7 +192,7 @@ export const calendarRouter = router({
         const event = await db.query.calendarEvents.findFirst({
           where: isAdmin
             ? eq(calendarEvents.id, input.id)
-            : and(eq(calendarEvents.id, input.id), eq(calendarEvents.workspaceId, workspaceId)),
+            : and(eq(calendarEvents.id, input.id), workspaceId ? eq(calendarEvents.workspaceId, workspaceId as number) : undefined),
         });
 
         if (!event) {
@@ -546,7 +546,7 @@ export const calendarRouter = router({
           and(
             gte(calendarEvents.eventDate, start),
             lte(calendarEvents.eventDate, end),
-            ...(isAdmin ? [] : [eq(calendarEvents.workspaceId, workspaceId)])
+            ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)])
           )
         )
         .orderBy(calendarEvents.eventDate);

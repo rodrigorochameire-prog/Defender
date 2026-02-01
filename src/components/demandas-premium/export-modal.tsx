@@ -87,7 +87,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
 
   const formatProcessos = (processos: any[]) => {
     if (!processos || processos.length === 0) return "";
-    return processos.map(p => `${p.tipo}: ${p.numero}`).join("; ");
+    return processos.map((p: { tipo: string; numero: string }) => `${p.tipo}: ${p.numero}`).join("; ");
   };
 
   const prepareExportData = () => {
@@ -258,7 +258,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
       if (selectedFields.includes('processos')) {
         // Formatar múltiplos processos em uma única célula
         const processosFormatted = demanda.processos
-          .map(p => `${p.tipo}: ${p.numero}`)
+          .map((p: { tipo: string; numero: string }) => `${p.tipo}: ${p.numero}`)
           .join('\n');
         row.push(processosFormatted || '-');
       }
