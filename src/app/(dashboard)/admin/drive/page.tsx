@@ -1089,16 +1089,18 @@ export default function DrivePage() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-        {/* Sub-header */}
-        <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between">
+        {/* Header Padrão Defender - Sofisticado */}
+        <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                <HardDrive className="w-4 h-4 text-white" />
+              <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+                <FolderOpen className="w-5 h-5 text-white dark:text-zinc-900" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Drive</h1>
-                <p className="text-[10px] text-zinc-500">{stats.total} arquivos • {formatFileSize(stats.totalSize)}</p>
+                <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Drive</h1>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {stats.total} arquivos • {formatFileSize(stats.totalSize)}
+                </p>
               </div>
             </div>
             
@@ -1106,18 +1108,18 @@ export default function DrivePage() {
               <Button 
                 variant="outline" 
                 size="sm"
-                className="h-8 px-3 text-xs"
+                className="h-9 px-4 border-zinc-200 dark:border-zinc-700 rounded-xl"
                 onClick={() => setNewFolderOpen(true)}
               >
-                <FolderPlus className="w-3.5 h-3.5 mr-1.5" />
+                <FolderPlus className="w-4 h-4 mr-2" />
                 Nova Pasta
               </Button>
               <Button 
                 size="sm"
-                className="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-700"
+                className="h-9 px-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-xl font-medium shadow-md"
                 onClick={() => setUploadOpen(true)}
               >
-                <Upload className="w-3.5 h-3.5 mr-1.5" />
+                <Upload className="w-4 h-4 mr-2" />
                 Upload
               </Button>
             </div>
@@ -1130,17 +1132,17 @@ export default function DrivePage() {
             {/* Sidebar de Navegação Hierárquica */}
             <div className="hidden lg:block w-72 flex-shrink-0">
               <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden sticky top-4">
-                {/* Header da Sidebar */}
-                <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10">
+                {/* Header da Sidebar - Padrão Defender */}
+                <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold text-amber-800 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                       <Folder className="w-3.5 h-3.5" />
                       Explorador
                     </h3>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                      className="h-6 w-6 p-0 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                       onClick={() => setExpandedFolders(new Set())}
                     >
                       <ChevronUp className="w-3.5 h-3.5" />

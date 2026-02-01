@@ -1320,44 +1320,53 @@ export default function ProcessosPage() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-        {/* Sub-header unificado */}
-        <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-                <Scale className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+        {/* Header Padrão Defender - Sofisticado */}
+        <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+                <Scale className="w-5 h-5 text-white dark:text-zinc-900" />
               </div>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                Gerenciamento de processos • {stats.total} cadastrados
-              </span>
+              <div>
+                <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Processos</h1>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {stats.total} cadastrados • {stats.comarcas} comarcas
+                </p>
+              </div>
             </div>
             
-            <div className="flex items-center gap-0.5">
-              <a href="https://esaj.tjba.jus.br/cpopg/open.do" target="_blank" rel="noopener noreferrer">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="h-7 w-7 p-0 text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                  title="Consultar TJ-BA"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </Button>
-              </a>
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <a href="https://esaj.tjba.jus.br/cpopg/open.do" target="_blank" rel="noopener noreferrer">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-9 w-9 p-0 border-zinc-200 dark:border-zinc-700"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                    </a>
+                  </TooltipTrigger>
+                  <TooltipContent>Consultar TJ-BA</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Button 
-                variant="ghost" 
+                variant="outline" 
                 size="sm"
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="h-9 w-9 p-0 border-zinc-200 dark:border-zinc-700"
                 title="Exportar"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-4 h-4" />
               </Button>
               <Link href="/admin/processos/novo">
                 <Button 
                   size="sm"
-                  className="h-7 px-2.5 ml-1.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+                  className="h-9 px-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-xl font-medium shadow-md"
                 >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  Novo
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Processo
                 </Button>
               </Link>
             </div>
@@ -1367,42 +1376,67 @@ export default function ProcessosPage() {
         {/* Conteúdo Principal */}
         <div className="p-4 md:p-6 space-y-4 md:space-y-6">
 
-        {/* Stats Cards Compactos */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {[
-            { label: "Total", value: stats.total, icon: Scale, color: "zinc" },
-            { label: "Júri", value: stats.juri, icon: Gavel, color: "emerald" },
-            { label: "Com Demandas", value: stats.comDemandas, icon: Clock, color: "amber", highlight: stats.comDemandas > 0 },
-            { label: "Réu Preso", value: stats.reuPreso, icon: Lock, color: "rose", highlight: stats.reuPreso > 0 },
-            { label: "Comarcas", value: stats.comarcas, icon: Building2, color: "blue" },
-          ].map((stat, idx) => (
-            <div
-              key={idx}
-              className={cn(
-                "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border transition-all duration-200",
-                "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 hover:shadow-sm",
-                idx >= 3 && "hidden md:block",
-                idx === 4 && "hidden lg:block"
-              )}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="space-y-0.5">
-                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">{stat.label}</p>
-                  <p className={cn(
-                    "text-xl font-bold",
-                    stat.highlight ? `text-${stat.color}-600 dark:text-${stat.color}-400` : "text-zinc-800 dark:text-zinc-200"
-                  )}>{stat.value}</p>
-                </div>
-                <div className={cn(
-                  "w-9 h-9 rounded-lg flex items-center justify-center border transition-all",
-                  `bg-${stat.color}-50 dark:bg-${stat.color}-900/20 border-${stat.color}-100 dark:border-${stat.color}-800/50`
-                )}>
-                  <stat.icon className={cn("w-4 h-4", `text-${stat.color}-600 dark:text-${stat.color}-400`)} />
-                </div>
+        {/* Stats Cards - Padrão Defender Sofisticado */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:shadow-zinc-900/10 dark:hover:shadow-white/5 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
+                <Scale className="w-5 h-5 text-white dark:text-zinc-900" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats.total}</p>
+                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Total</p>
               </div>
             </div>
-          ))}
+          </Card>
 
+          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/30">
+                <Gavel className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats.juri}</p>
+                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Júri</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all hidden md:block">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/30">
+                <Clock className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats.comDemandas}</p>
+                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Demandas</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all hidden md:block">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-500 flex items-center justify-center shadow-md shadow-rose-500/30">
+                <Lock className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats.reuPreso}</p>
+                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Réu Preso</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="group relative p-5 bg-zinc-900 dark:bg-white border-zinc-800 dark:border-zinc-200 rounded-2xl hover:shadow-xl transition-all hidden md:block">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-md">
+                <Building2 className="w-5 h-5 text-zinc-900 dark:text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-white dark:text-zinc-900 tracking-tighter">{stats.comarcas}</p>
+                <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Comarcas</p>
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* Card de Filtros - Padrão Demandas */}
