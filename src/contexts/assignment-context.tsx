@@ -72,8 +72,8 @@ const JURI_MODULES: MenuSection[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
-      { label: "Banco de Jurados", path: "/admin/jurados", icon: "UserCheck", description: "Perfil e histórico de votações" },
-      { label: "Profiler de Jurados", path: "/admin/jurados/profiler", icon: "Brain", description: "Score de empatia e análise", isPremium: true },
+      { label: "Banco de Jurados", path: "/admin/juri/jurados", icon: "Users", description: "Perfis psicológicos e análise comportamental" },
+      { label: "Mapa de Afinidades", path: "/admin/juri/jurados?tab=afinidades", icon: "Network", description: "Grupos e influências entre jurados" },
     ],
   },
   {
@@ -156,8 +156,8 @@ const GRUPO_JURI_MODULES: MenuSection[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
-      { label: "Banco de Jurados", path: "/admin/jurados", icon: "UserCheck" },
-      { label: "Profiler de Jurados", path: "/admin/jurados/profiler", icon: "Brain", isPremium: true },
+      { label: "Banco de Jurados", path: "/admin/juri/jurados", icon: "Users", description: "Perfis psicológicos e análise" },
+      { label: "Mapa de Afinidades", path: "/admin/juri/jurados?tab=afinidades", icon: "Network", description: "Grupos entre jurados" },
     ],
   },
   {
