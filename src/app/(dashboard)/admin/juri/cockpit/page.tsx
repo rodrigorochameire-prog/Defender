@@ -1113,37 +1113,33 @@ export default function PlenarioCockpitPage() {
   return (
     <TooltipProvider>
       <div className={containerClass}>
-        {/* Header */}
-        <div className={cn(
-          "sticky top-0 z-10 px-4 py-3 border-b backdrop-blur-md",
-          isDarkMode ? "bg-zinc-950/90 border-zinc-800" : "bg-white/90 border-zinc-200"
-        )}>
+        {/* Header - Padrão Defender */}
+        <div className="sticky top-0 z-10 px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <Link href="/admin/juri">
-                <Button variant="ghost" size="icon" className={isDarkMode ? "text-zinc-400 hover:text-white" : ""}>
-                  <ArrowLeft className="h-5 w-5" />
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
+                  <ArrowLeft className="w-3.5 h-3.5" />
                 </Button>
               </Link>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
-                <Zap className="h-5 w-5 text-white" />
+              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+                <Zap className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
               </div>
-              <div>
-                <h1 className="text-lg font-bold">Plenário Live</h1>
-                <p className={cn("text-xs", isDarkMode ? "text-zinc-500" : "text-zinc-500")}>
-                  {juradosAtivos.length}/7 jurados • {recusadosMP + recusadosDefesa} recusados
-                </p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Plenário Live</span>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500">• {juradosAtivos.length}/7 jurados</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className={isDarkMode ? "border-zinc-700 text-zinc-400" : ""}
+                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+                title={isDarkMode ? "Modo Claro" : "Modo Escuro"}
               >
-                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
               </Button>
             </div>
           </div>
