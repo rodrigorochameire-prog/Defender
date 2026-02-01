@@ -837,10 +837,10 @@ export default function DashboardJuriPage() {
                   )}
                 </div>
 
-                {/* Coluna 2: Tipo de Registro - Grid fixo 3x2 */}
-                <div className="lg:col-span-1 space-y-1.5 flex-shrink-0">
+                {/* Coluna 2: Tipo de Registro - Flexível e empilhável */}
+                <div className="lg:col-span-2 space-y-1.5 flex-shrink-0">
                   <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
-                  <div className="grid grid-cols-3 gap-1 w-fit">
+                  <div className="flex flex-wrap gap-1">
                     {tiposRegistro.map((tipo) => {
                       const Icon = tipo.icon;
                       const isSelected = atendimentoRapido.tipo === tipo.id;
@@ -855,7 +855,7 @@ export default function DashboardJuriPage() {
                               setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }));
                             }
                           }}
-                          className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
+                          className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors flex-shrink-0 ${
                             isSelected && !isDelegacao
                               ? tipo.bgActive
                               : isDelegacao
@@ -872,7 +872,7 @@ export default function DashboardJuriPage() {
                 </div>
 
                 {/* Coluna 3: Descrição + Botão */}
-                <div className="lg:col-span-6 space-y-2">
+                <div className="lg:col-span-5 space-y-2">
                   <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Descrição</label>
                   <div className="flex gap-2">
                     <Textarea
