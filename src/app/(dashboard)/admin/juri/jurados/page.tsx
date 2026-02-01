@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc/client";
 
 // ============================================
 // TIPOS
@@ -671,15 +672,76 @@ export default function JuradosPage() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [juradosImportados, setJuradosImportados] = useState<JuradoImportado[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
 
-  const handleImportarJurados = (jurados: JuradoImportado[]) => {
+  // Buscar jurados do banco de dados
+  const utils = trpc.useUtils();
+  const { data: juradosDB, isLoading } = trpc.jurados.list.useQuery({ ativo: true });
+  
+  // Mutation para criar jurados
+  const createJuradoMutation = trpc.jurados.create.useMutation({
+    onSuccess: () => {
+      utils.jurados.list.invalidate();
+    },
+  });
+
+  const handleImportarJurados = async (jurados: JuradoImportado[]) => {
+    setIsImporting(true);
+    let sucessos = 0;
+    let erros = 0;
+    
+    for (const jurado of jurados) {
+      try {
+        await createJuradoMutation.mutateAsync({
+          nome: jurado.nome,
+          profissao: jurado.profissao || undefined,
+          genero: undefined, // Não temos essa info na ata
+          observacoes: `Importado da ata - ${jurado.reuniao}ª Reunião - ${jurado.tipo}. Empresa: ${jurado.empresa || "-"}`,
+        });
+        sucessos++;
+      } catch (error) {
+        console.error("Erro ao importar jurado:", jurado.nome, error);
+        erros++;
+      }
+    }
+    
+    setIsImporting(false);
+    
+    if (sucessos > 0) {
+      toast.success(`${sucessos} jurados importados com sucesso!`);
+    }
+    if (erros > 0) {
+      toast.error(`${erros} jurados não puderam ser importados.`);
+    }
+    
     setJuradosImportados(prev => [...prev, ...jurados]);
-    // Aqui seria feita a integração com o backend para salvar os jurados
   };
 
-  // Jurados existentes (mock + importados)
+  // Converter jurados do banco para o formato do componente
+  const juradosDoSistema: JuradoPerfil[] = useMemo(() => {
+    if (!juradosDB) return juradosMock;
+    
+    return juradosDB.map((j: any) => ({
+      id: j.id,
+      nome: j.nome,
+      profissao: j.profissao || undefined,
+      idade: j.idade || undefined,
+      bairro: j.bairro || undefined,
+      genero: (j.genero === "M" || j.genero === "F") ? j.genero : undefined,
+      perfilDominante: j.perfilTendencia || undefined,
+      taxaAbsolvicao: j.taxaAbsolvicao || 50,
+      totalSessoes: j.participacoes || 0,
+      votosAbsolvicao: j.votosAbsolvicao || 0,
+      votosCondenacao: j.votosCondenacao || 0,
+      ultimaParticipacao: j.updatedAt ? new Date(j.updatedAt).toISOString().split("T")[0] : undefined,
+      reuniao: "1", // Default
+      tipo: "titular" as const,
+    }));
+  }, [juradosDB]);
+
+  // Jurados existentes (banco + fallback mocks)
   const juradosFiltrados = useMemo(() => {
-    return juradosMock.filter((j) => {
+    return juradosDoSistema.filter((j) => {
       const matchBusca = j.nome.toLowerCase().includes(busca.toLowerCase()) ||
         j.profissao?.toLowerCase().includes(busca.toLowerCase());
       
@@ -695,7 +757,7 @@ export default function JuradosPage() {
 
       return matchBusca && matchTendencia && matchPerfil && matchReuniao && matchTipo;
     });
-  }, [busca, filtroTendencia, filtroPerfil, filtroReuniao, filtroTipo]);
+  }, [juradosDoSistema, busca, filtroTendencia, filtroPerfil, filtroReuniao, filtroTipo]);
   
   // Jurados importados filtrados
   const importadosFiltrados = useMemo(() => {
@@ -782,7 +844,7 @@ export default function JuradosPage() {
 
       <div className="p-4 md:p-6 space-y-4">
         {/* Stats */}
-        <StatsBar jurados={juradosMock} />
+        <StatsBar jurados={juradosDoSistema} />
 
         {/* Filtros */}
         <div className="flex flex-col gap-2">
