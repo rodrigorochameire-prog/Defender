@@ -580,10 +580,10 @@ export default function DashboardJuriPage() {
           })}
         </div>
 
-        {/* PRAZOS URGENTES + REGISTRO RÁPIDO */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* PRAZOS MAIS PRÓXIMOS - Simplificado */}
-          <Card className="lg:col-span-2 group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+        {/* PRAZOS URGENTES */}
+        <div className="space-y-4">
+          {/* PRAZOS MAIS PRÓXIMOS - Linha completa */}
+          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
             <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -645,7 +645,7 @@ export default function DashboardJuriPage() {
             </div>
           </Card>
 
-          {/* REGISTRO RÁPIDO DE ATENDIMENTO - LAYOUT COMPACTO */}
+          {/* REGISTRO RÁPIDO DE ATENDIMENTO - LAYOUT HORIZONTAL */}
           <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
             <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center gap-2">
@@ -653,33 +653,35 @@ export default function DashboardJuriPage() {
                 <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Registro Rápido</h3>
               </div>
             </div>
-            <div className="p-3 space-y-2">
-              {/* Linha única: Seletor de Assistido + Tipos de Registro */}
-              <div className="flex items-center gap-2">
-                {/* Seletor de Assistido com Autocomplete - Compacto */}
-                <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={assistidoSearchOpen}
-                      className="flex-1 h-8 justify-between text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                    >
-                    {atendimentoRapido.assistidoId ? (
-                      <span className="flex items-center gap-2 truncate">
-                        <User className="w-3.5 h-3.5 text-emerald-500" />
-                        <span className="truncate">{atendimentoRapido.assistidoNome}</span>
-                      </span>
-                    ) : (
-                      <span className="text-zinc-500 flex items-center gap-2">
-                        <Search className="w-3.5 h-3.5" />
-                        Buscar assistido...
-                      </span>
-                    )}
-                    <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0" align="start">
+            <div className="p-4">
+              {/* Layout horizontal em telas grandes */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                {/* Coluna 1: Seletor de Assistido + Chip do selecionado */}
+                <div className="lg:col-span-4 space-y-2">
+                  <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Assistido</label>
+                  <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={assistidoSearchOpen}
+                        className="w-full h-9 justify-between text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                      >
+                        {atendimentoRapido.assistidoId ? (
+                          <span className="flex items-center gap-2 truncate">
+                            <User className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                            <span className="truncate">{atendimentoRapido.assistidoNome}</span>
+                          </span>
+                        ) : (
+                          <span className="text-zinc-500 flex items-center gap-2">
+                            <Search className="w-3.5 h-3.5" />
+                            Buscar assistido...
+                          </span>
+                        )}
+                        <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[350px] p-0" align="start">
                   <Command>
                     <CommandInput 
                       placeholder="Digite o nome ou CPF..." 
@@ -743,99 +745,102 @@ export default function DashboardJuriPage() {
                     </CommandList>
                   </Command>
                 </PopoverContent>
-              </Popover>
+                  </Popover>
 
-                {/* Seletor de Tipo de Registro - Na mesma linha */}
-                <div className="flex items-center gap-0.5 flex-shrink-0">
-                  {tiposRegistro.map((tipo) => {
-                    const Icon = tipo.icon;
-                    const isSelected = atendimentoRapido.tipo === tipo.id;
-                    return (
-                      <button
-                        key={tipo.id}
-                        onClick={() => setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }))}
-                        className={`flex items-center justify-center w-7 h-7 rounded transition-colors ${
-                          isSelected 
-                            ? tipo.bgActive
-                            : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
-                        }`}
-                        title={tipo.label}
+                  {/* Card do Assistido Selecionado */}
+                  {assistidoSelecionado && (
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 mt-2">
+                      <Avatar className="h-6 w-6 flex-shrink-0">
+                        <AvatarImage src={assistidoSelecionado.photoUrl || ""} />
+                        <AvatarFallback className="text-[8px] bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
+                          {assistidoSelecionado.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-medium text-emerald-900 dark:text-emerald-100 truncate">
+                          {assistidoSelecionado.nome}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-[9px] text-emerald-600 dark:text-emerald-400">
+                          {assistidoSelecionado.situacaoPrisional === "PRESO" && (
+                            <span className="flex items-center gap-0.5 text-red-600">
+                              <Lock className="w-2 h-2" />
+                              Preso
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-zinc-400 hover:text-red-500 flex-shrink-0"
+                        onClick={() => setAtendimentoRapido(prev => ({ ...prev, assistidoId: null, assistidoNome: "" }))}
                       >
-                        <Icon className={`w-3.5 h-3.5 ${isSelected ? tipo.color : "text-zinc-400"}`} />
-                      </button>
-                    );
-                  })}
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Coluna 2: Tipo de Registro */}
+                <div className="lg:col-span-2 space-y-2">
+                  <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {tiposRegistro.map((tipo) => {
+                      const Icon = tipo.icon;
+                      const isSelected = atendimentoRapido.tipo === tipo.id;
+                      return (
+                        <button
+                          key={tipo.id}
+                          onClick={() => setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }))}
+                          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                            isSelected 
+                              ? tipo.bgActive
+                              : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800"
+                          }`}
+                          title={tipo.label}
+                        >
+                          <Icon className={`w-4 h-4 ${isSelected ? tipo.color : "text-zinc-400"}`} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Coluna 3: Descrição + Botão */}
+                <div className="lg:col-span-6 space-y-2">
+                  <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Descrição</label>
+                  <div className="flex gap-2">
+                    <Textarea
+                      placeholder={
+                        atendimentoRapido.tipo === "atendimento" ? "Descreva o atendimento realizado..." :
+                        atendimentoRapido.tipo === "diligencia" ? "Descreva a diligência ou busca..." :
+                        atendimentoRapido.tipo === "informacao" ? "Registre a informação obtida..." :
+                        atendimentoRapido.tipo === "peticao" ? "Descreva a petição protocolada..." :
+                        "Adicione sua anotação..."
+                      }
+                      value={atendimentoRapido.descricao}
+                      onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, descricao: e.target.value }))}
+                      className="flex-1 min-h-[60px] text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none"
+                    />
+                    <Button 
+                      size="sm" 
+                      className="h-[60px] px-4 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm flex-shrink-0"
+                      disabled={!atendimentoRapido.assistidoId || !atendimentoRapido.descricao.trim()}
+                      onClick={() => {
+                        if (atendimentoRapido.assistidoId && atendimentoRapido.descricao.trim()) {
+                          const tipoLabel = tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro";
+                          toast.success(`${tipoLabel} de ${atendimentoRapido.assistidoNome} registrado!`);
+                          setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "" });
+                        } else {
+                          toast.error("Selecione um assistido e descreva o registro");
+                        }
+                      }}
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
-
-              {/* Card do Assistido Selecionado - Mais compacto */}
-              {assistidoSelecionado && (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
-                  <Avatar className="h-7 w-7 flex-shrink-0">
-                    <AvatarImage src={assistidoSelecionado.photoUrl || ""} />
-                    <AvatarFallback className="text-[9px] bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
-                      {assistidoSelecionado.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-emerald-900 dark:text-emerald-100 truncate">
-                      {assistidoSelecionado.nome}
-                    </p>
-                    <div className="flex items-center gap-2 text-[9px] text-emerald-600 dark:text-emerald-400">
-                      {assistidoSelecionado.situacaoPrisional === "PRESO" && (
-                        <span className="flex items-center gap-0.5 text-red-600">
-                          <Lock className="w-2 h-2" />
-                          Preso
-                        </span>
-                      )}
-                      {assistidoSelecionado.telefone && (
-                        <span className="truncate">{assistidoSelecionado.telefone}</span>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 text-zinc-400 hover:text-red-500 flex-shrink-0"
-                    onClick={() => setAtendimentoRapido(prev => ({ ...prev, assistidoId: null, assistidoNome: "" }))}
-                  >
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>
-              )}
-
-              {/* Descrição do Atendimento */}
-              <Textarea
-                placeholder={
-                  atendimentoRapido.tipo === "atendimento" ? "Descreva o atendimento realizado..." :
-                  atendimentoRapido.tipo === "diligencia" ? "Descreva a diligência ou busca..." :
-                  atendimentoRapido.tipo === "informacao" ? "Registre a informação obtida..." :
-                  atendimentoRapido.tipo === "peticao" ? "Descreva a petição protocolada..." :
-                  "Adicione sua anotação..."
-                }
-                value={atendimentoRapido.descricao}
-                onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, descricao: e.target.value }))}
-                className="min-h-[70px] text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none"
-              />
-
-              {/* Botão de Registrar */}
-              <Button 
-                size="sm" 
-                className="w-full h-8 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm"
-                disabled={!atendimentoRapido.assistidoId || !atendimentoRapido.descricao.trim()}
-                onClick={() => {
-                  if (atendimentoRapido.assistidoId && atendimentoRapido.descricao.trim()) {
-                    const tipoLabel = tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro";
-                    toast.success(`${tipoLabel} de ${atendimentoRapido.assistidoNome} registrado!`);
-                    setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "" });
-                  } else {
-                    toast.error("Selecione um assistido e descreva o registro");
-                  }
-                }}
-              >
-                <Send className="w-3 h-3 mr-1.5" />
-                Registrar {tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label}
-              </Button>
             </div>
           </Card>
         </div>
