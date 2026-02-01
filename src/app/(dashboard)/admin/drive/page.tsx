@@ -361,56 +361,94 @@ function FileCard({
   if (viewMode === "list") {
     return (
       <div 
-        className="flex items-center gap-4 p-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer group border-b border-zinc-100 dark:border-zinc-800 last:border-0"
+        className={cn(
+          "flex items-center gap-4 px-4 py-3 transition-all cursor-pointer group",
+          "hover:bg-zinc-50 dark:hover:bg-zinc-800/30",
+          "border-b border-zinc-100 dark:border-zinc-800/50 last:border-0"
+        )}
         onClick={handleClick}
       >
-        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", bgClass)}>
+        {/* Ícone com fundo circular */}
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105",
+          bgClass
+        )}>
           <Icon className={cn("w-5 h-5", colorClass)} />
         </div>
         
+        {/* Info Principal */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate group-hover:text-emerald-600 transition-colors">
+            <h4 className={cn(
+              "text-sm font-medium truncate transition-colors",
+              "text-zinc-800 dark:text-zinc-200 group-hover:text-amber-600 dark:group-hover:text-amber-400"
+            )}>
               {file.name}
             </h4>
             {file.starred && (
-              <Star className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" />
+              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
             )}
           </div>
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="flex items-center gap-2 mt-1">
             {file.assistidoNome && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              <Link 
+                href={`/admin/assistidos/${file.assistidoId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+              >
+                <Users className="w-2.5 h-2.5" />
                 {file.assistidoNome}
-              </Badge>
+              </Link>
             )}
             {file.processoNumero && (
-              <span className="text-[10px] font-mono text-zinc-400 truncate">
-                {file.processoNumero}
-              </span>
+              <Link
+                href={`/admin/processos/${file.processoId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors font-mono"
+              >
+                <Scale className="w-2.5 h-2.5" />
+                {file.processoNumero.slice(-15)}
+              </Link>
             )}
           </div>
         </div>
 
-        <div className="text-right text-xs text-zinc-500 flex-shrink-0 hidden md:block">
-          <p>{formatFileSize(file.size)}</p>
-          <p>{formatDistanceToNow(file.modifiedTime, { locale: ptBR, addSuffix: true })}</p>
+        {/* Metadados */}
+        <div className="hidden md:flex items-center gap-6 text-xs text-zinc-500 flex-shrink-0">
+          <div className="text-right">
+            <p className="font-medium text-zinc-700 dark:text-zinc-300">{formatFileSize(file.size)}</p>
+          </div>
+          <div className="text-right w-24">
+            <p>{formatDistanceToNow(file.modifiedTime, { locale: ptBR, addSuffix: true })}</p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Ações - Aparecem no hover */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
           {!file.isFolder && (
             <>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-600">
-                    <Download className="w-3.5 h-3.5" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg text-zinc-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Download className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-[10px]">Download</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-600">
-                    <Share2 className="w-3.5 h-3.5" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Share2 className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-[10px]">Compartilhar</TooltipContent>
@@ -419,8 +457,13 @@ function FileCard({
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-zinc-600">
-                <MoreHorizontal className="w-3.5 h-3.5" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -457,15 +500,20 @@ function FileCard({
     );
   }
 
-  // Grid view
+  // Grid view - Refinado
   return (
-    <Card 
-      className="group cursor-pointer hover:shadow-lg hover:border-zinc-300 dark:hover:border-zinc-600 transition-all overflow-hidden"
+    <div 
+      className={cn(
+        "group cursor-pointer rounded-xl overflow-hidden transition-all",
+        "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800",
+        "hover:shadow-lg hover:shadow-zinc-200/50 dark:hover:shadow-none hover:border-zinc-300 dark:hover:border-zinc-700",
+        "hover:-translate-y-0.5"
+      )}
       onClick={handleClick}
     >
       {/* Preview Area */}
       <div className={cn(
-        "h-28 flex items-center justify-center relative",
+        "h-24 flex items-center justify-center relative",
         bgClass
       )}>
         {file.thumbnailLink && !file.isFolder ? (
@@ -478,57 +526,63 @@ function FileCard({
             unoptimized
           />
         ) : (
-          <Icon className={cn("w-10 h-10", colorClass)} />
+          <div className="w-14 h-14 rounded-2xl bg-white/80 dark:bg-zinc-800/80 flex items-center justify-center shadow-sm">
+            <Icon className={cn("w-7 h-7", colorClass)} />
+          </div>
         )}
         
         {/* Hover Overlay */}
         {!file.isFolder && (
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="sm" variant="secondary" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onPreview(file); }}>
-                  <Eye className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Visualizar</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="sm" variant="secondary" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
-                  <Download className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Download</TooltipContent>
-            </Tooltip>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2">
+            <Button 
+              size="sm" 
+              variant="secondary" 
+              className="h-9 w-9 p-0 rounded-xl shadow-lg" 
+              onClick={(e) => { e.stopPropagation(); onPreview(file); }}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant="secondary" 
+              className="h-9 w-9 p-0 rounded-xl shadow-lg" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Download className="w-4 h-4" />
+            </Button>
           </div>
         )}
 
         {/* Star Badge */}
         {file.starred && (
-          <div className="absolute top-2 right-2">
-            <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+          <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/90 dark:bg-zinc-800/90 flex items-center justify-center shadow-sm">
+            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
           </div>
         )}
       </div>
 
       {/* Info */}
       <div className="p-3">
-        <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate mb-1 group-hover:text-emerald-600 transition-colors">
+        <h4 className={cn(
+          "text-sm font-medium truncate mb-1 transition-colors",
+          "text-zinc-800 dark:text-zinc-200 group-hover:text-amber-600 dark:group-hover:text-amber-400"
+        )}>
           {file.name}
         </h4>
         <div className="flex items-center justify-between text-[10px] text-zinc-500">
-          <span>{file.isFolder ? "Pasta" : formatFileSize(file.size)}</span>
+          <span className="font-medium">{file.isFolder ? "Pasta" : formatFileSize(file.size)}</span>
           <span>{formatDistanceToNow(file.modifiedTime, { locale: ptBR, addSuffix: true })}</span>
         </div>
         
         {/* Assistido Badge */}
         {file.assistidoNome && (
-          <Badge variant="secondary" className="mt-2 text-[10px] truncate max-w-full px-1.5 py-0">
-            {file.assistidoNome}
-          </Badge>
+          <div className="mt-2 flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 w-fit">
+            <Users className="w-2.5 h-2.5" />
+            <span className="truncate max-w-20">{file.assistidoNome.split(" ")[0]}</span>
+          </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -655,21 +709,25 @@ function UploadDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Upload className="w-5 h-5 text-emerald-600" />
-            Upload de Arquivos
+          <DialogTitle className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+              <Upload className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="text-base">Upload de Arquivos</span>
+              <p className="text-xs font-normal text-zinc-500 mt-0.5">
+                Arraste arquivos ou clique para selecionar
+              </p>
+            </div>
           </DialogTitle>
-          <DialogDescription>
-            Arraste arquivos ou clique para selecionar
-          </DialogDescription>
         </DialogHeader>
         
         <div 
           className={cn(
-            "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+            "relative border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer group overflow-hidden",
             dragActive 
-              ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" 
-              : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+              ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-[1.02]" 
+              : "border-zinc-200 dark:border-zinc-700 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
           )}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -677,6 +735,12 @@ function UploadDialog({
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
         >
+          {/* Padrão decorativo */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
+            backgroundSize: '16px 16px'
+          }} />
+          
           <input 
             ref={fileInputRef}
             type="file" 
@@ -688,21 +752,41 @@ function UploadDialog({
               }
             }}
           />
-          <FileUp className={cn(
-            "w-12 h-12 mx-auto mb-4",
-            dragActive ? "text-emerald-500" : "text-zinc-400"
-          )} />
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
-            Arraste arquivos aqui ou clique para selecionar
+          <div className={cn(
+            "relative w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center transition-all",
+            dragActive 
+              ? "bg-amber-100 dark:bg-amber-900/30" 
+              : "bg-zinc-100 dark:bg-zinc-800 group-hover:bg-amber-50 dark:group-hover:bg-amber-900/20"
+          )}>
+            <FileUp className={cn(
+              "w-8 h-8 transition-colors",
+              dragActive ? "text-amber-600" : "text-zinc-400 group-hover:text-amber-500"
+            )} />
+          </div>
+          <p className={cn(
+            "text-sm font-medium mb-1 transition-colors",
+            dragActive ? "text-amber-700 dark:text-amber-400" : "text-zinc-700 dark:text-zinc-300"
+          )}>
+            {dragActive ? "Solte para fazer upload" : "Arraste arquivos aqui"}
           </p>
-          <p className="text-xs text-zinc-400">
-            PDF, DOC, DOCX, JPG, PNG, MP4 • Máx. 50MB
+          <p className="text-xs text-zinc-500">
+            ou <span className="text-amber-600 dark:text-amber-400 font-medium">clique para selecionar</span>
           </p>
+          <div className="flex items-center justify-center gap-2 mt-4">
+            {["PDF", "DOC", "JPG", "PNG"].map((ext) => (
+              <span key={ext} className="text-[9px] px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-medium">
+                {ext}
+              </span>
+            ))}
+            <span className="text-[9px] text-zinc-400">• Máx. 50MB</span>
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700">
+          <Button variant="outline" onClick={onClose} className="rounded-lg">
+            Cancelar
+          </Button>
+          <Button className="rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700">
             <Upload className="w-4 h-4 mr-2" />
             Fazer Upload
           </Button>
@@ -898,36 +982,193 @@ export default function DrivePage() {
           </div>
         </div>
 
-        {/* Conteúdo Principal */}
-        <div className="p-4 md:p-6 space-y-6">
-          {/* Stats Cards */}
-          <StatsGrid columns={4}>
-            <StatsCard
-              label="Arquivos"
-              value={stats.total}
-              icon={File}
-              subtitle={formatFileSize(stats.totalSize)}
-            />
-            <StatsCard
-              label="Pastas"
-              value={stats.folders}
-              icon={Folder}
-            />
-            <StatsCard
-              label="Favoritos"
-              value={stats.starred}
-              icon={Star}
-            />
-            <StatsCard
-              label="Recentes"
-              value={MOCK_FILES.filter(f => !f.isFolder && new Date(f.modifiedTime) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
-              icon={Clock}
-              subtitle="últimos 7 dias"
-            />
-          </StatsGrid>
+        {/* Conteúdo Principal - Layout com Sidebar */}
+        <div className="p-4 md:p-6">
+          <div className="flex gap-6">
+            {/* Sidebar de Navegação */}
+            <div className="hidden lg:block w-56 flex-shrink-0 space-y-4">
+              {/* Navegação Rápida */}
+              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+                  Navegação
+                </h3>
+                <nav className="space-y-1">
+                  {[
+                    { id: null, name: "Todos os Arquivos", icon: HardDrive, count: stats.total },
+                    { id: "folder-assistidos", name: "Assistidos", icon: Users, count: 12 },
+                    { id: "folder-processos", name: "Processos", icon: Scale, count: 23 },
+                    { id: "folder-peticoes", name: "Petições", icon: FileText, count: 8 },
+                    { id: "folder-pautas", name: "Pautas", icon: Clock, count: 5 },
+                  ].map((item) => (
+                    <button
+                      key={item.id || "root"}
+                      onClick={() => {
+                        if (item.id) {
+                          navigateToFolder(item.id);
+                        } else {
+                          setCurrentFolder(null);
+                          setBreadcrumbs([{ id: "root", name: "Meu Drive" }]);
+                        }
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all",
+                        currentFolder === item.id
+                          ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-medium"
+                          : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      )}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      <span className="flex-1 text-left">{item.name}</span>
+                      <span className="text-[10px] text-zinc-400">{item.count}</span>
+                    </button>
+                  ))}
+                </nav>
+              </div>
 
-          {/* Breadcrumbs + Filtros */}
-          <Card className="overflow-hidden">
+              {/* Favoritos */}
+              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Star className="w-3 h-3 text-amber-500" />
+                  Favoritos
+                </h3>
+                <div className="space-y-1">
+                  {MOCK_FILES.filter(f => f.starred && !f.isFolder).slice(0, 4).map((file) => {
+                    const fileType = getFileType(file.mimeType);
+                    const Icon = FILE_ICONS[fileType];
+                    const colorClass = FILE_COLORS[fileType];
+                    return (
+                      <button
+                        key={file.id}
+                        onClick={() => handlePreview(file)}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                      >
+                        <Icon className={cn("w-3.5 h-3.5", colorClass)} />
+                        <span className="flex-1 text-left truncate">{file.name.split('.')[0]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Armazenamento */}
+              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+                  Armazenamento
+                </h3>
+                <div className="space-y-2">
+                  <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
+                      style={{ width: "23%" }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-zinc-500">
+                    <span>{formatFileSize(stats.totalSize)} usado</span>
+                    <span>15 GB disponível</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Área Principal */}
+            <div className="flex-1 space-y-4">
+              {/* Stats Bar Compacta */}
+              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-6 text-sm">
+                    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                      <Folder className="w-4 h-4 text-amber-500" />
+                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{stats.folders}</span>
+                      <span className="text-zinc-500">pastas</span>
+                    </div>
+                    <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700" />
+                    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                      <File className="w-4 h-4 text-blue-500" />
+                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{stats.total}</span>
+                      <span className="text-zinc-500">arquivos</span>
+                    </div>
+                    <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700" />
+                    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                      <Star className="w-4 h-4 text-amber-500" />
+                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{stats.starred}</span>
+                      <span className="text-zinc-500">favoritos</span>
+                    </div>
+                    <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700" />
+                    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                      <HardDrive className="w-4 h-4 text-zinc-400" />
+                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatFileSize(stats.totalSize)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant={viewMode === "list" ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => setViewMode("list")}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === "grid" ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => setViewMode("grid")}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Acesso Rápido */}
+              {currentFolder === null && (
+                <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-amber-500" />
+                      Acesso Rápido
+                    </h3>
+                    <span className="text-[10px] text-zinc-400">Arquivos recentes</span>
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto pb-2">
+                    {MOCK_FILES
+                      .filter(f => !f.isFolder)
+                      .sort((a, b) => new Date(b.modifiedTime).getTime() - new Date(a.modifiedTime).getTime())
+                      .slice(0, 6)
+                      .map((file) => {
+                        const fileType = getFileType(file.mimeType);
+                        const Icon = FILE_ICONS[fileType];
+                        const colorClass = FILE_COLORS[fileType];
+                        const bgClass = FILE_BG_COLORS[fileType];
+                        return (
+                          <button
+                            key={file.id}
+                            onClick={() => handlePreview(file)}
+                            className={cn(
+                              "flex-shrink-0 flex items-center gap-3 px-3 py-2 rounded-xl border transition-all hover:shadow-md",
+                              "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                            )}
+                          >
+                            <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", bgClass)}>
+                              <Icon className={cn("w-4 h-4", colorClass)} />
+                            </div>
+                            <div className="text-left">
+                              <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate max-w-28">
+                                {file.name.split('.')[0]}
+                              </p>
+                              <p className="text-[10px] text-zinc-400">
+                                {formatDistanceToNow(file.modifiedTime, { locale: ptBR, addSuffix: true })}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* Breadcrumbs + Filtros */}
+              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
             <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 {/* Breadcrumbs */}
@@ -1073,7 +1314,9 @@ export default function DrivePage() {
                 </div>
               )}
             </div>
-          </Card>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Dialogs */}
