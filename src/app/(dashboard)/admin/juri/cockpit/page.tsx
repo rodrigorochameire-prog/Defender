@@ -599,29 +599,36 @@ function CadeiraVisual({
     );
   }
 
-  // Indicador de tendência sutil (apenas uma barra fina na lateral)
-  const getTendenciaBorder = () => {
-    if (jurado.taxaAbsolvicao >= 60) return "border-l-emerald-400";
-    if (jurado.taxaAbsolvicao >= 40) return "border-l-amber-400";
-    return "border-l-rose-400";
+  // Cor de tendência para indicador
+  const getTendenciaColor = () => {
+    if (jurado.taxaAbsolvicao >= 60) return { bg: "bg-emerald-500", ring: "ring-emerald-200 dark:ring-emerald-800" };
+    if (jurado.taxaAbsolvicao >= 40) return { bg: "bg-amber-500", ring: "ring-amber-200 dark:ring-amber-800" };
+    return { bg: "bg-rose-500", ring: "ring-rose-200 dark:ring-rose-800" };
   };
+  const tendenciaCor = getTendenciaColor();
 
   return (
     <div
       className={cn(
-        "relative rounded-xl p-4 min-h-[160px] transition-all group border-l-4",
+        "relative rounded-xl p-4 min-h-[140px] transition-all group",
         isDarkMode 
-          ? "bg-zinc-900/80 border border-zinc-800 hover:bg-zinc-900" 
-          : "bg-white border border-zinc-100 shadow-sm hover:shadow-md",
-        getTendenciaBorder()
+          ? "bg-zinc-900/60 border border-zinc-700/50 hover:border-zinc-600" 
+          : "bg-white border border-zinc-200 shadow-sm hover:shadow-md hover:border-zinc-300"
       )}
     >
-      {/* Badge da cadeira - Discreto */}
+      {/* Indicador de tendência - Dot no canto superior esquerdo */}
       <div className={cn(
-        "absolute -top-2.5 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold",
+        "absolute top-3 left-3 w-2.5 h-2.5 rounded-full ring-2",
+        tendenciaCor.bg,
+        tendenciaCor.ring
+      )} />
+
+      {/* Badge da cadeira - No canto superior direito, junto aos botões */}
+      <div className={cn(
+        "absolute -top-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full flex items-center justify-center text-[10px] font-semibold",
         isDarkMode 
           ? "bg-zinc-800 text-zinc-400 border border-zinc-700" 
-          : "bg-zinc-100 text-zinc-600 border border-zinc-200"
+          : "bg-white text-zinc-500 border border-zinc-200 shadow-sm"
       )}>
         {cadeiraNum}
       </div>
@@ -1351,7 +1358,7 @@ export default function PlenarioCockpitPage() {
                     </div>
 
                     {/* Área das Cadeiras */}
-                    <div className="px-6 py-8 space-y-8">
+                    <div className="px-6 py-5 space-y-2">
                       
                       {/* Fileira de Trás (4 cadeiras) */}
                       <div className="relative">
@@ -1398,11 +1405,11 @@ export default function PlenarioCockpitPage() {
                         </div>
                       </div>
 
-                      {/* Conector visual entre fileiras */}
-                      <div className="flex justify-center">
+                      {/* Conector visual entre fileiras - Compacto */}
+                      <div className="flex justify-center py-1">
                         <div className={cn(
-                          "w-px h-6",
-                          isDarkMode ? "bg-gradient-to-b from-zinc-700 to-transparent" : "bg-gradient-to-b from-zinc-300 to-transparent"
+                          "w-px h-3",
+                          isDarkMode ? "bg-zinc-700" : "bg-zinc-300"
                         )} />
                       </div>
 
