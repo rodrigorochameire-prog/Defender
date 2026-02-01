@@ -289,6 +289,7 @@ export const UTILITIES_MENU: MenuSection[] = [
     id: "sistema",
     title: "Sistema",
     items: [
+      { label: "Usuários", path: "/admin/usuarios", icon: "Users", description: "Gerenciar acessos" },
       { label: "Configurações", path: "/admin/settings", icon: "Settings" },
       { label: "Workspaces", path: "/admin/workspaces", icon: "Building2", description: "Acessos e universos de dados" },
       { label: "Relatórios", path: "/admin/relatorios", icon: "BarChart3" },

@@ -44,11 +44,11 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-sm font-medium text-foreground/80">
+        <Label htmlFor="email" className="text-sm font-medium text-zinc-300">
           Email
         </Label>
         <div className="relative group">
-          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 group-focus-within:text-teal-400 transition-colors" />
           <Input
             id="email"
             name="email"
@@ -56,16 +56,16 @@ export function LoginForm() {
             placeholder="seu@email.com"
             autoComplete="email"
             disabled={isLoading}
-            className="pl-10 h-11 text-sm bg-muted/30 border-border/50 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+            className="pl-10 h-11 text-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:bg-zinc-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all"
           />
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-sm font-medium text-foreground/80">
+        <Label htmlFor="password" className="text-sm font-medium text-zinc-300">
           Senha
         </Label>
         <div className="relative group">
-          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 group-focus-within:text-teal-400 transition-colors" />
           <Input
             id="password"
             name="password"
@@ -73,13 +73,13 @@ export function LoginForm() {
             placeholder="••••••••"
             autoComplete="current-password"
             disabled={isLoading}
-            className="pl-10 h-11 text-sm bg-muted/30 border-border/50 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+            className="pl-10 h-11 text-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:bg-zinc-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all"
           />
         </div>
       </div>
       <Button
         type="submit"
-        className="w-full h-11 text-sm font-medium bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300"
+        className="w-full h-11 text-sm font-medium bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20 hover:shadow-xl hover:shadow-teal-500/30 transition-all duration-300"
         disabled={isLoading}
       >
         {isLoading ? (
