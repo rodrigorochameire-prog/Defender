@@ -140,22 +140,24 @@ function ImportarJuradosModal({
     }
 
     setErro(null);
-    const texto = textoColado;
+    let texto = textoColado;
     const agrupamentos: JuradoAgrupado[] = [];
     
-    // Detectar reuniões periódicas
-    const reuniaoRegex = /(\d)ª\s*Reunião\s*Periódica\s*\(([^)]+)\)/gi;
-    const titularesRegex = /Titulares/gi;
-    const suplentesRegex = /Suplentes/gi;
+    // Normalizar caracteres especiais (º vs ª)
+    texto = texto.replace(/[ºª]/g, "ª");
+    
+    // Regex mais flexível para detectar reuniões
+    // Aceita: "1ª Reunião Periódica (01/02/2026 a 30/04/2026)" ou variações
+    const reuniaoPattern = /(\d)[ªº]?\s*Reunião\s*Periódica\s*\(([^)]+)\)/gi;
     
     // Dividir o texto em seções por reunião
-    const partes = texto.split(/(?=\dª\s*Reunião\s*Periódica)/i);
+    const partes = texto.split(/(?=\d[ªº]?\s*Reunião\s*Periódica)/i);
     
     for (const parte of partes) {
       if (!parte.trim()) continue;
       
       // Identificar qual reunião
-      const matchReuniao = parte.match(/(\d)ª\s*Reunião\s*Periódica\s*\(([^)]+)\)/i);
+      const matchReuniao = parte.match(/(\d)[ªº]?\s*Reunião\s*Periódica\s*\(([^)]+)\)/i);
       if (!matchReuniao) continue;
       
       const numeroReuniao = matchReuniao[1];
@@ -193,11 +195,61 @@ function ImportarJuradosModal({
   // Parser de linhas individuais de jurados
   const parseLinhasJurados = (texto: string, reuniao: string, tipo: "titular" | "suplente"): JuradoImportado[] => {
     const jurados: JuradoImportado[] = [];
-    const linhas = texto.split("\n");
+    const linhas = texto.split("\n").map(l => l.trim()).filter(l => l);
     
+    // Primeiro, tentar detectar se cada campo está em linha separada
+    // Padrão: número, nome, empresa, profissão em linhas consecutivas
+    const linhasApenaNumero = linhas.filter(l => /^\d+$/.test(l));
+    const formatoLinhasSeparadas = linhasApenaNumero.length >= 5;
+    
+    if (formatoLinhasSeparadas) {
+      // Formato: cada campo em uma linha separada
+      // Agrupar em blocos de 4 linhas (número, nome, empresa, profissão)
+      let i = 0;
+      while (i < linhas.length) {
+        const linha = linhas[i];
+        
+        // Pular cabeçalhos
+        if (linha.includes("n.º") || linha === "Nome" || linha === "Empresa" || linha === "Profissão") {
+          i++;
+          continue;
+        }
+        
+        // Se é um número sozinho, é o início de um novo jurado
+        if (/^\d+$/.test(linha)) {
+          const numero = parseInt(linha);
+          if (numero >= 1 && numero <= 30) {
+            // Próximas linhas são nome, empresa, profissão
+            const nome = linhas[i + 1] || "";
+            const empresa = linhas[i + 2] || "";
+            const profissao = linhas[i + 3] || "";
+            
+            // Verificar se nome parece válido (não é número nem cabeçalho)
+            if (nome && !/^\d+$/.test(nome) && !["Nome", "Empresa", "Profissão", "n.º", "-"].includes(nome)) {
+              jurados.push({
+                numero,
+                nome: nome.trim(),
+                empresa: empresa === "-" ? undefined : empresa.trim() || undefined,
+                profissao: profissao === "-" ? undefined : profissao.trim() || undefined,
+                reuniao,
+                tipo,
+                selecionado: true,
+              });
+              i += 4; // Pular as 4 linhas processadas
+              continue;
+            }
+          }
+        }
+        i++;
+      }
+      
+      return jurados;
+    }
+    
+    // Formato tradicional: cada jurado em uma linha
     for (const linha of linhas) {
       // Pular cabeçalhos de tabela
-      if (linha.includes("n.º") || linha.includes("Nome") || linha.includes("Empresa") || linha.includes("Profissão")) continue;
+      if (linha.includes("n.º") || linha === "Nome" || linha === "Empresa" || linha === "Profissão") continue;
       if (!linha.trim()) continue;
       
       // Tentar diferentes formatos
