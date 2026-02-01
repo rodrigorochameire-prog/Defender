@@ -109,8 +109,15 @@ function getPerfilLabel(perfil?: string) {
 }
 
 // ============================================
-// COMPONENTE: Modal de Importação de Jurados
+// COMPONENTE: Modal de Importação Inteligente de Jurados
 // ============================================
+interface JuradoAgrupado {
+  reuniao: string;
+  reuniaoLabel: string;
+  titulares: JuradoImportado[];
+  suplentes: JuradoImportado[];
+}
+
 function ImportarJuradosModal({ 
   open, 
   onOpenChange, 
@@ -121,184 +128,304 @@ function ImportarJuradosModal({
   onImport: (jurados: JuradoImportado[]) => void;
 }) {
   const [textoColado, setTextoColado] = useState("");
-  const [reuniaoSelecionada, setReuniaoSelecionada] = useState("1");
-  const [tipoSelecionado, setTipoSelecionado] = useState<"titular" | "suplente">("titular");
-  const [juradosParseados, setJuradosParseados] = useState<JuradoImportado[]>([]);
+  const [juradosAgrupados, setJuradosAgrupados] = useState<JuradoAgrupado[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [tabAtiva, setTabAtiva] = useState("1");
 
-  const parseTexto = () => {
+  // Parser inteligente que identifica seções automaticamente
+  const parseAtaCompleta = () => {
     if (!textoColado.trim()) {
-      setErro("Cole o texto da ata de sorteio");
+      setErro("Cole toda a ata de sorteio de jurados");
       return;
     }
 
     setErro(null);
-    const linhas = textoColado.trim().split("\n");
-    const jurados: JuradoImportado[] = [];
-
-    for (const linha of linhas) {
-      // Tenta fazer parse de diferentes formatos
-      // Formato 1: Número\tNome\tEmpresa\tProfissão (tab separado)
-      // Formato 2: Número  Nome  Empresa  Profissão (espaços múltiplos)
+    const texto = textoColado;
+    const agrupamentos: JuradoAgrupado[] = [];
+    
+    // Detectar reuniões periódicas
+    const reuniaoRegex = /(\d)ª\s*Reunião\s*Periódica\s*\(([^)]+)\)/gi;
+    const titularesRegex = /Titulares/gi;
+    const suplentesRegex = /Suplentes/gi;
+    
+    // Dividir o texto em seções por reunião
+    const partes = texto.split(/(?=\dª\s*Reunião\s*Periódica)/i);
+    
+    for (const parte of partes) {
+      if (!parte.trim()) continue;
       
-      const partes = linha.split(/\t/).filter(p => p.trim());
+      // Identificar qual reunião
+      const matchReuniao = parte.match(/(\d)ª\s*Reunião\s*Periódica\s*\(([^)]+)\)/i);
+      if (!matchReuniao) continue;
+      
+      const numeroReuniao = matchReuniao[1];
+      const periodoReuniao = matchReuniao[2];
+      
+      // Dividir em titulares e suplentes
+      const parteTitulares = parte.split(/Suplentes/i)[0];
+      const parteSuplentes = parte.split(/Suplentes/i)[1] || "";
+      
+      // Extrair texto após "Titulares"
+      const textoTitulares = parteTitulares.split(/Titulares/i)[1] || parteTitulares;
+      
+      const titulares = parseLinhasJurados(textoTitulares, numeroReuniao, "titular");
+      const suplentes = parseLinhasJurados(parteSuplentes, numeroReuniao, "suplente");
+      
+      if (titulares.length > 0 || suplentes.length > 0) {
+        agrupamentos.push({
+          reuniao: numeroReuniao,
+          reuniaoLabel: `${numeroReuniao}ª Reunião (${periodoReuniao})`,
+          titulares,
+          suplentes,
+        });
+      }
+    }
+    
+    if (agrupamentos.length === 0) {
+      setErro("Não foi possível identificar as reuniões na ata. Verifique o formato.");
+      return;
+    }
+    
+    setJuradosAgrupados(agrupamentos);
+    setTabAtiva(agrupamentos[0]?.reuniao || "1");
+  };
+  
+  // Parser de linhas individuais de jurados
+  const parseLinhasJurados = (texto: string, reuniao: string, tipo: "titular" | "suplente"): JuradoImportado[] => {
+    const jurados: JuradoImportado[] = [];
+    const linhas = texto.split("\n");
+    
+    for (const linha of linhas) {
+      // Pular cabeçalhos de tabela
+      if (linha.includes("n.º") || linha.includes("Nome") || linha.includes("Empresa") || linha.includes("Profissão")) continue;
+      if (!linha.trim()) continue;
+      
+      // Tentar diferentes formatos
+      // Formato tab-separado
+      let partes = linha.split(/\t/).filter(p => p.trim());
+      
+      // Se não tem tabs, tentar por múltiplos espaços ou números no início
+      if (partes.length < 2) {
+        const matchNumero = linha.match(/^(\d+)\s+(.+)/);
+        if (matchNumero) {
+          const resto = matchNumero[2];
+          // Tentar separar por tabs ou múltiplos espaços
+          partes = [matchNumero[1], ...resto.split(/\t|\s{2,}/).filter(p => p.trim())];
+        }
+      }
       
       if (partes.length >= 2) {
         const numero = parseInt(partes[0].trim());
-        if (isNaN(numero)) continue;
+        if (isNaN(numero) || numero < 1 || numero > 30) continue;
         
         const nome = partes[1]?.trim() || "";
-        const empresa = partes[2]?.trim() || "-";
-        const profissao = partes[3]?.trim() || "-";
+        const empresa = partes[2]?.trim() || "";
+        const profissao = partes[3]?.trim() || "";
         
-        if (nome) {
+        // Validar que parece um nome (pelo menos 2 palavras ou nome longo)
+        if (nome && (nome.includes(" ") || nome.length > 5)) {
           jurados.push({
             numero,
             nome,
             empresa: empresa === "-" ? "" : empresa,
             profissao: profissao === "-" ? "" : profissao,
-            tipo: tipoSelecionado,
-            reuniao: reuniaoSelecionada,
+            tipo,
+            reuniao,
           });
         }
       }
     }
-
-    if (jurados.length === 0) {
-      setErro("Não foi possível identificar jurados no texto. Verifique o formato.");
-      return;
-    }
-
-    setJuradosParseados(jurados);
+    
+    return jurados;
   };
 
   const handleImportar = () => {
-    if (juradosParseados.length === 0) {
+    const todosJurados: JuradoImportado[] = [];
+    for (const grupo of juradosAgrupados) {
+      todosJurados.push(...grupo.titulares, ...grupo.suplentes);
+    }
+    
+    if (todosJurados.length === 0) {
       toast.error("Nenhum jurado para importar");
       return;
     }
-    onImport(juradosParseados);
-    toast.success(`${juradosParseados.length} jurados importados com sucesso!`);
+    
+    onImport(todosJurados);
+    toast.success(`${todosJurados.length} jurados importados com sucesso!`);
     setTextoColado("");
-    setJuradosParseados([]);
+    setJuradosAgrupados([]);
     onOpenChange(false);
   };
 
   const limpar = () => {
     setTextoColado("");
-    setJuradosParseados([]);
+    setJuradosAgrupados([]);
     setErro(null);
   };
+  
+  const totalJurados = juradosAgrupados.reduce((acc, g) => acc + g.titulares.length + g.suplentes.length, 0);
+  const grupoAtivo = juradosAgrupados.find(g => g.reuniao === tabAtiva);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center">
-              <Upload className="w-4 h-4 text-white dark:text-zinc-900" />
+          <DialogTitle className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center">
+              <Upload className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
-            Importar Jurados
+            <div>
+              <span className="block">Importar Ata de Sorteio</span>
+              <span className="text-xs font-normal text-zinc-500">Cole toda a ata - o sistema identifica automaticamente</span>
+            </div>
           </DialogTitle>
-          <DialogDescription>
-            Cole a lista de jurados da ata de sorteio. O sistema reconhece automaticamente o formato.
-          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-auto space-y-4 py-4">
-          {/* Configurações */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Reunião Periódica</Label>
-              <Select value={reuniaoSelecionada} onValueChange={setReuniaoSelecionada}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1ª Reunião (02-04/2026)</SelectItem>
-                  <SelectItem value="2">2ª Reunião (05-08/2026)</SelectItem>
-                  <SelectItem value="3">3ª Reunião (09-12/2026)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Tipo</Label>
-              <Select value={tipoSelecionado} onValueChange={(v) => setTipoSelecionado(v as "titular" | "suplente")}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="titular">Titular</SelectItem>
-                  <SelectItem value="suplente">Suplente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Área de texto para colar */}
-          {juradosParseados.length === 0 ? (
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                Cole a lista da ata de sorteio (formato: Nº | Nome | Empresa | Profissão)
-              </Label>
+          {juradosAgrupados.length === 0 ? (
+            <div className="space-y-3">
               <Textarea
-                placeholder={`Exemplo:
-1	Diana Mascarenhas dos Santos	Creche N. Senhora	Professora
-2	Gledeson Santos de Araujo	Secretaria de Cultura	Assistente
-3	Isabella Santana Souza	Kordsa	Administrativo`}
+                placeholder={`Cole aqui toda a ata de sorteio de jurados...
+
+O sistema identificará automaticamente:
+• 1ª, 2ª e 3ª Reuniões Periódicas
+• Jurados Titulares e Suplentes
+• Nome, Empresa e Profissão
+
+Exemplo de formato aceito:
+1ª Reunião Periódica (01/02/2026 a 30/04/2026)
+Titulares
+1    Diana Mascarenhas dos Santos    Creche N. Senhora    Professora
+2    Gledeson Santos de Araujo    Secretaria de Cultura    Assistente
+...
+Suplentes
+1    Omar Cleiton de Vasconcelos    Cata    -
+...`}
                 value={textoColado}
                 onChange={(e) => setTextoColado(e.target.value)}
-                className="min-h-[200px] font-mono text-sm"
+                className="min-h-[280px] font-mono text-xs leading-relaxed"
               />
               {erro && (
-                <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400">
-                  <AlertCircle className="w-4 h-4" />
+                <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 p-3 rounded-lg">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   {erro}
                 </div>
               )}
-              <Button onClick={parseTexto} className="w-full">
+              <Button onClick={parseAtaCompleta} className="w-full h-11 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
                 <FileText className="w-4 h-4 mr-2" />
-                Processar Lista
+                Processar Ata Completa
               </Button>
             </div>
           ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {juradosParseados.length} jurados identificados
-                  </span>
+            <div className="space-y-4">
+              {/* Resumo */}
+              <div className="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center">
+                    <Check className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-emerald-800 dark:text-emerald-200">
+                      {totalJurados} jurados identificados
+                    </p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                      {juradosAgrupados.length} reuniões periódicas
+                    </p>
+                  </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={limpar}>
+                <Button variant="ghost" size="sm" onClick={limpar} className="text-emerald-700 hover:text-emerald-900">
                   <Trash2 className="w-4 h-4 mr-1" />
-                  Limpar
+                  Refazer
                 </Button>
               </div>
               
-              {/* Preview da lista */}
-              <div className="max-h-[300px] overflow-auto border border-zinc-200 dark:border-zinc-800 rounded-xl">
-                <table className="w-full text-sm">
-                  <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0">
-                    <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-zinc-500 w-12">#</th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-zinc-500">Nome</th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-zinc-500">Empresa</th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-zinc-500">Profissão</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    {juradosParseados.map((j, idx) => (
-                      <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                        <td className="px-3 py-2 text-zinc-500">{j.numero}</td>
-                        <td className="px-3 py-2 font-medium text-zinc-800 dark:text-zinc-200">{j.nome}</td>
-                        <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{j.empresa || "-"}</td>
-                        <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{j.profissao || "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Tabs por reunião */}
+              <div className="flex gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+                {juradosAgrupados.map((grupo) => (
+                  <button
+                    key={grupo.reuniao}
+                    onClick={() => setTabAtiva(grupo.reuniao)}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                      tabAtiva === grupo.reuniao
+                        ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                        : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    )}
+                  >
+                    {grupo.reuniao}ª Reunião
+                    <Badge className="ml-2 h-5 text-[10px]" variant="secondary">
+                      {grupo.titulares.length + grupo.suplentes.length}
+                    </Badge>
+                  </button>
+                ))}
               </div>
+              
+              {/* Lista de jurados da reunião ativa */}
+              {grupoAtivo && (
+                <div className="space-y-4">
+                  {/* Titulares */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                        Titulares ({grupoAtivo.titulares.length})
+                      </Badge>
+                    </div>
+                    <div className="max-h-[180px] overflow-auto border border-zinc-200 dark:border-zinc-800 rounded-xl">
+                      <table className="w-full text-sm">
+                        <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0">
+                          <tr className="border-b border-zinc-200 dark:border-zinc-800">
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500 w-10">#</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Nome</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Empresa</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Profissão</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                          {grupoAtivo.titulares.map((j, idx) => (
+                            <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                              <td className="px-3 py-1.5 text-zinc-400 text-xs">{j.numero}</td>
+                              <td className="px-3 py-1.5 font-medium text-zinc-800 dark:text-zinc-200 text-xs">{j.nome}</td>
+                              <td className="px-3 py-1.5 text-zinc-500 text-xs">{j.empresa || "-"}</td>
+                              <td className="px-3 py-1.5 text-zinc-500 text-xs">{j.profissao || "-"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  {/* Suplentes */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                        Suplentes ({grupoAtivo.suplentes.length})
+                      </Badge>
+                    </div>
+                    <div className="max-h-[180px] overflow-auto border border-zinc-200 dark:border-zinc-800 rounded-xl">
+                      <table className="w-full text-sm">
+                        <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0">
+                          <tr className="border-b border-zinc-200 dark:border-zinc-800">
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500 w-10">#</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Nome</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Empresa</th>
+                            <th className="px-3 py-2 text-left text-[10px] font-semibold text-zinc-500">Profissão</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                          {grupoAtivo.suplentes.map((j, idx) => (
+                            <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                              <td className="px-3 py-1.5 text-zinc-400 text-xs">{j.numero}</td>
+                              <td className="px-3 py-1.5 font-medium text-zinc-800 dark:text-zinc-200 text-xs">{j.nome}</td>
+                              <td className="px-3 py-1.5 text-zinc-500 text-xs">{j.empresa || "-"}</td>
+                              <td className="px-3 py-1.5 text-zinc-500 text-xs">{j.profissao || "-"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -309,11 +436,11 @@ function ImportarJuradosModal({
           </Button>
           <Button 
             onClick={handleImportar}
-            disabled={juradosParseados.length === 0}
+            disabled={totalJurados === 0}
             className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
           >
             <Upload className="w-4 h-4 mr-2" />
-            Importar {juradosParseados.length > 0 ? `(${juradosParseados.length})` : ""}
+            Importar Todos ({totalJurados})
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -487,6 +614,8 @@ export default function JuradosPage() {
   const [busca, setBusca] = useState("");
   const [filtroTendencia, setFiltroTendencia] = useState<string>("todos");
   const [filtroPerfil, setFiltroPerfil] = useState<string>("todos");
+  const [filtroReuniao, setFiltroReuniao] = useState<string>("todos");
+  const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [juradosImportados, setJuradosImportados] = useState<JuradoImportado[]>([]);
@@ -496,6 +625,7 @@ export default function JuradosPage() {
     // Aqui seria feita a integração com o backend para salvar os jurados
   };
 
+  // Jurados existentes (mock + importados)
   const juradosFiltrados = useMemo(() => {
     return juradosMock.filter((j) => {
       const matchBusca = j.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -507,10 +637,58 @@ export default function JuradosPage() {
         (filtroTendencia === "desfavoravel" && j.taxaAbsolvicao < 40);
       
       const matchPerfil = filtroPerfil === "todos" || j.perfilDominante === filtroPerfil;
+      
+      const matchReuniao = filtroReuniao === "todos" || j.reuniao === filtroReuniao;
+      const matchTipo = filtroTipo === "todos" || j.tipo === filtroTipo;
 
-      return matchBusca && matchTendencia && matchPerfil;
+      return matchBusca && matchTendencia && matchPerfil && matchReuniao && matchTipo;
     });
-  }, [busca, filtroTendencia, filtroPerfil]);
+  }, [busca, filtroTendencia, filtroPerfil, filtroReuniao, filtroTipo]);
+  
+  // Jurados importados filtrados
+  const importadosFiltrados = useMemo(() => {
+    return juradosImportados.filter((j) => {
+      const matchBusca = j.nome.toLowerCase().includes(busca.toLowerCase()) ||
+        j.profissao?.toLowerCase().includes(busca.toLowerCase()) ||
+        j.empresa?.toLowerCase().includes(busca.toLowerCase());
+      
+      const matchReuniao = filtroReuniao === "todos" || j.reuniao === filtroReuniao;
+      const matchTipo = filtroTipo === "todos" || j.tipo === filtroTipo;
+
+      return matchBusca && matchReuniao && matchTipo;
+    });
+  }, [juradosImportados, busca, filtroReuniao, filtroTipo]);
+  
+  // Agrupar importados por reunião e tipo para exibição organizada
+  const importadosAgrupados = useMemo(() => {
+    const grupos: Record<string, { titulares: JuradoImportado[]; suplentes: JuradoImportado[] }> = {};
+    
+    for (const j of importadosFiltrados) {
+      if (!grupos[j.reuniao]) {
+        grupos[j.reuniao] = { titulares: [], suplentes: [] };
+      }
+      if (j.tipo === "titular") {
+        grupos[j.reuniao].titulares.push(j);
+      } else {
+        grupos[j.reuniao].suplentes.push(j);
+      }
+    }
+    
+    return grupos;
+  }, [importadosFiltrados]);
+  
+  // Obter empresas únicas para estatísticas
+  const estatisticasImportados = useMemo(() => {
+    const empresas = new Set(juradosImportados.map(j => j.empresa).filter(Boolean));
+    const profissoes = new Set(juradosImportados.map(j => j.profissao).filter(Boolean));
+    return {
+      total: juradosImportados.length,
+      titulares: juradosImportados.filter(j => j.tipo === "titular").length,
+      suplentes: juradosImportados.filter(j => j.tipo === "suplente").length,
+      empresas: empresas.size,
+      profissoes: profissoes.size,
+    };
+  }, [juradosImportados]);
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
@@ -555,58 +733,87 @@ export default function JuradosPage() {
         <StatsBar jurados={juradosMock} />
 
         {/* Filtros */}
-        <div className="flex flex-col md:flex-row gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
-            <Input
-              placeholder="Buscar por nome ou profissão..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-9 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
-            />
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col md:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <Input
+                placeholder="Buscar por nome, empresa ou profissão..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="pl-9 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+              />
+            </div>
+            
+            {/* Filtros de Reunião e Tipo */}
+            <Select value={filtroReuniao} onValueChange={setFiltroReuniao}>
+              <SelectTrigger className="w-full md:w-44 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+                <SelectValue placeholder="Reunião" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todas Reuniões</SelectItem>
+                <SelectItem value="1">1ª Reunião (Fev-Abr)</SelectItem>
+                <SelectItem value="2">2ª Reunião (Mai-Ago)</SelectItem>
+                <SelectItem value="3">3ª Reunião (Set-Dez)</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+              <SelectTrigger className="w-full md:w-32 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="titular">Titulares</SelectItem>
+                <SelectItem value="suplente">Suplentes</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Select value={filtroTendencia} onValueChange={setFiltroTendencia}>
-            <SelectTrigger className="w-full md:w-40 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-              <SelectValue placeholder="Tendência" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todas</SelectItem>
-              <SelectItem value="favoravel">Favoráveis</SelectItem>
-              <SelectItem value="neutro">Neutros</SelectItem>
-              <SelectItem value="desfavoravel">Desfavoráveis</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filtroPerfil} onValueChange={setFiltroPerfil}>
-            <SelectTrigger className="w-full md:w-36 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-              <SelectValue placeholder="Perfil" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="empatico">Empático</SelectItem>
-              <SelectItem value="analitico">Analítico</SelectItem>
-              <SelectItem value="autoritario">Autoritário</SelectItem>
-              <SelectItem value="conciliador">Conciliador</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="flex bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-0.5 rounded-lg">
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "px-2.5 py-1.5 rounded-md transition-all",
-                viewMode === "list" ? "bg-zinc-100 dark:bg-zinc-800" : "text-zinc-400 hover:text-zinc-600"
-              )}
-            >
-              <List className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "px-2.5 py-1.5 rounded-md transition-all",
-                viewMode === "grid" ? "bg-zinc-100 dark:bg-zinc-800" : "text-zinc-400 hover:text-zinc-600"
-              )}
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
+          
+          <div className="flex flex-col md:flex-row gap-2">
+            <Select value={filtroTendencia} onValueChange={setFiltroTendencia}>
+              <SelectTrigger className="w-full md:w-40 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+                <SelectValue placeholder="Tendência" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todas</SelectItem>
+                <SelectItem value="favoravel">Favoráveis</SelectItem>
+                <SelectItem value="neutro">Neutros</SelectItem>
+                <SelectItem value="desfavoravel">Desfavoráveis</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filtroPerfil} onValueChange={setFiltroPerfil}>
+              <SelectTrigger className="w-full md:w-36 h-9 text-sm bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+                <SelectValue placeholder="Perfil" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="empatico">Empático</SelectItem>
+                <SelectItem value="analitico">Analítico</SelectItem>
+                <SelectItem value="autoritario">Autoritário</SelectItem>
+                <SelectItem value="conciliador">Conciliador</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-0.5 rounded-lg">
+              <button
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-md transition-all",
+                  viewMode === "list" ? "bg-zinc-100 dark:bg-zinc-800" : "text-zinc-400 hover:text-zinc-600"
+                )}
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-md transition-all",
+                  viewMode === "grid" ? "bg-zinc-100 dark:bg-zinc-800" : "text-zinc-400 hover:text-zinc-600"
+                )}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -632,29 +839,102 @@ export default function JuradosPage() {
           </div>
         )}
 
-        {/* Jurados Importados (Temporário - Preview) */}
+        {/* Jurados Importados - Organizados por Período e Tipo */}
         {juradosImportados.length > 0 && (
-          <Card className="p-4 mt-6 bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30">
-            <div className="flex items-center gap-2 mb-3">
-              <Check className="w-5 h-5 text-emerald-600" />
-              <h3 className="font-semibold text-zinc-800 dark:text-zinc-200">
-                {juradosImportados.length} jurados importados recentemente
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {juradosImportados.slice(0, 9).map((j, idx) => (
-                <div key={idx} className="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm">
-                  <p className="font-medium text-zinc-800 dark:text-zinc-200 truncate">{j.nome}</p>
-                  <p className="text-xs text-zinc-500 truncate">{j.empresa || "-"} • {j.profissao || "-"}</p>
+          <div className="mt-8 space-y-6">
+            {/* Header com estatísticas */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
+                  <Users className="w-6 h-6 text-white dark:text-zinc-900" />
                 </div>
-              ))}
-              {juradosImportados.length > 9 && (
-                <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-sm text-zinc-500">
-                  +{juradosImportados.length - 9} mais
+                <div>
+                  <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                    Jurados Sorteados 2026
+                  </h2>
+                  <p className="text-sm text-zinc-500">
+                    {estatisticasImportados.total} jurados • {estatisticasImportados.empresas} empresas • {estatisticasImportados.profissoes} profissões
+                  </p>
                 </div>
-              )}
+              </div>
+              <div className="flex gap-3">
+                <div className="px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{estatisticasImportados.titulares}</p>
+                  <p className="text-[10px] font-medium text-blue-500 uppercase tracking-wider">Titulares</p>
+                </div>
+                <div className="px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{estatisticasImportados.suplentes}</p>
+                  <p className="text-[10px] font-medium text-amber-500 uppercase tracking-wider">Suplentes</p>
+                </div>
+              </div>
             </div>
-          </Card>
+            
+            {/* Listas por período */}
+            {Object.entries(importadosAgrupados).map(([reuniao, grupo]) => (
+              <Card key={reuniao} className="overflow-hidden border-zinc-200 dark:border-zinc-800">
+                <div className="px-5 py-4 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+                  <h3 className="font-semibold text-zinc-800 dark:text-zinc-200">
+                    {reuniao}ª Reunião Periódica
+                    <span className="ml-2 text-sm font-normal text-zinc-500">
+                      ({reuniao === "1" ? "Fev-Abr" : reuniao === "2" ? "Mai-Ago" : "Set-Dez"}/2026)
+                    </span>
+                  </h3>
+                </div>
+                
+                <div className="p-5 space-y-5">
+                  {/* Titulares */}
+                  {grupo.titulares.length > 0 && (
+                    <div className="space-y-3">
+                      <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                        Titulares ({grupo.titulares.length})
+                      </Badge>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                        {grupo.titulares.map((j, idx) => (
+                          <div key={idx} className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
+                            <div className="flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-400 flex-shrink-0">
+                                {j.numero}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">{j.nome}</p>
+                                <p className="text-xs text-zinc-500 truncate">{j.empresa || "—"}</p>
+                                <p className="text-[10px] text-zinc-400 truncate">{j.profissao || "—"}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Suplentes */}
+                  {grupo.suplentes.length > 0 && (
+                    <div className="space-y-3">
+                      <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                        Suplentes ({grupo.suplentes.length})
+                      </Badge>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                        {grupo.suplentes.map((j, idx) => (
+                          <div key={idx} className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors">
+                            <div className="flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-xs font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">
+                                {j.numero}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">{j.nome}</p>
+                                <p className="text-xs text-zinc-500 truncate">{j.empresa || "—"}</p>
+                                <p className="text-[10px] text-zinc-400 truncate">{j.profissao || "—"}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
 
