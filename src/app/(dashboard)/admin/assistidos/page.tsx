@@ -1601,49 +1601,32 @@ export default function AssistidosPage() {
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Sub-header com Busca Global */}
+      {/* Sub-header - Padrão Defender */}
       <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center gap-3">
-          {/* Info + Stats */}
-          <div className="flex items-center gap-2.5 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
               <Users className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
             </div>
-            <div className="hidden sm:flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{stats.total}</span>
-              <span className="text-[10px] text-zinc-400">total</span>
-              <span className="text-zinc-300 dark:text-zinc-600">•</span>
-              <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">{stats.presos}</span>
-              <span className="text-[10px] text-zinc-400">presos</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Cadastro e gestão de assistidos</span>
+          </div>
+          
+          {/* Busca + Ações */}
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por nome, CPF, vulgo..."
+                className="pl-8 w-[200px] md:w-[280px] h-7 text-xs border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 rounded-md"
+              />
             </div>
-          </div>
-          
-          {/* Busca Global - Sempre Visível */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por nome, CPF, vulgo..."
-              className="pl-9 h-8 text-xs border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 rounded-lg focus:ring-1 focus:ring-emerald-500/30"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-              >
-                <Circle className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-          
-          {/* Ações */}
-          <div className="flex items-center gap-0.5 flex-shrink-0">
             <Link href="/admin/inteligencia">
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
                 title="Inteligência"
               >
                 <Brain className="w-3.5 h-3.5" />
@@ -1652,7 +1635,7 @@ export default function AssistidosPage() {
             <Button 
               variant="ghost" 
               size="sm"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
               title="Exportar"
             >
               <Download className="w-3.5 h-3.5" />
@@ -1660,10 +1643,10 @@ export default function AssistidosPage() {
             <Link href="/admin/assistidos/novo">
               <Button 
                 size="sm"
-                className="h-7 px-2.5 ml-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-md transition-colors"
+                className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
-                <span className="hidden sm:inline">Novo</span>
+                Novo
               </Button>
             </Link>
           </div>
