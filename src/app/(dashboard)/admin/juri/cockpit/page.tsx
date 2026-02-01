@@ -78,6 +78,10 @@ import {
   Clock,
   ThumbsUp,
   ThumbsDown,
+  Minus,
+  BarChart3,
+  Sparkles,
+  FileBarChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -791,7 +795,7 @@ export default function PlenarioCockpitPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [totalTime, setTotalTime] = useState(phases[0].minutes * 60);
   const [timeLeft, setTimeLeft] = useState(phases[0].minutes * 60);
-  const [activeTab, setActiveTab] = useState<"conselho" | "anotacoes">("conselho");
+  const [activeTab, setActiveTab] = useState<"conselho" | "anotacoes" | "relatorio">("conselho");
   const [searchJurado, setSearchJurado] = useState("");
   const [showRecusados, setShowRecusados] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -813,6 +817,14 @@ export default function PlenarioCockpitPage() {
   const [novaAnotacao, setNovaAnotacao] = useState("");
   const [categoriaAnotacao, setCategoriaAnotacao] = useState("geral");
   const [filtroCategoria, setFiltroCategoria] = useState("todas");
+
+  // Formulários de comportamento por jurado (cadeira 1-7)
+  const [formComportamentos, setFormComportamentos] = useState<Record<number, {
+    momento: string;
+    tipo: string;
+    descricao: string;
+    interpretacao: "favoravel" | "neutro" | "desfavoravel" | "incerto";
+  }>>({});
 
   // Carregar dados salvos
   useEffect(() => {
@@ -965,7 +977,60 @@ export default function PlenarioCockpitPage() {
     });
   }, []);
 
-  // Handler para comportamentos contextualizados
+  // Handler para atualizar formulário de comportamento
+  const updateFormComportamento = useCallback((
+    cadeira: number,
+    field: "momento" | "tipo" | "descricao" | "interpretacao",
+    value: string
+  ) => {
+    setFormComportamentos(prev => ({
+      ...prev,
+      [cadeira]: {
+        momento: prev[cadeira]?.momento || "",
+        tipo: prev[cadeira]?.tipo || "",
+        descricao: prev[cadeira]?.descricao || "",
+        interpretacao: prev[cadeira]?.interpretacao || "neutro",
+        [field]: value,
+      }
+    }));
+  }, []);
+
+  // Handler para registrar comportamento
+  const handleRegistrarComportamento = useCallback((cadeira: number) => {
+    const form = formComportamentos[cadeira];
+    if (!form?.descricao?.trim()) return;
+
+    setConselhoSentenca(prev => {
+      const novo = [...prev];
+      const jurado = novo[cadeira - 1];
+      if (jurado) {
+        const novoComportamento: ComportamentoRegistro = {
+          id: String(Date.now()),
+          timestamp: new Date().toISOString(),
+          juradoId: jurado.id,
+          fase: faseSelecionada.label,
+          momento: form.momento || "Durante exposição",
+          tipo: (form.tipo as ComportamentoRegistro["tipo"]) || "linguagem_corporal",
+          descricao: form.descricao.trim(),
+          interpretacao: form.interpretacao || "neutro",
+          relevancia: 2,
+        };
+        novo[cadeira - 1] = {
+          ...jurado,
+          comportamentos: [...jurado.comportamentos, novoComportamento]
+        };
+      }
+      return novo;
+    });
+    
+    // Limpar formulário
+    setFormComportamentos(prev => ({
+      ...prev,
+      [cadeira]: { momento: "", tipo: "", descricao: "", interpretacao: "neutro" }
+    }));
+  }, [formComportamentos, faseSelecionada.label]);
+
+  // Handler para comportamentos contextualizados (versão simplificada)
   const handleAddComportamento = useCallback((
     cadeira: number, 
     comportamento: Omit<ComportamentoRegistro, "id" | "timestamp">
@@ -1180,6 +1245,16 @@ export default function PlenarioCockpitPage() {
             >
               <PenLine className="w-4 h-4 mr-2" />
               Anotações ({anotacoes.length})
+            </Button>
+            <Button
+              variant={activeTab === "relatorio" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("relatorio")}
+              className={activeTab === "relatorio" ? "bg-gradient-to-r from-emerald-500 to-teal-600" : ""}
+              disabled={juradosAtivos.length === 0}
+            >
+              <FileBarChart className="w-4 h-4 mr-2" />
+              Relatório & Análise
             </Button>
           </div>
 
@@ -1637,10 +1712,13 @@ export default function PlenarioCockpitPage() {
                             </div>
                           )}
 
-                          {/* Formulário de Registro - Layout limpo */}
+                          {/* Formulário de Registro - Funcional */}
                           <div className="p-5 space-y-4">
                             {/* Seletor de Momento */}
-                            <Select defaultValue="">
+                            <Select 
+                              value={formComportamentos[jurado.cadeira]?.momento || ""}
+                              onValueChange={(v) => updateFormComportamento(jurado.cadeira, "momento", v)}
+                            >
                               <SelectTrigger className={cn(
                                 "h-9 text-xs",
                                 isDarkMode ? "bg-zinc-800/50 border-zinc-700/50" : "bg-zinc-50 border-zinc-200"
@@ -1656,7 +1734,7 @@ export default function PlenarioCockpitPage() {
                               </SelectContent>
                             </Select>
 
-                            {/* Tipo de Comportamento - Ícones Lucide */}
+                            {/* Tipo de Comportamento - Selecionável */}
                             <div className="flex flex-wrap gap-2">
                               {TIPOS_COMPORTAMENTO.map((tipo) => {
                                 const IconComponent = tipo.iconId === "smile" ? Smile :
@@ -1666,14 +1744,19 @@ export default function PlenarioCockpitPage() {
                                   tipo.iconId === "move" ? Move :
                                   tipo.iconId === "mic" ? Mic : Activity;
                                 
+                                const isSelected = formComportamentos[jurado.cadeira]?.tipo === tipo.id;
+                                
                                 return (
                                   <button
                                     key={tipo.id}
+                                    onClick={() => updateFormComportamento(jurado.cadeira, "tipo", tipo.id)}
                                     className={cn(
                                       "flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg transition-all",
-                                      isDarkMode 
-                                        ? "bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200" 
-                                        : "bg-zinc-100/80 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700"
+                                      isSelected 
+                                        ? "bg-violet-500 text-white ring-2 ring-violet-300 dark:ring-violet-700"
+                                        : isDarkMode 
+                                          ? "bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200" 
+                                          : "bg-zinc-100/80 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700"
                                     )}
                                   >
                                     <IconComponent className="w-3 h-3" />
@@ -1683,66 +1766,67 @@ export default function PlenarioCockpitPage() {
                               })}
                             </div>
 
-                            {/* Input de Descrição com botões de ação */}
-                            <div className="flex gap-2">
-                              <Input
-                                placeholder="Descreva o comportamento observado..."
-                                className={cn(
-                                  "h-9 text-xs flex-1",
-                                  isDarkMode ? "bg-zinc-800/50 border-zinc-700/50" : "bg-zinc-50 border-zinc-200"
-                                )}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
-                                    handleAddComportamento(jurado.cadeira, {
-                                      juradoId: jurado.id,
-                                      fase: faseSelecionada.label,
-                                      momento: "Durante exposição",
-                                      tipo: "linguagem_corporal",
-                                      descricao: (e.target as HTMLInputElement).value.trim(),
-                                      interpretacao: "neutro",
-                                      relevancia: 2,
-                                    });
-                                    (e.target as HTMLInputElement).value = "";
-                                  }
-                                }}
-                              />
-                              {/* Botões de Interpretação - Design refinado */}
-                              <div className="flex gap-1">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="ghost" 
-                                      className={cn(
-                                        "h-9 w-9 p-0 rounded-lg",
-                                        isDarkMode 
-                                          ? "hover:bg-emerald-950/50 text-emerald-400" 
-                                          : "hover:bg-emerald-50 text-emerald-600"
-                                      )}
-                                    >
-                                      <ThumbsUp className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="text-[10px]">Favorável</TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="ghost" 
-                                      className={cn(
-                                        "h-9 w-9 p-0 rounded-lg",
-                                        isDarkMode 
-                                          ? "hover:bg-rose-950/50 text-rose-400" 
-                                          : "hover:bg-rose-50 text-rose-600"
-                                      )}
-                                    >
-                                      <ThumbsDown className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="text-[10px]">Desfavorável</TooltipContent>
-                                </Tooltip>
+                            {/* Input de Descrição */}
+                            <Input
+                              value={formComportamentos[jurado.cadeira]?.descricao || ""}
+                              onChange={(e) => updateFormComportamento(jurado.cadeira, "descricao", e.target.value)}
+                              placeholder="Descreva o comportamento observado..."
+                              className={cn(
+                                "h-9 text-xs",
+                                isDarkMode ? "bg-zinc-800/50 border-zinc-700/50" : "bg-zinc-50 border-zinc-200"
+                              )}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleRegistrarComportamento(jurado.cadeira);
+                                }
+                              }}
+                            />
+
+                            {/* Botões de Interpretação e Salvar */}
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-1 flex-1">
+                                {[
+                                  { id: "favoravel", icon: ThumbsUp, color: "emerald", label: "Favorável" },
+                                  { id: "neutro", icon: Minus, color: "amber", label: "Neutro" },
+                                  { id: "desfavoravel", icon: ThumbsDown, color: "rose", label: "Desfavorável" },
+                                ].map(({ id, icon: Icon, color, label }) => {
+                                  const isSelected = (formComportamentos[jurado.cadeira]?.interpretacao || "neutro") === id;
+                                  return (
+                                    <Tooltip key={id}>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          onClick={() => updateFormComportamento(jurado.cadeira, "interpretacao", id)}
+                                          className={cn(
+                                            "h-8 px-3 rounded-lg flex items-center gap-1.5 text-[10px] font-medium transition-all",
+                                            isSelected 
+                                              ? color === "emerald" 
+                                                ? "bg-emerald-500 text-white" 
+                                                : color === "rose" 
+                                                  ? "bg-rose-500 text-white"
+                                                  : "bg-amber-500 text-white"
+                                              : isDarkMode 
+                                                ? "bg-zinc-800 text-zinc-400 hover:bg-zinc-700" 
+                                                : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                                          )}
+                                        >
+                                          <Icon className="w-3.5 h-3.5" />
+                                          {isSelected && <span>{label}</span>}
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="text-[10px]">{label}</TooltipContent>
+                                    </Tooltip>
+                                  );
+                                })}
                               </div>
+                              <Button
+                                size="sm"
+                                onClick={() => handleRegistrarComportamento(jurado.cadeira)}
+                                disabled={!formComportamentos[jurado.cadeira]?.descricao?.trim()}
+                                className="h-8 px-4 bg-violet-600 hover:bg-violet-700 text-white text-xs"
+                              >
+                                <Plus className="w-3.5 h-3.5 mr-1" />
+                                Registrar
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -1888,6 +1972,316 @@ export default function PlenarioCockpitPage() {
                       );
                     })
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab: Relatório & Análise */}
+          {activeTab === "relatorio" && (
+            <div className="space-y-6">
+              {/* Header do Relatório */}
+              <div className={cn("p-6", cardClass)}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center",
+                      "bg-gradient-to-br from-emerald-500 to-teal-600"
+                    )}>
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className={cn("text-lg font-semibold", isDarkMode ? "text-zinc-100" : "text-zinc-800")}>
+                        Relatório de Análise Comportamental
+                      </h3>
+                      <p className="text-sm text-zinc-500 mt-0.5">
+                        Análise consolidada dos comportamentos observados durante a sessão
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-violet-600 border-violet-200 bg-violet-50 dark:bg-violet-950/30">
+                    {juradosAtivos.reduce((acc, j) => acc + (j.comportamentos?.length || 0), 0)} comportamentos registrados
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Grid: Timeline + Análise por Jurado */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Timeline Consolidada */}
+                <div className={cn("lg:col-span-2 p-6", cardClass)}>
+                  <h4 className={cn("text-sm font-semibold mb-4 flex items-center gap-2", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+                    <Clock className="w-4 h-4 text-violet-500" />
+                    Timeline de Comportamentos
+                  </h4>
+                  
+                  {(() => {
+                    // Consolidar todos os comportamentos ordenados por timestamp
+                    const todosComportamentos = juradosAtivos
+                      .flatMap(j => (j.comportamentos || []).map(c => ({
+                        ...c,
+                        juradoNome: j.nome,
+                        juradoCadeira: j.cadeira,
+                        juradoTendencia: j.taxaAbsolvicao,
+                      })))
+                      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+                    if (todosComportamentos.length === 0) {
+                      return (
+                        <div className="text-center py-12">
+                          <Activity className={cn("w-12 h-12 mx-auto mb-3", isDarkMode ? "text-zinc-700" : "text-zinc-300")} />
+                          <p className={cn("text-sm", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+                            Nenhum comportamento registrado ainda
+                          </p>
+                          <p className="text-xs text-zinc-400 mt-1">
+                            Os comportamentos aparecerão aqui conforme forem registrados
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                        {todosComportamentos.map((comp, index) => {
+                          const hora = new Date(comp.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                          return (
+                            <div key={comp.id} className="relative flex gap-4">
+                              {/* Linha conectora */}
+                              {index < todosComportamentos.length - 1 && (
+                                <div className={cn(
+                                  "absolute left-[19px] top-10 bottom-0 w-px",
+                                  isDarkMode ? "bg-zinc-800" : "bg-zinc-200"
+                                )} />
+                              )}
+                              
+                              {/* Indicador */}
+                              <div className={cn(
+                                "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ring-4",
+                                comp.interpretacao === "favoravel" 
+                                  ? "bg-emerald-500 ring-emerald-100 dark:ring-emerald-900" 
+                                  : comp.interpretacao === "desfavoravel"
+                                    ? "bg-rose-500 ring-rose-100 dark:ring-rose-900"
+                                    : "bg-amber-500 ring-amber-100 dark:ring-amber-900"
+                              )}>
+                                {comp.interpretacao === "favoravel" 
+                                  ? <ThumbsUp className="w-4 h-4 text-white" />
+                                  : comp.interpretacao === "desfavoravel"
+                                    ? <ThumbsDown className="w-4 h-4 text-white" />
+                                    : <Minus className="w-4 h-4 text-white" />
+                                }
+                              </div>
+                              
+                              {/* Conteúdo */}
+                              <div className={cn(
+                                "flex-1 p-4 rounded-xl",
+                                isDarkMode ? "bg-zinc-900/50" : "bg-zinc-50"
+                              )}>
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-[10px]">
+                                      Cadeira {comp.juradoCadeira}
+                                    </Badge>
+                                    <span className={cn("text-sm font-medium", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+                                      {comp.juradoNome.split(" ").slice(0, 2).join(" ")}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-zinc-400">{hora}</span>
+                                </div>
+                                <p className={cn("text-sm", isDarkMode ? "text-zinc-300" : "text-zinc-600")}>
+                                  {comp.descricao}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className="text-[10px] text-zinc-400">
+                                    {comp.fase} • {comp.momento}
+                                  </span>
+                                  <Badge variant="outline" className="text-[9px]">
+                                    {TIPOS_COMPORTAMENTO.find(t => t.id === comp.tipo)?.label || comp.tipo}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Análise por Jurado */}
+                <div className={cn("p-6", cardClass)}>
+                  <h4 className={cn("text-sm font-semibold mb-4 flex items-center gap-2", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+                    <BarChart3 className="w-4 h-4 text-violet-500" />
+                    Análise por Jurado
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    {juradosAtivos.map((jurado) => {
+                      const comportamentos = jurado.comportamentos || [];
+                      const favoraveis = comportamentos.filter(c => c.interpretacao === "favoravel").length;
+                      const desfavoraveis = comportamentos.filter(c => c.interpretacao === "desfavoravel").length;
+                      const neutros = comportamentos.filter(c => c.interpretacao === "neutro").length;
+                      const total = comportamentos.length;
+                      
+                      const tendenciaGeral = favoraveis > desfavoraveis ? "favoravel" : desfavoraveis > favoraveis ? "desfavoravel" : "neutro";
+                      
+                      return (
+                        <div key={jurado.id} className={cn(
+                          "p-4 rounded-xl",
+                          isDarkMode ? "bg-zinc-900/50" : "bg-zinc-50"
+                        )}>
+                          <div className="flex items-center gap-3 mb-3">
+                            <Avatar className="h-9 w-9">
+                              {jurado.foto && <AvatarImage src={jurado.foto} />}
+                              <AvatarFallback className="text-xs font-medium bg-zinc-200 dark:bg-zinc-700">
+                                {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <p className={cn("text-sm font-medium", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+                                {jurado.nome.split(" ").slice(0, 2).join(" ")}
+                              </p>
+                              <p className="text-[10px] text-zinc-400">Cadeira {jurado.cadeira} • {total} registros</p>
+                            </div>
+                            <div className={cn(
+                              "w-3 h-3 rounded-full",
+                              tendenciaGeral === "favoravel" ? "bg-emerald-500" :
+                              tendenciaGeral === "desfavoravel" ? "bg-rose-500" : "bg-amber-500"
+                            )} />
+                          </div>
+                          
+                          {total > 0 && (
+                            <div className="flex gap-1 h-2">
+                              {favoraveis > 0 && (
+                                <div 
+                                  className="bg-emerald-500 rounded-full"
+                                  style={{ width: `${(favoraveis / total) * 100}%` }}
+                                />
+                              )}
+                              {neutros > 0 && (
+                                <div 
+                                  className="bg-amber-500 rounded-full"
+                                  style={{ width: `${(neutros / total) * 100}%` }}
+                                />
+                              )}
+                              {desfavoraveis > 0 && (
+                                <div 
+                                  className="bg-rose-500 rounded-full"
+                                  style={{ width: `${(desfavoraveis / total) * 100}%` }}
+                                />
+                              )}
+                            </div>
+                          )}
+                          
+                          <div className="flex justify-between mt-2 text-[10px] text-zinc-400">
+                            <span className="text-emerald-500">{favoraveis} fav</span>
+                            <span className="text-amber-500">{neutros} neu</span>
+                            <span className="text-rose-500">{desfavoraveis} des</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Análise Inteligente com IA */}
+              <div className={cn("p-6", cardClass)}>
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className={cn("text-base font-semibold mb-2", isDarkMode ? "text-zinc-100" : "text-zinc-800")}>
+                      Análise Estratégica por IA
+                    </h4>
+                    
+                    {(() => {
+                      const totalComportamentos = juradosAtivos.reduce((acc, j) => acc + (j.comportamentos?.length || 0), 0);
+                      const totalFavoraveis = juradosAtivos.reduce((acc, j) => 
+                        acc + (j.comportamentos?.filter(c => c.interpretacao === "favoravel").length || 0), 0);
+                      const totalDesfavoraveis = juradosAtivos.reduce((acc, j) => 
+                        acc + (j.comportamentos?.filter(c => c.interpretacao === "desfavoravel").length || 0), 0);
+                      
+                      // Identificar jurados chave
+                      const juradosComMaisReacoes = [...juradosAtivos]
+                        .sort((a, b) => (b.comportamentos?.length || 0) - (a.comportamentos?.length || 0))
+                        .slice(0, 3);
+                      
+                      const juradosMaisFavoraveis = juradosAtivos.filter(j => {
+                        const favs = j.comportamentos?.filter(c => c.interpretacao === "favoravel").length || 0;
+                        const desfavs = j.comportamentos?.filter(c => c.interpretacao === "desfavoravel").length || 0;
+                        return favs > desfavs;
+                      });
+                      
+                      const juradosMaisDesfavoraveis = juradosAtivos.filter(j => {
+                        const favs = j.comportamentos?.filter(c => c.interpretacao === "favoravel").length || 0;
+                        const desfavs = j.comportamentos?.filter(c => c.interpretacao === "desfavoravel").length || 0;
+                        return desfavs > favs;
+                      });
+
+                      if (totalComportamentos < 3) {
+                        return (
+                          <p className={cn("text-sm leading-relaxed", isDarkMode ? "text-zinc-400" : "text-zinc-500")}>
+                            Continue registrando comportamentos para obter uma análise estratégica completa. 
+                            Recomenda-se pelo menos 3 observações para insights significativos.
+                          </p>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-4">
+                          <p className={cn("text-sm leading-relaxed", isDarkMode ? "text-zinc-300" : "text-zinc-600")}>
+                            {totalFavoraveis > totalDesfavoraveis ? (
+                              <>
+                                <strong className="text-emerald-500">Tendência Favorável:</strong> O conselho apresenta 
+                                {" "}{Math.round((totalFavoraveis / totalComportamentos) * 100)}% de reações positivas. 
+                                {juradosMaisFavoraveis.length > 0 && (
+                                  <> Os jurados {juradosMaisFavoraveis.map(j => j.nome.split(" ")[0]).join(", ")} demonstram 
+                                  maior receptividade aos argumentos da defesa.</>
+                                )}
+                              </>
+                            ) : totalDesfavoraveis > totalFavoraveis ? (
+                              <>
+                                <strong className="text-rose-500">Atenção Requerida:</strong> O conselho apresenta 
+                                {" "}{Math.round((totalDesfavoraveis / totalComportamentos) * 100)}% de reações desfavoráveis. 
+                                {juradosMaisDesfavoraveis.length > 0 && (
+                                  <> Foco especial em {juradosMaisDesfavoraveis.map(j => j.nome.split(" ")[0]).join(", ")} 
+                                  que demonstram resistência.</>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <strong className="text-amber-500">Conselho Equilibrado:</strong> As reações estão divididas. 
+                                Os argumentos finais serão decisivos para inclinar a balança.
+                              </>
+                            )}
+                          </p>
+                          
+                          {/* Recomendações */}
+                          <div className={cn(
+                            "p-4 rounded-lg border-l-4",
+                            totalFavoraveis > totalDesfavoraveis 
+                              ? "border-l-emerald-500 bg-emerald-50 dark:bg-emerald-950/20" 
+                              : totalDesfavoraveis > totalFavoraveis 
+                                ? "border-l-rose-500 bg-rose-50 dark:bg-rose-950/20"
+                                : "border-l-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                          )}>
+                            <p className={cn("text-xs font-semibold mb-1", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+                              Recomendação Estratégica:
+                            </p>
+                            <p className={cn("text-xs", isDarkMode ? "text-zinc-400" : "text-zinc-600")}>
+                              {totalFavoraveis > totalDesfavoraveis ? (
+                                "Mantenha a narrativa emocional e reforce os pontos que geraram reações positivas. Evite mudanças bruscas de estratégia."
+                              ) : totalDesfavoraveis > totalFavoraveis ? (
+                                "Considere ajustar a abordagem. Foque em provas técnicas e contradições da acusação. Evite apelos emocionais excessivos."
+                              ) : (
+                                "Prepare argumentos finais impactantes. Identifique os jurados indecisos e direcione a comunicação para eles."
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             </div>
