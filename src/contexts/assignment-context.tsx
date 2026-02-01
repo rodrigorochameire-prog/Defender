@@ -294,6 +294,7 @@ export const UTILITIES_MENU: MenuSection[] = [
     title: "Sistema",
     items: [
       { label: "Usuários", path: "/admin/usuarios", icon: "Users", description: "Gerenciar acessos", requiredRoles: ["admin"] },
+      { label: "Preview Perfis", path: "/admin/preview-perfis", icon: "UserCheck", description: "Visualizar dashboards por perfil", requiredRoles: ["admin"] },
       { label: "Configurações", path: "/admin/settings", icon: "Settings", requiredRoles: ["admin", "defensor"] },
       { label: "Banco de Dados", path: "/admin/settings/dados", icon: "FolderOpen", description: "Monitor e gestão de dados", requiredRoles: ["admin", "defensor"] },
       { label: "Workspaces", path: "/admin/workspaces", icon: "Building2", description: "Acessos e universos de dados", requiredRoles: ["admin"] },
