@@ -681,6 +681,7 @@ export default function JuradosPage() {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [juradosImportados, setJuradosImportados] = useState<JuradoImportado[]>([]);
   const [isImporting, setIsImporting] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState<"por-reuniao" | "lista-geral">("por-reuniao");
 
   // Buscar jurados do banco de dados
   const utils = trpc.useUtils();
@@ -748,6 +749,29 @@ export default function JuradosPage() {
       empresa: j.empresa || undefined,
     }));
   }, [juradosDB]);
+
+  // Agrupar jurados por reunião e tipo
+  const juradosAgrupados = useMemo(() => {
+    const grupos: Record<string, { titulares: JuradoPerfil[]; suplentes: JuradoPerfil[] }> = {
+      "1": { titulares: [], suplentes: [] },
+      "2": { titulares: [], suplentes: [] },
+      "3": { titulares: [], suplentes: [] },
+    };
+    
+    for (const j of juradosDoSistema) {
+      const reuniao = j.reuniao || "1";
+      const tipo = j.tipo || "titular";
+      if (grupos[reuniao]) {
+        if (tipo === "titular") {
+          grupos[reuniao].titulares.push(j);
+        } else {
+          grupos[reuniao].suplentes.push(j);
+        }
+      }
+    }
+    
+    return grupos;
+  }, [juradosDoSistema]);
 
   // Jurados existentes (banco + fallback mocks)
   const juradosFiltrados = useMemo(() => {
@@ -856,6 +880,124 @@ export default function JuradosPage() {
         {/* Stats */}
         <StatsBar jurados={juradosDoSistema} />
 
+        {/* Abas */}
+        <div className="flex gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+          <button
+            onClick={() => setAbaAtiva("por-reuniao")}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              abaAtiva === "por-reuniao"
+                ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            )}
+          >
+            Por Reunião
+          </button>
+          <button
+            onClick={() => setAbaAtiva("lista-geral")}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              abaAtiva === "lista-geral"
+                ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            )}
+          >
+            Lista Geral
+          </button>
+        </div>
+
+        {/* Conteúdo da aba "Por Reunião" */}
+        {abaAtiva === "por-reuniao" && (
+          <div className="space-y-6">
+            {["1", "2", "3"].map((reuniao) => {
+              const grupo = juradosAgrupados[reuniao];
+              const total = grupo.titulares.length + grupo.suplentes.length;
+              if (total === 0) return null;
+              
+              return (
+                <Card key={reuniao} className="overflow-hidden border-zinc-200 dark:border-zinc-800">
+                  <div className="px-5 py-4 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+                    <h3 className="font-semibold text-zinc-800 dark:text-zinc-200">
+                      {reuniao}ª Reunião Periódica
+                      <span className="ml-2 text-sm font-normal text-zinc-500">
+                        ({reuniao === "1" ? "Fev-Abr" : reuniao === "2" ? "Mai-Ago" : "Set-Dez"}/2026)
+                      </span>
+                      <Badge className="ml-3" variant="secondary">{total} jurados</Badge>
+                    </h3>
+                  </div>
+                  
+                  <div className="p-5 space-y-5">
+                    {/* Titulares */}
+                    {grupo.titulares.length > 0 && (
+                      <div className="space-y-3">
+                        <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                          Titulares ({grupo.titulares.length})
+                        </Badge>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                          {grupo.titulares.map((j, idx) => (
+                            <Link key={j.id} href={`/admin/juri/jurados/${j.id}`}>
+                              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors cursor-pointer">
+                                <div className="flex items-start gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-400 flex-shrink-0">
+                                    {idx + 1}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">{j.nome}</p>
+                                    <p className="text-xs text-zinc-500 truncate">{j.empresa || "—"}</p>
+                                    <p className="text-[10px] text-zinc-400 truncate">{j.profissao || "—"}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Suplentes */}
+                    {grupo.suplentes.length > 0 && (
+                      <div className="space-y-3">
+                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                          Suplentes ({grupo.suplentes.length})
+                        </Badge>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                          {grupo.suplentes.map((j, idx) => (
+                            <Link key={j.id} href={`/admin/juri/jurados/${j.id}`}>
+                              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors cursor-pointer">
+                                <div className="flex items-start gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-xs font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">
+                                    {idx + 1}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm text-zinc-800 dark:text-zinc-200 truncate">{j.nome}</p>
+                                    <p className="text-xs text-zinc-500 truncate">{j.empresa || "—"}</p>
+                                    <p className="text-[10px] text-zinc-400 truncate">{j.profissao || "—"}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+            
+            {juradosDoSistema.length === 0 && (
+              <div className="text-center py-12">
+                <Users className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+                <p className="text-sm text-zinc-500">Nenhum jurado cadastrado</p>
+                <p className="text-xs text-zinc-400 mt-1">Importe uma ata de sorteio para começar</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Conteúdo da aba "Lista Geral" */}
+        {abaAtiva === "lista-geral" && (
+          <>
         {/* Filtros */}
         <div className="flex flex-col gap-2">
           <div className="flex flex-col md:flex-row gap-2">
@@ -962,9 +1104,11 @@ export default function JuradosPage() {
             <p className="text-sm text-zinc-500">Nenhum jurado encontrado</p>
           </div>
         )}
+          </>
+        )}
 
-        {/* Jurados Importados - Organizados por Período e Tipo */}
-        {juradosImportados.length > 0 && (
+        {/* Seção oculta - dados já integrados nas abas acima */}
+        {false && juradosImportados.length > 0 && (
           <div className="mt-8 space-y-6">
             {/* Header com estatísticas */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
