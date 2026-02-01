@@ -1354,6 +1354,18 @@ export default function AssistidosPage() {
   const [comarcaFilter, setComarcaFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"nome" | "prioridade" | "prazo" | "complexidade">("nome");
   const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "status">("none");
+  const [showNaoIdentificados, setShowNaoIdentificados] = useState(false);
+  const [showArquivados, setShowArquivados] = useState(false);
+
+  // Contagem de não identificados
+  const naoIdentificadosCount = useMemo(() => {
+    return realAssistidos.filter(a => 
+      a.nome.toLowerCase().includes("não identificado") || 
+      a.nome.toLowerCase().includes("nao identificado") ||
+      a.nome === "" ||
+      a.nome === "-"
+    ).length;
+  }, [realAssistidos]);
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
   const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set());
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
@@ -1384,6 +1396,21 @@ export default function AssistidosPage() {
 
   const filteredAssistidos = useMemo(() => {
     let result = realAssistidos.filter((a) => {
+      // Verificar se é "Não Identificado"
+      const isNaoIdentificado = 
+        a.nome.toLowerCase().includes("não identificado") || 
+        a.nome.toLowerCase().includes("nao identificado") ||
+        a.nome === "" ||
+        a.nome === "-";
+      
+      // Se estiver no modo "Não Identificados", mostrar apenas esses
+      if (showNaoIdentificados) {
+        return isNaoIdentificado;
+      }
+      
+      // Caso contrário, excluir os não identificados da lista normal
+      if (isNaoIdentificado) return false;
+      
       const matchesSearch = a.nome.toLowerCase().includes(searchTerm.toLowerCase()) || a.cpf.includes(searchTerm) || (a.vulgo?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.crimePrincipal?.toLowerCase().includes(searchTerm.toLowerCase())) || (a.numeroProcesso?.includes(searchTerm));
       const matchesStatus = statusFilter === "all" || a.statusPrisional === statusFilter;
       const matchesArea = areaFilter === "all" || a.area === areaFilter;
@@ -1418,7 +1445,7 @@ export default function AssistidosPage() {
     });
 
     return result;
-  }, [realAssistidos, searchTerm, statusFilter, areaFilter, comarcaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter]);
+  }, [realAssistidos, searchTerm, statusFilter, areaFilter, comarcaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter, showNaoIdentificados]);
 
   // Detectar potenciais duplicados (nomes muito similares) - Otimizado com hash map
   const potentialDuplicates = useMemo(() => {
@@ -1648,10 +1675,63 @@ export default function AssistidosPage() {
       {/* Conteúdo Principal */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
 
+      {/* Alerta de Não Identificados */}
+      {naoIdentificadosCount > 0 && !showNaoIdentificados && (
+        <div className="flex items-center gap-3 p-3 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20">
+          <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+              {naoIdentificadosCount} assistido{naoIdentificadosCount !== 1 ? 's' : ''} sem identificação
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              Registros importados que precisam de regularização manual
+            </p>
+          </div>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="border-amber-400 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-400"
+            onClick={() => setShowNaoIdentificados(true)}
+          >
+            <Eye className="w-3.5 h-3.5 mr-2" />
+            Ver e Regularizar
+          </Button>
+        </div>
+      )}
+
+      {/* Banner modo Não Identificados */}
+      {showNaoIdentificados && (
+        <div className="flex items-center justify-between p-3 rounded-xl border border-amber-400 dark:border-amber-700 bg-amber-100 dark:bg-amber-900/30">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600" />
+            <div>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                Modo Regularização - Assistidos Não Identificados
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                Edite cada registro para adicionar o nome correto do assistido
+              </p>
+            </div>
+          </div>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="border-amber-500 text-amber-700 hover:bg-amber-200"
+            onClick={() => setShowNaoIdentificados(false)}
+          >
+            <XCircle className="w-3.5 h-3.5 mr-2" />
+            Voltar à Lista Normal
+          </Button>
+        </div>
+      )}
+
       {/* Stats Cards - Grid compacto e interativo */}
+      {!showNaoIdentificados && (
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
         {[
-          { label: "Total", value: stats.total, icon: Users, filter: "all", color: "zinc" },
+          { label: "Total", value: stats.total - naoIdentificadosCount, icon: Users, filter: "all", color: "zinc" },
           { label: "Presos", value: stats.presos, icon: Lock, filter: "preso", color: "rose", highlight: stats.presos > 0 },
           { label: "Monitorados", value: stats.monitorados, icon: Timer, filter: "monitorado", color: "amber" },
           { label: "Soltos", value: stats.soltos, icon: CheckCircle2, filter: "solto", color: "emerald" },
@@ -1739,6 +1819,7 @@ export default function AssistidosPage() {
           );
         })}
       </div>
+      )}
 
       {/* Card de Filtros - Padrão Demandas */}
       <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl p-5">
