@@ -117,7 +117,45 @@ interface JuradoCorpo {
 interface JuradoSorteado extends JuradoCorpo {
   cadeira: number;
   observacoesRapidas: string[];
+  comportamentos: ComportamentoRegistro[];
 }
+
+// Sistema de Comportamentos Contextualizados
+interface ComportamentoRegistro {
+  id: string;
+  juradoId: number;
+  timestamp: string;
+  fase: string;
+  momento: string; // Ex: "Testemunha João Silva", "Argumento legítima defesa"
+  tipo: "reacao_facial" | "linguagem_corporal" | "interacao" | "atencao" | "posicionamento" | "verbal";
+  descricao: string;
+  interpretacao: "favoravel" | "neutro" | "desfavoravel" | "incerto";
+  relevancia: 1 | 2 | 3; // 1 = baixa, 2 = média, 3 = alta
+}
+
+// Configuração de tipos de comportamento
+const TIPOS_COMPORTAMENTO = [
+  { id: "reacao_facial", label: "Reação Facial", icon: "😊", description: "Expressões, sorrisos, franzir testa" },
+  { id: "linguagem_corporal", label: "Linguagem Corporal", icon: "🤝", description: "Postura, gestos, movimentos" },
+  { id: "interacao", label: "Interação", icon: "💬", description: "Conversa com outros jurados, cochichos" },
+  { id: "atencao", label: "Atenção", icon: "👁", description: "Nível de atenção, distração, interesse" },
+  { id: "posicionamento", label: "Posicionamento", icon: "📍", description: "Inclinação, aproximação, afastamento" },
+  { id: "verbal", label: "Verbal", icon: "🗣", description: "Comentários, perguntas, suspiros" },
+];
+
+const MOMENTOS_SUGERIDOS = [
+  "Depoimento testemunha acusação",
+  "Depoimento testemunha defesa",
+  "Interrogatório do réu",
+  "Argumento do MP",
+  "Argumento da defesa",
+  "Exibição de prova documental",
+  "Exibição de prova pericial",
+  "Réplica do MP",
+  "Tréplica da defesa",
+  "Momento de emoção",
+  "Contradição identificada",
+];
 
 interface Anotacao {
   id: string;
@@ -551,54 +589,63 @@ function CadeiraVisual({
     );
   }
 
+  // Indicador de tendência sutil (apenas uma barra fina na lateral)
+  const getTendenciaBorder = () => {
+    if (jurado.taxaAbsolvicao >= 60) return "border-l-emerald-400";
+    if (jurado.taxaAbsolvicao >= 40) return "border-l-amber-400";
+    return "border-l-rose-400";
+  };
+
   return (
     <div
       className={cn(
-        "relative rounded-2xl p-4 min-h-[160px] transition-all group",
-        isDarkMode ? "bg-zinc-900 border border-zinc-800" : "bg-white border border-zinc-200 shadow-sm",
-        `ring-2 ring-offset-2 ${tendencia?.ring}`
+        "relative rounded-xl p-4 min-h-[160px] transition-all group border-l-4",
+        isDarkMode 
+          ? "bg-zinc-900/80 border border-zinc-800 hover:bg-zinc-900" 
+          : "bg-white border border-zinc-100 shadow-sm hover:shadow-md",
+        getTendenciaBorder()
       )}
     >
-      {/* Badge da cadeira */}
+      {/* Badge da cadeira - Discreto */}
       <div className={cn(
-        "absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg",
-        tendencia?.bg,
-        "text-white"
+        "absolute -top-2.5 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold",
+        isDarkMode 
+          ? "bg-zinc-800 text-zinc-400 border border-zinc-700" 
+          : "bg-zinc-100 text-zinc-600 border border-zinc-200"
       )}>
         {cadeiraNum}
       </div>
 
-      {/* Botão remover */}
+      {/* Botão remover - Sutil */}
       <button
         onClick={onRemove}
         className={cn(
-          "absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg",
-          "bg-rose-500 text-white hover:bg-rose-600"
+          "absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all",
+          "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/50"
         )}
       >
-        <X className="w-3.5 h-3.5" />
+        <X className="w-3 h-3" />
       </button>
 
       {/* Avatar com foto */}
-      <div className="flex flex-col items-center pt-2">
+      <div className="flex flex-col items-center pt-1">
         <div className="relative group/avatar">
-          <Avatar className="h-14 w-14 ring-2 ring-offset-2 ring-zinc-200 dark:ring-zinc-700">
+          <Avatar className="h-12 w-12">
             {jurado.foto ? (
               <AvatarImage src={jurado.foto} alt={jurado.nome} />
             ) : null}
-            {/* Avatar neutro - cor só aparece se tiver foto */}
-            <AvatarFallback className="text-base font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+            <AvatarFallback className="text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
               {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
             </AvatarFallback>
           </Avatar>
           <button
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all",
-              "bg-zinc-700 text-white hover:bg-zinc-600 shadow-md"
+              "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all",
+              "bg-zinc-600 text-white hover:bg-zinc-500"
             )}
           >
-            <Camera className="w-2.5 h-2.5" />
+            <Camera className="w-2 h-2" />
           </button>
           <input
             ref={fileInputRef}
@@ -612,46 +659,56 @@ function CadeiraVisual({
           />
         </div>
 
-        <p className={cn("text-sm font-semibold mt-2 text-center", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
+        <p className={cn("text-sm font-medium mt-2 text-center", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
           {jurado.nome.split(" ").slice(0, 2).join(" ")}
         </p>
-        <p className={cn("text-[10px]", isDarkMode ? "text-zinc-500" : "text-zinc-500")}>
+        <p className={cn("text-[10px]", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
           {jurado.profissao}
         </p>
 
-        {/* Indicadores */}
-        <div className="flex items-center gap-1.5 mt-2">
-          <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full border font-medium", getPerfilColor(jurado.perfilDominante))}>
+        {/* Indicadores - Visual minimalista */}
+        <div className="flex items-center gap-2 mt-2">
+          <span className={cn(
+            "text-[9px] px-1.5 py-0.5 rounded font-medium",
+            isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-zinc-100 text-zinc-500"
+          )}>
             {getPerfilLabel(jurado.perfilDominante)}
           </span>
-          <span className={cn(
-            "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-            tendencia?.bg,
-            "text-white"
-          )}>
-            {jurado.taxaAbsolvicao}%
-          </span>
+          {/* Barra de tendência minimalista */}
+          <div className="flex items-center gap-1">
+            <div className="w-8 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  jurado.taxaAbsolvicao >= 60 ? "bg-emerald-400" :
+                  jurado.taxaAbsolvicao >= 40 ? "bg-amber-400" : "bg-rose-400"
+                )}
+                style={{ width: `${jurado.taxaAbsolvicao}%` }}
+              />
+            </div>
+            <span className={cn("text-[9px] font-medium tabular-nums", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+              {jurado.taxaAbsolvicao}%
+            </span>
+          </div>
         </div>
 
-        {/* Observações rápidas */}
+        {/* Observações rápidas - Discretas */}
         {jurado.observacoesRapidas.length > 0 && (
-          <div className="mt-2 w-full space-y-0.5">
-            {jurado.observacoesRapidas.slice(-2).map((obs, i) => (
-              <p key={i} className={cn("text-[9px] px-2 py-0.5 rounded", isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-zinc-100 text-zinc-600")}>
-                • {obs}
-              </p>
-            ))}
+          <div className="mt-2 w-full">
+            <p className={cn("text-[9px] leading-relaxed line-clamp-2", isDarkMode ? "text-zinc-500" : "text-zinc-500")}>
+              {jurado.observacoesRapidas.slice(-1)[0]}
+            </p>
           </div>
         )}
 
-        {/* Input observação */}
+        {/* Input observação - Elegante */}
         {showInput ? (
           <div className="flex gap-1 mt-2 w-full">
             <Input
               value={novaObs}
               onChange={(e) => setNovaObs(e.target.value)}
-              placeholder="Obs..."
-              className={cn("h-6 text-[10px] flex-1", isDarkMode ? "bg-zinc-800 border-zinc-700" : "")}
+              placeholder="Comportamento observado..."
+              className={cn("h-7 text-[10px] flex-1 rounded", isDarkMode ? "bg-zinc-800 border-zinc-700" : "bg-zinc-50 border-zinc-200")}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && novaObs.trim()) {
                   onAddObservacao(novaObs.trim());
@@ -667,11 +724,13 @@ function CadeiraVisual({
           <button
             onClick={() => setShowInput(true)}
             className={cn(
-              "mt-2 text-[9px] py-1 px-2 rounded border border-dashed transition-colors",
-              isDarkMode ? "border-zinc-700 text-zinc-500 hover:text-zinc-400" : "border-zinc-300 text-zinc-400 hover:text-zinc-600"
+              "mt-2 text-[9px] py-1 w-full rounded transition-colors",
+              isDarkMode 
+                ? "text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800" 
+                : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50"
             )}
           >
-            + Adicionar nota
+            + nota
           </button>
         )}
       </div>
@@ -813,6 +872,7 @@ export default function PlenarioCockpitPage() {
       ...jurado,
       cadeira,
       observacoesRapidas: [],
+      comportamentos: [],
     };
     setConselhoSentenca(prev => {
       const novo = [...prev];
@@ -864,6 +924,29 @@ export default function PlenarioCockpitPage() {
         novo[cadeira - 1] = {
           ...jurado,
           observacoesRapidas: [...jurado.observacoesRapidas, obs]
+        };
+      }
+      return novo;
+    });
+  }, []);
+
+  // Handler para comportamentos contextualizados
+  const handleAddComportamento = useCallback((
+    cadeira: number, 
+    comportamento: Omit<ComportamentoRegistro, "id" | "timestamp">
+  ) => {
+    setConselhoSentenca(prev => {
+      const novo = [...prev];
+      const jurado = novo[cadeira - 1];
+      if (jurado) {
+        const novoComportamento: ComportamentoRegistro = {
+          ...comportamento,
+          id: String(Date.now()),
+          timestamp: new Date().toISOString(),
+        };
+        novo[cadeira - 1] = {
+          ...jurado,
+          comportamentos: [...jurado.comportamentos, novoComportamento]
         };
       }
       return novo;
@@ -1253,96 +1336,229 @@ export default function PlenarioCockpitPage() {
               )}
               </div>
 
-              {/* Seção de Comportamentos - Aparece quando conselho está completo */}
+              {/* Seção de Comportamentos Contextualizados - Aparece quando conselho está completo */}
               {juradosAtivos.length === 7 && (
-                <div className={cn("p-6", cardClass)}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-base font-semibold flex items-center gap-2">
-                        <PenLine className="w-4 h-4 text-violet-600" />
-                        Anotações de Comportamento
-                      </h3>
-                      <p className="text-xs text-zinc-500 mt-0.5">
-                        Conselho completo • Registre o comportamento de cada jurado
-                      </p>
+                <div className="space-y-4">
+                  {/* Header */}
+                  <div className={cn("p-4", cardClass)}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-base font-semibold flex items-center gap-2">
+                          <Target className="w-4 h-4 text-violet-500" />
+                          Monitoramento de Comportamentos
+                        </h3>
+                        <p className="text-xs text-zinc-500 mt-0.5">
+                          Registre comportamentos com contexto para análise estratégica
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Conselho Formado
+                        </Badge>
+                      </div>
                     </div>
-                    <Badge className="bg-emerald-500">
-                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                      7/7 Jurados
-                    </Badge>
                   </div>
 
-                  {/* Grid de jurados para anotações */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {/* Grid de Jurados com Cards Sofisticados */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                     {juradosAtivos.map((jurado) => {
-                      const tendencia = getTendenciaColor(jurado.taxaAbsolvicao);
+                      const getTendenciaBorderColor = () => {
+                        if (jurado.taxaAbsolvicao >= 60) return "border-l-emerald-400";
+                        if (jurado.taxaAbsolvicao >= 40) return "border-l-amber-400";
+                        return "border-l-rose-400";
+                      };
+                      
+                      const totalComportamentos = jurado.comportamentos?.length || 0;
+                      const comportamentosFavoraveis = jurado.comportamentos?.filter(c => c.interpretacao === "favoravel").length || 0;
+                      
                       return (
                         <div
                           key={jurado.id}
                           className={cn(
-                            "p-4 rounded-xl border",
-                            isDarkMode ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
+                            "rounded-xl border border-l-4 overflow-hidden",
+                            isDarkMode ? "bg-zinc-900/80 border-zinc-800" : "bg-white border-zinc-100",
+                            getTendenciaBorderColor()
                           )}
                         >
-                          <div className="flex items-center gap-3 mb-3">
-                            <Avatar className="h-10 w-10">
-                              {jurado.foto && <AvatarImage src={jurado.foto} />}
-                              <AvatarFallback className="text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                                {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold truncate">{jurado.nome.split(" ").slice(0, 2).join(" ")}</p>
-                              <div className="flex items-center gap-1">
-                                <span className="text-[10px] text-zinc-500">Cadeira {jurado.cadeira}</span>
-                                <span className={cn("text-[9px] font-bold px-1 py-0.5 rounded text-white", tendencia.bg)}>
-                                  {jurado.taxaAbsolvicao}%
-                                </span>
+                          {/* Header do Card */}
+                          <div className={cn("p-4 border-b", isDarkMode ? "border-zinc-800" : "border-zinc-100")}>
+                            <div className="flex items-center gap-3">
+                              <div className="relative">
+                                <Avatar className="h-11 w-11">
+                                  {jurado.foto && <AvatarImage src={jurado.foto} />}
+                                  <AvatarFallback className="text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+                                    {jurado.nome.split(" ").map(n => n[0]).slice(0, 2).join("")}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className={cn(
+                                  "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold",
+                                  isDarkMode ? "bg-zinc-700 text-zinc-300" : "bg-zinc-200 text-zinc-600"
+                                )}>
+                                  {jurado.cadeira}
+                                </div>
                               </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={cn("text-sm font-semibold truncate", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
+                                  {jurado.nome.split(" ").slice(0, 2).join(" ")}
+                                </p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className={cn("text-[10px]", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
+                                    {jurado.profissao}
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-6 h-1 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+                                      <div 
+                                        className={cn(
+                                          "h-full rounded-full",
+                                          jurado.taxaAbsolvicao >= 60 ? "bg-emerald-400" :
+                                          jurado.taxaAbsolvicao >= 40 ? "bg-amber-400" : "bg-rose-400"
+                                        )}
+                                        style={{ width: `${jurado.taxaAbsolvicao}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-[9px] font-medium text-zinc-400 tabular-nums">{jurado.taxaAbsolvicao}%</span>
+                                  </div>
+                                </div>
+                              </div>
+                              {totalComportamentos > 0 && (
+                                <div className="text-right">
+                                  <p className="text-lg font-bold text-zinc-700 dark:text-zinc-300">{totalComportamentos}</p>
+                                  <p className="text-[9px] text-zinc-400">registros</p>
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          {/* Observações existentes */}
-                          {jurado.observacoesRapidas.length > 0 && (
-                            <div className="mb-3 space-y-1">
-                              {jurado.observacoesRapidas.map((obs, i) => (
-                                <p key={i} className={cn("text-[10px] px-2 py-1 rounded", isDarkMode ? "bg-zinc-800 text-zinc-400" : "bg-zinc-100 text-zinc-600")}>
-                                  • {obs}
-                                </p>
-                              ))}
+                          {/* Timeline de Comportamentos */}
+                          {jurado.comportamentos && jurado.comportamentos.length > 0 && (
+                            <div className={cn("px-4 py-3 max-h-32 overflow-y-auto", isDarkMode ? "bg-zinc-900/50" : "bg-zinc-50/50")}>
+                              <div className="space-y-2">
+                                {jurado.comportamentos.slice(-3).map((comp) => (
+                                  <div key={comp.id} className="flex items-start gap-2">
+                                    <div className={cn(
+                                      "w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0",
+                                      comp.interpretacao === "favoravel" ? "bg-emerald-400" :
+                                      comp.interpretacao === "desfavoravel" ? "bg-rose-400" :
+                                      comp.interpretacao === "neutro" ? "bg-amber-400" : "bg-zinc-400"
+                                    )} />
+                                    <div className="flex-1 min-w-0">
+                                      <p className={cn("text-[10px] leading-relaxed", isDarkMode ? "text-zinc-400" : "text-zinc-600")}>
+                                        {comp.descricao}
+                                      </p>
+                                      <p className="text-[9px] text-zinc-400 mt-0.5">
+                                        {comp.fase} • {comp.momento}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
 
-                          {/* Input de nova observação */}
-                          <div className="flex gap-1">
-                            <Input
-                              placeholder="Comportamento observado..."
-                              className={cn("h-8 text-xs flex-1", isDarkMode ? "bg-zinc-800 border-zinc-700" : "")}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
-                                  handleAddObservacaoJurado(jurado.cadeira, (e.target as HTMLInputElement).value.trim());
-                                  (e.target as HTMLInputElement).value = "";
-                                }
-                              }}
-                            />
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 px-2"
-                              onClick={(e) => {
-                                const input = (e.target as HTMLButtonElement).previousElementSibling as HTMLInputElement;
-                                if (input?.value.trim()) {
-                                  handleAddObservacaoJurado(jurado.cadeira, input.value.trim());
-                                  input.value = "";
-                                }
-                              }}
-                            >
-                              <Plus className="w-3 h-3" />
-                            </Button>
+                          {/* Formulário de Registro Contextualizado */}
+                          <div className="p-4 space-y-3">
+                            {/* Seletor de Momento/Contexto */}
+                            <Select defaultValue="">
+                              <SelectTrigger className={cn("h-8 text-xs", isDarkMode ? "bg-zinc-800 border-zinc-700" : "bg-zinc-50 border-zinc-200")}>
+                                <SelectValue placeholder="Momento do comportamento..." />
+                              </SelectTrigger>
+                              <SelectContent className={isDarkMode ? "bg-zinc-900 border-zinc-800" : ""}>
+                                {MOMENTOS_SUGERIDOS.map((momento) => (
+                                  <SelectItem key={momento} value={momento} className="text-xs">
+                                    {momento}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+
+                            {/* Tipo de Comportamento */}
+                            <div className="flex flex-wrap gap-1">
+                              {TIPOS_COMPORTAMENTO.slice(0, 4).map((tipo) => (
+                                <button
+                                  key={tipo.id}
+                                  className={cn(
+                                    "text-[9px] px-2 py-1 rounded-full border transition-colors",
+                                    isDarkMode 
+                                      ? "border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300" 
+                                      : "border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+                                  )}
+                                >
+                                  {tipo.icon} {tipo.label}
+                                </button>
+                              ))}
+                            </div>
+
+                            {/* Input de Descrição */}
+                            <div className="flex gap-1.5">
+                              <Input
+                                placeholder="Descreva o comportamento observado..."
+                                className={cn("h-8 text-xs flex-1", isDarkMode ? "bg-zinc-800 border-zinc-700" : "bg-zinc-50 border-zinc-200")}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
+                                    handleAddComportamento(jurado.cadeira, {
+                                      juradoId: jurado.id,
+                                      fase: faseSelecionada.label,
+                                      momento: "Durante exposição",
+                                      tipo: "linguagem_corporal",
+                                      descricao: (e.target as HTMLInputElement).value.trim(),
+                                      interpretacao: "neutro",
+                                      relevancia: 2,
+                                    });
+                                    (e.target as HTMLInputElement).value = "";
+                                  }
+                                }}
+                              />
+                              {/* Botões de Interpretação Rápida */}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
+                                    <TrendingUp className="w-3.5 h-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-[10px]">Favorável</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30">
+                                    <TrendingDown className="w-3.5 h-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-[10px]">Desfavorável</TooltipContent>
+                              </Tooltip>
+                            </div>
                           </div>
                         </div>
                       );
                     })}
+                  </div>
+
+                  {/* Análise Inteligente de Padrões */}
+                  <div className={cn("p-5", cardClass)}>
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                        <Zap className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Análise de Padrões</h4>
+                        <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                          {favoraveis >= 4 ? (
+                            <>Conselho majoritariamente favorável ({favoraveis}/7). Reforce argumentos emocionais e de contexto social para consolidar posição.</>
+                          ) : favoraveis <= 2 ? (
+                            <>Conselho desafiador ({desfavoraveis}/7 desfavoráveis). Foque em provas técnicas e contradições da acusação para reverter posições.</>
+                          ) : (
+                            <>Conselho equilibrado. Os {neutros} jurados neutros são decisivos. Observe suas reações e ajuste a estratégia.</>
+                          )}
+                        </p>
+                        {juradosAtivos.some(j => j.comportamentos && j.comportamentos.length > 0) && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <Badge variant="outline" className="text-[10px] text-violet-600 border-violet-200">
+                              {juradosAtivos.reduce((acc, j) => acc + (j.comportamentos?.length || 0), 0)} comportamentos registrados
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
