@@ -221,6 +221,13 @@ export default function DashboardJuriPage() {
   });
   const juris = jurisData ?? [];
 
+  // Audiências (para o dashboard)
+  const { data: audienciasData, isLoading: loadingAudiencias } = trpc.audiencias.proximas.useQuery({
+    dias: 30,
+    limite: 20,
+  });
+  const audiencias = audienciasData ?? [];
+
   // ==========================================
   // MODAL DE CRIAÇÃO DE DEMANDA
   // ==========================================
@@ -292,7 +299,7 @@ export default function DashboardJuriPage() {
 
   const isLoading = loadingDemandas || loadingAssistidos || loadingCasos || loadingJuris;
 
-  // Demandas ordenadas por prazo (mais urgentes primeiro)
+  // Demandas ordenadas por prazo (4 mais urgentes - incluindo vencidos)
   const demandasPorPrazo = useMemo(() => {
     return [...demandasFiltradas]
       .filter((d: any) => d.prazoFinal || d.prazo)
@@ -301,7 +308,112 @@ export default function DashboardJuriPage() {
         const prazoB = b.prazoFinal ? new Date(b.prazoFinal) : b.prazo ? parseISO(b.prazo) : new Date(9999, 11, 31);
         return prazoA.getTime() - prazoB.getTime();
       })
-      .slice(0, 5);
+      .slice(0, 4);
+  }, [demandasFiltradas]);
+
+  // Estado para filtro de júris por defensor
+  const [filtroDefensorJuri, setFiltroDefensorJuri] = useState<"todos" | "rodrigo" | "juliane">("todos");
+
+  // Próximos 4 júris com filtro por defensor
+  const jurisProximos = useMemo(() => {
+    let filtered = [...jurisFiltrados];
+    
+    if (filtroDefensorJuri === "rodrigo") {
+      filtered = filtered.filter((j: any) => 
+        j.defensorNome?.toLowerCase().includes("rodrigo") || 
+        j.responsavelId === 1 // ID do Dr. Rodrigo
+      );
+    } else if (filtroDefensorJuri === "juliane") {
+      filtered = filtered.filter((j: any) => 
+        j.defensorNome?.toLowerCase().includes("juliane") || 
+        j.responsavelId === 2 // ID da Dra. Juliane
+      );
+    }
+    
+    return filtered.slice(0, 4);
+  }, [jurisFiltrados, filtroDefensorJuri]);
+
+  // Audiências da semana (ou próximas 10 se menos de 5 na semana)
+  const audienciasExibir = useMemo(() => {
+    const hoje = new Date();
+    const fimDaSemana = addDays(hoje, 7 - hoje.getDay()); // Domingo
+    
+    // Audiências da semana atual
+    const audienciasSemana = audiencias.filter((a: any) => {
+      const dataAud = a.data ? parseISO(a.data) : null;
+      return dataAud && dataAud >= hoje && dataAud <= fimDaSemana;
+    });
+    
+    // Se menos de 5 na semana, pega as próximas 10
+    if (audienciasSemana.length < 5) {
+      return audiencias.slice(0, 10);
+    }
+    
+    return audienciasSemana.slice(0, 10);
+  }, [audiencias]);
+
+  // Verificar se estamos mostrando audiências além da semana
+  const mostrandoAlemDaSemana = useMemo(() => {
+    const hoje = new Date();
+    const fimDaSemana = addDays(hoje, 7 - hoje.getDay());
+    const audienciasSemana = audiencias.filter((a: any) => {
+      const dataAud = a.data ? parseISO(a.data) : null;
+      return dataAud && dataAud >= hoje && dataAud <= fimDaSemana;
+    });
+    return audienciasSemana.length < 5;
+  }, [audiencias]);
+
+  // ==========================================
+  // INFOGRÁFICOS PARA DEFENSOR
+  // ==========================================
+
+  // Panorama de Réus (presos, monitorados, soltos)
+  const panoramaReus = useMemo(() => {
+    const presos = assistidos.filter((a: any) => 
+      a.situacaoPrisional === "PRESO" || 
+      ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional)
+    ).length;
+    const monitorados = assistidos.filter((a: any) => 
+      a.situacaoPrisional === "MONITORADO" || 
+      ["MONITORADO", "DOMICILIAR"].includes(a.statusPrisional)
+    ).length;
+    const soltos = assistidos.length - presos - monitorados;
+    
+    return { presos, monitorados, soltos, total: assistidos.length };
+  }, [assistidos]);
+
+  // Carga de Trabalho
+  const cargaTrabalho = useMemo(() => {
+    const hoje = new Date();
+    
+    // Prazos vencendo esta semana
+    const prazosEstaSemana = demandasFiltradas.filter((d: any) => {
+      if (!d.prazoFinal && !d.prazo) return false;
+      const prazo = d.prazoFinal ? new Date(d.prazoFinal) : parseISO(d.prazo);
+      return prazo >= hoje && prazo <= addDays(hoje, 7);
+    }).length;
+    
+    // Prazos vencidos
+    const prazosVencidos = demandasFiltradas.filter((d: any) => {
+      if (!d.prazoFinal && !d.prazo) return false;
+      const prazo = d.prazoFinal ? new Date(d.prazoFinal) : parseISO(d.prazo);
+      return prazo < hoje && d.status !== "CONCLUIDO" && d.status !== "ARQUIVADO";
+    }).length;
+    
+    // Demandas em andamento
+    const emAndamento = demandasFiltradas.filter((d: any) => 
+      d.status === "EM_ANDAMENTO" || d.status === "2_ATENDER" || d.status === "4_MONITORAR"
+    ).length;
+    
+    // Concluídas este mês
+    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const concluidasMes = demandasFiltradas.filter((d: any) => {
+      if (d.status !== "CONCLUIDO" && d.status !== "7_PROTOCOLADO") return false;
+      const dataAtualizacao = d.updatedAt ? new Date(d.updatedAt) : null;
+      return dataAtualizacao && dataAtualizacao >= inicioMes;
+    }).length;
+
+    return { prazosEstaSemana, prazosVencidos, emAndamento, concluidasMes };
   }, [demandasFiltradas]);
 
   // Estado para registro rápido de atendimento
@@ -734,51 +846,88 @@ export default function DashboardJuriPage() {
           </Card>
         </div>
 
-        {/* JÚRIS DO MÊS + AUDIÊNCIAS DA SEMANA */}
+        {/* JÚRIS + AUDIÊNCIAS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
 
-          {/* JÚRIS DOS PRÓXIMOS 30 DIAS */}
+          {/* PRÓXIMOS JÚRIS */}
           <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
             <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Gavel className="w-4 h-4 text-zinc-500" />
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Júris do Mês</h3>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
-                    {totalJuris}
+                  <Gavel className="w-4 h-4 text-violet-500" />
+                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Próximos Júris</h3>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-medium">
+                    {jurisProximos.length}
                   </span>
                 </div>
-                <Link href="/admin/juri">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-500 hover:text-emerald-600">
-                    Ver todos <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-1">
+                  {/* Filtro por defensor */}
+                  <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md p-0.5">
+                    {[
+                      { id: "todos", label: "Todos" },
+                      { id: "rodrigo", label: "Dr. Rodrigo" },
+                      { id: "juliane", label: "Dra. Juliane" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setFiltroDefensorJuri(opt.id as typeof filtroDefensorJuri)}
+                        className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
+                          filtroDefensorJuri === opt.id
+                            ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow-sm"
+                            : "text-zinc-500 hover:text-zinc-700"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <Link href="/admin/juri">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
 
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[280px] overflow-y-auto">
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {loadingJuris ? (
                 <div className="p-4 space-y-2">
-                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
-              ) : jurisFiltrados.length === 0 ? (
+              ) : jurisProximos.length === 0 ? (
                 <div className="p-6 text-center">
                   <Gavel className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
                   <p className="text-sm text-zinc-500">Nenhum júri agendado</p>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    {filtroDefensorJuri !== "todos" ? "Tente limpar o filtro" : ""}
+                  </p>
                 </div>
               ) : (
-                jurisFiltrados.slice(0, 5).map((juri: any) => {
+                jurisProximos.map((juri: any) => {
                   const dataSessao = juri.dataSessao ? new Date(juri.dataSessao) : null;
                   const diasRestantes = dataSessao ? differenceInDays(dataSessao, new Date()) : null;
                   
                   return (
                     <Link href={`/admin/juri/${juri.id}`} key={juri.id}>
-                      <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                        <div className="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex flex-col items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      <div className="flex items-center gap-3 px-3 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                        <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
+                          diasRestantes !== null && diasRestantes <= 3 
+                            ? "bg-rose-100 dark:bg-rose-900/30" 
+                            : diasRestantes !== null && diasRestantes <= 7
+                              ? "bg-amber-100 dark:bg-amber-900/30"
+                              : "bg-violet-100 dark:bg-violet-900/30"
+                        }`}>
+                          <span className={`text-sm font-bold ${
+                            diasRestantes !== null && diasRestantes <= 3 
+                              ? "text-rose-700 dark:text-rose-400" 
+                              : diasRestantes !== null && diasRestantes <= 7
+                                ? "text-amber-700 dark:text-amber-400"
+                                : "text-violet-700 dark:text-violet-400"
+                          }`}>
                             {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
                           </span>
-                          <span className="text-[9px] text-zinc-400 uppercase">
+                          <span className="text-[9px] text-zinc-500 uppercase">
                             {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : ""}
                           </span>
                         </div>
@@ -786,15 +935,23 @@ export default function DashboardJuriPage() {
                           <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                             {juri.assistidoNome || "Réu"}
                           </p>
-                          <p className="text-[11px] text-zinc-400">{juri.horario || "Horário a definir"}</p>
+                          <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                            <span>{juri.horario || "Horário a definir"}</span>
+                            {juri.defensorNome && (
+                              <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
+                                {juri.defensorNome}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        {diasRestantes !== null && diasRestantes >= 0 && (
-                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                            diasRestantes <= 3 ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" :
+                        {diasRestantes !== null && (
+                          <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
+                            diasRestantes <= 0 ? "bg-rose-500 text-white" :
+                            diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
                             diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
                             "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
                           }`}>
-                            {diasRestantes === 0 ? "Hoje" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes}d`}
+                            {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
                           </span>
                         )}
                       </div>
@@ -805,29 +962,94 @@ export default function DashboardJuriPage() {
             </div>
           </Card>
 
-          {/* AUDIÊNCIAS DA SEMANA */}
+          {/* AUDIÊNCIAS DA SEMANA / PRÓXIMAS */}
           <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
             <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-zinc-500" />
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Audiências da Semana</h3>
+                  <CalendarDays className="w-4 h-4 text-blue-500" />
+                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                    {mostrandoAlemDaSemana ? "Próximas Audiências" : "Audiências da Semana"}
+                  </h3>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium">
+                    {audienciasExibir.length}
+                  </span>
                 </div>
-                <Link href="/admin/audiencias">
+                <Link href="/admin/agenda">
                   <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-500 hover:text-emerald-600">
-                    Ver todas <ArrowRight className="w-3 h-3 ml-1" />
+                    Ver agenda <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[280px] overflow-y-auto">
-              {/* Placeholder para audiências - você pode conectar com dados reais depois */}
-              <div className="p-6 text-center">
-                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
-                <p className="text-sm text-zinc-500">Nenhuma audiência esta semana</p>
-                <p className="text-xs text-zinc-400 mt-1">As audiências aparecerão aqui</p>
-              </div>
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[300px] overflow-y-auto">
+              {loadingAudiencias ? (
+                <div className="p-4 space-y-2">
+                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+                </div>
+              ) : audienciasExibir.length === 0 ? (
+                <div className="p-6 text-center">
+                  <CalendarDays className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+                  <p className="text-sm text-zinc-500">Nenhuma audiência agendada</p>
+                  <p className="text-xs text-zinc-400 mt-1">As audiências aparecerão aqui</p>
+                </div>
+              ) : (
+                audienciasExibir.map((aud: any, index: number) => {
+                  const dataAud = aud.data ? parseISO(aud.data) : null;
+                  const isHoje = dataAud && isToday(dataAud);
+                  const isAmanha = dataAud && isTomorrow(dataAud);
+                  const estaSemana = dataAud && isThisWeek(dataAud, { weekStartsOn: 0 });
+                  
+                  // Agrupar visualmente por data
+                  const dataAnterior = index > 0 && audienciasExibir[index - 1].data 
+                    ? parseISO(audienciasExibir[index - 1].data) : null;
+                  const mostrarSeparadorData = !dataAnterior || 
+                    (dataAud && format(dataAud, "yyyy-MM-dd") !== format(dataAnterior, "yyyy-MM-dd"));
+
+                  return (
+                    <div key={aud.id}>
+                      {/* Separador de data */}
+                      {mostrarSeparadorData && dataAud && (
+                        <div className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/50">
+                          <span className={`text-[10px] font-medium uppercase tracking-wide ${
+                            isHoje ? "text-emerald-600 dark:text-emerald-400" :
+                            isAmanha ? "text-amber-600 dark:text-amber-400" :
+                            "text-zinc-500"
+                          }`}>
+                            {isHoje ? "Hoje" : 
+                             isAmanha ? "Amanhã" : 
+                             estaSemana ? format(dataAud, "EEEE", { locale: ptBR }) :
+                             format(dataAud, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                          </span>
+                        </div>
+                      )}
+                      <Link href={`/admin/audiencias/${aud.id}`}>
+                        <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                          <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${
+                            isHoje ? "bg-emerald-500" :
+                            isAmanha ? "bg-amber-500" :
+                            "bg-blue-400"
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                              {aud.assistidoNome || aud.titulo || "Audiência"}
+                            </p>
+                            <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                              <span>{aud.hora || aud.horario || "—"}</span>
+                              <span>•</span>
+                              <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
+                            </div>
+                          </div>
+                          {aud.reuPreso && (
+                            <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                          )}
+                        </div>
+                      </Link>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </Card>
         </div>
@@ -952,6 +1174,186 @@ export default function DashboardJuriPage() {
               </div>
             )}
           </div>
+        </Card>
+      </div>
+
+      {/* INFOGRÁFICOS PARA DEFENSOR */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        
+        {/* PANORAMA DE RÉUS */}
+        <Card className="group/card relative p-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-9 h-9 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center border border-rose-200 dark:border-rose-700">
+              <Users className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Panorama de Réus</h3>
+              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Situação prisional dos assistidos</p>
+            </div>
+          </div>
+
+          {panoramaReus.total === 0 ? (
+            <div className="text-center py-6">
+              <Users className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+              <p className="text-sm text-zinc-500">Nenhum assistido cadastrado</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Barra visual de proporção */}
+              <div className="relative h-10 rounded-lg overflow-hidden flex">
+                {panoramaReus.presos > 0 && (
+                  <div 
+                    className="h-full bg-gradient-to-b from-rose-500 to-rose-600 flex items-center justify-center transition-all"
+                    style={{ width: `${(panoramaReus.presos / panoramaReus.total) * 100}%` }}
+                  >
+                    {panoramaReus.presos >= 2 && (
+                      <span className="text-white text-xs font-bold">{panoramaReus.presos}</span>
+                    )}
+                  </div>
+                )}
+                {panoramaReus.monitorados > 0 && (
+                  <div 
+                    className="h-full bg-gradient-to-b from-amber-400 to-amber-500 flex items-center justify-center transition-all"
+                    style={{ width: `${(panoramaReus.monitorados / panoramaReus.total) * 100}%` }}
+                  >
+                    {panoramaReus.monitorados >= 2 && (
+                      <span className="text-white text-xs font-bold">{panoramaReus.monitorados}</span>
+                    )}
+                  </div>
+                )}
+                {panoramaReus.soltos > 0 && (
+                  <div 
+                    className="h-full bg-gradient-to-b from-emerald-400 to-emerald-500 flex items-center justify-center transition-all"
+                    style={{ width: `${(panoramaReus.soltos / panoramaReus.total) * 100}%` }}
+                  >
+                    {panoramaReus.soltos >= 2 && (
+                      <span className="text-white text-xs font-bold">{panoramaReus.soltos}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Legenda com valores */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50 dark:border-rose-800/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Lock className="w-3 h-3 text-rose-600" />
+                    <span className="text-[10px] font-medium text-rose-700 dark:text-rose-400 uppercase">Presos</span>
+                  </div>
+                  <p className="text-xl font-bold text-rose-700 dark:text-rose-400">{panoramaReus.presos}</p>
+                  <p className="text-[10px] text-rose-600/70 dark:text-rose-400/70">
+                    {panoramaReus.total > 0 ? ((panoramaReus.presos / panoramaReus.total) * 100).toFixed(0) : 0}%
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-3 h-3 text-amber-600" />
+                    <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400 uppercase">Monitor.</span>
+                  </div>
+                  <p className="text-xl font-bold text-amber-700 dark:text-amber-400">{panoramaReus.monitorados}</p>
+                  <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70">
+                    {panoramaReus.total > 0 ? ((panoramaReus.monitorados / panoramaReus.total) * 100).toFixed(0) : 0}%
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200/50 dark:border-emerald-800/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400 uppercase">Soltos</span>
+                  </div>
+                  <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{panoramaReus.soltos}</p>
+                  <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">
+                    {panoramaReus.total > 0 ? ((panoramaReus.soltos / panoramaReus.total) * 100).toFixed(0) : 0}%
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* CARGA DE TRABALHO */}
+        <Card className="group/card relative p-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center border border-blue-200 dark:border-blue-700">
+              <ListTodo className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Carga de Trabalho</h3>
+              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Demandas e prazos</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {/* Prazos Vencidos */}
+            <div className={`p-3 rounded-lg border ${
+              cargaTrabalho.prazosVencidos > 0 
+                ? "bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700" 
+                : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className={`text-[10px] font-medium uppercase ${
+                  cargaTrabalho.prazosVencidos > 0 ? "text-rose-600" : "text-zinc-500"
+                }`}>Prazos Vencidos</span>
+                {cargaTrabalho.prazosVencidos > 0 && (
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
+                )}
+              </div>
+              <p className={`text-2xl font-bold ${
+                cargaTrabalho.prazosVencidos > 0 ? "text-rose-600" : "text-zinc-700 dark:text-zinc-300"
+              }`}>{cargaTrabalho.prazosVencidos}</p>
+              <p className="text-[10px] text-zinc-400">demandas atrasadas</p>
+            </div>
+
+            {/* Prazos Esta Semana */}
+            <div className={`p-3 rounded-lg border ${
+              cargaTrabalho.prazosEstaSemana > 0 
+                ? "bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700" 
+                : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className={`text-[10px] font-medium uppercase ${
+                  cargaTrabalho.prazosEstaSemana > 0 ? "text-amber-600" : "text-zinc-500"
+                }`}>Esta Semana</span>
+                <Calendar className="w-3.5 h-3.5 text-amber-500" />
+              </div>
+              <p className={`text-2xl font-bold ${
+                cargaTrabalho.prazosEstaSemana > 0 ? "text-amber-600" : "text-zinc-700 dark:text-zinc-300"
+              }`}>{cargaTrabalho.prazosEstaSemana}</p>
+              <p className="text-[10px] text-zinc-400">prazos vencendo</p>
+            </div>
+
+            {/* Em Andamento */}
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+              <span className="text-[10px] font-medium text-blue-600 uppercase">Em Andamento</span>
+              <p className="text-2xl font-bold text-blue-600">{cargaTrabalho.emAndamento}</p>
+              <p className="text-[10px] text-zinc-400">demandas ativas</p>
+            </div>
+
+            {/* Concluídas Este Mês */}
+            <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-medium text-emerald-600 uppercase">Concluídas</span>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              </div>
+              <p className="text-2xl font-bold text-emerald-600">{cargaTrabalho.concluidasMes}</p>
+              <p className="text-[10px] text-zinc-400">este mês</p>
+            </div>
+          </div>
+
+          {/* Barra de progresso geral */}
+          {totalDemandas > 0 && (
+            <div className="mt-4 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-medium text-zinc-500 uppercase">Taxa de Conclusão Mensal</span>
+                <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                  {totalDemandas > 0 ? ((cargaTrabalho.concluidasMes / totalDemandas) * 100).toFixed(0) : 0}%
+                </span>
+              </div>
+              <Progress 
+                value={(cargaTrabalho.concluidasMes / totalDemandas) * 100} 
+                className="h-2"
+              />
+            </div>
+          )}
         </Card>
       </div>
       </div>
