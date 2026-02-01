@@ -31,9 +31,12 @@ export function LoginForm() {
 
       toast.success("Login realizado com sucesso!");
       
-      router.push("/admin");
+      // Aguardar um momento para garantir que o cookie foi setado
+      await new Promise(resolve => setTimeout(resolve, 100));
       
-      router.refresh();
+      // Usar window.location para forçar reload completo em vez de navegação client-side
+      // Isso garante que o servidor veja o cookie na próxima requisição
+      window.location.href = "/admin";
     } catch {
       toast.error("Erro ao fazer login. Tente novamente.");
     } finally {
