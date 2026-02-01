@@ -418,7 +418,7 @@ function SelecionarJuradoModal({
 // COMPONENTE PRINCIPAL
 // ============================================
 export default function PlenarioCockpitPage() {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [faseAtual, setFaseAtual] = useState(phases[0].id);
   const [isRunning, setIsRunning] = useState(false);
   const [totalTime, setTotalTime] = useState(phases[0].minutes * 60);

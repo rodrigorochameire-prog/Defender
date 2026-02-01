@@ -25,6 +25,7 @@ import {
   Layers,
   Settings2,
 } from "lucide-react";
+import { useAssignment, Assignment } from "@/contexts/assignment-context";
 
 // ==========================================
 // TIPOS
@@ -74,7 +75,7 @@ const WORKSPACES_ESPECIAIS = [
 // STORAGE KEYS
 // ==========================================
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   defensor: "defender_context_defensor",
   atribuicao: "defender_context_atribuicao",
   workspace: "defender_context_workspace",
@@ -82,8 +83,59 @@ const STORAGE_KEYS = {
 };
 
 // ==========================================
+// HOOK PARA ACESSAR FILTRO DE ATRIBUIÇÃO
+// ==========================================
+
+// Evento customizado para notificar mudanças de atribuição na mesma aba
+const ATRIBUICAO_CHANGE_EVENT = "atribuicao-filtro-change";
+
+export function dispatchAtribuicaoChange(atribuicao: AtribuicaoFiltro) {
+  window.dispatchEvent(new CustomEvent(ATRIBUICAO_CHANGE_EVENT, { detail: atribuicao }));
+}
+
+export function useAtribuicaoFiltro() {
+  const [atribuicao, setAtribuicao] = useState<AtribuicaoFiltro>("TODOS");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem(STORAGE_KEYS.atribuicao) as AtribuicaoFiltro;
+    if (saved) setAtribuicao(saved);
+
+    // Escutar mudanças no localStorage (de outras abas)
+    const handleStorage = () => {
+      const updated = localStorage.getItem(STORAGE_KEYS.atribuicao) as AtribuicaoFiltro;
+      if (updated) setAtribuicao(updated);
+    };
+
+    // Escutar evento customizado (da mesma aba)
+    const handleCustomEvent = (e: CustomEvent<AtribuicaoFiltro>) => {
+      setAtribuicao(e.detail);
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener(ATRIBUICAO_CHANGE_EVENT, handleCustomEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(ATRIBUICAO_CHANGE_EVENT, handleCustomEvent as EventListener);
+    };
+  }, []);
+
+  return { atribuicao, isAllSelected: atribuicao === "TODOS", mounted };
+}
+
+// ==========================================
 // COMPONENTE PRINCIPAL - VERSÃO COMPACTA PREMIUM
 // ==========================================
+
+// Mapeamento de AtribuicaoFiltro para Assignment
+const ATRIBUICAO_TO_ASSIGNMENT: Record<AtribuicaoFiltro, Assignment | null> = {
+  TODOS: null, // Quando "Todas" está selecionado, não usar nenhuma assignment específica
+  JURI: "JURI_CAMACARI",
+  VVD: "VVD_CAMACARI",
+  EP: "EXECUCAO_PENAL",
+};
 
 export function ContextControl({ collapsed = false }: ContextControlProps) {
   const [mounted, setMounted] = useState(false);
@@ -92,6 +144,8 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
   const [atribuicao, setAtribuicao] = useState<AtribuicaoFiltro>("TODOS");
   const [workspace, setWorkspace] = useState<WorkspaceEspecial>(null);
   const [visaoIntegrada, setVisaoIntegrada] = useState(false);
+  
+  const { setAssignment } = useAssignment();
 
   // Carregar do localStorage
   useEffect(() => {
@@ -102,10 +156,17 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
     const savedVisao = localStorage.getItem(STORAGE_KEYS.visaoIntegrada);
 
     if (savedDefensor) setDefensor(savedDefensor);
-    if (savedAtribuicao) setAtribuicao(savedAtribuicao);
+    if (savedAtribuicao) {
+      setAtribuicao(savedAtribuicao);
+      // Sincronizar com AssignmentContext
+      const assignment = ATRIBUICAO_TO_ASSIGNMENT[savedAtribuicao];
+      if (assignment) {
+        setAssignment(assignment);
+      }
+    }
     if (savedWorkspace && savedWorkspace !== "null") setWorkspace(savedWorkspace);
     if (savedVisao) setVisaoIntegrada(savedVisao === "true");
-  }, []);
+  }, [setAssignment]);
 
   // Salvar no localStorage
   const updateDefensor = (value: Defensor) => {
@@ -116,6 +177,17 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
   const updateAtribuicao = (value: AtribuicaoFiltro) => {
     setAtribuicao(value);
     localStorage.setItem(STORAGE_KEYS.atribuicao, value);
+    
+    // Notificar a sidebar sobre a mudança de atribuição
+    dispatchAtribuicaoChange(value);
+    
+    // Sincronizar com AssignmentContext para mostrar/ocultar módulos específicos
+    const assignment = ATRIBUICAO_TO_ASSIGNMENT[value];
+    if (assignment) {
+      setAssignment(assignment);
+    }
+    // Nota: Quando TODOS está selecionado, não chamamos setAssignment
+    // O módulo específico continuará com o último valor, mas tratamos isso na sidebar
   };
 
   const updateWorkspace = (value: WorkspaceEspecial) => {

@@ -32,6 +32,7 @@ import {
   useAssignment, CONTEXT_MENU_ITEMS, UTILITIES_MENU,
   type MenuSection, type AssignmentMenuItem,
 } from "@/contexts/assignment-context";
+import { useAtribuicaoFiltro } from "@/components/layout/context-control";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -217,6 +218,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   const pathname = usePathname();
   const { state, openMobile, setOpenMobile } = useSidebar();
   const { config, modules, isLoading } = useAssignment();
+  const { isAllSelected } = useAtribuicaoFiltro();
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
   
@@ -226,6 +228,9 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   useEffect(() => {
     setMounted(true);
   }, []);
+  
+  // Quando "Todas" está selecionado no filtro, não mostrar módulos específicos
+  const showSpecificModules = !isAllSelected;
 
   const handleNavigate = () => { 
     if (isMobile && openMobile) setOpenMobile(false); 
@@ -286,8 +291,8 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
             </SidebarMenu>
           </div>
 
-          {/* Módulos Específicos */}
-          {mounted && !isLoading && modules.length > 0 && (
+          {/* Módulos Específicos - Só mostra quando uma atribuição específica está selecionada */}
+          {mounted && !isLoading && modules.length > 0 && showSpecificModules && (
             <div>
               <SidebarMenu className="space-y-1">
                 {!isCollapsed && (
