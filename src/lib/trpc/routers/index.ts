@@ -25,6 +25,7 @@ import { whatsappRouter } from "./whatsapp";
 import { auditLogsRouter } from "./auditLogs";
 import { delegacaoRouter } from "./delegacao";
 import { activityLogsRouter } from "./activity-logs";
+import { juradosRouter } from "./jurados";
 
 
 export const appRouter = router({
@@ -63,6 +64,11 @@ export const appRouter = router({
   // ==========================================
   delegacao: delegacaoRouter,
   activityLogs: activityLogsRouter,
+  
+  // ==========================================
+  // JÚRI - CORPO DE JURADOS
+  // ==========================================
+  jurados: juradosRouter,
 });
 
 export type AppRouter = typeof appRouter;

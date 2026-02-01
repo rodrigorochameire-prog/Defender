@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import Link from "next/link";
+import { trpc } from "@/lib/trpc/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -804,8 +805,40 @@ export default function PlenarioCockpitPage() {
   const [showRecusados, setShowRecusados] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Estado dos jurados
+  // Buscar jurados do banco de dados
+  const { data: juradosDB, isLoading: isLoadingJurados } = trpc.jurados.list.useQuery({
+    ativo: true,
+  });
+
+  // Estado dos jurados - usa banco se disponível, senão usa mocks
   const [corpoAtual, setCorpoAtual] = useState<JuradoCorpo[]>(corpoJurados);
+  
+  // Atualizar corpo de jurados quando dados do banco chegarem
+  useEffect(() => {
+    if (juradosDB && juradosDB.length > 0) {
+      const juradosMapeados: JuradoCorpo[] = juradosDB.map((j: any) => ({
+        id: j.id,
+        nome: j.nome,
+        genero: (j.genero === "M" || j.genero === "F") ? j.genero : "M",
+        profissao: j.profissao || undefined,
+        idade: j.idade || undefined,
+        bairro: j.bairro || undefined,
+        taxaAbsolvicao: j.taxaAbsolvicao || 50,
+        perfilDominante: j.perfilTendencia || j.perfilPsicologico || undefined,
+        participacoes: j.participacoes || 0,
+        ultimaParticipacao: j.updatedAt ? new Date(j.updatedAt).toISOString().split("T")[0] : undefined,
+        recusadoPor: null,
+        estadoCivil: undefined,
+        escolaridade: j.escolaridade || undefined,
+        religiao: undefined,
+        observacoesPerfil: j.perfilPsicologico || undefined,
+        comportamentoNotado: undefined,
+        ultimoVoto: undefined,
+        notasComportamentais: j.historicoNotas ? [j.historicoNotas] : undefined,
+      }));
+      setCorpoAtual(juradosMapeados);
+    }
+  }, [juradosDB]);
   const [conselhoSentenca, setConselhoSentenca] = useState<(JuradoSorteado | null)[]>([
     null, null, null, null, null, null, null
   ]);
