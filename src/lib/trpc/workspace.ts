@@ -2,13 +2,22 @@ import { TRPCError } from "@trpc/server";
 import type { User } from "@/lib/db/schema";
 
 /**
- * Sistema de Workspace Simplificado
+ * Sistema de Isolamento de Dados por Defensor
  * 
- * O novo modelo funciona assim:
- * - Demandas: individuais (filtradas por quem criou/é responsável)
- * - Assistidos, Processos, Casos: compartilhados (todos têm acesso)
- * - Audiências/Júris: filtrados pela atribuição do mês do defensor
- * - Workspace: usado apenas para substituições (Criminal/Não Penal)
+ * Arquitetura:
+ * - Demandas: PRIVADAS por defensor (cada defensor tem seu "banco")
+ *   - Defensor vê suas demandas
+ *   - Estagiário vê demandas do seu supervisor (defensor vinculado)
+ *   - Servidor vê demandas de todos os defensores (administrativa)
+ *   - Admin vê tudo
+ * - Assistidos, Processos, Casos: COMPARTILHADOS (todos têm acesso com filtro opcional)
+ * - Audiências/Júris: filtrados pela atribuição do defensor
+ * 
+ * Defensores:
+ * - Dr. Rodrigo (id=1): compartilha com Emilly (supervisorId=1)
+ * - Dra. Juliane (id=2): compartilha com Taíssa (supervisorId=2)
+ * - Dr. Danilo (id=X): pode ter estagiário vinculado
+ * - Dra. Cristiane (id=Y): pode ter estagiário vinculado
  */
 
 export function getWorkspaceScope(user: User) {
@@ -20,6 +29,67 @@ export function getWorkspaceScope(user: User) {
     workspaceId: user.workspaceId ?? null,
     userId: user.id,
   };
+}
+
+/**
+ * Retorna o ID do defensor responsável pelas demandas
+ * - Para defensores: retorna o próprio ID
+ * - Para estagiários: retorna o ID do supervisor (defensor vinculado)
+ * - Para servidores: retorna null (podem ver de vários defensores)
+ * - Para admin: retorna null (vê tudo)
+ */
+export function getDefensorResponsavel(user: User): number | null {
+  const isAdmin = user.role === "admin";
+  const isServidor = user.role === "servidor";
+  const isEstagiario = user.role === "estagiario";
+  const isDefensor = user.role === "defensor";
+
+  // Admin e servidor podem ver demandas de qualquer defensor
+  if (isAdmin || isServidor) {
+    return null;
+  }
+
+  // Estagiário vê demandas do seu supervisor (defensor vinculado)
+  if (isEstagiario) {
+    return (user as any).supervisorId ?? user.id;
+  }
+
+  // Defensor vê suas próprias demandas
+  if (isDefensor) {
+    return user.id;
+  }
+
+  // Fallback: usa o próprio ID
+  return user.id;
+}
+
+/**
+ * Retorna os IDs de defensores que o usuário pode visualizar
+ * Útil para queries que precisam mostrar demandas de múltiplos defensores
+ */
+export function getDefensoresVisiveis(user: User): number[] | "all" {
+  const isAdmin = user.role === "admin";
+  const isServidor = user.role === "servidor";
+  const isEstagiario = user.role === "estagiario";
+  const isDefensor = user.role === "defensor";
+
+  // Admin e servidor veem todos
+  if (isAdmin || isServidor) {
+    return "all";
+  }
+
+  // Estagiário vê apenas do seu supervisor
+  if (isEstagiario) {
+    const supervisorId = (user as any).supervisorId;
+    return supervisorId ? [supervisorId] : [user.id];
+  }
+
+  // Defensor vê apenas as suas
+  if (isDefensor) {
+    return [user.id];
+  }
+
+  return [user.id];
 }
 
 export function resolveWorkspaceId(user: User, workspaceId?: number | null) {

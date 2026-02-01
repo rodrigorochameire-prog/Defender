@@ -1,14 +1,18 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { demandas, processos, assistidos } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql, lte, gte, and } from "drizzle-orm";
+import { demandas, processos, assistidos, users } from "@/lib/db/schema";
+import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { getWorkspaceScope } from "../workspace";
+import { getWorkspaceScope, getDefensorResponsavel, getDefensoresVisiveis } from "../workspace";
 
 export const demandasRouter = router({
   // Listar todas as demandas
-  // Demandas são INDIVIDUAIS - cada defensor vê apenas as suas
+  // ARQUITETURA: Cada defensor tem seu "banco de dados" de demandas
+  // - Defensor: vê apenas suas demandas
+  // - Estagiário: vê demandas do seu supervisor (defensor vinculado)
+  // - Servidor: pode ver de múltiplos defensores (administrativa)
+  // - Admin: vê tudo
   list: protectedProcedure
     .input(
       z.object({
@@ -16,16 +20,20 @@ export const demandasRouter = router({
         status: z.string().optional(),
         area: z.string().optional(),
         reuPreso: z.boolean().optional(),
-        defensorId: z.number().optional(), // ID do defensor para filtrar
+        defensorId: z.number().optional(), // Filtro explícito por defensor
         limit: z.number().min(1).max(100).default(50),
         offset: z.number().min(0).default(0),
       }).optional()
     )
     .query(async ({ ctx, input }) => {
       const { search, status, area, reuPreso, defensorId, limit = 50, offset = 0 } = input || {};
-      const { isAdmin, userId } = getWorkspaceScope(ctx.user);
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+      const defensorResponsavel = getDefensorResponsavel(ctx.user);
       
       let conditions = [];
+      
+      // Excluir demandas deletadas
+      conditions.push(isNull(demandas.deletedAt));
       
       if (search) {
         conditions.push(
@@ -41,21 +49,26 @@ export const demandasRouter = router({
         conditions.push(eq(demandas.reuPreso, reuPreso));
       }
 
-      // PRIVACIDADE DE DEMANDAS: Cada defensor vê apenas suas demandas
-      // Exceções:
-      // 1. Admin vê tudo
-      // 2. Defensor cobrindo outro durante afastamento
-      // 3. Supervisor vê demandas dos supervisionados
-      
+      // ISOLAMENTO POR DEFENSOR
+      // Cada defensor tem seu próprio universo de demandas
       if (defensorId) {
-        // Filtro explícito por defensor
+        // Filtro explícito solicitado - verificar se tem acesso
+        if (defensoresVisiveis !== "all" && !defensoresVisiveis.includes(defensorId)) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Você não tem acesso às demandas deste defensor",
+          });
+        }
         conditions.push(eq(demandas.defensorId, defensorId));
-      } else if (!isAdmin) {
-        // Mostra apenas as do usuário logado (privacidade padrão)
-        // TODO: Adicionar lógica de afastamentos quando implementada no banco
-        conditions.push(eq(demandas.defensorId, userId));
+      } else if (defensoresVisiveis !== "all") {
+        // Aplica filtro automático baseado no papel do usuário
+        if (defensoresVisiveis.length === 1) {
+          conditions.push(eq(demandas.defensorId, defensoresVisiveis[0]));
+        } else if (defensoresVisiveis.length > 1) {
+          conditions.push(inArray(demandas.defensorId, defensoresVisiveis));
+        }
       }
-      // Admin vê todas sem filtro
+      // Se defensoresVisiveis === "all", não filtra (admin/servidor)
       
       const result = await db
         .select({
@@ -97,11 +110,16 @@ export const demandasRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
-      const conditions = [eq(demandas.id, input.id)];
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+      const conditions = [eq(demandas.id, input.id), isNull(demandas.deletedAt)];
 
-      if (!isAdmin) {
-        conditions.push(eq(demandas.workspaceId, workspaceId));
+      // Aplicar filtro de acesso
+      if (defensoresVisiveis !== "all") {
+        if (defensoresVisiveis.length === 1) {
+          conditions.push(eq(demandas.defensorId, defensoresVisiveis[0]));
+        } else if (defensoresVisiveis.length > 1) {
+          conditions.push(inArray(demandas.defensorId, defensoresVisiveis));
+        }
       }
 
       const [demanda] = await db
@@ -113,6 +131,7 @@ export const demandasRouter = router({
     }),
 
   // Listar prazos urgentes (próximos 7 dias)
+  // Respeita o isolamento por defensor
   prazosUrgentes: protectedProcedure
     .input(
       z.object({
@@ -121,10 +140,31 @@ export const demandasRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const { dias = 7 } = input || {};
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
       const hoje = new Date();
       const limite = new Date();
       limite.setDate(limite.getDate() + dias);
+      
+      // Condições base
+      const baseConditions = [
+        isNull(demandas.deletedAt),
+        lte(demandas.prazo, limite.toISOString().split('T')[0]),
+        or(
+          eq(demandas.status, "2_ATENDER"),
+          eq(demandas.status, "4_MONITORAR"),
+          eq(demandas.status, "5_FILA"),
+          eq(demandas.status, "URGENTE")
+        ),
+      ];
+      
+      // Aplicar filtro de defensor
+      if (defensoresVisiveis !== "all") {
+        if (defensoresVisiveis.length === 1) {
+          baseConditions.push(eq(demandas.defensorId, defensoresVisiveis[0]));
+        } else if (defensoresVisiveis.length > 1) {
+          baseConditions.push(inArray(demandas.defensorId, defensoresVisiveis));
+        }
+      }
       
       const result = await db
         .select({
@@ -134,6 +174,7 @@ export const demandasRouter = router({
           status: demandas.status,
           prioridade: demandas.prioridade,
           reuPreso: demandas.reuPreso,
+          defensorId: demandas.defensorId,
           processo: {
             id: processos.id,
             numeroAutos: processos.numeroAutos,
@@ -148,24 +189,14 @@ export const demandasRouter = router({
         .from(demandas)
         .leftJoin(processos, eq(demandas.processoId, processos.id))
         .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
-        .where(
-          and(
-            lte(demandas.prazo, limite.toISOString().split('T')[0]),
-            or(
-              eq(demandas.status, "2_ATENDER"),
-              eq(demandas.status, "4_MONITORAR"),
-              eq(demandas.status, "5_FILA"),
-              eq(demandas.status, "URGENTE")
-            ),
-            ...(isAdmin ? [] : [eq(demandas.workspaceId, workspaceId)])
-          )
-        )
+        .where(and(...baseConditions))
         .orderBy(demandas.prazo);
       
       return result;
     }),
 
   // Criar nova demanda
+  // A demanda é criada no "banco" do defensor logado (ou do supervisor, se estagiário)
   create: protectedProcedure
     .input(
       z.object({
@@ -184,27 +215,15 @@ export const demandasRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const defensorId = getDefensorResponsavel(ctx.user);
+      const { workspaceId } = getWorkspaceScope(ctx.user);
+      
       const processo = await db.query.processos.findFirst({
         where: eq(processos.id, input.processoId),
       });
 
       if (!processo) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
-      }
-
-      if (!processo.workspaceId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Processo sem workspace atribuído.",
-        });
-      }
-
-      if (!isAdmin && processo.workspaceId !== workspaceId) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Você não tem acesso ao workspace deste processo.",
-        });
       }
 
       const assistido = await db.query.assistidos.findFirst({
@@ -215,20 +234,15 @@ export const demandasRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
       }
 
-      if (!assistido.workspaceId || assistido.workspaceId !== processo.workspaceId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Assistido com workspace divergente do processo.",
-        });
-      }
-
+      // Demanda é criada vinculada ao defensor responsável
       const [novaDemanda] = await db
         .insert(demandas)
         .values({
           ...input,
           prazo: input.prazo || null,
           dataEntrada: input.dataEntrada || null,
-          workspaceId: processo.workspaceId,
+          defensorId: defensorId || ctx.user.id, // Defensor responsável pela demanda
+          workspaceId: workspaceId, // Workspace opcional para compatibilidade
         })
         .returning();
       
@@ -236,6 +250,7 @@ export const demandasRouter = router({
     }),
 
   // Atualizar demanda
+  // Só pode atualizar demandas do seu "banco"
   update: protectedProcedure
     .input(
       z.object({
@@ -253,7 +268,7 @@ export const demandasRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
       
       const updateData: any = {
         ...data,
@@ -265,42 +280,82 @@ export const demandasRouter = router({
         updateData.concluidoEm = new Date();
       }
       
+      // Construir condições de acesso
+      let whereCondition;
+      if (defensoresVisiveis === "all") {
+        whereCondition = eq(demandas.id, id);
+      } else if (defensoresVisiveis.length === 1) {
+        whereCondition = and(eq(demandas.id, id), eq(demandas.defensorId, defensoresVisiveis[0]));
+      } else {
+        whereCondition = and(eq(demandas.id, id), inArray(demandas.defensorId, defensoresVisiveis));
+      }
+      
       const [atualizado] = await db
         .update(demandas)
         .set(updateData)
-        .where(
-          isAdmin
-            ? eq(demandas.id, id)
-            : and(eq(demandas.id, id), eq(demandas.workspaceId, workspaceId))
-        )
+        .where(whereCondition)
         .returning();
+      
+      if (!atualizado) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Demanda não encontrada ou você não tem permissão para editá-la",
+        });
+      }
       
       return atualizado;
     }),
 
   // Excluir demanda (soft delete)
+  // Só pode excluir demandas do seu "banco"
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+
+      // Construir condições de acesso
+      let whereCondition;
+      if (defensoresVisiveis === "all") {
+        whereCondition = eq(demandas.id, input.id);
+      } else if (defensoresVisiveis.length === 1) {
+        whereCondition = and(eq(demandas.id, input.id), eq(demandas.defensorId, defensoresVisiveis[0]));
+      } else {
+        whereCondition = and(eq(demandas.id, input.id), inArray(demandas.defensorId, defensoresVisiveis));
+      }
 
       const [excluido] = await db
         .update(demandas)
         .set({ deletedAt: new Date() })
-        .where(
-          isAdmin
-            ? eq(demandas.id, input.id)
-            : and(eq(demandas.id, input.id), eq(demandas.workspaceId, workspaceId))
-        )
+        .where(whereCondition)
         .returning();
+      
+      if (!excluido) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Demanda não encontrada ou você não tem permissão para excluí-la",
+        });
+      }
       
       return excluido;
     }),
 
   // Estatísticas
+  // Mostra estatísticas apenas das demandas que o usuário tem acesso
   stats: protectedProcedure.query(async ({ ctx }) => {
-    const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
-    const baseCondition = isAdmin ? undefined : eq(demandas.workspaceId, workspaceId);
+    const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+    
+    // Construir condição base de acesso
+    let baseConditions: any[] = [isNull(demandas.deletedAt)];
+    
+    if (defensoresVisiveis !== "all") {
+      if (defensoresVisiveis.length === 1) {
+        baseConditions.push(eq(demandas.defensorId, defensoresVisiveis[0]));
+      } else if (defensoresVisiveis.length > 1) {
+        baseConditions.push(inArray(demandas.defensorId, defensoresVisiveis));
+      }
+    }
+    
+    const baseCondition = and(...baseConditions);
 
     const total = await db
       .select({ count: sql<number>`count(*)` })
@@ -310,38 +365,22 @@ export const demandasRouter = router({
     const atender = await db
       .select({ count: sql<number>`count(*)` })
       .from(demandas)
-      .where(
-        baseCondition
-          ? and(baseCondition, eq(demandas.status, "2_ATENDER"))
-          : eq(demandas.status, "2_ATENDER")
-      );
+      .where(and(baseCondition, eq(demandas.status, "2_ATENDER")));
     
     const fila = await db
       .select({ count: sql<number>`count(*)` })
       .from(demandas)
-      .where(
-        baseCondition
-          ? and(baseCondition, eq(demandas.status, "5_FILA"))
-          : eq(demandas.status, "5_FILA")
-      );
+      .where(and(baseCondition, eq(demandas.status, "5_FILA")));
     
     const protocolados = await db
       .select({ count: sql<number>`count(*)` })
       .from(demandas)
-      .where(
-        baseCondition
-          ? and(baseCondition, eq(demandas.status, "7_PROTOCOLADO"))
-          : eq(demandas.status, "7_PROTOCOLADO")
-      );
+      .where(and(baseCondition, eq(demandas.status, "7_PROTOCOLADO")));
     
     const reuPreso = await db
       .select({ count: sql<number>`count(*)` })
       .from(demandas)
-      .where(
-        baseCondition
-          ? and(baseCondition, eq(demandas.reuPreso, true))
-          : eq(demandas.reuPreso, true)
-      );
+      .where(and(baseCondition, eq(demandas.reuPreso, true)));
     
     return {
       total: Number(total[0]?.count || 0),
