@@ -372,100 +372,116 @@ export default function DrivePage() {
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <FolderOpen className="w-5 h-5 text-white dark:text-zinc-900" />
+      {/* Header - Padrão Processos */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <FolderOpen className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Drive</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {stats?.totalFiles || 0} arquivos • {stats?.totalFolders || 0} pastas
-              </p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Drive</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">• {stats?.totalFiles || 0} arquivos</span>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Link href="/admin/settings/drive">
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm"
-                className="h-9 w-9 p-0 border-zinc-200 dark:border-zinc-700 rounded-xl"
+                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+                title="Configurações"
               >
-                <Settings className="w-4 h-4" />
+                <Settings className="w-3.5 h-3.5" />
               </Button>
             </Link>
             <Button 
-              variant="outline" 
+              variant="ghost"
               size="sm"
-              className="h-9 px-4 border-zinc-200 dark:border-zinc-700 rounded-xl"
+              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
               onClick={() => currentFolderId && syncMutation.mutate({ folderId: currentFolderId })}
               disabled={syncMutation.isPending || !currentFolderId}
+              title="Sincronizar"
             >
               {syncMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <RefreshCw className="w-3.5 h-3.5" />
               )}
-              Sincronizar
             </Button>
+            <Link href="/admin/drive/upload">
+              <Button 
+                size="sm"
+                className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+              >
+                <Upload className="w-3.5 h-3.5 mr-1" />
+                Upload
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 md:p-6 space-y-6">
-        {/* Stats Cards - Padrão Defender */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:shadow-zinc-900/10 dark:hover:shadow-white/5 transition-all">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
-                <File className="w-5 h-5 text-white dark:text-zinc-900" />
+      <div className="p-4 md:p-6 space-y-4">
+        {/* Stats Cards - Padrão Demandas (Compacto) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Arquivos</p>
+                <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.totalFiles || 0}</p>
+                <p className="text-[10px] text-zinc-400">no total</p>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats?.totalFiles || 0}</p>
-                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Arquivos</p>
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+                <File className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/30">
-                <FolderOpen className="w-5 h-5 text-white" />
+          <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Pastas</p>
+                <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.totalFolders || 0}</p>
+                <p className="text-[10px] text-zinc-400">organizadas</p>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats?.totalFolders || 0}</p>
-                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Pastas</p>
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+                <FolderOpen className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center shadow-md shadow-blue-500/30">
-                <Link2 className="w-5 h-5 text-white" />
+          <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Sincronizadas</p>
+                <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.syncedFolders || 0}</p>
+                <p className="text-[10px] text-zinc-400">com Google Drive</p>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats?.syncedFolders || 0}</p>
-                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Sincronizadas</p>
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+                <Link2 className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="group relative p-5 bg-zinc-900 dark:bg-white border-zinc-800 dark:border-zinc-200 rounded-2xl hover:shadow-xl transition-all">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-md">
-                <CheckCircle2 className="w-5 h-5 text-zinc-900 dark:text-white" />
+          <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Pendentes</p>
+                <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.pendingSync || 0}</p>
+                <p className="text-[10px] text-zinc-400">a sincronizar</p>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-white dark:text-zinc-900 tracking-tighter">{stats?.pendingSync || 0}</p>
-                <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Pendentes</p>
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+                <CheckCircle2 className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Main Content */}

@@ -63,6 +63,7 @@ import {
   BarChart3,
   ListTodo,
   FolderOpen,
+  Download,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -323,42 +324,48 @@ export default function EquipePage() {
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <Users className="w-5 h-5 text-white dark:text-zinc-900" />
+      {/* Header - Padrão Processos */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Users className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Equipe</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {estatisticas.total} membros cadastrados
-              </p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Equipe</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">• {estatisticas.total} membros</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <div className="flex items-center gap-1">
+            <div className="relative mr-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
               <Input
-                placeholder="Buscar membro..."
+                placeholder="Buscar..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-[200px] h-9 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-xl"
+                className="pl-8 w-[140px] h-7 text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-md"
               />
             </div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+              title="Exportar"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </Button>
             {canManageTeam() && (
               <Button 
                 size="sm" 
-                className="h-9 px-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-xl font-medium shadow-md"
+                className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
                 onClick={() => {
                   resetForm();
                   setAddModalOpen(true);
                 }}
               >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Adicionar
+                <UserPlus className="w-3.5 h-3.5 mr-1" />
+                Novo
               </Button>
             )}
           </div>
@@ -368,55 +375,63 @@ export default function EquipePage() {
       {/* Content */}
       <div className="p-4 md:p-6 space-y-6">
 
-      {/* Stats Cards - Padrão Defender */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:shadow-zinc-900/10 dark:hover:shadow-white/5 transition-all">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
-              <Users className="w-5 h-5 text-white dark:text-zinc-900" />
+      {/* Stats Cards - Padrão Demandas (Compacto) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Total</p>
+              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.total}</p>
+              <p className="text-[10px] text-zinc-400">membros</p>
             </div>
-            <div>
-              <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{estatisticas.total}</p>
-              <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Total</p>
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <Users className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/30">
-              <Clock className="w-5 h-5 text-white" />
+        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Pendentes</p>
+              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.delegacoesPendentes}</p>
+              <p className="text-[10px] text-zinc-400">delegações</p>
             </div>
-            <div>
-              <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{estatisticas.delegacoesPendentes}</p>
-              <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Pendentes</p>
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <Clock className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center shadow-md shadow-blue-500/30">
-              <RefreshCw className="w-5 h-5 text-white" />
+        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Andamento</p>
+              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.delegacoesEmAndamento}</p>
+              <p className="text-[10px] text-zinc-400">em execução</p>
             </div>
-            <div>
-              <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{estatisticas.delegacoesEmAndamento}</p>
-              <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Andamento</p>
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <RefreshCw className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="group relative p-5 bg-zinc-900 dark:bg-white border-zinc-800 dark:border-zinc-200 rounded-2xl hover:shadow-xl transition-all">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-md">
-              <CheckCircle2 className="w-5 h-5 text-zinc-900 dark:text-white" />
+        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Concluídas</p>
+              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticasDelegacoes?.concluidas || 0}</p>
+              <p className="text-[10px] text-zinc-400">este mês</p>
             </div>
-            <div>
-              <p className="text-3xl font-bold text-white dark:text-zinc-900 tracking-tighter">{estatisticasDelegacoes?.concluidas || 0}</p>
-              <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Concluídas</p>
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <CheckCircle2 className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Tabs */}

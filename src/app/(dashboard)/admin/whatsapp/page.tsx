@@ -686,47 +686,48 @@ export default function WhatsAppPage() {
   const isActive = myConfig?.config?.isActive ?? false;
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto space-y-6">
-      {/* Header - Padrão Defender */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-            <MessageCircle className="w-5 h-5 text-white dark:text-zinc-900" />
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Header - Padrão Processos */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <MessageCircle className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">WhatsApp</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">• Notificações automáticas</span>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
-              WhatsApp Business
-            </h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Notificações automáticas para assistidos
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <a 
-            href="https://business.facebook.com/settings/whatsapp-business-accounts" 
-            target="_blank" 
-            rel="noopener noreferrer"
-          >
-            <Button variant="outline" size="sm">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Meta Business
+          
+          <div className="flex items-center gap-1">
+            <a 
+              href="https://business.facebook.com/settings/whatsapp-business-accounts" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600" title="Meta Business">
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Button>
+            </a>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+              onClick={() => {
+                refetchConfig();
+                refetchHistory();
+              }}
+              title="Atualizar"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
             </Button>
-          </a>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              refetchConfig();
-              refetchHistory();
-            }}
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Atualizar
-          </Button>
+          </div>
         </div>
       </div>
+
+      {/* Conteúdo Principal */}
+      <div className="p-4 md:p-6 max-w-[1200px] mx-auto space-y-4">
 
       {/* Status da Conexão */}
       <ConnectionStatus
@@ -923,6 +924,7 @@ export default function WhatsAppPage() {
           />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

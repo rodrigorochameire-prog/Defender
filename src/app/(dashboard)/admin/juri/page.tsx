@@ -136,28 +136,45 @@ export default function JuriPage() {
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* SUB-HEADER - Padrão Defender */}
+      {/* Header - Padrão Processos */}
       <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center border border-violet-200 dark:border-violet-800">
-              <Gavel className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Gavel className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
             </div>
-            <div>
-              <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Tribunal do Júri</h1>
-              <p className="text-[10px] text-zinc-500">Gestão de sessões plenárias</p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Tribunal do Júri</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">• {stats.agendadas} sessões</span>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <Download className="w-3.5 h-3.5 mr-1.5" />
-              Exportar
+          <div className="flex items-center gap-1">
+            <Link href="/admin/juri/cockpit">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+                title="Cockpit"
+              >
+                <Target className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+              title="Exportar"
+            >
+              <Download className="w-3.5 h-3.5" />
             </Button>
             <Link href="/admin/juri/nova">
-              <Button size="sm" className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white">
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Nova Sessão
+              <Button 
+                size="sm" 
+                className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Nova
               </Button>
             </Link>
           </div>

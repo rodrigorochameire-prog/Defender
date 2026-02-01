@@ -1320,53 +1320,49 @@ export default function ProcessosPage() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-        {/* Header Padrão Defender - Sofisticado */}
-        <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-                <Scale className="w-5 h-5 text-white dark:text-zinc-900" />
+        {/* Header Compacto - Padrão Defender */}
+        <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+                <Scale className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Processos</h1>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {stats.total} cadastrados • {stats.comarcas} comarcas
-                </p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Processos</span>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500">• {stats.total} cadastrados</span>
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <a href="https://esaj.tjba.jus.br/cpopg/open.do" target="_blank" rel="noopener noreferrer">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="h-9 w-9 p-0 border-zinc-200 dark:border-zinc-700"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </Button>
-                    </a>
-                  </TooltipTrigger>
-                  <TooltipContent>Consultar TJ-BA</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center gap-1.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href="https://esaj.tjba.jus.br/cpopg/open.do" target="_blank" rel="noopener noreferrer">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>Consultar TJ-BA</TooltipContent>
+              </Tooltip>
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm"
-                className="h-9 w-9 p-0 border-zinc-200 dark:border-zinc-700"
+                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
                 title="Exportar"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-3.5 h-3.5" />
               </Button>
               <Link href="/admin/processos/novo">
                 <Button 
                   size="sm"
-                  className="h-9 px-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-xl font-medium shadow-md"
+                  className="h-7 px-2.5 ml-1.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Processo
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Novo
                 </Button>
               </Link>
             </div>
@@ -1374,69 +1370,65 @@ export default function ProcessosPage() {
         </div>
 
         {/* Conteúdo Principal */}
-        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="p-4 md:p-6 space-y-4">
 
-        {/* Stats Cards - Padrão Defender Sofisticado */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:shadow-zinc-900/10 dark:hover:shadow-white/5 transition-all">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
-                <Scale className="w-5 h-5 text-white dark:text-zinc-900" />
+        {/* Stats Cards - Padrão Demandas (Compacto) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Total</p>
+                <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats.total}</p>
+                <p className="text-[10px] text-zinc-400"><span className="text-emerald-600 font-medium">{stats.comarcas}</span> comarcas</p>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats.total}</p>
-                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Total</p>
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+                <Scale className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/30">
-                <Gavel className="w-5 h-5 text-white" />
+          <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Júri</p>
+                <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats.juri}</p>
+                <p className="text-[10px] text-zinc-400">processos</p>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats.juri}</p>
-                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Júri</p>
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+                <Gavel className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all hidden md:block">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/30">
-                <Clock className="w-5 h-5 text-white" />
+          <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Réus Presos</p>
+                <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats.reuPreso}</p>
+                <p className="text-[10px] text-zinc-400">prioridade máxima</p>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats.comDemandas}</p>
-                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Demandas</p>
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+                <Lock className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl transition-all hidden md:block">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-rose-500 flex items-center justify-center shadow-md shadow-rose-500/30">
-                <Lock className="w-5 h-5 text-white" />
+          <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Com Demandas</p>
+                <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats.comDemandas}</p>
+                <p className="text-[10px] text-zinc-400">pendentes</p>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{stats.reuPreso}</p>
-                <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Réu Preso</p>
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+                <Clock className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </Card>
-
-          <Card className="group relative p-5 bg-zinc-900 dark:bg-white border-zinc-800 dark:border-zinc-200 rounded-2xl hover:shadow-xl transition-all hidden md:block">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-md">
-                <Building2 className="w-5 h-5 text-zinc-900 dark:text-white" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-white dark:text-zinc-900 tracking-tighter">{stats.comarcas}</p>
-                <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Comarcas</p>
-              </div>
-            </div>
-          </Card>
+          </div>
         </div>
 
         {/* Card de Filtros - Padrão Demandas */}

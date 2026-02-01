@@ -8,6 +8,34 @@ import { hashPassword, verifyPassword } from "@/lib/auth/password";
 
 export const usersRouter = router({
   /**
+   * Busca dados do usuário logado
+   */
+  me: protectedProcedure.query(async ({ ctx }) => {
+    return safeAsync(async () => {
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, ctx.user!.id),
+      });
+
+      if (!user) {
+        throw Errors.notFound("Usuário");
+      }
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        oab: user.oab,
+        comarca: user.comarca,
+        emailVerified: user.emailVerified,
+        approvalStatus: user.approvalStatus,
+        workspaceId: user.workspaceId,
+      };
+    }, "Erro ao buscar dados do usuário");
+  }),
+
+  /**
    * Lista todos os usuários (admin)
    */
   list: adminProcedure

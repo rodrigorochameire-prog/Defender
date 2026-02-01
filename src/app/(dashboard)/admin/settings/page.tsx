@@ -59,28 +59,41 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Settings className="h-6 w-6 text-primary" />
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Header - Padrão Processos */}
+      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Settings className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Configurações</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">• Sistema</span>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Configurações</h1>
-            <p className="text-muted-foreground">Configure o sistema DefensorHub</p>
+          
+          <div className="flex items-center gap-1">
+            <Button 
+              onClick={handleSave} 
+              disabled={isSaving}
+              size="sm"
+              className="h-7 px-2.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+            >
+              {isSaving ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5 mr-1" />
+              )}
+              Salvar
+            </Button>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4 mr-2" />
-          )}
-          Salvar Alterações
-        </Button>
       </div>
 
+      {/* Conteúdo Principal */}
+      <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+      
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
@@ -426,6 +439,7 @@ export default function AdminSettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
