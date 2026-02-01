@@ -622,16 +622,39 @@ function CadeiraVisual({
         {cadeiraNum}
       </div>
 
-      {/* Botão remover - Sutil */}
-      <button
-        onClick={onRemove}
-        className={cn(
-          "absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all",
-          "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/50"
-        )}
-      >
-        <X className="w-3 h-3" />
-      </button>
+      {/* Botões de ação - Aparecem no hover */}
+      <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+        {/* Botão ver perfil */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={`/admin/juri/jurados/${jurado.id}`}
+              className={cn(
+                "w-5 h-5 rounded-full flex items-center justify-center transition-all",
+                "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 hover:bg-violet-100 hover:text-violet-600 dark:hover:bg-violet-900/50"
+              )}
+            >
+              <ExternalLink className="w-2.5 h-2.5" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-[10px]">Ver perfil completo</TooltipContent>
+        </Tooltip>
+        {/* Botão remover */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onRemove}
+              className={cn(
+                "w-5 h-5 rounded-full flex items-center justify-center transition-all",
+                "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/50"
+              )}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-[10px]">Remover do conselho</TooltipContent>
+        </Tooltip>
+      </div>
 
       {/* Avatar com foto */}
       <div className="flex flex-col items-center pt-1">
@@ -665,9 +688,15 @@ function CadeiraVisual({
           />
         </div>
 
-        <p className={cn("text-sm font-medium mt-2 text-center", isDarkMode ? "text-zinc-200" : "text-zinc-700")}>
+        <Link 
+          href={`/admin/juri/jurados/${jurado.id}`}
+          className={cn(
+            "text-sm font-medium mt-2 text-center hover:underline transition-colors",
+            isDarkMode ? "text-zinc-200 hover:text-violet-400" : "text-zinc-700 hover:text-violet-600"
+          )}
+        >
           {jurado.nome.split(" ").slice(0, 2).join(" ")}
-        </p>
+        </Link>
         <p className={cn("text-[10px]", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
           {jurado.profissao}
         </p>
