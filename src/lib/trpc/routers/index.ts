@@ -23,6 +23,7 @@ import { notificationTemplatesRouter } from "./notificationTemplates";
 import { documentsRouter } from "./documents";
 import { whatsappRouter } from "./whatsapp";
 import { auditLogsRouter } from "./auditLogs";
+import { delegacaoRouter } from "./delegacao";
 
 
 export const appRouter = router({
@@ -55,6 +56,11 @@ export const appRouter = router({
   documents: documentsRouter,
   whatsapp: whatsappRouter,
   auditLogs: auditLogsRouter,
+  
+  // ==========================================
+  // SISTEMA DE EQUIPE
+  // ==========================================
+  delegacao: delegacaoRouter,
 });
 
 export type AppRouter = typeof appRouter;

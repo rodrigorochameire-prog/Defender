@@ -41,15 +41,21 @@ export const demandasRouter = router({
         conditions.push(eq(demandas.reuPreso, reuPreso));
       }
 
-      // Filtrar por defensor específico se informado
+      // PRIVACIDADE DE DEMANDAS: Cada defensor vê apenas suas demandas
+      // Exceções:
+      // 1. Admin vê tudo
+      // 2. Defensor cobrindo outro durante afastamento
+      // 3. Supervisor vê demandas dos supervisionados
+      
       if (defensorId) {
+        // Filtro explícito por defensor
         conditions.push(eq(demandas.defensorId, defensorId));
+      } else if (!isAdmin) {
+        // Mostra apenas as do usuário logado (privacidade padrão)
+        // TODO: Adicionar lógica de afastamentos quando implementada no banco
+        conditions.push(eq(demandas.defensorId, userId));
       }
-      // Se não for admin e não especificou defensor, mostra apenas as do usuário logado
-      // else if (!isAdmin) {
-      //   conditions.push(eq(demandas.defensorId, userId));
-      // }
-      // Por enquanto, mostra todas (comportamento compartilhado para testes)
+      // Admin vê todas sem filtro
       
       const result = await db
         .select({

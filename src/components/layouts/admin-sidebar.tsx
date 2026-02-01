@@ -9,8 +9,9 @@ import {
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
   Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
-  FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network
+  FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound
 } from "lucide-react";
+import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import {
@@ -49,7 +50,7 @@ const iconMap: Record<string, React.ElementType> = {
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
   Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
-  ChevronRight, ListTodo, Network
+  ChevronRight, ListTodo, Network, UsersRound
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
@@ -78,13 +79,19 @@ export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProp
   );
 }
 
-function MenuItem({ item, isActive, isCollapsed, onNavigate }: {
+function MenuItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
   item: AssignmentMenuItem;
   isActive: boolean;
   isCollapsed: boolean;
   onNavigate: () => void;
+  userRole?: UserRole;
 }) {
   const Icon = iconMap[item.icon] || Briefcase;
+  
+  // Filtrar por role se definido
+  if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+    return null;
+  }
   
   // Design diferente para sidebar retraída vs expandida - TEMA ESCURO
   if (isCollapsed) {
@@ -150,15 +157,23 @@ function MenuItem({ item, isActive, isCollapsed, onNavigate }: {
   );
 }
 
-function MenuSectionComponent({ section, pathname, isCollapsed, onNavigate }: {
+function MenuSectionComponent({ section, pathname, isCollapsed, onNavigate, userRole }: {
   section: MenuSection;
   pathname: string;
   isCollapsed: boolean;
   onNavigate: () => void;
+  userRole?: UserRole;
 }) {
   const [isOpen, setIsOpen] = useState(section.defaultOpen !== false);
+  
+  // Filtrar itens por role
+  const visibleItems = section.items.filter(item => {
+    if (!item.requiredRoles) return true;
+    if (!userRole) return true;
+    return item.requiredRoles.includes(userRole);
+  });
 
-  const hasActiveItem = section.items.some(
+  const hasActiveItem = visibleItems.some(
     (item) => pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path))
   );
 
@@ -167,6 +182,9 @@ function MenuSectionComponent({ section, pathname, isCollapsed, onNavigate }: {
       setIsOpen(true);
     }
   }, [hasActiveItem, isOpen]);
+  
+  // Se não há itens visíveis, não mostrar a seção
+  if (visibleItems.length === 0) return null;
 
   if (section.collapsible && !isCollapsed) {
     return (
@@ -181,9 +199,9 @@ function MenuSectionComponent({ section, pathname, isCollapsed, onNavigate }: {
           )} />
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-0.5 mt-1">
-          {section.items.map((item) => {
+          {visibleItems.map((item) => {
             const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
-            return <MenuItem key={item.path} item={item} isActive={isActive} isCollapsed={isCollapsed} onNavigate={onNavigate} />;
+            return <MenuItem key={item.path} item={item} isActive={isActive} isCollapsed={isCollapsed} onNavigate={onNavigate} userRole={userRole} />;
           })}
         </CollapsibleContent>
       </Collapsible>
@@ -200,9 +218,9 @@ function MenuSectionComponent({ section, pathname, isCollapsed, onNavigate }: {
         </div>
       )}
       <div className="space-y-0.5">
-        {section.items.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
-          return <MenuItem key={item.path} item={item} isActive={isActive} isCollapsed={isCollapsed} onNavigate={onNavigate} />;
+          return <MenuItem key={item.path} item={item} isActive={isActive} isCollapsed={isCollapsed} onNavigate={onNavigate} userRole={userRole} />;
         })}
       </div>
     </div>
@@ -219,8 +237,12 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   const { state, openMobile, setOpenMobile } = useSidebar();
   const { config, modules, isLoading } = useAssignment();
   const { isAllSelected } = useAtribuicaoFiltro();
+  const { user: sessionUser } = usePermissions();
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
+  
+  // Role do usuário para filtrar menus
+  const userRole = sessionUser?.role as UserRole | undefined;
   
   // No mobile, a sidebar sempre mostra expandida quando aberta
   const isCollapsed = isMobile ? false : state === "collapsed";
@@ -285,7 +307,8 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
                   item={item} 
                   isActive={pathname === item.path} 
                   isCollapsed={isCollapsed} 
-                  onNavigate={handleNavigate} 
+                  onNavigate={handleNavigate}
+                  userRole={userRole}
                 />
               ))}
             </SidebarMenu>
@@ -314,7 +337,8 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
                     section={section} 
                     pathname={pathname} 
                     isCollapsed={isCollapsed} 
-                    onNavigate={handleNavigate} 
+                    onNavigate={handleNavigate}
+                    userRole={userRole}
                   />
                 ))}
               </SidebarMenu>
@@ -341,7 +365,8 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
                   section={section} 
                   pathname={pathname} 
                   isCollapsed={isCollapsed} 
-                  onNavigate={handleNavigate} 
+                  onNavigate={handleNavigate}
+                  userRole={userRole}
                 />
               ))}
             </SidebarMenu>

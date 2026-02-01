@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
+import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { DEMANDA_STATUS } from "@/config/demanda-status";
 import { toast } from "sonner";
@@ -48,6 +49,7 @@ import {
   ExternalLink,
   Info,
   PenLine,
+  UserPlus,
 } from "lucide-react";
 import {
   Popover,
@@ -420,20 +422,26 @@ export default function DashboardJuriPage() {
   const [atendimentoRapido, setAtendimentoRapido] = useState<{
     assistidoId: number | null;
     assistidoNome: string;
-    tipo: "atendimento" | "diligencia" | "informacao" | "peticao" | "anotacao";
+    tipo: "atendimento" | "diligencia" | "informacao" | "peticao" | "anotacao" | "delegacao";
     descricao: string;
   }>({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "" });
   const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
 
-  // Configuração dos tipos de registro
+  // Configuração dos tipos de registro (layout 3x2)
   const tiposRegistro = [
+    // Linha 1
     { id: "atendimento", label: "Atendimento", icon: MessageSquare, color: "text-emerald-600", bgActive: "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300" },
     { id: "diligencia", label: "Diligência", icon: Search, color: "text-blue-600", bgActive: "bg-blue-100 dark:bg-blue-900/30 border-blue-300" },
     { id: "informacao", label: "Info", icon: Info, color: "text-amber-600", bgActive: "bg-amber-100 dark:bg-amber-900/30 border-amber-300" },
+    // Linha 2
     { id: "peticao", label: "Petição", icon: FileText, color: "text-purple-600", bgActive: "bg-purple-100 dark:bg-purple-900/30 border-purple-300" },
     { id: "anotacao", label: "Nota", icon: PenLine, color: "text-zinc-600", bgActive: "bg-zinc-100 dark:bg-zinc-800 border-zinc-300" },
+    { id: "delegacao", label: "Delegar", icon: UserPlus, color: "text-rose-600", bgActive: "bg-rose-100 dark:bg-rose-900/30 border-rose-300" },
   ] as const;
+  
+  // Estado para modal de delegação
+  const [delegacaoModalOpen, setDelegacaoModalOpen] = useState(false);
 
   // Assistido selecionado para exibir detalhes
   const assistidoSelecionado = useMemo(() => {
@@ -781,25 +789,35 @@ export default function DashboardJuriPage() {
                   )}
                 </div>
 
-                {/* Coluna 2: Tipo de Registro */}
+                {/* Coluna 2: Tipo de Registro - Layout 3x2 */}
                 <div className="lg:col-span-2 space-y-2 flex-shrink-0">
                   <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
-                  <div className="flex items-center gap-1 flex-nowrap">
+                  <div className="grid grid-cols-3 gap-1">
                     {tiposRegistro.map((tipo) => {
                       const Icon = tipo.icon;
                       const isSelected = atendimentoRapido.tipo === tipo.id;
+                      const isDelegacao = tipo.id === "delegacao";
                       return (
                         <button
                           key={tipo.id}
-                          onClick={() => setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }))}
+                          onClick={() => {
+                            if (isDelegacao) {
+                              // Abrir modal de delegação ao invés de selecionar tipo
+                              setDelegacaoModalOpen(true);
+                            } else {
+                              setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }));
+                            }
+                          }}
                           className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
-                            isSelected 
+                            isSelected && !isDelegacao
                               ? tipo.bgActive
-                              : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800"
+                              : isDelegacao
+                                ? "border border-rose-200 dark:border-rose-800 hover:border-rose-400 dark:hover:border-rose-600 bg-rose-50 dark:bg-rose-900/20"
+                                : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800"
                           }`}
                           title={tipo.label}
                         >
-                          <Icon className={`w-4 h-4 ${isSelected ? tipo.color : "text-zinc-400"}`} />
+                          <Icon className={`w-4 h-4 ${isSelected && !isDelegacao ? tipo.color : isDelegacao ? "text-rose-500" : "text-zinc-400"}`} />
                         </button>
                       );
                     })}
@@ -1366,6 +1384,18 @@ export default function DashboardJuriPage() {
         atribuicaoOptions={atribuicaoOptions}
         atoOptions={atoOptions}
         statusOptions={statusOptions}
+      />
+
+      {/* Modal de Delegação */}
+      <DelegacaoModal
+        open={delegacaoModalOpen}
+        onOpenChange={setDelegacaoModalOpen}
+        assistidoId={atendimentoRapido.assistidoId}
+        assistidoNome={atendimentoRapido.assistidoNome}
+        onDelegacaoSucesso={(data) => {
+          toast.success(`Tarefa delegada para ${data.destinatarioNome}!`);
+          setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "" });
+        }}
       />
     </div>
   );

@@ -33,6 +33,8 @@ export interface AssignmentCategoryConfig {
 // ESTRUTURA DE MENU
 // ==========================================
 
+export type UserRole = "admin" | "defensor" | "servidor" | "estagiario" | "triagem";
+
 export interface AssignmentMenuItem {
   label: string;
   path: string;
@@ -40,6 +42,7 @@ export interface AssignmentMenuItem {
   badge?: string;
   description?: string;
   isPremium?: boolean; // Para recursos avançados
+  requiredRoles?: UserRole[]; // Roles que podem acessar este item
 }
 
 export interface MenuSection {
@@ -250,13 +253,14 @@ const PETICIONAMENTO_MODULES: MenuSection[] = [
 // ==========================================
 
 export const CONTEXT_MENU_ITEMS: AssignmentMenuItem[] = [
-  { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
-  { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
-  { label: "Agenda", path: "/admin/agenda", icon: "Calendar", description: "Agenda completa de eventos" },
-  { label: "Casos", path: "/admin/casos", icon: "Briefcase" },
-  { label: "Assistidos", path: "/admin/assistidos", icon: "Users" },
-  { label: "Processos", path: "/admin/processos", icon: "Scale" },
-  { label: "Drive", path: "/admin/drive", icon: "FolderOpen", description: "Arquivos e documentos" },
+  { label: "Dashboard", path: "/admin", icon: "LayoutDashboard", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Demandas", path: "/admin/demandas", icon: "ListTodo", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Agenda", path: "/admin/agenda", icon: "Calendar", description: "Agenda completa de eventos", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Casos", path: "/admin/casos", icon: "Briefcase", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
+  { label: "Processos", path: "/admin/processos", icon: "Scale", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Drive", path: "/admin/drive", icon: "FolderOpen", description: "Arquivos e documentos", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Equipe", path: "/admin/equipe", icon: "UsersRound", description: "Gestão da equipe", requiredRoles: ["admin", "defensor", "servidor"] },
 ];
 
 // ==========================================
@@ -289,11 +293,11 @@ export const UTILITIES_MENU: MenuSection[] = [
     id: "sistema",
     title: "Sistema",
     items: [
-      { label: "Usuários", path: "/admin/usuarios", icon: "Users", description: "Gerenciar acessos" },
-      { label: "Configurações", path: "/admin/settings", icon: "Settings" },
-      { label: "Banco de Dados", path: "/admin/settings/dados", icon: "FolderOpen", description: "Monitor e gestão de dados" },
-      { label: "Workspaces", path: "/admin/workspaces", icon: "Building2", description: "Acessos e universos de dados" },
-      { label: "Relatórios", path: "/admin/relatorios", icon: "BarChart3" },
+      { label: "Usuários", path: "/admin/usuarios", icon: "Users", description: "Gerenciar acessos", requiredRoles: ["admin"] },
+      { label: "Configurações", path: "/admin/settings", icon: "Settings", requiredRoles: ["admin", "defensor"] },
+      { label: "Banco de Dados", path: "/admin/settings/dados", icon: "FolderOpen", description: "Monitor e gestão de dados", requiredRoles: ["admin", "defensor"] },
+      { label: "Workspaces", path: "/admin/workspaces", icon: "Building2", description: "Acessos e universos de dados", requiredRoles: ["admin"] },
+      { label: "Relatórios", path: "/admin/relatorios", icon: "BarChart3", requiredRoles: ["admin", "defensor"] },
     ],
     collapsible: true,
     defaultOpen: false,

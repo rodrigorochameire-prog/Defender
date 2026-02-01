@@ -121,13 +121,24 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash"),
-  role: varchar("role", { length: 20 }).default("defensor").notNull(), // 'admin' | 'defensor' | 'estagiario' | 'servidor'
+  role: varchar("role", { length: 20 }).default("defensor").notNull(), // 'admin' | 'defensor' | 'estagiario' | 'servidor' | 'triagem'
   phone: text("phone"),
   oab: varchar("oab", { length: 50 }), // Número da OAB
   comarca: varchar("comarca", { length: 100 }), // Comarca de atuação
   workspaceId: integer("workspace_id").references(() => workspaces.id),
   emailVerified: boolean("email_verified").default(false).notNull(),
   approvalStatus: varchar("approval_status", { length: 20 }).default("pending").notNull(),
+  
+  // Sistema de Equipe
+  supervisorId: integer("supervisor_id"), // FK para users.id (defensor supervisor de estagiário)
+  funcao: varchar("funcao", { length: 30 }), // Função detalhada: 'defensor_titular', 'defensor_substituto', 'servidor_administrativo', 'estagiario_direito', 'triagem'
+  
+  // Arquitetura Multi-Defensor
+  nucleo: varchar("nucleo", { length: 30 }), // 'ESPECIALIZADOS' | 'VARA_1' | 'VARA_2' - Núcleo de atuação
+  isAdmin: boolean("is_admin").default(false), // Administrador geral da comarca
+  podeVerTodosAssistidos: boolean("pode_ver_todos_assistidos").default(true), // Se pode ver assistidos de outros núcleos
+  podeVerTodosProcessos: boolean("pode_ver_todos_processos").default(true), // Se pode ver processos de outros núcleos
+  
   // Soft delete
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -138,6 +149,8 @@ export const users = pgTable("users", {
   index("users_deleted_at_idx").on(table.deletedAt),
   index("users_comarca_idx").on(table.comarca),
   index("users_workspace_id_idx").on(table.workspaceId),
+  index("users_supervisor_id_idx").on(table.supervisorId),
+  index("users_nucleo_idx").on(table.nucleo),
 ]);
 
 export type User = typeof users.$inferSelect;
@@ -315,6 +328,13 @@ export const demandas = pgTable("demandas", {
   // Responsável
   defensorId: integer("defensor_id").references(() => users.id),
   
+  // Sistema de Delegação
+  delegadoParaId: integer("delegado_para_id").references(() => users.id), // Quem recebeu a delegação
+  dataDelegacao: timestamp("data_delegacao"), // Quando foi delegado
+  motivoDelegacao: text("motivo_delegacao"), // Instruções/motivo da delegação
+  statusDelegacao: varchar("status_delegacao", { length: 20 }), // 'pendente' | 'aceita' | 'em_andamento' | 'concluida' | 'devolvida'
+  prazoSugerido: date("prazo_sugerido"), // Prazo sugerido para a tarefa delegada
+  
   // Flag de réu preso (prioridade automática)
   reuPreso: boolean("reu_preso").default(false),
   
@@ -334,6 +354,7 @@ export const demandas = pgTable("demandas", {
   index("demandas_prazo_idx").on(table.prazo),
   index("demandas_status_idx").on(table.status),
   index("demandas_prioridade_idx").on(table.prioridade),
+  index("demandas_delegado_para_id_idx").on(table.delegadoParaId),
   index("demandas_defensor_id_idx").on(table.defensorId),
   index("demandas_reu_preso_idx").on(table.reuPreso),
   index("demandas_deleted_at_idx").on(table.deletedAt),
@@ -343,6 +364,98 @@ export const demandas = pgTable("demandas", {
 
 export type Demanda = typeof demandas.$inferSelect;
 export type InsertDemanda = typeof demandas.$inferInsert;
+
+// ==========================================
+// HISTÓRICO DE DELEGAÇÕES
+// ==========================================
+
+export const delegacoesHistorico = pgTable("delegacoes_historico", {
+  id: serial("id").primaryKey(),
+  demandaId: integer("demanda_id")
+    .notNull()
+    .references(() => demandas.id, { onDelete: "cascade" }),
+  
+  // Quem delegou e para quem
+  delegadoDeId: integer("delegado_de_id")
+    .notNull()
+    .references(() => users.id),
+  delegadoParaId: integer("delegado_para_id")
+    .notNull()
+    .references(() => users.id),
+  
+  // Timestamps
+  dataDelegacao: timestamp("data_delegacao").defaultNow().notNull(),
+  dataAceitacao: timestamp("data_aceitacao"),
+  dataConclusao: timestamp("data_conclusao"),
+  
+  // Detalhes
+  instrucoes: text("instrucoes"), // Instruções do defensor
+  observacoes: text("observacoes"), // Observações da execução
+  prazoSugerido: date("prazo_sugerido"),
+  
+  // Status: 'pendente' | 'aceita' | 'em_andamento' | 'concluida' | 'devolvida' | 'cancelada'
+  status: varchar("status", { length: 20 }).default("pendente").notNull(),
+  
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("delegacoes_historico_demanda_id_idx").on(table.demandaId),
+  index("delegacoes_historico_delegado_de_id_idx").on(table.delegadoDeId),
+  index("delegacoes_historico_delegado_para_id_idx").on(table.delegadoParaId),
+  index("delegacoes_historico_status_idx").on(table.status),
+  index("delegacoes_historico_workspace_id_idx").on(table.workspaceId),
+]);
+
+export type DelegacaoHistorico = typeof delegacoesHistorico.$inferSelect;
+export type InsertDelegacaoHistorico = typeof delegacoesHistorico.$inferInsert;
+
+// ==========================================
+// AFASTAMENTOS (Cobertura entre Defensores)
+// ==========================================
+
+export const afastamentos = pgTable("afastamentos", {
+  id: serial("id").primaryKey(),
+  
+  // Defensor afastado e substituto
+  defensorId: integer("defensor_id")
+    .notNull()
+    .references(() => users.id),
+  substitutoId: integer("substituto_id")
+    .notNull()
+    .references(() => users.id),
+  
+  // Período
+  dataInicio: date("data_inicio").notNull(),
+  dataFim: date("data_fim"),
+  
+  // Tipo: 'FERIAS' | 'LICENCA' | 'CAPACITACAO' | 'OUTRO'
+  tipo: varchar("tipo", { length: 20 }).default("FERIAS").notNull(),
+  motivo: text("motivo"),
+  
+  // Status
+  ativo: boolean("ativo").default(true).notNull(),
+  
+  // Permissões durante o afastamento
+  acessoDemandas: boolean("acesso_demandas").default(true), // Substituto pode ver demandas
+  acessoEquipe: boolean("acesso_equipe").default(false), // Substituto pode gerenciar equipe
+  
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("afastamentos_defensor_id_idx").on(table.defensorId),
+  index("afastamentos_substituto_id_idx").on(table.substitutoId),
+  index("afastamentos_ativo_idx").on(table.ativo),
+  index("afastamentos_data_inicio_idx").on(table.dataInicio),
+  index("afastamentos_workspace_id_idx").on(table.workspaceId),
+]);
+
+export type Afastamento = typeof afastamentos.$inferSelect;
+export type InsertAfastamento = typeof afastamentos.$inferInsert;
 
 // ==========================================
 // SESSÕES DO JÚRI (Plenário)
@@ -1463,6 +1576,20 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   notifications: many(notifications),
   atendimentos: many(atendimentos),
   casos: many(casos),
+  // Sistema de Equipe
+  supervisor: one(users, { fields: [users.supervisorId], references: [users.id], relationName: "supervisor" }),
+  supervisionados: many(users, { relationName: "supervisor" }),
+  delegacoesRecebidas: many(delegacoesHistorico, { relationName: "delegadoPara" }),
+  delegacoesEnviadas: many(delegacoesHistorico, { relationName: "delegadoDe" }),
+  // Afastamentos
+  afastamentosComoDefensor: many(afastamentos, { relationName: "defensorAfastado" }),
+  afastamentosComoSubstituto: many(afastamentos, { relationName: "defensorSubstituto" }),
+}));
+
+export const afastamentosRelations = relations(afastamentos, ({ one }) => ({
+  defensor: one(users, { fields: [afastamentos.defensorId], references: [users.id], relationName: "defensorAfastado" }),
+  substituto: one(users, { fields: [afastamentos.substitutoId], references: [users.id], relationName: "defensorSubstituto" }),
+  workspace: one(workspaces, { fields: [afastamentos.workspaceId], references: [workspaces.id] }),
 }));
 
 export const assistidosRelations = relations(assistidos, ({ one, many }) => ({
@@ -1495,9 +1622,18 @@ export const demandasRelations = relations(demandas, ({ one, many }) => ({
   processo: one(processos, { fields: [demandas.processoId], references: [processos.id] }),
   assistido: one(assistidos, { fields: [demandas.assistidoId], references: [assistidos.id] }),
   defensor: one(users, { fields: [demandas.defensorId], references: [users.id] }),
+  delegadoPara: one(users, { fields: [demandas.delegadoParaId], references: [users.id], relationName: "demandasDelegadas" }),
+  delegacoesHistorico: many(delegacoesHistorico),
   documentos: many(documentos),
   anotacoes: many(anotacoes),
   calendarEvents: many(calendarEvents),
+}));
+
+export const delegacoesHistoricoRelations = relations(delegacoesHistorico, ({ one }) => ({
+  demanda: one(demandas, { fields: [delegacoesHistorico.demandaId], references: [demandas.id] }),
+  delegadoDe: one(users, { fields: [delegacoesHistorico.delegadoDeId], references: [users.id], relationName: "delegadoDe" }),
+  delegadoPara: one(users, { fields: [delegacoesHistorico.delegadoParaId], references: [users.id], relationName: "delegadoPara" }),
+  workspace: one(workspaces, { fields: [delegacoesHistorico.workspaceId], references: [workspaces.id] }),
 }));
 
 export const sessoesJuriRelations = relations(sessoesJuri, ({ one, many }) => ({
