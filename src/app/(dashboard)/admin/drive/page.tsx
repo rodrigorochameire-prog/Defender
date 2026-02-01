@@ -183,15 +183,19 @@ const MOCK_FILES: DriveFile[] = [
   // ===== NÍVEL 1: Pastas Raiz =====
   { id: "root-assistidos", name: "Assistidos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-06-01"), isFolder: true },
   { id: "root-processos", name: "Processos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-06-01"), isFolder: true },
-  { id: "root-pautas", name: "Pautas de Audiência", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-28"), createdAt: new Date("2025-06-01"), isFolder: true },
+  { id: "root-pautas", name: "Pautas", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-28"), createdAt: new Date("2025-06-01"), isFolder: true },
   { id: "root-jurisprudencia", name: "Jurisprudência", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-25"), createdAt: new Date("2025-06-01"), isFolder: true },
-  { id: "root-modelos", name: "Modelos e Templates", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-20"), createdAt: new Date("2025-06-01"), isFolder: true },
+  { id: "root-modelos", name: "Modelos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-20"), createdAt: new Date("2025-06-01"), isFolder: true },
 
   // ===== NÍVEL 2: Assistidos > Atribuições =====
   { id: "assist-juri", name: "Tribunal do Júri", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-assistidos" },
   { id: "assist-vvd", name: "Violência Doméstica", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-assistidos" },
   { id: "assist-ep", name: "Execução Penal", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-28"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-assistidos" },
-  { id: "assist-geral", name: "Substituição Geral", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-27"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-assistidos" },
+
+  // ===== NÍVEL 2: Processos > Atribuições =====
+  { id: "proc-juri", name: "Tribunal do Júri", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-processos" },
+  { id: "proc-vvd", name: "Violência Doméstica", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-processos" },
+  { id: "proc-ep", name: "Execução Penal", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-28"), createdAt: new Date("2025-06-01"), isFolder: true, parentId: "root-processos" },
 
   // ===== NÍVEL 3: Assistidos > Júri > Pessoas =====
   { id: "juri-jose", name: "José Carlos Santos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-08-15"), isFolder: true, parentId: "assist-juri", assistidoId: 1, assistidoNome: "José Carlos Santos" },
@@ -208,43 +212,54 @@ const MOCK_FILES: DriveFile[] = [
 
   // ===== NÍVEL 4: José Carlos > Subpastas =====
   { id: "jose-docs", name: "Documentos Pessoais", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-08-15"), isFolder: true, parentId: "juri-jose" },
-  { id: "jose-processo", name: "Processo 8002341-90", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-08-16"), isFolder: true, parentId: "juri-jose", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+  { id: "jose-proc-folder", name: "Processo 8002341-90", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-08-16"), isFolder: true, parentId: "juri-jose", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
   { id: "jose-fotos", name: "Fotos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-28"), createdAt: new Date("2025-08-17"), isFolder: true, parentId: "juri-jose" },
+
+  // ===== NÍVEL 3: Processos > Júri > Processos =====
+  { id: "pjuri-2341", name: "8002341-90.2025.8.05.0039 - José Carlos", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-08-16"), isFolder: true, parentId: "proc-juri", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039", assistidoId: 1, assistidoNome: "José Carlos Santos" },
+  { id: "pjuri-2342", name: "8002342-75.2025.8.05.0039 - Pedro Oliveira", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-07-21"), isFolder: true, parentId: "proc-juri", processoId: 2, processoNumero: "8002342-75.2025.8.05.0039", assistidoId: 2, assistidoNome: "Pedro Oliveira Lima" },
+  { id: "pjuri-2343", name: "8002343-60.2025.8.05.0039 - Marcos Antônio", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-28"), createdAt: new Date("2025-09-10"), isFolder: true, parentId: "proc-juri", processoId: 3, processoNumero: "8002343-60.2025.8.05.0039", assistidoId: 3, assistidoNome: "Marcos Antônio Reis" },
+
+  // ===== NÍVEL 3: Processos > VVD > Processos =====
+  { id: "pvvd-5001", name: "8005001-12.2025.8.05.0039 - Maria Aparecida", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-27"), createdAt: new Date("2025-10-05"), isFolder: true, parentId: "proc-vvd", processoId: 4, processoNumero: "8005001-12.2025.8.05.0039", assistidoId: 4, assistidoNome: "Maria Aparecida Silva" },
+
+  // ===== NÍVEL 3: Processos > EP > Processos =====
+  { id: "pep-0800", name: "8000800-20.2024.8.05.0039 - Fernando Costa", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-25"), createdAt: new Date("2024-06-10"), isFolder: true, parentId: "proc-ep", processoId: 5, processoNumero: "8000800-20.2024.8.05.0039", assistidoId: 6, assistidoNome: "Fernando Costa" },
 
   // ===== NÍVEL 5: José Carlos > Documentos Pessoais > Arquivos =====
   { id: "jose-rg", name: "RG.jpg", mimeType: "image/jpeg", size: 1234567, modifiedTime: new Date("2026-01-15"), createdAt: new Date("2025-08-15"), isFolder: false, parentId: "jose-docs", assistidoId: 1, assistidoNome: "José Carlos Santos", thumbnailLink: "/placeholder.jpg" },
   { id: "jose-cpf", name: "CPF.jpg", mimeType: "image/jpeg", size: 987654, modifiedTime: new Date("2026-01-15"), createdAt: new Date("2025-08-15"), isFolder: false, parentId: "jose-docs", assistidoId: 1, assistidoNome: "José Carlos Santos" },
   { id: "jose-comp", name: "Comprovante Residência.pdf", mimeType: "application/pdf", size: 456789, modifiedTime: new Date("2026-01-14"), createdAt: new Date("2025-08-16"), isFolder: false, parentId: "jose-docs", assistidoId: 1, assistidoNome: "José Carlos Santos" },
 
-  // ===== NÍVEL 5: José Carlos > Processo > Arquivos =====
-  { id: "jose-denuncia", name: "Denúncia.pdf", mimeType: "application/pdf", size: 345678, modifiedTime: new Date("2025-08-20"), createdAt: new Date("2025-08-20"), isFolder: false, parentId: "jose-processo", starred: true, processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
-  { id: "jose-resposta", name: "Resposta à Acusação.pdf", mimeType: "application/pdf", size: 245678, modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-09-10"), isFolder: false, parentId: "jose-processo", starred: true, processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
-  { id: "jose-alegacoes", name: "Alegações Finais.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 156789, modifiedTime: new Date("2026-01-28"), createdAt: new Date("2026-01-28"), isFolder: false, parentId: "jose-processo", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
-  { id: "jose-laudo", name: "Laudo Pericial.pdf", mimeType: "application/pdf", size: 567890, modifiedTime: new Date("2025-10-15"), createdAt: new Date("2025-10-15"), isFolder: false, parentId: "jose-processo", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
-  { id: "jose-audio", name: "Audiência Instrução.mp3", mimeType: "audio/mpeg", size: 45678901, modifiedTime: new Date("2025-11-20"), createdAt: new Date("2025-11-20"), isFolder: false, parentId: "jose-processo", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+  // ===== Arquivos do Processo José (vinculados em ambas pastas) =====
+  { id: "doc-jose-denuncia", name: "Denúncia.pdf", mimeType: "application/pdf", size: 345678, modifiedTime: new Date("2025-08-20"), createdAt: new Date("2025-08-20"), isFolder: false, parentId: "jose-proc-folder", starred: true, processoId: 1, processoNumero: "8002341-90.2025.8.05.0039", assistidoId: 1, assistidoNome: "José Carlos Santos" },
+  { id: "doc-jose-resposta", name: "Resposta à Acusação.pdf", mimeType: "application/pdf", size: 245678, modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-09-10"), isFolder: false, parentId: "jose-proc-folder", starred: true, processoId: 1, processoNumero: "8002341-90.2025.8.05.0039", assistidoId: 1, assistidoNome: "José Carlos Santos" },
+  { id: "doc-jose-alegacoes", name: "Alegações Finais.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 156789, modifiedTime: new Date("2026-01-28"), createdAt: new Date("2026-01-28"), isFolder: false, parentId: "jose-proc-folder", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039", assistidoId: 1, assistidoNome: "José Carlos Santos" },
+  { id: "doc-jose-laudo", name: "Laudo Pericial.pdf", mimeType: "application/pdf", size: 567890, modifiedTime: new Date("2025-10-15"), createdAt: new Date("2025-10-15"), isFolder: false, parentId: "jose-proc-folder", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+  { id: "doc-jose-audio", name: "Audiência Instrução.mp3", mimeType: "audio/mpeg", size: 45678901, modifiedTime: new Date("2025-11-20"), createdAt: new Date("2025-11-20"), isFolder: false, parentId: "jose-proc-folder", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
+
+  // ===== Links virtuais para Processos > Júri > 8002341-90 (mesmos arquivos) =====
+  { id: "link-jose-denuncia", name: "Denúncia.pdf", mimeType: "application/pdf", size: 345678, modifiedTime: new Date("2025-08-20"), createdAt: new Date("2025-08-20"), isFolder: false, parentId: "pjuri-2341", starred: true, processoId: 1, processoNumero: "8002341-90.2025.8.05.0039", assistidoId: 1, assistidoNome: "José Carlos Santos" },
+  { id: "link-jose-resposta", name: "Resposta à Acusação.pdf", mimeType: "application/pdf", size: 245678, modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-09-10"), isFolder: false, parentId: "pjuri-2341", starred: true, processoId: 1, processoNumero: "8002341-90.2025.8.05.0039", assistidoId: 1, assistidoNome: "José Carlos Santos" },
+  { id: "link-jose-alegacoes", name: "Alegações Finais.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 156789, modifiedTime: new Date("2026-01-28"), createdAt: new Date("2026-01-28"), isFolder: false, parentId: "pjuri-2341", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
 
   // ===== NÍVEL 5: José Carlos > Fotos > Arquivos =====
-  { id: "jose-foto1", name: "Local do Crime 01.jpg", mimeType: "image/jpeg", size: 3456789, modifiedTime: new Date("2025-08-20"), createdAt: new Date("2025-08-20"), isFolder: false, parentId: "jose-fotos" },
-  { id: "jose-foto2", name: "Local do Crime 02.jpg", mimeType: "image/jpeg", size: 3234567, modifiedTime: new Date("2025-08-20"), createdAt: new Date("2025-08-20"), isFolder: false, parentId: "jose-fotos" },
+  { id: "jose-foto1", name: "Local do Crime 01.jpg", mimeType: "image/jpeg", size: 3456789, modifiedTime: new Date("2025-08-20"), createdAt: new Date("2025-08-20"), isFolder: false, parentId: "jose-fotos", assistidoId: 1, assistidoNome: "José Carlos Santos" },
+  { id: "jose-foto2", name: "Local do Crime 02.jpg", mimeType: "image/jpeg", size: 3234567, modifiedTime: new Date("2025-08-20"), createdAt: new Date("2025-08-20"), isFolder: false, parentId: "jose-fotos", assistidoId: 1, assistidoNome: "José Carlos Santos" },
   { id: "jose-foto3", name: "Evidência A.jpg", mimeType: "image/jpeg", size: 2345678, modifiedTime: new Date("2025-08-21"), createdAt: new Date("2025-08-21"), isFolder: false, parentId: "jose-fotos" },
 
   // ===== NÍVEL 4: Pedro Oliveira > Subpastas =====
   { id: "pedro-docs", name: "Documentos Pessoais", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-07-20"), isFolder: true, parentId: "juri-pedro" },
-  { id: "pedro-processo", name: "Processo 8002342-75", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-07-21"), isFolder: true, parentId: "juri-pedro", processoId: 2, processoNumero: "8002342-75.2025.8.05.0039" },
+  { id: "pedro-proc-folder", name: "Processo 8002342-75", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-07-21"), isFolder: true, parentId: "juri-pedro", processoId: 2, processoNumero: "8002342-75.2025.8.05.0039" },
 
-  // ===== NÍVEL 5: Pedro > Processo > Arquivos =====
-  { id: "pedro-denuncia", name: "Denúncia.pdf", mimeType: "application/pdf", size: 298765, modifiedTime: new Date("2025-07-25"), createdAt: new Date("2025-07-25"), isFolder: false, parentId: "pedro-processo", processoId: 2 },
-  { id: "pedro-alegacoes", name: "Alegações Finais.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 189012, modifiedTime: new Date("2026-01-29"), createdAt: new Date("2026-01-29"), isFolder: false, parentId: "pedro-processo", starred: true, processoId: 2 },
-
-  // ===== Processos por Número =====
-  { id: "proc-2341", name: "8002341-90.2025.8.05.0039", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-30"), createdAt: new Date("2025-08-16"), isFolder: true, parentId: "root-processos", processoId: 1, processoNumero: "8002341-90.2025.8.05.0039" },
-  { id: "proc-2342", name: "8002342-75.2025.8.05.0039", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-29"), createdAt: new Date("2025-07-21"), isFolder: true, parentId: "root-processos", processoId: 2, processoNumero: "8002342-75.2025.8.05.0039" },
-  { id: "proc-0800", name: "8000800-20.2024.8.05.0039", mimeType: "application/vnd.google-apps.folder", modifiedTime: new Date("2026-01-25"), createdAt: new Date("2024-06-10"), isFolder: true, parentId: "root-processos", processoId: 3, processoNumero: "8000800-20.2024.8.05.0039" },
+  // ===== Arquivos do Pedro =====
+  { id: "doc-pedro-denuncia", name: "Denúncia.pdf", mimeType: "application/pdf", size: 298765, modifiedTime: new Date("2025-07-25"), createdAt: new Date("2025-07-25"), isFolder: false, parentId: "pedro-proc-folder", processoId: 2, processoNumero: "8002342-75.2025.8.05.0039" },
+  { id: "doc-pedro-alegacoes", name: "Alegações Finais.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 189012, modifiedTime: new Date("2026-01-29"), createdAt: new Date("2026-01-29"), isFolder: false, parentId: "pedro-proc-folder", starred: true, processoId: 2, processoNumero: "8002342-75.2025.8.05.0039" },
 
   // ===== Pautas =====
   { id: "pauta-2026-05", name: "Semana 05-2026.pdf", mimeType: "application/pdf", size: 89456, modifiedTime: new Date("2026-01-28"), createdAt: new Date("2026-01-28"), isFolder: false, parentId: "root-pautas", starred: true },
   { id: "pauta-2026-04", name: "Semana 04-2026.pdf", mimeType: "application/pdf", size: 92345, modifiedTime: new Date("2026-01-21"), createdAt: new Date("2026-01-21"), isFolder: false, parentId: "root-pautas" },
-  { id: "pauta-video", name: "Gravação Audiência 10-01.mp4", mimeType: "video/mp4", size: 156789012, modifiedTime: new Date("2026-01-25"), createdAt: new Date("2026-01-25"), isFolder: false, parentId: "root-pautas" },
+  { id: "pauta-video", name: "Gravação Audiência.mp4", mimeType: "video/mp4", size: 156789012, modifiedTime: new Date("2026-01-25"), createdAt: new Date("2026-01-25"), isFolder: false, parentId: "root-pautas" },
 
   // ===== Jurisprudência =====
   { id: "juris-stj", name: "STJ - Tráfico Privilegiado.pdf", mimeType: "application/pdf", size: 234567, modifiedTime: new Date("2026-01-24"), createdAt: new Date("2026-01-24"), isFolder: false, parentId: "root-jurisprudencia" },
@@ -306,26 +321,26 @@ function FolderTreeItem({
   const isActive = currentFolder === node.id;
   const hasChildren = node.children.length > 0;
 
-  // Cores por nível para visual hierarchy
-  const levelColors = [
-    "text-amber-600 dark:text-amber-400",
-    "text-blue-600 dark:text-blue-400",
-    "text-emerald-600 dark:text-emerald-400",
-    "text-violet-600 dark:text-violet-400",
-    "text-rose-600 dark:text-rose-400",
+  // Cores sutis e profissionais por nível
+  const levelStyles = [
+    { icon: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20", active: "bg-amber-100 dark:bg-amber-900/40 ring-1 ring-amber-200 dark:ring-amber-800" },
+    { icon: "text-sky-500", bg: "bg-sky-50 dark:bg-sky-900/20", active: "bg-sky-100 dark:bg-sky-900/40 ring-1 ring-sky-200 dark:ring-sky-800" },
+    { icon: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20", active: "bg-emerald-100 dark:bg-emerald-900/40 ring-1 ring-emerald-200 dark:ring-emerald-800" },
+    { icon: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-900/20", active: "bg-violet-100 dark:bg-violet-900/40 ring-1 ring-violet-200 dark:ring-violet-800" },
+    { icon: "text-rose-500", bg: "bg-rose-50 dark:bg-rose-900/20", active: "bg-rose-100 dark:bg-rose-900/40 ring-1 ring-rose-200 dark:ring-rose-800" },
   ];
-  const iconColor = levelColors[level % levelColors.length];
+  const style = levelStyles[level % levelStyles.length];
 
   return (
     <div>
       <div
         className={cn(
-          "flex items-center gap-1 py-1.5 px-2 rounded-lg cursor-pointer transition-all group",
+          "flex items-center gap-1.5 py-1.5 px-2 rounded-lg cursor-pointer transition-all group",
           isActive
-            ? "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300"
-            : "hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
+            ? style.active
+            : "hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
         )}
-        style={{ paddingLeft: `${8 + level * 16}px` }}
+        style={{ paddingLeft: `${12 + level * 14}px` }}
       >
         {/* Expand/Collapse button */}
         <button
@@ -334,15 +349,15 @@ function FolderTreeItem({
             onToggleExpand(node.id);
           }}
           className={cn(
-            "w-5 h-5 rounded flex items-center justify-center transition-all",
+            "w-4 h-4 rounded flex items-center justify-center transition-all flex-shrink-0",
             hasChildren 
               ? "hover:bg-zinc-200 dark:hover:bg-zinc-700" 
-              : "opacity-0"
+              : "invisible"
           )}
         >
           {hasChildren && (
             <ChevronRight className={cn(
-              "w-3.5 h-3.5 text-zinc-400 transition-transform",
+              "w-3 h-3 text-zinc-400 transition-transform duration-200",
               isExpanded && "rotate-90"
             )} />
           )}
@@ -353,10 +368,17 @@ function FolderTreeItem({
           onClick={() => onNavigate(node.id)}
           className="flex-1 flex items-center gap-2 min-w-0"
         >
-          <FolderOpen className={cn("w-4 h-4 flex-shrink-0", iconColor)} />
+          <div className={cn(
+            "w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors",
+            isActive ? style.bg : "bg-zinc-100 dark:bg-zinc-800 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700"
+          )}>
+            <FolderOpen className={cn("w-3 h-3", isActive ? style.icon : "text-zinc-500")} />
+          </div>
           <span className={cn(
-            "text-sm truncate",
-            isActive ? "font-medium" : "text-zinc-700 dark:text-zinc-300"
+            "text-[13px] truncate transition-colors",
+            isActive 
+              ? "font-medium text-zinc-900 dark:text-zinc-100" 
+              : "text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-200"
           )}>
             {node.name}
           </span>
@@ -365,7 +387,7 @@ function FolderTreeItem({
         {/* File count badge */}
         {node.fileCount > 0 && (
           <span className={cn(
-            "text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500",
+            "text-[9px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-400 font-medium tabular-nums",
             "opacity-0 group-hover:opacity-100 transition-opacity"
           )}>
             {node.fileCount}
@@ -373,13 +395,13 @@ function FolderTreeItem({
         )}
       </div>
 
-      {/* Children */}
+      {/* Children com animação */}
       {isExpanded && hasChildren && (
-        <div className="relative">
-          {/* Linha de conexão vertical */}
+        <div className="relative animate-in slide-in-from-top-1 duration-200">
+          {/* Linha de conexão vertical sutil */}
           <div 
-            className="absolute left-[18px] top-0 bottom-2 w-px bg-zinc-200 dark:bg-zinc-700"
-            style={{ marginLeft: `${level * 16}px` }}
+            className="absolute top-0 bottom-1 w-px bg-zinc-200/60 dark:bg-zinc-700/60"
+            style={{ left: `${20 + level * 14}px` }}
           />
           {node.children.map((child) => (
             <FolderTreeItem
@@ -932,13 +954,38 @@ export default function DrivePage() {
   // Árvore de pastas
   const folderTree = useMemo(() => buildFolderTree(MOCK_FILES, undefined), []);
 
-  // Navegação
+  // Navegação - Reconstrói todo o caminho do breadcrumb
   const navigateToFolder = useCallback((folderId: string) => {
     const folder = MOCK_FILES.find(f => f.id === folderId);
-    if (folder) {
-      setCurrentFolder(folderId);
-      setBreadcrumbs(prev => [...prev, { id: folderId, name: folder.name }]);
+    if (!folder) return;
+
+    // Construir caminho completo até a pasta
+    const path: Breadcrumb[] = [{ id: "root", name: "Meu Drive" }];
+    let current: DriveFile | undefined = folder;
+    const ancestors: DriveFile[] = [];
+
+    // Subir na árvore até a raiz
+    while (current) {
+      ancestors.unshift(current);
+      current = current.parentId ? MOCK_FILES.find(f => f.id === current!.parentId) : undefined;
     }
+
+    // Adicionar cada ancestral ao breadcrumb
+    ancestors.forEach(f => {
+      path.push({ id: f.id, name: f.name });
+    });
+
+    setCurrentFolder(folderId);
+    setBreadcrumbs(path);
+
+    // Auto-expandir pastas ancestrais na árvore
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      ancestors.forEach(f => {
+        if (f.parentId) next.add(f.parentId);
+      });
+      return next;
+    });
   }, []);
 
   const navigateToBreadcrumb = useCallback((index: number) => {
