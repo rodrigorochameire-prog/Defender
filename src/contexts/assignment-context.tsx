@@ -85,7 +85,6 @@ const JURI_MODULES: MenuSection[] = [
     collapsible: true,
     defaultOpen: false,
     items: [
-      { label: "Investigação & OSINT", path: "/admin/juri/investigacao", icon: "FileSearch", description: "Kanban de providências" },
       { label: "Matriz de Provas", path: "/admin/juri/provas", icon: "ClipboardCheck", description: "Contradições e tabela comparativa" },
       { label: "Teses do Júri", path: "/admin/juri/teses", icon: "Target", description: "Narrativa e teses defensivas" },
       { label: "Laboratório de Oratória", path: "/admin/juri/laboratorio", icon: "Mic", description: "Treino de sustentação oral", isPremium: true },
@@ -169,7 +168,6 @@ const GRUPO_JURI_MODULES: MenuSection[] = [
     collapsible: true,
     defaultOpen: false,
     items: [
-      { label: "Investigação & OSINT", path: "/admin/juri/investigacao", icon: "FileSearch" },
       { label: "Matriz de Provas", path: "/admin/juri/provas", icon: "ClipboardCheck" },
       { label: "Teses do Júri", path: "/admin/juri/teses", icon: "Target" },
       { label: "Laboratório de Oratória", path: "/admin/juri/laboratorio", icon: "Mic", isPremium: true },
@@ -260,6 +258,7 @@ export const CONTEXT_MENU_ITEMS: AssignmentMenuItem[] = [
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
   { label: "Processos", path: "/admin/processos", icon: "Scale", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Drive", path: "/admin/drive", icon: "FolderOpen", description: "Arquivos e documentos", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Diligências", path: "/admin/diligencias", icon: "FileSearch", description: "Painel de investigações", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Equipe", path: "/admin/equipe", icon: "UsersRound", description: "Gestão da equipe", requiredRoles: ["admin", "defensor", "servidor"] },
 ];
 
