@@ -46,6 +46,8 @@ import {
   X,
   Phone,
   ExternalLink,
+  Info,
+  PenLine,
 } from "lucide-react";
 import {
   Popover,
@@ -306,10 +308,20 @@ export default function DashboardJuriPage() {
   const [atendimentoRapido, setAtendimentoRapido] = useState<{
     assistidoId: number | null;
     assistidoNome: string;
+    tipo: "atendimento" | "diligencia" | "informacao" | "peticao" | "anotacao";
     descricao: string;
-  }>({ assistidoId: null, assistidoNome: "", descricao: "" });
+  }>({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "" });
   const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
+
+  // Configuração dos tipos de registro
+  const tiposRegistro = [
+    { id: "atendimento", label: "Atendimento", icon: MessageSquare, color: "text-emerald-600", bgActive: "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300" },
+    { id: "diligencia", label: "Diligência", icon: Search, color: "text-blue-600", bgActive: "bg-blue-100 dark:bg-blue-900/30 border-blue-300" },
+    { id: "informacao", label: "Info", icon: Info, color: "text-amber-600", bgActive: "bg-amber-100 dark:bg-amber-900/30 border-amber-300" },
+    { id: "peticao", label: "Petição", icon: FileText, color: "text-purple-600", bgActive: "bg-purple-100 dark:bg-purple-900/30 border-purple-300" },
+    { id: "anotacao", label: "Nota", icon: PenLine, color: "text-zinc-600", bgActive: "bg-zinc-100 dark:bg-zinc-800 border-zinc-300" },
+  ] as const;
 
   // Assistido selecionado para exibir detalhes
   const assistidoSelecionado = useMemo(() => {
@@ -664,9 +676,37 @@ export default function DashboardJuriPage() {
                 </div>
               )}
 
+              {/* Seletor de Tipo de Registro */}
+              <div className="flex flex-wrap gap-1">
+                {tiposRegistro.map((tipo) => {
+                  const Icon = tipo.icon;
+                  const isSelected = atendimentoRapido.tipo === tipo.id;
+                  return (
+                    <button
+                      key={tipo.id}
+                      onClick={() => setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }))}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors ${
+                        isSelected 
+                          ? tipo.bgActive
+                          : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                      }`}
+                    >
+                      <Icon className={`w-3 h-3 ${tipo.color}`} />
+                      <span className={isSelected ? tipo.color : "text-zinc-600 dark:text-zinc-400"}>{tipo.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
               {/* Descrição do Atendimento */}
               <Textarea
-                placeholder="Descrição do atendimento..."
+                placeholder={
+                  atendimentoRapido.tipo === "atendimento" ? "Descreva o atendimento realizado..." :
+                  atendimentoRapido.tipo === "diligencia" ? "Descreva a diligência ou busca..." :
+                  atendimentoRapido.tipo === "informacao" ? "Registre a informação obtida..." :
+                  atendimentoRapido.tipo === "peticao" ? "Descreva a petição protocolada..." :
+                  "Adicione sua anotação..."
+                }
                 value={atendimentoRapido.descricao}
                 onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, descricao: e.target.value }))}
                 className="min-h-[70px] text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none"
@@ -679,15 +719,16 @@ export default function DashboardJuriPage() {
                 disabled={!atendimentoRapido.assistidoId || !atendimentoRapido.descricao.trim()}
                 onClick={() => {
                   if (atendimentoRapido.assistidoId && atendimentoRapido.descricao.trim()) {
-                    toast.success(`Atendimento de ${atendimentoRapido.assistidoNome} registrado!`);
-                    setAtendimentoRapido({ assistidoId: null, assistidoNome: "", descricao: "" });
+                    const tipoLabel = tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro";
+                    toast.success(`${tipoLabel} de ${atendimentoRapido.assistidoNome} registrado!`);
+                    setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "" });
                   } else {
-                    toast.error("Selecione um assistido e descreva o atendimento");
+                    toast.error("Selecione um assistido e descreva o registro");
                   }
                 }}
               >
                 <Send className="w-3 h-3 mr-1.5" />
-                Registrar Atendimento
+                Registrar {tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label}
               </Button>
             </div>
           </Card>
