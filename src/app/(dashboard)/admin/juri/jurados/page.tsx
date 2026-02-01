@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -14,6 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Users,
   Search,
@@ -29,8 +39,14 @@ import {
   LayoutGrid,
   List,
   Eye,
+  Upload,
+  FileText,
+  Check,
+  AlertCircle,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // ============================================
 // TIPOS
@@ -41,12 +57,24 @@ interface JuradoPerfil {
   genero: "M" | "F";
   idade?: number;
   profissao?: string;
+  empresa?: string;
   perfilDominante?: "empatico" | "analitico" | "autoritario" | "conciliador" | "impulsivo";
   totalSessoes: number;
   absolvicoes: number;
   condenacoes: number;
   taxaAbsolvicao: number;
   confiabilidadePerfil: "alta" | "media" | "baixa";
+  tipo?: "titular" | "suplente";
+  reuniao?: string;
+}
+
+interface JuradoImportado {
+  numero: number;
+  nome: string;
+  empresa: string;
+  profissao: string;
+  tipo: "titular" | "suplente";
+  reuniao: string;
 }
 
 // Dados mockados
@@ -78,6 +106,219 @@ function getPerfilLabel(perfil?: string) {
     impulsivo: "Impulsivo",
   };
   return labels[perfil || ""] || "—";
+}
+
+// ============================================
+// COMPONENTE: Modal de Importação de Jurados
+// ============================================
+function ImportarJuradosModal({ 
+  open, 
+  onOpenChange, 
+  onImport 
+}: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void;
+  onImport: (jurados: JuradoImportado[]) => void;
+}) {
+  const [textoColado, setTextoColado] = useState("");
+  const [reuniaoSelecionada, setReuniaoSelecionada] = useState("1");
+  const [tipoSelecionado, setTipoSelecionado] = useState<"titular" | "suplente">("titular");
+  const [juradosParseados, setJuradosParseados] = useState<JuradoImportado[]>([]);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const parseTexto = () => {
+    if (!textoColado.trim()) {
+      setErro("Cole o texto da ata de sorteio");
+      return;
+    }
+
+    setErro(null);
+    const linhas = textoColado.trim().split("\n");
+    const jurados: JuradoImportado[] = [];
+
+    for (const linha of linhas) {
+      // Tenta fazer parse de diferentes formatos
+      // Formato 1: Número\tNome\tEmpresa\tProfissão (tab separado)
+      // Formato 2: Número  Nome  Empresa  Profissão (espaços múltiplos)
+      
+      const partes = linha.split(/\t/).filter(p => p.trim());
+      
+      if (partes.length >= 2) {
+        const numero = parseInt(partes[0].trim());
+        if (isNaN(numero)) continue;
+        
+        const nome = partes[1]?.trim() || "";
+        const empresa = partes[2]?.trim() || "-";
+        const profissao = partes[3]?.trim() || "-";
+        
+        if (nome) {
+          jurados.push({
+            numero,
+            nome,
+            empresa: empresa === "-" ? "" : empresa,
+            profissao: profissao === "-" ? "" : profissao,
+            tipo: tipoSelecionado,
+            reuniao: reuniaoSelecionada,
+          });
+        }
+      }
+    }
+
+    if (jurados.length === 0) {
+      setErro("Não foi possível identificar jurados no texto. Verifique o formato.");
+      return;
+    }
+
+    setJuradosParseados(jurados);
+  };
+
+  const handleImportar = () => {
+    if (juradosParseados.length === 0) {
+      toast.error("Nenhum jurado para importar");
+      return;
+    }
+    onImport(juradosParseados);
+    toast.success(`${juradosParseados.length} jurados importados com sucesso!`);
+    setTextoColado("");
+    setJuradosParseados([]);
+    onOpenChange(false);
+  };
+
+  const limpar = () => {
+    setTextoColado("");
+    setJuradosParseados([]);
+    setErro(null);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center">
+              <Upload className="w-4 h-4 text-white dark:text-zinc-900" />
+            </div>
+            Importar Jurados
+          </DialogTitle>
+          <DialogDescription>
+            Cole a lista de jurados da ata de sorteio. O sistema reconhece automaticamente o formato.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-auto space-y-4 py-4">
+          {/* Configurações */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Reunião Periódica</Label>
+              <Select value={reuniaoSelecionada} onValueChange={setReuniaoSelecionada}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1ª Reunião (02-04/2026)</SelectItem>
+                  <SelectItem value="2">2ª Reunião (05-08/2026)</SelectItem>
+                  <SelectItem value="3">3ª Reunião (09-12/2026)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Tipo</Label>
+              <Select value={tipoSelecionado} onValueChange={(v) => setTipoSelecionado(v as "titular" | "suplente")}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="titular">Titular</SelectItem>
+                  <SelectItem value="suplente">Suplente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Área de texto para colar */}
+          {juradosParseados.length === 0 ? (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                Cole a lista da ata de sorteio (formato: Nº | Nome | Empresa | Profissão)
+              </Label>
+              <Textarea
+                placeholder={`Exemplo:
+1	Diana Mascarenhas dos Santos	Creche N. Senhora	Professora
+2	Gledeson Santos de Araujo	Secretaria de Cultura	Assistente
+3	Isabella Santana Souza	Kordsa	Administrativo`}
+                value={textoColado}
+                onChange={(e) => setTextoColado(e.target.value)}
+                className="min-h-[200px] font-mono text-sm"
+              />
+              {erro && (
+                <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400">
+                  <AlertCircle className="w-4 h-4" />
+                  {erro}
+                </div>
+              )}
+              <Button onClick={parseTexto} className="w-full">
+                <FileText className="w-4 h-4 mr-2" />
+                Processar Lista
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    {juradosParseados.length} jurados identificados
+                  </span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={limpar}>
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Limpar
+                </Button>
+              </div>
+              
+              {/* Preview da lista */}
+              <div className="max-h-[300px] overflow-auto border border-zinc-200 dark:border-zinc-800 rounded-xl">
+                <table className="w-full text-sm">
+                  <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0">
+                    <tr className="border-b border-zinc-200 dark:border-zinc-800">
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-zinc-500 w-12">#</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-zinc-500">Nome</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-zinc-500">Empresa</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-zinc-500">Profissão</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {juradosParseados.map((j, idx) => (
+                      <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                        <td className="px-3 py-2 text-zinc-500">{j.numero}</td>
+                        <td className="px-3 py-2 font-medium text-zinc-800 dark:text-zinc-200">{j.nome}</td>
+                        <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{j.empresa || "-"}</td>
+                        <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{j.profissao || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="border-t border-zinc-100 dark:border-zinc-800 pt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleImportar}
+            disabled={juradosParseados.length === 0}
+            className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Importar {juradosParseados.length > 0 ? `(${juradosParseados.length})` : ""}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 // ============================================
@@ -247,6 +488,13 @@ export default function JuradosPage() {
   const [filtroTendencia, setFiltroTendencia] = useState<string>("todos");
   const [filtroPerfil, setFiltroPerfil] = useState<string>("todos");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [juradosImportados, setJuradosImportados] = useState<JuradoImportado[]>([]);
+
+  const handleImportarJurados = (jurados: JuradoImportado[]) => {
+    setJuradosImportados(prev => [...prev, ...jurados]);
+    // Aqui seria feita a integração com o backend para salvar os jurados
+  };
 
   const juradosFiltrados = useMemo(() => {
     return juradosMock.filter((j) => {
@@ -284,10 +532,21 @@ export default function JuradosPage() {
             </div>
           </div>
           
-          <Button size="sm" className="h-8 text-xs bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
-            <Plus className="w-3.5 h-3.5 mr-1.5" />
-            Novo Jurado
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="h-8 text-xs border-zinc-300 dark:border-zinc-700"
+              onClick={() => setImportModalOpen(true)}
+            >
+              <Upload className="w-3.5 h-3.5 mr-1.5" />
+              Importar Lista
+            </Button>
+            <Button size="sm" className="h-8 text-xs bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              Novo Jurado
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -372,7 +631,39 @@ export default function JuradosPage() {
             <p className="text-sm text-zinc-500">Nenhum jurado encontrado</p>
           </div>
         )}
+
+        {/* Jurados Importados (Temporário - Preview) */}
+        {juradosImportados.length > 0 && (
+          <Card className="p-4 mt-6 bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30">
+            <div className="flex items-center gap-2 mb-3">
+              <Check className="w-5 h-5 text-emerald-600" />
+              <h3 className="font-semibold text-zinc-800 dark:text-zinc-200">
+                {juradosImportados.length} jurados importados recentemente
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              {juradosImportados.slice(0, 9).map((j, idx) => (
+                <div key={idx} className="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm">
+                  <p className="font-medium text-zinc-800 dark:text-zinc-200 truncate">{j.nome}</p>
+                  <p className="text-xs text-zinc-500 truncate">{j.empresa || "-"} • {j.profissao || "-"}</p>
+                </div>
+              ))}
+              {juradosImportados.length > 9 && (
+                <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-sm text-zinc-500">
+                  +{juradosImportados.length - 9} mais
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
       </div>
+
+      {/* Modal de Importação */}
+      <ImportarJuradosModal
+        open={importModalOpen}
+        onOpenChange={setImportModalOpen}
+        onImport={handleImportarJurados}
+      />
     </div>
   );
 }

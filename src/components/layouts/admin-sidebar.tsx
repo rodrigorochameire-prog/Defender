@@ -93,7 +93,7 @@ function MenuItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
     return null;
   }
   
-  // Design diferente para sidebar retraída vs expandida - TEMA ESCURO CORRIGIDO
+  // Design preto e branco elegante - funciona em light e dark mode
   if (isCollapsed) {
     return (
       <SidebarMenuItem>
@@ -104,14 +104,14 @@ function MenuItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
           className={cn(
             "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
             isActive 
-              ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30" 
-              : "text-zinc-500 hover:bg-zinc-700/50 hover:text-zinc-300"
+              ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-lg shadow-zinc-900/20 dark:shadow-white/20" 
+              : "text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700/50 hover:text-zinc-700 dark:hover:text-zinc-300"
           )}
         >
           <Link href={item.path} prefetch={true} onClick={onNavigate}>
             <Icon className={cn(
               "h-5 w-5 transition-all duration-300", 
-              isActive ? "text-white" : "text-zinc-500"
+              isActive ? "text-white dark:text-zinc-900" : "text-zinc-500"
             )} strokeWidth={isActive ? 2.5 : 2} />
           </Link>
         </SidebarMenuButton>
@@ -128,20 +128,20 @@ function MenuItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
         className={cn(
           "h-11 transition-all duration-300 rounded-xl group/item relative overflow-hidden",
           isActive 
-            ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 font-semibold" 
-            : "text-zinc-400 hover:text-white hover:bg-zinc-700/50"
+            ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-lg shadow-zinc-900/20 dark:shadow-white/20 font-semibold" 
+            : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700/50"
         )}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
           <div className={cn(
             "h-7 w-7 rounded-lg flex items-center justify-center mr-1 transition-all duration-300",
             isActive 
-              ? "bg-white/20" 
-              : "bg-zinc-700/50 group-hover/item:bg-zinc-600/50"
+              ? "bg-white/20 dark:bg-zinc-900/20" 
+              : "bg-zinc-200 dark:bg-zinc-700/50 group-hover/item:bg-zinc-300 dark:group-hover/item:bg-zinc-600/50"
           )}>
             <Icon className={cn(
               "h-4 w-4 transition-all duration-300 flex-shrink-0", 
-              isActive ? "text-white" : "text-zinc-500 group-hover/item:text-zinc-300"
+              isActive ? "text-white dark:text-zinc-900" : "text-zinc-500 group-hover/item:text-zinc-700 dark:group-hover/item:text-zinc-300"
             )} strokeWidth={isActive ? 2.5 : 2} />
           </div>
           <span className="text-[13px] font-medium truncate">{item.label}</span>
@@ -149,7 +149,7 @@ function MenuItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
             <Sparkles className="h-3 w-3 text-amber-400 ml-auto" />
           )}
           {isActive && !item.isPremium && (
-            <div className="absolute right-3 w-2 h-2 rounded-full bg-white/50 shadow-sm" />
+            <div className="absolute right-3 w-2 h-2 rounded-full bg-white/50 dark:bg-zinc-900/50 shadow-sm" />
           )}
         </Link>
       </SidebarMenuButton>

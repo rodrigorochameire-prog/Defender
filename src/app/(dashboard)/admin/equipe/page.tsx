@@ -279,124 +279,120 @@ export default function EquipePage() {
 
   return (
     <div className="space-y-6 p-6 max-w-[1600px] mx-auto">
-      {/* Header */}
+      {/* Header - Sofisticado Preto e Branco */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <Users className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
-            Equipe
+            <span className="tracking-tight">Equipe</span>
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1.5 ml-14">
             Gerencie sua equipe e acompanhe as delegações
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <Input
               placeholder="Buscar membro..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-[200px] h-9"
+              className="pl-9 w-[220px] h-10 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl"
             />
           </div>
           {canManageTeam() && (
             <Button 
               size="sm" 
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+              className="h-10 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-xl font-medium shadow-lg"
               onClick={() => toast.info("Funcionalidade de adicionar membro em desenvolvimento")}
             >
-              <UserPlus className="w-4 h-4 mr-1.5" />
+              <UserPlus className="w-4 h-4 mr-2" />
               Adicionar
             </Button>
           )}
         </div>
       </div>
 
-      {/* Stats Cards - Design Refinado */}
+      {/* Stats Cards - Design Sofisticado Preto e Branco */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="group relative p-4 bg-white dark:bg-zinc-900/80 border-zinc-100 dark:border-zinc-800/60 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 dark:from-emerald-500/20 dark:to-emerald-600/20 flex items-center justify-center ring-1 ring-emerald-500/20">
-              <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-zinc-900/10 dark:hover:shadow-white/5 transition-all duration-300">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
+              <Users className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">{estatisticas.total}</p>
-              <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Membros</p>
+              <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{estatisticas.total}</p>
+              <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Membros</p>
             </div>
           </div>
-          <div className="relative mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center gap-2 text-xs">
-            <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2 text-xs">
+            <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               {estatisticas.online} online
             </span>
           </div>
         </Card>
 
-        <Card className="group relative p-4 bg-white dark:bg-zinc-900/80 border-zinc-100 dark:border-zinc-800/60 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-600/10 dark:from-amber-500/20 dark:to-amber-600/20 flex items-center justify-center ring-1 ring-amber-500/20">
-              <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+        <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-zinc-900/10 dark:hover:shadow-white/5 transition-all duration-300">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/30">
+              <Clock className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">{estatisticas.delegacoesPendentes}</p>
-              <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Pendentes</p>
+              <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{estatisticas.delegacoesPendentes}</p>
+              <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Pendentes</p>
             </div>
           </div>
         </Card>
 
-        <Card className="group relative p-4 bg-white dark:bg-zinc-900/80 border-zinc-100 dark:border-zinc-800/60 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 dark:from-blue-500/20 dark:to-blue-600/20 flex items-center justify-center ring-1 ring-blue-500/20">
-              <RefreshCw className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        <Card className="group relative p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-zinc-900/10 dark:hover:shadow-white/5 transition-all duration-300">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center shadow-md shadow-blue-500/30">
+              <RefreshCw className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">{estatisticas.delegacoesEmAndamento}</p>
-              <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Em Andamento</p>
+              <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">{estatisticas.delegacoesEmAndamento}</p>
+              <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">Em Andamento</p>
             </div>
           </div>
         </Card>
 
-        <Card className="group relative p-4 bg-white dark:bg-zinc-900/80 border-zinc-100 dark:border-zinc-800/60 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-violet-500/5 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500/10 to-violet-600/10 dark:from-violet-500/20 dark:to-violet-600/20 flex items-center justify-center ring-1 ring-violet-500/20">
-              <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+        <Card className="group relative p-5 bg-zinc-900 dark:bg-white border-zinc-800 dark:border-zinc-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-md">
+              <TrendingUp className="w-5 h-5 text-zinc-900 dark:text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <p className="text-3xl font-bold text-white dark:text-zinc-900 tracking-tighter">
                 {MOCK_TEAM_MEMBERS.reduce((acc, m) => acc + m.stats.concluidas, 0)}
               </p>
-              <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Concluídas</p>
+              <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Concluídas</p>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Tabs - Design Refinado */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
-        <TabsList className="bg-zinc-100/80 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200/50 dark:border-zinc-700/30">
-          <TabsTrigger value="visao-geral" className="text-xs rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm">
-            <Users className="w-3.5 h-3.5 mr-1.5" />
+      {/* Tabs - Design Sofisticado Preto e Branco */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <TabsTrigger value="visao-geral" className="text-sm font-medium rounded-xl px-4 py-2.5 data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-zinc-900 data-[state=active]:shadow-md transition-all duration-200">
+            <Users className="w-4 h-4 mr-2" />
             Visão Geral
           </TabsTrigger>
-          <TabsTrigger value="delegacoes" className="text-xs rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm">
-            <Send className="w-3.5 h-3.5 mr-1.5" />
+          <TabsTrigger value="delegacoes" className="text-sm font-medium rounded-xl px-4 py-2.5 data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-zinc-900 data-[state=active]:shadow-md transition-all duration-200">
+            <Send className="w-4 h-4 mr-2" />
             Delegações
             {estatisticas.delegacoesPendentes > 0 && (
-              <Badge className="ml-1.5 h-4 px-1.5 text-[9px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+              <Badge className="ml-2 h-5 px-2 text-[10px] bg-amber-500 text-white border-0 font-semibold">
                 {estatisticas.delegacoesPendentes}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="vinculos" className="text-xs rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm">
-            <Link2 className="w-3.5 h-3.5 mr-1.5" />
+          <TabsTrigger value="vinculos" className="text-sm font-medium rounded-xl px-4 py-2.5 data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-zinc-900 data-[state=active]:shadow-md transition-all duration-200">
+            <Link2 className="w-4 h-4 mr-2" />
             Vínculos
           </TabsTrigger>
           {canManageTeam() && (
