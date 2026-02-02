@@ -370,60 +370,60 @@ export default function EquipePage() {
       {/* Content */}
       <div className="p-4 md:p-6 space-y-6">
 
-      {/* Stats Cards - Padrão Demandas (Compacto) */}
+      {/* Stats Cards - Mobile-first */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Total</p>
-              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.total}</p>
-              <p className="text-[10px] text-zinc-400">membros</p>
+              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Total</p>
+              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.total}</p>
+              <p className="text-xs sm:text-[10px] text-zinc-400">membros</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-              <Users className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <Users className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
         </div>
 
-        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Pendentes</p>
-              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.delegacoesPendentes}</p>
-              <p className="text-[10px] text-zinc-400">delegações</p>
+              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Pendentes</p>
+              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.delegacoesPendentes}</p>
+              <p className="text-xs sm:text-[10px] text-zinc-400">delegações</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-              <Clock className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <Clock className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
         </div>
 
-        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Andamento</p>
-              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.delegacoesEmAndamento}</p>
-              <p className="text-[10px] text-zinc-400">em execução</p>
+              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Andamento</p>
+              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticas.delegacoesEmAndamento}</p>
+              <p className="text-xs sm:text-[10px] text-zinc-400">em execução</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-              <RefreshCw className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <RefreshCw className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
         </div>
 
-        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Concluídas</p>
-              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticasDelegacoes?.concluidas || 0}</p>
-              <p className="text-[10px] text-zinc-400">este mês</p>
+              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Concluídas</p>
+              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{estatisticasDelegacoes?.concluidas || 0}</p>
+              <p className="text-xs sm:text-[10px] text-zinc-400">este mês</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-              <CheckCircle2 className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+              <CheckCircle2 className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
             </div>
           </div>
         </div>

@@ -136,20 +136,20 @@ export default function JuriPage() {
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header - Padrão Processos */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+      {/* Header - Padrão Defender */}
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <Gavel className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center shadow-lg">
+              <Gavel className="w-5 h-5 text-white" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Tribunal do Júri</span>
-              <span className="text-xs text-zinc-400 dark:text-zinc-500">• {stats.agendadas} sessões</span>
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Tribunal do Júri</h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Gestão de sessões e julgamentos</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <Link href="/admin/juri/cockpit">
               <Button 
                 variant="ghost" 
@@ -171,7 +171,7 @@ export default function JuriPage() {
             <Link href="/admin/juri/nova">
               <Button 
                 size="sm" 
-                className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+                className="h-7 px-2.5 ml-1 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
                 Nova
@@ -184,8 +184,8 @@ export default function JuriPage() {
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         
-        {/* STATS CARDS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* STATS CARDS - Padrão mobile-first */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { label: "Agendadas", value: stats.agendadas, icon: Calendar, color: "violet" },
             { label: "Absolvições", value: stats.absolvicoes, icon: CheckCircle2, color: "emerald" },
@@ -201,18 +201,18 @@ export default function JuriPage() {
             }[stat.color];
             
             return (
-              <div key={idx} className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
-                <div className="flex items-center gap-3">
-                  <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", colorClasses)}>
-                    <Icon className="w-4 h-4" />
+              <div key={idx} className="p-4 sm:p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center gap-3 sm:gap-3">
+                  <div className={cn("w-11 h-11 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center", colorClasses)}>
+                    <Icon className="w-5 h-5 sm:w-4 sm:h-4" />
                   </div>
                   <div>
                     {isLoading ? (
                       <Skeleton className="h-6 w-10" />
                     ) : (
-                      <p className="text-xl font-bold text-zinc-800 dark:text-zinc-200">{stat.value}</p>
+                      <p className="text-2xl sm:text-xl font-bold text-zinc-800 dark:text-zinc-200">{stat.value}</p>
                     )}
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide">{stat.label}</p>
+                    <p className="text-xs sm:text-[10px] text-zinc-500 uppercase tracking-wide">{stat.label}</p>
                   </div>
                 </div>
               </div>
@@ -241,11 +241,11 @@ export default function JuriPage() {
             </CardHeader>
             <CardContent>
               {loadingProximas ? (
-                <div className="grid gap-3 md:grid-cols-4">
-                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+                <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28 sm:h-24 rounded-xl" />)}
                 </div>
               ) : (
-                <div className="grid gap-3 md:grid-cols-4">
+                <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
                   {proximasSessoes?.slice(0, 4).map((sessao) => {
                     const dataSessao = sessao.dataSessao ? new Date(sessao.dataSessao) : new Date();
                     const prox = getProximidade(dataSessao);
@@ -280,7 +280,7 @@ export default function JuriPage() {
           </Card>
         )}
 
-        {/* FERRAMENTAS - Grid Compacto */}
+        {/* FERRAMENTAS - Grid Compacto com tamanhos mobile-first */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { id: "cockpit", label: "Plenário Live", desc: "Cockpit do julgamento", href: "/admin/juri/cockpit", icon: Zap, color: "violet", premium: true },
@@ -298,17 +298,17 @@ export default function JuriPage() {
             
             return (
               <Link key={tool.id} href={tool.href}>
-                <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all group">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", bgColor)}>
-                      <Icon className="w-5 h-5" />
+                <div className="p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all group">
+                  <div className="flex items-center justify-between mb-4 sm:mb-3">
+                    <div className={cn("w-12 h-12 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center", bgColor)}>
+                      <Icon className="w-6 h-6 sm:w-5 sm:h-5" />
                     </div>
                     {tool.premium && (
-                      <Badge className="bg-violet-500 text-white text-[9px] border-0">Premium</Badge>
+                      <Badge className="bg-violet-500 text-white text-[10px] sm:text-[9px] border-0">Premium</Badge>
                     )}
                   </div>
-                  <h3 className="font-semibold text-sm text-zinc-800 dark:text-zinc-200">{tool.label}</h3>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">{tool.desc}</p>
+                  <h3 className="font-semibold text-base sm:text-sm text-zinc-800 dark:text-zinc-200">{tool.label}</h3>
+                  <p className="text-sm sm:text-[11px] text-zinc-500 mt-0.5">{tool.desc}</p>
                 </div>
               </Link>
             );
@@ -370,8 +370,8 @@ export default function JuriPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-36 sm:h-32 rounded-xl" />)}
               </div>
             ) : sessoesFiltradas.length === 0 ? (
               <div className="text-center py-12">
@@ -385,7 +385,7 @@ export default function JuriPage() {
                 </Link>
               </div>
             ) : viewMode === "grid" ? (
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {sessoesFiltradas.map((sessao) => {
                   const dataSessao = sessao.dataSessao ? new Date(sessao.dataSessao) : null;
                   const statusCfg = getStatusConfig(sessao.status || "AGENDADA");

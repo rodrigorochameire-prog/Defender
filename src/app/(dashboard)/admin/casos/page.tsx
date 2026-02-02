@@ -1300,7 +1300,7 @@ export default function CasosPage() {
         {/* Conteúdo Principal */}
         <div className="p-4 md:p-6 space-y-4 md:space-y-6">
 
-        {/* Stats Cards - Grid compacto */}
+        {/* Stats Cards - Mobile-first */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { label: "Total", value: stats?.totalCasos || 0, icon: Briefcase },
@@ -1310,18 +1310,18 @@ export default function CasosPage() {
           ].map((stat, idx) => (
             <div
               key={idx}
-              className="group relative text-left p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-200"
+              className="group relative text-left p-4 sm:p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-200"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">{stat.label}</p>
+                  <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">{stat.label}</p>
                   <p className={cn(
-                    "text-lg font-semibold",
+                    "text-2xl sm:text-lg font-semibold",
                     stat.highlight ? "text-rose-600 dark:text-rose-400" : "text-zinc-700 dark:text-zinc-300"
                   )}>{stat.value}</p>
                 </div>
-                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-                  <stat.icon className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                <div className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+                  <stat.icon className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 dark:text-zinc-400" />
                 </div>
               </div>
             </div>
