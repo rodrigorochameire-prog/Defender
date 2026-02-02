@@ -52,173 +52,6 @@ import {
   FileText,
 } from "lucide-react";
 
-// Mock data expandido
-const demandasMock = [
-  {
-    id: "1",
-    status: "analisar",
-    prazo: "29/01/26",
-    data: "20/01/26",
-    assistido: "Nathan Gonçalves dos Santos",
-    avatar: "",
-    processos: [{ tipo: "AP", numero: "6005582-31.2024.8.05.0039" }],
-    ato: "Ciência habilitação",
-    providencias: "Atendimento solicitado pelo assistido para esclarecimentos detalhados sobre o andamento processual. Necessário verificar histórico completo de movimentações nos últimos 6 meses, incluindo audiências realizadas, depoimentos colhidos e documentos juntados aos autos. Cliente solicita cópia integral do processo para análise particular com familiares.",
-    atribuicao: "Tribunal do Júri",
-    tipoAto: "Ciência",
-    estadoPrisional: "preso",
-    dataInclusao: "2026-01-20T10:30:00",
-    arquivado: false,
-  },
-  {
-    id: "2",
-    status: "elaborar",
-    prazo: "30/01/26",
-    data: "23/01/26",
-    assistido: "José Carlos da Silva",
-    avatar: "",
-    processos: [{ tipo: "AP", numero: "8035914-23.2024.8.05.0039" }],
-    ato: "Ciência de pronúncia",
-    providencias: "Elaborar resposta à acusação considerando todas as teses defensivas possíveis.",
-    atribuicao: "Tribunal do Júri",
-    tipoAto: "Ciência",
-    estadoPrisional: "preso",
-    dataInclusao: "2026-01-23T14:20:00",
-    arquivado: false,
-  },
-  {
-    id: "3",
-    status: "atender",
-    prazo: "",
-    data: "15/01/26",
-    assistido: "Luís Carlos Alves de Santana",
-    avatar: "",
-    processos: [{ tipo: "AP", numero: "0800004-34.2018.8.05.0039" }],
-    ato: "Diligências do réu",
-    providencias: "",
-    atribuicao: "Criminal Geral",
-    tipoAto: "Diligências",
-    estadoPrisional: "solto",
-    dataInclusao: "2026-01-15T09:15:00",
-    arquivado: false,
-  },
-  {
-    id: "4",
-    status: "urgente",
-    prazo: "29/01/26",
-    data: "28/01/26",
-    assistido: "Maria Silva Santos",
-    avatar: "",
-    processos: [{ tipo: "HC", numero: "8004123-45.2026.8.05.0039" }],
-    ato: "Habeas Corpus",
-    providencias: "Prisão preventiva - requerer liberdade provisória com urgência.",
-    atribuicao: "Criminal Geral",
-    tipoAto: "HC",
-    estadoPrisional: "preso",
-    dataInclusao: "2026-01-28T16:45:00",
-    arquivado: false,
-  },
-  {
-    id: "5",
-    status: "elaborando",
-    prazo: "01/02/26",
-    data: "25/01/26",
-    assistido: "Mariana Silva Santos",
-    avatar: "",
-    processos: [
-      { tipo: "MPU", numero: "8005678-90.2026.8.05.0039" },
-      { tipo: "AP", numero: "8005679-01.2026.8.05.0039" },
-    ],
-    ato: "Petição de Medida Protetiva",
-    providencias: "Elaborar petição solicitando medida protetiva de urgência com afastamento imediato do agressor.",
-    atribuicao: "Violência Doméstica",
-    tipoAto: "Petição",
-    estadoPrisional: "solto",
-    dataInclusao: "2026-01-25T11:20:00",
-    arquivado: false,
-  },
-  {
-    id: "6",
-    status: "fila",
-    prazo: "",
-    data: "27/01/26",
-    assistido: "Roberto Alves Lima",
-    avatar: "",
-    processos: [{ tipo: "AP", numero: "0012345-67.2026.8.05.0039" }],
-    ato: "Atendimento Inicial",
-    providencias: "Aguardando na fila para primeiro atendimento",
-    atribuicao: "Criminal Geral",
-    tipoAto: "Atendimento",
-    estadoPrisional: "solto",
-    dataInclusao: "2026-01-27T08:00:00",
-    arquivado: false,
-  },
-  {
-    id: "7",
-    status: "protocolar",
-    prazo: "",
-    data: "26/01/26",
-    assistido: "Diego Bonifim Almeida",
-    avatar: "",
-    processos: [{ tipo: "AP", numero: "6082906-74.2018.8.05.0039" }],
-    ato: "Ofício",
-    providencias: "Requerer diligências para verificar situação policial (câmeras de monitoramento)",
-    atribuicao: "Criminal Geral",
-    tipoAto: "Ofício",
-    estadoPrisional: "solto",
-    dataInclusao: "2026-01-26T13:30:00",
-    arquivado: false,
-  },
-  {
-    id: "8",
-    status: "protocolado",
-    prazo: "",
-    data: "19/01/26",
-    assistido: "Ricardo Santos Ferreira",
-    avatar: "",
-    processos: [{ tipo: "AP", numero: "0056789-01.2026.8.05.0039" }],
-    ato: "Habeas Corpus",
-    providencias: "HC protocolado e aguardando julgamento",
-    atribuicao: "Tribunal do Júri",
-    tipoAto: "HC",
-    estadoPrisional: "preso",
-    dataInclusao: "2026-01-19T17:00:00",
-    arquivado: false,
-  },
-  {
-    id: "9",
-    status: "monitorar",
-    prazo: "",
-    data: "24/01/26",
-    assistido: "Carolina Mendes Oliveira",
-    avatar: "",
-    processos: [{ tipo: "IP", numero: "0023456-78.2026.8.05.0039" }],
-    ato: "Rol de Testemunhas",
-    providencias: "Aguardando lista de testemunhas de defesa",
-    atribuicao: "Tribunal do Júri",
-    tipoAto: "Diligências",
-    estadoPrisional: "monitorado",
-    dataInclusao: "2026-01-24T10:45:00",
-    arquivado: false,
-  },
-  {
-    id: "10",
-    status: "resolvido",
-    prazo: "",
-    data: "18/01/26",
-    assistido: "Anderson Lima Souza",
-    avatar: "",
-    processos: [{ tipo: "AP", numero: "0078901-23.2026.8.05.0039" }],
-    ato: "Ciência de Sentença",
-    providencias: "Ciente da decisão judicial",
-    atribuicao: "Execução Penal",
-    tipoAto: "Ciência",
-    estadoPrisional: "preso",
-    dataInclusao: "2026-01-18T15:20:00",
-    arquivado: false,
-  },
-];
-
 // Ícones e cores por atribuição
 const atribuicaoIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   "Tribunal do Júri": Gavel,
@@ -294,7 +127,7 @@ const chartOptions = [
 export default function Demandas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("status");
-  const [demandas, setDemandas] = useState(demandasMock);
+  const [demandas, setDemandas] = useState<any[]>([]);
   const [selectedPrazoFilter, setSelectedPrazoFilter] = useState<string | null>(null);
   const [selectedAtribuicao, setSelectedAtribuicao] = useState<string | null>(null);
   const [selectedEstadoPrisional, setSelectedEstadoPrisional] = useState<string | null>(null);
@@ -385,10 +218,12 @@ export default function Demandas() {
         prioridade: d.prioridade || "normal",
         arquivado: d.status === "ARQUIVADO",
       }));
-      // Usar apenas dados do banco (sem mocks)
+      // Usar apenas dados do banco
       setDemandas(mappedDemandas);
+    } else {
+      // Se banco vazio, mantém array vazio
+      setDemandas([]);
     }
-    // Se banco vazio, manter mocks (já é o estado inicial)
   }, [demandasDB]);
 
   // Gerar lista de atos dinamicamente baseado na atribuição selecionada
