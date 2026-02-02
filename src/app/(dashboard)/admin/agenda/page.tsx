@@ -600,7 +600,8 @@ export default function AgendaPage() {
         id: a.id.toString(),
         titulo: a.titulo || `Audiência - ${a.tipo}`,
         tipo: "audiencia",
-        data: new Date(a.dataHora).toISOString().split("T")[0],
+        // Usar format() ao invés de toISOString() para respeitar timezone local
+        data: format(new Date(a.dataHora), "yyyy-MM-dd"),
         horarioInicio: a.horario || format(new Date(a.dataHora), "HH:mm"),
         horarioFim: "",
         local: a.local || "",
