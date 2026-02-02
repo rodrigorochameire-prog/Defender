@@ -594,6 +594,38 @@ export const usersRouter = router({
     }),
 
   /**
+   * Redefinir senha de um membro (admin)
+   * Permite que admin defina nova senha para qualquer usuário
+   */
+  resetPassword: adminProcedure
+    .input(
+      z.object({
+        userId: idSchema,
+        newPassword: z.string().min(6, "Nova senha deve ter no mínimo 6 caracteres"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const targetUser = await db.query.users.findFirst({
+          where: eq(users.id, input.userId),
+        });
+
+        if (!targetUser) {
+          throw Errors.notFound("Usuário");
+        }
+
+        const passwordHash = await hashPassword(input.newPassword);
+
+        await db
+          .update(users)
+          .set({ passwordHash, updatedAt: new Date() })
+          .where(eq(users.id, input.userId));
+
+        return { success: true, userName: targetUser.name };
+      }, "Erro ao redefinir senha");
+    }),
+
+  /**
    * Alterar senha (para usuários que já têm senha)
    */
   changePassword: protectedProcedure

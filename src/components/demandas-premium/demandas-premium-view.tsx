@@ -235,11 +235,12 @@ export default function Demandas() {
         assistido: d.assistido?.nome || d.titulo || "Sem assistido",
         assistidoId: d.assistido?.id || d.assistidoId || null,
         processoId: d.processo?.id || d.processoId || null,
-        status: DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "fila",
-        prazo: d.prazo ? new Date(d.prazo).toLocaleDateString("pt-BR") : "",
-        data: d.dataEntrada ? new Date(d.dataEntrada).toLocaleDateString("pt-BR") : new Date(d.createdAt).toLocaleDateString("pt-BR"),
-        processos: d.processo?.numeroAutos 
-          ? [{ tipo: "Processo", numero: d.processo.numeroAutos }] 
+        // Usar substatus granular quando disponível, senão mapear do status coarse do DB
+        status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "fila",
+        prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",
+        data: d.dataEntrada ? new Date(d.dataEntrada + "T12:00:00").toLocaleDateString("pt-BR") : new Date(d.createdAt).toLocaleDateString("pt-BR"),
+        processos: d.processo?.numeroAutos
+          ? [{ tipo: "Processo", numero: d.processo.numeroAutos }]
           : [],
         ato: d.ato || d.titulo || "",
         providencias: d.providencias || "",
@@ -267,6 +268,26 @@ export default function Demandas() {
     return getAtosPorAtribuicao(selectedAtribuicao);
   }, [selectedAtribuicao]);
 
+  // Mapeamento de status granular da UI para status coarse do banco
+  const UI_STATUS_TO_DB: Record<string, string> = {
+    "fila": "5_FILA",
+    "atender": "2_ATENDER",
+    "analisar": "2_ATENDER",
+    "elaborar": "2_ATENDER",
+    "elaborando": "2_ATENDER",
+    "buscar": "2_ATENDER",
+    "revisar": "2_ATENDER",
+    "revisando": "2_ATENDER",
+    "monitorar": "4_MONITORAR",
+    "protocolar": "5_FILA",
+    "protocolado": "7_PROTOCOLADO",
+    "ciencia": "7_CIENCIA",
+    "sem_atuacao": "7_SEM_ATUACAO",
+    "urgente": "URGENTE",
+    "resolvido": "CONCLUIDO",
+    "arquivado": "ARQUIVADO",
+  };
+
   const handleStatusChange = (demandaId: string, newStatus: string) => {
     // Atualizar localmente para feedback imediato
     setDemandas((prev) =>
@@ -276,9 +297,11 @@ export default function Demandas() {
     // Atualizar no banco (id precisa ser número)
     const numericId = parseInt(demandaId, 10);
     if (!isNaN(numericId)) {
+      const dbStatus = UI_STATUS_TO_DB[newStatus] || newStatus.toUpperCase().replace(/ /g, "_");
       updateDemandaMutation.mutate({
         id: numericId,
-        status: newStatus.toUpperCase().replace(/ /g, "_"),
+        status: dbStatus as any,
+        substatus: newStatus, // Salvar o status granular
       });
     }
   };

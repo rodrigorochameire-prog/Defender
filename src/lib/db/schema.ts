@@ -320,6 +320,7 @@ export const demandas = pgTable("demandas", {
   
   // Status
   status: statusDemandaEnum("status").default("5_FILA"),
+  substatus: varchar("substatus", { length: 50 }), // Status granular: elaborar, revisar, buscar, etc.
   prioridade: prioridadeEnum("prioridade").default("NORMAL"),
   
   // Providências

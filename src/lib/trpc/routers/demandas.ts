@@ -77,6 +77,7 @@ export const demandasRouter = router({
           prazo: demandas.prazo,
           dataEntrada: demandas.dataEntrada,
           status: demandas.status,
+          substatus: demandas.substatus,
           prioridade: demandas.prioridade,
           providencias: demandas.providencias,
           reuPreso: demandas.reuPreso,
@@ -103,7 +104,7 @@ export const demandasRouter = router({
         .orderBy(demandas.prazo)
         .limit(limit)
         .offset(offset);
-      
+
       return result;
     }),
 
@@ -173,6 +174,7 @@ export const demandasRouter = router({
           ato: demandas.ato,
           prazo: demandas.prazo,
           status: demandas.status,
+          substatus: demandas.substatus,
           prioridade: demandas.prioridade,
           reuPreso: demandas.reuPreso,
           defensorId: demandas.defensorId,
@@ -193,7 +195,7 @@ export const demandasRouter = router({
         .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
         .where(and(...baseConditions))
         .orderBy(demandas.prazo);
-      
+
       return result;
     }),
 
@@ -260,9 +262,10 @@ export const demandasRouter = router({
         ato: z.string().min(1).optional(),
         prazo: z.string().optional(),
         status: z.enum([
-          "2_ATENDER", "4_MONITORAR", "5_FILA", "7_PROTOCOLADO", 
+          "2_ATENDER", "4_MONITORAR", "5_FILA", "7_PROTOCOLADO",
           "7_CIENCIA", "7_SEM_ATUACAO", "URGENTE", "CONCLUIDO", "ARQUIVADO"
         ]).optional(),
+        substatus: z.string().max(50).optional().nullable(),
         prioridade: z.enum(["BAIXA", "NORMAL", "ALTA", "URGENTE", "REU_PRESO"]).optional(),
         providencias: z.string().optional(),
         reuPreso: z.boolean().optional(),
@@ -556,19 +559,27 @@ export const demandasRouter = router({
           const dbStatus = STATUS_TO_DB[row.status || "fila"] || "5_FILA";
           const reuPreso = row.estadoPrisional === "preso";
 
-          // 5. Converter datas do formato DD/MM/YY para YYYY-MM-DD
+          // 5. Converter datas do formato DD/MM/YY ou DD/MM/YYYY para YYYY-MM-DD
           const convertDate = (dateStr: string | undefined): string | null => {
-            if (!dateStr) return null;
-            const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{2,4})$/);
+            if (!dateStr || !dateStr.trim()) return null;
+            const cleaned = dateStr.trim().replace(/\./g, "/");
+            // Formato DD/MM/YY ou DD/MM/YYYY
+            const match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
             if (match) {
               const [, dia, mes, ano] = match;
               const anoFull = ano.length === 2 ? `20${ano}` : ano;
-              return `${anoFull}-${mes}-${dia}`;
+              return `${anoFull}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
             }
-            return dateStr;
+            // Formato YYYY-MM-DD (já está correto)
+            const isoMatch = cleaned.match(/^\d{4}-\d{2}-\d{2}$/);
+            if (isoMatch) return cleaned;
+            return null;
           };
 
           // 6. Criar demanda
+          // Salvar substatus granular (elaborar, revisar, buscar, etc.) para display
+          const substatus = row.status?.toLowerCase().trim() || null;
+
           await db.insert(demandas).values({
             processoId: processo.id,
             assistidoId: assistido.id,
@@ -576,6 +587,7 @@ export const demandasRouter = router({
             prazo: convertDate(row.prazo),
             dataEntrada: convertDate(row.dataEntrada),
             status: dbStatus as any,
+            substatus: substatus, // Status granular preservado
             prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
             reuPreso,
             providencias: row.providencias || null,

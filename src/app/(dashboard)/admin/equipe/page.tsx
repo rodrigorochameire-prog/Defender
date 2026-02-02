@@ -50,6 +50,8 @@ import {
   Scale,
   User,
   Eye,
+  Lock,
+  KeyRound,
   UserCheck,
   Copy,
   Check,
@@ -106,6 +108,8 @@ export default function EquipePage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
   
   // Form states
   const [formData, setFormData] = useState({
@@ -162,6 +166,18 @@ export default function EquipePage() {
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao remover membro");
+    },
+  });
+
+  const resetPasswordMutation = trpc.users.resetPassword.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Senha de ${result.userName} redefinida com sucesso!`);
+      setResetPasswordModalOpen(false);
+      setSelectedMembro(null);
+      setNewPassword("");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao redefinir senha");
     },
   });
 
@@ -228,6 +244,27 @@ export default function EquipePage() {
   const openDeleteDialog = (membro: TeamMember) => {
     setSelectedMembro(membro);
     setDeleteDialogOpen(true);
+  };
+
+  const openResetPasswordModal = (membro: TeamMember) => {
+    setSelectedMembro(membro);
+    setNewPassword("");
+    setResetPasswordModalOpen(true);
+  };
+
+  const handleResetPassword = () => {
+    if (!selectedMembro || !newPassword) {
+      toast.error("Preencha a nova senha");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("A senha deve ter no mínimo 6 caracteres");
+      return;
+    }
+    resetPasswordMutation.mutate({
+      userId: selectedMembro.id,
+      newPassword,
+    });
   };
 
   const handleCopiarEmail = (membro: TeamMember) => {
@@ -529,8 +566,12 @@ export default function EquipePage() {
                             <Edit className="w-4 h-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openResetPasswordModal(membro)}>
+                            <Lock className="w-4 h-4 mr-2" />
+                            Redefinir Senha
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => openDeleteDialog(membro)}
                             className="text-rose-600 focus:text-rose-600"
                           >
@@ -1026,6 +1067,46 @@ export default function EquipePage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Redefinir Senha */}
+      <Dialog open={resetPasswordModalOpen} onOpenChange={setResetPasswordModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-amber-500" />
+              Redefinir Senha
+            </DialogTitle>
+            <DialogDescription>
+              Defina uma nova senha para <strong>{selectedMembro?.name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Nova Senha *</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetPasswordModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleResetPassword}
+              disabled={resetPasswordMutation.isPending || newPassword.length < 6}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {resetPasswordMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Redefinir Senha
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
