@@ -167,13 +167,50 @@ function handlePostgresError(error: any, requestId: string): TRPCError | null {
     });
   }
   
-  // Verifica erros de conexão do postgres.js
+  // Verifica erros do postgres.js (com severity ou name PostgresError)
   if (error?.name === "PostgresError" || error?.severity) {
-    console.error(`[${requestId}] PostgreSQL Connection Error:`, error);
-    
+    console.error(`[${requestId}] PostgreSQL Error:`, {
+      name: error.name,
+      message: error.message,
+      severity: error.severity,
+      code: error.code,
+      detail: error.detail,
+      hint: error.hint,
+      column: error.column,
+      table: error.table,
+    });
+
+    // Erros de schema/coluna inexistente
+    if (error?.code === "42703" || error?.code === "42P01") {
+      return new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Erro interno: estrutura do banco de dados desatualizada.",
+      });
+    }
+
+    // Erros de permissão/RLS
+    if (error?.code === "42501") {
+      return new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Erro de permissão no banco de dados.",
+      });
+    }
+
+    // Erros realmente de conexão
+    const connectionCodes = ["08000", "08003", "08006", "08001", "57P01", "57P02", "57P03"];
+    if (connectionCodes.includes(error?.code)) {
+      return new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Erro de conexão com o banco de dados. Tente novamente.",
+      });
+    }
+
+    // Outros erros do PostgreSQL
     return new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "Erro de conexão com o banco de dados. Tente novamente.",
+      message: process.env.NODE_ENV === "development"
+        ? `Erro no banco: ${error.message}`
+        : "Erro interno no banco de dados. Tente novamente.",
     });
   }
   

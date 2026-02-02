@@ -559,7 +559,7 @@ export default function DashboardJuriPage() {
           userRole={user?.role as UserRole || "defensor"}
           userName={user?.name}
           supervisorName={undefined}
-          demandas={demandas}
+          demandas={demandasFiltradas}
           delegacoes={[]}
           assistidos={assistidos}
           processos={processos}
@@ -712,7 +712,7 @@ export default function DashboardJuriPage() {
             <div className="p-4">
               {/* Layout horizontal em telas grandes */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                {/* Coluna 1: Seletor de Assistido + Chip do selecionado */}
+                {/* Coluna 1: Seletor de Assistido + Tipos inline */}
                 <div className="lg:col-span-5 space-y-2">
                   <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Assistido</label>
                   <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
@@ -835,44 +835,45 @@ export default function DashboardJuriPage() {
                       </Button>
                     </div>
                   )}
-                </div>
 
-                {/* Coluna 2: Tipo de Registro - Grid 2x3 compacto */}
-                <div className="lg:col-span-1 space-y-1.5">
-                  <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
-                  <div className="grid grid-cols-3 gap-1 w-fit">
-                    {tiposRegistro.map((tipo) => {
-                      const Icon = tipo.icon;
-                      const isSelected = atendimentoRapido.tipo === tipo.id;
-                      const isDelegacao = tipo.id === "delegacao";
-                      return (
-                        <button
-                          key={tipo.id}
-                          onClick={() => {
-                            if (isDelegacao) {
-                              setDelegacaoModalOpen(true);
-                            } else {
-                              setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }));
-                            }
-                          }}
-                          className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
-                            isSelected && !isDelegacao
-                              ? tipo.bgActive
-                              : isDelegacao
-                                ? "border border-rose-200 dark:border-rose-800 hover:border-rose-400 dark:hover:border-rose-600 bg-rose-50 dark:bg-rose-900/20"
-                                : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800"
-                          }`}
-                          title={tipo.label}
-                        >
-                          <Icon className={`w-4 h-4 ${isSelected && !isDelegacao ? tipo.color : isDelegacao ? "text-rose-500" : "text-zinc-400"}`} />
-                        </button>
-                      );
-                    })}
+                  {/* Tipo de Registro - Inline com labels, wraps em tela estreita */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {tiposRegistro.map((tipo) => {
+                        const Icon = tipo.icon;
+                        const isSelected = atendimentoRapido.tipo === tipo.id;
+                        const isDelegacao = tipo.id === "delegacao";
+                        return (
+                          <button
+                            key={tipo.id}
+                            onClick={() => {
+                              if (isDelegacao) {
+                                setDelegacaoModalOpen(true);
+                              } else {
+                                setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }));
+                              }
+                            }}
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                              isSelected && !isDelegacao
+                                ? `${tipo.bgActive} ${tipo.color}`
+                                : isDelegacao
+                                  ? "border border-rose-200 dark:border-rose-800 hover:border-rose-400 dark:hover:border-rose-600 bg-rose-50 dark:bg-rose-900/20 text-rose-500"
+                                  : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-500"
+                            }`}
+                            title={tipo.label}
+                          >
+                            <Icon className={`w-3.5 h-3.5 ${isSelected && !isDelegacao ? tipo.color : isDelegacao ? "text-rose-500" : "text-zinc-400"}`} />
+                            <span className="hidden sm:inline">{tipo.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                {/* Coluna 3: Descrição + Botão */}
-                <div className="lg:col-span-6 space-y-1.5">
+                {/* Coluna 2: Descrição + Botão */}
+                <div className="lg:col-span-7 space-y-1.5">
                   <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Descrição</label>
                   <div className="flex gap-2">
                     <Textarea
