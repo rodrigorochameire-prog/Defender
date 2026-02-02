@@ -1698,9 +1698,9 @@ export default function AssistidosPage() {
         </div>
       )}
 
-      {/* Stats Cards - 2 colunas em mobile */}
+      {/* Stats Cards - 2 colunas em mobile - Padrão Agenda */}
       {!showNaoIdentificados && (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {[
           { label: "Total", value: stats.total - naoIdentificadosCount, icon: Users, filter: "all", color: "zinc" },
           { label: "Presos", value: stats.presos, icon: Lock, filter: "preso", color: "rose", highlight: stats.presos > 0 },
@@ -1738,7 +1738,7 @@ export default function AssistidosPage() {
               key={idx}
               onClick={handleClick}
               className={cn(
-                "group relative text-left p-2.5 rounded-lg bg-white dark:bg-zinc-900 border transition-all duration-200",
+                "group relative text-left p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border transition-all duration-200",
                 isActive
                   ? stat.color === "rose" 
                     ? "border-rose-300 dark:border-rose-700 ring-1 ring-rose-200/50 dark:ring-rose-800/30 bg-rose-50/50 dark:bg-rose-900/10"
@@ -1752,11 +1752,11 @@ export default function AssistidosPage() {
                 idx === 4 && "hidden lg:block"
               )}
             >
-              <div className="flex items-center justify-between gap-2">
-                <div className="space-y-0.5">
+              <div className="flex items-center justify-between gap-2 md:gap-3">
+                <div className="space-y-0.5 md:space-y-1">
                   <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">{stat.label}</p>
                   <p className={cn(
-                    "text-lg font-bold",
+                    "text-lg md:text-xl font-semibold",
                     stat.highlight && stat.value > 0 ? "text-rose-600 dark:text-rose-400" : 
                     isActive ? (
                       stat.color === "rose" ? "text-rose-600 dark:text-rose-400" :
@@ -1767,7 +1767,7 @@ export default function AssistidosPage() {
                   )}>{stat.value}</p>
                 </div>
                 <div className={cn(
-                  "w-7 h-7 rounded-md flex items-center justify-center transition-all",
+                  "w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center transition-all",
                   isActive ? (
                     stat.color === "rose" ? "bg-rose-100 dark:bg-rose-900/30" :
                     stat.color === "amber" ? "bg-amber-100 dark:bg-amber-900/30" :
@@ -1776,7 +1776,7 @@ export default function AssistidosPage() {
                   ) : "bg-zinc-100 dark:bg-zinc-800"
                 )}>
                   <stat.icon className={cn(
-                    "w-3.5 h-3.5",
+                    "w-3.5 h-3.5 md:w-4 md:h-4",
                     isActive ? (
                       stat.color === "rose" ? "text-rose-600 dark:text-rose-400" :
                       stat.color === "amber" ? "text-amber-600 dark:text-amber-400" :
