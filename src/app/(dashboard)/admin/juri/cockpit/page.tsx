@@ -123,6 +123,7 @@ interface JuradoCorpo {
   comportamentoNotado?: string;
   ultimoVoto?: "absolvicao" | "condenacao" | null;
   notasComportamentais?: string[];
+  tipoJurado?: "titular" | "suplente" | string; // Tipo do jurado na ata de sorteio
 }
 
 interface JuradoSorteado extends JuradoCorpo {
@@ -344,6 +345,17 @@ function JuradoCardExpandivel({
               <p className={cn("text-[11px] font-semibold truncate", isDarkMode ? "text-zinc-200" : "text-zinc-800")}>
                 {jurado.nome.split(" ").slice(0, 2).join(" ")}
               </p>
+              {/* Badge Titular/Suplente */}
+              {jurado.tipoJurado && (
+                <span className={cn(
+                  "text-[8px] font-semibold px-1 py-0.5 rounded uppercase",
+                  jurado.tipoJurado === "titular" 
+                    ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                )}>
+                  {jurado.tipoJurado === "titular" ? "T" : "S"}
+                </span>
+              )}
               <span className={cn("text-[9px] font-bold px-1 py-0.5 rounded text-white", tendencia.bg)}>
                 {jurado.taxaAbsolvicao}%
               </span>
@@ -810,13 +822,34 @@ export default function PlenarioCockpitPage() {
     ativo: true,
   });
 
+  // Calcular o período atual baseado na data
+  // 1ª reunião: Janeiro a Abril | 2ª reunião: Maio a Agosto | 3ª reunião: Setembro a Dezembro
+  const getPeriodoAtual = (): string => {
+    const mes = new Date().getMonth() + 1; // 1-12
+    if (mes >= 1 && mes <= 4) return "1";
+    if (mes >= 5 && mes <= 8) return "2";
+    return "3";
+  };
+
+  const periodoAtual = getPeriodoAtual();
+  const nomePeriodo = periodoAtual === "1" ? "1ª Reunião" : periodoAtual === "2" ? "2ª Reunião" : "3ª Reunião";
+
   // Estado dos jurados - usa banco se disponível, senão usa mocks
   const [corpoAtual, setCorpoAtual] = useState<JuradoCorpo[]>(corpoJurados);
   
   // Atualizar corpo de jurados quando dados do banco chegarem
+  // Filtra apenas jurados do período atual (titulares e suplentes)
   useEffect(() => {
     if (juradosDB && juradosDB.length > 0) {
-      const juradosMapeados: JuradoCorpo[] = juradosDB.map((j: any) => ({
+      // Filtrar apenas jurados do período atual
+      const juradosDoPeriodo = juradosDB.filter((j: any) => 
+        j.reuniaoPeriodica === periodoAtual
+      );
+      
+      // Se não houver jurados do período atual, usar todos (fallback)
+      const juradosParaMapear = juradosDoPeriodo.length > 0 ? juradosDoPeriodo : juradosDB;
+      
+      const juradosMapeados: JuradoCorpo[] = juradosParaMapear.map((j: any) => ({
         id: j.id,
         nome: j.nome,
         genero: (j.genero === "M" || j.genero === "F") ? j.genero : "M",
@@ -835,10 +868,11 @@ export default function PlenarioCockpitPage() {
         comportamentoNotado: undefined,
         ultimoVoto: undefined,
         notasComportamentais: j.historicoNotas ? [j.historicoNotas] : undefined,
+        tipoJurado: j.tipoJurado || undefined, // 'titular' | 'suplente'
       }));
       setCorpoAtual(juradosMapeados);
     }
-  }, [juradosDB]);
+  }, [juradosDB, periodoAtual]);
   const [conselhoSentenca, setConselhoSentenca] = useState<(JuradoSorteado | null)[]>([
     null, null, null, null, null, null, null
   ]);
@@ -1106,11 +1140,17 @@ export default function PlenarioCockpitPage() {
 
   // Filtragem de jurados
   const juradosFiltrados = useMemo(() => {
-    return corpoAtual.filter(j => {
+    const filtered = corpoAtual.filter(j => {
       const matchSearch = j.nome.toLowerCase().includes(searchJurado.toLowerCase()) ||
                           j.profissao?.toLowerCase().includes(searchJurado.toLowerCase());
       const matchRecusado = showRecusados ? true : !j.recusadoPor;
       return matchSearch && matchRecusado;
+    });
+    // Ordenar: titulares primeiro, depois suplentes
+    return filtered.sort((a, b) => {
+      if (a.tipoJurado === "titular" && b.tipoJurado !== "titular") return -1;
+      if (a.tipoJurado !== "titular" && b.tipoJurado === "titular") return 1;
+      return 0;
     });
   }, [corpoAtual, searchJurado, showRecusados]);
 
@@ -1530,6 +1570,9 @@ export default function PlenarioCockpitPage() {
                   <h3 className="text-sm font-semibold flex items-center gap-2">
                     <Users className="w-4 h-4 text-violet-600" />
                     Corpo de Jurados
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
+                      {nomePeriodo}
+                    </span>
                   </h3>
                   <p className="text-[10px] text-zinc-500 mt-0.5">
                     Clique para selecionar • {juradosDisponiveis.length} disponíveis
