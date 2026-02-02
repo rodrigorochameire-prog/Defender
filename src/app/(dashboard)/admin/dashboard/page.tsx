@@ -837,10 +837,10 @@ export default function DashboardJuriPage() {
                   )}
                 </div>
 
-                {/* Coluna 2: Tipo de Registro - Flexível e empilhável */}
-                <div className="lg:col-span-2 space-y-1.5 flex-shrink-0">
+                {/* Coluna 2: Tipo de Registro - Grid 2x3 compacto */}
+                <div className="lg:col-span-1 space-y-1.5">
                   <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="grid grid-cols-2 gap-1 w-fit">
                     {tiposRegistro.map((tipo) => {
                       const Icon = tipo.icon;
                       const isSelected = atendimentoRapido.tipo === tipo.id;
@@ -855,7 +855,7 @@ export default function DashboardJuriPage() {
                               setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }));
                             }
                           }}
-                          className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors flex-shrink-0 ${
+                          className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
                             isSelected && !isDelegacao
                               ? tipo.bgActive
                               : isDelegacao
@@ -872,7 +872,7 @@ export default function DashboardJuriPage() {
                 </div>
 
                 {/* Coluna 3: Descrição + Botão */}
-                <div className="lg:col-span-5 space-y-2">
+                <div className="lg:col-span-6 space-y-1.5">
                   <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Descrição</label>
                   <div className="flex gap-2">
                     <Textarea
@@ -885,11 +885,12 @@ export default function DashboardJuriPage() {
                       }
                       value={atendimentoRapido.descricao}
                       onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, descricao: e.target.value }))}
-                      className="flex-1 min-h-[60px] text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none"
+                      rows={2}
+                      className="flex-1 text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none"
                     />
-                    <Button 
-                      size="sm" 
-                      className="h-[60px] px-4 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm flex-shrink-0"
+                    <Button
+                      size="sm"
+                      className="self-stretch px-4 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm flex-shrink-0"
                       disabled={!atendimentoRapido.assistidoId || !atendimentoRapido.descricao.trim()}
                       onClick={() => {
                         if (atendimentoRapido.assistidoId && atendimentoRapido.descricao.trim()) {
