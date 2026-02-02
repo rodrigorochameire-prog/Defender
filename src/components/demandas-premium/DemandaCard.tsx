@@ -77,6 +77,9 @@ interface DemandaCardProps {
   onAtoChange?: (id: string, ato: string) => void; // Novo callback para mudança de ato
   atoOptions?: Array<{ value: string; label: string }>; // Lista de atos disponíveis
   onProvidenciasChange?: (id: string, providencias: string) => void; // Callback para mudança de providências
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 export function DemandaCard({
@@ -92,6 +95,9 @@ export function DemandaCard({
   onAtoChange,
   atoOptions,
   onProvidenciasChange,
+  isSelectMode,
+  isSelected,
+  onToggleSelect,
 }: DemandaCardProps) {
   const [showProvidencias, setShowProvidencias] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -216,9 +222,23 @@ export function DemandaCard({
         }}
       />
 
+      {/* Checkbox de seleção */}
+      {isSelectMode && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleSelect?.(demanda.id); }}
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-5 h-5 rounded border transition-all duration-200"
+          style={{
+            borderColor: isSelected ? borderColor : undefined,
+            backgroundColor: isSelected ? borderColor : undefined,
+          }}
+        >
+          {isSelected && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+        </button>
+      )}
+
       {/* Conteúdo do Card */}
-      <div 
-        className="relative bg-white dark:bg-zinc-900 p-4 md:p-5 lg:p-6 ml-1 rounded-r-xl border border-l-0 border-zinc-200/60 dark:border-zinc-800/60 transition-all duration-300"
+      <div
+        className={`relative bg-white dark:bg-zinc-900 p-4 md:p-5 lg:p-6 rounded-r-xl border border-l-0 border-zinc-200/60 dark:border-zinc-800/60 transition-all duration-300 ${isSelectMode ? "ml-8" : "ml-1"}`}
         style={{
           boxShadow: isHovered 
             ? '0 4px 12px rgba(0, 0, 0, 0.08)' 

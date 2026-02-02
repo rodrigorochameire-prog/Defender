@@ -51,6 +51,9 @@ import {
   ShieldCheck,
   FileCheck,
   FileText,
+  CheckSquare,
+  Trash2,
+  X,
 } from "lucide-react";
 
 // Ícones e cores por atribuição
@@ -177,6 +180,8 @@ export default function Demandas() {
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
   const [isInfographicsExpanded, setIsInfographicsExpanded] = useState(false);
   const [isAdminConfigModalOpen, setIsAdminConfigModalOpen] = useState(false);
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // ==========================================
   // BUSCA DADOS REAIS DO BANCO DE DADOS
@@ -405,6 +410,45 @@ export default function Demandas() {
         toast.success("Demanda deletada!");
       }
     }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === demandasOrdenadas.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(demandasOrdenadas.map((d) => d.id)));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Deseja deletar ${selectedIds.size} demanda(s)? Esta ação não pode ser desfeita.`)) return;
+
+    for (const id of selectedIds) {
+      const numericId = parseInt(id, 10);
+      if (!isNaN(numericId)) {
+        deleteDemandaMutation.mutate({ id: numericId });
+      }
+    }
+    setSelectedIds(new Set());
+    setIsSelectMode(false);
+  };
+
+  const handleExitSelectMode = () => {
+    setIsSelectMode(false);
+    setSelectedIds(new Set());
   };
 
   const importFromSheetsMutation = trpc.demandas.importFromSheets.useMutation({
@@ -821,6 +865,9 @@ export default function Demandas() {
                       onDelete={handleDeleteDemanda}
                       copyToClipboard={copyToClipboard}
                       onProvidenciasChange={handleProvidenciasChange}
+                      isSelectMode={isSelectMode}
+                      isSelected={selectedIds.has(demanda.id)}
+                      onToggleSelect={handleToggleSelect}
                     />
                   );
                 })
@@ -828,15 +875,59 @@ export default function Demandas() {
             </div>
 
             <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30 flex items-center justify-between">
-              <p className="text-sm text-zinc-600 dark:text-zinc-300">
-                Mostrando <strong>{demandasOrdenadas.length}</strong> de{" "}
-                <strong>
-                  {showArchived
-                    ? demandas.filter((d) => d.arquivado).length
-                    : demandas.filter((d) => !d.arquivado).length}
-                </strong>{" "}
-                demandas {showArchived ? "arquivadas" : "ativas"}
-              </p>
+              {isSelectMode ? (
+                <div className="flex items-center gap-3 w-full">
+                  <button
+                    onClick={handleSelectAll}
+                    className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                  >
+                    {selectedIds.size === demandasOrdenadas.length ? "Desmarcar tudo" : "Selecionar tudo"}
+                  </button>
+                  <span className="text-xs text-zinc-400">
+                    {selectedIds.size} selecionada{selectedIds.size !== 1 ? "s" : ""}
+                  </span>
+                  <div className="ml-auto flex items-center gap-2">
+                    {selectedIds.size > 0 && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="h-7 text-xs gap-1.5"
+                        onClick={handleDeleteSelected}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Deletar ({selectedIds.size})
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs text-zinc-400 hover:text-zinc-600"
+                      onClick={handleExitSelectMode}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                    Mostrando <strong>{demandasOrdenadas.length}</strong> de{" "}
+                    <strong>
+                      {showArchived
+                        ? demandas.filter((d) => d.arquivado).length
+                        : demandas.filter((d) => !d.arquivado).length}
+                    </strong>{" "}
+                    demandas {showArchived ? "arquivadas" : "ativas"}
+                  </p>
+                  <button
+                    onClick={() => setIsSelectMode(true)}
+                    className="text-zinc-300 hover:text-zinc-500 dark:text-zinc-600 dark:hover:text-zinc-400 transition-colors"
+                    title="Selecionar demandas"
+                  >
+                    <CheckSquare className="w-4 h-4" />
+                  </button>
+                </>
+              )}
             </div>
           </Card>
 
