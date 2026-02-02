@@ -155,13 +155,14 @@ export interface PremiumStatsGridProps {
 }
 
 export function PremiumStatsGrid({ children, columns = 4, className }: PremiumStatsGridProps) {
+  // Mobile-first: 1 coluna em telas pequenas para melhor legibilidade
   return (
     <div
       className={cn(
         "grid gap-3 md:gap-4",
         columns === 2 && "grid-cols-1 sm:grid-cols-2",
         columns === 3 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-        columns === 4 && "grid-cols-2 lg:grid-cols-4",
+        columns === 4 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
         className
       )}
     >

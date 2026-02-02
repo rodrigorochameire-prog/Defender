@@ -1531,8 +1531,8 @@ export default function AssistidosPage() {
         </div>
         
         <div className="p-4 md:p-6 space-y-4">
-          {/* Stats skeleton */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          {/* Stats skeleton - Mobile-first */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {[1, 2, 3, 4, 5].map(i => (
               <Skeleton key={i} className="h-16 rounded-lg" />
             ))}
@@ -1698,9 +1698,9 @@ export default function AssistidosPage() {
         </div>
       )}
 
-      {/* Stats Cards - Grid compacto e interativo */}
+      {/* Stats Cards - Mobile-first */}
       {!showNaoIdentificados && (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
         {[
           { label: "Total", value: stats.total - naoIdentificadosCount, icon: Users, filter: "all", color: "zinc" },
           { label: "Presos", value: stats.presos, icon: Lock, filter: "preso", color: "rose", highlight: stats.presos > 0 },

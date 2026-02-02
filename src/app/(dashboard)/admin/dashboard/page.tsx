@@ -601,7 +601,7 @@ export default function DashboardJuriPage() {
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* STATS CARDS - Polimento premium com toques emerald */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {statsData.map((stat, index) => {
             const Icon = stat.icon;
             return (
@@ -1145,7 +1145,7 @@ export default function DashboardJuriPage() {
               <p className="text-xs mt-1 text-zinc-400 dark:text-zinc-500">Adicione demandas para estatísticas</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <ResponsiveContainer width="100%" height={160}>
                 <PieChart>
                   <Pie data={dadosDonut} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={5} dataKey="value">
@@ -1298,7 +1298,7 @@ export default function DashboardJuriPage() {
               </div>
 
               {/* Legenda com valores */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 xs:grid-cols-3 gap-2">
                 <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50 dark:border-rose-800/30">
                   <div className="flex items-center gap-2 mb-1">
                     <Lock className="w-3 h-3 text-rose-600" />
@@ -1346,7 +1346,7 @@ export default function DashboardJuriPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
             {/* Prazos Vencidos */}
             <div className={`p-3 rounded-lg border ${
               cargaTrabalho.prazosVencidos > 0 

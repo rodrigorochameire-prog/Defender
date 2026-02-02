@@ -749,8 +749,8 @@ export default function Demandas() {
 
       {/* Conteúdo Principal */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Cards - 4 por linha como Dashboard e Agenda */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Stats Cards - Mobile-first: 1 coluna em mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {statsData.map((stat, index) => {
             const Icon = stat.icon;
             return (
