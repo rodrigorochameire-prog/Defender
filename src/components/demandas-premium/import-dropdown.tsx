@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ImportDropdownProps {
   onImportExcel: () => void;
   onImportPJe: () => void;
+  onImportSheets?: () => void;
 }
 
-export function ImportDropdown({ onImportExcel, onImportPJe }: ImportDropdownProps) {
+export function ImportDropdown({ onImportExcel, onImportPJe, onImportSheets }: ImportDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +37,11 @@ export function ImportDropdown({ onImportExcel, onImportPJe }: ImportDropdownPro
     onImportPJe();
   };
 
+  const handleSheetsClick = () => {
+    setIsOpen(false);
+    onImportSheets?.();
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
@@ -51,12 +57,21 @@ export function ImportDropdown({ onImportExcel, onImportPJe }: ImportDropdownPro
       {isOpen && (
         <>
           <div className="fixed inset-0 z-[90]" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full mt-1 right-0 z-[100] w-32 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden py-1">
+          <div className="absolute top-full mt-1 right-0 z-[100] w-40 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden py-1">
+            {onImportSheets && (
+              <button
+                onClick={handleSheetsClick}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 text-sm"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                <span>Google Sheets</span>
+              </button>
+            )}
             <button
               onClick={handleExcelClick}
               className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 text-sm"
             >
-              <Download className="w-4 h-4 text-green-600" />
+              <Download className="w-4 h-4 text-emerald-600" />
               <span>Excel</span>
             </button>
             <button

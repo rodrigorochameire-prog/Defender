@@ -13,6 +13,7 @@ import { PJeImportModal } from "@/components/demandas-premium/pje-import-modal";
 import { ExportModal } from "@/components/demandas-premium/export-modal";
 import { AdminConfigModal } from "@/components/demandas-premium/admin-config-modal";
 import { ImportDropdown } from "@/components/demandas-premium/import-dropdown";
+import { SheetsImportModal } from "@/components/demandas-premium/sheets-import-modal";
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -145,6 +146,7 @@ export default function Demandas() {
   const [isChartConfigModalOpen, setIsChartConfigModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isPJeImportModalOpen, setIsPJeImportModalOpen] = useState(false);
+  const [isSheetsImportModalOpen, setIsSheetsImportModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -559,6 +561,7 @@ export default function Demandas() {
             <ImportDropdown 
               onImportExcel={() => setIsImportModalOpen(true)}
               onImportPJe={() => setIsPJeImportModalOpen(true)}
+              onImportSheets={() => setIsSheetsImportModalOpen(true)}
             />
             <Button 
               variant="ghost" 
@@ -879,6 +882,11 @@ export default function Demandas() {
         atoOptions={atoOptionsFiltered}
         statusOptions={statusOptions}
         demandasExistentes={allDemandas}
+      />
+      <SheetsImportModal
+        isOpen={isSheetsImportModalOpen}
+        onClose={() => setIsSheetsImportModalOpen(false)}
+        onImport={handleImportDemandas}
       />
       <ChartConfigModal
         isOpen={isChartConfigModalOpen}
