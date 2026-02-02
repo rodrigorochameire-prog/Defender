@@ -647,7 +647,7 @@ export default function JuradoPerfilPage({ params }: { params: Promise<{ id: str
                 {jurado.observacoes ? (
                   <p className="whitespace-pre-wrap">{jurado.observacoes}</p>
                 ) : (
-                  <p className="text-zinc-500 italic">Nenhuma observação registrada. Clique em "Editar" para adicionar.</p>
+                  <p className="text-zinc-500 italic">Nenhuma observação registrada. Clique em &quot;Editar&quot; para adicionar.</p>
                 )}
               </div>
             )}
