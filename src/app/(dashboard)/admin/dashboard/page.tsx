@@ -616,9 +616,9 @@ export default function DashboardJuriPage() {
                         {stat.title}
                       </p>
                       {isLoading ? (
-                        <Skeleton className="h-8 sm:h-7 w-16 sm:w-14" />
+                        <Skeleton className="h-7 sm:h-6 w-14 sm:w-12" />
                       ) : (
-                        <p className="text-2xl sm:text-xl font-bold sm:font-semibold text-zinc-800 dark:text-zinc-200">
+                        <p className="text-xl sm:text-lg font-bold sm:font-semibold text-zinc-800 dark:text-zinc-200">
                           {stat.value}
                         </p>
                       )}
