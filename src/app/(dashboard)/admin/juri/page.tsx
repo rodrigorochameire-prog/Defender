@@ -124,9 +124,10 @@ export default function JuriPage() {
 
   // Stats calculados - métricas úteis para gestão
   const stats = useMemo(() => {
-    if (!sessoes) return { agendadas: 0, esteMes: 0, adiadas: 0, total: 0 };
+    if (!sessoes) return { agendadas: 0, esteMes: 0, adiadas: 0, diasProxima: null as number | null };
     
     const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
     
@@ -143,10 +144,18 @@ export default function JuriPage() {
     // Sessões adiadas (precisam de atenção)
     const adiadas = sessoes.filter((s) => s.status === "ADIADA" || s.status === "adiada").length;
     
-    // Total de processos no júri
-    const total = sessoes.length;
+    // Dias até a próxima sessão
+    const sessoesAgendadas = sessoes
+      .filter((s) => (s.status === "AGENDADA" || s.status === "agendada") && s.dataSessao)
+      .map((s) => new Date(s.dataSessao!))
+      .filter((d) => d >= hoje)
+      .sort((a, b) => a.getTime() - b.getTime());
     
-    return { agendadas, esteMes, adiadas, total };
+    const diasProxima = sessoesAgendadas.length > 0
+      ? Math.ceil((sessoesAgendadas[0].getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+    
+    return { agendadas, esteMes, adiadas, diasProxima };
   }, [sessoes]);
 
   return (
@@ -205,7 +214,13 @@ export default function JuriPage() {
             { label: "Agendadas", value: stats.agendadas, icon: Calendar, desc: "sessões futuras" },
             { label: "Este Mês", value: stats.esteMes, icon: Clock, desc: "sessões previstas" },
             { label: "Adiadas", value: stats.adiadas, icon: AlertTriangle, desc: "aguardando data", highlight: stats.adiadas > 0 },
-            { label: "Processos", value: stats.total, icon: Scale, desc: "no júri" },
+            { 
+              label: "Próxima", 
+              value: stats.diasProxima !== null ? (stats.diasProxima === 0 ? "Hoje" : `${stats.diasProxima}d`) : "-", 
+              icon: Zap, 
+              desc: stats.diasProxima !== null && stats.diasProxima <= 7 ? "atenção!" : "dias",
+              highlight: stats.diasProxima !== null && stats.diasProxima <= 7
+            },
           ].map((stat, idx) => {
             const Icon = stat.icon;
             
