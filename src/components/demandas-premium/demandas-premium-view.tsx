@@ -244,12 +244,15 @@ export default function Demandas() {
     setDemandas((prev) =>
       prev.map((d) => (d.id === demandaId ? { ...d, status: newStatus } : d))
     );
-    
-    // Atualizar no banco
-    updateDemandaMutation.mutate({
-      id: demandaId,
-      status: newStatus.toUpperCase().replace(/ /g, "_"),
-    });
+
+    // Atualizar no banco (id precisa ser número)
+    const numericId = parseInt(demandaId, 10);
+    if (!isNaN(numericId)) {
+      updateDemandaMutation.mutate({
+        id: numericId,
+        status: newStatus.toUpperCase().replace(/ /g, "_"),
+      });
+    }
   };
 
   const handleAtoChange = (demandaId: string, newAto: string) => {
@@ -257,13 +260,16 @@ export default function Demandas() {
     setDemandas((prev) =>
       prev.map((d) => (d.id === demandaId ? { ...d, ato: newAto } : d))
     );
-    
-    // Atualizar no banco
-    updateDemandaMutation.mutate({
-      id: demandaId,
-      ato: newAto,
-    });
-    
+
+    // Atualizar no banco (id precisa ser número)
+    const numericId = parseInt(demandaId, 10);
+    if (!isNaN(numericId)) {
+      updateDemandaMutation.mutate({
+        id: numericId,
+        ato: newAto,
+      });
+    }
+
     toast.success(`Ato alterado para "${newAto}"!`, {
       description: "O prazo será recalculado automaticamente conforme o tipo de ato."
     });
@@ -274,13 +280,16 @@ export default function Demandas() {
     setDemandas((prev) =>
       prev.map((d) => (d.id === demandaId ? { ...d, providencias } : d))
     );
-    
-    // Atualizar no banco
-    updateDemandaMutation.mutate({
-      id: demandaId,
-      providencias,
-    });
-    
+
+    // Atualizar no banco (id precisa ser número)
+    const numericId = parseInt(demandaId, 10);
+    if (!isNaN(numericId)) {
+      updateDemandaMutation.mutate({
+        id: numericId,
+        providencias,
+      });
+    }
+
     toast.success("Providências atualizadas!");
   };
 
@@ -375,26 +384,39 @@ export default function Demandas() {
     }
   };
 
-  const handleImportDemandas = (importedData: any[]) => {
-    const newDemandas = importedData.map((data, index) => ({
-      id: `DEM-IMP-${Date.now()}-${index}`,
+  const importFromSheetsMutation = trpc.demandas.importFromSheets.useMutation({
+    onSuccess: (result) => {
+      utils.demandas.list.invalidate();
+      utils.demandas.stats.invalidate();
+      const messages: string[] = [];
+      if (result.imported > 0) messages.push(`${result.imported} importadas`);
+      if (result.skipped > 0) messages.push(`${result.skipped} ignoradas (duplicatas)`);
+      if (result.errors.length > 0) messages.push(`${result.errors.length} erros`);
+      toast.success(`Importação concluída: ${messages.join(", ")}`);
+      if (result.errors.length > 0) {
+        result.errors.forEach((err) => toast.error(err));
+      }
+    },
+    onError: (error) => {
+      toast.error("Erro na importação: " + error.message);
+    },
+  });
+
+  const handleImportDemandas = async (importedData: any[]) => {
+    // Mapear dados do modal para o formato esperado pela mutation
+    const rows = importedData.map((data) => ({
       assistido: data.assistido || "Não informado",
-      status: data.status || "fila",
-      data: data.data || new Date().toISOString().split("T")[0],
-      prazo: data.prazo || "",
-      processos: data.processos || [],
+      processoNumero: data.processos?.[0]?.numero || "",
       ato: data.ato || "Outros",
-      providencias: data.providencias || "",
-      atribuicao: data.atribuicao || "Criminal Geral",
-      avatar: "",
-      dataInclusao: new Date().toISOString(),
-      arquivado: false,
-      tipoAto: "Geral",
+      prazo: data.prazo || undefined,
+      dataEntrada: data.data || undefined,
+      status: data.status || "fila",
       estadoPrisional: data.estadoPrisional || "solto",
+      providencias: data.providencias || undefined,
+      atribuicao: data.atribuicao || "Criminal Geral",
     }));
 
-    setDemandas((prev) => [...prev, ...newDemandas]);
-    toast.success(`${newDemandas.length} demandas importadas!`);
+    importFromSheetsMutation.mutate({ rows });
   };
 
   const toggleChart = (chartType: string) => {

@@ -404,4 +404,167 @@ export const demandasRouter = router({
       reuPreso: Number(reuPreso[0]?.count || 0),
     };
   }),
+
+  // Importar demandas do Google Sheets (bulk)
+  // Faz upsert de assistido (por nome) e processo (por número), depois cria a demanda
+  importFromSheets: protectedProcedure
+    .input(
+      z.object({
+        rows: z.array(
+          z.object({
+            assistido: z.string().min(1),
+            processoNumero: z.string().optional(),
+            ato: z.string().min(1),
+            prazo: z.string().optional(),
+            dataEntrada: z.string().optional(),
+            status: z.string().optional(),
+            estadoPrisional: z.string().optional(),
+            providencias: z.string().optional(),
+            atribuicao: z.string().optional(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const defensorId = getDefensorResponsavel(ctx.user);
+      const { workspaceId } = getWorkspaceScope(ctx.user);
+
+      // Mapeamento de status do frontend para enum do banco
+      const STATUS_TO_DB: Record<string, string> = {
+        "fila": "5_FILA",
+        "atender": "2_ATENDER",
+        "analisar": "2_ATENDER",
+        "elaborar": "2_ATENDER",
+        "elaborando": "2_ATENDER",
+        "buscar": "2_ATENDER",
+        "revisar": "2_ATENDER",
+        "monitorar": "4_MONITORAR",
+        "protocolar": "5_FILA",
+        "protocolado": "7_PROTOCOLADO",
+        "urgente": "URGENTE",
+        "resolvido": "CONCLUIDO",
+        "arquivado": "ARQUIVADO",
+      };
+
+      // Mapeamento de atribuição para área do processo
+      const ATRIBUICAO_TO_AREA: Record<string, string> = {
+        "Tribunal do Júri": "JURI",
+        "Grupo Especial do Júri": "JURI",
+        "Violência Doméstica": "VIOLENCIA_DOMESTICA",
+        "Execução Penal": "EXECUCAO_PENAL",
+        "Criminal Geral": "SUBSTITUICAO",
+        "Substituição": "SUBSTITUICAO",
+        "Curadoria Especial": "CURADORIA",
+      };
+
+      const results = {
+        imported: 0,
+        skipped: 0,
+        errors: [] as string[],
+      };
+
+      for (const row of input.rows) {
+        try {
+          // 1. Buscar ou criar assistido por nome
+          let assistido = await db.query.assistidos.findFirst({
+            where: and(
+              ilike(assistidos.nome, row.assistido.trim()),
+              isNull(assistidos.deletedAt),
+            ),
+          });
+
+          if (!assistido) {
+            const statusPrisional = row.estadoPrisional === "preso"
+              ? "CADEIA_PUBLICA"
+              : row.estadoPrisional === "monitorado"
+                ? "MONITORADO"
+                : "SOLTO";
+
+            const [newAssistido] = await db.insert(assistidos).values({
+              nome: row.assistido.trim(),
+              statusPrisional: statusPrisional as any,
+              defensorId: defensorId || ctx.user.id,
+              workspaceId: workspaceId,
+            }).returning();
+            assistido = newAssistido;
+          }
+
+          // 2. Buscar ou criar processo por número
+          const processoNumero = row.processoNumero?.trim() || "";
+          let processo;
+
+          if (processoNumero) {
+            processo = await db.query.processos.findFirst({
+              where: and(
+                eq(processos.numeroAutos, processoNumero),
+                isNull(processos.deletedAt),
+              ),
+            });
+          }
+
+          if (!processo) {
+            const area = (ATRIBUICAO_TO_AREA[row.atribuicao || ""] || "JURI") as any;
+            const [newProcesso] = await db.insert(processos).values({
+              assistidoId: assistido.id,
+              numeroAutos: processoNumero || `SN-${Date.now()}-${results.imported}`,
+              area,
+              workspaceId: assistido.workspaceId,
+            }).returning();
+            processo = newProcesso;
+          }
+
+          // 3. Verificar duplicata (mesmo processo + mesmo ato)
+          const existingDemanda = await db.query.demandas.findFirst({
+            where: and(
+              eq(demandas.processoId, processo.id),
+              eq(demandas.ato, row.ato),
+              isNull(demandas.deletedAt),
+            ),
+          });
+
+          if (existingDemanda) {
+            results.skipped++;
+            continue;
+          }
+
+          // 4. Mapear status
+          const dbStatus = STATUS_TO_DB[row.status || "fila"] || "5_FILA";
+          const reuPreso = row.estadoPrisional === "preso";
+
+          // 5. Converter datas do formato DD/MM/YY para YYYY-MM-DD
+          const convertDate = (dateStr: string | undefined): string | null => {
+            if (!dateStr) return null;
+            const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{2,4})$/);
+            if (match) {
+              const [, dia, mes, ano] = match;
+              const anoFull = ano.length === 2 ? `20${ano}` : ano;
+              return `${anoFull}-${mes}-${dia}`;
+            }
+            return dateStr;
+          };
+
+          // 6. Criar demanda
+          await db.insert(demandas).values({
+            processoId: processo.id,
+            assistidoId: assistido.id,
+            ato: row.ato,
+            prazo: convertDate(row.prazo),
+            dataEntrada: convertDate(row.dataEntrada),
+            status: dbStatus as any,
+            prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
+            reuPreso,
+            providencias: row.providencias || null,
+            defensorId: defensorId || ctx.user.id,
+            workspaceId: workspaceId,
+          }).returning();
+
+          results.imported++;
+        } catch (error) {
+          results.errors.push(`${row.assistido}: ${(error as Error).message}`);
+          results.skipped++;
+        }
+      }
+
+      return results;
+    }),
 });
