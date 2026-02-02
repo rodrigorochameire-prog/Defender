@@ -184,33 +184,28 @@ export default function JuriPage() {
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         
-        {/* STATS CARDS - Padrão mobile-first */}
+        {/* STATS CARDS - Padrão Defender (neutro) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: "Agendadas", value: stats.agendadas, icon: Calendar, color: "violet" },
-            { label: "Absolvições", value: stats.absolvicoes, icon: CheckCircle2, color: "emerald" },
-            { label: "Condenações", value: stats.condenacoes, icon: XCircle, color: "rose" },
-            { label: "Taxa Absolvição", value: `${stats.taxaAbsolvicao}%`, icon: TrendingUp, color: "amber" },
+            { label: "Agendadas", value: stats.agendadas, icon: Calendar },
+            { label: "Absolvições", value: stats.absolvicoes, icon: CheckCircle2 },
+            { label: "Condenações", value: stats.condenacoes, icon: XCircle },
+            { label: "Taxa Absolvição", value: `${stats.taxaAbsolvicao}%`, icon: TrendingUp },
           ].map((stat, idx) => {
             const Icon = stat.icon;
-            const colorClasses = {
-              violet: "text-violet-600 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-400",
-              emerald: "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400",
-              rose: "text-rose-600 bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400",
-              amber: "text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400",
-            }[stat.color];
             
             return (
-              <div key={idx} className="p-4 sm:p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
-                <div className="flex items-center gap-3 sm:gap-3">
-                  <div className={cn("w-11 h-11 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center", colorClasses)}>
-                    <Icon className="w-5 h-5 sm:w-4 sm:h-4" />
+              <div key={idx} className="group relative p-4 sm:p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+                    <Icon className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
                   </div>
                   <div>
                     {isLoading ? (
                       <Skeleton className="h-6 w-10" />
                     ) : (
-                      <p className="text-2xl sm:text-xl font-bold text-zinc-800 dark:text-zinc-200">{stat.value}</p>
+                      <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stat.value}</p>
                     )}
                     <p className="text-xs sm:text-[10px] text-zinc-500 uppercase tracking-wide">{stat.label}</p>
                   </div>
@@ -220,20 +215,20 @@ export default function JuriPage() {
           })}
         </div>
 
-        {/* PRÓXIMAS SESSÕES - Destaque */}
+        {/* PRÓXIMAS SESSÕES - Suavizado */}
         {(loadingProximas || (proximasSessoes && proximasSessoes.length > 0)) && (
-          <Card className="border-violet-200 dark:border-violet-800/50 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/20 dark:to-purple-950/20">
+          <Card className="border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-violet-600" />
-                  <CardTitle className="text-sm font-semibold">Próximas Sessões</CardTitle>
-                  <Badge variant="outline" className="text-[10px] border-violet-300 text-violet-600">
+                  <Zap className="w-4 h-4 text-zinc-500" />
+                  <CardTitle className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Próximas Sessões</CardTitle>
+                  <Badge variant="outline" className="text-[10px] border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400">
                     {proximasSessoes?.length || 0}
                   </Badge>
                 </div>
                 <Link href="/admin/juri/cockpit">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-violet-600 hover:text-violet-700">
+                  <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-600 hover:text-emerald-600 dark:text-zinc-400">
                     Abrir Cockpit <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </Link>
@@ -252,12 +247,9 @@ export default function JuriPage() {
                     
                     return (
                       <Link key={sessao.id} href={`/admin/juri/${sessao.id}`}>
-                        <div className={cn(
-                          "p-3 rounded-xl bg-white dark:bg-zinc-900 border transition-all hover:shadow-md group cursor-pointer",
-                          prox.urgent ? "border-violet-300 dark:border-violet-700" : "border-zinc-200 dark:border-zinc-800"
-                        )}>
+                        <div className="group p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 transition-all hover:border-emerald-300/50 dark:hover:border-emerald-700/50 hover:shadow-sm cursor-pointer">
                           <div className="flex items-center justify-between mb-2">
-                            <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded", prox.color)}>
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
                               {prox.label}
                             </span>
                             <span className="text-[10px] text-zinc-400">{format(dataSessao, "HH:mm")}</span>
@@ -280,31 +272,26 @@ export default function JuriPage() {
           </Card>
         )}
 
-        {/* FERRAMENTAS - Grid Compacto com tamanhos mobile-first */}
+        {/* FERRAMENTAS - Padrão Defender (neutro) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { id: "cockpit", label: "Plenário Live", desc: "Cockpit do julgamento", href: "/admin/juri/cockpit", icon: Zap, color: "violet", premium: true },
-            { id: "jurados", label: "Banco de Jurados", desc: "Perfis psicológicos", href: "/admin/juri/jurados", icon: Users, color: "blue" },
-            { id: "investigacao", label: "Investigação", desc: "OSINT e diligências", href: "/admin/juri/investigacao", icon: FileSearch, color: "emerald" },
-            { id: "teses", label: "Teses do Júri", desc: "Narrativa e argumentos", href: "/admin/juri/teses", icon: Target, color: "amber" },
+            { id: "cockpit", label: "Plenário Live", desc: "Cockpit do julgamento", href: "/admin/juri/cockpit", icon: Zap, premium: true },
+            { id: "jurados", label: "Banco de Jurados", desc: "Perfis psicológicos", href: "/admin/juri/jurados", icon: Users },
+            { id: "investigacao", label: "Investigação", desc: "OSINT e diligências", href: "/admin/juri/investigacao", icon: FileSearch },
+            { id: "teses", label: "Teses do Júri", desc: "Narrativa e argumentos", href: "/admin/juri/teses", icon: Target },
           ].map((tool) => {
             const Icon = tool.icon;
-            const bgColor = {
-              violet: "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400",
-              blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
-              emerald: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400",
-              amber: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
-            }[tool.color];
             
             return (
               <Link key={tool.id} href={tool.href}>
-                <div className="p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 transition-all group">
+                <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
                   <div className="flex items-center justify-between mb-4 sm:mb-3">
-                    <div className={cn("w-12 h-12 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center", bgColor)}>
-                      <Icon className="w-6 h-6 sm:w-5 sm:h-5" />
+                    <div className="w-12 h-12 sm:w-10 sm:h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
+                      <Icon className="w-6 h-6 sm:w-5 sm:h-5 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
                     </div>
                     {tool.premium && (
-                      <Badge className="bg-violet-500 text-white text-[10px] sm:text-[9px] border-0">Premium</Badge>
+                      <Badge className="bg-zinc-800 dark:bg-zinc-700 text-white text-[10px] sm:text-[9px] border-0">Premium</Badge>
                     )}
                   </div>
                   <h3 className="font-semibold text-base sm:text-sm text-zinc-800 dark:text-zinc-200">{tool.label}</h3>

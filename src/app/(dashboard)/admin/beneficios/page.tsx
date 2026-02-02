@@ -81,8 +81,8 @@ export default function BeneficiosPage() {
       </div>
 
       <div className="p-4 md:p-6 space-y-4">
-        {/* Stats Vazios */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* Stats Mobile-first */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { label: "Elegíveis", value: 0, icon: TrendingUp, color: "text-emerald-600" },
             { label: "Requeridos", value: 0, icon: FileText, color: "text-blue-600" },
@@ -91,12 +91,12 @@ export default function BeneficiosPage() {
           ].map((stat, idx) => {
             const Icon = stat.icon;
             return (
-              <div key={idx} className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
+              <div key={idx} className="p-4 sm:p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
                 <div className="flex items-center gap-3">
-                  <Icon className={cn("w-5 h-5", stat.color)} />
+                  <Icon className={cn("w-6 h-6 sm:w-5 sm:h-5", stat.color)} />
                   <div>
-                    <p className={cn("text-xl font-bold", stat.color)}>{stat.value}</p>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide">{stat.label}</p>
+                    <p className={cn("text-2xl sm:text-xl font-bold", stat.color)}>{stat.value}</p>
+                    <p className="text-xs sm:text-[10px] text-zinc-500 uppercase tracking-wide">{stat.label}</p>
                   </div>
                 </div>
               </div>

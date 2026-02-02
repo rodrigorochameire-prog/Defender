@@ -244,65 +244,65 @@ export default function UsuariosPage() {
       {/* Conteúdo */}
       <div className="p-4 md:p-6 space-y-4">
       
-      {/* Stats Cards - Padrão Demandas */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+      {/* Stats Cards - Mobile-first */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Total</p>
-              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.total ?? 0}</p>
+              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Total</p>
+              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.total ?? 0}</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <Users className="w-4 h-4 text-zinc-500" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Users className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
             </div>
           </div>
         </div>
-        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Admins</p>
-              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.admins ?? 0}</p>
+              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Admins</p>
+              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.admins ?? 0}</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <Crown className="w-4 h-4 text-zinc-500" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Crown className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
             </div>
           </div>
         </div>
-        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Defensores</p>
-              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.defensores ?? 0}</p>
+              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Defensores</p>
+              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.defensores ?? 0}</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <Briefcase className="w-4 h-4 text-zinc-500" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
             </div>
           </div>
         </div>
-        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Estagiários</p>
-              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.estagiarios ?? 0}</p>
+              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Estagiários</p>
+              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.estagiarios ?? 0}</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <GraduationCap className="w-4 h-4 text-zinc-500" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <GraduationCap className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
             </div>
           </div>
         </div>
-        <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
+        <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Servidores</p>
-              <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.servidores ?? 0}</p>
+              <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide">Servidores</p>
+              <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.servidores ?? 0}</p>
             </div>
-            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <Building className="w-4 h-4 text-zinc-500" />
+            <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <Building className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500" />
             </div>
           </div>
         </div>
