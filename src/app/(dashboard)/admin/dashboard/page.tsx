@@ -606,28 +606,28 @@ export default function DashboardJuriPage() {
             const Icon = stat.icon;
             return (
               <Link href={stat.href} key={index}>
-                <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03] dark:hover:shadow-emerald-500/[0.05]">
+                <div className="group relative p-4 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03] dark:hover:shadow-emerald-500/[0.05]">
                   {/* Linha superior sutil no hover */}
                   <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
                   
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
+                    <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-1">
+                      <p className="text-xs sm:text-[10px] font-medium text-zinc-500 dark:text-zinc-400 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
                         {stat.title}
                       </p>
                       {isLoading ? (
-                        <Skeleton className="h-7 w-14" />
+                        <Skeleton className="h-8 sm:h-7 w-16 sm:w-14" />
                       ) : (
-                        <p className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">
+                        <p className="text-2xl sm:text-xl font-bold sm:font-semibold text-zinc-800 dark:text-zinc-200">
                           {stat.value}
                         </p>
                       )}
-                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                      <p className="text-xs sm:text-[10px] text-zinc-500 dark:text-zinc-400">
                         {stat.subtitle}
                       </p>
                     </div>
-                    <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
-                      <Icon className="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
+                    <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-xl sm:rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                      <Icon className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
                     </div>
                   </div>
                 </div>

@@ -375,7 +375,8 @@ function SemanaView({
     <div className="grid grid-cols-7 gap-2">
       {diasSemana.map((dia) => {
         const eventosDoDia = eventos.filter(e => {
-          const eventDate = new Date(e.data);
+          // Adicionar T12:00:00 para evitar problemas de timezone
+          const eventDate = new Date(e.data + "T12:00:00");
           return eventDate.toDateString() === dia.toDateString();
         });
         
@@ -637,7 +638,8 @@ export default function AgendaPage() {
       if (eventosNoMesAtual.length === 0) {
         const primeiroEvento = eventos[0];
         if (primeiroEvento) {
-          const dataEvento = new Date(primeiroEvento.data);
+          // Adicionar T12:00:00 para evitar problemas de timezone
+          const dataEvento = new Date(primeiroEvento.data + "T12:00:00");
           setCurrentDate(dataEvento);
         }
       }
@@ -764,7 +766,8 @@ export default function AgendaPage() {
 
       let matchPeriodo = true;
       if (selectedPeriodo) {
-        const eventoDate = new Date(evento.data);
+        // Adicionar T12:00:00 para evitar problemas de timezone
+        const eventoDate = new Date(evento.data + "T12:00:00");
         const today = new Date();
 
         if (selectedPeriodo === "hoje") {
@@ -823,10 +826,11 @@ export default function AgendaPage() {
 
   // Estatísticas
   const stats = useMemo(() => {
-    const hoje = eventos.filter((e) => isToday(new Date(e.data))).length;
-    const amanha = eventos.filter((e) => isTomorrow(new Date(e.data))).length;
+    // Adicionar T12:00:00 para evitar problemas de timezone
+    const hoje = eventos.filter((e) => isToday(new Date(e.data + "T12:00:00"))).length;
+    const amanha = eventos.filter((e) => isTomorrow(new Date(e.data + "T12:00:00"))).length;
     const semana = eventos.filter((e) => {
-      const eventDate = new Date(e.data);
+      const eventDate = new Date(e.data + "T12:00:00");
       const today = new Date();
       const weekEnd = addDays(today, 7);
       return eventDate >= today && eventDate <= weekEnd;

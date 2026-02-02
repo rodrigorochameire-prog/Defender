@@ -248,7 +248,8 @@ export function CalendarMonthView({
   }
 
   const getEventosForDate = (date: Date) => {
-    return eventos.filter((evento) => isSameDay(new Date(evento.data), date));
+    // Adicionar T12:00:00 para evitar problemas de timezone
+    return eventos.filter((evento) => isSameDay(new Date(evento.data + "T12:00:00"), date));
   };
 
   const handleDayClick = (date: Date, event: React.MouseEvent) => {

@@ -26,27 +26,28 @@ interface StatsCardProps {
   isActive?: boolean;
 }
 
+// Mobile-first: tamanhos maiores em mobile para melhor legibilidade
 const sizeStyles = {
   sm: {
     container: "p-4",
-    icon: "w-9 h-9",
-    iconInner: "w-4 h-4",
-    value: "text-xl font-semibold",
-    label: "text-[10px]",
+    icon: "w-10 sm:w-9 h-10 sm:h-9",
+    iconInner: "w-5 sm:w-4 h-5 sm:h-4",
+    value: "text-2xl sm:text-xl font-bold sm:font-semibold",
+    label: "text-xs sm:text-[10px]",
   },
   md: {
     container: "p-4",
-    icon: "w-9 h-9",
-    iconInner: "w-4 h-4",
-    value: "text-xl font-semibold",
-    label: "text-[10px]",
+    icon: "w-11 sm:w-9 h-11 sm:h-9",
+    iconInner: "w-5 sm:w-4 h-5 sm:h-4",
+    value: "text-2xl sm:text-xl font-bold sm:font-semibold",
+    label: "text-xs sm:text-[10px]",
   },
   lg: {
     container: "p-5",
-    icon: "w-10 h-10",
-    iconInner: "w-5 h-5",
-    value: "text-2xl font-bold",
-    label: "text-xs",
+    icon: "w-12 sm:w-10 h-12 sm:h-10",
+    iconInner: "w-6 sm:w-5 h-6 sm:h-5",
+    value: "text-3xl sm:text-2xl font-bold",
+    label: "text-sm sm:text-xs",
   },
 };
 

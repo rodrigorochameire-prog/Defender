@@ -81,8 +81,8 @@ export function PremiumStatsCard({
   const CardContent = (
     <div
       className={cn(
-        // Base
-        "p-4 md:p-5 rounded-xl md:rounded-2xl",
+        // Base - padding maior em mobile
+        "p-5 sm:p-4 md:p-5 rounded-2xl md:rounded-2xl",
         "bg-white dark:bg-zinc-900",
         "border border-zinc-200/80 dark:border-zinc-800/80",
         // Hover effects - combina clean + efeitos
@@ -98,39 +98,39 @@ export function PremiumStatsCard({
       )}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-4 sm:gap-3">
         {/* Content */}
-        <div className="flex-1 min-w-0 space-y-1">
-          {/* Label */}
-          <p className="text-xs md:text-sm font-semibold text-zinc-600 dark:text-zinc-400 truncate">
+        <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-1">
+          {/* Label - maior em mobile */}
+          <p className="text-sm sm:text-xs md:text-sm font-semibold text-zinc-600 dark:text-zinc-400 truncate">
             {label}
           </p>
           
-          {/* Value */}
+          {/* Value - maior em mobile */}
           <p className={cn(
-            "text-2xl md:text-3xl font-bold tracking-tight transition-colors duration-300",
+            "text-3xl sm:text-2xl md:text-3xl font-bold tracking-tight transition-colors duration-300",
             styles.valueColor
           )}>
             {value}
           </p>
           
-          {/* Subtitle */}
+          {/* Subtitle - maior em mobile */}
           {subtitle && (
-            <p className="text-[10px] md:text-xs text-zinc-500 dark:text-zinc-500 font-medium">
+            <p className="text-xs sm:text-[10px] md:text-xs text-zinc-500 dark:text-zinc-500 font-medium">
               {subtitle}
             </p>
           )}
         </div>
 
-        {/* Icon */}
+        {/* Icon - maior em mobile */}
         <div className={cn(
-          "w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0",
+          "w-12 h-12 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0",
           "transition-all duration-300",
           "group-hover:scale-110",
           styles.iconBg
         )}>
           <Icon className={cn(
-            "w-5 h-5 md:w-6 md:h-6",
+            "w-6 h-6 sm:w-5 sm:h-5 md:w-6 md:h-6",
             styles.iconColor
           )} strokeWidth={2} />
         </div>
