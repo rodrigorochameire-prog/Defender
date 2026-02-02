@@ -31,7 +31,11 @@ import {
   ArchiveRestore,
   Flame,
   Search,
+  MessageSquarePlus,
+  Save,
+  X,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { AssistidoAvatar } from "@/components/demandas-premium/assistido-avatar";
 import { CopyProcessButton } from "@/components/demandas-premium/CopyProcessButton";
@@ -72,6 +76,7 @@ interface DemandaCardProps {
   copyToClipboard: (text: string, message?: string) => void;
   onAtoChange?: (id: string, ato: string) => void; // Novo callback para mudança de ato
   atoOptions?: Array<{ value: string; label: string }>; // Lista de atos disponíveis
+  onProvidenciasChange?: (id: string, providencias: string) => void; // Callback para mudança de providências
 }
 
 export function DemandaCard({
@@ -86,11 +91,14 @@ export function DemandaCard({
   onDelete,
   onAtoChange,
   atoOptions,
+  onProvidenciasChange,
 }: DemandaCardProps) {
   const [showProvidencias, setShowProvidencias] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showAtoDropdown, setShowAtoDropdown] = useState(false);
+  const [isEditingProvidencias, setIsEditingProvidencias] = useState(false);
+  const [providenciasTemp, setProvidenciasTemp] = useState(demanda.providencias || "");
 
   const calcularPrazo = (prazoStr: string) => {
     if (!prazoStr) return { texto: "", cor: "gray" };
@@ -155,6 +163,27 @@ export function DemandaCard({
       onAtoChange(demanda.id, newAto);
     }
     setShowAtoDropdown(false);
+  };
+
+  const handleStartEditProvidencias = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setProvidenciasTemp(demanda.providencias || "");
+    setIsEditingProvidencias(true);
+    setShowProvidencias(true);
+  };
+
+  const handleSaveProvidencias = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onProvidenciasChange) {
+      onProvidenciasChange(demanda.id, providenciasTemp);
+    }
+    setIsEditingProvidencias(false);
+  };
+
+  const handleCancelProvidencias = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setProvidenciasTemp(demanda.providencias || "");
+    setIsEditingProvidencias(false);
   };
 
   // Fechar dropdowns ao clicar fora
@@ -373,29 +402,75 @@ export function DemandaCard({
           </div>
 
           {/* Providências */}
-          {demanda.providencias && (
-            <div>
+          <div>
+            <div className="flex items-center justify-between">
               <button
                 onClick={() => setShowProvidencias(!showProvidencias)}
-                className="flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors w-full py-1"
+                className="flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors py-1"
               >
                 {showProvidencias ? (
                   <ChevronDown className="w-4 h-4 flex-shrink-0" />
                 ) : (
                   <ChevronRight className="w-4 h-4 flex-shrink-0" />
                 )}
-                Ver Providências
+                {demanda.providencias ? "Providências" : "Adicionar providências"}
               </button>
-              
-              {showProvidencias && (
-                <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                    {demanda.providencias}
-                  </p>
-                </div>
+              {onProvidenciasChange && !isEditingProvidencias && (
+                <button
+                  onClick={handleStartEditProvidencias}
+                  className="p-1.5 rounded-md text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                  title="Editar providências"
+                >
+                  <MessageSquarePlus className="w-3.5 h-3.5" />
+                </button>
               )}
             </div>
-          )}
+            
+            {showProvidencias && (
+              <div className="mt-2">
+                {isEditingProvidencias ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={providenciasTemp}
+                      onChange={(e) => setProvidenciasTemp(e.target.value)}
+                      placeholder="Digite as providências..."
+                      className="min-h-[80px] text-sm"
+                      autoFocus
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCancelProvidencias}
+                        className="h-7 text-xs"
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveProvidencias}
+                        className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        <Save className="w-3 h-3 mr-1" />
+                        Salvar
+                      </Button>
+                    </div>
+                  </div>
+                ) : demanda.providencias ? (
+                  <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                      {demanda.providencias}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-400 italic p-2">
+                    Nenhuma providência registrada
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Actions */}
           <div className="flex gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
@@ -763,11 +838,11 @@ export function DemandaCard({
           </div>
 
           {/* Providências Desktop - Seção Expansível (Fora do Grid - Largura Total) */}
-          {demanda.providencias && (
-            <div className="mt-3.5 pt-3.5 border-t border-zinc-200/50 dark:border-zinc-800/50">
+          <div className="mt-3.5 pt-3.5 border-t border-zinc-200/50 dark:border-zinc-800/50">
+            <div className="flex items-center justify-between">
               <button
                 onClick={() => setShowProvidencias(!showProvidencias)}
-                className="flex items-start gap-2 text-xs hover:text-zinc-900 dark:hover:text-zinc-100 transition-all w-full text-left group/providencias"
+                className="flex items-start gap-2 text-xs hover:text-zinc-900 dark:hover:text-zinc-100 transition-all text-left group/providencias"
               >
                 <div className="transition-all duration-300 group-hover/providencias:scale-110 group-hover/providencias:rotate-3 mt-0.5 flex-shrink-0">
                   {showProvidencias ? (
@@ -777,30 +852,74 @@ export function DemandaCard({
                   )}
                 </div>
                 <span className="relative font-semibold text-zinc-700 dark:text-zinc-300 flex-shrink-0">
-                  Providências:
+                  {demanda.providencias ? "Providências:" : "Adicionar providências"}
                   <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-zinc-400 to-transparent group-hover/providencias:w-full transition-all duration-300" />
                 </span>
                 {/* Texto inline quando recolhido */}
-                {!showProvidencias && (
-                  <span className="text-zinc-600 dark:text-zinc-400 leading-relaxed transition-all duration-300 line-clamp-1 flex-1">
+                {!showProvidencias && demanda.providencias && (
+                  <span className="text-zinc-600 dark:text-zinc-400 leading-relaxed transition-all duration-300 line-clamp-1 flex-1 max-w-[600px]">
                     {demanda.providencias}
                   </span>
                 )}
               </button>
-              
-              {/* Texto expandido quando aberto */}
-              {showProvidencias && (
-                <div 
-                  className="mt-2 pl-6 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed transition-all duration-300"
-                  style={{
-                    animation: 'fadeInDown 0.3s ease-out'
-                  }}
+              {onProvidenciasChange && !isEditingProvidencias && (
+                <button
+                  onClick={handleStartEditProvidencias}
+                  className="p-1.5 rounded-md text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors opacity-0 group-hover:opacity-100"
+                  title="Editar providências"
                 >
-                  {demanda.providencias}
-                </div>
+                  <MessageSquarePlus className="w-3.5 h-3.5" />
+                </button>
               )}
             </div>
-          )}
+            
+            {/* Conteúdo expandido */}
+            {showProvidencias && (
+              <div 
+                className="mt-2 pl-6 transition-all duration-300"
+                style={{ animation: 'fadeInDown 0.3s ease-out' }}
+              >
+                {isEditingProvidencias ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={providenciasTemp}
+                      onChange={(e) => setProvidenciasTemp(e.target.value)}
+                      placeholder="Digite as providências..."
+                      className="min-h-[80px] text-sm"
+                      autoFocus
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCancelProvidencias}
+                        className="h-7 text-xs"
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveProvidencias}
+                        className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        <Save className="w-3 h-3 mr-1" />
+                        Salvar
+                      </Button>
+                    </div>
+                  </div>
+                ) : demanda.providencias ? (
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
+                    {demanda.providencias}
+                  </p>
+                ) : (
+                  <p className="text-xs text-zinc-400 italic">
+                    Nenhuma providência registrada
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

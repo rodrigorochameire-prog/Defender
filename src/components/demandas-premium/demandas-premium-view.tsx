@@ -269,6 +269,21 @@ export default function Demandas() {
     });
   };
 
+  const handleProvidenciasChange = (demandaId: string, providencias: string) => {
+    // Atualizar localmente para feedback imediato
+    setDemandas((prev) =>
+      prev.map((d) => (d.id === demandaId ? { ...d, providencias } : d))
+    );
+    
+    // Atualizar no banco
+    updateDemandaMutation.mutate({
+      id: demandaId,
+      providencias,
+    });
+    
+    toast.success("Providências atualizadas!");
+  };
+
   const handleSaveNewDemanda = (demandaData: DemandaFormData) => {
     // Por enquanto usar dados locais (mock) até o modal estar preparado
     // para selecionar assistidos e processos do banco de dados
@@ -760,6 +775,7 @@ export default function Demandas() {
                       onUnarchive={handleUnarchiveDemanda}
                       onDelete={handleDeleteDemanda}
                       copyToClipboard={copyToClipboard}
+                      onProvidenciasChange={handleProvidenciasChange}
                     />
                   );
                 })
