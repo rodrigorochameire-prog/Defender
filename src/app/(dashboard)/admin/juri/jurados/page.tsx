@@ -694,6 +694,31 @@ export default function JuradosPage() {
     },
   });
 
+  // Mutation para deletar jurado
+  const deleteJuradoMutation = trpc.jurados.delete.useMutation({
+    onSuccess: () => {
+      utils.jurados.list.invalidate();
+      toast.success("Jurado removido!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao remover: " + error.message);
+    },
+  });
+
+  // Mutation para deletar todos
+  const deleteAllMutation = trpc.jurados.deleteAll.useMutation({
+    onSuccess: (data) => {
+      utils.jurados.list.invalidate();
+      toast.success(`${data.count} jurados removidos!`);
+      setShowDeleteAllConfirm(false);
+    },
+    onError: (error) => {
+      toast.error("Erro ao remover: " + error.message);
+    },
+  });
+
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+
   const handleImportarJurados = async (jurados: JuradoImportado[]) => {
     setIsImporting(true);
     let sucessos = 0;
@@ -859,6 +884,17 @@ export default function JuradosPage() {
           </div>
           
           <div className="flex items-center gap-2">
+            {juradosDoSistema.length > 0 && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="h-8 text-xs border-red-300 dark:border-red-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                onClick={() => setShowDeleteAllConfirm(true)}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                Apagar Todos
+              </Button>
+            )}
             <Button 
               size="sm" 
               variant="outline"
@@ -935,9 +971,20 @@ export default function JuradosPage() {
                         </Badge>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                           {grupo.titulares.map((j, idx) => (
-                            <Link key={j.id} href={`/admin/juri/jurados/${j.id}`}>
-                              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors cursor-pointer">
-                                <div className="flex items-start gap-3">
+                            <div key={j.id} className="group relative p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Remover ${j.nome}?`)) {
+                                    deleteJuradoMutation.mutate({ id: j.id });
+                                  }
+                                }}
+                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                              <Link href={`/admin/juri/jurados/${j.id}`}>
+                                <div className="flex items-start gap-3 cursor-pointer">
                                   <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-400 flex-shrink-0">
                                     {idx + 1}
                                   </div>
@@ -947,8 +994,8 @@ export default function JuradosPage() {
                                     <p className="text-[10px] text-zinc-400 truncate">{j.profissao || "—"}</p>
                                   </div>
                                 </div>
-                              </div>
-                            </Link>
+                              </Link>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -962,9 +1009,20 @@ export default function JuradosPage() {
                         </Badge>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                           {grupo.suplentes.map((j, idx) => (
-                            <Link key={j.id} href={`/admin/juri/jurados/${j.id}`}>
-                              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors cursor-pointer">
-                                <div className="flex items-start gap-3">
+                            <div key={j.id} className="group relative p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Remover ${j.nome}?`)) {
+                                    deleteJuradoMutation.mutate({ id: j.id });
+                                  }
+                                }}
+                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                              <Link href={`/admin/juri/jurados/${j.id}`}>
+                                <div className="flex items-start gap-3 cursor-pointer">
                                   <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-xs font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">
                                     {idx + 1}
                                   </div>
@@ -974,8 +1032,8 @@ export default function JuradosPage() {
                                     <p className="text-[10px] text-zinc-400 truncate">{j.profissao || "—"}</p>
                                   </div>
                                 </div>
-                              </div>
-                            </Link>
+                              </Link>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1212,6 +1270,40 @@ export default function JuradosPage() {
         onOpenChange={setImportModalOpen}
         onImport={handleImportarJurados}
       />
+
+      {/* Modal de Confirmação - Apagar Todos */}
+      <Dialog open={showDeleteAllConfirm} onOpenChange={setShowDeleteAllConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-red-600">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              Apagar Todos os Jurados?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Esta ação irá remover permanentemente <strong>{juradosDoSistema.length} jurados</strong> do banco de dados.
+            </p>
+            <p className="text-sm text-red-600 dark:text-red-400 mt-2 font-medium">
+              Esta ação não pode ser desfeita.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteAllConfirm(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={() => deleteAllMutation.mutate()}
+              disabled={deleteAllMutation.isPending}
+            >
+              {deleteAllMutation.isPending ? "Apagando..." : "Apagar Todos"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

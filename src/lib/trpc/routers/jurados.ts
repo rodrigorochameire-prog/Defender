@@ -191,24 +191,33 @@ export const juradosRouter = router({
       return updated;
     }),
 
-  // Excluir (soft delete)
+  // Excluir jurado permanentemente
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      const [updated] = await db
-        .update(jurados)
-        .set({ ativo: false, updatedAt: new Date() })
+      const [deleted] = await db
+        .delete(jurados)
         .where(eq(jurados.id, input.id))
         .returning();
 
-      if (!updated) {
+      if (!deleted) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Jurado não encontrado",
         });
       }
 
-      return updated;
+      return deleted;
+    }),
+
+  // Excluir todos os jurados
+  deleteAll: protectedProcedure
+    .mutation(async () => {
+      const result = await db
+        .delete(jurados)
+        .returning();
+
+      return { count: result.length };
     }),
 
   // Estatísticas gerais
