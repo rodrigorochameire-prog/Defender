@@ -1216,8 +1216,8 @@ export default function ProcessosPage() {
           </div>
 
           <div className="p-4 md:p-6 space-y-4">
-            {/* Stats Skeleton - Mobile-first */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* Stats Skeleton - 2 colunas em mobile */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
                   <div className="flex items-center justify-between">
@@ -1372,8 +1372,8 @@ export default function ProcessosPage() {
         {/* Conteúdo Principal */}
         <div className="p-4 md:p-6 space-y-4">
 
-        {/* Stats Cards - Mobile-first */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Stats Cards - 2 colunas em mobile */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="flex items-start justify-between gap-3">

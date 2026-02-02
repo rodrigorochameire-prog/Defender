@@ -600,8 +600,8 @@ export default function DashboardJuriPage() {
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* STATS CARDS - Polimento premium com toques emerald */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* STATS CARDS - 2 colunas em mobile */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {statsData.map((stat, index) => {
             const Icon = stat.icon;
             return (

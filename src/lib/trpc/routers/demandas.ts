@@ -313,14 +313,28 @@ export const demandasRouter = router({
     .mutation(async ({ ctx, input }) => {
       const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
 
-      // Construir condições de acesso
+      // Construir condições de acesso - incluir verificação de não deletada
       let whereCondition;
       if (defensoresVisiveis === "all") {
-        whereCondition = eq(demandas.id, input.id);
+        whereCondition = and(eq(demandas.id, input.id), isNull(demandas.deletedAt));
       } else if (defensoresVisiveis.length === 1) {
-        whereCondition = and(eq(demandas.id, input.id), eq(demandas.defensorId, defensoresVisiveis[0]));
+        whereCondition = and(
+          eq(demandas.id, input.id), 
+          eq(demandas.defensorId, defensoresVisiveis[0]),
+          isNull(demandas.deletedAt)
+        );
+      } else if (defensoresVisiveis.length > 1) {
+        whereCondition = and(
+          eq(demandas.id, input.id), 
+          inArray(demandas.defensorId, defensoresVisiveis),
+          isNull(demandas.deletedAt)
+        );
       } else {
-        whereCondition = and(eq(demandas.id, input.id), inArray(demandas.defensorId, defensoresVisiveis));
+        // Nenhum defensor visível - não pode deletar nada
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem permissão para excluir demandas",
+        });
       }
 
       const [excluido] = await db
