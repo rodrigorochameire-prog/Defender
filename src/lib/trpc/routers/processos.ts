@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { processos, assistidos } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql, and } from "drizzle-orm";
+import { processos, assistidos, audiencias, movimentacoes, demandas, calendarEvents } from "@/lib/db/schema";
+import { eq, ilike, or, desc, sql, and, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope } from "../workspace";
 
@@ -225,4 +225,129 @@ export const processosRouter = router({
       juris: Number(juris[0]?.count || 0),
     };
   }),
+
+  // Timeline do processo - busca atos principais
+  timeline: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const { processoId } = input;
+      
+      // Buscar audiências do processo
+      const audienciasResult = await db
+        .select({
+          id: audiencias.id,
+          data: audiencias.dataAudiencia,
+          tipo: audiencias.tipo,
+          titulo: audiencias.titulo,
+          status: audiencias.status,
+          local: audiencias.local,
+        })
+        .from(audiencias)
+        .where(eq(audiencias.processoId, processoId))
+        .orderBy(desc(audiencias.dataAudiencia));
+      
+      // Buscar movimentações do processo
+      const movimentacoesResult = await db
+        .select({
+          id: movimentacoes.id,
+          data: movimentacoes.dataMovimentacao,
+          tipo: movimentacoes.tipo,
+          descricao: movimentacoes.descricao,
+        })
+        .from(movimentacoes)
+        .where(eq(movimentacoes.processoId, processoId))
+        .orderBy(desc(movimentacoes.dataMovimentacao));
+      
+      // Buscar demandas do processo
+      const demandasResult = await db
+        .select({
+          id: demandas.id,
+          data: demandas.dataExpedicao,
+          tipo: demandas.tipo,
+          status: demandas.status,
+          providencias: demandas.providencias,
+        })
+        .from(demandas)
+        .where(and(
+          eq(demandas.processoId, processoId),
+          isNull(demandas.deletedAt)
+        ))
+        .orderBy(desc(demandas.dataExpedicao));
+      
+      // Buscar eventos do calendário relacionados ao processo
+      const eventosResult = await db
+        .select({
+          id: calendarEvents.id,
+          data: calendarEvents.eventDate,
+          tipo: calendarEvents.eventType,
+          titulo: calendarEvents.title,
+        })
+        .from(calendarEvents)
+        .where(eq(calendarEvents.processoId, processoId))
+        .orderBy(desc(calendarEvents.eventDate));
+      
+      // Consolidar todos os atos em uma timeline única
+      const timeline: Array<{
+        id: number;
+        data: Date;
+        tipo: string;
+        categoria: "audiencia" | "movimentacao" | "demanda" | "evento";
+        titulo: string;
+        descricao?: string;
+        status?: string;
+      }> = [];
+      
+      // Adicionar audiências
+      audienciasResult.forEach(a => {
+        timeline.push({
+          id: a.id,
+          data: a.data,
+          tipo: a.tipo || "audiencia",
+          categoria: "audiencia",
+          titulo: a.titulo || `Audiência de ${a.tipo || "instrução"}`,
+          status: a.status || undefined,
+        });
+      });
+      
+      // Adicionar movimentações
+      movimentacoesResult.forEach(m => {
+        timeline.push({
+          id: m.id,
+          data: m.data,
+          tipo: m.tipo || "movimentacao",
+          categoria: "movimentacao",
+          titulo: m.descricao,
+          descricao: m.tipo || undefined,
+        });
+      });
+      
+      // Adicionar demandas importantes (apenas as com status relevante)
+      demandasResult.forEach(d => {
+        timeline.push({
+          id: d.id,
+          data: d.data,
+          tipo: d.tipo || "demanda",
+          categoria: "demanda",
+          titulo: d.providencias || `Demanda - ${d.tipo || "geral"}`,
+          status: d.status || undefined,
+        });
+      });
+      
+      // Adicionar eventos do calendário
+      eventosResult.forEach(e => {
+        timeline.push({
+          id: e.id,
+          data: e.data,
+          tipo: e.tipo || "evento",
+          categoria: "evento",
+          titulo: e.titulo || "Evento",
+        });
+      });
+      
+      // Ordenar por data (mais recente primeiro)
+      timeline.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+      
+      // Retornar os 10 atos mais recentes/importantes
+      return timeline.slice(0, 10);
+    }),
 });

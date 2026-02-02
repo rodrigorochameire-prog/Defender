@@ -401,6 +401,113 @@ function MiniTimeline({ eventos }: { eventos: Array<{ texto: string; data?: Date
   );
 }
 
+// Timeline do Processo - Busca dados reais do banco
+function ProcessoTimeline({ processoId }: { processoId: number }) {
+  const { data: timeline, isLoading } = trpc.processos.timeline.useQuery({ processoId });
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-1.5">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    );
+  }
+  
+  if (!timeline || timeline.length === 0) {
+    return (
+      <p className="text-[10px] text-zinc-400 italic">Nenhum ato registrado</p>
+    );
+  }
+  
+  // Configuração de cores e ícones por categoria
+  const getCategoriaConfig = (categoria: string, tipo: string) => {
+    switch (categoria) {
+      case "audiencia":
+        return { 
+          color: "bg-blue-500", 
+          textColor: "text-blue-600 dark:text-blue-400",
+          label: tipo === "instrucao" ? "Audiência de Instrução" : 
+                 tipo === "juri" ? "Sessão do Júri" :
+                 tipo === "custodia" ? "Audiência de Custódia" :
+                 tipo === "conciliacao" ? "Audiência de Conciliação" : "Audiência"
+        };
+      case "movimentacao":
+        return { 
+          color: tipo === "sentenca" ? "bg-emerald-500" : 
+                 tipo === "decisao" ? "bg-amber-500" : "bg-zinc-400",
+          textColor: tipo === "sentenca" ? "text-emerald-600 dark:text-emerald-400" : 
+                     tipo === "decisao" ? "text-amber-600 dark:text-amber-400" : "text-zinc-500",
+          label: tipo === "sentenca" ? "Sentença" : 
+                 tipo === "decisao" ? "Decisão" : 
+                 tipo === "despacho" ? "Despacho" : "Movimentação"
+        };
+      case "demanda":
+        return { 
+          color: "bg-rose-500", 
+          textColor: "text-rose-600 dark:text-rose-400",
+          label: "Demanda"
+        };
+      case "evento":
+        return { 
+          color: "bg-violet-500", 
+          textColor: "text-violet-600 dark:text-violet-400",
+          label: "Evento"
+        };
+      default:
+        return { 
+          color: "bg-zinc-400", 
+          textColor: "text-zinc-500",
+          label: "Ato"
+        };
+    }
+  };
+  
+  return (
+    <div className="relative pl-3 space-y-1.5 border-l border-zinc-200 dark:border-zinc-700">
+      {timeline.slice(0, 5).map((ato, index) => {
+        const config = getCategoriaConfig(ato.categoria, ato.tipo);
+        const isPast = new Date(ato.data) < new Date();
+        const isToday = new Date(ato.data).toDateString() === new Date().toDateString();
+        
+        return (
+          <div key={`${ato.categoria}-${ato.id}`} className="relative">
+            <div className={cn(
+              "absolute -left-[5px] top-1 w-2 h-2 rounded-full",
+              isToday ? "ring-2 ring-offset-1 ring-blue-400" : "",
+              config.color
+            )} />
+            <div className="ml-2 flex items-center gap-2">
+              <span className={cn("text-[10px] font-medium", config.textColor)}>
+                {format(new Date(ato.data), "dd/MM/yyyy")}
+              </span>
+              <span className="text-[10px] text-zinc-500 truncate flex-1">
+                {ato.titulo.length > 40 ? ato.titulo.substring(0, 40) + "..." : ato.titulo}
+              </span>
+              {ato.status && (
+                <span className={cn(
+                  "text-[8px] px-1 py-0.5 rounded font-medium",
+                  ato.status === "realizada" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                  ato.status === "agendada" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" :
+                  ato.status === "adiada" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" :
+                  "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                )}>
+                  {ato.status}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+      {timeline.length > 5 && (
+        <p className="ml-2 text-[9px] text-zinc-400">
+          +{timeline.length - 5} mais atos...
+        </p>
+      )}
+    </div>
+  );
+}
+
 // Card de Processo - Versão Compacta e Limpa
 function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: number }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -552,40 +659,13 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
                 <FaseProgressBar faseAtual="pronuncia" />
               )}
 
-              {/* Timeline de Atos Principais */}
+              {/* Timeline de Atos Principais - Dados do Banco */}
               <div>
                 <p className="text-[10px] text-zinc-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
                   <Activity className="w-2.5 h-2.5" />
                   Atos Principais
                 </p>
-                <div className="relative pl-3 space-y-1.5 border-l border-zinc-200 dark:border-zinc-700">
-                  {/* Próximo prazo */}
-                  {processo.proximoPrazo && (
-                    <div className="relative">
-                      <div className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-amber-500" />
-                      <div className="ml-2 flex items-center gap-2">
-                        <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                          {format(processo.proximoPrazo, "dd/MM/yyyy")}
-                        </span>
-                        <span className="text-[10px] text-zinc-500 truncate">
-                          {processo.atoProximoPrazo || "Prazo"}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  {/* Última movimentação (placeholder) */}
-                  {processo.dataDistribuicao && !isNaN(new Date(processo.dataDistribuicao).getTime()) && (
-                    <div className="relative">
-                      <div className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-                      <div className="ml-2 flex items-center gap-2">
-                        <span className="text-[10px] text-zinc-400">
-                          {format(new Date(processo.dataDistribuicao), "dd/MM/yyyy")}
-                        </span>
-                        <span className="text-[10px] text-zinc-500">Distribuição</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <ProcessoTimeline processoId={processo.id} />
               </div>
 
               {/* Caso Vinculado */}
