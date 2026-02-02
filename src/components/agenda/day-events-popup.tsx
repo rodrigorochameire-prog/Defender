@@ -118,19 +118,43 @@ const atribuicaoColors: Record<string, { bg: string; text: string; dot: string; 
 
 // Abreviações para títulos de eventos no calendário
 const abreviacoes: Record<string, string> = {
-  // Audiências Gerais
+  // AIJ - Instrução e Julgamento
   "Audiência de Instrução e Julgamento": "AIJ",
+  "Instrução e Julgamento": "AIJ",
+  
+  // Custódia
   "Audiência de Custódia": "Custódia",
+  
+  // Justificação
   "Audiência de Justificação": "Justificação",
+  
+  // Audiências Gerais
   "Audiência Preliminar": "AP",
   "Audiência de Apresentação": "Apresentação",
   "Audiência Concentrada": "Aud. Concentrada",
+  "Audiência de Conciliação": "Conciliação",
   
   // Júri
+  "Sessão de Julgamento do Tribunal do Júri": "Júri",
   "Sessão do Tribunal do Júri": "Júri",
   "Tribunal do Júri": "Júri",
   "Sessão de Júri": "Júri",
   "Plenário do Júri": "Júri",
+  
+  // PAP - Produção Antecipada de Provas
+  "Produção Antecipada de Provas": "PAP",
+  
+  // ANPP - Acordo de Não Persecução Penal
+  "Acordo de Não Persecução Penal": "ANPP",
+  
+  // Admonitória (Execução Penal)
+  "Audiência Admonitória": "Admonitória",
+  
+  // Oitiva Especial
+  "Oitiva Especial": "Oitiva especial",
+  
+  // Retratação
+  "Audiência de Retratação": "Retratação",
   
   // Execução Penal
   "Audiência de Execução": "Exec",

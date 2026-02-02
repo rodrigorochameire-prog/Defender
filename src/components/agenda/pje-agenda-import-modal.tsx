@@ -125,36 +125,165 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
     return "";
   };
 
+  // ============================================
+  // TIPOS DE AUDIÊNCIA POR ATRIBUIÇÃO
+  // ============================================
+  // Júri: Júri, AIJ, Custódia, PAP
+  // Violência Doméstica: AIJ, Justificação, Custódia, Oitiva especial, Retratação
+  // Execução Penal: Justificação, Admonitória
+  // Criminal Geral: AIJ, Custódia, ANPP, Justificação
+  // ============================================
+  
   const mapearTipoAudiencia = (tipoTexto: string, atribuicao: string): { sigla: string; descricao: string } => {
     const tipo = tipoTexto.toUpperCase();
+    const isJuri = atribuicao === "Tribunal do Júri";
     const isViolenciaDomestica = atribuicao === "Violência Doméstica";
+    const isExecucaoPenal = atribuicao === "Execução Penal";
+    const isCriminalGeral = atribuicao === "Criminal Geral";
 
-    if (tipo.includes("JUSTIFICAÇÃO") || tipo.includes("JUSTIFICACAO")) {
-      return { sigla: "Justificação", descricao: "Audiência de Justificação" };
+    // === TRIBUNAL DO JÚRI ===
+    if (isJuri) {
+      // Sessão de Julgamento do Júri (Plenário)
+      if (tipo.includes("SESSÃO") || tipo.includes("PLENÁRIO") || tipo.includes("PLENARIO") || 
+          tipo.includes("JULGAMENTO DO JÚRI") || tipo.includes("JULGAMENTO DO JURI") ||
+          tipo.includes("TRIBUNAL DO JÚRI") || tipo.includes("TRIBUNAL DO JURI")) {
+        return { sigla: "Júri", descricao: "Sessão de Julgamento do Tribunal do Júri" };
+      }
+      // AIJ - Audiência de Instrução e Julgamento (fase de instrução do júri)
+      if (tipo.includes("INSTRUÇÃO") || tipo.includes("INSTRUCAO") || 
+          (tipo.includes("JULGAMENTO") && !tipo.includes("SESSÃO"))) {
+        return { sigla: "AIJ", descricao: "Audiência de Instrução e Julgamento" };
+      }
+      // Custódia
+      if (tipo.includes("CUSTÓDIA") || tipo.includes("CUSTODIA")) {
+        return { sigla: "Custódia", descricao: "Audiência de Custódia" };
+      }
+      // PAP - Produção Antecipada de Provas
+      if (tipo.includes("PRODUÇÃO ANTECIPADA") || tipo.includes("PRODUCAO ANTECIPADA") || 
+          tipo.includes("PAP") || tipo.includes("ANTECIPADA DE PROVAS") ||
+          tipo.includes("PRESENCIAL")) {
+        return { sigla: "PAP", descricao: "Produção Antecipada de Provas" };
+      }
     }
-    if (tipo.includes("INSTRUÇÃO") || tipo.includes("INSTRUCAO") || tipo.includes("JULGAMENTO")) {
+
+    // === VIOLÊNCIA DOMÉSTICA ===
+    if (isViolenciaDomestica) {
+      // AIJ
+      if (tipo.includes("INSTRUÇÃO") || tipo.includes("INSTRUCAO") || tipo.includes("JULGAMENTO")) {
+        return { sigla: "AIJ", descricao: "Audiência de Instrução e Julgamento" };
+      }
+      // Justificação
+      if (tipo.includes("JUSTIFICAÇÃO") || tipo.includes("JUSTIFICACAO")) {
+        return { sigla: "Justificação", descricao: "Audiência de Justificação" };
+      }
+      // Custódia
+      if (tipo.includes("CUSTÓDIA") || tipo.includes("CUSTODIA")) {
+        return { sigla: "Custódia", descricao: "Audiência de Custódia" };
+      }
+      // Oitiva especial
+      if (tipo.includes("OITIVA") || tipo.includes("DEPOIMENTO ESPECIAL")) {
+        return { sigla: "Oitiva especial", descricao: "Oitiva Especial" };
+      }
+      // Retratação
+      if (tipo.includes("RETRATAÇÃO") || tipo.includes("RETRATACAO")) {
+        return { sigla: "Retratação", descricao: "Audiência de Retratação" };
+      }
+    }
+
+    // === EXECUÇÃO PENAL ===
+    if (isExecucaoPenal) {
+      // Justificação
+      if (tipo.includes("JUSTIFICAÇÃO") || tipo.includes("JUSTIFICACAO")) {
+        return { sigla: "Justificação", descricao: "Audiência de Justificação" };
+      }
+      // Admonitória
+      if (tipo.includes("ADMONITÓRIA") || tipo.includes("ADMONITORIA") || tipo.includes("ADMONIT")) {
+        return { sigla: "Admonitória", descricao: "Audiência Admonitória" };
+      }
+    }
+
+    // === CRIMINAL GERAL ===
+    if (isCriminalGeral) {
+      // AIJ
+      if (tipo.includes("INSTRUÇÃO") || tipo.includes("INSTRUCAO") || tipo.includes("JULGAMENTO")) {
+        return { sigla: "AIJ", descricao: "Audiência de Instrução e Julgamento" };
+      }
+      // Custódia
+      if (tipo.includes("CUSTÓDIA") || tipo.includes("CUSTODIA")) {
+        return { sigla: "Custódia", descricao: "Audiência de Custódia" };
+      }
+      // ANPP - Acordo de Não Persecução Penal
+      if (tipo.includes("ANPP") || tipo.includes("NÃO PERSECUÇÃO") || tipo.includes("NAO PERSECUCAO") ||
+          tipo.includes("ACORDO") || tipo.includes("NÃO-PERSECUÇÃO") || tipo.includes("NAO-PERSECUCAO")) {
+        return { sigla: "ANPP", descricao: "Acordo de Não Persecução Penal" };
+      }
+      // Justificação
+      if (tipo.includes("JUSTIFICAÇÃO") || tipo.includes("JUSTIFICACAO")) {
+        return { sigla: "Justificação", descricao: "Audiência de Justificação" };
+      }
+    }
+
+    // === TIPOS GENÉRICOS (qualquer atribuição) ===
+    
+    // AIJ - padrão para instrução em qualquer vara
+    if (tipo.includes("INSTRUÇÃO") || tipo.includes("INSTRUCAO") || 
+        (tipo.includes("JULGAMENTO") && !tipo.includes("SESSÃO") && !tipo.includes("TRIBUNAL"))) {
       return { sigla: "AIJ", descricao: "Audiência de Instrução e Julgamento" };
     }
+    
+    // Custódia
     if (tipo.includes("CUSTÓDIA") || tipo.includes("CUSTODIA")) {
       return { sigla: "Custódia", descricao: "Audiência de Custódia" };
     }
+    
+    // Justificação
+    if (tipo.includes("JUSTIFICAÇÃO") || tipo.includes("JUSTIFICACAO")) {
+      return { sigla: "Justificação", descricao: "Audiência de Justificação" };
+    }
+    
+    // Retratação
     if (tipo.includes("RETRATAÇÃO") || tipo.includes("RETRATACAO")) {
       return { sigla: "Retratação", descricao: "Audiência de Retratação" };
     }
-    if (tipo.includes("OITIVA") || tipo.includes("ESPECIAL") || tipo.includes("DEPOIMENTO ESPECIAL")) {
-      return { sigla: "Oitiva especial", descricao: "Audiência para ouvir crianças ou pessoas vulneráveis pelo procedimento especial" };
+    
+    // Oitiva especial
+    if (tipo.includes("OITIVA") || tipo.includes("DEPOIMENTO ESPECIAL")) {
+      return { sigla: "Oitiva especial", descricao: "Oitiva Especial" };
     }
+    
+    // ANPP
+    if (tipo.includes("ANPP") || tipo.includes("NÃO PERSECUÇÃO") || tipo.includes("NAO PERSECUCAO")) {
+      return { sigla: "ANPP", descricao: "Acordo de Não Persecução Penal" };
+    }
+    
+    // Admonitória
+    if (tipo.includes("ADMONITÓRIA") || tipo.includes("ADMONITORIA")) {
+      return { sigla: "Admonitória", descricao: "Audiência Admonitória" };
+    }
+    
+    // PAP
+    if (tipo.includes("PRODUÇÃO ANTECIPADA") || tipo.includes("PRODUCAO ANTECIPADA") || tipo.includes("PAP")) {
+      return { sigla: "PAP", descricao: "Produção Antecipada de Provas" };
+    }
+    
+    // Conciliação
     if (tipo.includes("CONCILIAÇÃO") || tipo.includes("CONCILIACAO")) {
       return { sigla: "Conciliação", descricao: "Audiência de Conciliação" };
     }
-    if (tipo.includes("INICIAL")) {
-      return { sigla: "Inicial", descricao: "Audiência Inicial" };
-    }
+    
+    // Sessão de Julgamento do Júri
     if (tipo.includes("SESSÃO DE JULGAMENTO") || tipo.includes("TRIBUNAL DO JÚRI") || tipo.includes("TRIBUNAL DO JURI")) {
-      return { sigla: "Plenário do Júri", descricao: "Sessão de Julgamento do Tribunal do Júri" };
+      return { sigla: "Júri", descricao: "Sessão de Julgamento do Tribunal do Júri" };
     }
 
-    return { sigla: tipoTexto || "Audiência", descricao: tipoTexto || "Audiência" };
+    // Fallback - usa o texto original se não for reconhecido, mas nunca "Audiência" genérico
+    const textoLimpo = tipoTexto.trim();
+    if (textoLimpo && textoLimpo.toLowerCase() !== "audiência") {
+      return { sigla: textoLimpo, descricao: textoLimpo };
+    }
+    
+    // Se chegou aqui sem identificar, usa AIJ como padrão (mais comum)
+    return { sigla: "AIJ", descricao: "Audiência de Instrução e Julgamento" };
   };
 
   const mapearSituacao = (situacaoTexto: string): string => {
@@ -292,26 +421,63 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
         // Mapear atribuição (precisa ser antes do tipo de audiência) - passa textoBloco para melhor detecção
         const atribuicao = mapearAtribuicao(orgaoJulgador, classeJudicial, textoBloco);
 
-        // Extrair tipo de audiência do texto
+        // Extrair tipo de audiência do texto - ordem importa (mais específico primeiro)
         let tipoAudienciaTexto = "";
-        if (textoBloco.match(/Sessão\s+de\s+Julgamento.*Tribunal\s+do\s+Juri/i)) {
+        
+        // Sessão de Julgamento do Júri
+        if (textoBloco.match(/Sessão\s+de\s+Julgamento/i) || 
+            textoBloco.match(/Plenário/i) ||
+            textoBloco.match(/TRIBUNAL\s+DO\s+J[UÚ]RI.*JULGAMENTO/i)) {
           tipoAudienciaTexto = "Sessão de Julgamento do Tribunal do Júri";
-        } else if (textoBloco.match(/AUDIÊNCIA\s+DE\s+INSTRUÇÃO\s+E\s+JULGAMENTO/i) || textoBloco.match(/INSTRUÇÃO\s+E\s+JULGAMENTO/i)) {
-          tipoAudienciaTexto = "Audiência de Instrução e Julgamento";
-        } else if (textoBloco.match(/JUSTIFICAÇÃO/i) || textoBloco.match(/JUSTIFICAÇ/i)) {
-          tipoAudienciaTexto = "Justificação";
-        } else if (textoBloco.match(/CUSTÓDIA/i) || textoBloco.match(/CUSTODIA/i)) {
-          tipoAudienciaTexto = "Custódia";
-        } else if (textoBloco.match(/RETRATAÇÃO/i) || textoBloco.match(/RETRATACAO/i)) {
-          tipoAudienciaTexto = "Retratação";
-        } else if (textoBloco.match(/OITIVA\s+ESPECIAL/i) || textoBloco.match(/DEPOIMENTO\s+ESPECIAL/i)) {
+        } 
+        // ANPP - Acordo de Não Persecução Penal
+        else if (textoBloco.match(/ANPP/i) || 
+                 textoBloco.match(/N[AÃ]O[\s-]*PERSECU[CÇ][AÃ]O/i) ||
+                 textoBloco.match(/ACORDO.*PENAL/i)) {
+          tipoAudienciaTexto = "ANPP";
+        }
+        // PAP - Produção Antecipada de Provas
+        else if (textoBloco.match(/PRODU[CÇ][AÃ]O\s+ANTECIPADA/i) || 
+                 textoBloco.match(/PAP/i) ||
+                 textoBloco.match(/ANTECIPADA\s+DE\s+PROVAS/i) ||
+                 textoBloco.match(/Coleta.*Provas/i)) {
+          tipoAudienciaTexto = "PAP";
+        }
+        // Admonitória (Execução Penal)
+        else if (textoBloco.match(/ADMONIT[OÓ]RIA/i)) {
+          tipoAudienciaTexto = "Admonitória";
+        }
+        // Oitiva Especial (antes de justificação para não confundir)
+        else if (textoBloco.match(/OITIVA\s*ESPECIAL/i) || 
+                 textoBloco.match(/DEPOIMENTO\s+ESPECIAL/i)) {
           tipoAudienciaTexto = "Oitiva especial";
-        } else if (textoBloco.match(/CONCILIAÇÃO/i) || textoBloco.match(/CONCILIACAO/i)) {
+        }
+        // Retratação
+        else if (textoBloco.match(/RETRATA[CÇ][AÃ]O/i)) {
+          tipoAudienciaTexto = "Retratação";
+        }
+        // Justificação
+        else if (textoBloco.match(/JUSTIFICA[CÇ][AÃ]O/i)) {
+          tipoAudienciaTexto = "Justificação";
+        }
+        // Custódia
+        else if (textoBloco.match(/CUST[OÓ]DIA/i)) {
+          tipoAudienciaTexto = "Custódia";
+        }
+        // AIJ - Instrução e Julgamento (detectar múltiplos padrões)
+        else if (textoBloco.match(/AUDI[EÊ]NCIA\s+DE\s+INSTRU[CÇ][AÃ]O/i) || 
+                 textoBloco.match(/INSTRU[CÇ][AÃ]O\s+E?\s*JULGAMENTO/i) ||
+                 textoBloco.match(/INSTRU[CÇ][AÃ]O/i) ||
+                 textoBloco.match(/AIJ/i)) {
+          tipoAudienciaTexto = "Instrução e Julgamento";
+        }
+        // Conciliação
+        else if (textoBloco.match(/CONCILIA[CÇ][AÃ]O/i)) {
           tipoAudienciaTexto = "Conciliação";
-        } else if (textoBloco.match(/Coleta.*Provas/i)) {
-          tipoAudienciaTexto = "Coleta Antecipada de Provas";
-        } else {
-          tipoAudienciaTexto = "Audiência";
+        }
+        // Fallback - texto genérico para deixar o mapeador decidir baseado na atribuição
+        else {
+          tipoAudienciaTexto = "";
         }
         
         // Mapear tipo de audiência para sigla e descrição

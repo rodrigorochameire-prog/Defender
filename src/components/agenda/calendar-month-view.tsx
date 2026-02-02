@@ -69,13 +69,32 @@ const defaultColors = getAtribuicaoColors("CRIMINAL");
 // Função para abreviar título
 const abreviarTitulo = (titulo: string): string => {
   const abreviacoes: Record<string, string> = {
+    // AIJ - Instrução e Julgamento
     "Audiência de Instrução e Julgamento": "AIJ",
+    "Instrução e Julgamento": "AIJ",
+    // Custódia
     "Audiência de Custódia": "Custódia",
+    // Justificação
     "Audiência de Justificação": "Justificação",
-    "Audiência Concentrada": "Concentrada",
+    // Júri
+    "Sessão de Julgamento do Tribunal do Júri": "Júri",
     "Sessão do Tribunal do Júri": "Júri",
     "Tribunal do Júri": "Júri",
     "Sessão de Júri": "Júri",
+    "Plenário do Júri": "Júri",
+    // PAP
+    "Produção Antecipada de Provas": "PAP",
+    // ANPP
+    "Acordo de Não Persecução Penal": "ANPP",
+    // Admonitória
+    "Audiência Admonitória": "Admonitória",
+    // Oitiva Especial
+    "Oitiva Especial": "Oitiva especial",
+    // Retratação
+    "Audiência de Retratação": "Retratação",
+    // Outros
+    "Audiência Concentrada": "Concentrada",
+    "Audiência de Conciliação": "Conciliação",
   };
 
   if (abreviacoes[titulo]) return abreviacoes[titulo];
