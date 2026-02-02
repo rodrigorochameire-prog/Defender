@@ -64,6 +64,29 @@ const atribuicaoIcons: Record<string, React.ComponentType<{ className?: string }
   "Curadoria Especial": Shield,
 };
 
+// Mapeamento de status do banco (enum) para status da UI
+const DB_STATUS_TO_UI: Record<string, string> = {
+  "2_ATENDER": "atender",
+  "4_MONITORAR": "monitorar",
+  "5_FILA": "fila",
+  "7_PROTOCOLADO": "protocolado",
+  "7_CIENCIA": "ciencia",
+  "7_SEM_ATUACAO": "sem_atuacao",
+  "URGENTE": "urgente",
+  "CONCLUIDO": "resolvido",
+  "ARQUIVADO": "protocolado",
+};
+
+// Mapeamento de enum do banco para label amigável
+const ATRIBUICAO_ENUM_TO_LABEL: Record<string, string> = {
+  "JURI_CAMACARI": "Tribunal do Júri",
+  "GRUPO_JURI": "Grupo Especial do Júri",
+  "VVD_CAMACARI": "Violência Doméstica",
+  "EXECUCAO_PENAL": "Execução Penal",
+  "SUBSTITUICAO": "Criminal Geral",
+  "SUBSTITUICAO_CIVEL": "Curadoria Especial",
+};
+
 const atribuicaoColors: Record<string, string> = {
   "Tribunal do Júri": "text-green-600 dark:text-green-500",
   "Grupo Especial do Júri": "text-orange-600 dark:text-orange-500",
@@ -207,7 +230,7 @@ export default function Demandas() {
         assistido: d.assistido?.nome || d.titulo || "Sem assistido",
         assistidoId: d.assistido?.id || d.assistidoId || null,
         processoId: d.processo?.id || d.processoId || null,
-        status: d.status?.toLowerCase().replace(/_/g, " ") || "fila",
+        status: DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "fila",
         prazo: d.prazo ? new Date(d.prazo).toLocaleDateString("pt-BR") : "",
         data: d.dataEntrada ? new Date(d.dataEntrada).toLocaleDateString("pt-BR") : new Date(d.createdAt).toLocaleDateString("pt-BR"),
         processos: d.processo?.numeroAutos 
@@ -215,7 +238,7 @@ export default function Demandas() {
           : [],
         ato: d.ato || d.titulo || "",
         providencias: d.providencias || "",
-        atribuicao: d.atribuicao || "Criminal Geral",
+        atribuicao: ATRIBUICAO_ENUM_TO_LABEL[d.processo?.atribuicao] || d.atribuicao || "Criminal Geral",
         estadoPrisional: d.reuPreso ? "preso" : (d.assistido?.statusPrisional || "solto"),
         prioridade: d.prioridade || "normal",
         arquivado: d.status === "ARQUIVADO",

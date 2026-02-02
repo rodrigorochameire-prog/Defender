@@ -88,6 +88,7 @@ export const demandasRouter = router({
             id: processos.id,
             numeroAutos: processos.numeroAutos,
             area: processos.area,
+            atribuicao: processos.atribuicao,
           },
           assistido: {
             id: assistidos.id,
@@ -179,6 +180,7 @@ export const demandasRouter = router({
             id: processos.id,
             numeroAutos: processos.numeroAutos,
             area: processos.area,
+            atribuicao: processos.atribuicao,
           },
           assistido: {
             id: assistidos.id,
@@ -457,6 +459,17 @@ export const demandasRouter = router({
         "Curadoria Especial": "CURADORIA",
       };
 
+      // Mapeamento de atribuição (label do frontend) para enum do banco (processos.atribuicao)
+      const ATRIBUICAO_TO_ENUM: Record<string, string> = {
+        "Tribunal do Júri": "JURI_CAMACARI",
+        "Grupo Especial do Júri": "GRUPO_JURI",
+        "Violência Doméstica": "VVD_CAMACARI",
+        "Execução Penal": "EXECUCAO_PENAL",
+        "Criminal Geral": "SUBSTITUICAO",
+        "Substituição": "SUBSTITUICAO",
+        "Curadoria Especial": "SUBSTITUICAO_CIVEL",
+      };
+
       const results = {
         imported: 0,
         skipped: 0,
@@ -504,10 +517,12 @@ export const demandasRouter = router({
 
           if (!processo) {
             const area = (ATRIBUICAO_TO_AREA[row.atribuicao || ""] || "JURI") as any;
+            const atribuicaoEnum = (ATRIBUICAO_TO_ENUM[row.atribuicao || ""] || "SUBSTITUICAO") as any;
             const [newProcesso] = await db.insert(processos).values({
               assistidoId: assistido.id,
               numeroAutos: processoNumero || `SN-${Date.now()}-${results.imported}`,
               area,
+              atribuicao: atribuicaoEnum,
               workspaceId: assistido.workspaceId,
             }).returning();
             processo = newProcesso;
