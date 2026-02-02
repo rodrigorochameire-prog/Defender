@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   FileSpreadsheet,
@@ -17,6 +19,12 @@ import {
   Lock,
   AlertCircle,
   Trash2,
+  Gavel,
+  Home,
+  Folder,
+  Shield,
+  Target,
+  RefreshCw,
 } from "lucide-react";
 
 interface SheetsImportModalProps {
@@ -58,25 +66,21 @@ const STATUS_MAP: Record<string, string> = {
   "resolvido": "resolvido",
 };
 
-// Mapeamento de atribuição baseado no ato
-const ATRIBUICAO_MAP: Record<string, string> = {
-  "rese": "Tribunal do Júri",
-  "habeas corpus": "Tribunal do Júri",
-  "hc": "Tribunal do Júri",
-  "alegações finais": "Tribunal do Júri",
-  "resposta à acusação": "Tribunal do Júri",
-  "razões de apelação": "Tribunal do Júri",
-  "ciência da pronúncia": "Tribunal do Júri",
-  "ciência habilitação": "Tribunal do Júri",
-  "revogação da prisão": "Criminal Geral",
-  "ofício": "Criminal Geral",
-  "petição intermediária": "Criminal Geral",
-  "diligências": "Criminal Geral",
-};
+// Opções de atribuição
+const ATRIBUICAO_OPTIONS = [
+  { value: "Tribunal do Júri", label: "Tribunal do Júri", icon: Gavel },
+  { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri", icon: Target },
+  { value: "Violência Doméstica", label: "Violência Doméstica", icon: Home },
+  { value: "Execução Penal", label: "Execução Penal", icon: Lock },
+  { value: "Criminal Geral", label: "Criminal Geral", icon: Folder },
+  { value: "Substituição", label: "Substituição", icon: RefreshCw },
+  { value: "Curadoria Especial", label: "Curadoria Especial", icon: Shield },
+];
 
 export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportModalProps) {
   const [rawText, setRawText] = useState("");
   const [parsedDemandas, setParsedDemandas] = useState<ParsedDemanda[]>([]);
+  const [selectedAtribuicao, setSelectedAtribuicao] = useState<string>("");
 
   // Função para extrair status do texto (ex: "2 - Analisar" -> "analisar")
   const parseStatus = (statusText: string): string => {
@@ -93,21 +97,6 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
     }
     
     return "fila";
-  };
-
-  // Função para detectar atribuição baseado no ato
-  const detectAtribuicao = (ato: string): string => {
-    if (!ato) return "Criminal Geral";
-    
-    const atoLower = ato.toLowerCase();
-    
-    for (const [key, value] of Object.entries(ATRIBUICAO_MAP)) {
-      if (atoLower.includes(key)) {
-        return value;
-      }
-    }
-    
-    return "Criminal Geral";
   };
 
   // Função para normalizar estado prisional
@@ -215,7 +204,6 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
       const data = parseData(dataRaw);
       const prazo = parseData(prazoRaw);
       const processos = parseProcesso(processoRaw);
-      const atribuicao = detectAtribuicao(ato);
 
       demandas.push({
         id: `sheets-${Date.now()}-${i}`,
@@ -227,7 +215,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
         processos,
         ato: ato || "Demanda importada",
         providencias,
-        atribuicao,
+        atribuicao: selectedAtribuicao,
         valido: erros.length === 0,
         erros,
       });
@@ -284,6 +272,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
   const handleClose = () => {
     setRawText("");
     setParsedDemandas([]);
+    setSelectedAtribuicao("");
     onClose();
   };
 
@@ -310,6 +299,34 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
         </DialogHeader>
 
         <div className="flex-1 overflow-auto space-y-4">
+          {/* Seletor de atribuição (obrigatório) */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Atribuição <span className="text-red-500">*</span>
+            </Label>
+            <Select value={selectedAtribuicao} onValueChange={setSelectedAtribuicao}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione a atribuição das demandas..." />
+              </SelectTrigger>
+              <SelectContent>
+                {ATRIBUICAO_OPTIONS.map((opt) => {
+                  const Icon = opt.icon;
+                  return (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-4 h-4" />
+                        <span>{opt.label}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-zinc-500">
+              Todas as demandas importadas serão atribuídas a esta vara
+            </p>
+          </div>
+
           {/* Área de texto para colar */}
           <div>
             <Textarea
@@ -317,6 +334,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
               onChange={(e) => setRawText(e.target.value)}
               placeholder="Cole aqui o conteúdo copiado da planilha do Google Sheets..."
               className="min-h-[120px] font-mono text-xs"
+              disabled={!selectedAtribuicao}
             />
             <div className="flex justify-between items-center mt-2">
               <p className="text-xs text-zinc-500">
@@ -325,7 +343,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
               <Button
                 onClick={handleParse}
                 size="sm"
-                disabled={!rawText.trim()}
+                disabled={!rawText.trim() || !selectedAtribuicao}
               >
                 <FileSpreadsheet className="w-4 h-4 mr-2" />
                 Processar
