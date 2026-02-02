@@ -122,16 +122,31 @@ export default function JuriPage() {
     );
   }, [sessoes, searchTerm]);
 
-  // Stats calculados
+  // Stats calculados - métricas úteis para gestão
   const stats = useMemo(() => {
-    if (!sessoes) return { total: 0, agendadas: 0, absolvicoes: 0, condenacoes: 0, taxaAbsolvicao: 0 };
-    const total = sessoes.length;
+    if (!sessoes) return { agendadas: 0, esteMes: 0, adiadas: 0, total: 0 };
+    
+    const hoje = new Date();
+    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    
     const agendadas = sessoes.filter((s) => s.status === "AGENDADA" || s.status === "agendada").length;
-    const realizadas = sessoes.filter((s) => s.status === "REALIZADA" || s.status === "realizada");
-    const absolvicoes = realizadas.filter((s) => s.resultado === "absolvicao" || s.resultado === "ABSOLVICAO").length;
-    const condenacoes = realizadas.filter((s) => s.resultado === "condenacao" || s.resultado === "CONDENACAO").length;
-    const taxaAbsolvicao = realizadas.length > 0 ? Math.round((absolvicoes / realizadas.length) * 100) : 0;
-    return { total, agendadas, absolvicoes, condenacoes, taxaAbsolvicao };
+    
+    // Sessões agendadas para este mês
+    const esteMes = sessoes.filter((s) => {
+      if (s.status !== "AGENDADA" && s.status !== "agendada") return false;
+      if (!s.dataSessao) return false;
+      const data = new Date(s.dataSessao);
+      return data >= inicioMes && data <= fimMes;
+    }).length;
+    
+    // Sessões adiadas (precisam de atenção)
+    const adiadas = sessoes.filter((s) => s.status === "ADIADA" || s.status === "adiada").length;
+    
+    // Total de processos no júri
+    const total = sessoes.length;
+    
+    return { agendadas, esteMes, adiadas, total };
   }, [sessoes]);
 
   return (
@@ -184,13 +199,13 @@ export default function JuriPage() {
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         
-        {/* STATS CARDS - Padrão Defender (neutro) */}
+        {/* STATS CARDS - Métricas de gestão (não de resultado) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: "Agendadas", value: stats.agendadas, icon: Calendar },
-            { label: "Absolvições", value: stats.absolvicoes, icon: CheckCircle2 },
-            { label: "Condenações", value: stats.condenacoes, icon: XCircle },
-            { label: "Taxa Absolvição", value: `${stats.taxaAbsolvicao}%`, icon: TrendingUp },
+            { label: "Agendadas", value: stats.agendadas, icon: Calendar, desc: "sessões futuras" },
+            { label: "Este Mês", value: stats.esteMes, icon: Clock, desc: "sessões previstas" },
+            { label: "Adiadas", value: stats.adiadas, icon: AlertTriangle, desc: "aguardando data", highlight: stats.adiadas > 0 },
+            { label: "Processos", value: stats.total, icon: Scale, desc: "no júri" },
           ].map((stat, idx) => {
             const Icon = stat.icon;
             
@@ -198,14 +213,25 @@ export default function JuriPage() {
               <div key={idx} className="group relative p-4 sm:p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-                    <Icon className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+                  <div className={cn(
+                    "w-11 h-11 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center border transition-all",
+                    stat.highlight 
+                      ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+                      : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20"
+                  )}>
+                    <Icon className={cn(
+                      "w-5 h-5 sm:w-4 sm:h-4 transition-colors",
+                      stat.highlight ? "text-amber-600" : "text-zinc-500 group-hover:text-emerald-600"
+                    )} />
                   </div>
                   <div>
                     {isLoading ? (
                       <Skeleton className="h-6 w-10" />
                     ) : (
-                      <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stat.value}</p>
+                      <p className={cn(
+                        "text-2xl sm:text-xl font-semibold",
+                        stat.highlight ? "text-amber-600" : "text-zinc-700 dark:text-zinc-300"
+                      )}>{stat.value}</p>
                     )}
                     <p className="text-xs sm:text-[10px] text-zinc-500 uppercase tracking-wide">{stat.label}</p>
                   </div>
