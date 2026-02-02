@@ -212,15 +212,15 @@ export function DemandaCard({
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   {demanda.assistidoId ? (
                     <Link href={`/admin/assistidos/${demanda.assistidoId}`}>
-                      <h4 className="text-base font-bold text-zinc-900 dark:text-zinc-50 truncate hover:text-primary transition-colors">
+                      <h4 className="text-base font-bold text-zinc-900 dark:text-zinc-50 hover:text-primary transition-colors break-words">
                         {demanda.assistido}
                       </h4>
                     </Link>
                   ) : (
-                    <h4 className="text-base font-bold text-zinc-900 dark:text-zinc-50 truncate">
+                    <h4 className="text-base font-bold text-zinc-900 dark:text-zinc-50 break-words">
                       {demanda.assistido}
                     </h4>
                   )}
@@ -502,7 +502,7 @@ export function DemandaCard({
 
         {/* Desktop Layout (>= lg) - Grid de 3 colunas */}
         <div className="hidden lg:block">
-          <div className="grid grid-cols-[minmax(200px,350px)_1fr_auto] gap-4 xl:gap-6 items-start">
+          <div className="grid grid-cols-[minmax(280px,420px)_minmax(200px,400px)_auto] gap-4 xl:gap-6 items-start">
             {/* Coluna 1: Nome e Ato */}
             <div className="flex items-start gap-4 pr-6 border-r border-zinc-200/60 dark:border-zinc-700/60">
               <div className="relative">

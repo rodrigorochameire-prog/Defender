@@ -385,8 +385,8 @@ export default function Demandas() {
         prioridade: d.prioridade || "normal",
         arquivado: d.status === "ARQUIVADO",
       }));
-      // Combinar dados do banco com mocks (banco primeiro)
-      setDemandas([...mappedDemandas, ...demandasMock]);
+      // Usar apenas dados do banco (sem mocks)
+      setDemandas(mappedDemandas);
     }
     // Se banco vazio, manter mocks (já é o estado inicial)
   }, [demandasDB]);
