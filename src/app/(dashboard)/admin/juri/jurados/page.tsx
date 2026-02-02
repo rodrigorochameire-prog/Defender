@@ -25,6 +25,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Users,
   Search,
   Plus,
@@ -44,6 +51,8 @@ import {
   Check,
   AlertCircle,
   Trash2,
+  MoreVertical,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -884,17 +893,6 @@ export default function JuradosPage() {
           </div>
           
           <div className="flex items-center gap-2">
-            {juradosDoSistema.length > 0 && (
-              <Button 
-                size="sm" 
-                variant="outline"
-                className="h-8 text-xs border-red-300 dark:border-red-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                onClick={() => setShowDeleteAllConfirm(true)}
-              >
-                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                Apagar Todos
-              </Button>
-            )}
             <Button 
               size="sm" 
               variant="outline"
@@ -908,6 +906,24 @@ export default function JuradosPage() {
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               Novo Jurado
             </Button>
+            {juradosDoSistema.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreVertical className="w-4 h-4 text-zinc-400" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem 
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                    onClick={() => setShowDeleteAllConfirm(true)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Limpar todos
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>
@@ -979,9 +995,9 @@ export default function JuradosPage() {
                                     deleteJuradoMutation.mutate({ id: j.id });
                                   }
                                 }}
-                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-400 dark:text-zinc-500 flex items-center justify-center opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:bg-red-200 hover:text-red-600 transition-all text-[10px]"
                               >
-                                <Trash2 className="w-3 h-3" />
+                                <X className="w-2.5 h-2.5" />
                               </button>
                               <Link href={`/admin/juri/jurados/${j.id}`}>
                                 <div className="flex items-start gap-3 cursor-pointer">
@@ -1017,9 +1033,9 @@ export default function JuradosPage() {
                                     deleteJuradoMutation.mutate({ id: j.id });
                                   }
                                 }}
-                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-400 dark:text-zinc-500 flex items-center justify-center opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:bg-red-200 hover:text-red-600 transition-all text-[10px]"
                               >
-                                <Trash2 className="w-3 h-3" />
+                                <X className="w-2.5 h-2.5" />
                               </button>
                               <Link href={`/admin/juri/jurados/${j.id}`}>
                                 <div className="flex items-start gap-3 cursor-pointer">
