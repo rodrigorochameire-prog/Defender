@@ -506,6 +506,9 @@ export const demandasRouter = router({
           const processoNumero = row.processoNumero?.trim() || "";
           let processo;
 
+          const targetArea = (ATRIBUICAO_TO_AREA[row.atribuicao || ""] || "JURI") as any;
+          const targetAtribuicao = (ATRIBUICAO_TO_ENUM[row.atribuicao || ""] || "SUBSTITUICAO") as any;
+
           if (processoNumero) {
             processo = await db.query.processos.findFirst({
               where: and(
@@ -513,16 +516,23 @@ export const demandasRouter = router({
                 isNull(processos.deletedAt),
               ),
             });
+
+            // Atualizar atribuição/área do processo existente se necessário
+            if (processo && processo.atribuicao !== targetAtribuicao) {
+              const [updated] = await db.update(processos)
+                .set({ atribuicao: targetAtribuicao, area: targetArea, updatedAt: new Date() })
+                .where(eq(processos.id, processo.id))
+                .returning();
+              processo = updated;
+            }
           }
 
           if (!processo) {
-            const area = (ATRIBUICAO_TO_AREA[row.atribuicao || ""] || "JURI") as any;
-            const atribuicaoEnum = (ATRIBUICAO_TO_ENUM[row.atribuicao || ""] || "SUBSTITUICAO") as any;
             const [newProcesso] = await db.insert(processos).values({
               assistidoId: assistido.id,
               numeroAutos: processoNumero || `SN-${Date.now()}-${results.imported}`,
-              area,
-              atribuicao: atribuicaoEnum,
+              area: targetArea,
+              atribuicao: targetAtribuicao,
               workspaceId: assistido.workspaceId,
             }).returning();
             processo = newProcesso;
