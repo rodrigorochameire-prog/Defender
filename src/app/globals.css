@@ -158,6 +158,30 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* ===== MOBILE-FIRST: Fontes maiores em telas pequenas ===== */
+  @media (max-width: 640px) {
+    html {
+      font-size: 17px; /* Base 17px em mobile (vs 16px padrão) */
+    }
+    
+    /* Textos muito pequenos ficam mais legíveis */
+    .text-\[10px\] {
+      font-size: 12px !important;
+    }
+    
+    .text-\[11px\] {
+      font-size: 13px !important;
+    }
+    
+    .text-xs {
+      font-size: 0.8125rem !important; /* 13px */
+    }
+    
+    .text-sm {
+      font-size: 0.9375rem !important; /* 15px */
+    }
+  }
+
   /* ===== TYPOGRAPHY BASE ===== */
   h1 {
     @apply text-4xl font-bold tracking-tight leading-tight;
