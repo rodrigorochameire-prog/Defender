@@ -187,9 +187,10 @@ export default function Demandas() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"cards" | "table">(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem("defender_demandas_view_mode") as "cards" | "table") || "cards";
+      // Padrão é "table" (modo planilha) - mais prático para gestão de demandas
+      return (localStorage.getItem("defender_demandas_view_mode") as "cards" | "table") || "table";
     }
-    return "cards";
+    return "table";
   });
 
   // ==========================================
