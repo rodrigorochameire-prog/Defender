@@ -135,25 +135,28 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
     return cleaned;
   };
 
-  // Função para extrair número de processo
-  const parseProcesso = (processoText: string): { tipo: string; numero: string }[] => {
-    if (!processoText) return [{ tipo: "AP", numero: "" }];
-    
+  // Função para extrair número de processo com tipo opcional
+  const parseProcesso = (processoText: string, tipoColuna?: string): { tipo: string; numero: string }[] => {
+    if (!processoText) return [];
+
     // Pode ter múltiplos processos separados por quebra de linha
     const processos = processoText.split(/\n/).map(p => p.trim()).filter(p => p);
-    
+
     return processos.map(numero => {
-      // Detectar tipo pelo padrão ou número
-      let tipo = "AP";
-      if (numero.includes("HC") || numero.toLowerCase().includes("habeas")) {
-        tipo = "HC";
-      } else if (numero.includes("IP")) {
-        tipo = "IP";
-      } else if (numero.includes("MPU")) {
-        tipo = "MPU";
+      // Se veio tipo da coluna separada, usar ele
+      if (tipoColuna && tipoColuna.trim()) {
+        return { tipo: tipoColuna.trim().toUpperCase(), numero: numero.trim() };
       }
-      
-      return { tipo, numero: numero.replace(/^(AP|HC|IP|MPU)\s*-?\s*/i, "").trim() };
+
+      // Detectar tipo pelo padrão no próprio texto (ex: "IP 8009873-02.2024...")
+      let tipo = "";
+      const tipoMatch = numero.match(/^(AP|IP|APF|MPU|EP|ANPP|PPP|Cautelar|HC|TC|RC|OE)\s+/i);
+      if (tipoMatch) {
+        tipo = tipoMatch[1].toUpperCase();
+        numero = numero.replace(tipoMatch[0], "").trim();
+      }
+
+      return { tipo, numero: numero.trim() };
     });
   };
 
@@ -173,26 +176,28 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
       // Dividir por tabulação (padrão do Google Sheets ao copiar)
       const columns = line.split("\t");
       
-      // Padrão esperado:
+      // Padrão esperado (com coluna Tipo):
       // [0] Status (ex: "2 - Analisar")
-      // [1] Estado Prisional (opcional, ex: "Solto")
+      // [1] Estado Prisional (opcional, ex: "Preso")
       // [2] Data (ex: "23.01.26")
       // [3] Assistido
-      // [4] Processo
-      // [5] Ato
-      // [6] Prazo (opcional)
-      // [7] Providências
-      
+      // [4] Tipo (ex: "AP", "IP", "MPU") - NOVO
+      // [5] Autos/Processo
+      // [6] Ato
+      // [7] Prazo (opcional)
+      // [8] Providências
+
       const erros: string[] = [];
-      
+
       const statusRaw = columns[0]?.trim() || "";
       const estadoPrisionalRaw = columns[1]?.trim() || "";
       const dataRaw = columns[2]?.trim() || "";
       const assistido = columns[3]?.trim() || "";
-      const processoRaw = columns[4]?.trim() || "";
-      const ato = columns[5]?.trim() || "";
-      const prazoRaw = columns[6]?.trim() || "";
-      const providencias = columns[7]?.trim() || "";
+      const tipoProcessoRaw = columns[4]?.trim() || "";
+      const processoRaw = columns[5]?.trim() || "";
+      const ato = columns[6]?.trim() || "";
+      const prazoRaw = columns[7]?.trim() || "";
+      const providencias = columns[8]?.trim() || "";
 
       // Validações
       if (!assistido) {
@@ -203,7 +208,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
       const estadoPrisional = parseEstadoPrisional(estadoPrisionalRaw);
       const data = parseData(dataRaw);
       const prazo = parseData(prazoRaw);
-      const processos = parseProcesso(processoRaw);
+      const processos = parseProcesso(processoRaw, tipoProcessoRaw);
 
       demandas.push({
         id: `sheets-${Date.now()}-${i}`,
@@ -293,7 +298,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
           <DialogDescription>
             Cole o conteúdo copiado da planilha do Google Sheets. O formato esperado é:
             <span className="block mt-1 text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 p-2 rounded">
-              Status | Estado | Data | Assistido | Processo | Ato | Prazo | Providências
+              Status | Prisão | Data | Assistido | Tipo | Autos | Ato | Prazo | Providências
             </span>
           </DialogDescription>
         </DialogHeader>
@@ -389,9 +394,12 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
                           )}
                         </div>
 
-                        {/* Linha 2: Processo e Ato */}
+                        {/* Linha 2: Tipo, Processo e Ato */}
                         <div className="flex items-center gap-2 text-xs text-zinc-500">
                           <FileText className="w-3 h-3 flex-shrink-0" />
+                          {demanda.processos[0]?.tipo && (
+                            <span className="font-semibold text-emerald-600">{demanda.processos[0].tipo}</span>
+                          )}
                           <span className="font-mono">{demanda.processos[0]?.numero || "Sem processo"}</span>
                           <span>•</span>
                           <span className="truncate">{demanda.ato}</span>

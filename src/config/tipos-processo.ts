@@ -63,6 +63,11 @@ export const TIPOS_PROCESSO = {
     label: "Revisão Criminal",
     descricao: "Revisão de sentença transitada em julgado",
   },
+  OE: {
+    sigla: "OE",
+    label: "Oitiva Especial",
+    descricao: "Procedimento especial para ouvir crianças pré-processualmente (evita revitimização)",
+  },
 } as const;
 
 export type TipoProcessoKey = keyof typeof TIPOS_PROCESSO;
@@ -83,6 +88,7 @@ export const TIPO_PROCESSO_OPTIONS = [
   { value: "HC", label: "HC - Habeas Corpus" },
   { value: "TC", label: "TC - Termo Circ." },
   { value: "RC", label: "RC - Revisão Criminal" },
+  { value: "OE", label: "OE - Oitiva Especial" },
 ];
 
 /**
@@ -100,6 +106,7 @@ export const TIPO_PROCESSO_OPTIONS_COMPACT = [
   { value: "HC", label: "HC" },
   { value: "TC", label: "TC" },
   { value: "RC", label: "RC" },
+  { value: "OE", label: "OE" },
 ];
 
 /**
