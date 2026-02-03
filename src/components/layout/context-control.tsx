@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -24,21 +24,23 @@ import {
   Check,
   Layers,
   Settings2,
+  Building2,
 } from "lucide-react";
 import { useAssignment, Assignment } from "@/contexts/assignment-context";
+import { useProfissional, type ProfissionalConfig } from "@/contexts/profissional-context";
 
 // ==========================================
 // TIPOS
 // ==========================================
 
-export type Defensor = "R" | "J" | "GERAL";
+export type Defensor = string; // Now dynamic: profissional ID as string, or "GERAL"
 export type AtribuicaoFiltro = "JURI" | "VVD" | "EP" | "TODOS";
-export type WorkspaceEspecial = 
-  | null 
-  | "SUBSTITUICAO_CRIMINAL" 
-  | "GRUPO_JURI" 
-  | "CURADORIA" 
-  | "PETICIONAMENTO" 
+export type WorkspaceEspecial =
+  | null
+  | "SUBSTITUICAO_CRIMINAL"
+  | "GRUPO_JURI"
+  | "CURADORIA"
+  | "PETICIONAMENTO"
   | "SUBSTITUICAO_CIVEL";
 
 interface ContextControlProps {
@@ -46,18 +48,12 @@ interface ContextControlProps {
 }
 
 // ==========================================
-// CONFIGURAÇÕES
+// CONFIGURAÇÕES ESTÁTICAS
 // ==========================================
-
-const DEFENSORES = [
-  { id: "R" as Defensor, nome: "Dr. Rodrigo", inicial: "R", cor: "bg-zinc-800 text-white" },
-  { id: "J" as Defensor, nome: "Dra. Juliane", inicial: "J", cor: "bg-white border-2 border-zinc-600 text-zinc-900" },
-  { id: "GERAL" as Defensor, nome: "Visão Geral", inicial: "G", cor: "bg-zinc-300 text-zinc-700" },
-];
 
 const ATRIBUICOES = [
   { id: "TODOS" as AtribuicaoFiltro, nome: "Todas", icon: Layers, cor: "text-zinc-500", bg: "bg-zinc-100 dark:bg-zinc-800" },
-  { id: "JURI" as AtribuicaoFiltro, nome: "Júri", icon: Gavel, cor: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" },
+  { id: "JURI" as AtribuicaoFiltro, nome: "Juri", icon: Gavel, cor: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" },
   { id: "VVD" as AtribuicaoFiltro, nome: "VVD", icon: Shield, cor: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" },
   { id: "EP" as AtribuicaoFiltro, nome: "Exec.", icon: Lock, cor: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" },
 ];
@@ -65,10 +61,10 @@ const ATRIBUICOES = [
 const WORKSPACES_ESPECIAIS = [
   { id: null as WorkspaceEspecial, nome: "Principal", icon: Briefcase, cor: "text-zinc-500" },
   { id: "SUBSTITUICAO_CRIMINAL" as WorkspaceEspecial, nome: "Subst. Criminal", icon: RefreshCw, cor: "text-zinc-500" },
-  { id: "GRUPO_JURI" as WorkspaceEspecial, nome: "Grupo Júri", icon: Award, cor: "text-zinc-500" },
+  { id: "GRUPO_JURI" as WorkspaceEspecial, nome: "Grupo Juri", icon: Award, cor: "text-zinc-500" },
   { id: "CURADORIA" as WorkspaceEspecial, nome: "Curadoria", icon: UserCheck, cor: "text-zinc-500" },
   { id: "PETICIONAMENTO" as WorkspaceEspecial, nome: "Peticionamento", icon: FileText, cor: "text-zinc-500" },
-  { id: "SUBSTITUICAO_CIVEL" as WorkspaceEspecial, nome: "Subst. Cível", icon: Scale, cor: "text-zinc-500" },
+  { id: "SUBSTITUICAO_CIVEL" as WorkspaceEspecial, nome: "Subst. Civel", icon: Scale, cor: "text-zinc-500" },
 ];
 
 // ==========================================
@@ -83,10 +79,10 @@ export const STORAGE_KEYS = {
 };
 
 // ==========================================
-// HOOK PARA ACESSAR FILTRO DE ATRIBUIÇÃO
+// HOOK PARA ACESSAR FILTRO DE ATRIBUICAO
 // ==========================================
 
-// Evento customizado para notificar mudanças de atribuição na mesma aba
+// Evento customizado para notificar mudancas de atribuicao na mesma aba
 const ATRIBUICAO_CHANGE_EVENT = "atribuicao-filtro-change";
 
 export function dispatchAtribuicaoChange(atribuicao: AtribuicaoFiltro) {
@@ -102,7 +98,7 @@ export function useAtribuicaoFiltro() {
     const saved = localStorage.getItem(STORAGE_KEYS.atribuicao) as AtribuicaoFiltro;
     if (saved) setAtribuicao(saved);
 
-    // Escutar mudanças no localStorage (de outras abas)
+    // Escutar mudancas no localStorage (de outras abas)
     const handleStorage = () => {
       const updated = localStorage.getItem(STORAGE_KEYS.atribuicao) as AtribuicaoFiltro;
       if (updated) setAtribuicao(updated);
@@ -115,7 +111,7 @@ export function useAtribuicaoFiltro() {
 
     window.addEventListener("storage", handleStorage);
     window.addEventListener(ATRIBUICAO_CHANGE_EVENT, handleCustomEvent as EventListener);
-    
+
     return () => {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener(ATRIBUICAO_CHANGE_EVENT, handleCustomEvent as EventListener);
@@ -126,12 +122,35 @@ export function useAtribuicaoFiltro() {
 }
 
 // ==========================================
-// COMPONENTE PRINCIPAL - VERSÃO COMPACTA PREMIUM
+// HELPER: Gerar dados de display para um defensor
+// ==========================================
+
+function getDefensorDisplayData(config: ProfissionalConfig): { id: string; nome: string; inicial: string; cor: string; grupo: string } {
+  const inicial = config.nomeCurto?.[0]?.toUpperCase() || config.nome[0]?.toUpperCase() || "?";
+
+  // Cores distintas baseadas no ID (match do estilo original)
+  let cor = "bg-zinc-600 text-white";
+  if (config.id === 1) cor = "bg-zinc-800 text-white";
+  else if (config.id === 2) cor = "bg-white border-2 border-zinc-600 text-zinc-900";
+  else if (config.id === 3) cor = "bg-zinc-700 text-white";
+  else if (config.id === 4) cor = "bg-zinc-500 text-white";
+
+  return {
+    id: String(config.id),
+    nome: config.nome,
+    inicial,
+    cor,
+    grupo: config.grupo,
+  };
+}
+
+// ==========================================
+// COMPONENTE PRINCIPAL - VERSAO COMPACTA PREMIUM
 // ==========================================
 
 // Mapeamento de AtribuicaoFiltro para Assignment
 const ATRIBUICAO_TO_ASSIGNMENT: Record<AtribuicaoFiltro, Assignment | null> = {
-  TODOS: null, // Quando "Todas" está selecionado, não usar nenhuma assignment específica
+  TODOS: null,
   JURI: "JURI_CAMACARI",
   VVD: "VVD_CAMACARI",
   EP: "EXECUCAO_PENAL",
@@ -140,12 +159,36 @@ const ATRIBUICAO_TO_ASSIGNMENT: Record<AtribuicaoFiltro, Assignment | null> = {
 export function ContextControl({ collapsed = false }: ContextControlProps) {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
-  const [defensor, setDefensor] = useState<Defensor>("R");
+  const [defensor, setDefensor] = useState<Defensor>("1");
   const [atribuicao, setAtribuicao] = useState<AtribuicaoFiltro>("TODOS");
   const [workspace, setWorkspace] = useState<WorkspaceEspecial>(null);
   const [visaoIntegrada, setVisaoIntegrada] = useState(false);
-  
+
   const { setAssignment } = useAssignment();
+  const { profissionaisConfigs, profissionalAtivo, setProfissionalAtivo } = useProfissional();
+
+  // Construir lista de defensores dinamicamente a partir do contexto
+  const defensoresDisplay = useMemo(() => {
+    const items = profissionaisConfigs.map(getDefensorDisplayData);
+    // Adicionar "Visao Geral" no final
+    items.push({
+      id: "GERAL",
+      nome: "Visao Geral",
+      inicial: "G",
+      cor: "bg-zinc-300 text-zinc-700",
+      grupo: "todos",
+    });
+    return items;
+  }, [profissionaisConfigs]);
+
+  // Detectar se o defensor selecionado eh criminal geral
+  const defensorSelecionadoGrupo = useMemo(() => {
+    if (defensor === "GERAL") return "todos";
+    const found = profissionaisConfigs.find((c) => String(c.id) === defensor);
+    return found?.grupo || "juri_ep_vvd";
+  }, [defensor, profissionaisConfigs]);
+
+  const isCriminalGeral = defensorSelecionadoGrupo === "varas_criminais";
 
   // Carregar do localStorage
   useEffect(() => {
@@ -155,10 +198,15 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
     const savedWorkspace = localStorage.getItem(STORAGE_KEYS.workspace) as WorkspaceEspecial;
     const savedVisao = localStorage.getItem(STORAGE_KEYS.visaoIntegrada);
 
-    if (savedDefensor) setDefensor(savedDefensor);
+    if (savedDefensor) {
+      // Migrar valores antigos: "R" -> "1", "J" -> "2"
+      let migrated = savedDefensor;
+      if (savedDefensor === "R") migrated = "1";
+      else if (savedDefensor === "J") migrated = "2";
+      setDefensor(migrated);
+    }
     if (savedAtribuicao) {
       setAtribuicao(savedAtribuicao);
-      // Sincronizar com AssignmentContext
       const assignment = ATRIBUICAO_TO_ASSIGNMENT[savedAtribuicao];
       if (assignment) {
         setAssignment(assignment);
@@ -167,6 +215,19 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
     if (savedWorkspace && savedWorkspace !== "null") setWorkspace(savedWorkspace);
     if (savedVisao) setVisaoIntegrada(savedVisao === "true");
   }, [setAssignment]);
+
+  // Sincronizar com ProfissionalContext quando o defensor muda
+  useEffect(() => {
+    if (!mounted) return;
+    if (defensor === "GERAL") {
+      setProfissionalAtivo(0);
+    } else {
+      const id = parseInt(defensor, 10);
+      if (!isNaN(id)) {
+        setProfissionalAtivo(id);
+      }
+    }
+  }, [defensor, mounted, setProfissionalAtivo]);
 
   // Salvar no localStorage
   const updateDefensor = (value: Defensor) => {
@@ -177,17 +238,13 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
   const updateAtribuicao = (value: AtribuicaoFiltro) => {
     setAtribuicao(value);
     localStorage.setItem(STORAGE_KEYS.atribuicao, value);
-    
-    // Notificar a sidebar sobre a mudança de atribuição
+
     dispatchAtribuicaoChange(value);
-    
-    // Sincronizar com AssignmentContext para mostrar/ocultar módulos específicos
+
     const assignment = ATRIBUICAO_TO_ASSIGNMENT[value];
     if (assignment) {
       setAssignment(assignment);
     }
-    // Nota: Quando TODOS está selecionado, não chamamos setAssignment
-    // O módulo específico continuará com o último valor, mas tratamos isso na sidebar
   };
 
   const updateWorkspace = (value: WorkspaceEspecial) => {
@@ -201,7 +258,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
   };
 
   // Dados atuais
-  const defensorAtual = DEFENSORES.find(d => d.id === defensor)!;
+  const defensorAtual = defensoresDisplay.find(d => d.id === defensor) || defensoresDisplay[0];
   const atribuicaoAtual = ATRIBUICOES.find(a => a.id === atribuicao)!;
   const workspaceAtual = WORKSPACES_ESPECIAIS.find(w => w.id === workspace)!;
 
@@ -213,7 +270,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
     );
   }
 
-  // Versão colapsada - apenas avatar do defensor
+  // Versao colapsada - apenas avatar do defensor
   if (collapsed) {
     return (
       <div className="flex flex-col items-center py-2 px-1">
@@ -228,8 +285,8 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
               {defensorAtual.inicial}
             </button>
           </PopoverTrigger>
-          <PopoverContent side="right" align="start" className="w-64 p-0 bg-[#1f1f23] border-zinc-700/40 shadow-xl shadow-black/30">
-            <ContextPopoverContent 
+          <PopoverContent side="right" align="start" className="w-72 p-0 bg-[#1f1f23] border-zinc-700/40 shadow-xl shadow-black/30">
+            <ContextPopoverContent
               defensor={defensor}
               atribuicao={atribuicao}
               workspace={workspace}
@@ -238,13 +295,15 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
               updateAtribuicao={updateAtribuicao}
               updateWorkspace={updateWorkspace}
               updateVisaoIntegrada={updateVisaoIntegrada}
+              defensoresDisplay={defensoresDisplay}
+              isCriminalGeral={isCriminalGeral}
             />
           </PopoverContent>
         </Popover>
-        
+
         {/* Indicadores visuais compactos */}
         <div className="flex gap-1 mt-2">
-          {atribuicao !== "TODOS" && (
+          {atribuicao !== "TODOS" && !isCriminalGeral && (
             <div className={cn("w-1.5 h-1.5 rounded-full", atribuicaoAtual.cor.replace("text-", "bg-"))} />
           )}
           {workspace && (
@@ -255,7 +314,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
     );
   }
 
-  // Versão expandida - linha única elegante (TEMA ESCURO)
+  // Versao expandida - linha unica elegante (TEMA ESCURO)
   return (
     <div className="px-3 py-2">
       <Popover open={open} onOpenChange={setOpen}>
@@ -283,12 +342,21 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
                 <span className="text-[11px] font-bold text-zinc-100 truncate">
                   {defensorAtual.nome}
                 </span>
-                {atribuicao !== "TODOS" && (
+                {atribuicao !== "TODOS" && !isCriminalGeral && (
                   <>
                     <span className="text-[10px] text-zinc-500">|</span>
                     <div className={cn("flex items-center gap-0.5", atribuicaoAtual.cor)}>
                       <atribuicaoAtual.icon className="w-3 h-3" />
                       <span className="text-[10px] font-semibold">{atribuicaoAtual.nome}</span>
+                    </div>
+                  </>
+                )}
+                {isCriminalGeral && (
+                  <>
+                    <span className="text-[10px] text-zinc-500">|</span>
+                    <div className="flex items-center gap-0.5 text-zinc-400">
+                      <Building2 className="w-3 h-3" />
+                      <span className="text-[10px] font-semibold">Vara Criminal</span>
                     </div>
                   </>
                 )}
@@ -311,9 +379,9 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
             )} />
           </button>
         </PopoverTrigger>
-        
+
         <PopoverContent align="start" className="w-72 p-0 bg-[#1f1f23] border-zinc-700/40 shadow-xl shadow-black/30">
-          <ContextPopoverContent 
+          <ContextPopoverContent
             defensor={defensor}
             atribuicao={atribuicao}
             workspace={workspace}
@@ -322,6 +390,8 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
             updateAtribuicao={updateAtribuicao}
             updateWorkspace={updateWorkspace}
             updateVisaoIntegrada={updateVisaoIntegrada}
+            defensoresDisplay={defensoresDisplay}
+            isCriminalGeral={isCriminalGeral}
           />
         </PopoverContent>
       </Popover>
@@ -330,8 +400,16 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
 }
 
 // ==========================================
-// CONTEÚDO DO POPOVER
+// CONTEUDO DO POPOVER
 // ==========================================
+
+interface DefensorDisplay {
+  id: string;
+  nome: string;
+  inicial: string;
+  cor: string;
+  grupo: string;
+}
 
 function ContextPopoverContent({
   defensor,
@@ -342,6 +420,8 @@ function ContextPopoverContent({
   updateAtribuicao,
   updateWorkspace,
   updateVisaoIntegrada,
+  defensoresDisplay,
+  isCriminalGeral,
 }: {
   defensor: Defensor;
   atribuicao: AtribuicaoFiltro;
@@ -351,68 +431,139 @@ function ContextPopoverContent({
   updateAtribuicao: (v: AtribuicaoFiltro) => void;
   updateWorkspace: (v: WorkspaceEspecial) => void;
   updateVisaoIntegrada: (v: boolean) => void;
+  defensoresDisplay: DefensorDisplay[];
+  isCriminalGeral: boolean;
 }) {
+  // Separar defensores por grupo para melhor organizacao
+  const juriEpVvdDefensores = defensoresDisplay.filter(d => d.grupo === "juri_ep_vvd");
+  const varasCriminaisDefensores = defensoresDisplay.filter(d => d.grupo === "varas_criminais");
+  const geralOption = defensoresDisplay.find(d => d.id === "GERAL");
+
   return (
     <div className="divide-y divide-zinc-600/30">
-      {/* Seção: Defensor */}
+      {/* Secao: Defensor */}
       <div className="p-3">
         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
           Defensor
         </p>
-        <div className="flex gap-2">
-          {DEFENSORES.map((d) => (
-            <button
-              key={d.id}
-              onClick={() => updateDefensor(d.id)}
-              className={cn(
-                "flex-1 py-2 px-2 rounded-lg transition-all duration-200 text-center",
-                "border-2",
-                defensor === d.id 
-                  ? "border-emerald-500 bg-emerald-900/30" 
-                  : "border-transparent hover:bg-zinc-700/50"
-              )}
-            >
-              <div className={cn(
-                "w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs mx-auto mb-1",
-                d.cor
-              )}>
-                {d.inicial}
-              </div>
-              <p className="text-[10px] font-medium text-zinc-300 truncate">
-                {d.nome.split(' ')[0]}
-              </p>
-            </button>
-          ))}
-        </div>
+
+        {/* Especializados (Juri/EP/VVD) */}
+        {juriEpVvdDefensores.length > 0 && (
+          <div className="flex gap-2 mb-2">
+            {juriEpVvdDefensores.map((d) => (
+              <button
+                key={d.id}
+                onClick={() => updateDefensor(d.id)}
+                className={cn(
+                  "flex-1 py-2 px-2 rounded-lg transition-all duration-200 text-center",
+                  "border-2",
+                  defensor === d.id
+                    ? "border-emerald-500 bg-emerald-900/30"
+                    : "border-transparent hover:bg-zinc-700/50"
+                )}
+              >
+                <div className={cn(
+                  "w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs mx-auto mb-1",
+                  d.cor
+                )}>
+                  {d.inicial}
+                </div>
+                <p className="text-[10px] font-medium text-zinc-300 truncate">
+                  {d.nome.split(' ').pop()}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Criminal Geral */}
+        {varasCriminaisDefensores.length > 0 && (
+          <>
+            <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider mb-1.5 mt-2">
+              Varas Criminais
+            </p>
+            <div className="flex gap-2 mb-2">
+              {varasCriminaisDefensores.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => updateDefensor(d.id)}
+                  className={cn(
+                    "flex-1 py-2 px-2 rounded-lg transition-all duration-200 text-center",
+                    "border-2",
+                    defensor === d.id
+                      ? "border-emerald-500 bg-emerald-900/30"
+                      : "border-transparent hover:bg-zinc-700/50"
+                  )}
+                >
+                  <div className={cn(
+                    "w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs mx-auto mb-1",
+                    d.cor
+                  )}>
+                    {d.inicial}
+                  </div>
+                  <p className="text-[10px] font-medium text-zinc-300 truncate">
+                    {d.nome.split(' ').pop()}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Visao Geral */}
+        {geralOption && (
+          <button
+            onClick={() => updateDefensor(geralOption.id)}
+            className={cn(
+              "w-full py-2 px-3 rounded-lg transition-all duration-200 flex items-center gap-2",
+              "border-2",
+              defensor === geralOption.id
+                ? "border-emerald-500 bg-emerald-900/30"
+                : "border-transparent hover:bg-zinc-700/50"
+            )}
+          >
+            <div className={cn(
+              "w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px]",
+              geralOption.cor
+            )}>
+              {geralOption.inicial}
+            </div>
+            <p className="text-[10px] font-medium text-zinc-300">
+              {geralOption.nome}
+            </p>
+          </button>
+        )}
       </div>
 
-      {/* Seção: Filtro de Atribuição */}
-      <div className="p-3">
-        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
-          Filtrar Atribuição
-        </p>
-        <div className="grid grid-cols-4 gap-1.5">
-          {ATRIBUICOES.map((a) => (
-            <button
-              key={a.id}
-              onClick={() => updateAtribuicao(a.id)}
-              className={cn(
-                "py-2 px-1 rounded-lg transition-all duration-200 text-center",
-                atribuicao === a.id 
-                  ? "ring-2 ring-emerald-500 bg-zinc-700/50"
-                  : "hover:bg-zinc-700/50"
-              )}
-            >
-              <a.icon className={cn("w-4 h-4 mx-auto mb-1", a.cor)} />
-              <p className="text-[9px] font-semibold text-zinc-300">
-                {a.nome}
-              </p>
-            </button>
-          ))}
+      {/* Secao: Filtro de Atribuicao - Apenas para especializados */}
+      {!isCriminalGeral && (
+        <div className="p-3">
+          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
+            Filtrar Atribuicao
+          </p>
+          <div className="grid grid-cols-4 gap-1.5">
+            {ATRIBUICOES.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => updateAtribuicao(a.id)}
+                className={cn(
+                  "py-2 px-1 rounded-lg transition-all duration-200 text-center",
+                  atribuicao === a.id
+                    ? "ring-2 ring-emerald-500 bg-zinc-700/50"
+                    : "hover:bg-zinc-700/50"
+                )}
+              >
+                <a.icon className={cn("w-4 h-4 mx-auto mb-1", a.cor)} />
+                <p className="text-[9px] font-semibold text-zinc-300">
+                  {a.nome}
+                </p>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Seção: Workspace */}
+      {/* Secao: Workspace */}
       <div className="p-3">
         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
           Workspace
@@ -424,8 +575,8 @@ function ContextPopoverContent({
               onClick={() => updateWorkspace(w.id)}
               className={cn(
                 "w-full flex items-center gap-2 py-2 px-2.5 rounded-lg transition-all duration-200",
-                workspace === w.id 
-                  ? "bg-emerald-900/30 ring-1 ring-emerald-500/50" 
+                workspace === w.id
+                  ? "bg-emerald-900/30 ring-1 ring-emerald-500/50"
                   : "hover:bg-zinc-700/50"
               )}
             >
@@ -441,14 +592,14 @@ function ContextPopoverContent({
         </div>
       </div>
 
-      {/* Seção: Visão Integrada */}
+      {/* Secao: Visao Integrada */}
       <div className="p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Eye className="w-4 h-4 text-zinc-400" />
             <div>
               <p className="text-xs font-medium text-zinc-200">
-                Visão Integrada
+                Visao Integrada
               </p>
               <p className="text-[10px] text-zinc-500">
                 Incluir workspaces especiais
@@ -471,7 +622,7 @@ function ContextPopoverContent({
 // ==========================================
 
 export function useContextControl() {
-  const [defensor, setDefensor] = useState<Defensor>("R");
+  const [defensor, setDefensor] = useState<Defensor>("1");
   const [atribuicao, setAtribuicao] = useState<AtribuicaoFiltro>("TODOS");
   const [workspace, setWorkspace] = useState<WorkspaceEspecial>(null);
   const [visaoIntegrada, setVisaoIntegrada] = useState(false);
@@ -482,18 +633,29 @@ export function useContextControl() {
     const savedWorkspace = localStorage.getItem(STORAGE_KEYS.workspace) as WorkspaceEspecial;
     const savedVisao = localStorage.getItem(STORAGE_KEYS.visaoIntegrada);
 
-    if (savedDefensor) setDefensor(savedDefensor);
+    if (savedDefensor) {
+      // Migrar valores antigos
+      let migrated = savedDefensor;
+      if (savedDefensor === "R") migrated = "1";
+      else if (savedDefensor === "J") migrated = "2";
+      setDefensor(migrated);
+    }
     if (savedAtribuicao) setAtribuicao(savedAtribuicao);
     if (savedWorkspace && savedWorkspace !== "null") setWorkspace(savedWorkspace);
     if (savedVisao) setVisaoIntegrada(savedVisao === "true");
 
-    // Listener para mudanças
+    // Listener para mudancas
     const handleStorage = () => {
       const d = localStorage.getItem(STORAGE_KEYS.defensor) as Defensor;
       const a = localStorage.getItem(STORAGE_KEYS.atribuicao) as AtribuicaoFiltro;
       const w = localStorage.getItem(STORAGE_KEYS.workspace) as WorkspaceEspecial;
       const v = localStorage.getItem(STORAGE_KEYS.visaoIntegrada);
-      if (d) setDefensor(d);
+      if (d) {
+        let migrated = d;
+        if (d === "R") migrated = "1";
+        else if (d === "J") migrated = "2";
+        setDefensor(migrated);
+      }
       if (a) setAtribuicao(a);
       if (w && w !== "null") setWorkspace(w); else setWorkspace(null);
       if (v) setVisaoIntegrada(v === "true");
@@ -509,6 +671,6 @@ export function useContextControl() {
     workspace,
     visaoIntegrada,
     isWorkspaceEspecial: workspace !== null,
-    defensorNome: DEFENSORES.find(d => d.id === defensor)?.nome || "",
+    defensorNome: defensor === "GERAL" ? "Visao Geral" : "",
   };
 }

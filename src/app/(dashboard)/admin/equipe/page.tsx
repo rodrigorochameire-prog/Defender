@@ -66,6 +66,7 @@ import {
   ListTodo,
   FolderOpen,
   Download,
+  Share2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -272,6 +273,49 @@ export default function EquipePage() {
     setCopiedEmail(membro.id);
     toast.success("Email copiado!");
     setTimeout(() => setCopiedEmail(null), 2000);
+  };
+
+  const handleCopiarConvite = (membro: TeamMember) => {
+    const roleName = getRoleLabelLocal(membro.role);
+    const texto = [
+      `=== OMBUDS Defender - Convite de Acesso ===`,
+      ``,
+      `Ola, ${membro.name}!`,
+      ``,
+      `Voce foi adicionado(a) ao sistema OMBUDS Defender como ${roleName}.`,
+      ``,
+      `Para acessar o sistema, utilize as informacoes abaixo:`,
+      ``,
+      `Link de acesso: https://ombuds.vercel.app/login`,
+      `Email: ${membro.email}`,
+      ``,
+      `Caso seja seu primeiro acesso, solicite sua senha ao administrador.`,
+      ``,
+      `--- Como usar o OMBUDS Defender ---`,
+      ``,
+      `1. Acesse o link acima e faca login com seu email e senha.`,
+      `2. No menu lateral, voce encontrara as seguintes secoes:`,
+      `   - Dashboard: Visao geral das suas demandas e prazos`,
+      `   - Demandas: Gerencie suas tarefas, prazos e atendimentos`,
+      `   - Agenda: Consulte audiencias e compromissos`,
+      `   - Casos: Acompanhe os casos em andamento`,
+      `   - Assistidos: Cadastro e consulta de assistidos`,
+      `   - Processos: Consulta e vinculacao de processos`,
+      `   - Drive: Documentos e arquivos compartilhados`,
+      `   - Investigacao: Diligencias e buscas`,
+      `   - Equipe: Gestao de membros e delegacoes`,
+      ``,
+      `3. Para registrar um atendimento rapido, use o "Registro Rapido" no Dashboard.`,
+      `4. Para delegar tarefas, acesse a demanda e clique em "Delegar".`,
+      `5. Mantenha seus prazos atualizados para receber alertas automaticos.`,
+      ``,
+      `Em caso de duvidas, entre em contato com o administrador do sistema.`,
+      ``,
+      `--- OMBUDS Defender ---`,
+    ].join("\n");
+
+    navigator.clipboard.writeText(texto);
+    toast.success(`Convite de ${membro.name} copiado para a area de transferencia!`);
   };
 
   // Filtrar membros pela busca
@@ -569,6 +613,10 @@ export default function EquipePage() {
                           <DropdownMenuItem onClick={() => openResetPasswordModal(membro)}>
                             <Lock className="w-4 h-4 mr-2" />
                             Redefinir Senha
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleCopiarConvite(membro)}>
+                            <Share2 className="w-4 h-4 mr-2" />
+                            Copiar Convite
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem

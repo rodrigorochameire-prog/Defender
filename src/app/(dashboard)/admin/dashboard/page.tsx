@@ -172,9 +172,10 @@ function formatPrazo(prazo: string | Date | null): { texto: string; cor: string 
 
 function ResponsavelBadge({ responsavelId }: { responsavelId: number | null }) {
   if (!responsavelId || !(responsavelId in PROFISSIONAIS_CONFIG)) return null;
-  
-  const config = PROFISSIONAIS_CONFIG[responsavelId as keyof typeof PROFISSIONAIS_CONFIG];
-  
+
+  const config = PROFISSIONAIS_CONFIG[responsavelId];
+  if (!config) return null;
+
   return (
     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${config.corBadge}`}>
       {config.nomeCurto}
@@ -228,11 +229,20 @@ export default function DashboardJuriPage() {
     dias: 60,
   });
   const juris = jurisData ?? [];
-  
+
   // Processos (para registro rápido)
   const { data: processos = [] } = trpc.processos.list.useQuery({
     limit: 100,
   });
+
+  // Delegações recebidas (para estagiários e servidores)
+  const { data: minhasDelegacoes = [], isLoading: loadingDelegacoes } = trpc.delegacao.minhasDelegacoes.useQuery(
+    undefined,
+    { enabled: !!user && ["estagiario", "servidor"].includes(user.role) }
+  );
+
+  // Buscar dados do supervisor (para estagiários)
+  const { data: currentUserData } = trpc.auth.me.useQuery();
   
   // ==========================================
   // VERIFICAR TIPO DE DASHBOARD (calculado, sem early return)
@@ -240,9 +250,9 @@ export default function DashboardJuriPage() {
   
   // Para perfis não-defensor (estagiário, servidor, triagem), usar dashboard por perfil
   const isPerfilAlternativo = user && ["estagiario", "servidor", "triagem"].includes(user.role);
-  
-  // Verificar se é defensor de vara criminal (não-especializado)
-  const isDefensorCriminalGeral = user && user.role === "defensor" && !isGrupoJuriEpVvd;
+
+  // Verificar se é defensor de vara criminal (não-especializado) - usado para adaptar seções do dashboard
+  const isDefensorCriminalGeral = user && user.role === "defensor" && isGrupoVarasCriminais;
 
   // Audiências (para o dashboard)
   const { data: audienciasData, isLoading: loadingAudiencias } = trpc.audiencias.proximas.useQuery({
@@ -531,11 +541,13 @@ export default function DashboardJuriPage() {
       href: "/admin/assistidos",
     },
     {
-      title: "Próximos Júris",
-      value: totalJuris.toString(),
-      subtitle: totalJuris > 0 ? "agendados" : "nenhum agendado",
-      icon: Gavel,
-      href: "/admin/juri",
+      title: isDefensorCriminalGeral ? "Audiências" : "Próximos Júris",
+      value: isDefensorCriminalGeral ? audienciasExibir.length.toString() : totalJuris.toString(),
+      subtitle: isDefensorCriminalGeral
+        ? (audienciasExibir.length > 0 ? "agendadas" : "nenhuma agendada")
+        : (totalJuris > 0 ? "agendados" : "nenhum agendado"),
+      icon: isDefensorCriminalGeral ? CalendarDays : Gavel,
+      href: isDefensorCriminalGeral ? "/admin/agenda" : "/admin/juri",
     },
   ];
 
@@ -551,22 +563,46 @@ export default function DashboardJuriPage() {
   // RENDERIZAR DASHBOARD POR PERFIL (se aplicável)
   // ==========================================
   
-  // Para perfis não-defensor ou defensor criminal geral, usar dashboard específico
-  if (!loadingUser && (isPerfilAlternativo || isDefensorCriminalGeral)) {
+  // Resolver nome do supervisor para estagiários
+  const supervisorName = useMemo(() => {
+    if (!currentUserData || user?.role !== "estagiario") return undefined;
+    const supervisorId = (currentUserData as any)?.supervisorId;
+    if (!supervisorId) return undefined;
+    // Procurar na lista de profissionais do contexto
+    const supervisor = profissionalAtivo?.id === supervisorId
+      ? profissionalAtivo.nome
+      : undefined;
+    return supervisor || "Defensor";
+  }, [currentUserData, user, profissionalAtivo]);
+
+  // Transformar delegações do tRPC para o formato esperado pelo DashboardPorPerfil
+  const delegacoesFormatadas = useMemo(() => {
+    return minhasDelegacoes.map((d: any) => ({
+      id: d.id,
+      titulo: d.instrucoes?.slice(0, 60) || "Tarefa delegada",
+      instrucoes: d.instrucoes,
+      status: d.status || "pendente",
+      prazoSugerido: d.prazoSugerido,
+      delegadoDeNome: d.delegadoDe?.name || "Defensor",
+      assistidoNome: d.demanda?.assistido?.nome,
+      processoNumero: d.demanda?.processo?.numeroAutos,
+    }));
+  }, [minhasDelegacoes]);
+
+  // Para perfis não-defensor (estagiário, servidor, triagem), usar dashboard por perfil
+  if (!loadingUser && isPerfilAlternativo) {
     return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11] p-4 md:p-6">
-        <DashboardPorPerfil
-          userRole={user?.role as UserRole || "defensor"}
-          userName={user?.name}
-          supervisorName={undefined}
-          demandas={demandasFiltradas}
-          delegacoes={[]}
-          assistidos={assistidos}
-          processos={processos}
-          audiencias={[]}
-          isLoading={loadingDemandas || loadingAssistidos}
-        />
-      </div>
+      <DashboardPorPerfil
+        userRole={user?.role as UserRole || "defensor"}
+        userName={user?.name}
+        supervisorName={supervisorName}
+        demandas={demandasFiltradas}
+        delegacoes={delegacoesFormatadas}
+        assistidos={assistidos}
+        processos={processos}
+        audiencias={audiencias}
+        isLoading={loadingDemandas || loadingAssistidos || loadingDelegacoes}
+      />
     );
   }
 
@@ -915,118 +951,210 @@ export default function DashboardJuriPage() {
         {/* JÚRIS + AUDIÊNCIAS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
 
-          {/* PRÓXIMOS JÚRIS */}
-          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-            <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Gavel className="w-4 h-4 text-violet-500" />
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Próximos Júris</h3>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-medium">
-                    {jurisProximos.length}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  {/* Filtro por defensor */}
-                  <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md p-0.5">
-                    {[
-                      { id: "todos", label: "Todos" },
-                      { id: "rodrigo", label: "Dr. Rodrigo" },
-                      { id: "juliane", label: "Dra. Juliane" },
-                    ].map((opt) => (
-                      <button
-                        key={opt.id}
-                        onClick={() => setFiltroDefensorJuri(opt.id as typeof filtroDefensorJuri)}
-                        className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
-                          filtroDefensorJuri === opt.id
-                            ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow-sm"
-                            : "text-zinc-500 hover:text-zinc-700"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+          {/* PRÓXIMOS JÚRIS / MINHAS AUDIÊNCIAS (para criminal geral) */}
+          {isDefensorCriminalGeral ? (
+            /* Criminal Geral: Mostra Minhas Audiências no lugar dos Júris */
+            <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+              <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-violet-500" />
+                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Minhas Audiências</h3>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-medium">
+                      {audienciasExibir.length}
+                    </span>
                   </div>
-                  <Link href="/admin/juri">
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
-                      <ArrowRight className="w-3.5 h-3.5" />
+                  <Link href="/admin/agenda">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-500 hover:text-emerald-600">
+                      Ver agenda <ArrowRight className="w-3 h-3 ml-1" />
                     </Button>
                   </Link>
                 </div>
               </div>
-            </div>
 
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {loadingJuris ? (
-                <div className="p-4 space-y-2">
-                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
-                </div>
-              ) : jurisProximos.length === 0 ? (
-                <div className="p-6 text-center">
-                  <Gavel className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
-                  <p className="text-sm text-zinc-500">Nenhum júri agendado</p>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    {filtroDefensorJuri !== "todos" ? "Tente limpar o filtro" : ""}
-                  </p>
-                </div>
-              ) : (
-                jurisProximos.map((juri: any) => {
-                  const dataSessao = juri.dataSessao ? new Date(juri.dataSessao) : null;
-                  const diasRestantes = dataSessao ? differenceInDays(dataSessao, new Date()) : null;
-                  
-                  return (
-                    <Link href={`/admin/juri/${juri.id}`} key={juri.id}>
-                      <div className="flex items-center gap-3 px-3 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                        <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
-                          diasRestantes !== null && diasRestantes <= 3 
-                            ? "bg-rose-100 dark:bg-rose-900/30" 
-                            : diasRestantes !== null && diasRestantes <= 7
-                              ? "bg-amber-100 dark:bg-amber-900/30"
-                              : "bg-violet-100 dark:bg-violet-900/30"
-                        }`}>
-                          <span className={`text-sm font-bold ${
-                            diasRestantes !== null && diasRestantes <= 3 
-                              ? "text-rose-700 dark:text-rose-400" 
-                              : diasRestantes !== null && diasRestantes <= 7
-                                ? "text-amber-700 dark:text-amber-400"
-                                : "text-violet-700 dark:text-violet-400"
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[300px] overflow-y-auto">
+                {loadingAudiencias ? (
+                  <div className="p-4 space-y-2">
+                    {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                  </div>
+                ) : audienciasExibir.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <CalendarDays className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+                    <p className="text-sm text-zinc-500">Nenhuma audiência agendada</p>
+                    <p className="text-xs text-zinc-400 mt-1">As audiências aparecerão aqui</p>
+                  </div>
+                ) : (
+                  audienciasExibir.map((aud: any, index: number) => {
+                    const dataAud = aud.data ? parseISO(aud.data) : null;
+                    const isHoje = dataAud && isToday(dataAud);
+                    const isAmanha = dataAud && isTomorrow(dataAud);
+                    const diasRestantes = dataAud ? differenceInDays(dataAud, new Date()) : null;
+
+                    return (
+                      <Link href={`/admin/audiencias/${aud.id}`} key={aud.id}>
+                        <div className="flex items-center gap-3 px-3 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                          <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
+                            isHoje
+                              ? "bg-rose-100 dark:bg-rose-900/30"
+                              : isAmanha
+                                ? "bg-amber-100 dark:bg-amber-900/30"
+                                : "bg-violet-100 dark:bg-violet-900/30"
                           }`}>
-                            {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
-                          </span>
-                          <span className="text-[9px] text-zinc-500 uppercase">
-                            {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : ""}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                            {juri.assistidoNome || "Réu"}
-                          </p>
-                          <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                            <span>{juri.horario || "Horário a definir"}</span>
-                            {juri.defensorNome && (
-                              <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
-                                {juri.defensorNome}
-                              </span>
-                            )}
+                            <span className={`text-sm font-bold ${
+                              isHoje
+                                ? "text-rose-700 dark:text-rose-400"
+                                : isAmanha
+                                  ? "text-amber-700 dark:text-amber-400"
+                                  : "text-violet-700 dark:text-violet-400"
+                            }`}>
+                              {dataAud ? format(dataAud, "dd", { locale: ptBR }) : "--"}
+                            </span>
+                            <span className="text-[9px] text-zinc-500 uppercase">
+                              {dataAud ? format(dataAud, "MMM", { locale: ptBR }) : ""}
+                            </span>
                           </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                              {aud.assistidoNome || aud.titulo || "Audiência"}
+                            </p>
+                            <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                              <span>{aud.hora || aud.horario || "—"}</span>
+                              <span>•</span>
+                              <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
+                            </div>
+                          </div>
+                          {aud.reuPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
+                          {diasRestantes !== null && (
+                            <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
+                              diasRestantes <= 0 ? "bg-rose-500 text-white" :
+                              diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
+                              diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
+                              "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                            }`}>
+                              {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
+                            </span>
+                          )}
                         </div>
-                        {diasRestantes !== null && (
-                          <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
-                            diasRestantes <= 0 ? "bg-rose-500 text-white" :
-                            diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
-                            diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
-                            "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-                          }`}>
-                            {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
-                          </span>
-                        )}
-                      </div>
+                      </Link>
+                    );
+                  })
+                )}
+              </div>
+            </Card>
+          ) : (
+            /* Especializado: Mostra Próximos Júris */
+            <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+              <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Gavel className="w-4 h-4 text-violet-500" />
+                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Próximos Júris</h3>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-medium">
+                      {jurisProximos.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {/* Filtro por defensor */}
+                    <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md p-0.5">
+                      {[
+                        { id: "todos", label: "Todos" },
+                        { id: "rodrigo", label: "Dr. Rodrigo" },
+                        { id: "juliane", label: "Dra. Juliane" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.id}
+                          onClick={() => setFiltroDefensorJuri(opt.id as typeof filtroDefensorJuri)}
+                          className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
+                            filtroDefensorJuri === opt.id
+                              ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow-sm"
+                              : "text-zinc-500 hover:text-zinc-700"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    <Link href="/admin/juri">
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Button>
                     </Link>
-                  );
-                })
-              )}
-            </div>
-          </Card>
+                  </div>
+                </div>
+              </div>
+
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {loadingJuris ? (
+                  <div className="p-4 space-y-2">
+                    {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                  </div>
+                ) : jurisProximos.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <Gavel className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+                    <p className="text-sm text-zinc-500">Nenhum júri agendado</p>
+                    <p className="text-xs text-zinc-400 mt-1">
+                      {filtroDefensorJuri !== "todos" ? "Tente limpar o filtro" : ""}
+                    </p>
+                  </div>
+                ) : (
+                  jurisProximos.map((juri: any) => {
+                    const dataSessao = juri.dataSessao ? new Date(juri.dataSessao) : null;
+                    const diasRestantes = dataSessao ? differenceInDays(dataSessao, new Date()) : null;
+
+                    return (
+                      <Link href={`/admin/juri/${juri.id}`} key={juri.id}>
+                        <div className="flex items-center gap-3 px-3 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                          <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
+                            diasRestantes !== null && diasRestantes <= 3
+                              ? "bg-rose-100 dark:bg-rose-900/30"
+                              : diasRestantes !== null && diasRestantes <= 7
+                                ? "bg-amber-100 dark:bg-amber-900/30"
+                                : "bg-violet-100 dark:bg-violet-900/30"
+                          }`}>
+                            <span className={`text-sm font-bold ${
+                              diasRestantes !== null && diasRestantes <= 3
+                                ? "text-rose-700 dark:text-rose-400"
+                                : diasRestantes !== null && diasRestantes <= 7
+                                  ? "text-amber-700 dark:text-amber-400"
+                                  : "text-violet-700 dark:text-violet-400"
+                            }`}>
+                              {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
+                            </span>
+                            <span className="text-[9px] text-zinc-500 uppercase">
+                              {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : ""}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                              {juri.assistidoNome || "Réu"}
+                            </p>
+                            <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                              <span>{juri.horario || "Horário a definir"}</span>
+                              {juri.defensorNome && (
+                                <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
+                                  {juri.defensorNome}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {diasRestantes !== null && (
+                            <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
+                              diasRestantes <= 0 ? "bg-rose-500 text-white" :
+                              diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
+                              diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
+                              "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                            }`}>
+                              {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })
+                )}
+              </div>
+            </Card>
+          )}
 
           {/* AUDIÊNCIAS DA SEMANA / PRÓXIMAS */}
           <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
@@ -1224,7 +1352,7 @@ export default function DashboardJuriPage() {
             </div>
 
             {/* Atribuição atual */}
-            {atribuicaoAtual && (
+            {(atribuicaoAtual || isDefensorCriminalGeral) && (
               <div className="p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-md bg-white dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
@@ -1233,7 +1361,10 @@ export default function DashboardJuriPage() {
                   <div>
                     <p className="text-[9px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-medium">Atribuição</p>
                     <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                      {atribuicaoAtual === "JURI_EP" ? "Tribunal do Júri / Exec. Penal" : "Violência Doméstica"}
+                      {isDefensorCriminalGeral
+                        ? (profissionalAtivo.vara || "Vara Criminal")
+                        : atribuicaoAtual === "JURI_EP" ? "Tribunal do Júri / Exec. Penal" : "Violência Doméstica"
+                      }
                     </p>
                   </div>
                 </div>

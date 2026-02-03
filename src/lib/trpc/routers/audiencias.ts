@@ -237,6 +237,7 @@ export const audienciasRouter = router({
       const { eventos } = input;
       const importados: number[] = [];
       const duplicados: string[] = [];
+      const atualizados: number[] = [];
       const assistidosCriados: number[] = [];
       
       // Obter workspaceId do usuário (ou usar 1 como padrão)
@@ -312,7 +313,11 @@ export const audienciasRouter = router({
           
           // Verificar se já existe uma audiência com mesmo processo, data e horário
           const existente = await db
-            .select({ id: audiencias.id })
+            .select({
+              id: audiencias.id,
+              processoId: audiencias.processoId,
+              assistidoId: audiencias.assistidoId,
+            })
             .from(audiencias)
             .leftJoin(processos, eq(audiencias.processoId, processos.id))
             .where(
@@ -323,7 +328,42 @@ export const audienciasRouter = router({
             )
             .limit(1);
 
+          // Se encontrou duplicata, atualizar com os novos dados (exceto processo e assistido já vinculados)
           if (existente.length > 0) {
+            const audienciaExistente = existente[0];
+
+            // Atualizar audiência existente com novos dados
+            await db
+              .update(audiencias)
+              .set({
+                tipo: evento.tipo,
+                titulo: evento.titulo,
+                descricao: evento.descricao,
+                local: evento.local,
+                horario: evento.horarioInicio,
+                status: evento.status === "confirmado" ? "agendada" :
+                       evento.status === "cancelado" ? "cancelada" :
+                       evento.status === "remarcado" ? "reagendada" : "agendada",
+              })
+              .where(eq(audiencias.id, audienciaExistente.id));
+
+            // Atualizar processo existente com atribuição corrigida se necessário
+            if (audienciaExistente.processoId) {
+              const atribuicaoEnum = mapAtribuicao(evento.atribuicao);
+              const areaEnum = mapArea(evento.atribuicao);
+
+              await db
+                .update(processos)
+                .set({
+                  atribuicao: atribuicaoEnum as any,
+                  area: areaEnum as any,
+                  classeProcessual: evento.classeJudicial || undefined,
+                  vara: evento.orgaoJulgador || undefined,
+                })
+                .where(eq(processos.id, audienciaExistente.processoId));
+            }
+
+            atualizados.push(audienciaExistente.id);
             duplicados.push(evento.processo);
             continue;
           }
@@ -504,6 +544,7 @@ export const audienciasRouter = router({
       return {
         importados: importados.length,
         duplicados: duplicados.length,
+        atualizados: atualizados.length,
         duplicadosProcessos: duplicados,
         assistidosCriados: assistidosCriados.length,
       };

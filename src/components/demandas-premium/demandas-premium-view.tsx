@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/demandas-premium/PageHeader";
 import { DemandaCard } from "@/components/demandas-premium/DemandaCard";
+import { DemandaTableView } from "@/components/demandas-premium/DemandaTableView";
 import {
   ListTodo,
   Plus,
@@ -54,6 +55,8 @@ import {
   CheckSquare,
   Trash2,
   X,
+  LayoutList,
+  Table2,
 } from "lucide-react";
 
 // Ícones e cores por atribuição
@@ -182,6 +185,12 @@ export default function Demandas() {
   const [isAdminConfigModalOpen, setIsAdminConfigModalOpen] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"cards" | "table">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("defender_demandas_view_mode") as "cards" | "table") || "cards";
+    }
+    return "cards";
+  });
 
   // ==========================================
   // BUSCA DADOS REAIS DO BANCO DE DADOS
@@ -811,6 +820,37 @@ export default function Demandas() {
                     </button>
                   ))}
                 </div>
+                {/* Toggle de Visualização: Cards / Planilha */}
+                <div className="hidden md:flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 gap-0.5">
+                  <button
+                    onClick={() => {
+                      setViewMode("cards");
+                      localStorage.setItem("defender_demandas_view_mode", "cards");
+                    }}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === "cards"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    }`}
+                    title="Visualização em Cards"
+                  >
+                    <LayoutList className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setViewMode("table");
+                      localStorage.setItem("defender_demandas_view_mode", "table");
+                    }}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === "table"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    }`}
+                    title="Visualização em Planilha"
+                  >
+                    <Table2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 <button
                   onClick={() => setShowArchived(!showArchived)}
                   className={`px-2 md:px-2.5 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-medium transition-all whitespace-nowrap ${
@@ -849,51 +889,74 @@ export default function Demandas() {
               </div>
             )}
 
-            <div className="p-4 space-y-3 max-h-[calc(100vh-400px)] min-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900">
-              {demandasOrdenadas.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mx-auto mb-5 flex items-center justify-center">
-                    <ListTodo className="w-10 h-10 text-zinc-400 dark:text-zinc-600" />
-                  </div>
-                  <p className="text-base font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                    Nenhuma demanda encontrada
-                  </p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    {showArchived
-                      ? "Não há demandas arquivadas no momento"
-                      : "Ajuste os filtros ou crie uma nova demanda"}
-                  </p>
-                </div>
+            <div className={`${viewMode === "cards" ? "p-4 space-y-3" : "p-0"} max-h-[calc(100vh-400px)] min-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900`}>
+              {viewMode === "table" ? (
+                /* ========== MODO PLANILHA ========== */
+                <DemandaTableView
+                  demandas={demandasOrdenadas}
+                  atribuicaoIcons={atribuicaoIcons}
+                  atribuicaoColors={atribuicaoColors}
+                  onStatusChange={handleStatusChange}
+                  onEdit={handleEditDemanda}
+                  onArchive={handleArchiveDemanda}
+                  onUnarchive={handleUnarchiveDemanda}
+                  onDelete={handleDeleteDemanda}
+                  copyToClipboard={copyToClipboard}
+                  onAtoChange={handleAtoChange}
+                  onProvidenciasChange={handleProvidenciasChange}
+                  isSelectMode={isSelectMode}
+                  selectedIds={selectedIds}
+                  onToggleSelect={handleToggleSelect}
+                />
               ) : (
-                demandasOrdenadas.map((demanda) => {
-                  const statusConfig = getStatusConfig(demanda.status);
-                  const borderColor = STATUS_GROUPS[statusConfig.group].color;
-                  
-                  // Filtrar atos específicos para a atribuição da demanda
-                  const atoOptionsForDemanda = getAtosPorAtribuicao(demanda.atribuicao);
+                /* ========== MODO CARDS ========== */
+                <>
+                  {demandasOrdenadas.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mx-auto mb-5 flex items-center justify-center">
+                        <ListTodo className="w-10 h-10 text-zinc-400 dark:text-zinc-600" />
+                      </div>
+                      <p className="text-base font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                        Nenhuma demanda encontrada
+                      </p>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        {showArchived
+                          ? "Não há demandas arquivadas no momento"
+                          : "Ajuste os filtros ou crie uma nova demanda"}
+                      </p>
+                    </div>
+                  ) : (
+                    demandasOrdenadas.map((demanda) => {
+                      const statusConfig = getStatusConfig(demanda.status);
+                      const borderColor = STATUS_GROUPS[statusConfig.group].color;
 
-                  return (
-                    <DemandaCard
-                      key={demanda.id}
-                      demanda={demanda}
-                      borderColor={borderColor}
-                      atribuicaoIcons={atribuicaoIcons}
-                      atribuicaoColors={atribuicaoColors}
-                      onStatusChange={handleStatusChange}
-                      onAtoChange={handleAtoChange}
-                      atoOptions={atoOptionsForDemanda}
-                      onEdit={handleEditDemanda}
-                      onArchive={handleArchiveDemanda}
-                      onUnarchive={handleUnarchiveDemanda}
-                      onDelete={handleDeleteDemanda}
-                      copyToClipboard={copyToClipboard}
-                      onProvidenciasChange={handleProvidenciasChange}
-                      isSelectMode={isSelectMode}
-                      isSelected={selectedIds.has(demanda.id)}
-                      onToggleSelect={handleToggleSelect}
-                    />
-                  );
-                })
+                      // Filtrar atos específicos para a atribuição da demanda
+                      const atoOptionsForDemanda = getAtosPorAtribuicao(demanda.atribuicao);
+
+                      return (
+                        <DemandaCard
+                          key={demanda.id}
+                          demanda={demanda}
+                          borderColor={borderColor}
+                          atribuicaoIcons={atribuicaoIcons}
+                          atribuicaoColors={atribuicaoColors}
+                          onStatusChange={handleStatusChange}
+                          onAtoChange={handleAtoChange}
+                          atoOptions={atoOptionsForDemanda}
+                          onEdit={handleEditDemanda}
+                          onArchive={handleArchiveDemanda}
+                          onUnarchive={handleUnarchiveDemanda}
+                          onDelete={handleDeleteDemanda}
+                          copyToClipboard={copyToClipboard}
+                          onProvidenciasChange={handleProvidenciasChange}
+                          isSelectMode={isSelectMode}
+                          isSelected={selectedIds.has(demanda.id)}
+                          onToggleSelect={handleToggleSelect}
+                        />
+                      );
+                    })
+                  )}
+                </>
               )}
             </div>
 

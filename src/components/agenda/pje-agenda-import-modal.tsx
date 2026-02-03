@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   Upload,
@@ -19,6 +20,7 @@ import {
   XCircle,
   Scale,
   Shield,
+  Info,
 } from "lucide-react";
 
 interface PJeAgendaImportModalProps {
@@ -50,10 +52,20 @@ interface ParsedEvento {
   orgaoJulgador: string;
 }
 
+// Opções de atribuição disponíveis
+const ATRIBUICAO_OPTIONS = [
+  { value: "auto", label: "🔄 Detectar automaticamente", description: "O sistema analisa o texto e identifica a atribuição" },
+  { value: "Tribunal do Júri", label: "⚖️ Tribunal do Júri", description: "AIJ, Júri (Plenário), PAP, Custódia" },
+  { value: "Violência Doméstica", label: "🛡️ Violência Doméstica", description: "AIJ, Justificação, Oitiva Especial, Custódia, Retratação" },
+  { value: "Execução Penal", label: "⚖️ Execução Penal", description: "Justificação, Admonitória" },
+  { value: "Criminal Geral", label: "📋 Criminal Geral", description: "AIJ, PAP, Custódia, ANPP, Justificação" },
+] as const;
+
 export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImportModalProps) {
   const [htmlContent, setHtmlContent] = useState("");
   const [parsedEventos, setParsedEventos] = useState<ParsedEvento[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [forcedAtribuicao, setForcedAtribuicao] = useState<string>("auto");
 
   // Conectivos que devem permanecer em minúsculo no Title Case
   const conectivos = ["de", "da", "do", "das", "dos", "e", "em", "para", "por", "com", "sem", "a", "o", "as", "os"];
@@ -80,8 +92,8 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
 
     // Violência Doméstica - verificar múltiplas variações e padrões
     if (
-      texto.includes("VIOLÊNCIA DOMÉSTICA") || 
-      texto.includes("VIOLENCIA DOMESTICA") || 
+      texto.includes("VIOLÊNCIA DOMÉSTICA") ||
+      texto.includes("VIOLENCIA DOMESTICA") ||
       texto.includes("VIOLÊNCIA DOM") ||
       texto.includes("VIOLENCIA DOM") ||
       texto.includes("MARIA DA PENHA") ||
@@ -94,12 +106,30 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
     ) {
       return "Violência Doméstica";
     }
-    if (texto.includes("TRIBUNAL DO JÚRI") || texto.includes("TRIBUNAL DO JURI") || texto.includes("PLENÁRIO")) {
+
+    // Tribunal do Júri - VERIFICAR PRIMEIRO a classe judicial (mais específico)
+    // "COMPETÊNCIA DO JÚRI" ou "AÇÃO PENAL DE COMPETÊNCIA DO JÚRI" na classe judicial
+    if (
+      classeJudicial.toUpperCase().includes("COMPET") && classeJudicial.toUpperCase().includes("JÚRI") ||
+      classeJudicial.toUpperCase().includes("COMPET") && classeJudicial.toUpperCase().includes("JURI") ||
+      texto.includes("TRIBUNAL DO JÚRI") ||
+      texto.includes("TRIBUNAL DO JURI") ||
+      texto.includes("PLENÁRIO") ||
+      texto.includes("VARA DO JÚRI") ||
+      texto.includes("VARA DO JURI") ||
+      /VARA\s+D[OAE]\s+J[UÚ]RI/i.test(texto) ||
+      /COMPET[EÊ]NCIA\s+D[OAE]\s+J[UÚ]RI/i.test(texto)
+    ) {
       return "Tribunal do Júri";
     }
-    if (texto.includes("EXECUÇÃO PENAL") || texto.includes("EXECUCAO PENAL") || texto.includes("EXECUÇÕES")) {
+
+    // Execução Penal - SOMENTE quando explicitamente mencionado, não por estar no nome da vara
+    // Não detectar "VARA DO JÚRI E EXECUÇÕES PENAIS" como Execução Penal
+    const ehVaraJuriComExecucao = /VARA\s+D[OAE]\s+J[UÚ]RI\s+E\s+EXECU[CÇ]/i.test(texto);
+    if (!ehVaraJuriComExecucao && (texto.includes("EXECUÇÃO PENAL") || texto.includes("EXECUCAO PENAL") || texto.includes("EXECUÇÕES"))) {
       return "Execução Penal";
     }
+
     if (texto.includes("CURADORIA")) {
       return "Curadoria";
     }
@@ -419,7 +449,10 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
         classeJudicial = toTitleCase(classeJudicial.replace(/\s+/g, " ").trim());
 
         // Mapear atribuição (precisa ser antes do tipo de audiência) - passa textoBloco para melhor detecção
-        const atribuicao = mapearAtribuicao(orgaoJulgador, classeJudicial, textoBloco);
+        // Se o usuário forçou uma atribuição, usar ela; caso contrário, detectar automaticamente
+        const atribuicao = forcedAtribuicao !== "auto"
+          ? forcedAtribuicao
+          : mapearAtribuicao(orgaoJulgador, classeJudicial, textoBloco);
 
         // Extrair tipo de audiência do texto - ordem importa (mais específico primeiro)
         let tipoAudienciaTexto = "";
@@ -591,8 +624,9 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
           
           if (processoMaisProximo) {
             // Pegar texto ao redor para extrair mais informações
+            // Reduzido de 2000 para 500 caracteres para evitar pegar dados de outra audiência
             const inicio = Math.max(0, dataMatch.index! - 50);
-            const fim = Math.min(conteudo.length, dataMatch.index! + 2000);
+            const fim = Math.min(conteudo.length, dataMatch.index! + 500);
             const textoContexto = conteudo.substring(inicio, fim);
             
             // Extrair assistidos após o X (incluindo AUTORIDADE para casos específicos)
@@ -646,8 +680,10 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
             // Local fixo
             const localAlt = "Fórum Clemente Mariani - Camaçari";
             
-            // Mapear atribuição
-            const atribuicaoAlt = mapearAtribuicao(orgao, "", textoContexto);
+            // Mapear atribuição (usar forçada se selecionada)
+            const atribuicaoAlt = forcedAtribuicao !== "auto"
+              ? forcedAtribuicao
+              : mapearAtribuicao(orgao, "", textoContexto);
             
             // Determinar tipo de audiência
             let tipoAudTexto = "Audiência";
@@ -757,6 +793,7 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
   const handleReset = () => {
     setHtmlContent("");
     setParsedEventos([]);
+    setForcedAtribuicao("auto");
   };
 
   const getAtribuicaoIcon = (atribuicao: string) => {
@@ -794,10 +831,42 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
           </ol>
         </div>
 
+        {/* Seletor de Atribuição */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+            <Scale className="w-4 h-4" />
+            Atribuição da Pauta
+          </Label>
+          <Select value={forcedAtribuicao} onValueChange={setForcedAtribuicao}>
+            <SelectTrigger className="w-full bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700">
+              <SelectValue placeholder="Selecione a atribuição" />
+            </SelectTrigger>
+            <SelectContent>
+              {ATRIBUICAO_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{option.label}</span>
+                    <span className="text-xs text-zinc-500">{option.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {forcedAtribuicao !== "auto" && (
+            <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-950/30 rounded border border-amber-200 dark:border-amber-800">
+              <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                <strong>Atribuição forçada:</strong> Todos os eventos serão classificados como &ldquo;{forcedAtribuicao}&rdquo;.
+                Útil quando a pauta é de uma única vara e a detecção automática não está funcionando corretamente.
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Campo de input */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-            HTML da Pauta do PJe
+            Conteúdo da Pauta do PJe
           </Label>
           <Textarea
             value={htmlContent}

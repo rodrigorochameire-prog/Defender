@@ -687,19 +687,27 @@ export default function AgendaPage() {
 
   const importBatch = trpc.audiencias.importBatch.useMutation({
     onSuccess: (result) => {
-      let mensagem = `${result.importados} evento(s) importado(s)`;
-      
+      let mensagem = `${result.importados} novo(s) evento(s) importado(s)`;
+
+      if (result.atualizados > 0) {
+        mensagem += `, ${result.atualizados} evento(s) atualizado(s)`;
+      }
+
       if (result.assistidosCriados > 0) {
         mensagem += `, ${result.assistidosCriados} assistido(s) criado(s)`;
       }
-      
-      if (result.duplicados > 0) {
-        mensagem += `. ${result.duplicados} duplicado(s) ignorado(s)`;
+
+      if (result.atualizados > 0 && result.importados === 0) {
+        // Apenas atualizações = sucesso também
+        toast.success(mensagem + "!");
+      } else if (result.duplicados > 0 && result.atualizados === 0) {
+        // Duplicados não atualizados = warning (mantém comportamento anterior por segurança)
+        mensagem += `. ${result.duplicados} duplicado(s) encontrado(s)`;
         toast.warning(mensagem);
       } else {
         toast.success(mensagem + " com sucesso!");
       }
-      
+
       // Recarregar a lista de audiências
       utils.audiencias.list.invalidate();
     },

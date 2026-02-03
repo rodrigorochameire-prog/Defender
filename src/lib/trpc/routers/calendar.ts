@@ -1,11 +1,31 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, calendarEvents, processos, assistidos, demandas } from "@/lib/db";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, inArray } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, calendarEventSchema } from "@/lib/validations";
 import { startOfMonth, endOfMonth, startOfDay, endOfDay, addDays, addWeeks, addMonths, addYears } from "date-fns";
-import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
+import { getWorkspaceScope, resolveWorkspaceId, getDefensoresVisiveis } from "../workspace";
+
+/**
+ * Gera condições de filtro para o calendário baseado no defensor.
+ * - Admin/Servidor: vê todos os eventos (agenda integrada)
+ * - Defensor: vê apenas eventos que criou (agenda separada)
+ * - Estagiário: vê eventos do supervisor
+ */
+function getCalendarDefensorFilter(user: any) {
+  const defensoresVisiveis = getDefensoresVisiveis(user);
+  if (defensoresVisiveis === "all") return []; // Admin/servidor: sem filtro
+
+  // Defensor/estagiário: filtrar por createdById
+  if (defensoresVisiveis.length === 1) {
+    return [eq(calendarEvents.createdById, defensoresVisiveis[0])];
+  }
+  if (defensoresVisiveis.length > 1) {
+    return [inArray(calendarEvents.createdById, defensoresVisiveis)];
+  }
+  return [eq(calendarEvents.createdById, user.id)];
+}
 
 /**
  * Gera as datas de ocorrência para eventos recorrentes
@@ -81,8 +101,9 @@ export const calendarRouter = router({
         const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
         const startDate = new Date(input.start);
         const endDate = new Date(input.end);
+        const defensorFilter = getCalendarDefensorFilter(ctx.user);
 
-        // Base query
+        // Base query com filtro por defensor (agenda separada para defensores)
         let events = await db
           .select({
             event: calendarEvents,
@@ -102,7 +123,8 @@ export const calendarRouter = router({
             and(
               gte(calendarEvents.eventDate, startDate),
               lte(calendarEvents.eventDate, endDate),
-              ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)])
+              ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)]),
+              ...defensorFilter
             )
           )
           .orderBy(calendarEvents.eventDate);
@@ -141,6 +163,7 @@ export const calendarRouter = router({
     .query(async ({ ctx, input }) => {
       return safeAsync(async () => {
         const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+        const defensorFilter = getCalendarDefensorFilter(ctx.user);
         const now = new Date();
         const month = input?.month ?? now.getMonth();
         const year = input?.year ?? now.getFullYear();
@@ -167,7 +190,8 @@ export const calendarRouter = router({
             and(
               gte(calendarEvents.eventDate, start),
               lte(calendarEvents.eventDate, end),
-              ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)])
+              ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)]),
+              ...defensorFilter
             )
           )
           .orderBy(calendarEvents.eventDate);
@@ -523,6 +547,7 @@ export const calendarRouter = router({
   today: protectedProcedure.query(async ({ ctx }) => {
     return safeAsync(async () => {
       const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+      const defensorFilter = getCalendarDefensorFilter(ctx.user);
       const now = new Date();
       const start = startOfDay(now);
       const end = endOfDay(now);
@@ -546,7 +571,8 @@ export const calendarRouter = router({
           and(
             gte(calendarEvents.eventDate, start),
             lte(calendarEvents.eventDate, end),
-            ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)])
+            ...(isAdmin || !workspaceId ? [] : [eq(calendarEvents.workspaceId, workspaceId as number)]),
+            ...defensorFilter
           )
         )
         .orderBy(calendarEvents.eventDate);
