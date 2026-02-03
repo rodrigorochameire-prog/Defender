@@ -1,13 +1,17 @@
 /**
  * Tipos de Processo
  * Configuração centralizada dos tipos de processo utilizados no sistema
+ *
+ * Nota: Recursos como RESE, Apelação são no âmbito da AP.
+ *       Agravo em Execução é no âmbito da EP.
+ *       Por isso não são tipos de processo separados.
  */
 
 export const TIPOS_PROCESSO = {
   AP: {
     sigla: "AP",
     label: "Ação Penal",
-    descricao: "Processo criminal comum",
+    descricao: "Processo criminal comum (inclui recursos como RESE, Apelação)",
   },
   IP: {
     sigla: "IP",
@@ -27,7 +31,7 @@ export const TIPOS_PROCESSO = {
   EP: {
     sigla: "EP",
     label: "Execução Penal",
-    descricao: "Processo de execução de pena",
+    descricao: "Processo de execução de pena (inclui Agravo em Execução)",
   },
   ANPP: {
     sigla: "ANPP",
@@ -54,25 +58,10 @@ export const TIPOS_PROCESSO = {
     label: "Termo Circunstanciado",
     descricao: "Infração de menor potencial ofensivo",
   },
-  RESE: {
-    sigla: "RESE",
-    label: "RESE",
-    descricao: "Recurso em Sentido Estrito",
-  },
-  AE: {
-    sigla: "AE",
-    label: "Agravo em Execução",
-    descricao: "Recurso em execução penal",
-  },
-  RSE: {
-    sigla: "RSE",
+  RC: {
+    sigla: "RC",
     label: "Revisão Criminal",
     descricao: "Revisão de sentença transitada em julgado",
-  },
-  APELACAO: {
-    sigla: "Apelação",
-    label: "Apelação Criminal",
-    descricao: "Recurso de apelação",
   },
 } as const;
 
@@ -93,10 +82,7 @@ export const TIPO_PROCESSO_OPTIONS = [
   { value: "Cautelar", label: "Cautelar" },
   { value: "HC", label: "HC - Habeas Corpus" },
   { value: "TC", label: "TC - Termo Circ." },
-  { value: "RESE", label: "RESE" },
-  { value: "AE", label: "AE - Agravo Exec." },
-  { value: "Apelação", label: "Apelação" },
-  { value: "RSE", label: "Revisão Criminal" },
+  { value: "RC", label: "RC - Revisão Criminal" },
 ];
 
 /**
@@ -113,10 +99,7 @@ export const TIPO_PROCESSO_OPTIONS_COMPACT = [
   { value: "Cautelar", label: "Cautelar" },
   { value: "HC", label: "HC" },
   { value: "TC", label: "TC" },
-  { value: "RESE", label: "RESE" },
-  { value: "AE", label: "AE" },
-  { value: "Apelação", label: "Apelação" },
-  { value: "RSE", label: "RSE" },
+  { value: "RC", label: "RC" },
 ];
 
 /**
