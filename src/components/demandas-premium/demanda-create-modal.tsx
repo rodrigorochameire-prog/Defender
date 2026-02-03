@@ -8,6 +8,7 @@ import { Plus, Trash2, User, Scale, FileText, MapPin, Save, X, Sparkles, Info, C
 import { calcularPrazoPorAto, obterDiasPrazoPorAto } from "@/lib/prazo-calculator";
 import { SITUACAO_PRISIONAL_OPTIONS } from "@/config/templates";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
+import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
 import { cn } from "@/lib/utils";
 
 export interface DemandaFormData {
@@ -311,16 +312,7 @@ export function DemandaCreateModal({
     return getAtosPorAtribuicao("Criminal Geral");
   }, [formData.atribuicao]);
 
-  const tipoProcessoOptions = [
-    { value: "AP", label: "Ação Penal" },
-    { value: "IP", label: "Inquérito Policial" },
-    { value: "HC", label: "Habeas Corpus" },
-    { value: "MPU", label: "Medida Protetiva" },
-    { value: "EP", label: "Execução Penal" },
-    { value: "TC", label: "Termo Circunstanciado" },
-    { value: "RESE", label: "RESE" },
-    { value: "AE", label: "Agravo em Execução" },
-  ];
+  const tipoProcessoOptions = TIPO_PROCESSO_OPTIONS;
 
   const estadoPrisionalOptions = SITUACAO_PRISIONAL_OPTIONS.map(opt => ({ value: opt, label: opt }));
 
