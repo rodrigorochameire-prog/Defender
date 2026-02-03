@@ -17,6 +17,7 @@ import {
   AlertCircle,
   ExternalLink,
   FileText,
+  Calendar,
 } from "lucide-react";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
@@ -324,16 +325,14 @@ function Row({
       : "";
 
   return (
-    <div
-      className={`group/row border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors ${rowBg}`}
-    >
-      <div className="flex items-center px-3 py-2.5 gap-2">
+    <div className={`group/row border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors ${rowBg}`}>
+      <div className="flex items-start px-3 py-2.5 gap-2">
 
         {/* Checkbox de seleção */}
         {isSelectMode && (
           <button
             onClick={() => onToggleSelect?.(demanda.id)}
-            className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+            className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 mt-2.5 ${
               isSelected ? "border-emerald-500 bg-emerald-500" : "border-zinc-300 dark:border-zinc-600 hover:border-zinc-400"
             }`}
           >
@@ -343,7 +342,7 @@ function Row({
 
         {/* Barra de status colorida */}
         <div
-          className="w-1 self-stretch rounded-full flex-shrink-0"
+          className="w-1 min-h-[60px] md:min-h-[44px] self-stretch rounded-full flex-shrink-0"
           style={{ backgroundColor: statusColor }}
         />
 
@@ -352,68 +351,88 @@ function Row({
           {getInitials(demanda.assistido)}
         </div>
 
-        {/* Conteúdo principal - Grid responsivo */}
-        <div className="flex-1 min-w-0 grid grid-cols-12 gap-x-3 gap-y-0.5 items-center">
+        {/* Conteúdo principal - Layout responsivo */}
+        <div className="flex-1 min-w-0">
 
-          {/* Linha 1: Nome + Badges + Status + Datas + Processo */}
+          {/* === MOBILE LAYOUT (< md) === */}
+          <div className="md:hidden space-y-1.5">
+            {/* Linha 1: Nome + badges */}
+            <div className="flex items-center gap-1.5 min-w-0">
+              {isUrgente && <Flame className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />}
+              {isPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
+              {demanda.assistidoId ? (
+                <Link
+                  href={`/admin/assistidos/${demanda.assistidoId}`}
+                  className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 truncate"
+                  title={demanda.assistido}
+                >
+                  {demanda.assistido}
+                </Link>
+              ) : (
+                <span className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                  {demanda.assistido}
+                </span>
+              )}
+            </div>
 
-          {/* Nome do assistido (3 cols) */}
-          <div className="col-span-3 min-w-0 flex items-center gap-1.5">
-            {isUrgente && <Flame className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />}
-            {isPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
-            {demanda.assistidoId ? (
-              <Link
-                href={`/admin/assistidos/${demanda.assistidoId}`}
-                className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 dark:hover:text-emerald-400 truncate transition-colors"
-                title={demanda.assistido}
-              >
-                {demanda.assistido}
-              </Link>
-            ) : (
-              <span className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 truncate" title={demanda.assistido}>
-                {demanda.assistido}
-              </span>
-            )}
-          </div>
+            {/* Linha 2: Status + Prazo */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <Dropdown
+                value={demanda.status}
+                compact
+                displayValue={
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
+                    <span className="text-[11px] text-zinc-700 dark:text-zinc-300">{statusConfig.label}</span>
+                  </div>
+                }
+                options={statusOptions}
+                onChange={(v) => onStatusChange(demanda.id, v)}
+              />
 
-          {/* Status (2 cols) */}
-          <div className="col-span-2 min-w-0">
-            <Dropdown
-              value={demanda.status}
-              compact
-              displayValue={
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                  <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate">{statusConfig.label}</span>
-                </div>
-              }
-              options={statusOptions}
-              onChange={(v) => onStatusChange(demanda.id, v)}
-            />
-          </div>
+              <div className="flex items-center gap-1.5 text-[10px]">
+                <Calendar className="w-3 h-3 text-zinc-400" />
+                <span className="text-zinc-400">{formatarData(demanda.data)}</span>
+                <span className="text-zinc-300">→</span>
+                <span className={`font-semibold flex items-center gap-0.5 ${
+                  prazoInfo.cor === "red" ? "text-rose-600" :
+                  prazoInfo.cor === "amber" ? "text-amber-600" :
+                  prazoInfo.cor === "yellow" ? "text-yellow-600" : "text-zinc-500"
+                }`}>
+                  {prazoInfo.cor === "red" && <AlertCircle className="w-3 h-3" />}
+                  {prazoInfo.texto}
+                </span>
+              </div>
+            </div>
 
-          {/* Datas: Exp + Prazo (2 cols) */}
-          <div className="col-span-2 flex items-center gap-2 text-center justify-center">
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
-              {formatarData(demanda.data)}
-            </span>
-            <span className="text-zinc-300 dark:text-zinc-600">→</span>
-            <span className={`text-[11px] font-semibold flex items-center gap-0.5 ${
-              prazoInfo.cor === "red" ? "text-rose-600 dark:text-rose-400" :
-              prazoInfo.cor === "amber" ? "text-amber-600 dark:text-amber-400" :
-              prazoInfo.cor === "yellow" ? "text-yellow-600 dark:text-yellow-400" : "text-zinc-500 dark:text-zinc-400"
-            }`}>
-              {prazoInfo.cor === "red" && <AlertCircle className="w-3 h-3" />}
-              {prazoInfo.texto}
-            </span>
-          </div>
+            {/* Linha 3: Ato */}
+            <div className="min-w-0">
+              {onAtoChange ? (
+                <Dropdown
+                  value={demanda.ato}
+                  compact
+                  displayValue={
+                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1">
+                      <FileText className="w-3 h-3 flex-shrink-0" />
+                      {demanda.ato || "Selecionar ato"}
+                    </span>
+                  }
+                  options={atoOptions}
+                  onChange={(v) => onAtoChange(demanda.id, v)}
+                />
+              ) : (
+                <span className="text-[10px] text-zinc-500 truncate flex items-center gap-1">
+                  <FileText className="w-3 h-3" />
+                  {demanda.ato}
+                </span>
+              )}
+            </div>
 
-          {/* Processo (3 cols) */}
-          <div className="col-span-3 min-w-0">
-            {demanda.processos.length > 0 ? (
+            {/* Linha 4: Processo */}
+            {demanda.processos.length > 0 && (
               <div className="flex items-center gap-1 min-w-0">
                 <span
-                  className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 truncate cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                  className="text-[10px] font-mono text-zinc-500 truncate cursor-pointer hover:text-emerald-600"
                   onClick={() => copy(demanda.processos[0].numero)}
                   title={demanda.processos[0].numero}
                 >
@@ -421,79 +440,170 @@ function Row({
                 </span>
                 <button
                   onClick={() => copy(demanda.processos[0].numero)}
-                  className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 opacity-0 group-hover/row:opacity-100 transition-all flex-shrink-0"
-                  title="Copiar número"
+                  className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 flex-shrink-0"
                 >
                   {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-zinc-400" />}
                 </button>
-                {demanda.processoId && (
-                  <Link
-                    href={`/admin/processos/${demanda.processoId}`}
-                    className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 opacity-0 group-hover/row:opacity-100 transition-all flex-shrink-0"
-                    title="Abrir processo"
-                  >
-                    <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
-                  </Link>
+              </div>
+            )}
+
+            {/* Linha 5: Providências */}
+            {(onProvidenciasChange || demanda.providencias) && (
+              <div className="min-w-0">
+                {onProvidenciasChange ? (
+                  <EditableTextInline
+                    value={demanda.providencias || ""}
+                    onSave={(v) => onProvidenciasChange(demanda.id, v)}
+                    placeholder="+ providências"
+                  />
+                ) : (
+                  <span className="text-[10px] text-zinc-500 truncate block">{demanda.providencias}</span>
                 )}
               </div>
-            ) : (
-              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">Sem processo</span>
             )}
           </div>
 
-          {/* Atribuição icon (2 cols) */}
-          <div className="col-span-2 hidden lg:flex items-center gap-1.5 min-w-0">
-            {Icon && <Icon className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />}
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate" title={demanda.atribuicao}>
-              {demanda.atribuicao}
-            </span>
-          </div>
+          {/* === DESKTOP LAYOUT (>= md) === */}
+          <div className="hidden md:grid grid-cols-12 gap-x-3 gap-y-0.5 items-center">
+            {/* Linha 1: Nome | Status | Datas | Processo | Atribuição */}
 
-          {/* Linha 2: Ato + Providências (toda a largura, alinhado) */}
+            {/* Nome do assistido (3 cols) */}
+            <div className="col-span-3 min-w-0 flex items-center gap-1.5">
+              {isUrgente && <Flame className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />}
+              {isPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
+              {demanda.assistidoId ? (
+                <Link
+                  href={`/admin/assistidos/${demanda.assistidoId}`}
+                  className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 dark:hover:text-emerald-400 truncate transition-colors"
+                  title={demanda.assistido}
+                >
+                  {demanda.assistido}
+                </Link>
+              ) : (
+                <span className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 truncate" title={demanda.assistido}>
+                  {demanda.assistido}
+                </span>
+              )}
+            </div>
 
-          {/* Ato (3 cols - alinhado com nome) */}
-          <div className="col-span-3 min-w-0">
-            {onAtoChange ? (
+            {/* Status (2 cols) */}
+            <div className="col-span-2 min-w-0">
               <Dropdown
-                value={demanda.ato}
+                value={demanda.status}
                 compact
                 displayValue={
-                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1">
-                    <FileText className="w-3 h-3 flex-shrink-0" />
-                    {demanda.ato || "Selecionar ato"}
-                  </span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
+                    <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate">{statusConfig.label}</span>
+                  </div>
                 }
-                options={atoOptions}
-                onChange={(v) => onAtoChange(demanda.id, v)}
+                options={statusOptions}
+                onChange={(v) => onStatusChange(demanda.id, v)}
               />
-            ) : (
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1">
-                <FileText className="w-3 h-3" />
-                {demanda.ato}
+            </div>
+
+            {/* Datas: Exp + Prazo (2 cols) */}
+            <div className="col-span-2 flex items-center gap-2 text-center justify-center">
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                {formatarData(demanda.data)}
               </span>
-            )}
-          </div>
+              <span className="text-zinc-300 dark:text-zinc-600">→</span>
+              <span className={`text-[11px] font-semibold flex items-center gap-0.5 ${
+                prazoInfo.cor === "red" ? "text-rose-600 dark:text-rose-400" :
+                prazoInfo.cor === "amber" ? "text-amber-600 dark:text-amber-400" :
+                prazoInfo.cor === "yellow" ? "text-yellow-600 dark:text-yellow-400" : "text-zinc-500 dark:text-zinc-400"
+              }`}>
+                {prazoInfo.cor === "red" && <AlertCircle className="w-3 h-3" />}
+                {prazoInfo.texto}
+              </span>
+            </div>
 
-          {/* Providências (9 cols - ocupa o resto) */}
-          <div className="col-span-9 min-w-0">
-            {onProvidenciasChange ? (
-              <EditableTextInline
-                value={demanda.providencias || ""}
-                onSave={(v) => onProvidenciasChange(demanda.id, v)}
-                placeholder="+ providências"
-              />
-            ) : demanda.providencias ? (
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate block">{demanda.providencias}</span>
-            ) : null}
-          </div>
+            {/* Processo (3 cols) */}
+            <div className="col-span-3 min-w-0">
+              {demanda.processos.length > 0 ? (
+                <div className="flex items-center gap-1 min-w-0">
+                  <span
+                    className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 truncate cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                    onClick={() => copy(demanda.processos[0].numero)}
+                    title={demanda.processos[0].numero}
+                  >
+                    {demanda.processos[0].numero}
+                  </span>
+                  <button
+                    onClick={() => copy(demanda.processos[0].numero)}
+                    className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 opacity-0 group-hover/row:opacity-100 transition-all flex-shrink-0"
+                    title="Copiar número"
+                  >
+                    {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-zinc-400" />}
+                  </button>
+                  {demanda.processoId && (
+                    <Link
+                      href={`/admin/processos/${demanda.processoId}`}
+                      className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 opacity-0 group-hover/row:opacity-100 transition-all flex-shrink-0"
+                      title="Abrir processo"
+                    >
+                      <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">Sem processo</span>
+              )}
+            </div>
 
+            {/* Atribuição (2 cols) */}
+            <div className="col-span-2 hidden lg:flex items-center gap-1.5 min-w-0">
+              {Icon && <Icon className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />}
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate" title={demanda.atribuicao}>
+                {demanda.atribuicao}
+              </span>
+            </div>
+
+            {/* Linha 2: Ato + Providências */}
+
+            {/* Ato (3 cols) */}
+            <div className="col-span-3 min-w-0">
+              {onAtoChange ? (
+                <Dropdown
+                  value={demanda.ato}
+                  compact
+                  displayValue={
+                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1">
+                      <FileText className="w-3 h-3 flex-shrink-0" />
+                      {demanda.ato || "Selecionar ato"}
+                    </span>
+                  }
+                  options={atoOptions}
+                  onChange={(v) => onAtoChange(demanda.id, v)}
+                />
+              ) : (
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1">
+                  <FileText className="w-3 h-3" />
+                  {demanda.ato}
+                </span>
+              )}
+            </div>
+
+            {/* Providências (9 cols) */}
+            <div className="col-span-9 min-w-0">
+              {onProvidenciasChange ? (
+                <EditableTextInline
+                  value={demanda.providencias || ""}
+                  onSave={(v) => onProvidenciasChange(demanda.id, v)}
+                  placeholder="+ providências"
+                />
+              ) : demanda.providencias ? (
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate block">{demanda.providencias}</span>
+              ) : null}
+            </div>
+          </div>
         </div>
 
         {/* Menu de ações */}
         <div ref={menuRef} className="relative flex-shrink-0">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors opacity-0 group-hover/row:opacity-100"
+            className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors md:opacity-0 md:group-hover/row:opacity-100"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
@@ -558,8 +668,8 @@ export function DemandaTableView({
 }: DemandaTableViewProps) {
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
-      {/* Header */}
-      <div className="flex items-center px-3 py-2 gap-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-800/60">
+      {/* Header - Apenas desktop */}
+      <div className="hidden md:flex items-center px-3 py-2 gap-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-800/60">
         {isSelectMode && <div className="w-4" />}
         <div className="w-1" />
         <div className="w-9" />
@@ -571,6 +681,13 @@ export function DemandaTableView({
           <div className="col-span-2 hidden lg:block">Atribuição</div>
         </div>
         <div className="w-8" />
+      </div>
+
+      {/* Header Mobile */}
+      <div className="md:hidden px-3 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-800/60">
+        <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+          Demandas
+        </span>
       </div>
 
       {/* Rows */}
