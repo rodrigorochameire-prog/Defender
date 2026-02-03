@@ -332,7 +332,7 @@ function DemandaRow({
         <Avatar initials={getInitials(demanda.assistido)} borderColor={statusColor} />
 
         {/* Conteúdo principal - nome e ato */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-[180px]">
           <div className="flex items-center gap-2">
             {isUrgente && <Flame className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />}
             {isPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
@@ -371,7 +371,7 @@ function DemandaRow({
         </div>
 
         {/* Status com dot */}
-        <div className="w-[140px] flex-shrink-0">
+        <div className="w-[130px] flex-shrink-0">
           <InlineDropdown
             value={demanda.status}
             options={statusOptions}
@@ -381,7 +381,7 @@ function DemandaRow({
         </div>
 
         {/* Prazo */}
-        <div className="w-[80px] flex-shrink-0 text-center">
+        <div className="w-[90px] flex-shrink-0 text-center">
           {prazoInfo.cor === "none" ? (
             <span className="text-[12px] text-zinc-400">-</span>
           ) : (
@@ -402,15 +402,18 @@ function DemandaRow({
         </div>
 
         {/* Processo com copy */}
-        <div className="w-[160px] flex-shrink-0">
+        <div className="w-[200px] flex-shrink-0">
           {demanda.processos.length > 0 ? (
             <div className="flex items-center gap-1.5">
-              <span className="text-[12px] font-mono text-zinc-500 dark:text-zinc-400 truncate">
-                {demanda.processos[0].numero.slice(-15)}
+              <span
+                className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 truncate cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300"
+                title={demanda.processos[0].numero}
+              >
+                {demanda.processos[0].numero}
               </span>
               <button
                 onClick={() => handleCopy(demanda.processos[0].numero)}
-                className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors opacity-0 group-hover:opacity-100"
+                className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
               >
                 {copied ? (
                   <Check className="w-3 h-3 text-emerald-500" />
@@ -420,26 +423,24 @@ function DemandaRow({
               </button>
             </div>
           ) : (
-            <span className="text-[12px] text-zinc-400">-</span>
+            <span className="text-[11px] text-zinc-400">-</span>
           )}
         </div>
 
         {/* Atribuição com ícone */}
-        <div className="w-[100px] flex-shrink-0 hidden lg:block">
+        <div className="w-[130px] flex-shrink-0 hidden xl:block">
           <div className="flex items-center gap-1.5">
             {AtribuicaoIcon && (
               <AtribuicaoIcon className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
             )}
-            <span className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-              {demanda.atribuicao.length > 12
-                ? demanda.atribuicao.slice(0, 12) + "..."
-                : demanda.atribuicao}
+            <span className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate" title={demanda.atribuicao}>
+              {demanda.atribuicao}
             </span>
           </div>
         </div>
 
         {/* Ações */}
-        <div className="w-[40px] flex-shrink-0 relative" ref={actionsRef}>
+        <div className="w-[36px] flex-shrink-0 relative" ref={actionsRef}>
           <button
             onClick={() => setShowActions(!showActions)}
             className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors opacity-0 group-hover:opacity-100"
@@ -571,12 +572,12 @@ export function DemandaTableView({
       <div className="flex items-center px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
         {isSelectMode && <div className="w-5 mr-4" />}
         <div className="w-10 mr-4" /> {/* Avatar space */}
-        <div className="flex-1">Demanda</div>
-        <div className="w-[140px] flex-shrink-0">Status</div>
-        <div className="w-[80px] flex-shrink-0 text-center">Prazo</div>
-        <div className="w-[160px] flex-shrink-0">Processo</div>
-        <div className="w-[100px] flex-shrink-0 hidden lg:block">Atribuição</div>
-        <div className="w-[40px] flex-shrink-0" />
+        <div className="flex-1 min-w-[180px]">Assistido / Ato</div>
+        <div className="w-[130px] flex-shrink-0">Status</div>
+        <div className="w-[90px] flex-shrink-0 text-center">Prazo</div>
+        <div className="w-[200px] flex-shrink-0">Processo</div>
+        <div className="w-[130px] flex-shrink-0 hidden xl:block">Atribuição</div>
+        <div className="w-[36px] flex-shrink-0" />
       </div>
 
       {/* Rows */}
