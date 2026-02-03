@@ -412,8 +412,8 @@ function Row({
                   value={demanda.ato}
                   compact
                   displayValue={
-                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1">
-                      <FileText className="w-3 h-3 flex-shrink-0" />
+                    <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 truncate flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md">
+                      <FileText className="w-3.5 h-3.5 flex-shrink-0" />
                       {demanda.ato || "Selecionar ato"}
                     </span>
                   }
@@ -421,8 +421,8 @@ function Row({
                   onChange={(v) => onAtoChange(demanda.id, v)}
                 />
               ) : (
-                <span className="text-[10px] text-zinc-500 truncate flex items-center gap-1">
-                  <FileText className="w-3 h-3" />
+                <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 truncate flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md">
+                  <FileText className="w-3.5 h-3.5" />
                   {demanda.ato}
                 </span>
               )}
@@ -568,8 +568,8 @@ function Row({
                   value={demanda.ato}
                   compact
                   displayValue={
-                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1">
-                      <FileText className="w-3 h-3 flex-shrink-0" />
+                    <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 truncate flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md">
+                      <FileText className="w-3.5 h-3.5 flex-shrink-0" />
                       {demanda.ato || "Selecionar ato"}
                     </span>
                   }
@@ -577,8 +577,8 @@ function Row({
                   onChange={(v) => onAtoChange(demanda.id, v)}
                 />
               ) : (
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1">
-                  <FileText className="w-3 h-3" />
+                <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 truncate flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md">
+                  <FileText className="w-3.5 h-3.5" />
                   {demanda.ato}
                 </span>
               )}
