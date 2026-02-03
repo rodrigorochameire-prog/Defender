@@ -250,7 +250,7 @@ export default function Demandas() {
         prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",
         data: d.dataEntrada ? new Date(d.dataEntrada + "T12:00:00").toLocaleDateString("pt-BR") : new Date(d.createdAt).toLocaleDateString("pt-BR"),
         processos: d.processo?.numeroAutos
-          ? [{ tipo: "Processo", numero: d.processo.numeroAutos }]
+          ? [{ tipo: "", numero: d.processo.numeroAutos }]
           : [],
         ato: d.ato || d.titulo || "",
         providencias: d.providencias || "",

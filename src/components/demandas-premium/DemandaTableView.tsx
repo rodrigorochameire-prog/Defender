@@ -430,10 +430,7 @@ function Row({
 
             {/* Linha 4: Processo */}
             {demanda.processos.length > 0 && (
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-500 flex-shrink-0">
-                  {demanda.processos[0].tipo || "AP"}
-                </span>
+              <div className="flex items-center gap-1 min-w-0">
                 <span
                   className="text-[10px] font-mono text-zinc-500 truncate cursor-pointer hover:text-emerald-600"
                   onClick={() => copy(demanda.processos[0].numero)}
@@ -524,10 +521,7 @@ function Row({
             {/* Processo (3 cols) */}
             <div className="col-span-3 min-w-0">
               {demanda.processos.length > 0 ? (
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-500 flex-shrink-0">
-                    {demanda.processos[0].tipo || "AP"}
-                  </span>
+                <div className="flex items-center gap-1 min-w-0">
                   <span
                     className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 truncate cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                     onClick={() => copy(demanda.processos[0].numero)}
