@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useAssignment, Assignment } from "@/contexts/assignment-context";
 import { useProfissional, type ProfissionalConfig } from "@/contexts/profissional-context";
+import { usePermissions } from "@/hooks/use-permissions";
 
 // ==========================================
 // TIPOS
@@ -165,7 +166,23 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
   const [visaoIntegrada, setVisaoIntegrada] = useState(false);
 
   const { setAssignment } = useAssignment();
-  const { profissionaisConfigs, profissionalAtivo, setProfissionalAtivo } = useProfissional();
+  const { profissionaisConfigs, profissionalAtivo, profissionalLogado, setProfissionalAtivo } = useProfissional();
+  const { user: sessionUser } = usePermissions();
+
+  // Verificar se o usuario logado pode ver o switcher de contexto
+  // Apenas defensores especializados (grupo juri_ep_vvd) e admin veem o switcher
+  const canSeeSwitcher = useMemo(() => {
+    // Admin sempre ve
+    if (sessionUser?.role === "admin") return true;
+    
+    // Se nao eh defensor, nao ve
+    if (sessionUser?.role !== "defensor") return false;
+    
+    // Verificar se o profissional logado eh do grupo especializado
+    if (profissionalLogado && profissionalLogado.grupo === "juri_ep_vvd") return true;
+    
+    return false;
+  }, [sessionUser, profissionalLogado]);
 
   // Construir lista de defensores dinamicamente a partir do contexto
   const defensoresDisplay = useMemo(() => {
@@ -268,6 +285,12 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
         <div className="h-12 bg-[#2a2a2f]/50 rounded-xl animate-pulse" />
       </div>
     );
+  }
+
+  // Se o usuario nao pode ver o switcher, nao renderiza nada
+  // Isso se aplica a: Danilo, Cristiane, estagiarios, servidor, triagem
+  if (!canSeeSwitcher) {
+    return null;
   }
 
   // Versao colapsada - apenas avatar do defensor

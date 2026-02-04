@@ -33,6 +33,7 @@ import {
   useAssignment, CONTEXT_MENU_ITEMS, UTILITIES_MENU,
   type MenuSection, type AssignmentMenuItem,
 } from "@/contexts/assignment-context";
+import { useProfissional } from "@/contexts/profissional-context";
 import { useAtribuicaoFiltro } from "@/components/layout/context-control";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
@@ -238,6 +239,12 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   const { config, modules, isLoading } = useAssignment();
   const { isAllSelected } = useAtribuicaoFiltro();
   const { user: sessionUser } = usePermissions();
+  const { profissionalLogado } = useProfissional();
+  
+  // Verificar se o usuario pode ver modulos especializados (Juri, EP, VVD)
+  // Apenas defensores do grupo juri_ep_vvd e admin podem ver
+  const canSeeSpecializedModules = sessionUser?.role === "admin" || 
+    (sessionUser?.role === "defensor" && profissionalLogado?.grupo === "juri_ep_vvd");
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
   
@@ -315,7 +322,8 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           </div>
 
           {/* Módulos Específicos - Só mostra quando uma atribuição específica está selecionada */}
-          {mounted && !isLoading && modules.length > 0 && showSpecificModules && (
+          {/* Oculto para defensores de varas criminais (Danilo, Cristiane) */}
+          {mounted && !isLoading && modules.length > 0 && showSpecificModules && canSeeSpecializedModules && (
             <div>
               <SidebarMenu className="space-y-1">
                 {!isCollapsed && (
