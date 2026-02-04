@@ -59,7 +59,7 @@ export interface MenuSection {
 // Os itens gerais (Assistidos, Processos, Demandas) ficam no menu fixo superior
 // ==========================================
 
-// 🏛️ TRIBUNAL DO JÚRI - Ferramentas específicas
+// TRIBUNAL DO JÚRI - Ferramentas específicas
 const JURI_MODULES: MenuSection[] = [
   {
     id: "plenario",
@@ -136,7 +136,7 @@ const EP_MODULES: MenuSection[] = [
   },
 ];
 
-// 🔄 SUBSTITUIÇÃO CRIMINAL
+// SUBSTITUIÇÃO CRIMINAL
 const SUBSTITUICAO_MODULES: MenuSection[] = [
   // Módulos específicos removidos - usando apenas menu principal
 ];
@@ -185,7 +185,7 @@ const GRUPO_JURI_MODULES: MenuSection[] = [
   },
 ];
 
-// ⚖️ SUBSTITUIÇÃO CÍVEL
+// SUBSTITUIÇÃO CÍVEL
 const CIVEL_MODULES: MenuSection[] = [
   {
     id: "ferramentas",
@@ -395,8 +395,7 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     shortName: "Júri Camaçari",
     description: "Processos do Tribunal do Júri da Comarca de Camaçari",
     icon: "Gavel",
-    emoji: "🏛️",
-    accentColor: "hsl(220, 10%, 45%)",
+        accentColor: "hsl(220, 10%, 45%)",
     accentColorLight: "hsl(220, 8%, 95%)",
     accentColorDark: "hsl(220, 12%, 35%)",
     bgGradient: "from-emerald-50/50 to-slate-50",
@@ -488,8 +487,7 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     shortName: "Subst. Criminal",
     description: "Atuação em substituição na área criminal",
     icon: "RefreshCw",
-    emoji: "🔄",
-    accentColor: "hsl(220, 10%, 47%)",
+        accentColor: "hsl(220, 10%, 47%)",
     accentColorLight: "hsl(220, 8%, 95%)",
     accentColorDark: "hsl(220, 12%, 37%)",
     bgGradient: "from-red-50/50 to-slate-50",
@@ -550,8 +548,7 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
     shortName: "Subst. Cível",
     description: "Atuação em substituição nas áreas cível, família e outras",
     icon: "Scale",
-    emoji: "⚖️",
-    accentColor: "hsl(220, 10%, 50%)",
+        accentColor: "hsl(220, 10%, 50%)",
     accentColorLight: "hsl(220, 8%, 95%)",
     accentColorDark: "hsl(220, 12%, 40%)",
     bgGradient: "from-violet-50/50 to-slate-50",

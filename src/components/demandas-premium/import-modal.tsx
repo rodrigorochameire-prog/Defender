@@ -251,7 +251,7 @@ export function ImportModal({ isOpen, onClose, onImport }: ImportModalProps) {
                   <li>Use o modelo baixado para garantir o formato correto</li>
                   <li>Datas devem estar no formato DD/MM/AA</li>
                   <li>Processos devem seguir o padrão CNJ: 0000000-00.0000.0.00.0000</li>
-                  <li className="font-semibold text-blue-800 dark:text-blue-200">📋 A aba &ldquo;Listas_Validacao&rdquo; contém as opções para os menus suspensos</li>
+                  <li className="font-semibold text-blue-800 dark:text-blue-200">A aba &ldquo;Listas_Validacao&rdquo; contém as opções para os menus suspensos</li>
                 </ul>
               </div>
             </div>
