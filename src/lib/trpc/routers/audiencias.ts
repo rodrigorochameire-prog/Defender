@@ -7,15 +7,16 @@ import { getWorkspaceScope } from "../workspace";
 
 export const audienciasRouter = router({
   // Listar audiências
+  // NOTA: Sem limite por padrão para garantir que todos os eventos apareçam no calendário
   list: protectedProcedure
     .input(z.object({
-      limit: z.number().min(1).max(1000).default(500), // Aumentado para suportar mais eventos
+      limit: z.number().min(1).max(10000).optional(), // Opcional - sem limite por padrão
       offset: z.number().default(0),
       responsavelId: z.number().optional(),
       apenasProximas: z.boolean().optional().default(false), // Filtrar apenas futuras
     }).optional())
     .query(async ({ input }) => {
-      const { limit = 500, offset = 0, responsavelId, apenasProximas = false } = input || {};
+      const { limit, offset = 0, responsavelId, apenasProximas = false } = input || {};
 
       const whereConditions = [];
 
@@ -34,7 +35,8 @@ export const audienciasRouter = router({
         );
       }
 
-      const results = await db
+      // Construir query base
+      let query = db
         .select({
           id: audiencias.id,
           processoId: audiencias.processoId,
@@ -69,10 +71,14 @@ export const audienciasRouter = router({
         .leftJoin(assistidos, eq(audiencias.assistidoId, assistidos.id))
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
         .orderBy(asc(audiencias.dataAudiencia))
-        .limit(limit)
         .offset(offset);
 
-      return results;
+      // Aplicar limite apenas se especificado
+      if (limit !== undefined) {
+        query = query.limit(limit) as any;
+      }
+
+      return await query;
     }),
 
   // Buscar audiência por ID

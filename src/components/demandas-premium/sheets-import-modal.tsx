@@ -66,15 +66,15 @@ const STATUS_MAP: Record<string, string> = {
   "resolvido": "resolvido",
 };
 
-// Opções de atribuição
+// Opções de atribuição - usando IDs do sistema para compatibilidade
 const ATRIBUICAO_OPTIONS = [
-  { value: "Tribunal do Júri", label: "Tribunal do Júri", icon: Gavel },
-  { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri", icon: Target },
-  { value: "Violência Doméstica", label: "Violência Doméstica", icon: Home },
-  { value: "Execução Penal", label: "Execução Penal", icon: Lock },
-  { value: "Criminal Geral", label: "Criminal Geral", icon: Folder },
-  { value: "Substituição", label: "Substituição", icon: RefreshCw },
-  { value: "Curadoria Especial", label: "Curadoria Especial", icon: Shield },
+  { value: "JURI_CAMACARI", label: "Vara do Júri - Camaçari", icon: Gavel },
+  { value: "GRUPO_JURI", label: "Grupo Especial do Júri", icon: Target },
+  { value: "VVD_CAMACARI", label: "Violência Doméstica - Camaçari", icon: Home },
+  { value: "EXECUCAO_PENAL", label: "Execução Penal", icon: Lock },
+  { value: "SUBSTITUICAO", label: "Criminal Geral", icon: Folder },
+  { value: "SUBSTITUICAO_CIVEL", label: "Substituição Cível", icon: RefreshCw },
+  { value: "CURADORIA", label: "Curadoria Especial", icon: Shield },
 ];
 
 export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportModalProps) {
