@@ -404,39 +404,46 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 
   const urgency = getUrgencyLevel();
 
+  // Determinar a cor do destaque superior baseado no status
+  const getTopBorderColor = () => {
+    if (isPreso) return { color: "#f43f5e", gradient: "from-rose-500 via-rose-400 to-rose-500" };
+    if (prazoVencido) return { color: "#f43f5e", gradient: "from-rose-500 via-rose-400 to-rose-500" };
+    if (audienciaHoje) return { color: "#f59e0b", gradient: "from-amber-500 via-amber-400 to-amber-500" };
+    if (isMonitorado) return { color: "#f59e0b", gradient: "from-amber-500 via-amber-400 to-amber-500" };
+    return { color: primaryColor, gradient: `from-[${primaryColor}] via-[${primaryColor}]/80 to-[${primaryColor}]` };
+  };
+
+  const topBorder = getTopBorderColor();
+
   return (
     <Card className={cn(
-      // Base Premium
+      // Base Premium - Estilo "Processos"
       "group relative flex flex-col justify-between overflow-hidden transition-all duration-300",
       "bg-white dark:bg-zinc-900",
-      "border border-zinc-200/80 dark:border-zinc-800",
+      "border border-zinc-100 dark:border-zinc-800",
       "rounded-xl",
-      "hover:shadow-xl",
+      "hover:shadow-lg",
       getCardGlow(),
       // Fixado
-      isPinned && "ring-2 ring-amber-400/50 dark:ring-amber-500/30 bg-gradient-to-br from-amber-50/50 to-white dark:from-amber-900/10 dark:to-zinc-900"
+      isPinned && "ring-2 ring-amber-400/50 dark:ring-amber-500/30"
     )}
-    style={{ borderLeftWidth: '4px', borderLeftColor: isPreso ? '#f43f5e' : primaryColor }}
     >
+      {/* ✨ BORDA SUPERIOR PREMIUM - Estilo "Processos" */}
+      <div
+        className={cn(
+          "absolute inset-x-0 top-0 h-1 rounded-t-xl",
+          urgency?.pulse && "animate-pulse"
+        )}
+        style={{ backgroundColor: topBorder.color }}
+      />
 
-      {/* Gradiente de fundo baseado em urgência */}
-      {urgency && (
-        <div className={cn(
-          "absolute inset-0 opacity-30 pointer-events-none",
-          urgency.color === "rose" && "bg-gradient-to-br from-rose-500/10 via-transparent to-transparent",
-          urgency.color === "amber" && "bg-gradient-to-br from-amber-500/10 via-transparent to-transparent"
-        )} />
-      )}
-
-      {/* Barra de urgência no topo */}
-      {urgency && (
-        <div className={cn(
-          "absolute top-0 left-0 right-0 h-1",
-          urgency.color === "rose" && "bg-gradient-to-r from-rose-500 via-rose-400 to-rose-500",
-          urgency.color === "amber" && "bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500",
-          urgency.pulse && "animate-pulse"
-        )} />
-      )}
+      {/* Gradiente de fundo sutil - partindo do topo */}
+      <div
+        className="absolute inset-0 opacity-40 pointer-events-none rounded-xl"
+        style={{
+          background: `linear-gradient(to bottom, ${topBorder.color}15 0%, transparent 40%)`
+        }}
+      />
 
       {/* Quick Actions Overlay - Aparece ao clicar no botão ⚡ */}
       {showQuickActions && (
@@ -2045,7 +2052,7 @@ export default function AssistidosPage() {
         </div>
       )}
 
-      {/* KPI Cards Premium - Grid Responsivo */}
+      {/* KPI Cards Premium - Grid Responsivo - Estilo "Processos" com borda superior */}
       {!showNaoIdentificados && (
       <>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -2055,17 +2062,20 @@ export default function AssistidosPage() {
             className={cn(
               "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               statusFilter === "all" && !showPinnedOnly
-                ? "border-emerald-200/50 dark:border-emerald-800/30 ring-1 ring-emerald-200/30"
+                ? "border-emerald-200/50 dark:border-emerald-800/30"
                 : "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
-              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/5"
+              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/10"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium */}
+            <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-emerald-500" />
+            {/* Gradiente de fundo */}
+            <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 transition-colors">Total</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Total</p>
                 <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.total - naoIdentificadosCount}</p>
-                <p className="text-[10px] text-zinc-400">assistidos</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400">assistidos</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
                 <Users className="w-5 h-5" />
@@ -2079,17 +2089,23 @@ export default function AssistidosPage() {
             className={cn(
               "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               statusFilter === "CADEIA_PUBLICA"
-                ? "border-rose-200/50 dark:border-rose-800/30 ring-1 ring-rose-200/30"
+                ? "border-rose-200/50 dark:border-rose-800/30"
                 : "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
               "cursor-pointer hover:shadow-lg hover:shadow-rose-500/10"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium */}
+            <div className={cn(
+              "absolute inset-x-0 top-0 h-1 rounded-t-xl bg-rose-500",
+              stats.presos > 0 && "animate-pulse"
+            )} />
+            {/* Gradiente de fundo */}
+            <div className="absolute inset-0 bg-gradient-to-b from-rose-500/10 via-rose-500/5 to-transparent" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-rose-600/70 transition-colors">Presos</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Presos</p>
                 <p className={cn("text-2xl font-bold", stats.presos > 0 ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.presos}</p>
-                <p className="text-[10px] text-zinc-400">prioridade máxima</p>
+                <p className="text-[10px] text-rose-600 dark:text-rose-400">prioridade máxima</p>
               </div>
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
@@ -2106,17 +2122,20 @@ export default function AssistidosPage() {
             className={cn(
               "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               statusFilter === "MONITORADO"
-                ? "border-amber-200/50 dark:border-amber-800/30 ring-1 ring-amber-200/30"
+                ? "border-amber-200/50 dark:border-amber-800/30"
                 : "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
               "cursor-pointer hover:shadow-lg hover:shadow-amber-500/10"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium */}
+            <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-amber-500" />
+            {/* Gradiente de fundo */}
+            <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-amber-600/70 transition-colors">Monitorados</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Monitorados</p>
                 <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.monitorados}</p>
-                <p className="text-[10px] text-zinc-400">domiciliar/tornozeleira</p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-400">domiciliar/tornozeleira</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
                 <Timer className="w-5 h-5" />
@@ -2133,19 +2152,22 @@ export default function AssistidosPage() {
               "cursor-pointer hover:shadow-lg hover:shadow-blue-500/10"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            {stats.audienciasHoje > 0 && (
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500 animate-pulse" />
-            )}
+            {/* ✨ Borda Superior Premium */}
+            <div className={cn(
+              "absolute inset-x-0 top-0 h-1 rounded-t-xl bg-blue-500",
+              stats.audienciasHoje > 0 && "animate-pulse"
+            )} />
+            {/* Gradiente de fundo */}
+            <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 via-blue-500/5 to-transparent" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-blue-600/70 transition-colors">Audiências Hoje</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Audiências Hoje</p>
                 <p className={cn("text-2xl font-bold", stats.audienciasHoje > 0 ? "text-blue-600 dark:text-blue-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.audienciasHoje}</p>
-                <p className="text-[10px] text-zinc-400">{stats.audienciasSemana} esta semana</p>
+                <p className="text-[10px] text-blue-600 dark:text-blue-400">{stats.audienciasSemana} esta semana</p>
               </div>
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
-                stats.audienciasHoje > 0 ? "bg-blue-500 text-white animate-pulse" : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                stats.audienciasHoje > 0 ? "bg-blue-500 text-white" : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
               )}>
                 <Calendar className="w-5 h-5" />
               </div>
@@ -2161,12 +2183,15 @@ export default function AssistidosPage() {
               "cursor-pointer hover:shadow-lg hover:shadow-violet-500/10"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium */}
+            <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-violet-500" />
+            {/* Gradiente de fundo */}
+            <div className="absolute inset-0 bg-gradient-to-b from-violet-500/10 via-violet-500/5 to-transparent" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-violet-600/70 transition-colors">Com Demandas</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Com Demandas</p>
                 <p className={cn("text-2xl font-bold", stats.comDemandas > 0 ? "text-violet-600 dark:text-violet-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.comDemandas}</p>
-                <p className="text-[10px] text-zinc-400">pendentes</p>
+                <p className="text-[10px] text-violet-600 dark:text-violet-400">pendentes</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
                 <FileText className="w-5 h-5" />
@@ -2180,21 +2205,24 @@ export default function AssistidosPage() {
             className={cn(
               "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               showPinnedOnly
-                ? "border-amber-200/50 dark:border-amber-800/30 ring-1 ring-amber-200/30 bg-gradient-to-br from-amber-50/50 to-white dark:from-amber-900/10 dark:to-zinc-900"
+                ? "border-amber-200/50 dark:border-amber-800/30"
                 : "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
               "cursor-pointer hover:shadow-lg hover:shadow-amber-500/10"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium */}
+            <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-amber-400" />
+            {/* Gradiente de fundo */}
+            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/10 via-amber-400/5 to-transparent" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-amber-600/70 transition-colors">Fixados</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Fixados</p>
                 <p className={cn("text-2xl font-bold", showPinnedOnly ? "text-amber-600 dark:text-amber-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.pinned}</p>
-                <p className="text-[10px] text-zinc-400">favoritos</p>
+                <p className="text-[10px] text-amber-500 dark:text-amber-400">favoritos</p>
               </div>
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
-                showPinnedOnly ? "bg-amber-500 text-white" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                showPinnedOnly ? "bg-amber-500 text-white" : "bg-amber-400/10 text-amber-500 dark:text-amber-400"
               )}>
                 <BookmarkCheck className="w-5 h-5" />
               </div>
