@@ -41,7 +41,13 @@ import {
   History,
   XCircle,
   CalendarX2,
+  Edit3,
+  Trash2,
+  ExternalLink,
+  User,
+  Copy,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface CalendarMonthViewProps {
   eventos: any[];
@@ -121,10 +127,14 @@ const COR_EVENTO_CANCELADO = "#a1a1aa"; // zinc-400
 // Componente de Evento Compacto - Visual sofisticado
 function EventoCompacto({
   evento,
-  onEventClick
+  onEventClick,
+  onEditEvento,
+  onDeleteEvento,
 }: {
   evento: any;
   onEventClick: (evento: any) => void;
+  onEditEvento?: (evento: any) => void;
+  onDeleteEvento?: (id: string) => void;
 }) {
   // Usar atribuicaoKey se disponível, senão buscar por atribuicao (label)
   const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
@@ -189,76 +199,211 @@ function EventoCompacto({
         </button>
       </PopoverTrigger>
       
-      <PopoverContent 
-        className="w-80 p-0 border shadow-xl" 
-        side="right" 
+      <PopoverContent
+        className="w-[340px] p-0 border-0 shadow-2xl rounded-xl overflow-hidden"
+        side="right"
         align="start"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={`p-4 border-l-4 ${colors.border}`}>
-          {/* Header */}
-          <div className="mb-3">
-            <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
-              {evento.titulo}
-            </h4>
-            {evento.assistido && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                {evento.assistidoId ? (
-                  <a 
-                    href={`/admin/assistidos/${evento.assistidoId}`}
-                    className="hover:text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {evento.assistido}
-                  </a>
-                ) : (
-                  evento.assistido
-                )}
-              </p>
-            )}
-          </div>
+        {/* Header com cor da atribuição */}
+        <div
+          className="px-4 py-3"
+          style={{ backgroundColor: `${displayColor}15` }}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              {/* Badge de status para cancelados */}
+              {eventoCancelado && (
+                <div className="flex items-center gap-1.5 mb-2">
+                  {evento.status === "cancelado" ? (
+                    <XCircle className="w-3.5 h-3.5 text-red-500" />
+                  ) : (
+                    <CalendarX2 className="w-3.5 h-3.5 text-amber-500" />
+                  )}
+                  <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
+                    {evento.status === "cancelado" ? "Cancelado" : "Redesignado"}
+                  </span>
+                </div>
+              )}
 
-          {/* Detalhes */}
-          <div className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
-            <div className="flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5" />
-              <span>{evento.horarioInicio}{evento.horarioFim && ` - ${evento.horarioFim}`}</span>
+              {/* Título */}
+              <h4
+                className={`font-bold text-base leading-tight ${
+                  eventoCancelado
+                    ? "text-zinc-400 line-through"
+                    : "text-zinc-900 dark:text-zinc-100"
+                }`}
+              >
+                {evento.titulo}
+              </h4>
+
+              {/* Assistido com link */}
+              {evento.assistido && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <User className="w-3.5 h-3.5 text-zinc-400" />
+                  {evento.assistidoId ? (
+                    <a
+                      href={`/admin/assistidos/${evento.assistidoId}`}
+                      className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {evento.assistido}
+                    </a>
+                  ) : (
+                    <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                      {evento.assistido}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
-            {evento.local && (
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5" />
-                <span className="truncate">{evento.local}</span>
-              </div>
-            )}
-            {evento.processo && (
-              <div className="flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5" />
-                <span className="font-mono text-[10px]">{evento.processo}</span>
-              </div>
-            )}
+
+            {/* Ações rápidas */}
+            <div className="flex items-center gap-0.5">
+              {onEditEvento && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditEvento(evento);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-zinc-200/80 dark:hover:bg-zinc-700 transition-colors"
+                  title="Editar"
+                >
+                  <Edit3 className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                </button>
+              )}
+              {onDeleteEvento && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm("Excluir este evento?")) {
+                      onDeleteEvento(evento.id);
+                    }
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                  title="Excluir"
+                >
+                  <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Conteúdo */}
+        <div className="px-4 py-3 space-y-3 bg-white dark:bg-zinc-900">
+          {/* Horário */}
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: `${displayColor}20` }}
+            >
+              <Clock className="w-4 h-4" style={{ color: displayColor }} />
+            </div>
+            <div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Horário</p>
+              <p
+                className={`text-sm font-semibold ${
+                  eventoCancelado ? "text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-100"
+                }`}
+              >
+                {evento.horarioInicio}
+                {evento.horarioFim && ` - ${evento.horarioFim}`}
+              </p>
+            </div>
           </div>
 
-          {/* Status */}
-          {hasRegistro && (
-            <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
-              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="text-xs font-medium">Registro documentado</span>
+          {/* Local */}
+          {evento.local && (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                <MapPin className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Local</p>
+                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                  {evento.local}
+                </p>
               </div>
             </div>
           )}
 
-          {/* Ação */}
-          <Button
-            size="sm"
-            className="w-full mt-3"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEventClick(evento);
-            }}
-          >
-            {hasRegistro ? "Ver Detalhes" : "Registrar"}
-          </Button>
+          {/* Processo */}
+          {evento.processo && (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Processo</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-mono text-zinc-700 dark:text-zinc-300 truncate">
+                    {evento.processo}
+                  </p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(evento.processo);
+                      toast.success("Número copiado!");
+                    }}
+                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    title="Copiar número"
+                  >
+                    <Copy className="w-3 h-3 text-zinc-400" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Indicador de Registro */}
+          {hasRegistro && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                Registro documentado
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Footer com ações */}
+        <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              className="flex-1 h-9 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEventClick(evento);
+              }}
+            >
+              {hasRegistro ? (
+                <>
+                  <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                  Ver Detalhes
+                </>
+              ) : (
+                <>
+                  <FileText className="w-3.5 h-3.5 mr-1.5" />
+                  Registrar
+                </>
+              )}
+            </Button>
+            {onEditEvento && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditEvento(evento);
+                }}
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
       </PopoverContent>
     </Popover>
@@ -435,10 +580,12 @@ export function CalendarMonthView({
                     {/* Lista de Eventos */}
                     <div className="space-y-1">
                       {dayEvents.slice(0, 3).map((evento) => (
-                        <EventoCompacto 
-                          key={evento.id} 
-                          evento={evento} 
+                        <EventoCompacto
+                          key={evento.id}
+                          evento={evento}
                           onEventClick={onEventClick}
+                          onEditEvento={onEditEvento}
+                          onDeleteEvento={onDeleteEvento}
                         />
                       ))}
                     </div>
