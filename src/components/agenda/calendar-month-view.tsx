@@ -39,6 +39,8 @@ import {
   CheckCircle2,
   FileText,
   History,
+  XCircle,
+  CalendarX2,
 } from "lucide-react";
 
 interface CalendarMonthViewProps {
@@ -47,6 +49,9 @@ interface CalendarMonthViewProps {
   onDateChange: (date: Date) => void;
   onEventClick: (evento: any) => void;
   onDateClick: (date: Date) => void;
+  onEditEvento?: (evento: any) => void;
+  onDeleteEvento?: (id: string) => void;
+  onArchiveEvento?: (id: string) => void;
 }
 
 import { getAtribuicaoColors, ATRIBUICAO_COLORS } from "@/lib/config/atribuicoes";
@@ -106,11 +111,18 @@ const abreviarTitulo = (titulo: string): string => {
   return titulo.length > 15 ? titulo.substring(0, 15) + "…" : titulo;
 };
 
+// Verifica se o evento não ocorrerá (cancelado ou redesignado)
+const isEventoCancelado = (status: string) =>
+  status === "cancelado" || status === "remarcado" || status === "redesignado";
+
+// Cor neutra para eventos que não ocorrerão
+const COR_EVENTO_CANCELADO = "#a1a1aa"; // zinc-400
+
 // Componente de Evento Compacto - Visual sofisticado
-function EventoCompacto({ 
-  evento, 
-  onEventClick 
-}: { 
+function EventoCompacto({
+  evento,
+  onEventClick
+}: {
   evento: any;
   onEventClick: (evento: any) => void;
 }) {
@@ -118,41 +130,59 @@ function EventoCompacto({
   const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
   const solidColor = (colors as any).color || "#71717a";
   const hasRegistro = !!evento.registro;
-  
+  const eventoCancelado = isEventoCancelado(evento.status);
+
+  // Usar cor neutra se evento cancelado/redesignado
+  const displayColor = eventoCancelado ? COR_EVENTO_CANCELADO : solidColor;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
           onClick={(e) => e.stopPropagation()}
-          className="group w-full text-left rounded-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 overflow-hidden"
+          className={`group w-full text-left rounded-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 overflow-hidden ${
+            eventoCancelado ? "opacity-60" : ""
+          }`}
           style={{
-            backgroundColor: `${solidColor}15`,
-            borderLeft: `3px solid ${solidColor}`,
+            backgroundColor: `${displayColor}15`,
+            borderLeft: `3px solid ${displayColor}`,
           }}
         >
           <div className="px-2 py-1.5">
             <div className="flex items-center gap-1.5">
-              {/* Horário com cor da atribuição */}
-              <span 
-                className="text-[10px] font-bold shrink-0"
-                style={{ color: solidColor }}
+              {/* Ícone de cancelado/redesignado */}
+              {evento.status === "cancelado" && (
+                <XCircle className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
+              )}
+              {(evento.status === "remarcado" || evento.status === "redesignado") && (
+                <CalendarX2 className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
+              )}
+
+              {/* Horário com cor da atribuição (ou neutra se cancelado) */}
+              <span
+                className={`text-[10px] font-bold shrink-0 ${eventoCancelado ? "line-through" : ""}`}
+                style={{ color: displayColor }}
               >
                 {evento.horarioInicio}
               </span>
-              
-              {/* Indicador de prioridade urgente */}
-              {evento.prioridade === "urgente" && (
+
+              {/* Indicador de prioridade urgente (só mostra se não cancelado) */}
+              {!eventoCancelado && evento.prioridade === "urgente" && (
                 <AlertTriangle className="w-2.5 h-2.5 text-red-500 shrink-0" />
               )}
-              
+
               {/* Indicador de registro salvo */}
               {hasRegistro && (
                 <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
               )}
             </div>
-            
+
             {/* Título */}
-            <p className="text-[10px] font-medium text-zinc-700 dark:text-zinc-300 truncate leading-tight mt-0.5">
+            <p className={`text-[10px] font-medium truncate leading-tight mt-0.5 ${
+              eventoCancelado
+                ? "text-zinc-400 dark:text-zinc-500 line-through"
+                : "text-zinc-700 dark:text-zinc-300"
+            }`}>
               {abreviarTitulo(evento.titulo)}
             </p>
           </div>
@@ -242,6 +272,9 @@ export function CalendarMonthView({
   onDateChange,
   onEventClick,
   onDateClick,
+  onEditEvento,
+  onDeleteEvento,
+  onArchiveEvento,
 }: CalendarMonthViewProps) {
   const [popupDate, setPopupDate] = useState<Date | null>(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
@@ -439,6 +472,9 @@ export function CalendarMonthView({
           position={popupPosition}
           onClose={() => setPopupDate(null)}
           onEventClick={onEventClick}
+          onEditEvento={onEditEvento}
+          onDeleteEvento={onDeleteEvento}
+          onArchiveEvento={onArchiveEvento}
         />
       )}
     </div>

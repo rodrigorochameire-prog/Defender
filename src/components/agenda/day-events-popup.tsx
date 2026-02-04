@@ -20,6 +20,12 @@ import {
   RefreshCw,
   Shield,
   AlertTriangle,
+  XCircle,
+  CalendarX2,
+  Trash2,
+  Edit3,
+  Archive,
+  MoreHorizontal,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -30,7 +36,17 @@ interface DayEventsPopupProps {
   position: { x: number; y: number };
   onClose: () => void;
   onEventClick: (evento: any) => void;
+  onEditEvento?: (evento: any) => void;
+  onDeleteEvento?: (id: string) => void;
+  onArchiveEvento?: (id: string) => void;
 }
+
+// Verifica se o evento não ocorrerá (cancelado ou redesignado)
+const isEventoCancelado = (status: string) =>
+  status === "cancelado" || status === "remarcado" || status === "redesignado";
+
+// Cor neutra para eventos que não ocorrerão
+const COR_EVENTO_CANCELADO = "#a1a1aa"; // zinc-400
 
 // Cores por atribuição - Design Premium e Profissional
 const atribuicaoColors: Record<string, { bg: string; text: string; dot: string; icon: string; border: string; borderLeft: string; borderColor: string; borderHover: string }> = {
@@ -229,6 +245,9 @@ export function DayEventsPopup({
   position,
   onClose,
   onEventClick,
+  onEditEvento,
+  onDeleteEvento,
+  onArchiveEvento,
 }: DayEventsPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
   const [adjustedPosition, setAdjustedPosition] = useState({ x: 0, y: 0 });
@@ -237,34 +256,56 @@ export function DayEventsPopup({
     if (!isOpen || !popupRef.current) return;
 
     const popup = popupRef.current;
-    const popupRect = popup.getBoundingClientRect();
     const padding = 16; // Espaço de segurança das bordas
-    const popupWidth = 420; // Largura fixa do popup
-    const popupHeight = Math.min(600, popupRect.height); // Altura máxima
+
+    // Detectar se é mobile/tablet (tela pequena)
+    const isMobile = window.innerWidth < 640;
+    const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
+
+    // Largura adaptativa
+    const popupWidth = isMobile ? window.innerWidth - padding * 2 : 420;
+    const popupHeight = Math.min(isMobile ? window.innerHeight * 0.7 : 600, 600);
 
     let x = position.x;
     let y = position.y;
 
-    // Ajustar horizontalmente
-    // Se não couber à direita, posiciona à esquerda
-    if (x + popupWidth + padding > window.innerWidth) {
-      x = Math.max(padding, window.innerWidth - popupWidth - padding);
-    }
-    
-    // Garantir que não saia pela esquerda
-    if (x < padding) {
+    if (isMobile) {
+      // Em mobile: centralizar horizontalmente
       x = padding;
-    }
-
-    // Ajustar verticalmente
-    // Se não couber abaixo, posiciona acima
-    if (y + popupHeight + padding > window.innerHeight) {
+      // Posicionar no meio inferior da tela
       y = Math.max(padding, window.innerHeight - popupHeight - padding);
-    }
-    
-    // Garantir que não saia por cima
-    if (y < padding) {
-      y = padding;
+    } else {
+      // Em desktop/tablet: seguir posição do clique com ajustes
+
+      // Ajustar horizontalmente
+      if (x + popupWidth + padding > window.innerWidth) {
+        x = Math.max(padding, window.innerWidth - popupWidth - padding);
+      }
+
+      // Garantir que não saia pela esquerda
+      if (x < padding) {
+        x = padding;
+      }
+
+      // Ajustar verticalmente - preferir mostrar abaixo
+      if (y + popupHeight + padding > window.innerHeight) {
+        // Se não couber abaixo, calcular melhor posição
+        const spaceBelow = window.innerHeight - y - padding;
+        const spaceAbove = y - padding;
+
+        if (spaceAbove > spaceBelow && spaceAbove >= 300) {
+          // Mostrar acima se tiver mais espaço
+          y = Math.max(padding, y - popupHeight - 16);
+        } else {
+          // Ajustar para caber na tela
+          y = Math.max(padding, window.innerHeight - popupHeight - padding);
+        }
+      }
+
+      // Garantir que não saia por cima
+      if (y < padding) {
+        y = padding;
+      }
     }
 
     setAdjustedPosition({ x, y });
@@ -300,7 +341,7 @@ export function DayEventsPopup({
             top: `${adjustedPosition.y}px`,
           }}
         >
-          <Card className="w-[420px] max-h-[600px] overflow-hidden shadow-2xl border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+          <Card className="w-[calc(100vw-32px)] sm:w-[420px] max-h-[70vh] sm:max-h-[600px] overflow-hidden shadow-2xl border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             {/* Header */}
             <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 flex items-center justify-between sticky top-0 z-10">
               <div>
@@ -320,7 +361,7 @@ export function DayEventsPopup({
             </div>
 
             {/* Content */}
-            <div className="max-h-[480px] overflow-y-auto">
+            <div className="max-h-[calc(70vh-120px)] sm:max-h-[480px] overflow-y-auto overscroll-contain">
               {eventosOrdenados.length === 0 ? (
                 <div className="p-12 text-center">
                   <CalendarIcon className="w-14 h-14 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
@@ -331,6 +372,7 @@ export function DayEventsPopup({
               ) : (
                 <div className="p-3">
                   {eventosOrdenados.map((evento, index) => {
+                    const eventoCancelado = isEventoCancelado(evento.status);
                     const atribuicaoColor = atribuicaoColors[evento.atribuicao] || atribuicaoColors["Criminal Geral"];
                     const AtribuicaoIcon = atribuicaoIcons[evento.atribuicao] || Folder;
                     const TipoIcon = tipoIcons[evento.tipo] || CalendarIcon;
@@ -346,36 +388,122 @@ export function DayEventsPopup({
                           onEventClick(evento);
                           onClose();
                         }}
-                        className={`mb-2.5 rounded-xl border border-zinc-300/60 dark:border-zinc-700/60 hover:border-zinc-400/80 dark:hover:border-zinc-600/80 cursor-pointer transition-all ${atribuicaoColor.bg} group shadow-sm hover:shadow-md`}
+                        className={`mb-2.5 rounded-xl border cursor-pointer transition-all group shadow-sm hover:shadow-md relative ${
+                          eventoCancelado
+                            ? "border-zinc-300/60 dark:border-zinc-700/60 bg-zinc-50/80 dark:bg-zinc-800/30 opacity-70"
+                            : `border-zinc-300/60 dark:border-zinc-700/60 hover:border-zinc-400/80 dark:hover:border-zinc-600/80 ${atribuicaoColor.bg}`
+                        }`}
                       >
                         <div className="p-4 relative">
+                          {/* Ações rápidas no hover */}
+                          <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            {onEditEvento && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEditEvento(evento);
+                                  onClose();
+                                }}
+                                className="p-1.5 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                                title="Editar"
+                              >
+                                <Edit3 className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+                              </button>
+                            )}
+                            {onArchiveEvento && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onArchiveEvento(evento.id);
+                                }}
+                                className="p-1.5 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                                title="Arquivar"
+                              >
+                                <Archive className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                              </button>
+                            )}
+                            {onDeleteEvento && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm("Excluir este evento?")) {
+                                    onDeleteEvento(evento.id);
+                                  }
+                                }}
+                                className="p-1.5 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                              </button>
+                            )}
+                          </div>
+
                           {/* Header do Evento */}
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                              <span className={`text-sm font-bold ${atribuicaoColor.text}`}>
+                              {/* Ícone de status cancelado/redesignado */}
+                              {evento.status === "cancelado" && (
+                                <XCircle className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                              )}
+                              {(evento.status === "remarcado" || evento.status === "redesignado") && (
+                                <CalendarX2 className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                              )}
+
+                              <span className={`text-sm font-bold ${
+                                eventoCancelado
+                                  ? "text-zinc-400 line-through"
+                                  : atribuicaoColor.text
+                              }`}>
                                 {evento.horarioInicio}
                               </span>
                               {evento.horarioFim && (
                                 <>
                                   <span className="text-xs text-zinc-400">até</span>
-                                  <span className={`text-sm font-bold ${atribuicaoColor.text}`}>
+                                  <span className={`text-sm font-bold ${
+                                    eventoCancelado
+                                      ? "text-zinc-400 line-through"
+                                      : atribuicaoColor.text
+                                  }`}>
                                     {evento.horarioFim}
                                   </span>
                                 </>
                               )}
                             </div>
-                            <ChevronRight className="w-4 h-4 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+
+                            {/* Badge de status para cancelado/redesignado */}
+                            {eventoCancelado && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-2 py-0.5 h-5 border-0 font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                              >
+                                {evento.status === "cancelado" ? "Cancelado" : "Redesignado"}
+                              </Badge>
+                            )}
+
+                            {!eventoCancelado && (
+                              <ChevronRight className="w-4 h-4 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                            )}
                           </div>
 
                           {/* Título e Tipo */}
                           <div className="flex items-start gap-3 mb-3">
-                            <TipoIcon className="w-5 h-5 text-zinc-600 dark:text-zinc-400 mt-0.5 flex-shrink-0" />
+                            <TipoIcon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
+                              eventoCancelado ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
+                            }`} />
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-base font-bold text-zinc-900 dark:text-zinc-100 leading-tight mb-1.5 line-clamp-2">
+                              <h4 className={`text-base font-bold leading-tight mb-1.5 line-clamp-2 ${
+                                eventoCancelado
+                                  ? "text-zinc-400 dark:text-zinc-500 line-through"
+                                  : "text-zinc-900 dark:text-zinc-100"
+                              }`}>
                                 {abreviarTitulo(evento.titulo)}
                               </h4>
                               {evento.assistido && (
-                                <p className="text-sm text-zinc-600 dark:text-zinc-400 truncate flex items-center gap-1.5">
+                                <p className={`text-sm truncate flex items-center gap-1.5 ${
+                                  eventoCancelado
+                                    ? "text-zinc-400 dark:text-zinc-500"
+                                    : "text-zinc-600 dark:text-zinc-400"
+                                }`}>
                                   <User className="w-3.5 h-3.5 flex-shrink-0" />
                                   {evento.assistido}
                                 </p>
@@ -387,13 +515,17 @@ export function DayEventsPopup({
                           {(evento.local || evento.processo) && (
                             <div className="space-y-1.5 mb-3">
                               {evento.local && (
-                                <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                                <div className={`flex items-center gap-2 text-sm ${
+                                  eventoCancelado ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
+                                }`}>
                                   <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                                   <span className="truncate">{evento.local}</span>
                                 </div>
                               )}
                               {evento.processo && (
-                                <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                                <div className={`flex items-center gap-2 text-sm ${
+                                  eventoCancelado ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
+                                }`}>
                                   <FileText className="w-3.5 h-3.5 flex-shrink-0" />
                                   <span className="truncate font-mono text-xs">{evento.processo}</span>
                                 </div>
@@ -404,12 +536,16 @@ export function DayEventsPopup({
                           {/* Footer - Atribuição e Prioridade */}
                           <div className="flex items-center justify-between pt-3 border-t border-zinc-200/50 dark:border-zinc-700/50">
                             <div className="flex items-center gap-2">
-                              <AtribuicaoIcon className={`w-4 h-4 ${atribuicaoColor.icon}`} />
-                              <span className={`text-xs font-semibold ${atribuicaoColor.text}`}>
+                              <AtribuicaoIcon className={`w-4 h-4 ${
+                                eventoCancelado ? "text-zinc-400" : atribuicaoColor.icon
+                              }`} />
+                              <span className={`text-xs font-semibold ${
+                                eventoCancelado ? "text-zinc-400" : atribuicaoColor.text
+                              }`}>
                                 {evento.atribuicao}
                               </span>
                             </div>
-                            {evento.prioridade && evento.prioridade !== "baixa" && (
+                            {!eventoCancelado && evento.prioridade && evento.prioridade !== "baixa" && (
                               <Badge
                                 variant="outline"
                                 className={`text-xs px-2.5 py-0.5 h-6 border-0 font-semibold ${

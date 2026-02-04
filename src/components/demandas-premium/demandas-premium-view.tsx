@@ -249,6 +249,8 @@ export default function Demandas() {
         status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "fila",
         prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",
         data: d.dataEntrada ? new Date(d.dataEntrada + "T12:00:00").toLocaleDateString("pt-BR") : new Date(d.createdAt).toLocaleDateString("pt-BR"),
+        // dataInclusao: timestamp ISO para ordenação por recentes (usado na importação do PJe)
+        dataInclusao: d.createdAt ? new Date(d.createdAt).toISOString() : new Date().toISOString(),
         processos: d.processo?.numeroAutos
           ? [{ tipo: "", numero: d.processo.numeroAutos }]
           : [],
@@ -258,6 +260,8 @@ export default function Demandas() {
         estadoPrisional: d.reuPreso ? "preso" : (d.assistido?.statusPrisional || "solto"),
         prioridade: d.prioridade || "normal",
         arquivado: d.status === "ARQUIVADO",
+        reuPreso: d.reuPreso || false,
+        substatus: d.substatus || null,
       }));
       // Usar apenas dados do banco
       setDemandas(mappedDemandas);
