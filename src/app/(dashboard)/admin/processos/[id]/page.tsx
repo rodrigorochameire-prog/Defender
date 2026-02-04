@@ -22,8 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  Scale, 
+import {
+  Scale,
   ArrowLeft,
   Edit,
   Trash2,
@@ -42,6 +42,7 @@ import {
   GitBranch,
   Shield,
   Upload,
+  Radar,
 } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -397,6 +398,25 @@ export default function ProcessoDetalhesPage() {
             </CardContent>
           </Card>
 
+          {/* Investigação */}
+          <Card className="border-emerald-200 dark:border-emerald-800/30 overflow-hidden">
+            <div className="bg-emerald-50 dark:bg-emerald-900/10 px-4 py-2 border-b border-emerald-100 dark:border-emerald-800/30 flex items-center gap-2">
+              <Radar className="h-4 w-4 text-emerald-600" />
+              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">Investigação</span>
+            </div>
+            <CardContent className="p-4 space-y-3 text-sm">
+              <p className="text-xs text-muted-foreground">
+                Gerencie diligências investigativas, pesquise testemunhas e colete provas.
+              </p>
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700 h-8 text-xs" asChild>
+                <Link href={`/admin/juri/investigacao?processoId=${processoId}`}>
+                  <Radar className="h-3 w-3 mr-1" />
+                  Abrir Central de Investigação
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Júri Info */}
           {processo.isJuri && (
             <Card className="border-purple-200 dark:border-purple-800/30 overflow-hidden">
@@ -408,7 +428,7 @@ export default function ProcessoDetalhesPage() {
                 <div>
                   <p className="text-xs text-muted-foreground mb-0.5">Sessão Plenária</p>
                   <p className="font-medium">
-                    {processo.dataSessaoJuri 
+                    {processo.dataSessaoJuri
                       ? format(parseISO(processo.dataSessaoJuri), "dd/MM/yyyy")
                       : "Aguardando designação"}
                   </p>
