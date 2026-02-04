@@ -332,7 +332,7 @@ export default function DashboardJuriPage() {
 
   const isLoading = loadingDemandas || loadingAssistidos || loadingCasos || loadingJuris;
 
-  // Demandas ordenadas por prazo (4 mais urgentes - incluindo vencidos)
+  // Demandas ordenadas por prazo (12 mais urgentes - incluindo vencidos, 3x mais que antes)
   const demandasPorPrazo = useMemo(() => {
     return [...demandasFiltradas]
       .filter((d: any) => d.prazoFinal || d.prazo)
@@ -341,7 +341,7 @@ export default function DashboardJuriPage() {
         const prazoB = b.prazoFinal ? new Date(b.prazoFinal) : b.prazo ? parseISO(b.prazo) : new Date(9999, 11, 31);
         return prazoA.getTime() - prazoB.getTime();
       })
-      .slice(0, 4);
+      .slice(0, 12);
   }, [demandasFiltradas]);
 
   // Estado para filtro de júris por defensor
@@ -694,10 +694,10 @@ export default function DashboardJuriPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[500px] overflow-y-auto">
               {loadingDemandas ? (
                 <div className="p-4 space-y-2">
-                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+                  {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
                 </div>
               ) : demandasPorPrazo.length === 0 ? (
                 <div className="p-6 text-center">
