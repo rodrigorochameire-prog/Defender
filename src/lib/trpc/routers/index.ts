@@ -49,6 +49,7 @@ export const appRouter = router({
   audiencias: audienciasRouter,
   drive: driveRouter,
   profissionais: profissionaisRouter,
+  diligencias: diligenciasRouter,
   
   // ==========================================
   // COMPARTILHADOS

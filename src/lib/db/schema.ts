@@ -755,6 +755,168 @@ export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type InsertCalendarEvent = typeof calendarEvents.$inferInsert;
 
 // ==========================================
+// DILIGÊNCIAS INVESTIGATIVAS
+// ==========================================
+
+export const diligenciaStatusEnum = pgEnum("diligencia_status", [
+  "A_PESQUISAR",      // Diligência pendente de pesquisa
+  "EM_ANDAMENTO",     // Pesquisa em andamento
+  "AGUARDANDO",       // Aguardando resposta/retorno
+  "LOCALIZADO",       // Pessoa/documento localizado
+  "OBTIDO",           // Documento/informação obtido
+  "INFRUTIFERO",      // Diligência sem resultado
+  "ARQUIVADO",        // Diligência arquivada
+]);
+
+export const diligenciaTipoEnum = pgEnum("diligencia_tipo", [
+  "LOCALIZACAO_PESSOA",     // Localizar testemunha, réu, vítima
+  "LOCALIZACAO_DOCUMENTO",  // Localizar documento específico
+  "REQUISICAO_DOCUMENTO",   // Requisitar documento a órgão
+  "PESQUISA_OSINT",         // Pesquisa em redes sociais, etc
+  "DILIGENCIA_CAMPO",       // Visita in loco
+  "INTIMACAO",              // Intimação de pessoa
+  "OITIVA",                 // Agendamento de oitiva
+  "PERICIA",                // Solicitação de perícia
+  "EXAME",                  // Exame médico, toxicológico, etc
+  "OUTRO",                  // Outras diligências
+]);
+
+export const diligencias = pgTable("diligencias", {
+  id: serial("id").primaryKey(),
+
+  // Identificação
+  titulo: varchar("titulo", { length: 300 }).notNull(),
+  descricao: text("descricao"),
+
+  // Tipo e Status
+  tipo: diligenciaTipoEnum("tipo").notNull().default("OUTRO"),
+  status: diligenciaStatusEnum("status").notNull().default("A_PESQUISAR"),
+
+  // Vinculação (pelo menos um deve estar preenchido)
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
+  casoId: integer("caso_id").references(() => casos.id, { onDelete: "cascade" }),
+  personaId: integer("persona_id").references(() => casePersonas.id, { onDelete: "set null" }),
+
+  // Detalhes da pessoa/objeto alvo
+  nomePessoaAlvo: varchar("nome_pessoa_alvo", { length: 200 }),
+  tipoRelacao: varchar("tipo_relacao", { length: 50 }), // testemunha, vitima, perito, informante
+  cpfAlvo: varchar("cpf_alvo", { length: 14 }),
+  enderecoAlvo: text("endereco_alvo"),
+  telefoneAlvo: varchar("telefone_alvo", { length: 20 }),
+
+  // Resultado e acompanhamento
+  resultado: text("resultado"),
+  dataConclusao: timestamp("data_conclusao"),
+  prazoEstimado: timestamp("prazo_estimado"),
+  prioridade: prioridadeEnum("prioridade").default("NORMAL"),
+
+  // Links de pesquisa OSINT (armazenados como JSON)
+  linksOsint: jsonb("links_osint").$type<{
+    jusbrasil?: string;
+    escavador?: string;
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    outros?: string[];
+  }>(),
+
+  // Documentos anexados
+  documentos: jsonb("documentos").$type<{
+    nome: string;
+    url: string;
+    tipo: string;
+    dataUpload: string;
+  }[]>(),
+
+  // Notas de acompanhamento (histórico)
+  historico: jsonb("historico").$type<{
+    data: string;
+    acao: string;
+    descricao: string;
+    userId?: number;
+  }[]>(),
+
+  // Tags para categorização
+  tags: jsonb("tags").$type<string[]>(),
+
+  // Sugestão automática (flag)
+  isSugestaoAutomatica: boolean("is_sugestao_automatica").default(false),
+  sugestaoOrigem: varchar("sugestao_origem", { length: 100 }), // "padrao_caso", "similar", "manual"
+
+  // Workspace e controle
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  defensorId: integer("defensor_id").references(() => users.id),
+  criadoPorId: integer("criado_por_id").references(() => users.id).notNull(),
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"),
+}, (table) => [
+  index("diligencias_processo_id_idx").on(table.processoId),
+  index("diligencias_assistido_id_idx").on(table.assistidoId),
+  index("diligencias_caso_id_idx").on(table.casoId),
+  index("diligencias_status_idx").on(table.status),
+  index("diligencias_tipo_idx").on(table.tipo),
+  index("diligencias_workspace_id_idx").on(table.workspaceId),
+  index("diligencias_defensor_id_idx").on(table.defensorId),
+  index("diligencias_deleted_at_idx").on(table.deletedAt),
+  index("diligencias_prioridade_idx").on(table.prioridade),
+]);
+
+export type Diligencia = typeof diligencias.$inferSelect;
+export type InsertDiligencia = typeof diligencias.$inferInsert;
+
+// ==========================================
+// TEMPLATES DE DILIGÊNCIAS (para sugestões)
+// ==========================================
+
+export const diligenciaTemplates = pgTable("diligencia_templates", {
+  id: serial("id").primaryKey(),
+
+  // Identificação
+  nome: varchar("nome", { length: 200 }).notNull(),
+  descricao: text("descricao"),
+
+  // Tipo de diligência
+  tipo: diligenciaTipoEnum("tipo").notNull(),
+
+  // Quando sugerir (condições)
+  aplicavelA: jsonb("aplicavel_a").$type<{
+    areas?: string[];        // JURI, EXECUCAO_PENAL, VVD
+    fases?: string[];        // inquerito, instrucao, plenario
+    tiposCrime?: string[];   // homicidio, roubo, trafico
+    tags?: string[];         // tags de caso que ativam
+  }>(),
+
+  // Template de conteúdo
+  tituloTemplate: varchar("titulo_template", { length: 300 }).notNull(),
+  descricaoTemplate: text("descricao_template"),
+  checklistItens: jsonb("checklist_itens").$type<string[]>(),
+
+  // Prioridade sugerida
+  prioridadeSugerida: prioridadeEnum("prioridade_sugerida").default("NORMAL"),
+  prazoSugeridoDias: integer("prazo_sugerido_dias"),
+
+  // Ordem de exibição
+  ordem: integer("ordem").default(0),
+  ativo: boolean("ativo").default(true),
+
+  // Metadata
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("diligencia_templates_tipo_idx").on(table.tipo),
+  index("diligencia_templates_ativo_idx").on(table.ativo),
+  index("diligencia_templates_workspace_id_idx").on(table.workspaceId),
+]);
+
+export type DiligenciaTemplate = typeof diligenciaTemplates.$inferSelect;
+export type InsertDiligenciaTemplate = typeof diligenciaTemplates.$inferInsert;
+
+// ==========================================
 // NOTIFICAÇÕES
 // ==========================================
 

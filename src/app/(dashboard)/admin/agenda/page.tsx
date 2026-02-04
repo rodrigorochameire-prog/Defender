@@ -23,6 +23,7 @@ import { ICalImportModal } from "@/components/agenda/ical-import-modal";
 import { RegistroAudienciaModal, RegistroAudienciaData } from "@/components/agenda/registro-audiencia-modal-simples";
 import { EscalaConfigModal } from "@/components/agenda/escala-config-modal";
 import { CalendarMonthView } from "@/components/agenda/calendar-month-view";
+import { CalendarWeekView } from "@/components/agenda/calendar-week-view";
 import { EventoCard } from "@/components/agenda/evento-card";
 import { EventoDetailModal } from "@/components/agenda/evento-detail-modal";
 import { BuscaRegistrosModal } from "@/components/agenda/busca-registros-modal";
@@ -504,7 +505,7 @@ function FilterPill({
 
 export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
+  const [viewMode, setViewMode] = useState<"calendar" | "week" | "list">("calendar");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("data");
   const [areaFilter, setAreaFilter] = useState("all");
@@ -1117,30 +1118,45 @@ export default function AgendaPage() {
 
           {/* Toggle Views - Compacto */}
           <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
-          <button
-            onClick={() => { setViewMode("calendar"); setSelectedPeriodo(null); }}
-            className={cn(
-              "flex items-center gap-1.5 px-3 h-9 text-xs font-medium rounded-md transition-all",
-              viewMode === "calendar" && !selectedPeriodo
-                ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm"
-                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
-            )}
-          >
-            <Grid3x3 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Calendário</span>
-          </button>
-          <button
-            onClick={() => { setViewMode("list"); setSelectedPeriodo(null); }}
-            className={cn(
-              "flex items-center gap-1.5 px-3 h-9 text-xs font-medium rounded-md transition-all",
-              viewMode === "list" && !selectedPeriodo
-                ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm"
-                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
-            )}
-          >
-            <List className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Lista</span>
-          </button>
+            <button
+              onClick={() => { setViewMode("calendar"); setSelectedPeriodo(null); }}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 h-9 text-xs font-medium rounded-md transition-all",
+                viewMode === "calendar" && !selectedPeriodo
+                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+              )}
+              title="Visualização mensal"
+            >
+              <Grid3x3 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Mês</span>
+            </button>
+            <button
+              onClick={() => { setViewMode("week"); setSelectedPeriodo(null); }}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 h-9 text-xs font-medium rounded-md transition-all",
+                viewMode === "week" && !selectedPeriodo
+                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+              )}
+              title="Visualização semanal"
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Semana</span>
+            </button>
+            <button
+              onClick={() => { setViewMode("list"); setSelectedPeriodo(null); }}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 h-9 text-xs font-medium rounded-md transition-all",
+                viewMode === "list" && !selectedPeriodo
+                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+              )}
+              title="Visualização em lista"
+            >
+              <List className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Lista</span>
+            </button>
           </div>
         </div>
 
@@ -1276,11 +1292,24 @@ export default function AgendaPage() {
         </div>
       )}
 
-      {/* Visualização padrão (calendário ou lista) */}
+      {/* Visualização padrão (calendário, semana ou lista) */}
       {!selectedPeriodo && (
         <>
           {viewMode === "calendar" ? (
             <CalendarMonthView
+              eventos={eventosFiltrados}
+              currentDate={currentDate}
+              onDateChange={setCurrentDate}
+              onEventClick={handleEventClick}
+              onDateClick={(date) => {
+                setCurrentDate(date);
+                setViewMode("list");
+              }}
+              onEditEvento={handleEditEvento}
+              onDeleteEvento={handleDeleteEvento}
+            />
+          ) : viewMode === "week" ? (
+            <CalendarWeekView
               eventos={eventosFiltrados}
               currentDate={currentDate}
               onDateChange={setCurrentDate}
