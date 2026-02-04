@@ -350,22 +350,22 @@ function DemandaGridCard({
           {demanda.ato}
         </p>
 
-        {/* Footer: Atribuição + Processo */}
-        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
-          <div className="flex items-center gap-1 text-[9px] text-zinc-400">
-            <AtribuicaoIcon className="w-3 h-3" />
-            <span className="truncate max-w-[80px]">{demanda.atribuicao}</span>
-          </div>
-
-          {demanda.processos?.[0] && (
-            <button
-              onClick={() => copyToClipboard(demanda.processos[0].numero, "Processo copiado!")}
-              className="text-[9px] font-mono text-zinc-400 hover:text-emerald-600 transition-colors truncate max-w-[100px]"
-            >
-              {demanda.processos[0].numero.slice(-10)}
-            </button>
-          )}
+        {/* Footer: Atribuição */}
+        <div className="flex items-center gap-1 text-[9px] text-zinc-400 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <AtribuicaoIcon className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate">{demanda.atribuicao}</span>
         </div>
+
+        {/* Número do Processo - linha separada para não truncar */}
+        {demanda.processos?.[0] && (
+          <button
+            onClick={() => copyToClipboard(demanda.processos[0].numero, "Processo copiado!")}
+            className="w-full text-[10px] font-mono text-zinc-500 hover:text-emerald-600 transition-colors text-left truncate"
+            title={demanda.processos[0].numero}
+          >
+            {demanda.processos[0].numero}
+          </button>
+        )}
       </div>
     </div>
   );
