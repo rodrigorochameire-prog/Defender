@@ -228,10 +228,8 @@ export default function DashboardJuriPage() {
     limit: 100,
   });
 
-  // Júris (sessões do júri) - aumentado para 365 dias
-  const { data: jurisData, isLoading: loadingJuris } = trpc.juri.proximas.useQuery({
-    dias: 365,
-  });
+  // Júris (sessões do júri) - sem limite de dias
+  const { data: jurisData, isLoading: loadingJuris } = trpc.juri.proximas.useQuery({});
   const juris = jurisData ?? [];
 
   // Processos (para registro rápido)
@@ -258,11 +256,8 @@ export default function DashboardJuriPage() {
   // Verificar se é defensor de vara criminal (não-especializado) - usado para adaptar seções do dashboard
   const isDefensorCriminalGeral = user && user.role === "defensor" && isGrupoVarasCriminais;
 
-  // Audiências (para o dashboard) - aumentado para 365 dias e 100 eventos
-  const { data: audienciasData, isLoading: loadingAudiencias } = trpc.audiencias.proximas.useQuery({
-    dias: 365,
-    limite: 100,
-  });
+  // Audiências (para o dashboard) - sem limite de dias ou quantidade
+  const { data: audienciasData, isLoading: loadingAudiencias } = trpc.audiencias.proximas.useQuery({});
   const audiencias = audienciasData ?? [];
 
   // ==========================================
