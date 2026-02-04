@@ -4,10 +4,10 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Download, 
-  FileSpreadsheet, 
-  FileText, 
+import {
+  Download,
+  FileSpreadsheet,
+  FileText,
   File,
   CheckCircle2,
   Circle,
@@ -17,8 +17,12 @@ import {
   Calendar,
   Settings,
   Eye,
-  X
+  X,
+  Clipboard,
+  Copy,
+  Table2
 } from "lucide-react";
+import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -30,7 +34,7 @@ interface ExportModalProps {
   demandasFiltradas: any[];
 }
 
-type ExportFormat = "excel" | "csv" | "pdf";
+type ExportFormat = "excel" | "csv" | "pdf" | "clipboard";
 type ExportScope = "all" | "filtered";
 
 const exportFields = [
@@ -45,6 +49,20 @@ const exportFields = [
   { key: "providencias", label: "Providências", default: false },
   { key: "prioridade", label: "Prioridade", default: false },
   { key: "dataInclusao", label: "Data Inclusão", default: false },
+];
+
+// Campos no formato da planilha Google Sheets do usuário
+// Ordem: Status | Prisão | Data | Assistido | Tipo | Autos | Ato | Prazo | Providências
+const sheetsFields = [
+  { key: "status", label: "Status" },
+  { key: "estadoPrisional", label: "Prisão" },
+  { key: "data", label: "Data" },
+  { key: "assistido", label: "Assistido" },
+  { key: "tipo", label: "Tipo" },
+  { key: "autos", label: "Autos" },
+  { key: "ato", label: "Ato" },
+  { key: "prazo", label: "Prazo" },
+  { key: "providencias", label: "Providências" },
 ];
 
 export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: ExportModalProps) {
@@ -141,16 +159,146 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
     const data = prepareExportData();
     const ws = XLSX.utils.json_to_sheet(data);
     const csv = XLSX.utils.sheet_to_csv(ws);
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `demandas_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("download", `demandas_${new Date().toISOString().split("T")[0]}.csv`);
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Mapear status do sistema para formato da planilha
+  const mapStatusToPlanilha = (status: string, substatus?: string): string => {
+    // Formato: "2 - Elaborar", "2 - Revisar", "2 - Analisar", etc.
+
+    // Se tem substatus granular, usar ele diretamente
+    if (substatus) {
+      const substatusMap: Record<string, string> = {
+        elaborar: "2 - Elaborar",
+        revisar: "2 - Revisar",
+        buscar: "2 - Buscar",
+        analisar: "2 - Analisar",
+        relatorio: "2 - Relatório",
+        atender: "2 - Atender",
+        fila: "2 - Elaborar",
+        monitorar: "4 - Monitorar",
+        protocolado: "7 - Protocolado",
+        ciencia: "7 - Ciência",
+      };
+      const key = substatus.toLowerCase().trim();
+      if (substatusMap[key]) {
+        return substatusMap[key];
+      }
+    }
+
+    // Mapear status coarse do banco
+    const statusMap: Record<string, string> = {
+      "2_ATENDER": "2 - Atender",
+      "5_FILA": "2 - Elaborar",
+      "4_MONITORAR": "4 - Monitorar",
+      "7_PROTOCOLADO": "7 - Protocolado",
+      "7_CIENCIA": "7 - Ciência",
+      "7_SEM_ATUACAO": "7 - Sem atuação",
+      URGENTE: "1 - Urgente",
+      CONCLUIDO: "7 - Concluído",
+      ARQUIVADO: "8 - Arquivado",
+    };
+
+    // Tentar mapear status direto da UI (ex: "elaborar", "revisar")
+    const uiStatusMap: Record<string, string> = {
+      elaborar: "2 - Elaborar",
+      revisar: "2 - Revisar",
+      buscar: "2 - Buscar",
+      analisar: "2 - Analisar",
+      relatorio: "2 - Relatório",
+      relatório: "2 - Relatório",
+      atender: "2 - Atender",
+      fila: "2 - Elaborar",
+      monitorar: "4 - Monitorar",
+      protocolado: "7 - Protocolado",
+      ciencia: "7 - Ciência",
+      ciência: "7 - Ciência",
+      urgente: "1 - Urgente",
+      concluido: "7 - Concluído",
+      concluído: "7 - Concluído",
+      arquivado: "8 - Arquivado",
+    };
+
+    const statusLower = (status || "").toLowerCase().trim();
+    if (uiStatusMap[statusLower]) {
+      return uiStatusMap[statusLower];
+    }
+
+    return statusMap[status] || status || "";
+  };
+
+  // Preparar dados para formato da planilha Google Sheets
+  const prepareSheetsData = () => {
+    return dataToExport.map((demanda) => {
+      // Extrair tipo e número do processo
+      let tipo = "";
+      let autos = "";
+      if (demanda.processos && demanda.processos.length > 0) {
+        const processo = demanda.processos[0];
+        tipo = processo.tipo || "";
+        autos = processo.numero || "";
+      }
+
+      // Estado prisional
+      const prisao = demanda.estadoPrisional === "preso" ? "Preso" : demanda.reuPreso ? "Preso" : "";
+
+      return {
+        status: mapStatusToPlanilha(demanda.status, demanda.substatus),
+        prisao: prisao,
+        data: demanda.data || "",
+        assistido: demanda.assistido || "",
+        tipo: tipo,
+        autos: autos,
+        ato: demanda.ato || "",
+        prazo: demanda.prazo || "",
+        providencias: demanda.providencias || "",
+      };
+    });
+  };
+
+  // Exportar para clipboard no formato tabulado (para colar no Google Sheets)
+  const exportToClipboard = async () => {
+    const data = prepareSheetsData();
+
+    // Criar texto tabulado (TSV - Tab Separated Values)
+    const rows = data.map((row) =>
+      [
+        row.status,
+        row.prisao,
+        row.data,
+        row.assistido,
+        row.tipo,
+        row.autos,
+        row.ato,
+        row.prazo,
+        row.providencias,
+      ].join("\t")
+    );
+
+    // Juntar todas as linhas (sem cabeçalho para facilitar o append)
+    const tsvContent = rows.join("\n");
+
+    try {
+      await navigator.clipboard.writeText(tsvContent);
+      toast.success(`${data.length} demandas copiadas! Cole na planilha com Ctrl+V`, {
+        description: "Dados prontos para colar no Google Sheets",
+        duration: 4000,
+      });
+      return true;
+    } catch (err) {
+      console.error("Falha ao copiar:", err);
+      toast.error("Falha ao copiar para área de transferência");
+      return false;
+    }
   };
 
   const exportToPDF = () => {
@@ -340,10 +488,10 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
 
   const handleExport = async () => {
     setIsExporting(true);
-    
+
     // Simular delay para melhor UX
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
     try {
       if (format === "excel") {
         exportToExcel();
@@ -351,8 +499,10 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
         exportToCSV();
       } else if (format === "pdf") {
         exportToPDF();
+      } else if (format === "clipboard") {
+        await exportToClipboard();
       }
-      
+
       setTimeout(() => {
         setIsExporting(false);
         handleClose();
@@ -363,28 +513,43 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
     }
   };
 
-  const formatOptions: Array<{ value: ExportFormat; label: string; icon: any; description: string; color: string }> = [
+  const formatOptions: Array<{
+    value: ExportFormat;
+    label: string;
+    icon: any;
+    description: string;
+    color: string;
+    highlight?: boolean;
+  }> = [
+    {
+      value: "clipboard",
+      label: "Copiar para Planilha",
+      icon: Table2,
+      description: "Cole direto no Google Sheets (Ctrl+V)",
+      color: "amber",
+      highlight: true,
+    },
     {
       value: "pdf",
       label: "PDF",
       icon: File,
       description: "Documento para impressão",
-      color: "red"
+      color: "red",
     },
     {
       value: "excel",
       label: "Excel (XLSX)",
       icon: FileSpreadsheet,
       description: "Planilha completa com formatação",
-      color: "emerald"
+      color: "emerald",
     },
     {
       value: "csv",
       label: "CSV",
       icon: FileText,
       description: "Compatível com qualquer planilha",
-      color: "blue"
-    }
+      color: "blue",
+    },
   ];
 
   return (
@@ -441,22 +606,58 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
                 {formatOptions.map((option) => {
                   const Icon = option.icon;
                   const isSelected = format === option.value;
+                  const isHighlight = option.highlight;
                   return (
                     <button
                       key={option.value}
                       onClick={() => setFormat(option.value)}
                       className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg border transition-all text-left ${
                         isSelected
-                          ? "border-zinc-400 bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-600"
+                          ? isHighlight
+                            ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-600"
+                            : "border-zinc-400 bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-600"
+                          : isHighlight
+                          ? "border-amber-200 dark:border-amber-800 hover:bg-amber-50/50 dark:hover:bg-amber-950/20"
                           : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                       }`}
                     >
-                      <Icon className={`w-4 h-4 ${isSelected ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400"}`} />
+                      <Icon
+                        className={`w-4 h-4 ${
+                          isSelected
+                            ? isHighlight
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-zinc-700 dark:text-zinc-300"
+                            : isHighlight
+                            ? "text-amber-500"
+                            : "text-zinc-400"
+                        }`}
+                      />
                       <div className="flex-1">
-                        <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200">{option.label}</p>
-                        <p className="text-[10px] text-zinc-400">{option.description}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p
+                            className={`text-xs font-medium ${
+                              isHighlight ? "text-amber-800 dark:text-amber-200" : "text-zinc-800 dark:text-zinc-200"
+                            }`}
+                          >
+                            {option.label}
+                          </p>
+                          {isHighlight && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-200 font-medium">
+                              Recomendado
+                            </span>
+                          )}
+                        </div>
+                        <p className={`text-[10px] ${isHighlight ? "text-amber-600 dark:text-amber-400" : "text-zinc-400"}`}>
+                          {option.description}
+                        </p>
                       </div>
-                      {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />}
+                      {isSelected && (
+                        <CheckCircle2
+                          className={`w-3.5 h-3.5 ${
+                            isHighlight ? "text-amber-600 dark:text-amber-400" : "text-zinc-600 dark:text-zinc-400"
+                          }`}
+                        />
+                      )}
                     </button>
                   );
                 })}
@@ -537,38 +738,85 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
           {/* Step 3: Preview */}
           {step === 3 && (
             <div className="space-y-3">
-              <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
-                <div className="grid grid-cols-2 gap-2 text-xs">
+              {format === "clipboard" ? (
+                <>
+                  {/* Preview específico para clipboard */}
+                  <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                    <div className="flex items-start gap-3">
+                      <Table2 className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+                          Pronto para colar no Google Sheets
+                        </p>
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">
+                          {dataToExport.length} linhas serão copiadas no formato da sua planilha
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Colunas que serão copiadas */}
                   <div>
-                    <p className="text-zinc-500">Formato</p>
-                    <p className="font-semibold text-zinc-900 dark:text-zinc-50">
-                      {formatOptions.find(f => f.value === format)?.label}
+                    <p className="text-[10px] font-medium text-zinc-500 mb-2">Colunas (na ordem da planilha):</p>
+                    <div className="flex flex-wrap gap-1">
+                      {sheetsFields.map((field, index) => (
+                        <Badge
+                          key={field.key}
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
+                        >
+                          {index + 1}. {field.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Instrução */}
+                  <div className="p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+                    <p className="text-[10px] text-zinc-600 dark:text-zinc-400">
+                      <span className="font-semibold">Após copiar:</span> Selecione a célula A na próxima linha vazia da
+                      planilha e pressione <kbd className="px-1 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 font-mono">Ctrl+V</kbd>
                     </p>
                   </div>
-                  <div>
-                    <p className="text-zinc-500">Registros</p>
-                    <p className="font-semibold text-zinc-900 dark:text-zinc-50">{dataToExport.length}</p>
+                </>
+              ) : (
+                <>
+                  <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <p className="text-zinc-500">Formato</p>
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-50">
+                          {formatOptions.find((f) => f.value === format)?.label}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-500">Registros</p>
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-50">{dataToExport.length}</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-500">Campos</p>
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-50">{selectedFields.length}</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-500">Data</p>
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-50">
+                          {new Date().toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-zinc-500">Campos</p>
-                    <p className="font-semibold text-zinc-900 dark:text-zinc-50">{selectedFields.length}</p>
-                  </div>
-                  <div>
-                    <p className="text-zinc-500">Data</p>
-                    <p className="font-semibold text-zinc-900 dark:text-zinc-50">{new Date().toLocaleDateString('pt-BR')}</p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex flex-wrap gap-1">
-                {exportFields
-                  .filter(f => selectedFields.includes(f.key))
-                  .map(field => (
-                    <Badge key={field.key} variant="outline" className="text-[10px] px-1.5 py-0">
-                      {field.label}
-                    </Badge>
-                  ))}
-              </div>
+                  <div className="flex flex-wrap gap-1">
+                    {exportFields
+                      .filter((f) => selectedFields.includes(f.key))
+                      .map((field) => (
+                        <Badge key={field.key} variant="outline" className="text-[10px] px-1.5 py-0">
+                          {field.label}
+                        </Badge>
+                      ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -578,7 +826,16 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
           <Button
             variant="ghost"
             size="sm"
-            onClick={step === 1 ? handleClose : () => setStep((s) => (s - 1) as 1 | 2 | 3)}
+            onClick={() => {
+              if (step === 1) {
+                handleClose();
+              } else if (step === 3 && format === "clipboard") {
+                // Voltar direto para step 1 se for clipboard
+                setStep(1);
+              } else {
+                setStep((s) => (s - 1) as 1 | 2 | 3);
+              }
+            }}
             disabled={isExporting}
             className="h-8 text-xs text-zinc-500 hover:text-zinc-700"
           >
@@ -588,8 +845,19 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
           {step < 3 ? (
             <Button
               size="sm"
-              onClick={() => setStep((s) => (s + 1) as 1 | 2 | 3)}
-              className="h-8 text-xs bg-zinc-800 hover:bg-zinc-700 dark:bg-zinc-200 dark:hover:bg-zinc-300 dark:text-zinc-900 text-white"
+              onClick={() => {
+                if (step === 1 && format === "clipboard") {
+                  // Pular step 2 para clipboard (campos fixos)
+                  setStep(3);
+                } else {
+                  setStep((s) => (s + 1) as 1 | 2 | 3);
+                }
+              }}
+              className={`h-8 text-xs ${
+                format === "clipboard"
+                  ? "bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white"
+                  : "bg-zinc-800 hover:bg-zinc-700 dark:bg-zinc-200 dark:hover:bg-zinc-300 dark:text-zinc-900 text-white"
+              }`}
               disabled={selectedFields.length === 0 && step === 2}
             >
               Próximo
@@ -599,10 +867,19 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
               size="sm"
               onClick={handleExport}
               disabled={isExporting}
-              className="h-8 text-xs bg-zinc-800 hover:bg-zinc-700 dark:bg-zinc-200 dark:hover:bg-zinc-300 dark:text-zinc-900 text-white"
+              className={`h-8 text-xs ${
+                format === "clipboard"
+                  ? "bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white"
+                  : "bg-zinc-800 hover:bg-zinc-700 dark:bg-zinc-200 dark:hover:bg-zinc-300 dark:text-zinc-900 text-white"
+              }`}
             >
               {isExporting ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : format === "clipboard" ? (
+                <>
+                  <Copy className="w-3.5 h-3.5 mr-1" />
+                  Copiar
+                </>
               ) : (
                 <>
                   <Download className="w-3.5 h-3.5 mr-1" />

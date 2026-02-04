@@ -28,6 +28,11 @@ import {
   Bell,
   Paperclip,
   MessageSquare,
+  CalendarX2,
+  Archive,
+  Copy,
+  ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -37,7 +42,14 @@ interface EventoDetailModalProps {
   evento: any;
   onEdit?: (evento: any) => void;
   onDelete?: (id: string) => void;
+  onArchive?: (id: string) => void;
+  onDuplicate?: (evento: any) => void;
+  onStatusChange?: (id: string, status: string) => void;
 }
+
+// Verifica se o evento não ocorrerá (cancelado ou redesignado)
+const isEventoCancelado = (status: string) =>
+  status === "cancelado" || status === "remarcado" || status === "redesignado";
 
 const tipoConfig: Record<string, any> = {
   audiencia: {
@@ -87,6 +99,9 @@ export function EventoDetailModal({
   evento,
   onEdit,
   onDelete,
+  onArchive,
+  onDuplicate,
+  onStatusChange,
 }: EventoDetailModalProps) {
   const [observacao, setObservacao] = useState(evento?.observacoes || "");
   const [isEditingObs, setIsEditingObs] = useState(false);
@@ -170,33 +185,148 @@ export function EventoDetailModal({
           Visualização completa das informações do evento da agenda, incluindo data, horário, local, participantes e observações.
         </DialogDescription>
         
+        {/* Banner de evento cancelado/redesignado */}
+        {isEventoCancelado(evento.status) && (
+          <div className={`px-6 py-3 flex items-center gap-3 ${
+            evento.status === "cancelado"
+              ? "bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-800"
+              : "bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800"
+          }`}>
+            {evento.status === "cancelado" ? (
+              <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            ) : (
+              <CalendarX2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            )}
+            <div className="flex-1">
+              <p className={`text-sm font-medium ${
+                evento.status === "cancelado"
+                  ? "text-red-700 dark:text-red-300"
+                  : "text-amber-700 dark:text-amber-300"
+              }`}>
+                {evento.status === "cancelado" ? "Evento Cancelado" : "Evento Redesignado"}
+              </p>
+              <p className={`text-xs ${
+                evento.status === "cancelado"
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-amber-600 dark:text-amber-400"
+              }`}>
+                Este evento não ocorrerá na data/horário original
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Header com actions */}
         <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {/* Editar */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onEdit?.(evento)}
                 className="h-9 w-9"
+                title="Editar evento"
               >
                 <Edit className="w-4 h-4" />
               </Button>
+
+              {/* Duplicar */}
+              {onDuplicate && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    onDuplicate(evento);
+                    toast.success("Evento duplicado! Edite os detalhes.");
+                  }}
+                  className="h-9 w-9"
+                  title="Duplicar evento"
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              )}
+
+              {/* Arquivar */}
+              {onArchive && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    onArchive(evento.id);
+                    toast.success("Evento arquivado!");
+                    onClose();
+                  }}
+                  className="h-9 w-9 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                  title="Arquivar evento"
+                >
+                  <Archive className="w-4 h-4" />
+                </Button>
+              )}
+
+              {/* Excluir */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleDelete}
                 className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                title="Excluir evento"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Mail className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
+
+              <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-1" />
+
+              {/* Ações de status rápido */}
+              {onStatusChange && !isEventoCancelado(evento.status) && evento.status !== "concluido" && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      onStatusChange(evento.id, "concluido");
+                      toast.success("Evento marcado como realizado!");
+                    }}
+                    className="h-8 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                    title="Marcar como realizado"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                    Realizado
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      onStatusChange(evento.id, "cancelado");
+                      toast.success("Evento marcado como cancelado!");
+                    }}
+                    className="h-8 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    title="Marcar como cancelado"
+                  >
+                    <XCircle className="w-3.5 h-3.5 mr-1" />
+                    Cancelar
+                  </Button>
+                </>
+              )}
+
+              {/* Restaurar evento cancelado */}
+              {onStatusChange && isEventoCancelado(evento.status) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    onStatusChange(evento.id, "confirmado");
+                    toast.success("Evento restaurado!");
+                  }}
+                  className="h-8 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                  title="Restaurar evento"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                  Restaurar
+                </Button>
+              )}
             </div>
+
             <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
               <X className="w-4 h-4" />
             </Button>
@@ -209,18 +339,34 @@ export function EventoDetailModal({
           <div className="space-y-2">
             <div className="flex items-start gap-3">
               <div
-                className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${config.bgColor} mt-1`}
+                className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-1 ${
+                  isEventoCancelado(evento.status)
+                    ? "bg-zinc-100 dark:bg-zinc-800"
+                    : config.bgColor
+                }`}
               >
                 <div
                   className="w-4 h-4 rounded"
-                  style={{ backgroundColor: config.color }}
+                  style={{
+                    backgroundColor: isEventoCancelado(evento.status)
+                      ? "#a1a1aa"
+                      : config.color
+                  }}
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-normal text-zinc-900 dark:text-zinc-50 break-words">
+                <h1 className={`text-2xl font-normal break-words ${
+                  isEventoCancelado(evento.status)
+                    ? "text-zinc-400 dark:text-zinc-500 line-through"
+                    : "text-zinc-900 dark:text-zinc-50"
+                }`}>
                   {evento.titulo}
                 </h1>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                <p className={`text-sm mt-1 ${
+                  isEventoCancelado(evento.status)
+                    ? "text-zinc-400 dark:text-zinc-500 line-through"
+                    : "text-zinc-600 dark:text-zinc-400"
+                }`}>
                   {formatDate(evento.data)} · {evento.horarioInicio}
                   {evento.horarioFim && ` – ${evento.horarioFim}`}
                 </p>

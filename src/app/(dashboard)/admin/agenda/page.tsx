@@ -60,6 +60,8 @@ import {
   RefreshCw,
   Briefcase,
   MapPin,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   isToday,
@@ -515,6 +517,8 @@ export default function AgendaPage() {
   const [selectedPeriodo, setSelectedPeriodo] = useState<string | null>(null);
   const [selectedDefensor, setSelectedDefensor] = useState<string | null>(null);
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+  // Filtro para mostrar/esconder eventos cancelados e redesignados
+  const [showCanceladosRedesignados, setShowCanceladosRedesignados] = useState(true);
 
   // Modais
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -772,6 +776,13 @@ export default function AgendaPage() {
       // Filtro por área (tabs de atribuição)
       const matchAreaFilter = areaFilter === "all" || evento.atribuicaoKey === areaFilter;
 
+      // Filtro para esconder eventos cancelados/redesignados
+      const isCanceladoOuRedesignado =
+        evento.status === "cancelado" ||
+        evento.status === "remarcado" ||
+        evento.status === "redesignado";
+      const matchCancelados = showCanceladosRedesignados || !isCanceladoOuRedesignado;
+
       let matchPeriodo = true;
       if (selectedPeriodo) {
         // Adicionar T12:00:00 para evitar problemas de timezone
@@ -796,7 +807,8 @@ export default function AgendaPage() {
         matchPrioridade &&
         matchDefensor &&
         matchPeriodo &&
-        matchAreaFilter
+        matchAreaFilter &&
+        matchCancelados
       );
     });
   }, [
@@ -807,6 +819,7 @@ export default function AgendaPage() {
     selectedStatus,
     selectedAtribuicao,
     selectedPrioridade,
+    showCanceladosRedesignados,
     selectedDefensor,
     selectedPeriodo,
   ]);
@@ -1081,6 +1094,29 @@ export default function AgendaPage() {
             )} />
           </Button>
 
+          {/* Toggle Cancelados/Redesignados */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
+            className={cn(
+              "h-9 gap-1.5",
+              !showCanceladosRedesignados
+                ? "border-zinc-400 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800"
+                : "border-zinc-200 dark:border-zinc-700"
+            )}
+            title={showCanceladosRedesignados ? "Esconder eventos cancelados" : "Mostrar eventos cancelados"}
+          >
+            {showCanceladosRedesignados ? (
+              <Eye className="w-3.5 h-3.5 text-zinc-500" />
+            ) : (
+              <EyeOff className="w-3.5 h-3.5 text-zinc-400" />
+            )}
+            <span className="hidden sm:inline text-xs">
+              {showCanceladosRedesignados ? "Cancelados" : "Ocultos"}
+            </span>
+          </Button>
+
           {/* Toggle Views - Compacto */}
           <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
           <button
@@ -1255,6 +1291,8 @@ export default function AgendaPage() {
                 setCurrentDate(date);
                 setViewMode("list");
               }}
+              onEditEvento={handleEditEvento}
+              onDeleteEvento={handleDeleteEvento}
             />
           ) : (
             <Card className="border border-zinc-200 dark:border-zinc-800 overflow-hidden">
