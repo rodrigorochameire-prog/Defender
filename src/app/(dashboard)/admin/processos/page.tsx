@@ -768,10 +768,14 @@ function UniversalProgressBar({ area, faseAtual, isJuri }: { area: string; faseA
 function QuickActionsOverlay({
   processoId,
   numeroAutos,
+  assistidoNome,
+  isVisible,
   onClose
 }: {
   processoId: number;
   numeroAutos: string;
+  assistidoNome: string;
+  isVisible: boolean;
   onClose: () => void;
 }) {
   const actions = [
@@ -781,12 +785,25 @@ function QuickActionsOverlay({
     { icon: ExternalLink, label: "TJ-BA", href: getTJBAUrl(numeroAutos), external: true, color: "amber" },
   ];
 
+  if (!isVisible) return null;
+
   return (
     <div
-      className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
-      onClick={(e) => e.stopPropagation()}
+      className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in duration-200"
+      onClick={onClose}
     >
-      <div className="grid grid-cols-2 gap-2 p-3">
+      {/* Botão Fechar */}
+      <button
+        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition-all"
+        onClick={onClose}
+      >
+        <XCircle className="w-5 h-5" />
+      </button>
+
+      {/* Nome do assistido */}
+      <p className="text-white/60 text-xs mb-3">{assistidoNome}</p>
+
+      <div className="grid grid-cols-2 gap-3 p-4" onClick={(e) => e.stopPropagation()}>
         {actions.map(action => (
           action.external ? (
             <a
@@ -794,29 +811,26 @@ function QuickActionsOverlay({
               href={action.href}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(
-                "flex flex-col items-center gap-1.5 p-3 rounded-lg transition-all",
-                "bg-white/5 hover:bg-white/10 text-white/80 hover:text-white"
-              )}
+              className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all hover:scale-105"
             >
-              <action.icon className="w-4 h-4" />
+              <action.icon className="w-5 h-5" />
               <span className="text-[10px] font-medium">{action.label}</span>
             </a>
           ) : (
             <Link
               key={action.label}
               href={action.href}
-              className={cn(
-                "flex flex-col items-center gap-1.5 p-3 rounded-lg transition-all",
-                "bg-white/5 hover:bg-white/10 text-white/80 hover:text-white"
-              )}
+              className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all hover:scale-105"
             >
-              <action.icon className="w-4 h-4" />
+              <action.icon className="w-5 h-5" />
               <span className="text-[10px] font-medium">{action.label}</span>
             </Link>
           )
         ))}
       </div>
+
+      {/* Dica */}
+      <p className="text-white/40 text-[10px] mt-3">Clique fora para fechar</p>
     </div>
   );
 }
@@ -876,10 +890,12 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
       )}
       style={{ borderLeftWidth: '4px', borderLeftColor: cardStatus.color }}
     >
-      {/* Quick Actions Overlay */}
+      {/* Quick Actions Overlay - Ativado por click */}
       <QuickActionsOverlay
         processoId={processo.id}
         numeroAutos={processo.numeroAutos}
+        assistidoNome={processo.assistido.nome}
+        isVisible={showQuickActions}
         onClose={() => setShowQuickActions(false)}
       />
 
@@ -1019,6 +1035,24 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
 
             {/* Ações Rápidas Inline */}
             <div className="flex items-center gap-1">
+              {/* Botão Quick Actions ⚡ */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 hover:bg-violet-50 hover:text-violet-600 dark:hover:bg-violet-900/20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowQuickActions(true);
+                    }}
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Ações Rápidas</TooltipContent>
+              </Tooltip>
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href={`/admin/processos/${processo.id}`}>

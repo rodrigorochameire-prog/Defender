@@ -417,7 +417,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 
   return (
     <Card className={cn(
-      // Base Premium - Estilo "Processos"
+      // Base Premium - Estilo "Processos" SUTIL
       "group relative flex flex-col justify-between overflow-hidden transition-all duration-300",
       "bg-white dark:bg-zinc-900",
       "border border-zinc-100 dark:border-zinc-800",
@@ -428,20 +428,22 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
       isPinned && "ring-2 ring-amber-400/50 dark:ring-amber-500/30"
     )}
     >
-      {/* ✨ BORDA SUPERIOR PREMIUM - Estilo "Processos" */}
+      {/* ✨ BORDA SUPERIOR PREMIUM - SUTIL no hover */}
       <div
         className={cn(
-          "absolute inset-x-0 top-0 h-1 rounded-t-xl",
+          "absolute inset-x-0 top-0 h-0.5 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300",
           urgency?.pulse && "animate-pulse"
         )}
-        style={{ backgroundColor: topBorder.color }}
+        style={{
+          background: `linear-gradient(to right, transparent, ${topBorder.color}, transparent)`
+        }}
       />
 
-      {/* Gradiente de fundo sutil - partindo do topo */}
+      {/* Gradiente de fundo - SUTIL no hover */}
       <div
-        className="absolute inset-0 opacity-40 pointer-events-none rounded-xl"
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none rounded-xl transition-opacity duration-500"
         style={{
-          background: `linear-gradient(to bottom, ${topBorder.color}15 0%, transparent 40%)`
+          background: `linear-gradient(to bottom right, ${topBorder.color}15 0%, ${topBorder.color}08 30%, transparent 60%)`
         }}
       />
 
@@ -2063,17 +2065,17 @@ export default function AssistidosPage() {
               "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               statusFilter === "all" && !showPinnedOnly
                 ? "border-emerald-200/50 dark:border-emerald-800/30"
-                : "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
+                : "border-zinc-100 dark:border-zinc-800",
               "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/10"
             )}
           >
-            {/* ✨ Borda Superior Premium */}
-            <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-emerald-500" />
-            {/* Gradiente de fundo */}
-            <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent" />
+            {/* Gradiente de fundo - SUTIL no hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium - SUTIL no hover */}
+            <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Total</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Total</p>
                 <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.total - naoIdentificadosCount}</p>
                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400">assistidos</p>
               </div>
@@ -2090,20 +2092,20 @@ export default function AssistidosPage() {
               "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               statusFilter === "CADEIA_PUBLICA"
                 ? "border-rose-200/50 dark:border-rose-800/30"
-                : "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
+                : "border-zinc-100 dark:border-zinc-800",
               "cursor-pointer hover:shadow-lg hover:shadow-rose-500/10"
             )}
           >
-            {/* ✨ Borda Superior Premium */}
+            {/* Gradiente de fundo - SUTIL no hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium - SUTIL no hover */}
             <div className={cn(
-              "absolute inset-x-0 top-0 h-1 rounded-t-xl bg-rose-500",
+              "absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-rose-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity",
               stats.presos > 0 && "animate-pulse"
             )} />
-            {/* Gradiente de fundo */}
-            <div className="absolute inset-0 bg-gradient-to-b from-rose-500/10 via-rose-500/5 to-transparent" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Presos</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Presos</p>
                 <p className={cn("text-2xl font-bold", stats.presos > 0 ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.presos}</p>
                 <p className="text-[10px] text-rose-600 dark:text-rose-400">prioridade máxima</p>
               </div>
@@ -2123,17 +2125,17 @@ export default function AssistidosPage() {
               "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               statusFilter === "MONITORADO"
                 ? "border-amber-200/50 dark:border-amber-800/30"
-                : "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
+                : "border-zinc-100 dark:border-zinc-800",
               "cursor-pointer hover:shadow-lg hover:shadow-amber-500/10"
             )}
           >
-            {/* ✨ Borda Superior Premium */}
-            <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-amber-500" />
-            {/* Gradiente de fundo */}
-            <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent" />
+            {/* Gradiente de fundo - SUTIL no hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium - SUTIL no hover */}
+            <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Monitorados</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Monitorados</p>
                 <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.monitorados}</p>
                 <p className="text-[10px] text-amber-600 dark:text-amber-400">domiciliar/tornozeleira</p>
               </div>
@@ -2148,20 +2150,20 @@ export default function AssistidosPage() {
             onClick={() => {}}
             className={cn(
               "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
-              "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
+              "border-zinc-100 dark:border-zinc-800",
               "cursor-pointer hover:shadow-lg hover:shadow-blue-500/10"
             )}
           >
-            {/* ✨ Borda Superior Premium */}
+            {/* Gradiente de fundo - SUTIL no hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium - SUTIL no hover */}
             <div className={cn(
-              "absolute inset-x-0 top-0 h-1 rounded-t-xl bg-blue-500",
+              "absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity",
               stats.audienciasHoje > 0 && "animate-pulse"
             )} />
-            {/* Gradiente de fundo */}
-            <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 via-blue-500/5 to-transparent" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Audiências Hoje</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Audiências Hoje</p>
                 <p className={cn("text-2xl font-bold", stats.audienciasHoje > 0 ? "text-blue-600 dark:text-blue-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.audienciasHoje}</p>
                 <p className="text-[10px] text-blue-600 dark:text-blue-400">{stats.audienciasSemana} esta semana</p>
               </div>
@@ -2179,17 +2181,17 @@ export default function AssistidosPage() {
             onClick={() => {}}
             className={cn(
               "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
-              "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
+              "border-zinc-100 dark:border-zinc-800",
               "cursor-pointer hover:shadow-lg hover:shadow-violet-500/10"
             )}
           >
-            {/* ✨ Borda Superior Premium */}
-            <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-violet-500" />
-            {/* Gradiente de fundo */}
-            <div className="absolute inset-0 bg-gradient-to-b from-violet-500/10 via-violet-500/5 to-transparent" />
+            {/* Gradiente de fundo - SUTIL no hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium - SUTIL no hover */}
+            <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Com Demandas</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Com Demandas</p>
                 <p className={cn("text-2xl font-bold", stats.comDemandas > 0 ? "text-violet-600 dark:text-violet-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.comDemandas}</p>
                 <p className="text-[10px] text-violet-600 dark:text-violet-400">pendentes</p>
               </div>
@@ -2206,17 +2208,17 @@ export default function AssistidosPage() {
               "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               showPinnedOnly
                 ? "border-amber-200/50 dark:border-amber-800/30"
-                : "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700",
+                : "border-zinc-100 dark:border-zinc-800",
               "cursor-pointer hover:shadow-lg hover:shadow-amber-500/10"
             )}
           >
-            {/* ✨ Borda Superior Premium */}
-            <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-amber-400" />
-            {/* Gradiente de fundo */}
-            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/10 via-amber-400/5 to-transparent" />
+            {/* Gradiente de fundo - SUTIL no hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 via-amber-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* ✨ Borda Superior Premium - SUTIL no hover */}
+            <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Fixados</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Fixados</p>
                 <p className={cn("text-2xl font-bold", showPinnedOnly ? "text-amber-600 dark:text-amber-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.pinned}</p>
                 <p className="text-[10px] text-amber-500 dark:text-amber-400">favoritos</p>
               </div>
