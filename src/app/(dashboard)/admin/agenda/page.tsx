@@ -520,6 +520,8 @@ export default function AgendaPage() {
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
   // Filtro para mostrar/esconder eventos cancelados e redesignados
   const [showCanceladosRedesignados, setShowCanceladosRedesignados] = useState(true);
+  // Filtro para mostrar eventos passados no modo lista (padrão: não mostra)
+  const [showPastEventsInList, setShowPastEventsInList] = useState(false);
 
   // Modais
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -798,6 +800,15 @@ export default function AgendaPage() {
         }
       }
 
+      // Filtro para modo lista: mostrar apenas eventos de hoje em diante (a menos que showPastEventsInList esteja ativo)
+      let matchFutureOnly = true;
+      if (viewMode === "list" && !showPastEventsInList && !selectedPeriodo) {
+        const eventoDate = new Date(evento.data + "T12:00:00");
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        matchFutureOnly = eventoDate >= today;
+      }
+
       return (
         matchSearch &&
         matchTipo &&
@@ -807,7 +818,8 @@ export default function AgendaPage() {
         matchDefensor &&
         matchPeriodo &&
         matchAreaFilter &&
-        matchCancelados
+        matchCancelados &&
+        matchFutureOnly
       );
     });
   }, [
@@ -821,6 +833,8 @@ export default function AgendaPage() {
     showCanceladosRedesignados,
     selectedDefensor,
     selectedPeriodo,
+    viewMode,
+    showPastEventsInList,
   ]);
 
   const eventosOrdenados = useMemo(() => {
@@ -1325,11 +1339,30 @@ export default function AgendaPage() {
             <Card className="border border-zinc-200 dark:border-zinc-800 overflow-hidden">
               {/* Header da Lista */}
               <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {eventosOrdenados.length} evento{eventosOrdenados.length !== 1 && 's'}
-                  </p>
-                  <div className="flex gap-1">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                      {eventosOrdenados.length} evento{eventosOrdenados.length !== 1 && 's'}
+                    </p>
+                    {!showPastEventsInList && (
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded">
+                        A partir de hoje
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-1 items-center">
+                    <button
+                      onClick={() => setShowPastEventsInList(!showPastEventsInList)}
+                      className={cn(
+                        "px-2.5 py-1.5 rounded-md text-xs font-medium transition-all",
+                        showPastEventsInList
+                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                          : "text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-600"
+                      )}
+                    >
+                      {showPastEventsInList ? "Ocultando Passados" : "Ver Passados"}
+                    </button>
+                    <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1" />
                     {["data", "prioridade"].map((sort) => (
                       <button
                         key={sort}

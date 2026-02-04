@@ -119,7 +119,8 @@ const abreviarTitulo = (titulo: string): string => {
 
 // Verifica se o evento não ocorrerá (cancelado ou redesignado)
 const isEventoCancelado = (status: string) =>
-  status === "cancelado" || status === "remarcado" || status === "redesignado";
+  status === "cancelado" || status === "cancelada" ||
+  status === "remarcado" || status === "redesignado" || status === "reagendada";
 
 // Cor neutra para eventos que não ocorrerão
 const COR_EVENTO_CANCELADO = "#a1a1aa"; // zinc-400
@@ -161,10 +162,10 @@ function EventoCompacto({
           <div className="px-2 py-1.5">
             <div className="flex items-center gap-1.5">
               {/* Ícone de cancelado/redesignado */}
-              {evento.status === "cancelado" && (
+              {(evento.status === "cancelado" || evento.status === "cancelada") && (
                 <XCircle className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
               )}
-              {(evento.status === "remarcado" || evento.status === "redesignado") && (
+              {(evento.status === "remarcado" || evento.status === "redesignado" || evento.status === "reagendada") && (
                 <CalendarX2 className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
               )}
 
@@ -215,13 +216,13 @@ function EventoCompacto({
               {/* Badge de status para cancelados */}
               {eventoCancelado && (
                 <div className="flex items-center gap-1.5 mb-2">
-                  {evento.status === "cancelado" ? (
+                  {(evento.status === "cancelado" || evento.status === "cancelada") ? (
                     <XCircle className="w-3.5 h-3.5 text-red-500" />
                   ) : (
                     <CalendarX2 className="w-3.5 h-3.5 text-amber-500" />
                   )}
                   <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
-                    {evento.status === "cancelado" ? "Cancelado" : "Redesignado"}
+                    {(evento.status === "cancelado" || evento.status === "cancelada") ? "Cancelada" : "Redesignada"}
                   </span>
                 </div>
               )}
