@@ -567,7 +567,9 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
 
         const evento: ParsedEvento = {
           titulo,
-          tipo: "audiencia",
+          // Enviar o tipo real da audiência para o backend poder diferenciar
+          // Sessão de Julgamento do Tribunal do Júri vs Instrução e Julgamento
+          tipo: tipoAudienciaMapeado.descricao || tipoAudienciaTexto || "Audiência",
           data: bloco.data,
           horarioInicio: bloco.hora,
           horarioFim,
@@ -740,7 +742,8 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
             
             const eventoAlt: ParsedEvento = {
               titulo: `${tipoAudMapeado.sigla} - ${assistidoAlt || "Sem assistido"} - ${processoMaisProximo}`,
-              tipo: "audiencia",
+              // Enviar o tipo real da audiência para o backend poder diferenciar
+              tipo: tipoAudMapeado.descricao || tipoAudTexto || "Audiência",
               data: dataCompleta,
               horarioInicio,
               horarioFim: horFim,
