@@ -1,6 +1,12 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import {
+  DEFENSORES_CONFIG,
+  getAtribuicoesDefensor,
+  getParceiroEquipe,
+  type DefensorConfig
+} from "@/config/defensores";
 
 // ==========================================
 // TIPOS DE ATRIBUIÇÃO
@@ -258,7 +264,8 @@ export const CONTEXT_MENU_ITEMS: AssignmentMenuItem[] = [
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
   { label: "Processos", path: "/admin/processos", icon: "Scale", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Drive", path: "/admin/drive", icon: "FolderOpen", description: "Arquivos e documentos", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
-  { label: "Investigação", path: "/admin/diligencias", icon: "Radar", description: "Radar e diligências", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch", description: "Diligências e OSINT", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Lógica", path: "/admin/logica", icon: "Brain", description: "Contradições e teses", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Equipe", path: "/admin/equipe", icon: "UsersRound", description: "Gestão da equipe", requiredRoles: ["admin", "defensor", "servidor"] },
 ];
 
@@ -484,9 +491,9 @@ export const ASSIGNMENT_CONFIGS: Record<Assignment, AssignmentConfig> = {
   },
   SUBSTITUICAO: {
     id: "SUBSTITUICAO",
-    name: "Substituição Criminal",
-    shortName: "Subst. Criminal",
-    description: "Atuação em substituição na área criminal",
+    name: "Criminal Geral",
+    shortName: "Criminal Geral",
+    description: "Atuação em varas criminais comuns",
     icon: "RefreshCw",
     emoji: "🔄",
     accentColor: "hsl(220, 10%, 47%)",
@@ -649,23 +656,46 @@ interface AssignmentContextType {
   modules: MenuSection[];
   setAssignment: (assignment: Assignment) => void;
   isLoading: boolean;
+  // Novos campos para configuração por defensor
+  defensor: DefensorConfig | null;
+  atribuicoesDisponiveis: Assignment[];
+  parceiro: DefensorConfig | null;
+  temDemandasCompartilhadas: boolean;
 }
 
 const AssignmentContext = createContext<AssignmentContextType | undefined>(undefined);
 
 const STORAGE_KEY = "defesahub_current_assignment";
+const DEFENSOR_STORAGE_KEY = "defesahub_defensor_id";
 
 export function AssignmentProvider({ children }: { children: ReactNode }) {
-  const [currentAssignment, setCurrentAssignment] = useState<Assignment>("JURI_CAMACARI");
+  const [currentAssignment, setCurrentAssignment] = useState<Assignment>("SUBSTITUICAO");
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [defensorId, setDefensorId] = useState<string | null>(null);
 
+  // Carrega configurações do localStorage
   useEffect(() => {
     setMounted(true);
+
+    // Carrega defensor salvo
+    const savedDefensor = localStorage.getItem(DEFENSOR_STORAGE_KEY);
+    if (savedDefensor) {
+      setDefensorId(savedDefensor);
+    }
+
+    // Carrega atribuição salva
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved && saved in ASSIGNMENT_CONFIGS) {
       setCurrentAssignment(saved as Assignment);
+    } else if (savedDefensor) {
+      // Se não tem atribuição salva mas tem defensor, usa a principal dele
+      const defensorConfig = DEFENSORES_CONFIG[savedDefensor];
+      if (defensorConfig) {
+        setCurrentAssignment(defensorConfig.atribuicaoPrincipal);
+      }
     }
+
     setIsLoading(false);
   }, []);
 
@@ -673,6 +703,18 @@ export function AssignmentProvider({ children }: { children: ReactNode }) {
     setCurrentAssignment(assignment);
     localStorage.setItem(STORAGE_KEY, assignment);
   }, []);
+
+  // Obtém configuração do defensor
+  const defensor = defensorId ? DEFENSORES_CONFIG[defensorId] || null : null;
+
+  // Atribuições disponíveis baseadas no defensor
+  const atribuicoesDisponiveis = defensor
+    ? getAtribuicoesDefensor(defensor.id)
+    : Object.keys(ASSIGNMENT_CONFIGS) as Assignment[];
+
+  // Parceiro de equipe
+  const parceiro = defensor ? getParceiroEquipe(defensor.id) || null : null;
+  const temDemandasCompartilhadas = defensor?.equipe?.demandasCompartilhadas || false;
 
   // Durante SSR, sempre usa SUBSTITUICAO para evitar hydration mismatch
   const effectiveAssignment = mounted ? currentAssignment : "SUBSTITUICAO";
@@ -687,6 +729,10 @@ export function AssignmentProvider({ children }: { children: ReactNode }) {
         modules,
         setAssignment,
         isLoading: !mounted || isLoading,
+        defensor,
+        atribuicoesDisponiveis,
+        parceiro,
+        temDemandasCompartilhadas,
       }}
     >
       {children}

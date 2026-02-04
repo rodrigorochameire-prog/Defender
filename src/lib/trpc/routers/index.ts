@@ -15,6 +15,7 @@ import { avaliacaoJuriRouter } from "./avaliacaoJuri";
 import { audienciasRouter } from "./audiencias";
 import { driveRouter } from "./drive";
 import { profissionaisRouter } from "./profissionais";
+import { diligenciasRouter } from "./diligencias";
 
 // Routers compartilhados
 import { calendarRouter } from "./calendar";
@@ -69,6 +70,11 @@ export const appRouter = router({
   // JÚRI - CORPO DE JURADOS
   // ==========================================
   jurados: juradosRouter,
+
+  // ==========================================
+  // INVESTIGAÇÃO - DILIGÊNCIAS
+  // ==========================================
+  diligencias: diligenciasRouter,
 });
 
 export type AppRouter = typeof appRouter;

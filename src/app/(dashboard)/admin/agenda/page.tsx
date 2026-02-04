@@ -531,9 +531,9 @@ export default function AgendaPage() {
   const [editingEvento, setEditingEvento] = useState<EventoFormData | null>(null);
   const [selectedEvento, setSelectedEvento] = useState<any | null>(null);
 
-  // Buscar audiências do banco via tRPC
+  // Buscar audiências do banco via tRPC (sem limite para mostrar todos os eventos)
   const { data: audienciasData, isLoading, refetch } = trpc.audiencias.list.useQuery({
-    limit: 100,
+    limit: 500, // Aumentado para garantir que todos os eventos apareçam
   });
   
   // Utils para invalidar queries após mutações

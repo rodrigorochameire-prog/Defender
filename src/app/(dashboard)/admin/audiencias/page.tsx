@@ -135,7 +135,7 @@ export default function AudienciasPage() {
   
   // Buscar audiências do banco de dados via tRPC
   const { data: audienciasData, isLoading, refetch } = trpc.audiencias.list.useQuery({
-    limit: 100,
+    limit: 500, // Aumentado para garantir que todos os eventos apareçam
   });
   
   // Mutation para atualizar audiências

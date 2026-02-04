@@ -9,17 +9,20 @@ export const audienciasRouter = router({
   // Listar audiências
   list: protectedProcedure
     .input(z.object({
-      limit: z.number().min(1).max(100).default(30),
+      limit: z.number().min(1).max(1000).default(500), // Aumentado para suportar mais eventos
       offset: z.number().default(0),
       responsavelId: z.number().optional(),
+      apenasProximas: z.boolean().optional().default(false), // Filtrar apenas futuras
     }).optional())
     .query(async ({ input }) => {
-      const { limit = 30, offset = 0, responsavelId } = input || {};
+      const { limit = 500, offset = 0, responsavelId, apenasProximas = false } = input || {};
 
       const whereConditions = [];
 
-      // Filtrar audiências futuras ou de hoje
-      whereConditions.push(gte(audiencias.dataAudiencia, new Date()));
+      // Filtrar audiências futuras apenas se solicitado
+      if (apenasProximas) {
+        whereConditions.push(gte(audiencias.dataAudiencia, new Date()));
+      }
 
       // Filtrar por responsável se especificado
       if (responsavelId) {
@@ -86,24 +89,24 @@ export const audienciasRouter = router({
     }),
 
   // Próximas audiências (para dashboard)
+  // Se dias=0, retorna TODAS as audiências futuras sem limite de data
   proximas: protectedProcedure
     .input(z.object({
-      dias: z.number().optional(),
-      limite: z.number().optional(),
+      dias: z.number().default(0), // 0 = sem limite de dias
+      limite: z.number().default(50), // Aumentado para mostrar mais eventos
     }).optional())
     .query(async ({ input }) => {
-      const { dias, limite } = input || {};
-      
-      // Construir condições WHERE dinamicamente
+      const { dias = 0, limite = 50 } = input || {};
+
       const whereConditions = [gte(audiencias.dataAudiencia, new Date())];
-      
-      // Adicionar limite de dias apenas se especificado
-      if (dias !== undefined) {
+
+      // Só adiciona limite de data se dias > 0
+      if (dias > 0) {
         const dataLimite = addDays(new Date(), dias);
         whereConditions.push(sql`${audiencias.dataAudiencia} <= ${dataLimite}`);
       }
 
-      let query = db
+      const results = await db
         .select({
           id: audiencias.id,
           dataHora: audiencias.dataAudiencia,
@@ -121,14 +124,9 @@ export const audienciasRouter = router({
         .from(audiencias)
         .leftJoin(processos, eq(audiencias.processoId, processos.id))
         .where(and(...whereConditions))
-        .orderBy(asc(audiencias.dataAudiencia));
-      
-      // Adicionar limite apenas se especificado
-      if (limite !== undefined) {
-        query = query.limit(limite) as any;
-      }
+        .orderBy(asc(audiencias.dataAudiencia))
+        .limit(limite);
 
-      const results = await query;
       return results;
     }),
 
@@ -247,8 +245,6 @@ export const audienciasRouter = router({
       const duplicados: string[] = [];
       const atualizados: number[] = [];
       const assistidosCriados: number[] = [];
-      const sessoesJuriCriadas: number[] = [];
-      const audienciasCriadas: number[] = [];
       
       // Obter workspaceId do usuário (ou usar 1 como padrão)
       const { workspaceId } = getWorkspaceScope(ctx.user);
@@ -525,93 +521,36 @@ export const audienciasRouter = router({
             processoId = novoProcesso.id;
           }
 
-          // Identificar se é Sessão de Julgamento do Tribunal do Júri ou Audiência de Instrução
-          const tipoNormalizado = evento.tipo?.toLowerCase() || "";
-          const localNormalizado = evento.local?.toLowerCase() || "";
-          const tituloNormalizado = evento.titulo?.toLowerCase() || "";
-          
-          // Critérios para identificar Sessão de Julgamento do Tribunal do Júri:
-          // - Tipo contém "sessão de julgamento" E "tribunal do júri" ou "tribunal do juri"
-          // - OU Local contém "sessão do tribunal do júri"
-          const isSessaoJuri = 
-            (tipoNormalizado.includes("sessão") && tipoNormalizado.includes("julgamento") && 
-             (tipoNormalizado.includes("júri") || tipoNormalizado.includes("juri"))) ||
-            (localNormalizado.includes("sessão") && 
-             (localNormalizado.includes("júri") || localNormalizado.includes("juri"))) ||
-            (tipoNormalizado.includes("tribunal do júri") || tipoNormalizado.includes("tribunal do juri"));
-          
-          // Mapear status da situação do PJe para status do sistema
-          const mapStatusSituacao = (situacao: string | undefined): string => {
-            if (!situacao) return "AGENDADA";
-            const s = situacao.toLowerCase();
-            if (s.includes("cancelada") || s.includes("cancelado")) return "CANCELADA";
-            if (s.includes("redesignada") || s.includes("remarcada") || s.includes("remarcado")) return "REDESIGNADA";
-            if (s.includes("realizada")) return "REALIZADA";
-            return "AGENDADA";
-          };
-          
-          if (isSessaoJuri) {
-            // Inserir na tabela sessoesJuri
-            // Buscar nome do assistido para cache
-            let assistidoNome = "Não identificado";
-            if (assistidoId) {
-              const [assistidoData] = await db
-                .select({ nome: assistidos.nome })
-                .from(assistidos)
-                .where(eq(assistidos.id, assistidoId))
-                .limit(1);
-              if (assistidoData) {
-                assistidoNome = assistidoData.nome;
-              }
-            }
-            
-            // Verificar se já existe sessão para este processo na mesma data
-            const [sessaoExistente] = await db
-              .select({ id: sessoesJuri.id })
-              .from(sessoesJuri)
-              .where(
-                and(
-                  eq(sessoesJuri.processoId, processoId!),
-                  eq(sessoesJuri.dataSessao, dataHora)
-                )
-              )
-              .limit(1);
-            
-            if (sessaoExistente) {
-              // Atualizar sessão existente
-              await db
-                .update(sessoesJuri)
-                .set({
-                  horario: evento.horarioInicio,
-                  sala: evento.local,
-                  assistidoNome: assistidoNome,
-                  status: mapStatusSituacao(evento.situacaoAudiencia || evento.status),
-                  observacoes: evento.descricao,
-                })
-                .where(eq(sessoesJuri.id, sessaoExistente.id));
-              
-              atualizados.push(sessaoExistente.id);
-            } else {
-              // Criar nova sessão de júri
-              const [sessao] = await db
-                .insert(sessoesJuri)
-                .values({
-                  processoId: processoId!,
-                  workspaceId: targetWorkspaceId,
-                  dataSessao: dataHora,
-                  horario: evento.horarioInicio,
-                  sala: evento.local,
-                  assistidoNome: assistidoNome,
-                  status: mapStatusSituacao(evento.situacaoAudiencia || evento.status),
-                  observacoes: evento.descricao,
-                })
-                .returning({ id: sessoesJuri.id });
-              
-              sessoesJuriCriadas.push(sessao.id);
-              importados.push(sessao.id);
-            }
+          // Verificar se é SESSÃO DE JÚRI (não apenas audiência na Vara do Júri)
+          // Critério: deve ser "Sessão de Julgamento" ou "Plenário", não apenas mencionar "Júri"
+          const tituloLower = evento.titulo?.toLowerCase() || "";
+          const ehSessaoJuri =
+            evento.tipo === "juri" ||
+            tituloLower.includes("sessão de julgamento") ||
+            tituloLower.includes("plenário do júri") ||
+            tituloLower.includes("plenário do juri") ||
+            // Padrão específico: "Júri - Nome" (título gerado pelo parser)
+            (tituloLower.startsWith("júri -") && !tituloLower.includes("instrução"));
+
+          if (ehSessaoJuri) {
+            // Criar sessão de júri na tabela correta
+            const [sessao] = await db
+              .insert(sessoesJuri)
+              .values({
+                processoId: processoId!,
+                dataSessao: dataHora,
+                defensorNome: "Defensor", // Será atualizado depois
+                assistidoNome: evento.assistido || "Não identificado",
+                status: evento.status === "cancelado" ? "CANCELADA" :
+                       evento.status === "remarcado" ? "ADIADA" : "AGENDADA",
+                observacoes: evento.descricao,
+                workspaceId: targetWorkspaceId,
+              })
+              .returning({ id: sessoesJuri.id });
+
+            importados.push(sessao.id);
           } else {
-            // Inserir na tabela audiencias (Instrução e Julgamento, etc.)
+            // Criar audiência comum
             const [audiencia] = await db
               .insert(audiencias)
               .values({
@@ -623,14 +562,13 @@ export const audienciasRouter = router({
                 descricao: evento.descricao,
                 local: evento.local,
                 horario: evento.horarioInicio,
-                status: evento.status === "confirmado" ? "agendada" : 
-                       evento.status === "cancelado" ? "cancelada" : 
+                status: evento.status === "confirmado" ? "agendada" :
+                       evento.status === "cancelado" ? "cancelada" :
                        evento.status === "remarcado" ? "reagendada" : "agendada",
                 workspaceId: targetWorkspaceId,
               })
               .returning({ id: audiencias.id });
 
-            audienciasCriadas.push(audiencia.id);
             importados.push(audiencia.id);
           }
         } catch (error) {
@@ -645,8 +583,6 @@ export const audienciasRouter = router({
         atualizados: atualizados.length,
         duplicadosProcessos: duplicados,
         assistidosCriados: assistidosCriados.length,
-        sessoesJuriCriadas: sessoesJuriCriadas.length,
-        audienciasCriadas: audienciasCriadas.length,
       };
     }),
 });
