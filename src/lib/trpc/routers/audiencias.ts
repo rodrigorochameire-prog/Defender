@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db, audiencias, processos, assistidos } from "@/lib/db";
+import { db, audiencias, processos, assistidos, sessoesJuri } from "@/lib/db";
 import { eq, and, gte, desc, asc, isNull, or, sql, ilike } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { getWorkspaceScope } from "../workspace";
@@ -239,6 +239,8 @@ export const audienciasRouter = router({
       const duplicados: string[] = [];
       const atualizados: number[] = [];
       const assistidosCriados: number[] = [];
+      const sessoesJuriCriadas: number[] = [];
+      const audienciasCriadas: number[] = [];
       
       // Obter workspaceId do usuário (ou usar 1 como padrão)
       const { workspaceId } = getWorkspaceScope(ctx.user);
@@ -515,26 +517,114 @@ export const audienciasRouter = router({
             processoId = novoProcesso.id;
           }
 
-          // Criar audiência
-          const [audiencia] = await db
-            .insert(audiencias)
-            .values({
-              processoId,
-              assistidoId,
-              dataAudiencia: dataHora,
-              tipo: evento.tipo,
-              titulo: evento.titulo,
-              descricao: evento.descricao,
-              local: evento.local,
-              horario: evento.horarioInicio,
-              status: evento.status === "confirmado" ? "agendada" : 
-                     evento.status === "cancelado" ? "cancelada" : 
-                     evento.status === "remarcado" ? "reagendada" : "agendada",
-              workspaceId: targetWorkspaceId,
-            })
-            .returning({ id: audiencias.id });
+          // Identificar se é Sessão de Julgamento do Tribunal do Júri ou Audiência de Instrução
+          const tipoNormalizado = evento.tipo?.toLowerCase() || "";
+          const localNormalizado = evento.local?.toLowerCase() || "";
+          const tituloNormalizado = evento.titulo?.toLowerCase() || "";
+          
+          // Critérios para identificar Sessão de Julgamento do Tribunal do Júri:
+          // - Tipo contém "sessão de julgamento" E "tribunal do júri" ou "tribunal do juri"
+          // - OU Local contém "sessão do tribunal do júri"
+          const isSessaoJuri = 
+            (tipoNormalizado.includes("sessão") && tipoNormalizado.includes("julgamento") && 
+             (tipoNormalizado.includes("júri") || tipoNormalizado.includes("juri"))) ||
+            (localNormalizado.includes("sessão") && 
+             (localNormalizado.includes("júri") || localNormalizado.includes("juri"))) ||
+            (tipoNormalizado.includes("tribunal do júri") || tipoNormalizado.includes("tribunal do juri"));
+          
+          // Mapear status da situação do PJe para status do sistema
+          const mapStatusSituacao = (situacao: string | undefined): string => {
+            if (!situacao) return "AGENDADA";
+            const s = situacao.toLowerCase();
+            if (s.includes("cancelada") || s.includes("cancelado")) return "CANCELADA";
+            if (s.includes("redesignada") || s.includes("remarcada") || s.includes("remarcado")) return "REDESIGNADA";
+            if (s.includes("realizada")) return "REALIZADA";
+            return "AGENDADA";
+          };
+          
+          if (isSessaoJuri) {
+            // Inserir na tabela sessoesJuri
+            // Buscar nome do assistido para cache
+            let assistidoNome = "Não identificado";
+            if (assistidoId) {
+              const [assistidoData] = await db
+                .select({ nome: assistidos.nome })
+                .from(assistidos)
+                .where(eq(assistidos.id, assistidoId))
+                .limit(1);
+              if (assistidoData) {
+                assistidoNome = assistidoData.nome;
+              }
+            }
+            
+            // Verificar se já existe sessão para este processo na mesma data
+            const [sessaoExistente] = await db
+              .select({ id: sessoesJuri.id })
+              .from(sessoesJuri)
+              .where(
+                and(
+                  eq(sessoesJuri.processoId, processoId!),
+                  eq(sessoesJuri.dataSessao, dataHora)
+                )
+              )
+              .limit(1);
+            
+            if (sessaoExistente) {
+              // Atualizar sessão existente
+              await db
+                .update(sessoesJuri)
+                .set({
+                  horario: evento.horarioInicio,
+                  sala: evento.local,
+                  assistidoNome: assistidoNome,
+                  status: mapStatusSituacao(evento.situacaoAudiencia || evento.status),
+                  observacoes: evento.descricao,
+                })
+                .where(eq(sessoesJuri.id, sessaoExistente.id));
+              
+              atualizados.push(sessaoExistente.id);
+            } else {
+              // Criar nova sessão de júri
+              const [sessao] = await db
+                .insert(sessoesJuri)
+                .values({
+                  processoId: processoId!,
+                  workspaceId: targetWorkspaceId,
+                  dataSessao: dataHora,
+                  horario: evento.horarioInicio,
+                  sala: evento.local,
+                  assistidoNome: assistidoNome,
+                  status: mapStatusSituacao(evento.situacaoAudiencia || evento.status),
+                  observacoes: evento.descricao,
+                })
+                .returning({ id: sessoesJuri.id });
+              
+              sessoesJuriCriadas.push(sessao.id);
+              importados.push(sessao.id);
+            }
+          } else {
+            // Inserir na tabela audiencias (Instrução e Julgamento, etc.)
+            const [audiencia] = await db
+              .insert(audiencias)
+              .values({
+                processoId,
+                assistidoId,
+                dataAudiencia: dataHora,
+                tipo: evento.tipo,
+                titulo: evento.titulo,
+                descricao: evento.descricao,
+                local: evento.local,
+                horario: evento.horarioInicio,
+                status: evento.status === "confirmado" ? "agendada" : 
+                       evento.status === "cancelado" ? "cancelada" : 
+                       evento.status === "remarcado" ? "reagendada" : "agendada",
+                workspaceId: targetWorkspaceId,
+              })
+              .returning({ id: audiencias.id });
 
-          importados.push(audiencia.id);
+            audienciasCriadas.push(audiencia.id);
+            importados.push(audiencia.id);
+          }
         } catch (error) {
           console.error(`Erro ao importar evento ${evento.processo}:`, error);
           // Continuar com os próximos eventos
@@ -547,6 +637,8 @@ export const audienciasRouter = router({
         atualizados: atualizados.length,
         duplicadosProcessos: duplicados,
         assistidosCriados: assistidosCriados.length,
+        sessoesJuriCriadas: sessoesJuriCriadas.length,
+        audienciasCriadas: audienciasCriadas.length,
       };
     }),
 });
