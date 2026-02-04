@@ -21,6 +21,9 @@ import {
   Scale,
   Shield,
   Info,
+  RefreshCw,
+  Lock,
+  Folder,
 } from "lucide-react";
 
 interface PJeAgendaImportModalProps {
@@ -52,13 +55,13 @@ interface ParsedEvento {
   orgaoJulgador: string;
 }
 
-// Opções de atribuição disponíveis
+// Opções de atribuição disponíveis com ícones Lucide
 const ATRIBUICAO_OPTIONS = [
-  { value: "auto", label: "🔄 Detectar automaticamente", description: "O sistema analisa o texto e identifica a atribuição" },
-  { value: "Tribunal do Júri", label: "⚖️ Tribunal do Júri", description: "AIJ, Júri (Plenário), PAP, Custódia" },
-  { value: "Violência Doméstica", label: "🛡️ Violência Doméstica", description: "AIJ, Justificação, Oitiva Especial, Custódia, Retratação" },
-  { value: "Execução Penal", label: "⚖️ Execução Penal", description: "Justificação, Admonitória" },
-  { value: "Criminal Geral", label: "📋 Criminal Geral", description: "AIJ, PAP, Custódia, ANPP, Justificação" },
+  { value: "auto", label: "Detectar automaticamente", description: "O sistema analisa o texto e identifica a atribuição", icon: RefreshCw },
+  { value: "Tribunal do Júri", label: "Tribunal do Júri", description: "AIJ, Júri (Plenário), PAP, Custódia", icon: Gavel },
+  { value: "Violência Doméstica", label: "Violência Doméstica", description: "AIJ, Justificação, Oitiva Especial, Custódia, Retratação", icon: Shield },
+  { value: "Execução Penal", label: "Execução Penal", description: "Justificação, Admonitória", icon: Lock },
+  { value: "Criminal Geral", label: "Criminal Geral", description: "AIJ, PAP, Custódia, ANPP, Justificação", icon: Folder },
 ] as const;
 
 export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImportModalProps) {
@@ -549,21 +552,21 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
         const assistidosTexto = assistidosUnicos.map(a => a.nome).join(", ");
         
         // Criar descrição estruturada no formato padrão
-        const descricaoCompleta = `📋 INFORMAÇÕES DA AUDIÊNCIA
+        const descricaoCompleta = `INFORMAÇÕES DA AUDIÊNCIA
 
-📍 Órgão Julgador: ${orgaoJulgadorFormatado || "Não informado"}
+Órgão Julgador: ${orgaoJulgadorFormatado || "Não informado"}
 
-⚖️ Tipo de Audiência: ${tipoAudienciaMapeado.descricao}
+Tipo de Audiência: ${tipoAudienciaMapeado.descricao}
 
-📂 Processo: ${processo}
+Processo: ${processo}
 
-📑 Classe Processual: ${classeJudicial}
+Classe Processual: ${classeJudicial}
 
-👤 Parte(s) Assistida(s): ${assistidosTexto || "Não identificado"}
+Parte(s) Assistida(s): ${assistidosTexto || "Não identificado"}
 
-📅 Data e Horário: ${dataFormatada}
+Data e Horário: ${dataFormatada}
 
-✅ Status: ${situacao}`;
+Status: ${situacao}`;
 
         const evento: ParsedEvento = {
           titulo,
@@ -724,21 +727,21 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
             const dataFormatadaAlt = `${dataCompleta.substring(8, 10)}/${dataCompleta.substring(5, 7)}/${dataCompleta.substring(2, 4)} ${horarioInicio}`;
             
             // Criar descrição estruturada
-            const descricaoAlt = `📋 INFORMAÇÕES DA AUDIÊNCIA
+            const descricaoAlt = `INFORMAÇÕES DA AUDIÊNCIA
 
-📍 Órgão Julgador: ${orgao}
+Órgão Julgador: ${orgao}
 
-⚖️ Tipo de Audiência: ${tipoAudMapeado.descricao}
+Tipo de Audiência: ${tipoAudMapeado.descricao}
 
-📂 Processo: ${processoMaisProximo}
+Processo: ${processoMaisProximo}
 
-📑 Classe Processual: ${classeAlt}
+Classe Processual: ${classeAlt}
 
-👤 Parte(s) Assistida(s): ${assistidosTextoAlt || "Não identificado"}
+Parte(s) Assistida(s): ${assistidosTextoAlt || "Não identificado"}
 
-📅 Data e Horário: ${dataFormatadaAlt}
+Data e Horário: ${dataFormatadaAlt}
 
-✅ Status: ${sit}`;
+Status: ${sit}`;
             
             const eventoAlt: ParsedEvento = {
               titulo: `${tipoAudMapeado.sigla} - ${assistidoAlt || "Sem assistido"} - ${processoMaisProximo}`,
@@ -845,14 +848,20 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport }: PJeAgendaImp
               <SelectValue placeholder="Selecione a atribuição" />
             </SelectTrigger>
             <SelectContent>
-              {ATRIBUICAO_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{option.label}</span>
-                    <span className="text-xs text-zinc-500">{option.description}</span>
-                  </div>
-                </SelectItem>
-              ))}
+              {ATRIBUICAO_OPTIONS.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <SelectItem key={option.value} value={option.value}>
+                    <div className="flex items-start gap-2">
+                      <Icon className="w-4 h-4 mt-0.5 text-zinc-500 flex-shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">{option.label}</span>
+                        <span className="text-xs text-zinc-500">{option.description}</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
           {forcedAtribuicao !== "auto" && (

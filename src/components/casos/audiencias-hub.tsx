@@ -30,7 +30,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { 
+import {
   Calendar as CalendarIcon,
   List,
   Columns3,
@@ -51,7 +51,16 @@ import {
   ExternalLink,
   Scale,
   LayoutGrid,
-  CalendarDays
+  CalendarDays,
+  Lock,
+  Handshake,
+  ClipboardList,
+  Gavel,
+  ScrollText,
+  Theater,
+  ArrowRight,
+  Pin,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PrisonerIndicator, StatusPrisionalDot } from "@/components/shared/prisoner-indicator";
@@ -100,16 +109,16 @@ interface AudienciasHubProps {
 // CONSTANTES
 // ==========================================
 
-const TIPOS_AUDIENCIA = {
-  INSTRUCAO: { label: "Instrução", icon: "⚖️", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", dotColor: "bg-blue-500" },
-  CUSTODIA: { label: "Custódia", icon: "🔒", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400", dotColor: "bg-red-500" },
-  CONCILIACAO: { label: "Conciliação", icon: "🤝", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400", dotColor: "bg-green-500" },
-  JUSTIFICACAO: { label: "Justificação", icon: "📋", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", dotColor: "bg-amber-500" },
-  ADMONICAO: { label: "Admonição", icon: "👨‍⚖️", color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400", dotColor: "bg-violet-500" },
-  UNA: { label: "Una", icon: "📑", color: "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400", dotColor: "bg-slate-500" },
-  PLENARIO_JURI: { label: "Plenário", icon: "🎭", color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", dotColor: "bg-rose-500" },
-  CONTINUACAO: { label: "Continuação", icon: "➡️", color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400", dotColor: "bg-cyan-500" },
-  OUTRA: { label: "Outra", icon: "📌", color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400", dotColor: "bg-zinc-500" },
+const TIPOS_AUDIENCIA: Record<string, { label: string; icon: LucideIcon; color: string; dotColor: string }> = {
+  INSTRUCAO: { label: "Instrução", icon: Scale, color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", dotColor: "bg-blue-500" },
+  CUSTODIA: { label: "Custódia", icon: Lock, color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400", dotColor: "bg-red-500" },
+  CONCILIACAO: { label: "Conciliação", icon: Handshake, color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400", dotColor: "bg-green-500" },
+  JUSTIFICACAO: { label: "Justificação", icon: ClipboardList, color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", dotColor: "bg-amber-500" },
+  ADMONICAO: { label: "Admonição", icon: Gavel, color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400", dotColor: "bg-violet-500" },
+  UNA: { label: "Una", icon: ScrollText, color: "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400", dotColor: "bg-slate-500" },
+  PLENARIO_JURI: { label: "Plenário", icon: Theater, color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", dotColor: "bg-rose-500" },
+  CONTINUACAO: { label: "Continuação", icon: ArrowRight, color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400", dotColor: "bg-cyan-500" },
+  OUTRA: { label: "Outra", icon: Pin, color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400", dotColor: "bg-zinc-500" },
 };
 
 const STATUS_AUDIENCIA = {
@@ -218,7 +227,7 @@ function AudienciaCard({
         {/* Tipo e Local */}
         <div className="flex items-center gap-2 mb-2">
           <Badge className={cn("text-xs", tipoConfig.color)}>
-            {tipoConfig.icon} {tipoConfig.label}
+            <tipoConfig.icon className="w-3 h-3" /> {tipoConfig.label}
           </Badge>
           {audiencia.sala && (
             <span className="text-xs text-zinc-500">
@@ -321,7 +330,7 @@ function ListView({
                   </TableCell>
                   <TableCell>
                     <Badge className={cn("text-xs px-1.5 py-0", tipoConfig.color)}>
-                      {tipoConfig.icon} {tipoConfig.label}
+                      <tipoConfig.icon className="w-3 h-3" /> {tipoConfig.label}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -406,7 +415,7 @@ function ListView({
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Badge className={cn("text-[9px] px-1.5 py-0", tipoConfig.color)}>
-                    {tipoConfig.icon}
+                    <tipoConfig.icon className="w-3 h-3" />
                   </Badge>
                   <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", statusConfig.color)}>
                     {statusConfig.label}
@@ -749,7 +758,7 @@ function AudienciaSidePeek({
               </SheetTitle>
               <div className="flex items-center gap-2 mt-1">
                 <Badge className={cn("text-xs", tipoConfig.color)}>
-                  {tipoConfig.icon} {tipoConfig.label}
+                  <tipoConfig.icon className="w-3 h-3" /> {tipoConfig.label}
                 </Badge>
                 <Badge variant="outline" className={cn("text-xs", statusConfig.color)}>
                   {statusConfig.label}

@@ -32,6 +32,12 @@ import {
   CheckCircle,
   Clock,
   Target,
+  Building2,
+  Newspaper,
+  Instagram,
+  Linkedin,
+  Facebook,
+  type LucideIcon,
 } from "lucide-react";
 import { DiligenciasPanel } from "@/components/diligencias";
 import { cn } from "@/lib/utils";
@@ -40,15 +46,15 @@ import { cn } from "@/lib/utils";
 // FONTES OSINT
 // ==========================================
 
-const osintSources = [
-  { label: "Jusbrasil", base: "https://www.jusbrasil.com.br/busca?q=", icon: "⚖️" },
-  { label: "Escavador", base: "https://www.escavador.com/busca?q=", icon: "🔍" },
-  { label: "Facebook", base: "https://www.facebook.com/search/top/?q=", icon: "📘" },
-  { label: "Instagram", base: "https://www.instagram.com/explore/tags/", icon: "📷" },
-  { label: "LinkedIn", base: "https://www.linkedin.com/search/results/all/?keywords=", icon: "💼" },
-  { label: "Portal Transparência", base: "https://portaldatransparencia.gov.br/busca?termo=", icon: "🏛️" },
-  { label: "Diário Oficial", base: "https://www.jusbrasil.com.br/diarios/busca?q=", icon: "📰" },
-  { label: "Google", base: "https://www.google.com/search?q=", icon: "🔎" },
+const osintSources: { label: string; base: string; icon: LucideIcon }[] = [
+  { label: "Jusbrasil", base: "https://www.jusbrasil.com.br/busca?q=", icon: Scale },
+  { label: "Escavador", base: "https://www.escavador.com/busca?q=", icon: Search },
+  { label: "Facebook", base: "https://www.facebook.com/search/top/?q=", icon: Facebook },
+  { label: "Instagram", base: "https://www.instagram.com/explore/tags/", icon: Instagram },
+  { label: "LinkedIn", base: "https://www.linkedin.com/search/results/all/?keywords=", icon: Linkedin },
+  { label: "Portal Transparência", base: "https://portaldatransparencia.gov.br/busca?termo=", icon: Building2 },
+  { label: "Diário Oficial", base: "https://www.jusbrasil.com.br/diarios/busca?q=", icon: Newspaper },
+  { label: "Google", base: "https://www.google.com/search?q=", icon: Globe },
 ];
 
 // ==========================================
@@ -366,19 +372,22 @@ export default function InvestigacaoPage() {
 
                 {osintLinks.length > 0 && (
                   <div className="grid gap-2 md:grid-cols-4">
-                    {osintLinks.map((link) => (
-                      <a
-                        key={link.label}
-                        href={link.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-2 rounded-lg border border-emerald-100 dark:border-emerald-900/40 p-3 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                      >
-                        <span>{link.icon}</span>
-                        <span>{link.label}</span>
-                        <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
-                      </a>
-                    ))}
+                    {osintLinks.map((link) => {
+                      const Icon = link.icon;
+                      return (
+                        <a
+                          key={link.label}
+                          href={link.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-2 rounded-lg border border-emerald-100 dark:border-emerald-900/40 p-3 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span>{link.label}</span>
+                          <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
+                        </a>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

@@ -874,16 +874,14 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
               {data.linkDrive && (
                 <a href={data.linkDrive} target="_blank" rel="noopener noreferrer" className="col-span-1">
                   <Button variant="outline" className="w-full h-10 sm:h-11 text-xs sm:text-sm border-zinc-300 dark:border-zinc-600">
-                    <FolderOpen className="w-4 h-4 mr-2 text-zinc-500 dark:text-zinc-400" />
+                    <FolderOpen className="w-4 h-4 sm:mr-2 text-zinc-500 dark:text-zinc-400" />
                     <span className="hidden sm:inline">Drive</span>
-                    <span className="sm:hidden">📁</span>
                   </Button>
                 </a>
               )}
               <Button variant="outline" className="col-span-1 h-10 sm:h-11 text-xs sm:text-sm border-zinc-300 dark:border-zinc-600">
-                <MessageCircle className="w-4 h-4 mr-2 text-zinc-500 dark:text-zinc-400" />
+                <MessageCircle className="w-4 h-4 sm:mr-2 text-zinc-500 dark:text-zinc-400" />
                 <span className="hidden sm:inline">Contato</span>
-                <span className="sm:hidden">💬</span>
               </Button>
             </div>
           </div>
