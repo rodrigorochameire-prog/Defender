@@ -372,8 +372,9 @@ export default function DashboardJuriPage() {
     const fimDaSemana = addDays(hoje, 7 - hoje.getDay()); // Domingo
     
     // Audiências da semana atual
+    // O campo retornado pelo tRPC é dataHora, não data
     const audienciasSemana = audiencias.filter((a: any) => {
-      const dataAud = a.data ? parseISO(a.data) : null;
+      const dataAud = a.dataHora ? new Date(a.dataHora) : null;
       return dataAud && dataAud >= hoje && dataAud <= fimDaSemana;
     });
     
@@ -390,7 +391,7 @@ export default function DashboardJuriPage() {
     const hoje = new Date();
     const fimDaSemana = addDays(hoje, 7 - hoje.getDay());
     const audienciasSemana = audiencias.filter((a: any) => {
-      const dataAud = a.data ? parseISO(a.data) : null;
+      const dataAud = a.dataHora ? new Date(a.dataHora) : null;
       return dataAud && dataAud >= hoje && dataAud <= fimDaSemana;
     });
     return audienciasSemana.length < 5;
@@ -985,7 +986,8 @@ export default function DashboardJuriPage() {
                   </div>
                 ) : (
                   audienciasExibir.map((aud: any, index: number) => {
-                    const dataAud = aud.data ? parseISO(aud.data) : null;
+                    // O campo retornado pelo tRPC é dataHora, não data
+                    const dataAud = aud.dataHora ? new Date(aud.dataHora) : null;
                     const isHoje = dataAud && isToday(dataAud);
                     const isAmanha = dataAud && isTomorrow(dataAud);
                     const diasRestantes = dataAud ? differenceInDays(dataAud, new Date()) : null;
@@ -1018,7 +1020,7 @@ export default function DashboardJuriPage() {
                               {aud.assistidoNome || aud.titulo || "Audiência"}
                             </p>
                             <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                              <span>{aud.hora || aud.horario || "—"}</span>
+                              <span>{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
                               <span>•</span>
                               <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
                             </div>
@@ -1190,14 +1192,15 @@ export default function DashboardJuriPage() {
                 </div>
               ) : (
                 audienciasExibir.map((aud: any, index: number) => {
-                  const dataAud = aud.data ? parseISO(aud.data) : null;
+                  // O campo retornado pelo tRPC é dataHora, não data
+                  const dataAud = aud.dataHora ? new Date(aud.dataHora) : null;
                   const isHoje = dataAud && isToday(dataAud);
                   const isAmanha = dataAud && isTomorrow(dataAud);
                   const estaSemana = dataAud && isThisWeek(dataAud, { weekStartsOn: 0 });
                   
                   // Agrupar visualmente por data
-                  const dataAnterior = index > 0 && audienciasExibir[index - 1].data 
-                    ? parseISO(audienciasExibir[index - 1].data) : null;
+                  const dataAnterior = index > 0 && audienciasExibir[index - 1].dataHora 
+                    ? new Date(audienciasExibir[index - 1].dataHora) : null;
                   const mostrarSeparadorData = !dataAnterior || 
                     (dataAud && format(dataAud, "yyyy-MM-dd") !== format(dataAnterior, "yyyy-MM-dd"));
 
@@ -1230,7 +1233,7 @@ export default function DashboardJuriPage() {
                               {aud.assistidoNome || aud.titulo || "Audiência"}
                             </p>
                             <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                              <span>{aud.hora || aud.horario || "—"}</span>
+                              <span>{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
                               <span>•</span>
                               <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
                             </div>
