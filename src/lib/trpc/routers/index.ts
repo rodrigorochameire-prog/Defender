@@ -15,6 +15,7 @@ import { avaliacaoJuriRouter } from "./avaliacaoJuri";
 import { audienciasRouter } from "./audiencias";
 import { driveRouter } from "./drive";
 import { profissionaisRouter } from "./profissionais";
+import { diligenciasRouter } from "./diligencias";
 
 // Routers compartilhados
 import { calendarRouter } from "./calendar";
@@ -48,6 +49,7 @@ export const appRouter = router({
   audiencias: audienciasRouter,
   drive: driveRouter,
   profissionais: profissionaisRouter,
+  diligencias: diligenciasRouter,
   
   // ==========================================
   // COMPARTILHADOS
