@@ -1026,6 +1026,20 @@ export default function DashboardJuriPage() {
                             </div>
                           </div>
                           {aud.reuPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
+                          {/* Badge de status do evento */}
+                          {aud.status && aud.status !== "agendada" && (
+                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${
+                              aud.status === "cancelada" || aud.status === "CANCELADA"
+                                ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 line-through"
+                                : aud.status === "reagendada" || aud.status === "REDESIGNADA"
+                                  ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
+                                  : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                            }`}>
+                              {aud.status === "cancelada" || aud.status === "CANCELADA" ? "Cancelada" :
+                               aud.status === "reagendada" || aud.status === "REDESIGNADA" ? "Redesignada" :
+                               aud.status === "realizada" || aud.status === "REALIZADA" ? "Realizada" : aud.status}
+                            </span>
+                          )}
                           {diasRestantes !== null && (
                             <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
                               diasRestantes <= 0 ? "bg-rose-500 text-white" :
@@ -1139,6 +1153,22 @@ export default function DashboardJuriPage() {
                               )}
                             </div>
                           </div>
+                          {/* Badge de status do júri */}
+                          {juri.status && juri.status !== "AGENDADA" && (
+                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${
+                              juri.status === "CANCELADA"
+                                ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                                : juri.status === "REDESIGNADA"
+                                  ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
+                                  : juri.status === "REALIZADA"
+                                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                            }`}>
+                              {juri.status === "CANCELADA" ? "Cancelado" :
+                               juri.status === "REDESIGNADA" ? "Redesignado" :
+                               juri.status === "REALIZADA" ? "Realizado" : juri.status}
+                            </span>
+                          )}
                           {diasRestantes !== null && (
                             <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
                               diasRestantes <= 0 ? "bg-rose-500 text-white" :
@@ -1240,6 +1270,22 @@ export default function DashboardJuriPage() {
                           </div>
                           {aud.reuPreso && (
                             <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                          )}
+                          {/* Badge de status do evento */}
+                          {aud.status && aud.status !== "agendada" && (
+                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${
+                              aud.status === "cancelada" || aud.status === "CANCELADA"
+                                ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                                : aud.status === "reagendada" || aud.status === "REDESIGNADA"
+                                  ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
+                                  : aud.status === "realizada" || aud.status === "REALIZADA"
+                                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                            }`}>
+                              {aud.status === "cancelada" || aud.status === "CANCELADA" ? "Cancelada" :
+                               aud.status === "reagendada" || aud.status === "REDESIGNADA" ? "Redesignada" :
+                               aud.status === "realizada" || aud.status === "REALIZADA" ? "Realizada" : aud.status}
+                            </span>
                           )}
                         </div>
                       </Link>
