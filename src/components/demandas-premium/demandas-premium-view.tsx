@@ -34,7 +34,6 @@ import {
   Download,
   Upload,
   Archive,
-  XCircle,
   Sparkles,
   BarChart as BarChartIcon,
   Settings,
@@ -57,6 +56,10 @@ import {
   X,
   LayoutList,
   Table2,
+  LayoutGrid,
+  Eye,
+  Zap,
+  XCircle,
 } from "lucide-react";
 
 // Ícones e cores por atribuição
@@ -154,6 +157,220 @@ const chartOptions = [
   { value: "situacao-prisional", label: "Situação Prisional", category: "Situação", icon: ShieldCheck, color: "#27272A" },
 ];
 
+// ==========================================
+// DEMANDA GRID CARD - Estilo Premium com Hover Sutil
+// ==========================================
+
+interface DemandaGridCardProps {
+  demanda: any;
+  statusConfig: any;
+  borderColor: string;
+  atribuicaoIcons: Record<string, React.ComponentType<{ className?: string }>>;
+  onStatusChange: (id: string, status: string) => void;
+  onEdit: (demanda: any) => void;
+  onArchive: (id: string) => void;
+  onDelete: (id: string) => void;
+  copyToClipboard: (text: string, message?: string) => void;
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
+}
+
+function DemandaGridCard({
+  demanda,
+  statusConfig,
+  borderColor,
+  atribuicaoIcons,
+  onStatusChange,
+  onEdit,
+  onArchive,
+  onDelete,
+  copyToClipboard,
+  isSelectMode,
+  isSelected,
+  onToggleSelect
+}: DemandaGridCardProps) {
+  const [showQuickActions, setShowQuickActions] = useState(false);
+
+  const AtribuicaoIcon = atribuicaoIcons[demanda.atribuicao] || Scale;
+
+  // Calcular prazo
+  const calcularPrazo = (prazoStr: string) => {
+    if (!prazoStr) return null;
+    try {
+      const [dia, mes, ano] = prazoStr.split('/').map(Number);
+      const prazo = new Date(2000 + ano, mes - 1, dia);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      prazo.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((prazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) return { text: "Vencido", urgent: true };
+      if (diffDays === 0) return { text: "Hoje", urgent: true };
+      if (diffDays === 1) return { text: "Amanhã", urgent: true };
+      if (diffDays <= 3) return { text: `${diffDays}d`, urgent: true };
+      return { text: `${diffDays}d`, urgent: false };
+    } catch {
+      return null;
+    }
+  };
+
+  const prazoInfo = calcularPrazo(demanda.prazo);
+  const isPreso = demanda.estadoPrisional && demanda.estadoPrisional !== "Solto";
+
+  return (
+    <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden transition-all duration-300 hover:shadow-lg">
+      {/* ✨ BORDA SUPERIOR PREMIUM - SUTIL no hover */}
+      <div
+        className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          background: `linear-gradient(to right, transparent, ${borderColor}, transparent)`
+        }}
+      />
+
+      {/* Gradiente de fundo - SUTIL no hover */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none rounded-xl transition-opacity duration-500"
+        style={{
+          background: `linear-gradient(to bottom right, ${borderColor}15 0%, ${borderColor}08 30%, transparent 60%)`
+        }}
+      />
+
+      {/* Quick Actions Overlay */}
+      {showQuickActions && (
+        <div
+          className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in duration-200"
+          onClick={() => setShowQuickActions(false)}
+        >
+          <button
+            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition-all"
+            onClick={() => setShowQuickActions(false)}
+          >
+            <XCircle className="w-4 h-4" />
+          </button>
+
+          <p className="text-white/60 text-[10px] mb-2">{demanda.assistido}</p>
+
+          <div className="grid grid-cols-2 gap-2 p-3" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => { onEdit(demanda); setShowQuickActions(false); }}
+              className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all"
+            >
+              <Eye className="w-4 h-4" />
+              <span className="text-[9px]">Ver/Editar</span>
+            </button>
+            <button
+              onClick={() => { copyToClipboard(demanda.processos?.[0]?.numero || "", "Processo copiado!"); setShowQuickActions(false); }}
+              className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all"
+            >
+              <FileText className="w-4 h-4" />
+              <span className="text-[9px]">Copiar Nº</span>
+            </button>
+            <button
+              onClick={() => { onArchive(demanda.id); setShowQuickActions(false); }}
+              className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all"
+            >
+              <Archive className="w-4 h-4" />
+              <span className="text-[9px]">Arquivar</span>
+            </button>
+            <button
+              onClick={() => { onDelete(demanda.id); setShowQuickActions(false); }}
+              className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-rose-500/30 text-white/80 hover:text-rose-300 transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="text-[9px]">Excluir</span>
+            </button>
+          </div>
+
+          <p className="text-white/40 text-[9px] mt-2">Clique fora para fechar</p>
+        </div>
+      )}
+
+      {/* Checkbox de seleção */}
+      {isSelectMode && (
+        <div className="absolute top-2 left-2 z-10">
+          <button
+            onClick={() => onToggleSelect?.(demanda.id)}
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+              isSelected
+                ? "bg-emerald-500 border-emerald-500 text-white"
+                : "border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:border-emerald-400"
+            }`}
+          >
+            {isSelected && <CheckSquare className="w-3 h-3" />}
+          </button>
+        </div>
+      )}
+
+      {/* Conteúdo do Card */}
+      <div className="p-3 space-y-2.5 relative z-10">
+        {/* Header: Status + Prazo + Quick Actions */}
+        <div className="flex items-center justify-between">
+          <Badge
+            className="text-[9px] px-1.5 py-0.5 font-medium"
+            style={{ backgroundColor: `${borderColor}20`, color: borderColor }}
+          >
+            {statusConfig.label}
+          </Badge>
+
+          <div className="flex items-center gap-1">
+            {prazoInfo && (
+              <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
+                prazoInfo.urgent
+                  ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+              }`}>
+                {prazoInfo.text}
+              </span>
+            )}
+            {/* Botão Quick Actions ⚡ */}
+            <button
+              onClick={() => setShowQuickActions(true)}
+              className="w-6 h-6 rounded flex items-center justify-center text-zinc-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all"
+            >
+              <Zap className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Assistido */}
+        <div className="flex items-center gap-2">
+          {isPreso && (
+            <div className="w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
+              <Lock className="w-2.5 h-2.5 text-white" />
+            </div>
+          )}
+          <p className="font-medium text-sm text-zinc-800 dark:text-zinc-100 truncate">
+            {demanda.assistido}
+          </p>
+        </div>
+
+        {/* Ato */}
+        <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+          {demanda.ato}
+        </p>
+
+        {/* Footer: Atribuição + Processo */}
+        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-1 text-[9px] text-zinc-400">
+            <AtribuicaoIcon className="w-3 h-3" />
+            <span className="truncate max-w-[80px]">{demanda.atribuicao}</span>
+          </div>
+
+          {demanda.processos?.[0] && (
+            <button
+              onClick={() => copyToClipboard(demanda.processos[0].numero, "Processo copiado!")}
+              className="text-[9px] font-mono text-zinc-400 hover:text-emerald-600 transition-colors truncate max-w-[100px]"
+            >
+              {demanda.processos[0].numero.slice(-10)}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Demandas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("status");
@@ -185,10 +402,10 @@ export default function Demandas() {
   const [isAdminConfigModalOpen, setIsAdminConfigModalOpen] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<"cards" | "table">(() => {
+  const [viewMode, setViewMode] = useState<"table" | "cards" | "grid">(() => {
     if (typeof window !== "undefined") {
       // Padrão é "table" (modo planilha) - mais prático para gestão de demandas
-      return (localStorage.getItem("defender_demandas_view_mode") as "cards" | "table") || "table";
+      return (localStorage.getItem("defender_demandas_view_mode") as "table" | "cards" | "grid") || "table";
     }
     return "table";
   });
@@ -825,22 +1042,8 @@ export default function Demandas() {
                     </button>
                   ))}
                 </div>
-                {/* Toggle de Visualização: Cards / Planilha */}
+                {/* Toggle de Visualização: Planilha / Cards / Grid */}
                 <div className="hidden md:flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 gap-0.5">
-                  <button
-                    onClick={() => {
-                      setViewMode("cards");
-                      localStorage.setItem("defender_demandas_view_mode", "cards");
-                    }}
-                    className={`p-1.5 rounded-md transition-all ${
-                      viewMode === "cards"
-                        ? "bg-emerald-600 text-white shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                    }`}
-                    title="Visualização em Cards"
-                  >
-                    <LayoutList className="w-3.5 h-3.5" />
-                  </button>
                   <button
                     onClick={() => {
                       setViewMode("table");
@@ -851,9 +1054,37 @@ export default function Demandas() {
                         ? "bg-emerald-600 text-white shadow-sm"
                         : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                     }`}
-                    title="Visualização em Planilha"
+                    title="Lista (Padrão)"
                   >
                     <Table2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setViewMode("cards");
+                      localStorage.setItem("defender_demandas_view_mode", "cards");
+                    }}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === "cards"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    }`}
+                    title="Cards Horizontais"
+                  >
+                    <LayoutList className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setViewMode("grid");
+                      localStorage.setItem("defender_demandas_view_mode", "grid");
+                    }}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === "grid"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    }`}
+                    title="Grid Premium"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <button
@@ -894,9 +1125,9 @@ export default function Demandas() {
               </div>
             )}
 
-            <div className={`${viewMode === "cards" ? "p-4 space-y-3" : "p-0"} max-h-[calc(100vh-400px)] min-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900`}>
+            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : "p-4"} max-h-[calc(100vh-400px)] min-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900`}>
               {viewMode === "table" ? (
-                /* ========== MODO PLANILHA ========== */
+                /* ========== MODO PLANILHA (PADRÃO) ========== */
                 <DemandaTableView
                   demandas={demandasOrdenadas}
                   atribuicaoIcons={atribuicaoIcons}
@@ -913,8 +1144,8 @@ export default function Demandas() {
                   selectedIds={selectedIds}
                   onToggleSelect={handleToggleSelect}
                 />
-              ) : (
-                /* ========== MODO CARDS ========== */
+              ) : viewMode === "cards" ? (
+                /* ========== MODO CARDS HORIZONTAIS ========== */
                 <>
                   {demandasOrdenadas.length === 0 ? (
                     <div className="text-center py-16">
@@ -960,6 +1191,50 @@ export default function Demandas() {
                         />
                       );
                     })
+                  )}
+                </>
+              ) : (
+                /* ========== MODO GRID PREMIUM ========== */
+                <>
+                  {demandasOrdenadas.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mx-auto mb-5 flex items-center justify-center">
+                        <ListTodo className="w-10 h-10 text-zinc-400 dark:text-zinc-600" />
+                      </div>
+                      <p className="text-base font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                        Nenhuma demanda encontrada
+                      </p>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        {showArchived
+                          ? "Não há demandas arquivadas no momento"
+                          : "Ajuste os filtros ou crie uma nova demanda"}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {demandasOrdenadas.map((demanda) => {
+                        const statusConfig = getStatusConfig(demanda.status);
+                        const borderColor = STATUS_GROUPS[statusConfig.group].color;
+
+                        return (
+                          <DemandaGridCard
+                            key={demanda.id}
+                            demanda={demanda}
+                            statusConfig={statusConfig}
+                            borderColor={borderColor}
+                            atribuicaoIcons={atribuicaoIcons}
+                            onStatusChange={handleStatusChange}
+                            onEdit={handleEditDemanda}
+                            onArchive={handleArchiveDemanda}
+                            onDelete={handleDeleteDemanda}
+                            copyToClipboard={copyToClipboard}
+                            isSelectMode={isSelectMode}
+                            isSelected={selectedIds.has(demanda.id)}
+                            onToggleSelect={handleToggleSelect}
+                          />
+                        );
+                      })}
+                    </div>
                   )}
                 </>
               )}

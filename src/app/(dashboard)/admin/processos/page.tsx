@@ -881,15 +881,30 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
   return (
     <div
       className={cn(
-        "group relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800",
-        "hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300",
+        "group relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800",
+        "transition-all duration-300",
         "overflow-hidden",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
         "hover:shadow-lg",
         cardStatus.glow
       )}
-      style={{ borderLeftWidth: '4px', borderLeftColor: cardStatus.color }}
     >
+      {/* ✨ BORDA SUPERIOR PREMIUM - SUTIL no hover */}
+      <div
+        className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          background: `linear-gradient(to right, transparent, ${cardStatus.color}, transparent)`
+        }}
+      />
+
+      {/* Gradiente de fundo - SUTIL no hover */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none rounded-xl transition-opacity duration-500"
+        style={{
+          background: `linear-gradient(to bottom right, ${cardStatus.color}15 0%, ${cardStatus.color}08 30%, transparent 60%)`
+        }}
+      />
+
       {/* Quick Actions Overlay - Ativado por click */}
       <QuickActionsOverlay
         processoId={processo.id}
