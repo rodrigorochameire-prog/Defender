@@ -71,7 +71,9 @@ import { ptBR } from "date-fns/locale";
 
 interface DiligenciasPanelProps {
   processoId?: number;
+  processoNumero?: string;
   assistidoId?: number;
+  assistidoNome?: string;
   casoId?: number;
   area?: string;
   fase?: string;

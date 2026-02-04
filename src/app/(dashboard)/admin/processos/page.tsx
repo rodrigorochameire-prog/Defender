@@ -43,8 +43,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
-import { 
-  Scale, 
+import {
+  Scale,
   Plus,
   Search,
   Download,
@@ -80,6 +80,11 @@ import {
   Filter,
   XCircle,
   ArrowUpDown,
+  CalendarClock,
+  AlertCircle,
+  Timer,
+  Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -90,7 +95,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, isToday, isTomorrow, isPast, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -221,6 +226,194 @@ function calcularPrioridade(processo: Processo): number {
   // Demandas abertas
   score += processo.demandasAbertas * 10;
   return score;
+}
+
+// ==========================================
+// KPI CARD PREMIUM - Gradientes e Animações
+// ==========================================
+
+interface KPICardPremiumProps {
+  title: string;
+  value: number | string;
+  subtitle?: string;
+  icon: React.ElementType;
+  trend?: { value: number; label: string };
+  gradient: "emerald" | "blue" | "amber" | "rose" | "violet" | "zinc";
+  onClick?: () => void;
+  active?: boolean;
+}
+
+const GRADIENT_CONFIGS = {
+  emerald: {
+    bg: "from-emerald-500/10 via-emerald-500/5 to-transparent",
+    border: "border-emerald-200/50 dark:border-emerald-800/30",
+    icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    text: "text-emerald-600 dark:text-emerald-400",
+    glow: "group-hover:shadow-emerald-500/10",
+  },
+  blue: {
+    bg: "from-blue-500/10 via-blue-500/5 to-transparent",
+    border: "border-blue-200/50 dark:border-blue-800/30",
+    icon: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    text: "text-blue-600 dark:text-blue-400",
+    glow: "group-hover:shadow-blue-500/10",
+  },
+  amber: {
+    bg: "from-amber-500/10 via-amber-500/5 to-transparent",
+    border: "border-amber-200/50 dark:border-amber-800/30",
+    icon: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    text: "text-amber-600 dark:text-amber-400",
+    glow: "group-hover:shadow-amber-500/10",
+  },
+  rose: {
+    bg: "from-rose-500/10 via-rose-500/5 to-transparent",
+    border: "border-rose-200/50 dark:border-rose-800/30",
+    icon: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+    text: "text-rose-600 dark:text-rose-400",
+    glow: "group-hover:shadow-rose-500/10",
+  },
+  violet: {
+    bg: "from-violet-500/10 via-violet-500/5 to-transparent",
+    border: "border-violet-200/50 dark:border-violet-800/30",
+    icon: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+    text: "text-violet-600 dark:text-violet-400",
+    glow: "group-hover:shadow-violet-500/10",
+  },
+  zinc: {
+    bg: "from-zinc-500/10 via-zinc-500/5 to-transparent",
+    border: "border-zinc-200/50 dark:border-zinc-700/50",
+    icon: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
+    text: "text-zinc-600 dark:text-zinc-400",
+    glow: "group-hover:shadow-zinc-500/10",
+  },
+};
+
+function KPICardPremium({ title, value, subtitle, icon: Icon, trend, gradient, onClick, active }: KPICardPremiumProps) {
+  const config = GRADIENT_CONFIGS[gradient];
+
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
+        onClick && "cursor-pointer",
+        active ? config.border : "border-zinc-100 dark:border-zinc-800",
+        "hover:shadow-lg",
+        config.glow
+      )}
+    >
+      {/* Gradient Background */}
+      <div className={cn(
+        "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+        config.bg
+      )} />
+
+      {/* Top accent line */}
+      <div className={cn(
+        "absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-100 transition-opacity",
+        config.text
+      )} />
+
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0 space-y-1">
+          <p className={cn(
+            "text-[10px] font-medium uppercase tracking-wider transition-colors",
+            active ? config.text : "text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300"
+          )}>
+            {title}
+          </p>
+          <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{value}</p>
+          {subtitle && (
+            <p className="text-[10px] text-zinc-400">{subtitle}</p>
+          )}
+          {trend && (
+            <div className={cn(
+              "flex items-center gap-1 text-[10px] font-medium",
+              trend.value >= 0 ? "text-emerald-600" : "text-rose-600"
+            )}>
+              <TrendingUp className={cn("w-3 h-3", trend.value < 0 && "rotate-180")} />
+              <span>{trend.value >= 0 ? "+" : ""}{trend.value}% {trend.label}</span>
+            </div>
+          )}
+        </div>
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300",
+          config.icon,
+          "group-hover:scale-110"
+        )}>
+          <Icon className="w-5 h-5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// FILTRO DE PRAZO - Chips Premium
+// ==========================================
+
+type PrazoFilter = "all" | "vencidos" | "hoje" | "amanha" | "semana" | "quinzena";
+
+const PRAZO_FILTERS: Array<{ value: PrazoFilter; label: string; icon: React.ElementType; color: string }> = [
+  { value: "all", label: "Todos", icon: Scale, color: "zinc" },
+  { value: "vencidos", label: "Vencidos", icon: AlertCircle, color: "rose" },
+  { value: "hoje", label: "Hoje", icon: Timer, color: "amber" },
+  { value: "amanha", label: "Amanhã", icon: CalendarClock, color: "blue" },
+  { value: "semana", label: "7 dias", icon: Calendar, color: "emerald" },
+  { value: "quinzena", label: "15 dias", icon: Calendar, color: "violet" },
+];
+
+function PrazoFilterChips({
+  selected,
+  onChange,
+  counts
+}: {
+  selected: PrazoFilter;
+  onChange: (value: PrazoFilter) => void;
+  counts: Record<PrazoFilter, number>;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+      {PRAZO_FILTERS.map(filter => {
+        const isActive = selected === filter.value;
+        const count = counts[filter.value] || 0;
+        const Icon = filter.icon;
+
+        return (
+          <button
+            key={filter.value}
+            onClick={() => onChange(filter.value)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap",
+              isActive
+                ? filter.color === "rose" ? "bg-rose-500 text-white shadow-sm" :
+                  filter.color === "amber" ? "bg-amber-500 text-white shadow-sm" :
+                  filter.color === "blue" ? "bg-blue-500 text-white shadow-sm" :
+                  filter.color === "emerald" ? "bg-emerald-500 text-white shadow-sm" :
+                  filter.color === "violet" ? "bg-violet-500 text-white shadow-sm" :
+                  "bg-zinc-800 text-white shadow-sm"
+                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+            )}
+          >
+            <Icon className="w-3 h-3" />
+            <span>{filter.label}</span>
+            {count > 0 && (
+              <span className={cn(
+                "min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold",
+                isActive
+                  ? "bg-white/20"
+                  : filter.color === "rose" ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400" :
+                    filter.color === "amber" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" :
+                    "bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400"
+              )}>
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 // Dados mockados
@@ -508,25 +701,150 @@ function ProcessoTimeline({ processoId }: { processoId: number }) {
   );
 }
 
-// Card de Processo - Versão Compacta e Limpa
+// ==========================================
+// PROGRESS BAR UNIVERSAL - Para qualquer processo
+// ==========================================
+
+const FASES_CRIMINAL = [
+  { id: "inquerito", label: "Inquérito", shortLabel: "INQ" },
+  { id: "denuncia", label: "Denúncia", shortLabel: "DEN" },
+  { id: "instrucao", label: "Instrução", shortLabel: "INST" },
+  { id: "sentenca", label: "Sentença", shortLabel: "SENT" },
+  { id: "transito", label: "Trânsito", shortLabel: "TRANS" },
+];
+
+const FASES_EXECUCAO = [
+  { id: "inicio", label: "Início", shortLabel: "INI" },
+  { id: "fechado", label: "Fechado", shortLabel: "FECH" },
+  { id: "semiaberto", label: "Semiaberto", shortLabel: "SEMI" },
+  { id: "aberto", label: "Aberto", shortLabel: "AB" },
+  { id: "extinta", label: "Extinta", shortLabel: "EXT" },
+];
+
+function UniversalProgressBar({ area, faseAtual, isJuri }: { area: string; faseAtual?: string; isJuri?: boolean }) {
+  const fases = isJuri ? FASES_JURI :
+    area === "EXECUCAO_PENAL" || area === "EXECUCAO" ? FASES_EXECUCAO : FASES_CRIMINAL;
+
+  const faseIndex = fases.findIndex(f => f.id === faseAtual);
+  const currentIndex = faseIndex >= 0 ? faseIndex : 0;
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-[9px]">
+        <span className="text-zinc-400 uppercase tracking-wider font-medium">Fase</span>
+        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+          {fases[currentIndex]?.label || fases[0].label}
+        </span>
+      </div>
+      <div className="flex gap-0.5">
+        {fases.map((fase, idx) => (
+          <Tooltip key={fase.id}>
+            <TooltipTrigger asChild>
+              <div
+                className={cn(
+                  "h-1 flex-1 rounded-full transition-all cursor-pointer",
+                  idx < currentIndex
+                    ? "bg-emerald-500"
+                    : idx === currentIndex
+                      ? "bg-emerald-400 dark:bg-emerald-600"
+                      : "bg-zinc-200 dark:bg-zinc-700"
+                )}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-[10px]">
+              {fase.label}
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// QUICK ACTIONS OVERLAY - Ações Rápidas Premium
+// ==========================================
+
+function QuickActionsOverlay({
+  processoId,
+  numeroAutos,
+  onClose
+}: {
+  processoId: number;
+  numeroAutos: string;
+  onClose: () => void;
+}) {
+  const actions = [
+    { icon: Eye, label: "Ver Detalhes", href: `/admin/processos/${processoId}`, color: "emerald" },
+    { icon: FileText, label: "Nova Demanda", href: `/admin/demandas/nova?processo=${processoId}`, color: "blue" },
+    { icon: Calendar, label: "Agendar", href: `/admin/audiencias/nova?processo=${processoId}`, color: "violet" },
+    { icon: ExternalLink, label: "TJ-BA", href: getTJBAUrl(numeroAutos), external: true, color: "amber" },
+  ];
+
+  return (
+    <div
+      className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="grid grid-cols-2 gap-2 p-3">
+        {actions.map(action => (
+          action.external ? (
+            <a
+              key={action.label}
+              href={action.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "flex flex-col items-center gap-1.5 p-3 rounded-lg transition-all",
+                "bg-white/5 hover:bg-white/10 text-white/80 hover:text-white"
+              )}
+            >
+              <action.icon className="w-4 h-4" />
+              <span className="text-[10px] font-medium">{action.label}</span>
+            </a>
+          ) : (
+            <Link
+              key={action.label}
+              href={action.href}
+              className={cn(
+                "flex flex-col items-center gap-1.5 p-3 rounded-lg transition-all",
+                "bg-white/5 hover:bg-white/10 text-white/80 hover:text-white"
+              )}
+            >
+              <action.icon className="w-4 h-4" />
+              <span className="text-[10px] font-medium">{action.label}</span>
+            </Link>
+          )
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// CARD DE PROCESSO - Versão Premium
+// ==========================================
+
 function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: number }) {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  
+  const [showQuickActions, setShowQuickActions] = useState(false);
+
   // Animação de entrada escalonada
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), index * 30);
     return () => clearTimeout(timer);
   }, [index]);
-  
+
   const areaColor = SOLID_COLOR_MAP[normalizeAreaToFilter(processo.area)] || "#71717a";
-  
-  const diasPrazo = processo.proximoPrazo 
+
+  const diasPrazo = processo.proximoPrazo
     ? differenceInDays(processo.proximoPrazo, new Date())
     : null;
   const prazoHoje = diasPrazo === 0;
   const prazoVencido = diasPrazo !== null && diasPrazo < 0;
+  const prazoUrgente = diasPrazo !== null && diasPrazo >= 1 && diasPrazo <= 3;
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -535,160 +853,270 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Determinar o status visual do card
+  const getCardStatus = () => {
+    if (processo.assistido.preso) return { color: "#f43f5e", glow: "shadow-rose-500/20" };
+    if (prazoVencido) return { color: "#f43f5e", glow: "shadow-rose-500/10" };
+    if (prazoHoje) return { color: "#f59e0b", glow: "shadow-amber-500/10" };
+    if (prazoUrgente) return { color: "#3b82f6", glow: "shadow-blue-500/10" };
+    return { color: areaColor, glow: "" };
+  };
+
+  const cardStatus = getCardStatus();
+
   return (
-    <div 
+    <div
       className={cn(
-        "group relative bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800",
-        "hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md transition-all duration-200",
+        "group relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800",
+        "hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300",
         "overflow-hidden",
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
+        "hover:shadow-lg",
+        cardStatus.glow
       )}
-      style={{ borderLeftWidth: '3px', borderLeftColor: processo.assistido.preso ? '#f43f5e' : areaColor }}
+      style={{ borderLeftWidth: '4px', borderLeftColor: cardStatus.color }}
     >
+      {/* Quick Actions Overlay */}
+      <QuickActionsOverlay
+        processoId={processo.id}
+        numeroAutos={processo.numeroAutos}
+        onClose={() => setShowQuickActions(false)}
+      />
+
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        {/* Cabeçalho Compacto */}
-        <div className="p-3 space-y-2">
-          {/* Linha 1: Número do Processo + Ações */}
+        {/* Header Premium */}
+        <div className="p-4 space-y-3">
+          {/* Linha 1: Badges de Status */}
           <div className="flex items-center justify-between gap-2">
-            <div 
-              className="flex items-center gap-1.5 min-w-0 cursor-pointer group/copy" 
-              onClick={handleCopy}
-            >
-              <span className="font-mono text-xs text-zinc-700 dark:text-zinc-300 truncate hover:text-emerald-600 transition-colors">
-                {processo.numeroAutos}
-              </span>
-              {copied ? (
-                <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-              ) : (
-                <Copy className="w-3 h-3 text-zinc-400 opacity-0 group-hover/copy:opacity-100 transition-opacity flex-shrink-0" />
-              )}
-            </div>
-            
-            {/* Badges compactos */}
-            <div className="flex items-center gap-1">
-              {/* Área */}
-              <span 
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Área com ícone */}
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold"
                 style={{ backgroundColor: `${areaColor}15`, color: areaColor }}
               >
+                {ATRIBUICAO_ICONS[normalizeAreaToFilter(processo.area)] || <Scale className="w-3 h-3" />}
                 {ATRIBUICAO_OPTIONS.find(o => o.value === normalizeAreaToFilter(processo.area))?.shortLabel || processo.area}
               </span>
-              
-              {/* Júri */}
+
+              {/* Júri Badge Premium */}
               {processo.isJuri && (
-                <Gavel className="w-3 h-3 text-emerald-600" />
-              )}
-              
-              {/* Preso */}
-              {processo.assistido.preso && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
-                  <Lock className="w-2.5 h-2.5" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                  <Gavel className="w-3 h-3" />
+                  Júri
                 </span>
               )}
-              
-              {/* Prazo urgente */}
-              {(prazoVencido || prazoHoje) && (
-                <span className={cn(
-                  "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold",
-                  prazoVencido ? "bg-rose-100 text-rose-600" : "bg-amber-100 text-amber-600"
-                )}>
-                  {prazoVencido ? "!" : "Hoje"}
+
+              {/* Preso Badge Premium */}
+              {processo.assistido.preso && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse">
+                  <Lock className="w-3 h-3" />
+                  Preso
                 </span>
               )}
             </div>
+
+            {/* Prazo Badge Premium */}
+            {diasPrazo !== null && (
+              <span className={cn(
+                "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold",
+                prazoVencido && "bg-rose-500 text-white",
+                prazoHoje && "bg-amber-500 text-white animate-pulse",
+                prazoUrgente && "bg-blue-500 text-white",
+                !prazoVencido && !prazoHoje && !prazoUrgente && "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+              )}>
+                {prazoVencido ? (
+                  <>
+                    <AlertCircle className="w-3 h-3" />
+                    Vencido
+                  </>
+                ) : prazoHoje ? (
+                  <>
+                    <Timer className="w-3 h-3" />
+                    Hoje
+                  </>
+                ) : diasPrazo === 1 ? (
+                  <>
+                    <CalendarClock className="w-3 h-3" />
+                    Amanhã
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="w-3 h-3" />
+                    {diasPrazo}d
+                  </>
+                )}
+              </span>
+            )}
           </div>
-          
-          {/* Linha 2: Assunto */}
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1">
+
+          {/* Linha 2: Número do Processo */}
+          <div
+            className="flex items-center gap-2 cursor-pointer group/copy"
+            onClick={handleCopy}
+          >
+            <span className="font-mono text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate hover:text-emerald-600 transition-colors">
+              {processo.numeroAutos}
+            </span>
+            {copied ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+            ) : (
+              <Copy className="w-3.5 h-3.5 text-zinc-400 opacity-0 group-hover/copy:opacity-100 transition-opacity flex-shrink-0" />
+            )}
+          </div>
+
+          {/* Linha 3: Assunto */}
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
             {processo.assunto}
           </p>
-          
-          {/* Linha 3: Assistido + Comarca */}
-          <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-            <Link href={`/admin/assistidos/${processo.assistido.id}`} className="flex items-center gap-2 min-w-0">
-              <div 
-                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold text-white flex-shrink-0"
-                style={{ backgroundColor: areaColor }}
-              >
-                {processo.assistido.nome.substring(0, 2).toUpperCase()}
+
+          {/* Linha 4: Progress Bar Universal */}
+          <UniversalProgressBar
+            area={processo.area}
+            faseAtual={processo.isJuri ? "pronuncia" : "instrucao"}
+            isJuri={processo.isJuri}
+          />
+
+          {/* Linha 5: Assistido + Comarca */}
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+            <Link href={`/admin/assistidos/${processo.assistido.id}`} className="flex items-center gap-2.5 min-w-0 group/link">
+              <Avatar className="w-8 h-8 ring-2 ring-white dark:ring-zinc-800 shadow-sm">
+                <AvatarImage src={processo.assistido.foto || undefined} />
+                <AvatarFallback
+                  className="text-[10px] font-bold text-white"
+                  style={{ backgroundColor: areaColor }}
+                >
+                  {processo.assistido.nome.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate block group-hover/link:text-emerald-600 transition-colors">
+                  {processo.assistido.nome}
+                </span>
+                {processo.assistido.preso && processo.assistido.localPrisao && (
+                  <span className="text-[9px] text-rose-500 truncate block">
+                    {processo.assistido.localPrisao}
+                  </span>
+                )}
               </div>
-              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate hover:text-emerald-600 transition-colors">
-                {processo.assistido.nome}
-              </span>
             </Link>
-            
-            <div className="flex items-center gap-1 text-[10px] text-zinc-400 flex-shrink-0">
+
+            <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 flex-shrink-0 bg-zinc-50 dark:bg-zinc-800 px-2 py-1 rounded-md">
               <MapPin className="w-3 h-3" />
               <span>{processo.comarca}</span>
             </div>
           </div>
-          
-          {/* Linha 4: Demandas + Ações (se hover) */}
-          <div className="flex items-center justify-between gap-2">
-            {processo.demandasAbertas > 0 ? (
-              <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
-                <Clock className="w-3 h-3" />
-                {processo.demandasAbertas} demanda{processo.demandasAbertas > 1 && 's'}
-              </span>
-            ) : (
-              <span />
-            )}
-            
-            {/* Ações compactas */}
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Link href={`/admin/processos/${processo.id}`}>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <Eye className="w-3 h-3" />
-                </Button>
-              </Link>
-              <a href={getTJBAUrl(processo.numeroAutos)} target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-blue-600">
-                  <ExternalLink className="w-3 h-3" />
-                </Button>
-              </a>
+
+          {/* Linha 6: Demandas + Ações */}
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <div className="flex items-center gap-3">
+              {processo.demandasAbertas > 0 && (
+                <span className="inline-flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-md">
+                  <Clock className="w-3 h-3" />
+                  {processo.demandasAbertas} demanda{processo.demandasAbertas > 1 && 's'}
+                </span>
+              )}
+            </div>
+
+            {/* Ações Rápidas Inline */}
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={`/admin/processos/${processo.id}`}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-emerald-50 hover:text-emerald-600">
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Ver Detalhes</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href={getTJBAUrl(processo.numeroAutos)} target="_blank" rel="noopener noreferrer">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-blue-50 hover:text-blue-600">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>Consultar TJ-BA</TooltipContent>
+              </Tooltip>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <MoreHorizontal className="w-3.5 h-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <Link href={`/admin/demandas/nova?processo=${processo.id}`}>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      Nova Demanda
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href={`/admin/audiencias/nova?processo=${processo.id}`}>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Agendar Audiência
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator />
+                  <Link href={`/admin/demandas?processo=${processo.id}`}>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Ver Demandas
+                    </DropdownMenuItem>
+                  </Link>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
 
         {/* Conteúdo Expansível */}
         <CollapsibleContent>
-          <div className="px-3 pb-3 pt-2 space-y-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
-              
-              {/* Barra de Progresso do Júri */}
-              {processo.isJuri && (
-                <FaseProgressBar faseAtual="pronuncia" />
-              )}
+          <div className="px-4 pb-4 pt-3 space-y-3 border-t border-zinc-100 dark:border-zinc-800 bg-gradient-to-b from-zinc-50/50 to-white dark:from-zinc-900/50 dark:to-zinc-900">
 
-              {/* Timeline de Atos Principais - Dados do Banco */}
-              <div>
-                <p className="text-[10px] text-zinc-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
-                  <Activity className="w-2.5 h-2.5" />
-                  Atos Principais
-                </p>
-                <ProcessoTimeline processoId={processo.id} />
-              </div>
+            {/* Timeline de Atos Principais - Dados do Banco */}
+            <div>
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                <Activity className="w-3 h-3" />
+                Timeline de Atos
+              </p>
+              <ProcessoTimeline processoId={processo.id} />
+            </div>
 
-              {/* Caso Vinculado */}
-              {processo.casoId && processo.casoTitulo && (
-                <Link href={`/admin/casos/${processo.casoId}`} className="flex items-center gap-2 text-xs text-emerald-600 hover:text-emerald-700 transition-colors">
-                  <Target className="w-3 h-3" />
-                  <span className="truncate">{processo.casoTitulo}</span>
-                </Link>
-              )}
+            {/* Caso Vinculado */}
+            {processo.casoId && processo.casoTitulo && (
+              <Link href={`/admin/casos/${processo.casoId}`} className="flex items-center gap-2 text-xs text-emerald-600 hover:text-emerald-700 transition-colors bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg">
+                <Target className="w-3.5 h-3.5" />
+                <span className="truncate font-medium">{processo.casoTitulo}</span>
+                <ChevronRight className="w-3.5 h-3.5 ml-auto" />
+              </Link>
+            )}
 
-              {/* Vara */}
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <Building2 className="w-3 h-3" />
+            {/* Info Grid */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center gap-2 text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1.5 rounded-md">
+                <Building2 className="w-3.5 h-3.5 text-zinc-400" />
                 <span className="truncate">{processo.vara}</span>
               </div>
+              {processo.defensorNome && (
+                <div className="flex items-center gap-2 text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1.5 rounded-md">
+                  <Users className="w-3.5 h-3.5 text-zinc-400" />
+                  <span className="truncate">{processo.defensorNome}</span>
+                </div>
+              )}
+            </div>
           </div>
         </CollapsibleContent>
 
-        {/* Trigger de Expansão - mais compacto */}
+        {/* Trigger de Expansão Premium */}
         <CollapsibleTrigger asChild>
-          <button className="w-full flex justify-center py-1.5 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border-t border-zinc-100 dark:border-zinc-800">
+          <button className="w-full flex items-center justify-center gap-1.5 py-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border-t border-zinc-100 dark:border-zinc-800 text-zinc-400 hover:text-zinc-600">
+            <span className="text-[10px] font-medium">{isOpen ? "Menos" : "Mais"}</span>
             <ChevronDown className={cn(
-              "w-3.5 h-3.5 text-zinc-400 transition-transform",
+              "w-3.5 h-3.5 transition-transform",
               isOpen && "rotate-180"
             )} />
           </button>
@@ -1179,6 +1607,7 @@ export default function ProcessosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [areaFilter, setAreaFilter] = useState("all");
   const [situacaoFilter, setSituacaoFilter] = useState("ativo");
+  const [prazoFilter, setPrazoFilter] = useState<PrazoFilter>("all");
   const [sortBy, setSortBy] = useState<"prioridade" | "recente" | "comarca" | "assistido">("prioridade");
   const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "defensor">("none");
 
@@ -1212,16 +1641,72 @@ export default function ProcessosPage() {
     }));
   }, [processosData]);
 
+  // Helper para filtrar por prazo
+  const matchesPrazoFilter = (processo: any, filter: PrazoFilter): boolean => {
+    if (filter === "all") return true;
+    if (!processo.proximoPrazo) return false;
+
+    const prazoDate = new Date(processo.proximoPrazo);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const diasAte = differenceInDays(prazoDate, hoje);
+
+    switch (filter) {
+      case "vencidos":
+        return diasAte < 0;
+      case "hoje":
+        return diasAte === 0;
+      case "amanha":
+        return diasAte === 1;
+      case "semana":
+        return diasAte >= 0 && diasAte <= 7;
+      case "quinzena":
+        return diasAte >= 0 && diasAte <= 15;
+      default:
+        return true;
+    }
+  };
+
+  // Contagem de processos por prazo
+  const prazoCounts = useMemo(() => {
+    const counts: Record<PrazoFilter, number> = {
+      all: realProcessos.length,
+      vencidos: 0,
+      hoje: 0,
+      amanha: 0,
+      semana: 0,
+      quinzena: 0,
+    };
+
+    realProcessos.forEach(processo => {
+      if (processo.proximoPrazo) {
+        const prazoDate = new Date(processo.proximoPrazo);
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const diasAte = differenceInDays(prazoDate, hoje);
+
+        if (diasAte < 0) counts.vencidos++;
+        if (diasAte === 0) counts.hoje++;
+        if (diasAte === 1) counts.amanha++;
+        if (diasAte >= 0 && diasAte <= 7) counts.semana++;
+        if (diasAte >= 0 && diasAte <= 15) counts.quinzena++;
+      }
+    });
+
+    return counts;
+  }, [realProcessos]);
+
   // Filtrar processos
   const filteredProcessos = useMemo(() => {
     let result = realProcessos.filter((processo) => {
-      const matchesSearch = 
+      const matchesSearch =
         processo.numeroAutos.includes(searchTerm) ||
         processo.assistido.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
         processo.assunto.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesArea = areaMatchesFilter(processo.area, areaFilter);
       const matchesSituacao = situacaoFilter === "all" || processo.situacao === situacaoFilter;
-      return matchesSearch && matchesArea && matchesSituacao;
+      const matchesPrazo = matchesPrazoFilter(processo, prazoFilter);
+      return matchesSearch && matchesArea && matchesSituacao && matchesPrazo;
     });
 
     // Ordenar
@@ -1236,7 +1721,7 @@ export default function ProcessosPage() {
     }
 
     return result;
-  }, [realProcessos, searchTerm, areaFilter, situacaoFilter, sortBy]);
+  }, [realProcessos, searchTerm, areaFilter, situacaoFilter, prazoFilter, sortBy]);
 
   // Agrupar processos
   const groupedProcessos = useMemo(() => {
@@ -1256,14 +1741,42 @@ export default function ProcessosPage() {
     return Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
   }, [filteredProcessos, groupBy]);
 
-  // Estatísticas
-  const stats = useMemo(() => ({
-    total: realProcessos.length,
-    juri: realProcessos.filter(p => p.isJuri).length,
-    comDemandas: realProcessos.filter(p => p.demandasAbertas > 0).length,
-    reuPreso: realProcessos.filter(p => p.assistido.preso).length,
-    comarcas: new Set(realProcessos.map(p => p.comarca)).size,
-  }), [realProcessos]);
+  // Estatísticas Premium
+  const stats = useMemo(() => {
+    const total = realProcessos.length;
+    const juri = realProcessos.filter(p => p.isJuri).length;
+    const comDemandas = realProcessos.filter(p => p.demandasAbertas > 0).length;
+    const reuPreso = realProcessos.filter(p => p.assistido.preso).length;
+    const comarcas = new Set(realProcessos.map(p => p.comarca)).size;
+
+    // Calcular prazos urgentes
+    const prazosVencidos = realProcessos.filter(p => {
+      if (!p.proximoPrazo) return false;
+      return differenceInDays(new Date(p.proximoPrazo), new Date()) < 0;
+    }).length;
+
+    const prazosHoje = realProcessos.filter(p => {
+      if (!p.proximoPrazo) return false;
+      return differenceInDays(new Date(p.proximoPrazo), new Date()) === 0;
+    }).length;
+
+    const prazosUrgentes = realProcessos.filter(p => {
+      if (!p.proximoPrazo) return false;
+      const dias = differenceInDays(new Date(p.proximoPrazo), new Date());
+      return dias >= 0 && dias <= 3;
+    }).length;
+
+    return {
+      total,
+      juri,
+      comDemandas,
+      reuPreso,
+      comarcas,
+      prazosVencidos,
+      prazosHoje,
+      prazosUrgentes,
+    };
+  }, [realProcessos]);
 
   // Estatísticas por área (para mini gráfico)
   const statsByArea = useMemo(() => {
@@ -1452,63 +1965,89 @@ export default function ProcessosPage() {
         {/* Conteúdo Principal */}
         <div className="p-4 md:p-6 space-y-4">
 
-        {/* Stats Cards - 2 colunas em mobile - Padrão Agenda */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="flex items-start justify-between gap-2 md:gap-3">
-              <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Total</p>
-                <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats.total}</p>
-                <p className="text-[9px] md:text-[10px] text-zinc-400"><span className="text-emerald-600 font-medium">{stats.comarcas}</span> comarcas</p>
-              </div>
-              <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-                <Scale className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
-              </div>
-            </div>
-          </div>
+        {/* KPI Cards Premium - Grid Responsivo */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <KPICardPremium
+            title="Total"
+            value={stats.total}
+            subtitle={`${stats.comarcas} comarcas`}
+            icon={Scale}
+            gradient="emerald"
+          />
 
-          <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="flex items-start justify-between gap-2 md:gap-3">
-              <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Júri</p>
-                <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats.juri}</p>
-                <p className="text-[9px] md:text-[10px] text-zinc-400">processos</p>
-              </div>
-              <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-                <Gavel className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
-              </div>
-            </div>
-          </div>
+          <KPICardPremium
+            title="Júri"
+            value={stats.juri}
+            subtitle="processos"
+            icon={Gavel}
+            gradient="blue"
+            onClick={() => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI")}
+            active={areaFilter === "JURI"}
+          />
 
-          <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="flex items-start justify-between gap-2 md:gap-3">
-              <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Réus Presos</p>
-                <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats.reuPreso}</p>
-                <p className="text-[9px] md:text-[10px] text-zinc-400">prioridade máxima</p>
-              </div>
-              <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-                <Lock className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
-              </div>
-            </div>
-          </div>
+          <KPICardPremium
+            title="Réus Presos"
+            value={stats.reuPreso}
+            subtitle="prioridade máxima"
+            icon={Lock}
+            gradient="rose"
+          />
 
-          <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="flex items-start justify-between gap-2 md:gap-3">
-              <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Com Demandas</p>
-                <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats.comDemandas}</p>
-                <p className="text-[9px] md:text-[10px] text-zinc-400">pendentes</p>
-              </div>
-              <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
-              </div>
+          <KPICardPremium
+            title="Vencidos"
+            value={stats.prazosVencidos}
+            subtitle="prazos"
+            icon={AlertCircle}
+            gradient="rose"
+            onClick={() => setPrazoFilter(prazoFilter === "vencidos" ? "all" : "vencidos")}
+            active={prazoFilter === "vencidos"}
+          />
+
+          <KPICardPremium
+            title="Hoje"
+            value={stats.prazosHoje}
+            subtitle="vencem hoje"
+            icon={Timer}
+            gradient="amber"
+            onClick={() => setPrazoFilter(prazoFilter === "hoje" ? "all" : "hoje")}
+            active={prazoFilter === "hoje"}
+          />
+
+          <KPICardPremium
+            title="Urgentes"
+            value={stats.prazosUrgentes}
+            subtitle="até 3 dias"
+            icon={CalendarClock}
+            gradient="violet"
+            onClick={() => setPrazoFilter(prazoFilter === "semana" ? "all" : "semana")}
+            active={prazoFilter === "semana"}
+          />
+        </div>
+
+        {/* Filtros de Prazo - Chips Premium */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <CalendarClock className="w-4 h-4 text-zinc-400" />
+              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Filtrar por Prazo</span>
             </div>
+            {prazoFilter !== "all" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPrazoFilter("all")}
+                className="h-6 text-[10px] text-zinc-400 hover:text-zinc-600"
+              >
+                <XCircle className="w-3 h-3 mr-1" />
+                Limpar
+              </Button>
+            )}
           </div>
+          <PrazoFilterChips
+            selected={prazoFilter}
+            onChange={setPrazoFilter}
+            counts={prazoCounts}
+          />
         </div>
 
         {/* Card de Filtros - Padrão Demandas */}
