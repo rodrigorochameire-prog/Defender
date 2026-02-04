@@ -555,14 +555,14 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
               <p className="text-[10px] text-zinc-400 italic truncate">&ldquo;{assistido.vulgo}&rdquo;</p>
             )}
 
-            {/* Meta Info */}
+            {/* Meta Info - Simplificado */}
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              {/* Status Badge */}
+              {/* Status Badge - Mais discreto */}
               <span className={cn(
-                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold",
-                isPreso && "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400",
-                isMonitorado && "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
-                !isPreso && !isMonitorado && "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium",
+                isPreso && "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400",
+                isMonitorado && "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+                !isPreso && !isMonitorado && "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
               )}>
                 {statusConfig[assistido.statusPrisional]?.label || "Solto"}
               </span>
@@ -595,9 +595,9 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
           </Button>
         </div>
 
-        {/* 2. Badges de Atribuição + Urgência */}
+        {/* 2. Badges de Atribuição - Simplificados */}
         <div className="flex items-center justify-between gap-2">
-          {/* Atribuições */}
+          {/* Atribuições - NEUTRAS com apenas bolinha colorida */}
           <div className="flex items-center gap-1.5 flex-wrap">
             {atribuicoesUnicas.slice(0, 3).map((attr, idx) => {
               const normalizedAttr = attr.toUpperCase().replace(/_/g, ' ');
@@ -612,8 +612,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
               return (
                 <span
                   key={idx}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold"
-                  style={{ backgroundColor: `${color}15`, color }}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
                 >
                   <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
                   {shortLabel}
@@ -625,16 +624,16 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
             )}
           </div>
 
-          {/* Badge de Urgência */}
-          {urgency && (
+          {/* Badge de Urgência - Apenas quando realmente urgente */}
+          {urgency && urgency.level !== "normal" && (
             <span className={cn(
-              "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold",
-              urgency.color === "rose" && "bg-rose-500 text-white",
-              urgency.color === "amber" && "bg-amber-500 text-white",
+              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium",
+              urgency.color === "rose" && "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400",
+              urgency.color === "amber" && "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
               urgency.pulse && "animate-pulse"
             )}>
               <AlertCircle className="w-3 h-3" />
-              {urgency.level.toUpperCase()}
+              {urgency.level}
             </span>
           )}
         </div>
@@ -647,27 +646,22 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
           </div>
         )}
 
-        {/* 4. Mini KPIs */}
+        {/* 4. Mini KPIs - Design mais limpo */}
         <div className="grid grid-cols-3 gap-2">
           <Link
             href={`/admin/processos?assistido=${assistido.id}`}
             className="flex flex-col items-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            <Scale className="w-4 h-4 text-violet-500 mb-1" />
+            <Scale className="w-4 h-4 text-zinc-400 mb-1" />
             <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{assistido.processosAtivos || 0}</span>
             <span className="text-[9px] text-zinc-400">Processos</span>
           </Link>
 
           <Link
             href={`/admin/demandas?assistido=${assistido.id}`}
-            className={cn(
-              "flex flex-col items-center p-2 rounded-lg transition-colors",
-              assistido.demandasAbertas > 0
-                ? "bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30"
-                : "bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            )}
+            className="flex flex-col items-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            <FileText className={cn("w-4 h-4 mb-1", assistido.demandasAbertas > 0 ? "text-amber-500" : "text-zinc-400")} />
+            <FileText className="w-4 h-4 text-zinc-400 mb-1" />
             <span className={cn("text-sm font-bold", assistido.demandasAbertas > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-800 dark:text-zinc-200")}>
               {assistido.demandasAbertas || 0}
             </span>
@@ -675,22 +669,8 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
           </Link>
 
           <div className="flex flex-col items-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-            <div className={cn(
-              "w-4 h-4 mb-1 rounded-full flex items-center justify-center",
-              scoreLevel === "crítico" && "bg-rose-500",
-              scoreLevel === "atenção" && "bg-amber-500",
-              scoreLevel === "normal" && "bg-emerald-500"
-            )}>
-              <Brain className="w-2.5 h-2.5 text-white" />
-            </div>
-            <span className={cn(
-              "text-sm font-bold",
-              scoreLevel === "crítico" && "text-rose-600 dark:text-rose-400",
-              scoreLevel === "atenção" && "text-amber-600 dark:text-amber-400",
-              scoreLevel === "normal" && "text-emerald-600 dark:text-emerald-400"
-            )}>
-              {score}
-            </span>
+            <Brain className="w-4 h-4 text-zinc-400 mb-1" />
+            <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{score}</span>
             <span className="text-[9px] text-zinc-400">Score</span>
           </div>
         </div>
