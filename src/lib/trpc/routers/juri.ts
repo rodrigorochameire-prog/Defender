@@ -3,6 +3,7 @@ import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { sessoesJuri, processos } from "@/lib/db/schema";
 import { eq, desc, sql, gte, and } from "drizzle-orm";
+import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope } from "../workspace";
 
@@ -63,21 +64,32 @@ export const juriRouter = router({
   proximas: protectedProcedure
     .input(
       z.object({
-        dias: z.number().default(30),
+        dias: z.number().optional(),
+        limite: z.number().optional(),
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const { dias = 30 } = input || {};
+      const { dias, limite } = input || {};
       getWorkspaceScope(ctx.user); // Validar autenticação
       const hoje = new Date();
       
-      const result = await db
+      // Construir condições WHERE dinamicamente
+      const whereConditions = [gte(sessoesJuri.dataSessao, hoje)];
+      
+      // Adicionar limite de dias apenas se especificado
+      if (dias !== undefined) {
+        const dataLimite = addDays(hoje, dias);
+        whereConditions.push(sql`${sessoesJuri.dataSessao} <= ${dataLimite}`);
+      }
+      
+      let query = db
         .select({
           id: sessoesJuri.id,
           dataSessao: sessoesJuri.dataSessao,
           defensorNome: sessoesJuri.defensorNome,
           assistidoNome: sessoesJuri.assistidoNome,
           status: sessoesJuri.status,
+          horario: sessoesJuri.horario,
           processo: {
             id: processos.id,
             numeroAutos: processos.numeroAutos,
@@ -85,10 +97,15 @@ export const juriRouter = router({
         })
         .from(sessoesJuri)
         .leftJoin(processos, eq(sessoesJuri.processoId, processos.id))
-        .where(gte(sessoesJuri.dataSessao, hoje))
-        .orderBy(sessoesJuri.dataSessao)
-        .limit(10);
+        .where(and(...whereConditions))
+        .orderBy(sessoesJuri.dataSessao);
       
+      // Adicionar limite apenas se especificado
+      if (limite !== undefined) {
+        query = query.limit(limite) as any;
+      }
+      
+      const result = await query;
       return result;
     }),
 

@@ -88,14 +88,22 @@ export const audienciasRouter = router({
   // Próximas audiências (para dashboard)
   proximas: protectedProcedure
     .input(z.object({
-      dias: z.number().default(30),
-      limite: z.number().default(10),
+      dias: z.number().optional(),
+      limite: z.number().optional(),
     }).optional())
     .query(async ({ input }) => {
-      const { dias = 30, limite = 10 } = input || {};
-      const dataLimite = addDays(new Date(), dias);
+      const { dias, limite } = input || {};
+      
+      // Construir condições WHERE dinamicamente
+      const whereConditions = [gte(audiencias.dataAudiencia, new Date())];
+      
+      // Adicionar limite de dias apenas se especificado
+      if (dias !== undefined) {
+        const dataLimite = addDays(new Date(), dias);
+        whereConditions.push(sql`${audiencias.dataAudiencia} <= ${dataLimite}`);
+      }
 
-      const results = await db
+      let query = db
         .select({
           id: audiencias.id,
           dataHora: audiencias.dataAudiencia,
@@ -112,15 +120,15 @@ export const audienciasRouter = router({
         })
         .from(audiencias)
         .leftJoin(processos, eq(audiencias.processoId, processos.id))
-        .where(
-          and(
-            gte(audiencias.dataAudiencia, new Date()),
-            sql`${audiencias.dataAudiencia} <= ${dataLimite}`
-          )
-        )
-        .orderBy(asc(audiencias.dataAudiencia))
-        .limit(limite);
+        .where(and(...whereConditions))
+        .orderBy(asc(audiencias.dataAudiencia));
+      
+      // Adicionar limite apenas se especificado
+      if (limite !== undefined) {
+        query = query.limit(limite) as any;
+      }
 
+      const results = await query;
       return results;
     }),
 
