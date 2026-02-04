@@ -50,6 +50,10 @@ import {
   Info,
   PenLine,
   UserPlus,
+  XCircle,
+  RefreshCw,
+  CircleCheck,
+  CircleDot,
 } from "lucide-react";
 import {
   Popover,
@@ -1026,19 +1030,21 @@ export default function DashboardJuriPage() {
                             </div>
                           </div>
                           {aud.reuPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
-                          {/* Badge de status do evento */}
-                          {aud.status && aud.status !== "agendada" && (
-                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${
-                              aud.status === "cancelada" || aud.status === "CANCELADA"
-                                ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 line-through"
-                                : aud.status === "reagendada" || aud.status === "REDESIGNADA"
-                                  ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
-                                  : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-                            }`}>
-                              {aud.status === "cancelada" || aud.status === "CANCELADA" ? "Cancelada" :
-                               aud.status === "reagendada" || aud.status === "REDESIGNADA" ? "Redesignada" :
-                               aud.status === "realizada" || aud.status === "REALIZADA" ? "Realizada" : aud.status}
-                            </span>
+                          {/* Ícone de status do evento */}
+                          {aud.status && (aud.status === "cancelada" || aud.status === "CANCELADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Cancelada">
+                              <XCircle className="w-4 h-4 text-red-500" />
+                            </div>
+                          )}
+                          {aud.status && (aud.status === "reagendada" || aud.status === "REDESIGNADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Redesignada">
+                              <RefreshCw className="w-4 h-4 text-orange-500" />
+                            </div>
+                          )}
+                          {aud.status && (aud.status === "realizada" || aud.status === "REALIZADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Realizada">
+                              <CircleCheck className="w-4 h-4 text-emerald-500" />
+                            </div>
                           )}
                           {diasRestantes !== null && (
                             <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
@@ -1153,21 +1159,21 @@ export default function DashboardJuriPage() {
                               )}
                             </div>
                           </div>
-                          {/* Badge de status do júri */}
-                          {juri.status && juri.status !== "AGENDADA" && (
-                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${
-                              juri.status === "CANCELADA"
-                                ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-                                : juri.status === "REDESIGNADA"
-                                  ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
-                                  : juri.status === "REALIZADA"
-                                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-                                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-                            }`}>
-                              {juri.status === "CANCELADA" ? "Cancelado" :
-                               juri.status === "REDESIGNADA" ? "Redesignado" :
-                               juri.status === "REALIZADA" ? "Realizado" : juri.status}
-                            </span>
+                          {/* Ícone de status do júri */}
+                          {juri.status === "CANCELADA" && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Cancelado">
+                              <XCircle className="w-4 h-4 text-red-500" />
+                            </div>
+                          )}
+                          {juri.status === "REDESIGNADA" && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Redesignado">
+                              <RefreshCw className="w-4 h-4 text-orange-500" />
+                            </div>
+                          )}
+                          {juri.status === "REALIZADA" && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Realizado">
+                              <CircleCheck className="w-4 h-4 text-emerald-500" />
+                            </div>
                           )}
                           {diasRestantes !== null && (
                             <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
@@ -1271,21 +1277,21 @@ export default function DashboardJuriPage() {
                           {aud.reuPreso && (
                             <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
                           )}
-                          {/* Badge de status do evento */}
-                          {aud.status && aud.status !== "agendada" && (
-                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${
-                              aud.status === "cancelada" || aud.status === "CANCELADA"
-                                ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-                                : aud.status === "reagendada" || aud.status === "REDESIGNADA"
-                                  ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
-                                  : aud.status === "realizada" || aud.status === "REALIZADA"
-                                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-                                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-                            }`}>
-                              {aud.status === "cancelada" || aud.status === "CANCELADA" ? "Cancelada" :
-                               aud.status === "reagendada" || aud.status === "REDESIGNADA" ? "Redesignada" :
-                               aud.status === "realizada" || aud.status === "REALIZADA" ? "Realizada" : aud.status}
-                            </span>
+                          {/* Ícone de status do evento */}
+                          {aud.status && (aud.status === "cancelada" || aud.status === "CANCELADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Cancelada">
+                              <XCircle className="w-4 h-4 text-red-500" />
+                            </div>
+                          )}
+                          {aud.status && (aud.status === "reagendada" || aud.status === "REDESIGNADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Redesignada">
+                              <RefreshCw className="w-4 h-4 text-orange-500" />
+                            </div>
+                          )}
+                          {aud.status && (aud.status === "realizada" || aud.status === "REALIZADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Realizada">
+                              <CircleCheck className="w-4 h-4 text-emerald-500" />
+                            </div>
                           )}
                         </div>
                       </Link>
