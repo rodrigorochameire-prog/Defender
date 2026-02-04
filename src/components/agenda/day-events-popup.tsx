@@ -43,7 +43,8 @@ interface DayEventsPopupProps {
 
 // Verifica se o evento não ocorrerá (cancelado ou redesignado)
 const isEventoCancelado = (status: string) =>
-  status === "cancelado" || status === "remarcado" || status === "redesignado";
+  status === "cancelado" || status === "cancelada" ||
+  status === "remarcado" || status === "redesignado" || status === "reagendada";
 
 // Cor neutra para eventos que não ocorrerão
 const COR_EVENTO_CANCELADO = "#a1a1aa"; // zinc-400

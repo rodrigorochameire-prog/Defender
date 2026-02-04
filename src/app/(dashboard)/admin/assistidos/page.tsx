@@ -913,24 +913,24 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
             </div>
 
             {/* Ações Completas */}
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <Link href={`/admin/processos?assistido=${assistido.id}`}>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1">
+                  <Button variant="outline" size="sm" className="h-6 text-[9px] px-2 gap-1">
                     <Scale className="w-3 h-3" />
                     Processos
                   </Button>
                 </Link>
                 <Link href={`/admin/audiencias?assistido=${assistido.id}`}>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1">
+                  <Button variant="outline" size="sm" className="h-6 text-[9px] px-2 gap-1">
                     <Calendar className="w-3 h-3" />
                     Audiências
                   </Button>
                 </Link>
               </div>
-              <Link href={`/admin/assistidos/${assistido.id}`}>
-                <Button size="sm" className="h-7 text-[10px] gap-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600">
-                  Ver Perfil Completo
+              <Link href={`/admin/assistidos/${assistido.id}`} className="flex-shrink-0">
+                <Button size="sm" className="h-6 text-[9px] px-2 gap-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600">
+                  Ver Perfil
                   <ChevronRight className="w-3 h-3" />
                 </Button>
               </Link>

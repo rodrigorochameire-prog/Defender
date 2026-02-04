@@ -49,7 +49,8 @@ interface EventoDetailModalProps {
 
 // Verifica se o evento não ocorrerá (cancelado ou redesignado)
 const isEventoCancelado = (status: string) =>
-  status === "cancelado" || status === "remarcado" || status === "redesignado";
+  status === "cancelado" || status === "cancelada" ||
+  status === "remarcado" || status === "redesignado" || status === "reagendada";
 
 const tipoConfig: Record<string, any> = {
   audiencia: {
