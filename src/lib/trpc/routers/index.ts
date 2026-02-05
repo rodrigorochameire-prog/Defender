@@ -89,6 +89,11 @@ export const appRouter = router({
   // ATENDIMENTOS (PLAUD INTEGRATION)
   // ==========================================
   atendimentos: atendimentosRouter,
+
+  // ==========================================
+  // INVESTIGAÇÃO - DILIGÊNCIAS
+  // ==========================================
+  diligencias: diligenciasRouter,
 });
 
 export type AppRouter = typeof appRouter;

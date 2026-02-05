@@ -1,25 +1,29 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db, audiencias, processos, assistidos } from "@/lib/db";
+import { db, audiencias, processos, assistidos, sessoesJuri } from "@/lib/db";
 import { eq, and, gte, desc, asc, isNull, or, sql, ilike } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { getWorkspaceScope } from "../workspace";
 
 export const audienciasRouter = router({
   // Listar audiências
+  // NOTA: Sem limite por padrão para garantir que todos os eventos apareçam no calendário
   list: protectedProcedure
     .input(z.object({
-      limit: z.number().min(1).max(100).default(30),
+      limit: z.number().min(1).max(10000).optional(), // Opcional - sem limite por padrão
       offset: z.number().default(0),
       responsavelId: z.number().optional(),
+      apenasProximas: z.boolean().optional().default(false), // Filtrar apenas futuras
     }).optional())
     .query(async ({ input }) => {
-      const { limit = 30, offset = 0, responsavelId } = input || {};
+      const { limit, offset = 0, responsavelId, apenasProximas = false } = input || {};
 
       const whereConditions = [];
 
-      // Filtrar audiências futuras ou de hoje
-      whereConditions.push(gte(audiencias.dataAudiencia, new Date()));
+      // Filtrar audiências futuras apenas se solicitado
+      if (apenasProximas) {
+        whereConditions.push(gte(audiencias.dataAudiencia, new Date()));
+      }
 
       // Filtrar por responsável se especificado
       if (responsavelId) {
@@ -31,7 +35,8 @@ export const audienciasRouter = router({
         );
       }
 
-      const results = await db
+      // Construir query base
+      let query = db
         .select({
           id: audiencias.id,
           processoId: audiencias.processoId,
@@ -66,10 +71,14 @@ export const audienciasRouter = router({
         .leftJoin(assistidos, eq(audiencias.assistidoId, assistidos.id))
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
         .orderBy(asc(audiencias.dataAudiencia))
-        .limit(limit)
         .offset(offset);
 
-      return results;
+      // Aplicar limite apenas se especificado
+      if (limit !== undefined) {
+        query = query.limit(limit) as any;
+      }
+
+      return await query;
     }),
 
   // Buscar audiência por ID
@@ -86,14 +95,22 @@ export const audienciasRouter = router({
     }),
 
   // Próximas audiências (para dashboard)
+  // Se dias=0, retorna TODAS as audiências futuras sem limite de data
   proximas: protectedProcedure
     .input(z.object({
-      dias: z.number().default(30),
-      limite: z.number().default(10),
+      dias: z.number().default(0), // 0 = sem limite de dias
+      limite: z.number().default(50), // Aumentado para mostrar mais eventos
     }).optional())
     .query(async ({ input }) => {
-      const { dias = 30, limite = 10 } = input || {};
-      const dataLimite = addDays(new Date(), dias);
+      const { dias = 0, limite = 50 } = input || {};
+
+      const whereConditions = [gte(audiencias.dataAudiencia, new Date())];
+
+      // Só adiciona limite de data se dias > 0
+      if (dias > 0) {
+        const dataLimite = addDays(new Date(), dias);
+        whereConditions.push(sql`${audiencias.dataAudiencia} <= ${dataLimite}`);
+      }
 
       const results = await db
         .select({
@@ -113,12 +130,7 @@ export const audienciasRouter = router({
         })
         .from(audiencias)
         .leftJoin(processos, eq(audiencias.processoId, processos.id))
-        .where(
-          and(
-            gte(audiencias.dataAudiencia, new Date()),
-            sql`${audiencias.dataAudiencia} <= ${dataLimite}`
-          )
-        )
+        .where(and(...whereConditions))
         .orderBy(asc(audiencias.dataAudiencia))
         .limit(limite);
 
@@ -516,26 +528,56 @@ export const audienciasRouter = router({
             processoId = novoProcesso.id;
           }
 
-          // Criar audiência
-          const [audiencia] = await db
-            .insert(audiencias)
-            .values({
-              processoId,
-              assistidoId,
-              dataAudiencia: dataHora,
-              tipo: evento.tipo,
-              titulo: evento.titulo,
-              descricao: evento.descricao,
-              local: evento.local,
-              horario: evento.horarioInicio,
-              status: evento.status === "confirmado" ? "agendada" : 
-                     evento.status === "cancelado" ? "cancelada" : 
-                     evento.status === "remarcado" ? "reagendada" : "agendada",
-              workspaceId: targetWorkspaceId,
-            })
-            .returning({ id: audiencias.id });
+          // Verificar se é SESSÃO DE JÚRI (não apenas audiência na Vara do Júri)
+          // Critério: deve ser "Sessão de Julgamento" ou "Plenário", não apenas mencionar "Júri"
+          const tituloLower = evento.titulo?.toLowerCase() || "";
+          const ehSessaoJuri =
+            evento.tipo === "juri" ||
+            tituloLower.includes("sessão de julgamento") ||
+            tituloLower.includes("plenário do júri") ||
+            tituloLower.includes("plenário do juri") ||
+            // Padrão específico: "Júri - Nome" (título gerado pelo parser)
+            (tituloLower.startsWith("júri -") && !tituloLower.includes("instrução"));
 
-          importados.push(audiencia.id);
+          if (ehSessaoJuri) {
+            // Criar sessão de júri na tabela correta
+            const [sessao] = await db
+              .insert(sessoesJuri)
+              .values({
+                processoId: processoId!,
+                dataSessao: dataHora,
+                defensorNome: "Defensor", // Será atualizado depois
+                assistidoNome: evento.assistido || "Não identificado",
+                status: evento.status === "cancelado" ? "CANCELADA" :
+                       evento.status === "remarcado" ? "ADIADA" : "AGENDADA",
+                observacoes: evento.descricao,
+                workspaceId: targetWorkspaceId,
+              })
+              .returning({ id: sessoesJuri.id });
+
+            importados.push(sessao.id);
+          } else {
+            // Criar audiência comum
+            const [audiencia] = await db
+              .insert(audiencias)
+              .values({
+                processoId,
+                assistidoId,
+                dataAudiencia: dataHora,
+                tipo: evento.tipo,
+                titulo: evento.titulo,
+                descricao: evento.descricao,
+                local: evento.local,
+                horario: evento.horarioInicio,
+                status: evento.status === "confirmado" ? "agendada" :
+                       evento.status === "cancelado" ? "cancelada" :
+                       evento.status === "remarcado" ? "reagendada" : "agendada",
+                workspaceId: targetWorkspaceId,
+              })
+              .returning({ id: audiencias.id });
+
+            importados.push(audiencia.id);
+          }
         } catch (error) {
           console.error(`Erro ao importar evento ${evento.processo}:`, error);
           // Continuar com os próximos eventos

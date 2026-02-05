@@ -50,6 +50,10 @@ import {
   Info,
   PenLine,
   UserPlus,
+  XCircle,
+  RefreshCw,
+  CircleCheck,
+  CircleDot,
 } from "lucide-react";
 import {
   Popover,
@@ -225,10 +229,8 @@ export default function DashboardJuriPage() {
     limit: 100,
   });
 
-  // Júris (sessões do júri)
-  const { data: jurisData, isLoading: loadingJuris } = trpc.juri.proximas.useQuery({
-    dias: 60,
-  });
+  // Júris (sessões do júri) - sem limite de dias
+  const { data: jurisData, isLoading: loadingJuris } = trpc.juri.proximas.useQuery({});
   const juris = jurisData ?? [];
 
   // Processos (para registro rápido)
@@ -255,11 +257,8 @@ export default function DashboardJuriPage() {
   // Verificar se é defensor de vara criminal (não-especializado) - usado para adaptar seções do dashboard
   const isDefensorCriminalGeral = user && user.role === "defensor" && isGrupoVarasCriminais;
 
-  // Audiências (para o dashboard)
-  const { data: audienciasData, isLoading: loadingAudiencias } = trpc.audiencias.proximas.useQuery({
-    dias: 30,
-    limite: 20,
-  });
+  // Audiências (para o dashboard) - sem limite de dias ou quantidade
+  const { data: audienciasData, isLoading: loadingAudiencias } = trpc.audiencias.proximas.useQuery({});
   const audiencias = audienciasData ?? [];
 
   // ==========================================
@@ -333,7 +332,7 @@ export default function DashboardJuriPage() {
 
   const isLoading = loadingDemandas || loadingAssistidos || loadingCasos || loadingJuris;
 
-  // Demandas ordenadas por prazo (4 mais urgentes - incluindo vencidos)
+  // Demandas ordenadas por prazo (12 mais urgentes - incluindo vencidos, 3x mais que antes)
   const demandasPorPrazo = useMemo(() => {
     return [...demandasFiltradas]
       .filter((d: any) => d.prazoFinal || d.prazo)
@@ -342,7 +341,7 @@ export default function DashboardJuriPage() {
         const prazoB = b.prazoFinal ? new Date(b.prazoFinal) : b.prazo ? parseISO(b.prazo) : new Date(9999, 11, 31);
         return prazoA.getTime() - prazoB.getTime();
       })
-      .slice(0, 4);
+      .slice(0, 12);
   }, [demandasFiltradas]);
 
   // Estado para filtro de júris por defensor
@@ -373,8 +372,9 @@ export default function DashboardJuriPage() {
     const fimDaSemana = addDays(hoje, 7 - hoje.getDay()); // Domingo
     
     // Audiências da semana atual
+    // O campo retornado pelo tRPC é dataHora, não data
     const audienciasSemana = audiencias.filter((a: any) => {
-      const dataAud = a.data ? parseISO(a.data) : null;
+      const dataAud = a.dataHora ? new Date(a.dataHora) : null;
       return dataAud && dataAud >= hoje && dataAud <= fimDaSemana;
     });
     
@@ -391,7 +391,7 @@ export default function DashboardJuriPage() {
     const hoje = new Date();
     const fimDaSemana = addDays(hoje, 7 - hoje.getDay());
     const audienciasSemana = audiencias.filter((a: any) => {
-      const dataAud = a.data ? parseISO(a.data) : null;
+      const dataAud = a.dataHora ? new Date(a.dataHora) : null;
       return dataAud && dataAud >= hoje && dataAud <= fimDaSemana;
     });
     return audienciasSemana.length < 5;
@@ -685,10 +685,10 @@ export default function DashboardJuriPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[500px] overflow-y-auto">
               {loadingDemandas ? (
                 <div className="p-4 space-y-2">
-                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+                  {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
                 </div>
               ) : demandasPorPrazo.length === 0 ? (
                 <div className="p-6 text-center">
@@ -977,7 +977,8 @@ export default function DashboardJuriPage() {
                   </div>
                 ) : (
                   audienciasExibir.map((aud: any, index: number) => {
-                    const dataAud = aud.data ? parseISO(aud.data) : null;
+                    // O campo retornado pelo tRPC é dataHora, não data
+                    const dataAud = aud.dataHora ? new Date(aud.dataHora) : null;
                     const isHoje = dataAud && isToday(dataAud);
                     const isAmanha = dataAud && isTomorrow(dataAud);
                     const diasRestantes = dataAud ? differenceInDays(dataAud, new Date()) : null;
@@ -1010,12 +1011,28 @@ export default function DashboardJuriPage() {
                               {aud.assistidoNome || aud.titulo || "Audiência"}
                             </p>
                             <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                              <span>{aud.hora || aud.horario || "—"}</span>
+                              <span>{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
                               <span>•</span>
                               <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
                             </div>
                           </div>
                           {aud.reuPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
+                          {/* Ícone de status do evento */}
+                          {aud.status && (aud.status === "cancelada" || aud.status === "CANCELADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Cancelada">
+                              <XCircle className="w-4 h-4 text-red-500" />
+                            </div>
+                          )}
+                          {aud.status && (aud.status === "reagendada" || aud.status === "REDESIGNADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Redesignada">
+                              <RefreshCw className="w-4 h-4 text-orange-500" />
+                            </div>
+                          )}
+                          {aud.status && (aud.status === "realizada" || aud.status === "REALIZADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Realizada">
+                              <CircleCheck className="w-4 h-4 text-emerald-500" />
+                            </div>
+                          )}
                           {diasRestantes !== null && (
                             <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
                               diasRestantes <= 0 ? "bg-rose-500 text-white" :
@@ -1129,6 +1146,22 @@ export default function DashboardJuriPage() {
                               )}
                             </div>
                           </div>
+                          {/* Ícone de status do júri */}
+                          {juri.status === "CANCELADA" && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Cancelado">
+                              <XCircle className="w-4 h-4 text-red-500" />
+                            </div>
+                          )}
+                          {juri.status === "REDESIGNADA" && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Redesignado">
+                              <RefreshCw className="w-4 h-4 text-orange-500" />
+                            </div>
+                          )}
+                          {juri.status === "REALIZADA" && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Realizado">
+                              <CircleCheck className="w-4 h-4 text-emerald-500" />
+                            </div>
+                          )}
                           {diasRestantes !== null && (
                             <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
                               diasRestantes <= 0 ? "bg-rose-500 text-white" :
@@ -1182,14 +1215,15 @@ export default function DashboardJuriPage() {
                 </div>
               ) : (
                 audienciasExibir.map((aud: any, index: number) => {
-                  const dataAud = aud.data ? parseISO(aud.data) : null;
+                  // O campo retornado pelo tRPC é dataHora, não data
+                  const dataAud = aud.dataHora ? new Date(aud.dataHora) : null;
                   const isHoje = dataAud && isToday(dataAud);
                   const isAmanha = dataAud && isTomorrow(dataAud);
                   const estaSemana = dataAud && isThisWeek(dataAud, { weekStartsOn: 0 });
                   
                   // Agrupar visualmente por data
-                  const dataAnterior = index > 0 && audienciasExibir[index - 1].data 
-                    ? parseISO(audienciasExibir[index - 1].data) : null;
+                  const dataAnterior = index > 0 && audienciasExibir[index - 1].dataHora 
+                    ? new Date(audienciasExibir[index - 1].dataHora) : null;
                   const mostrarSeparadorData = !dataAnterior || 
                     (dataAud && format(dataAud, "yyyy-MM-dd") !== format(dataAnterior, "yyyy-MM-dd"));
 
@@ -1223,13 +1257,29 @@ export default function DashboardJuriPage() {
                               {aud.assistidoNome || aud.titulo || "Audiência"}
                             </p>
                             <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                              <span>{aud.hora || aud.horario || "—"}</span>
+                              <span>{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
                               <span>•</span>
                               <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
                             </div>
                           </div>
                           {aud.reuPreso && (
                             <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                          )}
+                          {/* Ícone de status do evento */}
+                          {aud.status && (aud.status === "cancelada" || aud.status === "CANCELADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Cancelada">
+                              <XCircle className="w-4 h-4 text-red-500" />
+                            </div>
+                          )}
+                          {aud.status && (aud.status === "reagendada" || aud.status === "REDESIGNADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Redesignada">
+                              <RefreshCw className="w-4 h-4 text-orange-500" />
+                            </div>
+                          )}
+                          {aud.status && (aud.status === "realizada" || aud.status === "REALIZADA") && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0" title="Realizada">
+                              <CircleCheck className="w-4 h-4 text-emerald-500" />
+                            </div>
                           )}
                         </div>
                       </Link>

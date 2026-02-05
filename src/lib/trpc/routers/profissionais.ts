@@ -102,7 +102,7 @@ export const profissionaisRouter = router({
   // Criar compartilhamento
   compartilhar: protectedProcedure
     .input(z.object({
-      entidadeTipo: z.enum(["demanda", "audiencia", "processo", "caso"]),
+      entidadeTipo: z.enum(["demanda", "audiencia", "processo", "caso", "evento"]),
       entidadeId: z.number(),
       compartilhadoPorId: z.number(),
       compartilhadoComId: z.number(),
@@ -139,6 +139,7 @@ export const profissionaisRouter = router({
           audiencia: "audiência",
           processo: "processo",
           caso: "caso",
+          evento: "evento da agenda",
         }[input.entidadeTipo];
 
         // Importar notifications table

@@ -135,7 +135,7 @@ export default function DashboardVarasCriminaisPage() {
 
   // Audiências
   const { data: audienciasData, isLoading: loadingAudiencias } = trpc.audiencias.list.useQuery({
-    limit: 30,
+    limit: 100, // Mostra últimas 100 audiências no dashboard
   });
   const audiencias = audienciasData ?? [];
 
