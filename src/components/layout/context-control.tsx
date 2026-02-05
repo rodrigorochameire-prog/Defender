@@ -125,7 +125,7 @@ export function useAtribuicaoFiltro() {
 // HELPER: Gerar dados de display para um defensor
 // ==========================================
 
-function getDefensorDisplayData(config: ProfissionalConfig): { id: string; nome: string; inicial: string; cor: string; grupo: string } {
+function getDefensorDisplayData(config: ProfissionalConfig): { id: string; nome: string; nomeCurto: string; inicial: string; cor: string; grupo: string } {
   const inicial = config.nomeCurto?.[0]?.toUpperCase() || config.nome[0]?.toUpperCase() || "?";
 
   // Cores distintas baseadas no ID (match do estilo original)
@@ -138,6 +138,7 @@ function getDefensorDisplayData(config: ProfissionalConfig): { id: string; nome:
   return {
     id: String(config.id),
     nome: config.nome,
+    nomeCurto: config.nomeCurto || config.nome.split(' ').slice(0, 2).join(' '),
     inicial,
     cor,
     grupo: config.grupo,
@@ -174,6 +175,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
     items.push({
       id: "GERAL",
       nome: "Visao Geral",
+      nomeCurto: "Visao Geral",
       inicial: "G",
       cor: "bg-zinc-300 text-zinc-700",
       grupo: "todos",
@@ -406,6 +408,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
 interface DefensorDisplay {
   id: string;
   nome: string;
+  nomeCurto: string;
   inicial: string;
   cor: string;
   grupo: string;
@@ -469,7 +472,7 @@ function ContextPopoverContent({
                   {d.inicial}
                 </div>
                 <p className="text-[10px] font-medium text-zinc-300 truncate">
-                  {d.nome.split(' ').pop()}
+                  {d.nomeCurto}
                 </p>
               </button>
             ))}
@@ -502,7 +505,7 @@ function ContextPopoverContent({
                     {d.inicial}
                   </div>
                   <p className="text-[10px] font-medium text-zinc-300 truncate">
-                    {d.nome.split(' ').pop()}
+                    {d.nomeCurto}
                   </p>
                 </button>
               ))}
