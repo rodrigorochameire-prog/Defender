@@ -970,6 +970,7 @@ export function parseSEEUIntimacoes(texto: string): ResultadoParserSEEU {
 
 /**
  * Converte intimação SEEU para formato de demanda
+ * Formato compatível com handleImportDemandas
  */
 export function intimacaoSEEUToDemanda(intimacao: IntimacaoSEEU): any {
   // Calcular prazo baseado no último dia
@@ -1003,24 +1004,26 @@ export function intimacaoSEEUToDemanda(intimacao: IntimacaoSEEU): any {
     }
   }
 
+  // Formato compatível com handleImportDemandas que espera:
+  // assistido, processos, ato, prazo, data, status, estadoPrisional, providencias, atribuicao
   return {
+    id: `seeu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     assistido: intimacao.assistido,
-    numeroProcesso: intimacao.numeroProcesso,
-    dataEntrada,
+    processos: [
+      {
+        tipo: 'EP', // Execução Penal
+        numero: intimacao.numeroProcesso,
+      }
+    ],
+    data: dataEntrada,
     prazo: prazoFinal,
     ato,
     atribuicao: 'EXECUCAO_PENAL',
-    status: intimacao.tipoManifestacao === 'ciencia' ? '7_CIENCIA' : '2_ATENDER',
-    providencias: intimacao.assuntoPrincipal ? `${intimacao.classeProcessual} - ${intimacao.assuntoPrincipal}` : intimacao.classeProcessual,
-    tipoIntimacao: intimacao.tipoManifestacao === 'ciencia' ? 'CIENCIA' : 'PETICIONAR',
-    // Campos extras para referência
-    extras: {
-      seq: intimacao.seq,
-      autoridade: intimacao.autoridade,
-      prazoResposta: intimacao.prazoResposta,
-      preAnalise: intimacao.preAnalise,
-      sistema: 'SEEU',
-    },
+    status: intimacao.tipoManifestacao === 'ciencia' ? 'ciencia' : 'atender',
+    estadoPrisional: 'Preso', // Padrão para execução penal
+    providencias: intimacao.assuntoPrincipal
+      ? `${intimacao.classeProcessual || 'Execução Penal'} - ${intimacao.assuntoPrincipal}`
+      : intimacao.classeProcessual || 'Execução Penal',
   };
 }
 

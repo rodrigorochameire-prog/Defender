@@ -746,8 +746,17 @@ export default function Demandas() {
   const handleUpdateDemandas = async (updatedData: any[]) => {
     for (const data of updatedData) {
       try {
+        // Converter ID para número se for string
+        const numericId = typeof data.id === 'string' ? parseInt(data.id, 10) : data.id;
+
+        // Ignorar se não conseguiu converter para número válido
+        if (isNaN(numericId)) {
+          console.warn(`ID inválido para atualização: ${data.id}`);
+          continue;
+        }
+
         await updateDemandaMutation.mutateAsync({
-          id: data.id,
+          id: numericId,
           data: {
             assistido: data.assistido,
             processoNumero: data.processos?.[0]?.numero,
