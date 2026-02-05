@@ -85,6 +85,7 @@ import { CompartilharDemandaModal } from "@/components/shared/compartilhar-deman
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { DashboardPorPerfil } from "@/components/dashboard/dashboard-por-perfil";
 import { RegistroRapidoAprimorado } from "@/components/dashboard/registro-rapido-aprimorado";
+import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 
 // ============================================
 // CONFIGURAÇÕES DE ATRIBUIÇÃO
@@ -518,36 +519,47 @@ export default function DashboardJuriPage() {
   const percentPresos = totalAssistidos > 0 ? Math.round((reusPresos / totalAssistidos) * 100) : 0;
 
   // Stats para os cards
-  const statsData = [
+  const statsData: Array<{
+    title: string;
+    value: string;
+    subtitle: string;
+    icon: any;
+    href: string;
+    gradient: "emerald" | "blue" | "amber" | "rose" | "violet" | "zinc";
+  }> = [
     {
-      title: "Em Preparação",
+      title: "Em Preparacao",
       value: demandasEmPreparacao.toString(),
       subtitle: `${percentEmPreparacao}% do total`,
       icon: FileText,
       href: "/admin/demandas",
+      gradient: "emerald",
     },
     {
-      title: "Prazos Críticos",
+      title: "Prazos Criticos",
       value: demandasCriticas.toString(),
       subtitle: `${percentCriticas}% do total`,
       icon: AlertCircle,
       href: "/admin/demandas",
+      gradient: "amber",
     },
     {
-      title: "Réus Presos",
+      title: "Reus Presos",
       value: `${percentPresos}%`,
-      subtitle: `${reusPresos} de ${totalAssistidos} réus`,
+      subtitle: `${reusPresos} de ${totalAssistidos} reus`,
       icon: Lock,
       href: "/admin/assistidos",
+      gradient: "rose",
     },
     {
-      title: isDefensorCriminalGeral ? "Audiências" : "Próximos Júris",
+      title: isDefensorCriminalGeral ? "Audiencias" : "Proximos Juris",
       value: isDefensorCriminalGeral ? audienciasExibir.length.toString() : totalJuris.toString(),
       subtitle: isDefensorCriminalGeral
         ? (audienciasExibir.length > 0 ? "agendadas" : "nenhuma agendada")
         : (totalJuris > 0 ? "agendados" : "nenhum agendado"),
       icon: isDefensorCriminalGeral ? CalendarDays : Gavel,
       href: isDefensorCriminalGeral ? "/admin/agenda" : "/admin/juri",
+      gradient: "blue",
     },
   ];
 
@@ -634,43 +646,23 @@ export default function DashboardJuriPage() {
         </div>
       </div>
 
-      {/* CONTEÚDO PRINCIPAL */}
+      {/* CONTEUDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* STATS CARDS - 2 colunas em mobile */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {statsData.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Link href={stat.href} key={index}>
-                <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03] dark:hover:shadow-emerald-500/[0.05]">
-                  {/* Linha superior sutil no hover */}
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-                  
-                  <div className="flex items-start justify-between gap-2 md:gap-3">
-                    <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                      <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
-                        {stat.title}
-                      </p>
-                      {isLoading ? (
-                        <Skeleton className="h-6 md:h-7 w-10 md:w-12" />
-                      ) : (
-                        <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">
-                          {stat.value}
-                        </p>
-                      )}
-                      <p className="text-[9px] md:text-[10px] text-zinc-400 dark:text-zinc-500">
-                        {stat.subtitle}
-                      </p>
-                    </div>
-                    <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
-                      <Icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        {/* STATS CARDS - KPI Premium */}
+        <KPIGrid columns={4}>
+          {statsData.map((stat, index) => (
+            <KPICardPremium
+              key={index}
+              title={stat.title}
+              value={isLoading ? "..." : stat.value}
+              subtitle={stat.subtitle}
+              icon={stat.icon}
+              gradient={stat.gradient}
+              href={stat.href}
+              size="sm"
+            />
+          ))}
+        </KPIGrid>
 
         {/* PRAZOS URGENTES */}
         <div className="space-y-4">
