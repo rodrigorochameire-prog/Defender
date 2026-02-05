@@ -156,19 +156,34 @@ const statusLabels: { [key: string]: string } = {
   "ARQUIVADO": "Arquivado",
 };
 
-function formatPrazo(prazo: string | Date | null): { texto: string; cor: string } {
-  if (!prazo) return { texto: "Sem prazo", cor: "gray" };
-  
+function formatPrazo(prazo: string | Date | null): { texto: string; cor: string; diasRestantes: number | null; vencido: boolean } {
+  if (!prazo) return { texto: "Sem prazo", cor: "gray", diasRestantes: null, vencido: false };
+
   const data = typeof prazo === "string" ? parseISO(prazo) : prazo;
-  
-  if (isToday(data)) return { texto: "Hoje", cor: "red" };
-  if (isTomorrow(data)) return { texto: "Amanhã", cor: "red" };
-  
-  const diffDays = Math.ceil((data.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-  
-  if (diffDays <= 2) return { texto: format(data, "dd/MM", { locale: ptBR }), cor: "red" };
-  if (diffDays <= 5) return { texto: format(data, "dd/MM", { locale: ptBR }), cor: "yellow" };
-  return { texto: format(data, "dd/MM", { locale: ptBR }), cor: "gray" };
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const prazoData = new Date(data);
+  prazoData.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.ceil((prazoData.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Prazo vencido
+  if (diffDays < 0) {
+    const diasVencidos = Math.abs(diffDays);
+    return {
+      texto: diasVencidos === 1 ? "1 dia atrás" : `${diasVencidos} dias atrás`,
+      cor: "vencido",
+      diasRestantes: diffDays,
+      vencido: true
+    };
+  }
+
+  if (diffDays === 0) return { texto: "HOJE", cor: "red", diasRestantes: 0, vencido: false };
+  if (diffDays === 1) return { texto: "Amanhã", cor: "red", diasRestantes: 1, vencido: false };
+
+  if (diffDays <= 3) return { texto: `${diffDays} dias`, cor: "red", diasRestantes: diffDays, vencido: false };
+  if (diffDays <= 7) return { texto: `${diffDays} dias`, cor: "yellow", diasRestantes: diffDays, vencido: false };
+  return { texto: format(data, "dd/MM", { locale: ptBR }), cor: "gray", diasRestantes: diffDays, vencido: false };
 }
 
 // ============================================
@@ -332,7 +347,7 @@ export default function DashboardJuriPage() {
 
   const isLoading = loadingDemandas || loadingAssistidos || loadingCasos || loadingJuris;
 
-  // Demandas ordenadas por prazo (12 mais urgentes - incluindo vencidos, 3x mais que antes)
+  // Demandas ordenadas por prazo (20 mais urgentes - incluindo vencidos)
   const demandasPorPrazo = useMemo(() => {
     return [...demandasFiltradas]
       .filter((d: any) => d.prazoFinal || d.prazo)
@@ -341,7 +356,41 @@ export default function DashboardJuriPage() {
         const prazoB = b.prazoFinal ? new Date(b.prazoFinal) : b.prazo ? parseISO(b.prazo) : new Date(9999, 11, 31);
         return prazoA.getTime() - prazoB.getTime();
       })
-      .slice(0, 12);
+      .slice(0, 20);
+  }, [demandasFiltradas]);
+
+  // Estatísticas de prazos críticos
+  const estatisticasPrazos = useMemo(() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    let vencidos = 0;
+    let venceHoje = 0;
+    let proximosDias = 0;
+    let reuPresoVencido = 0;
+    let reuPresoCritico = 0;
+
+    demandasFiltradas.forEach((d: any) => {
+      const prazo = d.prazoFinal || d.prazo;
+      if (!prazo) return;
+
+      const dataPrazo = new Date(prazo);
+      dataPrazo.setHours(0, 0, 0, 0);
+      const diffDias = Math.ceil((dataPrazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDias < 0) {
+        vencidos++;
+        if (d.reuPreso) reuPresoVencido++;
+      } else if (diffDias === 0) {
+        venceHoje++;
+        if (d.reuPreso) reuPresoCritico++;
+      } else if (diffDias <= 7) {
+        proximosDias++;
+        if (d.reuPreso && diffDias <= 3) reuPresoCritico++;
+      }
+    });
+
+    return { vencidos, venceHoje, proximosDias, reuPresoVencido, reuPresoCritico };
   }, [demandasFiltradas]);
 
   // Estado para filtro de júris por defensor
@@ -664,6 +713,60 @@ export default function DashboardJuriPage() {
           ))}
         </KPIGrid>
 
+        {/* ALERTA CRÍTICO - Réu Preso com Prazo Vencido */}
+        {estatisticasPrazos.reuPresoVencido > 0 && (
+          <Card className="border-red-500 bg-red-50 dark:bg-red-950/50 animate-pulse">
+            <div className="p-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-red-100 dark:bg-red-900/50">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-red-800 dark:text-red-200">
+                    ⚠️ ATENÇÃO: {estatisticasPrazos.reuPresoVencido} prazo{estatisticasPrazos.reuPresoVencido > 1 ? "s" : ""} de RÉU PRESO vencido{estatisticasPrazos.reuPresoVencido > 1 ? "s" : ""}!
+                  </p>
+                  <p className="text-sm text-red-600 dark:text-red-300">
+                    Prioridade máxima - verificar imediatamente
+                  </p>
+                </div>
+                <Link href="/admin/demandas?filtro=reuPreso">
+                  <Button size="sm" variant="destructive" className="h-8">
+                    Ver agora
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* BADGES DE STATUS RÁPIDO */}
+        <div className="flex flex-wrap gap-2">
+          {estatisticasPrazos.vencidos > 0 && (
+            <Badge variant="destructive" className="py-1 px-3 text-xs">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              {estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}
+            </Badge>
+          )}
+          {estatisticasPrazos.venceHoje > 0 && (
+            <Badge className="py-1 px-3 text-xs bg-orange-500 hover:bg-orange-600">
+              <Clock className="w-3 h-3 mr-1" />
+              {estatisticasPrazos.venceHoje} vence{estatisticasPrazos.venceHoje > 1 ? "m" : ""} hoje
+            </Badge>
+          )}
+          {estatisticasPrazos.proximosDias > 0 && (
+            <Badge variant="outline" className="py-1 px-3 text-xs border-amber-300 text-amber-700 dark:text-amber-400">
+              <Calendar className="w-3 h-3 mr-1" />
+              {estatisticasPrazos.proximosDias} na semana
+            </Badge>
+          )}
+          {estatisticasPrazos.reuPresoCritico > 0 && (
+            <Badge className="py-1 px-3 text-xs bg-purple-600 hover:bg-purple-700">
+              <Lock className="w-3 h-3 mr-1" />
+              {estatisticasPrazos.reuPresoCritico} réu preso crítico
+            </Badge>
+          )}
+        </div>
+
         {/* PRAZOS URGENTES */}
         <div className="space-y-4">
           {/* PRAZOS MAIS PRÓXIMOS - Linha completa */}
@@ -672,9 +775,14 @@ export default function DashboardJuriPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-amber-500" />
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Prazos Próximos</h3>
+                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Prazos</h3>
+                  {estatisticasPrazos.vencidos > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-bold animate-pulse">
+                      {estatisticasPrazos.vencidos} VENCIDO{estatisticasPrazos.vencidos > 1 ? "S" : ""}
+                    </span>
+                  )}
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">
-                    {demandasPorPrazo.length}
+                    {demandasPorPrazo.length} total
                   </span>
                 </div>
                 <Link href="/admin/demandas">
@@ -698,25 +806,48 @@ export default function DashboardJuriPage() {
               ) : (
                 demandasPorPrazo.map((demanda: any) => {
                   const prazoInfo = formatPrazo(demanda.prazoFinal || demanda.prazo);
+                  const isVencido = prazoInfo.vencido;
+                  const isReuPresoCritico = demanda.reuPreso && (isVencido || prazoInfo.diasRestantes === 0);
+
                   return (
                     <Link href={`/admin/demandas/${demanda.id}`} key={demanda.id}>
-                      <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <div className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${
+                        isReuPresoCritico
+                          ? "bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 border-l-4 border-red-500"
+                          : isVencido
+                          ? "bg-red-50/50 dark:bg-red-950/20 hover:bg-red-100/50 dark:hover:bg-red-950/30"
+                          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                      }`}>
                         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                          prazoInfo.cor === "red" ? "bg-red-500" : 
+                          isVencido ? "bg-red-600 animate-pulse" :
+                          prazoInfo.cor === "red" ? "bg-red-500" :
                           prazoInfo.cor === "yellow" ? "bg-amber-500" : "bg-zinc-400"
                         }`} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                            {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className={`text-sm font-medium truncate ${
+                              isVencido ? "text-red-700 dark:text-red-300" : "text-zinc-800 dark:text-zinc-200"
+                            }`}>
+                              {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
+                            </p>
+                            {demanda.reuPreso && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
+                                <Lock className="w-2.5 h-2.5 mr-0.5" />
+                                PRESO
+                              </span>
+                            )}
+                          </div>
                           <p className="text-[11px] text-zinc-400 truncate">{demanda.ato}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          {demanda.reuPreso && <Lock className="w-3 h-3 text-red-500" />}
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                            prazoInfo.cor === "red" ? "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400" :
-                            prazoInfo.cor === "yellow" ? "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400" :
-                            "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                            isVencido
+                              ? "bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300 animate-pulse"
+                              : prazoInfo.cor === "red"
+                              ? "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400"
+                              : prazoInfo.cor === "yellow"
+                              ? "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400"
+                              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
                           }`}>
                             {prazoInfo.texto}
                           </span>

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-fetch"],
+      "env": {
+        "MCP_SERVER_URL": "https://mcp.supabase.com/mcp?project_ref=hxfvlaeqhkmelvyzgfqp"
+      }
+    }
+  }
+}
