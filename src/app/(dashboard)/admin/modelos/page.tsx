@@ -310,7 +310,7 @@ export default function ModelosPage() {
           </div>
         ) : modelosFiltrados.length === 0 ? (
           <EmptyState
-            icon={<FileStack className="w-12 h-12" />}
+            icon={FileStack}
             title="Nenhum modelo encontrado"
             description={
               search || categoriaFilter !== "all"
@@ -318,12 +318,13 @@ export default function ModelosPage() {
                 : "Crie seu primeiro modelo de documento"
             }
             action={
-              <Link href="/admin/modelos/novo">
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Criar Modelo
-                </Button>
-              </Link>
+              !search && categoriaFilter === "all"
+                ? {
+                    label: "Criar Modelo",
+                    onClick: () => window.location.href = "/admin/modelos/novo",
+                    icon: Plus,
+                  }
+                : undefined
             }
           />
         ) : viewMode === "grid" ? (
@@ -355,7 +356,7 @@ interface ModeloCardProps {
     descricao: string | null;
     categoria: string;
     tipoPeca: string | null;
-    totalUsos: number;
+    totalUsos: number | null;
     createdAt: Date;
     tags?: string[] | null;
   };
@@ -452,7 +453,7 @@ function ModeloCard({ modelo }: ModeloCardProps) {
           </div>
           <div className="flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
-            {modelo.totalUsos} usos
+            {modelo.totalUsos || 0} usos
           </div>
         </div>
       </div>
@@ -510,7 +511,7 @@ function ModeloListItem({ modelo }: ModeloCardProps) {
           <span>{modelo.tipoPeca}</span>
         )}
         <span>{numTags} tags</span>
-        <span>{modelo.totalUsos} usos</span>
+        <span>{modelo.totalUsos || 0} usos</span>
         <span>{format(new Date(modelo.createdAt), "dd/MM/yyyy")}</span>
       </div>
 
