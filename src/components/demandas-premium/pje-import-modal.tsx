@@ -6,14 +6,14 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { 
-  parsePJeIntimacoes, 
-  intimacaoToDemanda, 
-  formatarResumoImportacao, 
-  verificarDuplicatas, 
+import {
+  parsePJeIntimacoesCompleto,
+  intimacaoToDemanda,
+  formatarResumoImportacao,
+  verificarDuplicatas,
   formatarResumoComDuplicatas,
   type IntimacaoPJeSimples,
-  type ResultadoVerificacaoDuplicatas 
+  type ResultadoVerificacaoDuplicatas
 } from "@/lib/pje-parser";
 
 interface PJeImportModalProps {
@@ -56,17 +56,27 @@ export function PJeImportModal({
     }
 
     try {
-      const resultado = parsePJeIntimacoes(texto);
-      
-      if (resultado.length === 0) {
+      const resultadoParser = parsePJeIntimacoesCompleto(texto);
+
+      if (resultadoParser.intimacoes.length === 0) {
         alert("Nenhuma intimação foi encontrada no texto. Verifique o formato.");
         return;
       }
 
+      // Se a atribuição foi detectada automaticamente, atualizar
+      if (resultadoParser.atribuicaoDetectada && resultadoParser.atribuicaoDetectada !== atribuicao) {
+        setAtribuicao(resultadoParser.atribuicaoDetectada);
+      }
+
       // Verificar duplicatas com as demandas existentes
-      const verificacao = verificarDuplicatas(resultado, demandasExistentes);
+      const verificacao = verificarDuplicatas(resultadoParser.intimacoes, demandasExistentes);
+
+      // Adicionar informações detectadas ao resultado
+      verificacao.atribuicaoDetectada = resultadoParser.atribuicaoDetectada;
+      verificacao.varaDetectada = resultadoParser.varaDetectada;
+
       setResultadoVerificacao(verificacao);
-      
+
       // Armazenar APENAS as intimações novas (não duplicadas)
       setIntimacoes(verificacao.novas);
       setEtapa("revisar");
@@ -447,17 +457,39 @@ export function PJeImportModal({
                       </div>
                       
                       <div className="grid grid-cols-1 gap-3">
-                        <div className="p-2.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                          <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 mb-1">Data de Expedição</p>
-                          <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{intimacao.dataExpedicao}</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="p-2.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+                            <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 mb-1">Data de Expedição</p>
+                            <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{intimacao.dataExpedicao}</p>
+                          </div>
+                          {intimacao.crime && (
+                            <div className="p-2.5 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
+                              <p className="text-[10px] font-semibold text-purple-500 dark:text-purple-400 mb-1">Crime</p>
+                              <p className="text-xs font-bold text-purple-900 dark:text-purple-100">{intimacao.crime}</p>
+                            </div>
+                          )}
+                          {intimacao.prazo && (
+                            <div className="p-2.5 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                              <p className="text-[10px] font-semibold text-blue-500 dark:text-blue-400 mb-1">Prazo PJe</p>
+                              <p className="text-xs font-bold text-blue-900 dark:text-blue-100">{intimacao.prazo} dias</p>
+                            </div>
+                          )}
+                          {intimacao.tipoProcesso && (
+                            <div className="p-2.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+                              <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 mb-1">Tipo</p>
+                              <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{intimacao.tipoProcesso}</p>
+                            </div>
+                          )}
                         </div>
                         <div className="p-2.5 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
                           <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 mb-1 flex items-center gap-1">
                             <Edit3 className="w-3 h-3" />
-                            Editar depois
+                            Providências (ajustar após importar)
                           </p>
                           <p className="text-xs text-amber-800 dark:text-amber-200">
-                            Ato: <strong>Ciência (padrão)</strong> • Status: <strong>Analisar (padrão)</strong> • Prazo: <strong>Calculado ao editar ato</strong>
+                            {intimacao.camposNaoExtraidos && intimacao.camposNaoExtraidos.length > 0
+                              ? `(ajustar status e ato${intimacao.camposNaoExtraidos.filter(c => c !== 'prazo' && c !== 'crime').length > 0 ? ' e ' + intimacao.camposNaoExtraidos.filter(c => c !== 'prazo' && c !== 'crime').join(' e ') : ''})`
+                              : '(ajustar status e ato)'}
                           </p>
                         </div>
                       </div>
