@@ -1221,9 +1221,10 @@ export default function DashboardJuriPage() {
                       <Link href={`/admin/audiencias/${aud.id}`}>
                         <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                           <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${
-                            isHoje ? "bg-emerald-500" :
-                            isAmanha ? "bg-amber-500" :
-                            "bg-blue-400"
+                            aud.processo?.atribuicao === "JURI" ? "bg-emerald-500" :
+                            aud.processo?.atribuicao === "VD" ? "bg-amber-500" :
+                            aud.processo?.atribuicao === "EP" ? "bg-blue-500" :
+                            "bg-zinc-400"
                           }`} />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
