@@ -342,7 +342,13 @@ export const demandas = pgTable("demandas", {
   
   // Flag de réu preso (prioridade automática)
   reuPreso: boolean("reu_preso").default(false),
-  
+
+  // Tipo de intimação (para VVD especialmente)
+  tipoIntimacao: varchar("tipo_intimacao", { length: 20 }).default("PETICIONAR"), // 'CIENCIA' | 'PETICIONAR' | 'AUDIENCIA' | 'CUMPRIMENTO'
+
+  // Se for VVD, referência para processo VVD
+  processoVVDId: integer("processo_vvd_id"),
+
   // Integração Google Calendar
   googleCalendarEventId: text("google_calendar_event_id"), // ID do evento no Google Calendar
   
@@ -1424,6 +1430,239 @@ export const medidasProtetivas = pgTable("medidas_protetivas", {
 
 export type MedidaProtetiva = typeof medidasProtetivas.$inferSelect;
 export type InsertMedidaProtetiva = typeof medidasProtetivas.$inferInsert;
+
+// ==========================================
+// MÓDULO VVD - PARTES (Vítimas e Autores separados)
+// ==========================================
+
+// Status da MPU para controle
+export const statusMPUEnum = pgEnum("status_mpu", [
+  "ATIVA",
+  "EXPIRADA",
+  "REVOGADA",
+  "RENOVADA",
+  "MODULADA",
+  "AGUARDANDO_DECISAO",
+]);
+
+// Tipo de intimação para demandas
+export const tipoIntimacaoEnum = pgEnum("tipo_intimacao", [
+  "CIENCIA",           // Mera ciência - vai direto para controle VVD
+  "PETICIONAR",        // Precisa peticionar - fica na fila de demandas
+  "AUDIENCIA",         // Intimação de audiência
+  "CUMPRIMENTO",       // Cumprimento de decisão/sentença
+]);
+
+// Partes de processo VVD (separado dos assistidos criminais)
+export const partesVVD = pgTable("partes_vvd", {
+  id: serial("id").primaryKey(),
+
+  // Identificação
+  nome: text("nome").notNull(),
+  cpf: varchar("cpf", { length: 14 }),
+  rg: varchar("rg", { length: 20 }),
+  dataNascimento: date("data_nascimento"),
+
+  // Tipo da parte
+  tipoParte: varchar("tipo_parte", { length: 20 }).notNull(), // 'autor' | 'vitima'
+
+  // Contato
+  telefone: varchar("telefone", { length: 20 }),
+  telefoneSecundario: varchar("telefone_secundario", { length: 20 }),
+  email: varchar("email", { length: 100 }),
+  endereco: text("endereco"),
+  bairro: varchar("bairro", { length: 100 }),
+  cidade: varchar("cidade", { length: 100 }),
+
+  // Relacionamento (parentesco com a outra parte)
+  parentesco: varchar("parentesco", { length: 50 }), // ex-companheiro, pai, filho, etc.
+
+  // Observações
+  observacoes: text("observacoes"),
+
+  // Workspace e responsável
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  defensorId: integer("defensor_id").references(() => users.id),
+
+  // Metadados
+  deletedAt: timestamp("deleted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("partes_vvd_nome_idx").on(table.nome),
+  index("partes_vvd_cpf_idx").on(table.cpf),
+  index("partes_vvd_tipo_parte_idx").on(table.tipoParte),
+  index("partes_vvd_workspace_id_idx").on(table.workspaceId),
+  index("partes_vvd_deleted_at_idx").on(table.deletedAt),
+]);
+
+export type ParteVVD = typeof partesVVD.$inferSelect;
+export type InsertParteVVD = typeof partesVVD.$inferInsert;
+
+// ==========================================
+// MÓDULO VVD - PROCESSOS DE MPU (separado dos processos criminais)
+// ==========================================
+
+export const processosVVD = pgTable("processos_vvd", {
+  id: serial("id").primaryKey(),
+
+  // Partes do processo
+  autorId: integer("autor_id")
+    .notNull()
+    .references(() => partesVVD.id, { onDelete: "cascade" }),
+  vitimaId: integer("vitima_id")
+    .references(() => partesVVD.id, { onDelete: "set null" }),
+
+  // Identificação do Processo
+  numeroAutos: text("numero_autos").notNull(),
+  tipoProcesso: varchar("tipo_processo", { length: 20 }).notNull().default("MPU"), // MPU, APOrd, APSum, etc.
+
+  // Localização
+  comarca: varchar("comarca", { length: 100 }),
+  vara: varchar("vara", { length: 100 }).default("Vara de Violência Doméstica"),
+
+  // Crime/Assunto
+  crime: varchar("crime", { length: 200 }), // Ameaça, Maus Tratos, Lesão Corporal, etc.
+  assunto: text("assunto"),
+
+  // Datas importantes
+  dataDistribuicao: date("data_distribuicao"),
+  dataUltimaMovimentacao: date("data_ultima_movimentacao"),
+
+  // Status
+  fase: varchar("fase", { length: 50 }).default("tramitando"), // tramitando, arquivado, suspenso
+  situacao: varchar("situacao", { length: 50 }).default("ativo"),
+
+  // Medida Protetiva vigente
+  mpuAtiva: boolean("mpu_ativa").default(false),
+  dataDecisaoMPU: date("data_decisao_mpu"),
+  tiposMPU: text("tipos_mpu"), // JSON com tipos: afastamento, proibição contato, etc.
+  dataVencimentoMPU: date("data_vencimento_mpu"),
+  distanciaMinima: integer("distancia_minima"), // em metros
+
+  // Defensor responsável
+  defensorId: integer("defensor_id").references(() => users.id),
+
+  // Observações
+  observacoes: text("observacoes"),
+
+  // Integração PJe
+  pjeDocumentoId: varchar("pje_documento_id", { length: 20 }), // ID do documento no PJe
+  pjeUltimaAtualizacao: timestamp("pje_ultima_atualizacao"),
+
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+
+  // Metadados
+  deletedAt: timestamp("deleted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("processos_vvd_autor_id_idx").on(table.autorId),
+  index("processos_vvd_vitima_id_idx").on(table.vitimaId),
+  index("processos_vvd_numero_autos_idx").on(table.numeroAutos),
+  index("processos_vvd_mpu_ativa_idx").on(table.mpuAtiva),
+  index("processos_vvd_data_vencimento_mpu_idx").on(table.dataVencimentoMPU),
+  index("processos_vvd_defensor_id_idx").on(table.defensorId),
+  index("processos_vvd_workspace_id_idx").on(table.workspaceId),
+  index("processos_vvd_deleted_at_idx").on(table.deletedAt),
+]);
+
+export type ProcessoVVD = typeof processosVVD.$inferSelect;
+export type InsertProcessoVVD = typeof processosVVD.$inferInsert;
+
+// ==========================================
+// MÓDULO VVD - INTIMAÇÕES/DEMANDAS DE VVD
+// ==========================================
+
+export const intimacoesVVD = pgTable("intimacoes_vvd", {
+  id: serial("id").primaryKey(),
+
+  // Relacionamentos
+  processoVVDId: integer("processo_vvd_id")
+    .notNull()
+    .references(() => processosVVD.id, { onDelete: "cascade" }),
+
+  // Tipo de intimação
+  tipoIntimacao: tipoIntimacaoEnum("tipo_intimacao").notNull().default("CIENCIA"),
+
+  // Dados da intimação
+  ato: text("ato").notNull(), // Ciência, Modulação MPU, Revogação, etc.
+  dataExpedicao: date("data_expedicao"),
+  dataIntimacao: date("data_intimacao"),
+  prazo: date("prazo"),
+  prazoDias: integer("prazo_dias"),
+
+  // ID do documento no PJe
+  pjeDocumentoId: varchar("pje_documento_id", { length: 20 }),
+  pjeTipoDocumento: varchar("pje_tipo_documento", { length: 50 }),
+
+  // Status
+  status: varchar("status", { length: 30 }).default("pendente"), // pendente, ciencia_dada, respondida, arquivada
+
+  // Providências (o que precisa ser feito)
+  providencias: text("providencias"),
+
+  // Se for tipo PETICIONAR, referência para a demanda normal
+  demandaId: integer("demanda_id").references(() => demandas.id),
+
+  // Responsável
+  defensorId: integer("defensor_id").references(() => users.id),
+
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("intimacoes_vvd_processo_vvd_id_idx").on(table.processoVVDId),
+  index("intimacoes_vvd_tipo_intimacao_idx").on(table.tipoIntimacao),
+  index("intimacoes_vvd_status_idx").on(table.status),
+  index("intimacoes_vvd_prazo_idx").on(table.prazo),
+  index("intimacoes_vvd_defensor_id_idx").on(table.defensorId),
+  index("intimacoes_vvd_workspace_id_idx").on(table.workspaceId),
+]);
+
+export type IntimacaoVVD = typeof intimacoesVVD.$inferSelect;
+export type InsertIntimacaoVVD = typeof intimacoesVVD.$inferInsert;
+
+// ==========================================
+// MÓDULO VVD - HISTÓRICO DE MPU
+// ==========================================
+
+export const historicoMPU = pgTable("historico_mpu", {
+  id: serial("id").primaryKey(),
+
+  processoVVDId: integer("processo_vvd_id")
+    .notNull()
+    .references(() => processosVVD.id, { onDelete: "cascade" }),
+
+  // Tipo de evento
+  tipoEvento: varchar("tipo_evento", { length: 30 }).notNull(), // 'deferimento', 'indeferimento', 'modulacao', 'revogacao', 'renovacao', 'descumprimento'
+
+  // Detalhes
+  dataEvento: date("data_evento").notNull(),
+  descricao: text("descricao"),
+
+  // Medidas vigentes após o evento
+  medidasVigentes: text("medidas_vigentes"), // JSON com as medidas
+  novaDataVencimento: date("nova_data_vencimento"),
+  novaDistancia: integer("nova_distancia"),
+
+  // Documento relacionado
+  pjeDocumentoId: varchar("pje_documento_id", { length: 20 }),
+
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("historico_mpu_processo_vvd_id_idx").on(table.processoVVDId),
+  index("historico_mpu_tipo_evento_idx").on(table.tipoEvento),
+  index("historico_mpu_data_evento_idx").on(table.dataEvento),
+]);
+
+export type HistoricoMPU = typeof historicoMPU.$inferSelect;
+export type InsertHistoricoMPU = typeof historicoMPU.$inferInsert;
 
 // ==========================================
 // MÓDULO EP - CÁLCULO SEEU (BENEFÍCIOS)

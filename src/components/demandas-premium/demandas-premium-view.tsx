@@ -14,6 +14,7 @@ import { ExportModal } from "@/components/demandas-premium/export-modal";
 import { AdminConfigModal } from "@/components/demandas-premium/admin-config-modal";
 import { ImportDropdown } from "@/components/demandas-premium/import-dropdown";
 import { SheetsImportModal } from "@/components/demandas-premium/sheets-import-modal";
+import { SEEUImportModal } from "@/components/demandas-premium/seeu-import-modal";
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -393,6 +394,7 @@ export default function Demandas() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isPJeImportModalOpen, setIsPJeImportModalOpen] = useState(false);
   const [isSheetsImportModalOpen, setIsSheetsImportModalOpen] = useState(false);
+  const [isSEEUImportModalOpen, setIsSEEUImportModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -740,6 +742,32 @@ export default function Demandas() {
     importFromSheetsMutation.mutate({ rows });
   };
 
+  // Função para atualizar demandas existentes (usado pelo SheetsImportModal)
+  const handleUpdateDemandas = async (updatedData: any[]) => {
+    for (const data of updatedData) {
+      try {
+        await updateDemandaMutation.mutateAsync({
+          id: data.id,
+          data: {
+            assistido: data.assistido,
+            processoNumero: data.processos?.[0]?.numero,
+            ato: data.ato,
+            prazo: data.prazo || undefined,
+            dataEntrada: data.data || undefined,
+            status: data.status,
+            estadoPrisional: data.estadoPrisional,
+            providencias: data.providencias,
+            atribuicao: data.atribuicao,
+          },
+        });
+      } catch (error) {
+        console.error(`Erro ao atualizar demanda ${data.id}:`, error);
+      }
+    }
+    // Invalidar cache após atualizações
+    utils.demandas.list.invalidate();
+  };
+
   const toggleChart = (chartType: string) => {
     setSelectedCharts((prev) => {
       if (prev.includes(chartType)) {
@@ -916,10 +944,11 @@ export default function Demandas() {
             >
               <BarChartIcon className="w-3.5 h-3.5" />
             </Button>
-            <ImportDropdown 
+            <ImportDropdown
               onImportExcel={() => setIsImportModalOpen(true)}
               onImportPJe={() => setIsPJeImportModalOpen(true)}
               onImportSheets={() => setIsSheetsImportModalOpen(true)}
+              onImportSEEU={() => setIsSEEUImportModalOpen(true)}
             />
             <Button 
               variant="ghost" 
@@ -1405,6 +1434,14 @@ export default function Demandas() {
         isOpen={isSheetsImportModalOpen}
         onClose={() => setIsSheetsImportModalOpen(false)}
         onImport={handleImportDemandas}
+        onUpdate={handleUpdateDemandas}
+        demandasExistentes={allDemandas}
+      />
+      <SEEUImportModal
+        isOpen={isSEEUImportModalOpen}
+        onClose={() => setIsSEEUImportModalOpen(false)}
+        onImport={handleImportDemandas}
+        demandasExistentes={allDemandas}
       />
       <ChartConfigModal
         isOpen={isChartConfigModalOpen}

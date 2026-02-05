@@ -31,6 +31,8 @@ interface SheetsImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (demandas: any[]) => void;
+  onUpdate?: (demandas: any[]) => void; // Para atualizar demandas existentes
+  demandasExistentes?: any[]; // Lista de demandas já cadastradas
 }
 
 interface ParsedDemanda {
@@ -77,10 +79,74 @@ const ATRIBUICAO_OPTIONS = [
   { value: "CURADORIA", label: "Curadoria Especial", icon: Shield },
 ];
 
-export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportModalProps) {
+interface DuplicataInfo {
+  nova: ParsedDemanda;
+  existente: any;
+  diferencas: string[];
+}
+
+// Função para normalizar nome para comparação
+function normalizarNome(nome: string): string {
+  return nome
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Função para verificar se duas demandas são duplicatas
+function saoMesmaDemanda(nova: ParsedDemanda, existente: any): boolean {
+  // Comparar por número de processo (mais confiável)
+  const processoNovo = nova.processos[0]?.numero;
+  const processoExistente = existente.processos?.[0]?.numero;
+
+  if (processoNovo && processoExistente && processoNovo === processoExistente) {
+    return true;
+  }
+
+  // Comparar por nome + data (fallback)
+  const nomeNovo = normalizarNome(nova.assistido);
+  const nomeExistente = normalizarNome(existente.assistido || '');
+
+  if (nomeNovo === nomeExistente && nova.data === existente.data) {
+    return true;
+  }
+
+  return false;
+}
+
+// Função para identificar diferenças entre demandas
+function identificarDiferencas(nova: ParsedDemanda, existente: any): string[] {
+  const diferencas: string[] = [];
+
+  if (nova.status !== existente.status) {
+    diferencas.push(`Status: ${existente.status} → ${nova.status}`);
+  }
+  if (nova.ato !== existente.ato) {
+    diferencas.push(`Ato: ${existente.ato || 'vazio'} → ${nova.ato}`);
+  }
+  if (nova.prazo !== existente.prazo) {
+    diferencas.push(`Prazo: ${existente.prazo || 'vazio'} → ${nova.prazo}`);
+  }
+  if (nova.providencias !== existente.providencias) {
+    diferencas.push(`Providências atualizadas`);
+  }
+  if (nova.estadoPrisional !== existente.estadoPrisional) {
+    diferencas.push(`Estado: ${existente.estadoPrisional} → ${nova.estadoPrisional}`);
+  }
+
+  return diferencas;
+}
+
+export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demandasExistentes = [] }: SheetsImportModalProps) {
   const [rawText, setRawText] = useState("");
   const [parsedDemandas, setParsedDemandas] = useState<ParsedDemanda[]>([]);
   const [selectedAtribuicao, setSelectedAtribuicao] = useState<string>("");
+
+  // Separação de novas vs duplicatas
+  const [demandasNovas, setDemandasNovas] = useState<ParsedDemanda[]>([]);
+  const [duplicatas, setDuplicatas] = useState<DuplicataInfo[]>([]);
 
   // Função para extrair status do texto (ex: "2 - Analisar" -> "analisar")
   const parseStatus = (statusText: string): string => {
@@ -227,12 +293,37 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
     }
 
     setParsedDemandas(demandas);
-    
+
+    // Separar demandas novas de duplicatas
+    const novas: ParsedDemanda[] = [];
+    const dups: DuplicataInfo[] = [];
+
+    for (const demanda of demandas.filter(d => d.valido)) {
+      const existente = demandasExistentes.find(e => saoMesmaDemanda(demanda, e));
+
+      if (existente) {
+        const diferencas = identificarDiferencas(demanda, existente);
+        if (diferencas.length > 0) {
+          dups.push({ nova: demanda, existente, diferencas });
+        }
+        // Se não há diferenças, ignora (já está atualizada)
+      } else {
+        novas.push(demanda);
+      }
+    }
+
+    setDemandasNovas(novas);
+    setDuplicatas(dups);
+
     const validas = demandas.filter(d => d.valido).length;
     const invalidas = demandas.length - validas;
-    
+
     if (validas > 0) {
-      toast.success(`${validas} demandas identificadas${invalidas > 0 ? ` (${invalidas} com erros)` : ""}`);
+      let msg = `${validas} demandas identificadas`;
+      if (novas.length > 0) msg += `, ${novas.length} novas`;
+      if (dups.length > 0) msg += `, ${dups.length} para atualizar`;
+      if (invalidas > 0) msg += ` (${invalidas} com erros)`;
+      toast.success(msg);
     } else {
       toast.error("Nenhuma demanda válida encontrada");
     }
@@ -243,40 +334,73 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
   };
 
   const handleImport = () => {
-    const validas = parsedDemandas.filter(d => d.valido);
-    
-    if (validas.length === 0) {
-      toast.error("Nenhuma demanda válida para importar");
+    if (demandasNovas.length === 0 && duplicatas.length === 0) {
+      toast.error("Nenhuma demanda para importar ou atualizar");
       return;
     }
 
-    // Converter para formato esperado
-    const demandasParaImportar = validas.map(d => ({
-      id: d.id,
-      status: d.status,
-      estadoPrisional: d.estadoPrisional,
-      data: d.data,
-      prazo: d.prazo,
-      assistido: d.assistido,
-      processos: d.processos,
-      ato: d.ato,
-      providencias: d.providencias,
-      atribuicao: d.atribuicao,
-      arquivado: false,
-    }));
+    // 1. Importar demandas novas
+    if (demandasNovas.length > 0) {
+      const demandasParaImportar = demandasNovas.map(d => ({
+        id: d.id,
+        status: d.status,
+        estadoPrisional: d.estadoPrisional,
+        data: d.data,
+        prazo: d.prazo,
+        assistido: d.assistido,
+        processos: d.processos,
+        ato: d.ato,
+        providencias: d.providencias,
+        atribuicao: d.atribuicao,
+        arquivado: false,
+      }));
 
-    onImport(demandasParaImportar);
-    toast.success(`${demandasParaImportar.length} demandas importadas com sucesso!`);
-    
+      onImport(demandasParaImportar);
+    }
+
+    // 2. Atualizar demandas existentes (duplicatas com diferenças)
+    if (duplicatas.length > 0 && onUpdate) {
+      const demandasParaAtualizar = duplicatas.map(dup => ({
+        id: dup.existente.id, // Manter o ID original
+        status: dup.nova.status,
+        estadoPrisional: dup.nova.estadoPrisional,
+        data: dup.nova.data,
+        prazo: dup.nova.prazo,
+        assistido: dup.nova.assistido,
+        processos: dup.nova.processos,
+        ato: dup.nova.ato,
+        providencias: dup.nova.providencias,
+        atribuicao: dup.nova.atribuicao,
+        arquivado: false,
+      }));
+
+      onUpdate(demandasParaAtualizar);
+    }
+
+    // Mensagem de sucesso
+    let msg = "";
+    if (demandasNovas.length > 0) {
+      msg += `${demandasNovas.length} demandas importadas`;
+    }
+    if (duplicatas.length > 0) {
+      if (msg) msg += ", ";
+      msg += `${duplicatas.length} demandas atualizadas`;
+    }
+    toast.success(msg + "!");
+
     // Limpar e fechar
     setRawText("");
     setParsedDemandas([]);
+    setDemandasNovas([]);
+    setDuplicatas([]);
     onClose();
   };
 
   const handleClose = () => {
     setRawText("");
     setParsedDemandas([]);
+    setDemandasNovas([]);
+    setDuplicatas([]);
     setSelectedAtribuicao("");
     onClose();
   };
@@ -284,8 +408,14 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
   const stats = useMemo(() => {
     const validas = parsedDemandas.filter(d => d.valido).length;
     const invalidas = parsedDemandas.length - validas;
-    return { total: parsedDemandas.length, validas, invalidas };
-  }, [parsedDemandas]);
+    return {
+      total: parsedDemandas.length,
+      validas,
+      invalidas,
+      novas: demandasNovas.length,
+      atualizacoes: duplicatas.length,
+    };
+  }, [parsedDemandas, demandasNovas, duplicatas]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -360,11 +490,23 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
           {parsedDemandas.length > 0 && (
             <div className="space-y-3">
               {/* Stats */}
-              <div className="flex items-center gap-4 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+              <div className="flex flex-wrap items-center gap-4 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span className="text-sm font-medium">{stats.validas} válidas</span>
                 </div>
+                {stats.novas > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-sm font-medium text-blue-600">{stats.novas} novas</span>
+                  </div>
+                )}
+                {stats.atualizacoes > 0 && (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium text-purple-600">{stats.atualizacoes} para atualizar</span>
+                  </div>
+                )}
                 {stats.invalidas > 0 && (
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-600" />
@@ -372,6 +514,22 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
                   </div>
                 )}
               </div>
+
+              {/* Info sobre duplicatas com alterações */}
+              {stats.atualizacoes > 0 && (
+                <div className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+                  <p className="text-xs font-medium text-purple-800 dark:text-purple-200 mb-2">
+                    🔄 {stats.atualizacoes} demandas serão atualizadas:
+                  </p>
+                  <div className="space-y-1 max-h-[100px] overflow-auto">
+                    {duplicatas.map((dup, i) => (
+                      <div key={i} className="text-[10px] text-purple-700 dark:text-purple-300">
+                        <span className="font-semibold">{dup.nova.assistido}</span>: {dup.diferencas.join(", ")}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Lista de demandas */}
               <div className="max-h-[300px] overflow-auto space-y-2">
@@ -447,13 +605,23 @@ export function SheetsImportModal({ isOpen, onClose, onImport }: SheetsImportMod
           <Button variant="outline" onClick={handleClose}>
             Cancelar
           </Button>
+          {stats.atualizacoes > 0 && !onUpdate && (
+            <p className="text-xs text-amber-600 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              Atualizações detectadas mas função de atualização não disponível
+            </p>
+          )}
           <Button
             onClick={handleImport}
-            disabled={stats.validas === 0}
+            disabled={stats.novas === 0 && stats.atualizacoes === 0}
             className="bg-emerald-600 hover:bg-emerald-700"
           >
             <CheckCircle2 className="w-4 h-4 mr-2" />
-            Importar {stats.validas} demandas
+            {stats.novas > 0 && stats.atualizacoes > 0
+              ? `Importar ${stats.novas} + Atualizar ${stats.atualizacoes}`
+              : stats.novas > 0
+                ? `Importar ${stats.novas} demandas`
+                : `Atualizar ${stats.atualizacoes} demandas`}
           </Button>
         </div>
       </DialogContent>

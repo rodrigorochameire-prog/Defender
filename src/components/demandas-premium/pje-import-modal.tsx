@@ -4,16 +4,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown } from "lucide-react";
+import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
 import {
   parsePJeIntimacoesCompleto,
+  parsePJeIntimacoesVVD,
+  separarIntimacoesVVD,
   intimacaoToDemanda,
   formatarResumoImportacao,
   verificarDuplicatas,
   formatarResumoComDuplicatas,
   type IntimacaoPJeSimples,
-  type ResultadoVerificacaoDuplicatas
+  type ResultadoVerificacaoDuplicatas,
+  type ResultadoParserVVD,
 } from "@/lib/pje-parser";
 
 interface PJeImportModalProps {
@@ -24,22 +29,52 @@ interface PJeImportModalProps {
   atoOptions: Array<{ value: string; label: string; icon?: any }>;
   statusOptions: Array<{ value: string; label: string; icon?: any }>;
   demandasExistentes?: any[]; // Lista de demandas já cadastradas
+  onVVDImportComplete?: () => void; // Callback para atualizar página VVD após importação
 }
 
-export function PJeImportModal({ 
-  isOpen, 
-  onClose, 
+export function PJeImportModal({
+  isOpen,
+  onClose,
   onImport,
   atribuicaoOptions,
   demandasExistentes = [],
+  onVVDImportComplete,
 }: PJeImportModalProps) {
   const [texto, setTexto] = useState("");
   const [intimacoes, setIntimacoes] = useState<IntimacaoPJeSimples[]>([]);
   const [resultadoVerificacao, setResultadoVerificacao] = useState<ResultadoVerificacaoDuplicatas | null>(null);
   const [etapa, setEtapa] = useState<"configurar" | "colar" | "revisar">("configurar");
-  
+  const [isImporting, setIsImporting] = useState(false);
+
   // Configurações globais - APENAS ATRIBUIÇÃO
   const [atribuicao, setAtribuicao] = useState("Júri");
+
+  // Para VVD - separação de MPU e demandas gerais
+  const [intimacoesMPU, setIntimacoesMPU] = useState<IntimacaoPJeSimples[]>([]);
+  const [intimacoesGerais, setIntimacoesGerais] = useState<IntimacaoPJeSimples[]>([]);
+  const [tipoIntimacaoVVD, setTipoIntimacaoVVD] = useState<"CIENCIA" | "PETICIONAR">("CIENCIA");
+
+  // Mutation para importação VVD
+  const importarVVDMutation = trpc.vvd.importarIntimacoesPJe.useMutation({
+    onSuccess: (resultado) => {
+      toast.success(
+        `Importação VVD concluída: ${resultado.processosNovos} processos, ${resultado.partesNovas} partes, ${resultado.intimacoesNovas} intimações`,
+        { duration: 5000 }
+      );
+      if (onVVDImportComplete) {
+        onVVDImportComplete();
+      }
+      onClose();
+      resetModal();
+    },
+    onError: (error) => {
+      toast.error(`Erro na importação VVD: ${error.message}`);
+      setIsImporting(false);
+    },
+  });
+
+  // Verificar se é importação VVD
+  const isVVD = atribuicao === "Violência Doméstica";
 
   const handleAvancarParaColar = () => {
     if (!atribuicao) {
@@ -79,6 +114,14 @@ export function PJeImportModal({
 
       // Armazenar APENAS as intimações novas (não duplicadas)
       setIntimacoes(verificacao.novas);
+
+      // Para VVD: separar MPUs das demais
+      if (resultadoParser.atribuicaoDetectada === "Violência Doméstica" || atribuicao === "Violência Doméstica") {
+        const separadas = separarIntimacoesVVD(verificacao.novas);
+        setIntimacoesMPU(separadas.intimacoesMPU);
+        setIntimacoesGerais(separadas.intimacoesGerais);
+      }
+
       setEtapa("revisar");
     } catch (error) {
       console.error("Erro ao processar:", error);
@@ -86,18 +129,69 @@ export function PJeImportModal({
     }
   };
 
-  const handleImportar = () => {
-    const demandas = intimacoes.map(intimacao => 
-      intimacaoToDemanda(intimacao, atribuicao)
-    );
-    onImport(demandas);
-    onClose();
-    
-    // Reset
+  const resetModal = () => {
     setTexto("");
     setIntimacoes([]);
+    setIntimacoesMPU([]);
+    setIntimacoesGerais([]);
     setEtapa("configurar");
     setAtribuicao("Júri");
+    setTipoIntimacaoVVD("CIENCIA");
+    setResultadoVerificacao(null);
+    setIsImporting(false);
+  };
+
+  const handleImportar = async () => {
+    if (isVVD) {
+      // Importação VVD com separação:
+      // - MPUMPCrim vai para página especial de MPUs
+      // - Demais classes vão para demandas gerais com atribuição VVD
+      setIsImporting(true);
+
+      // 1. Importar MPUs para tabela especial
+      if (intimacoesMPU.length > 0) {
+        const intimacoesParaVVD = intimacoesMPU.map((intimacao) => ({
+          assistido: intimacao.assistido,
+          numeroProcesso: intimacao.numeroProcesso,
+          dataExpedicao: intimacao.dataExpedicao,
+          prazo: intimacao.prazo,
+          tipoProcesso: intimacao.tipoProcesso,
+          crime: intimacao.crime,
+          pjeDocumentoId: intimacao.idDocumento,
+          pjeTipoDocumento: intimacao.tipoDocumento,
+          tipoIntimacao: tipoIntimacaoVVD,
+        }));
+
+        importarVVDMutation.mutate({ intimacoes: intimacoesParaVVD });
+      }
+
+      // 2. Importar demandas gerais (não-MPU) para lista de demandas com atribuição VVD
+      if (intimacoesGerais.length > 0) {
+        const demandasGerais = intimacoesGerais.map((intimacao) =>
+          intimacaoToDemanda(intimacao, "Violência Doméstica")
+        );
+        onImport(demandasGerais);
+
+        toast.success(
+          `${demandasGerais.length} demandas VVD (não-MPU) importadas para a lista geral`,
+          { duration: 3000 }
+        );
+      }
+
+      // Se não tem MPUs, só fecha
+      if (intimacoesMPU.length === 0) {
+        onClose();
+        resetModal();
+      }
+    } else {
+      // Importação regular - vai para demandas
+      const demandas = intimacoes.map((intimacao) =>
+        intimacaoToDemanda(intimacao, atribuicao)
+      );
+      onImport(demandas);
+      onClose();
+      resetModal();
+    }
   };
 
   const handleVoltar = () => {
@@ -112,10 +206,7 @@ export function PJeImportModal({
     onClose();
     // Reset após fechar
     setTimeout(() => {
-      setTexto("");
-      setIntimacoes([]);
-      setEtapa("configurar");
-      setAtribuicao("Júri");
+      resetModal();
     }, 300);
   };
 
@@ -215,22 +306,98 @@ export function PJeImportModal({
                   Todas as intimações terão esta atribuição
                 </p>
               </div>
+
+              {/* Opção específica para VVD - Tipo de Intimação */}
+              {isVVD && (
+                <div className="space-y-2.5 mt-5">
+                  <Label htmlFor="tipoIntimacaoVVD" className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                    Tipo de Intimação (VVD)
+                    <span className="text-red-500 text-xs">*</span>
+                  </Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setTipoIntimacaoVVD("CIENCIA")}
+                      className={cn(
+                        "p-4 rounded-xl border-2 transition-all text-left",
+                        tipoIntimacaoVVD === "CIENCIA"
+                          ? "border-purple-500 bg-purple-50 dark:bg-purple-950/30"
+                          : "border-zinc-200 dark:border-zinc-700 hover:border-purple-300"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className={cn(
+                          "w-5 h-5",
+                          tipoIntimacaoVVD === "CIENCIA" ? "text-purple-600" : "text-zinc-400"
+                        )} />
+                        <span className="font-semibold text-sm">Mera Ciência</span>
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Intimações que não exigem peticionamento. Vão direto para o controle de MPUs.
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTipoIntimacaoVVD("PETICIONAR")}
+                      className={cn(
+                        "p-4 rounded-xl border-2 transition-all text-left",
+                        tipoIntimacaoVVD === "PETICIONAR"
+                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                          : "border-zinc-200 dark:border-zinc-700 hover:border-amber-300"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className={cn(
+                          "w-5 h-5",
+                          tipoIntimacaoVVD === "PETICIONAR" ? "text-amber-600" : "text-zinc-400"
+                        )} />
+                        <span className="font-semibold text-sm">Peticionar</span>
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Intimações que exigem manifestação nos autos. Ficam pendentes até ação.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Card de Edição Posterior */}
-            <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 border-l-2 border-amber-400 rounded-r-lg">
-              <div className="flex items-start gap-2">
-                <Edit3 className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-medium text-xs text-zinc-700 dark:text-zinc-300 mb-1">
-                    Valores padrão (editáveis depois)
-                  </p>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
-                    Ato: Ciência • Status: Analisar • Prazo: Auto
-                  </p>
+            {/* Banner VVD */}
+            {isVVD && (
+              <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border border-purple-200 dark:border-purple-800 rounded-xl">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-purple-900 dark:text-purple-100 mb-1">
+                      Importação de Violência Doméstica
+                    </p>
+                    <p className="text-xs text-purple-700 dark:text-purple-300">
+                      Os processos e partes serão cadastrados na página especial de MPUs, separados dos assistidos e processos criminais.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Card de Edição Posterior - Só mostra para não-VVD */}
+            {!isVVD && (
+              <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 border-l-2 border-amber-400 rounded-r-lg">
+                <div className="flex items-start gap-2">
+                  <Edit3 className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-xs text-zinc-700 dark:text-zinc-300 mb-1">
+                      Valores padrão (editáveis depois)
+                    </p>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                      Ato: Ciência • Status: Analisar • Prazo: Auto
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Botões */}
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">
@@ -419,8 +586,50 @@ export function PJeImportModal({
               </div>
             )}
 
+            {/* Resumo da separação VVD */}
+            {isVVD && intimacoes.length > 0 && (
+              <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border border-purple-200 dark:border-purple-800 rounded-xl">
+                <div className="flex gap-3">
+                  <Shield className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-purple-900 dark:text-purple-100 mb-3">
+                      Separação de Intimações VVD
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                        <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">
+                          🛡️ MPUs (página especial)
+                        </p>
+                        <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
+                          {intimacoesMPU.length}
+                        </p>
+                        <p className="text-[10px] text-purple-600 dark:text-purple-400">
+                          Medidas Protetivas de Urgência
+                        </p>
+                      </div>
+                      <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                        <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mb-1">
+                          📋 Demandas Gerais
+                        </p>
+                        <p className="text-lg font-bold text-amber-900 dark:text-amber-100">
+                          {intimacoesGerais.length}
+                        </p>
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                          APOrd, APSum, PetCrim, etc.
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-purple-700 dark:text-purple-300 mt-3">
+                      <strong>MPUs</strong> vão para a página especial de Medidas Protetivas.
+                      <strong> Demandas gerais</strong> vão para a lista de demandas com atribuição VVD.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Lista de intimações (apenas se houver intimações novas) */}
-            {intimacoes.length > 0 && (
+            {intimacoes.length > 0 && !isVVD && (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 flex items-center justify-center border border-blue-200 dark:border-blue-800">
@@ -499,12 +708,77 @@ export function PJeImportModal({
               </div>
             )}
 
+            {/* Lista de MPUs (VVD) */}
+            {isVVD && intimacoesMPU.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border border-purple-200 dark:border-purple-800">
+                    <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                    Medidas Protetivas ({intimacoesMPU.length}) → Página Especial VVD
+                  </h3>
+                </div>
+                <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
+                  {intimacoesMPU.map((intimacao, index) => (
+                    <div key={index} className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-sm text-purple-900 dark:text-purple-100">{intimacao.assistido}</p>
+                          <p className="text-xs text-purple-600 dark:text-purple-400 font-mono">{intimacao.numeroProcesso}</p>
+                        </div>
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 rounded">
+                          MPU
+                        </span>
+                      </div>
+                      {intimacao.crime && (
+                        <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">{intimacao.crime}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Lista de Demandas Gerais (VVD) */}
+            {isVVD && intimacoesGerais.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 flex items-center justify-center border border-amber-200 dark:border-amber-800">
+                    <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                    Demandas Gerais ({intimacoesGerais.length}) → Lista de Demandas
+                  </h3>
+                </div>
+                <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
+                  {intimacoesGerais.map((intimacao, index) => (
+                    <div key={index} className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-sm text-amber-900 dark:text-amber-100">{intimacao.assistido}</p>
+                          <p className="text-xs text-amber-600 dark:text-amber-400 font-mono">{intimacao.numeroProcesso}</p>
+                        </div>
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 rounded">
+                          {intimacao.tipoProcesso || "VVD"}
+                        </span>
+                      </div>
+                      {intimacao.crime && (
+                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">{intimacao.crime}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Botões */}
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleVoltar}
+                disabled={isImporting}
                 className="h-11 px-6 text-sm font-semibold border-zinc-300 dark:border-zinc-700"
               >
                 Voltar
@@ -512,10 +786,28 @@ export function PJeImportModal({
               <Button
                 type="button"
                 onClick={handleImportar}
-                className="h-11 px-6 text-sm font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/30"
+                disabled={isImporting || intimacoes.length === 0}
+                className={cn(
+                  "h-11 px-6 text-sm font-semibold text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed",
+                  isVVD
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-purple-500/30"
+                    : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/30"
+                )}
               >
-                <Download className="w-4 h-4 mr-2" />
-                Importar {intimacoes.length} {intimacoes.length === 1 ? "Intimação" : "Intimações"}
+                {isImporting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Importando...
+                  </>
+                ) : (
+                  <>
+                    {isVVD ? <Shield className="w-4 h-4 mr-2" /> : <Download className="w-4 h-4 mr-2" />}
+                    {isVVD ? "Importar para MPUs" : "Importar"} {intimacoes.length} {intimacoes.length === 1 ? "Intimação" : "Intimações"}
+                  </>
+                )}
               </Button>
             </div>
           </div>

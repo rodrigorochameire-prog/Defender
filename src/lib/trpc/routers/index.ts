@@ -32,6 +32,7 @@ import { juradosRouter } from "./jurados";
 import { modelosRouter } from "./modelos";
 import { jurisprudenciaRouter } from "./jurisprudencia";
 import { prazosRouter } from "./prazos";
+import { vvdRouter } from "./vvd";
 
 
 export const appRouter = router({
@@ -106,6 +107,11 @@ export const appRouter = router({
   // PRAZOS - CÁLCULO AUTOMÁTICO
   // ==========================================
   prazos: prazosRouter,
+
+  // ==========================================
+  // VVD - VIOLÊNCIA DOMÉSTICA / MPU
+  // ==========================================
+  vvd: vvdRouter,
 });
 
 export type AppRouter = typeof appRouter;

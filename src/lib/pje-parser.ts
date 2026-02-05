@@ -10,12 +10,19 @@ export interface IntimacaoPJeSimples {
   vara?: string; // Vara de Violência Doméstica, Vara do Júri, etc.
   atribuicaoDetectada?: string; // Atribuição detectada automaticamente
   camposNaoExtraidos?: string[]; // Lista de campos que precisam ser preenchidos manualmente
+  isMPU?: boolean; // Se é processo de Medida Protetiva de Urgência (MPUMPCrim)
 }
 
 export interface ResultadoParser {
   intimacoes: IntimacaoPJeSimples[];
   atribuicaoDetectada: string | null;
   varaDetectada: string | null;
+}
+
+// Resultado separado para VVD - separa MPUs das demais
+export interface ResultadoParserVVD extends ResultadoParser {
+  intimacoesMPU: IntimacaoPJeSimples[]; // Vão para página especial de MPUs
+  intimacoesGerais: IntimacaoPJeSimples[]; // Vão para demandas gerais com atribuição VVD
 }
 
 // Função para converter nomes para Title Case mantendo preposições em minúsculo
@@ -210,6 +217,9 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
           if (!intimacaoAtual.prazo) camposNaoExtraidos.push('prazo');
           if (!intimacaoAtual.crime) camposNaoExtraidos.push('crime');
 
+          // Verificar se é MPU (Medida Protetiva de Urgência)
+          const isMPU = intimacaoAtual.tipoProcesso?.toUpperCase() === 'MPUMPCRIM';
+
           intimacoes.push({
             assistido: intimacaoAtual.assistido,
             dataExpedicao: intimacaoAtual.dataExpedicao,
@@ -222,6 +232,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
             vara: varaDetectada || undefined,
             atribuicaoDetectada: atribuicaoDetectada || undefined,
             camposNaoExtraidos: camposNaoExtraidos.length > 0 ? camposNaoExtraidos : undefined,
+            isMPU,
           });
         }
 
@@ -249,6 +260,8 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
       if (!intimacaoAtual.prazo) camposNaoExtraidos.push('prazo');
       if (!intimacaoAtual.crime) camposNaoExtraidos.push('crime');
 
+      const isMPU = intimacaoAtual.tipoProcesso?.toUpperCase() === 'MPUMPCRIM';
+
       intimacoes.push({
         assistido: intimacaoAtual.assistido,
         dataExpedicao: intimacaoAtual.dataExpedicao,
@@ -261,6 +274,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
         vara: varaDetectada || undefined,
         atribuicaoDetectada: atribuicaoDetectada || undefined,
         camposNaoExtraidos: camposNaoExtraidos.length > 0 ? camposNaoExtraidos : undefined,
+        isMPU,
       });
     }
   }
@@ -662,6 +676,42 @@ function calcularDistanciaLevenshtein(str1: string, str2: string): number {
   return dp[m][n];
 }
 
+/**
+ * Separa intimações de VVD em duas categorias:
+ * - MPU (MPUMPCrim): vão para a página especial de Medidas Protetivas
+ * - Gerais (APOrd, APSum, PetCrim, etc.): vão para demandas gerais com atribuição VVD
+ */
+export function separarIntimacoesVVD(intimacoes: IntimacaoPJeSimples[]): ResultadoParserVVD {
+  const intimacoesMPU: IntimacaoPJeSimples[] = [];
+  const intimacoesGerais: IntimacaoPJeSimples[] = [];
+
+  for (const intimacao of intimacoes) {
+    // MPUMPCrim vai para página especial de MPUs
+    if (intimacao.tipoProcesso?.toUpperCase() === 'MPUMPCRIM' || intimacao.isMPU) {
+      intimacoesMPU.push({ ...intimacao, isMPU: true });
+    } else {
+      // Demais classes (APOrd, APSum, PetCrim, etc.) vão para demandas gerais
+      intimacoesGerais.push({ ...intimacao, isMPU: false });
+    }
+  }
+
+  return {
+    intimacoes,
+    intimacoesMPU,
+    intimacoesGerais,
+    atribuicaoDetectada: intimacoes[0]?.atribuicaoDetectada || 'Violência Doméstica',
+    varaDetectada: intimacoes[0]?.vara || 'Vara de Violência Doméstica',
+  };
+}
+
+/**
+ * Parser completo para VVD que já separa MPUs das demais
+ */
+export function parsePJeIntimacoesVVD(texto: string): ResultadoParserVVD {
+  const resultado = parsePJeIntimacoesCompleto(texto);
+  return separarIntimacoesVVD(resultado.intimacoes);
+}
+
 export function formatarResumoComDuplicatas(resultado: ResultadoVerificacaoDuplicatas): string {
   let resumo = '';
 
@@ -710,4 +760,317 @@ export function formatarResumoComDuplicatas(resultado: ResultadoVerificacaoDupli
   }
 
   return resumo;
+}
+
+// ==========================================
+// PARSER SEEU - EXECUÇÃO PENAL
+// ==========================================
+
+/**
+ * Interface estendida para intimações do SEEU (Execução Penal)
+ */
+export interface IntimacaoSEEU extends IntimacaoPJeSimples {
+  seq?: number; // Número sequencial no SEEU
+  classeProcessual?: string; // Execução da Pena, Execução de Medidas Alternativas
+  assuntoPrincipal?: string; // Acordo de Não Persecução Penal, Pena Privativa de Liberdade, etc.
+  autoridade?: string; // Estado da Bahia, MP-BA
+  dataEnvio?: string; // Data de envio (primeira data)
+  ultimoDia?: string; // Último dia do prazo (segunda data)
+  prazoResposta?: string; // "6 dias corridos"
+  preAnalise?: string; // "Livre"
+  tipoManifestacao?: "manifestacao" | "ciencia" | "pendencia" | "razoes"; // Aba de origem
+}
+
+/**
+ * Resultado do parser SEEU com informações específicas de execução penal
+ */
+export interface ResultadoParserSEEU {
+  intimacoes: IntimacaoSEEU[];
+  totalEncontradas: number;
+  tipoManifestacao: string;
+  sistema: "SEEU";
+}
+
+/**
+ * Parser para intimações do SEEU (Sistema Eletrônico de Execução Unificada)
+ * Extrai dados da "Mesa do Defensor" do SEEU
+ */
+export function parseSEEUIntimacoes(texto: string): ResultadoParserSEEU {
+  const intimacoes: IntimacaoSEEU[] = [];
+  const linhas = texto.split('\n').map(l => l.trim()).filter(l => l);
+
+  // Detectar tipo de manifestação (aba ativa)
+  let tipoManifestacao = "manifestacao";
+  if (texto.includes("Ciência (") || texto.includes("Ciência(")) {
+    // Verifica se é a aba ativa
+    const matchCiencia = texto.match(/Ciência\s*\((\d+)\)/);
+    if (matchCiencia) {
+      tipoManifestacao = "ciencia";
+    }
+  }
+  if (texto.includes("Manifestação (") || texto.includes("Manifestação(")) {
+    const matchManifestacao = texto.match(/Manifestação\s*\((\d+)\)/);
+    if (matchManifestacao) {
+      tipoManifestacao = "manifestacao";
+    }
+  }
+
+  // Regex para detectar início de uma intimação (número sequencial + número CNJ)
+  // Padrão: número + número do processo CNJ
+  const regexProcessoCNJ = /^(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})\s*/;
+  const regexSeqProcesso = /^(\d+)\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/;
+
+  let i = 0;
+  while (i < linhas.length) {
+    const linha = linhas[i];
+
+    // Procurar por padrão: Seq + Processo CNJ
+    const matchSeqProcesso = linha.match(regexSeqProcesso);
+    const matchProcessoSolo = linha.match(regexProcessoCNJ);
+
+    if (matchSeqProcesso || matchProcessoSolo) {
+      const intimacao: IntimacaoSEEU = {
+        assistido: '',
+        dataExpedicao: '',
+        numeroProcesso: '',
+        atribuicaoDetectada: 'Execução Penal',
+        vara: 'Vara de Execuções Penais',
+      };
+
+      if (matchSeqProcesso) {
+        intimacao.seq = parseInt(matchSeqProcesso[1]);
+        intimacao.numeroProcesso = matchSeqProcesso[2];
+      } else if (matchProcessoSolo) {
+        intimacao.numeroProcesso = matchProcessoSolo[1];
+      }
+
+      // Avançar e coletar informações das próximas linhas
+      i++;
+
+      // Coletar até encontrar próxima intimação ou fim
+      while (i < linhas.length) {
+        const linhaAtual = linhas[i];
+
+        // Se encontrou próxima intimação, parar
+        if (regexSeqProcesso.test(linhaAtual) ||
+            (regexProcessoCNJ.test(linhaAtual) && linhaAtual.match(/^\d{7}/))) {
+          break;
+        }
+
+        // Classe Processual
+        if (linhaAtual.includes('Execução da Pena') ||
+            linhaAtual.includes('Execução de Medidas Alternativas')) {
+          intimacao.classeProcessual = linhaAtual.includes('Execução da Pena')
+            ? 'Execução da Pena'
+            : 'Execução de Medidas Alternativas no Juízo Comum';
+        }
+
+        // Assunto Principal (entre parênteses)
+        const matchAssunto = linhaAtual.match(/\(([^)]+)\)/);
+        if (matchAssunto && !intimacao.assuntoPrincipal) {
+          const assunto = matchAssunto[1];
+          // Filtrar assuntos válidos
+          if (assunto.includes('Acordo') || assunto.includes('Pena') ||
+              assunto.includes('Liberdade') || assunto.includes('Direitos')) {
+            intimacao.assuntoPrincipal = assunto;
+          }
+        }
+
+        // Autoridade
+        if (linhaAtual.includes('Autoridade:') || linhaAtual.includes('Polo Ativo:')) {
+          // A próxima linha não-vazia deve ser o nome da autoridade
+          i++;
+          while (i < linhas.length && linhas[i].trim() === '') i++;
+          if (i < linhas.length) {
+            const autoridade = linhas[i].trim();
+            if (autoridade && !autoridade.includes('Executado:') && !autoridade.includes('Defensor')) {
+              intimacao.autoridade = autoridade;
+            }
+          }
+          continue;
+        }
+
+        // Executado (nome do assistido)
+        if (linhaAtual.includes('Executado:')) {
+          // A próxima linha não-vazia deve ser o nome do executado
+          i++;
+          while (i < linhas.length && linhas[i].trim() === '') i++;
+          if (i < linhas.length) {
+            let nomeExecutado = linhas[i].trim();
+            // Remover possível "°" ou outros caracteres especiais do início
+            nomeExecutado = nomeExecutado.replace(/^[°\s]+/, '');
+            if (nomeExecutado &&
+                !nomeExecutado.includes('Autoridade:') &&
+                !nomeExecutado.includes('Defensor') &&
+                !nomeExecutado.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+              intimacao.assistido = toTitleCase(nomeExecutado);
+            }
+          }
+          continue;
+        }
+
+        // Datas (formato DD/MM/YYYY)
+        const matchDatas = linhaAtual.match(/(\d{2}\/\d{2}\/\d{4})/g);
+        if (matchDatas && matchDatas.length >= 1) {
+          // Primeira data é data de envio
+          if (!intimacao.dataEnvio) {
+            intimacao.dataEnvio = matchDatas[0];
+            intimacao.dataExpedicao = matchDatas[0]; // Para compatibilidade
+          }
+          // Segunda data é último dia
+          if (matchDatas.length >= 2 && !intimacao.ultimoDia) {
+            intimacao.ultimoDia = matchDatas[1];
+          }
+        }
+
+        // Prazo para resposta
+        const matchPrazo = linhaAtual.match(/(\d+)\s*dias?\s*(corridos|úteis)?/i);
+        if (matchPrazo) {
+          intimacao.prazo = parseInt(matchPrazo[1]);
+          intimacao.prazoResposta = linhaAtual.trim();
+        }
+
+        // Pré-Análise
+        if (linhaAtual === 'Livre' || linhaAtual.includes('Livre')) {
+          intimacao.preAnalise = 'Livre';
+        }
+
+        i++;
+      }
+
+      // Validar intimação antes de adicionar
+      if (intimacao.numeroProcesso && intimacao.assistido) {
+        intimacao.tipoManifestacao = tipoManifestacao as any;
+
+        // Definir tipo de documento baseado no tipo de manifestação
+        intimacao.tipoDocumento = tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação';
+
+        // Extrair crime/assunto do assunto principal
+        if (intimacao.assuntoPrincipal) {
+          intimacao.crime = intimacao.assuntoPrincipal;
+        }
+
+        // Tipo de processo
+        intimacao.tipoProcesso = intimacao.classeProcessual || 'Execução Penal';
+
+        intimacoes.push(intimacao);
+      }
+    } else {
+      i++;
+    }
+  }
+
+  return {
+    intimacoes,
+    totalEncontradas: intimacoes.length,
+    tipoManifestacao,
+    sistema: "SEEU",
+  };
+}
+
+/**
+ * Converte intimação SEEU para formato de demanda
+ */
+export function intimacaoSEEUToDemanda(intimacao: IntimacaoSEEU): any {
+  // Calcular prazo baseado no último dia
+  let prazoFinal: string | undefined;
+  if (intimacao.ultimoDia) {
+    // Converter DD/MM/YYYY para YYYY-MM-DD
+    const partes = intimacao.ultimoDia.split('/');
+    if (partes.length === 3) {
+      prazoFinal = `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+  }
+
+  // Converter data de envio para formato ISO
+  let dataEntrada: string | undefined;
+  if (intimacao.dataEnvio) {
+    const partes = intimacao.dataEnvio.split('/');
+    if (partes.length === 3) {
+      dataEntrada = `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+  }
+
+  // Determinar ato baseado no tipo de manifestação e assunto
+  let ato = intimacao.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação';
+  if (intimacao.assuntoPrincipal) {
+    if (intimacao.assuntoPrincipal.includes('Acordo de Não Persecução')) {
+      ato = 'ANPP - ' + ato;
+    } else if (intimacao.assuntoPrincipal.includes('Pena Privativa')) {
+      ato = 'PPL - ' + ato;
+    } else if (intimacao.assuntoPrincipal.includes('Pena Restritiva')) {
+      ato = 'PRD - ' + ato;
+    }
+  }
+
+  return {
+    assistido: intimacao.assistido,
+    numeroProcesso: intimacao.numeroProcesso,
+    dataEntrada,
+    prazo: prazoFinal,
+    ato,
+    atribuicao: 'EXECUCAO_PENAL',
+    status: intimacao.tipoManifestacao === 'ciencia' ? '7_CIENCIA' : '2_ATENDER',
+    providencias: intimacao.assuntoPrincipal ? `${intimacao.classeProcessual} - ${intimacao.assuntoPrincipal}` : intimacao.classeProcessual,
+    tipoIntimacao: intimacao.tipoManifestacao === 'ciencia' ? 'CIENCIA' : 'PETICIONAR',
+    // Campos extras para referência
+    extras: {
+      seq: intimacao.seq,
+      autoridade: intimacao.autoridade,
+      prazoResposta: intimacao.prazoResposta,
+      preAnalise: intimacao.preAnalise,
+      sistema: 'SEEU',
+    },
+  };
+}
+
+/**
+ * Detecta automaticamente se o texto é do SEEU
+ */
+export function isSEEU(texto: string): boolean {
+  const indicadores = [
+    'Mesa do Defensor',
+    'Manifestação (',
+    'Ciência (',
+    'Processos Pendentes',
+    'Executado:',
+    'Execução da Pena',
+    'seeu',
+    'SEEU',
+    'Pré-Análise',
+    'Leitura de Prazo',
+  ];
+
+  let score = 0;
+  const textoLower = texto.toLowerCase();
+
+  for (const indicador of indicadores) {
+    if (texto.includes(indicador) || textoLower.includes(indicador.toLowerCase())) {
+      score++;
+    }
+  }
+
+  // Se encontrou pelo menos 3 indicadores, é SEEU
+  return score >= 3;
+}
+
+/**
+ * Parser unificado que detecta automaticamente o sistema (PJe ou SEEU)
+ */
+export function parseIntimacoesUnificado(texto: string): ResultadoParser & { sistema: 'PJe' | 'SEEU' } {
+  if (isSEEU(texto)) {
+    const resultado = parseSEEUIntimacoes(texto);
+    return {
+      intimacoes: resultado.intimacoes,
+      atribuicaoDetectada: 'Execução Penal',
+      varaDetectada: 'Vara de Execuções Penais',
+      sistema: 'SEEU',
+    };
+  }
+
+  const resultado = parsePJeIntimacoesCompleto(texto);
+  return {
+    ...resultado,
+    sistema: 'PJe',
+  };
 }

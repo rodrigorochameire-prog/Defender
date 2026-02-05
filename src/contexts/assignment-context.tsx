@@ -101,20 +101,23 @@ const JURI_MODULES: MenuSection[] = [
 // 💜 VIOLÊNCIA DOMÉSTICA - Ferramentas específicas
 const VVD_MODULES: MenuSection[] = [
   {
-    id: "protecao",
-    title: "Proteção",
+    id: "mpu",
+    title: "Medidas Protetivas",
     items: [
-      { label: "Monitor de MPUs", path: "/admin/medidas", icon: "Shield", description: "Medidas próximas do vencimento" },
-      { label: "Mapa de Risco", path: "/admin/medidas/risco", icon: "AlertTriangle", description: "Avaliação de vulnerabilidade", isPremium: true },
-      { label: "Audiências de Custódia", path: "/admin/custodia", icon: "Lock" },
+      { label: "Painel de MPUs", path: "/admin/vvd", icon: "Shield", description: "Dashboard e visão geral das medidas" },
+      { label: "Intimações", path: "/admin/vvd/intimacoes", icon: "Bell", description: "Prazos e ciências pendentes" },
+      { label: "Processos VVD", path: "/admin/vvd/processos", icon: "FileText", description: "Processos de medidas protetivas" },
+      { label: "Partes", path: "/admin/vvd/partes", icon: "Users", description: "Autores e vítimas cadastrados" },
     ],
   },
   {
-    id: "atendimento",
-    title: "Atendimento",
+    id: "analise",
+    title: "Análise",
+    collapsible: true,
+    defaultOpen: false,
     items: [
-      { label: "Acolhimento", path: "/admin/atendimentos", icon: "Heart", description: "Registro de atendimentos" },
-      { label: "Rede de Apoio", path: "/admin/defensoria", icon: "Users", description: "CREAS, CAPS, delegacias" },
+      { label: "Mapa de Risco", path: "/admin/vvd/risco", icon: "AlertTriangle", description: "Avaliação de vulnerabilidade", isPremium: true },
+      { label: "Estatísticas", path: "/admin/vvd/stats", icon: "BarChart", description: "Relatórios e indicadores", isPremium: true },
     ],
   },
 ];

@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Download, FileText, FileSpreadsheet } from "lucide-react";
+import { Download, FileText, FileSpreadsheet, Gavel } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ImportDropdownProps {
   onImportExcel: () => void;
   onImportPJe: () => void;
   onImportSheets?: () => void;
+  onImportSEEU?: () => void;
 }
 
-export function ImportDropdown({ onImportExcel, onImportPJe, onImportSheets }: ImportDropdownProps) {
+export function ImportDropdown({ onImportExcel, onImportPJe, onImportSheets, onImportSEEU }: ImportDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +41,11 @@ export function ImportDropdown({ onImportExcel, onImportPJe, onImportSheets }: I
   const handleSheetsClick = () => {
     setIsOpen(false);
     onImportSheets?.();
+  };
+
+  const handleSEEUClick = () => {
+    setIsOpen(false);
+    onImportSEEU?.();
   };
 
   return (
@@ -81,6 +87,15 @@ export function ImportDropdown({ onImportExcel, onImportPJe, onImportSheets }: I
               <FileText className="w-4 h-4 text-blue-600" />
               <span>PJe</span>
             </button>
+            {onImportSEEU && (
+              <button
+                onClick={handleSEEUClick}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 text-sm"
+              >
+                <Gavel className="w-4 h-4 text-amber-600" />
+                <span>SEEU</span>
+              </button>
+            )}
           </div>
         </>
       )}
