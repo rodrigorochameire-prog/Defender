@@ -26,11 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  MessageCircle, 
-  Send, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  MessageCircle,
+  Send,
+  CheckCircle2,
+  XCircle,
   Settings,
   Phone,
   RefreshCw,
@@ -56,7 +56,13 @@ import {
   CheckCircle,
   XOctagon,
   HelpCircle,
+  QrCode,
+  Wifi,
+  WifiOff,
+  Plus,
+  Trash2,
 } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -516,6 +522,409 @@ function SendMessageCard({
   );
 }
 
+// ==========================================
+// EVOLUTION API - COMPONENTES
+// ==========================================
+
+function EvolutionApiCard() {
+  const utils = trpc.useUtils();
+
+  // Queries
+  const { data: configs, isLoading: loadingConfigs } = trpc.whatsappChat.listConfigs.useQuery();
+
+  // Mutations
+  const createConfigMutation = trpc.whatsappChat.createConfig.useMutation({
+    onSuccess: () => {
+      toast.success("Instância criada com sucesso!");
+      utils.whatsappChat.listConfigs.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteConfigMutation = trpc.whatsappChat.deleteConfig.useMutation({
+    onSuccess: () => {
+      toast.success("Instância removida!");
+      utils.whatsappChat.listConfigs.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // State para novo config
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [newConfig, setNewConfig] = useState({
+    instanceName: "",
+    apiUrl: "http://localhost:8080",
+    apiKey: "",
+  });
+
+  const handleCreateConfig = () => {
+    if (!newConfig.instanceName || !newConfig.apiUrl || !newConfig.apiKey) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    createConfigMutation.mutate({
+      instanceName: newConfig.instanceName,
+      apiUrl: newConfig.apiUrl,
+      apiKey: newConfig.apiKey,
+      webhookUrl: `${window.location.origin}/api/webhooks/evolution`,
+    });
+    setShowNewForm(false);
+    setNewConfig({ instanceName: "", apiUrl: "http://localhost:8080", apiKey: "" });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header com link para o chat */}
+      <Card className="p-6 border-2 border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <MessageSquare className="w-7 h-7 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                Evolution API - Chat em Tempo Real
+              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                Converse diretamente com assistidos pelo WhatsApp
+              </p>
+            </div>
+          </div>
+          <Link href="/admin/whatsapp/chat">
+            <Button className="bg-green-600 hover:bg-green-700">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Abrir Chat
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+        </div>
+      </Card>
+
+      {/* Instâncias configuradas */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
+              <QrCode className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                Instâncias Evolution API
+              </h3>
+              <p className="text-sm text-zinc-500">
+                Gerencie suas conexões WhatsApp via Evolution API
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" onClick={() => setShowNewForm(!showNewForm)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Instância
+          </Button>
+        </div>
+
+        {/* Formulário de nova instância */}
+        {showNewForm && (
+          <div className="mb-6 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50">
+            <h4 className="font-medium mb-4">Adicionar Nova Instância</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="instanceName">Nome da Instância *</Label>
+                <Input
+                  id="instanceName"
+                  value={newConfig.instanceName}
+                  onChange={(e) => setNewConfig({ ...newConfig, instanceName: e.target.value })}
+                  placeholder="ombuds-principal"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="apiUrl">URL da API *</Label>
+                <Input
+                  id="apiUrl"
+                  value={newConfig.apiUrl}
+                  onChange={(e) => setNewConfig({ ...newConfig, apiUrl: e.target.value })}
+                  placeholder="http://localhost:8080"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="apiKey">API Key *</Label>
+                <Input
+                  id="apiKey"
+                  type="password"
+                  value={newConfig.apiKey}
+                  onChange={(e) => setNewConfig({ ...newConfig, apiKey: e.target.value })}
+                  placeholder="sua-api-key"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setShowNewForm(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleCreateConfig}
+                disabled={createConfigMutation.isPending}
+              >
+                {createConfigMutation.isPending && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                )}
+                Criar Instância
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Lista de instâncias */}
+        {loadingConfigs ? (
+          <div className="space-y-3">
+            {[1, 2].map((i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : configs && configs.length > 0 ? (
+          <div className="space-y-3">
+            {configs.map((config) => (
+              <EvolutionInstanceCard
+                key={config.id}
+                config={config}
+                onDelete={() => deleteConfigMutation.mutate({ id: config.id })}
+                isDeleting={deleteConfigMutation.isPending}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <QrCode className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
+            <p className="text-zinc-500">Nenhuma instância configurada</p>
+            <p className="text-xs text-zinc-400 mt-1">
+              Clique em &quot;Nova Instância&quot; para começar
+            </p>
+          </div>
+        )}
+      </Card>
+
+      {/* Instruções */}
+      <Card className="p-6 bg-zinc-50 dark:bg-zinc-900/50">
+        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+          Como configurar a Evolution API
+        </h3>
+        <ol className="space-y-4 text-sm text-zinc-600 dark:text-zinc-400">
+          <li className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">
+              1
+            </span>
+            <div>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                Instale a Evolution API via Docker
+              </p>
+              <pre className="mt-2 p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-xs overflow-x-auto">
+                docker run -d --name evolution-api -p 8080:8080 atendai/evolution-api
+              </pre>
+            </div>
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">
+              2
+            </span>
+            <div>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                Configure a API Key no docker-compose.yml
+              </p>
+              <p className="text-xs text-zinc-500">
+                Defina a variável AUTHENTICATION_API_KEY
+              </p>
+            </div>
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">
+              3
+            </span>
+            <div>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                Adicione a instância aqui e escaneie o QR Code
+              </p>
+              <p className="text-xs text-zinc-500">
+                O QR Code aparecerá na página de chat para conexão
+              </p>
+            </div>
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center text-xs font-medium shrink-0">
+              <Check className="w-3 h-3" />
+            </span>
+            <div>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                Pronto! Acesse o Chat para conversar
+              </p>
+              <p className="text-xs text-zinc-500">
+                As mensagens serão recebidas e enviadas em tempo real
+              </p>
+            </div>
+          </li>
+        </ol>
+        <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+          <a
+            href="https://doc.evolution-api.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Documentação completa da Evolution API
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function EvolutionInstanceCard({
+  config,
+  onDelete,
+  isDeleting,
+}: {
+  config: any;
+  onDelete: () => void;
+  isDeleting: boolean;
+}) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const getStatusInfo = () => {
+    switch (config.status) {
+      case "connected":
+        return { label: "Conectado", color: "emerald", icon: Wifi };
+      case "connecting":
+        return { label: "Conectando...", color: "amber", icon: Loader2 };
+      case "waiting_qr":
+        return { label: "Aguardando QR", color: "blue", icon: QrCode };
+      case "error":
+        return { label: "Erro", color: "rose", icon: XCircle };
+      default:
+        return { label: "Desconectado", color: "zinc", icon: WifiOff };
+    }
+  };
+
+  const status = getStatusInfo();
+  const StatusIcon = status.icon;
+
+  return (
+    <div
+      className={cn(
+        "p-4 rounded-lg border transition-all",
+        status.color === "emerald" &&
+          "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10",
+        status.color === "amber" &&
+          "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10",
+        status.color === "blue" &&
+          "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10",
+        status.color === "rose" &&
+          "border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-900/10",
+        status.color === "zinc" && "border-zinc-200 dark:border-zinc-700"
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center",
+              status.color === "emerald" && "bg-emerald-100 dark:bg-emerald-900/30",
+              status.color === "amber" && "bg-amber-100 dark:bg-amber-900/30",
+              status.color === "blue" && "bg-blue-100 dark:bg-blue-900/30",
+              status.color === "rose" && "bg-rose-100 dark:bg-rose-900/30",
+              status.color === "zinc" && "bg-zinc-100 dark:bg-zinc-800"
+            )}
+          >
+            <StatusIcon
+              className={cn(
+                "w-5 h-5",
+                status.color === "emerald" && "text-emerald-600",
+                status.color === "amber" && "text-amber-600 animate-spin",
+                status.color === "blue" && "text-blue-600",
+                status.color === "rose" && "text-rose-600",
+                status.color === "zinc" && "text-zinc-500"
+              )}
+            />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
+                {config.instanceName}
+              </h4>
+              <Badge
+                className={cn(
+                  "text-xs",
+                  status.color === "emerald" &&
+                    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                  status.color === "amber" &&
+                    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                  status.color === "blue" &&
+                    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                  status.color === "rose" &&
+                    "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+                  status.color === "zinc" &&
+                    "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+                )}
+              >
+                {status.label}
+              </Badge>
+            </div>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              {config.apiUrl}
+              {config.phoneNumber && ` • ${config.phoneNumber}`}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link href="/admin/whatsapp/chat">
+            <Button variant="outline" size="sm">
+              <MessageSquare className="w-4 h-4 mr-1" />
+              Chat
+            </Button>
+          </Link>
+
+          {showDeleteConfirm ? (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Confirmar"
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-zinc-400 hover:text-rose-600"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MessageHistoryCard({ messages, isLoading }: { messages: any; isLoading: boolean }) {
   if (isLoading) {
     return (
@@ -780,18 +1189,30 @@ export default function WhatsAppPage() {
             <Zap className="w-4 h-4 mr-2" />
             Automação
           </TabsTrigger>
-          <TabsTrigger 
-            value="history" 
+          <TabsTrigger
+            value="history"
             className={cn(
               "rounded-lg px-4 py-2 text-sm font-medium transition-all",
-              activeTab === "history" 
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md" 
+              activeTab === "history"
+                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md"
                 : "text-zinc-600 dark:text-zinc-400"
             )}
             disabled={!myConfig?.hasConfig}
           >
             <History className="w-4 h-4 mr-2" />
             Histórico
+          </TabsTrigger>
+          <TabsTrigger
+            value="evolution"
+            className={cn(
+              "rounded-lg px-4 py-2 text-sm font-medium transition-all",
+              activeTab === "evolution"
+                ? "bg-green-600 text-white shadow-md"
+                : "text-zinc-600 dark:text-zinc-400"
+            )}
+          >
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Chat (Evolution)
           </TabsTrigger>
         </TabsList>
 
@@ -922,6 +1343,11 @@ export default function WhatsAppPage() {
             messages={messageHistory}
             isLoading={loadingHistory}
           />
+        </TabsContent>
+
+        {/* Tab: Evolution API */}
+        <TabsContent value="evolution" className="mt-6">
+          <EvolutionApiCard />
         </TabsContent>
       </Tabs>
       </div>

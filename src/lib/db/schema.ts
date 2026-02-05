@@ -1033,6 +1033,235 @@ export type WhatsAppMessage = typeof whatsappMessages.$inferSelect;
 export type InsertWhatsAppMessage = typeof whatsappMessages.$inferInsert;
 
 // ==========================================
+// WHATSAPP CHAT - EVOLUTION API
+// Chat bidirecional via Evolution API (open-source)
+// ==========================================
+
+// Configuração da instância Evolution API
+export const evolutionConfig = pgTable("evolution_config", {
+  id: serial("id").primaryKey(),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+
+  // Configuração da instância
+  instanceName: varchar("instance_name", { length: 100 }).notNull().unique(),
+  apiUrl: text("api_url").notNull(), // URL do servidor Evolution API
+  apiKey: text("api_key").notNull(), // Chave de autenticação
+
+  // Status da conexão
+  status: varchar("status", { length: 20 }).default("disconnected").notNull(), // connected, disconnected, qr_required
+  qrCode: text("qr_code"), // QR Code em base64 quando necessário
+  phoneNumber: varchar("phone_number", { length: 20 }), // Número conectado
+
+  // Webhook
+  webhookUrl: text("webhook_url"),
+  webhookSecret: text("webhook_secret"),
+
+  // Configurações
+  isActive: boolean("is_active").default(false).notNull(),
+  autoReply: boolean("auto_reply").default(false).notNull(),
+  autoReplyMessage: text("auto_reply_message"),
+
+  // Metadados
+  lastSyncAt: timestamp("last_sync_at"),
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("evolution_config_instance_name_idx").on(table.instanceName),
+  index("evolution_config_workspace_id_idx").on(table.workspaceId),
+  index("evolution_config_status_idx").on(table.status),
+]);
+
+export type EvolutionConfig = typeof evolutionConfig.$inferSelect;
+export type InsertEvolutionConfig = typeof evolutionConfig.$inferInsert;
+
+// Contatos do WhatsApp Chat
+export const whatsappContacts = pgTable("whatsapp_contacts", {
+  id: serial("id").primaryKey(),
+  configId: integer("config_id")
+    .notNull()
+    .references(() => evolutionConfig.id, { onDelete: "cascade" }),
+
+  // Identificação
+  phone: varchar("phone", { length: 20 }).notNull(), // 5571999999999
+  name: text("name"), // Nome definido pelo usuário
+  pushName: text("push_name"), // Nome do perfil WhatsApp
+  profilePicUrl: text("profile_pic_url"),
+
+  // Vínculo com assistido (opcional)
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
+
+  // Organização
+  tags: text("tags").array(), // Tags para organização
+  notes: text("notes"), // Anotações sobre o contato
+
+  // Status da conversa
+  lastMessageAt: timestamp("last_message_at"),
+  unreadCount: integer("unread_count").default(0).notNull(),
+  isArchived: boolean("is_archived").default(false).notNull(),
+  isFavorite: boolean("is_favorite").default(false).notNull(),
+
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("whatsapp_contacts_config_id_idx").on(table.configId),
+  index("whatsapp_contacts_phone_idx").on(table.phone),
+  index("whatsapp_contacts_assistido_id_idx").on(table.assistidoId),
+  index("whatsapp_contacts_last_message_at_idx").on(table.lastMessageAt),
+  uniqueIndex("whatsapp_contacts_config_phone_unique").on(table.configId, table.phone),
+]);
+
+export type WhatsAppContact = typeof whatsappContacts.$inferSelect;
+export type InsertWhatsAppContact = typeof whatsappContacts.$inferInsert;
+
+// Tipo de mensagem do chat
+export const chatMessageTypeEnum = pgEnum("chat_message_type", [
+  "text",
+  "image",
+  "audio",
+  "video",
+  "document",
+  "sticker",
+  "location",
+  "contact",
+  "unknown",
+]);
+
+// Mensagens do WhatsApp Chat
+export const whatsappChatMessages = pgTable("whatsapp_chat_messages", {
+  id: serial("id").primaryKey(),
+  contactId: integer("contact_id")
+    .notNull()
+    .references(() => whatsappContacts.id, { onDelete: "cascade" }),
+
+  // Identificação da mensagem
+  waMessageId: varchar("wa_message_id", { length: 255 }), // ID da mensagem no WhatsApp
+
+  // Direção e tipo
+  direction: varchar("direction", { length: 10 }).notNull(), // inbound, outbound
+  type: chatMessageTypeEnum("type").default("text").notNull(),
+
+  // Conteúdo
+  content: text("content"), // Texto ou descrição
+  mediaUrl: text("media_url"), // URL do arquivo de mídia
+  mediaMimeType: varchar("media_mime_type", { length: 100 }),
+  mediaFilename: varchar("media_filename", { length: 255 }),
+
+  // Status
+  status: varchar("status", { length: 20 }).default("sent").notNull(), // sent, delivered, read, failed
+
+  // Metadados
+  metadata: jsonb("metadata").default({}), // Dados extras da mensagem
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("whatsapp_chat_messages_contact_id_idx").on(table.contactId),
+  index("whatsapp_chat_messages_wa_message_id_idx").on(table.waMessageId),
+  index("whatsapp_chat_messages_direction_idx").on(table.direction),
+  index("whatsapp_chat_messages_created_at_idx").on(table.createdAt),
+]);
+
+export type WhatsAppChatMessage = typeof whatsappChatMessages.$inferSelect;
+export type InsertWhatsAppChatMessage = typeof whatsappChatMessages.$inferInsert;
+
+// ==========================================
+// PLAUD CONFIGURATION
+// Integração com dispositivos Plaud para gravação de atendimentos
+// ==========================================
+
+export const plaudConfig = pgTable("plaud_config", {
+  id: serial("id").primaryKey(),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+
+  // Configuração da API
+  apiKey: text("api_key"),                    // API Key do Plaud Developer Platform
+  apiSecret: text("api_secret"),              // API Secret
+  webhookSecret: text("webhook_secret"),      // Secret para validar webhooks
+
+  // Dispositivo vinculado
+  deviceId: varchar("device_id", { length: 100 }), // ID do dispositivo Plaud
+  deviceName: varchar("device_name", { length: 100 }),
+  deviceModel: varchar("device_model", { length: 50 }), // 'note' | 'notepin'
+
+  // Configurações de transcrição
+  defaultLanguage: varchar("default_language", { length: 10 }).default("pt-BR"),
+  autoTranscribe: boolean("auto_transcribe").default(true),
+  autoSummarize: boolean("auto_summarize").default(true),
+
+  // Configurações de upload para Drive
+  autoUploadToDrive: boolean("auto_upload_to_drive").default(true),
+  driveFolderId: varchar("drive_folder_id", { length: 100 }), // Pasta destino no Drive
+
+  // Status
+  isActive: boolean("is_active").default(false).notNull(),
+  lastSyncAt: timestamp("last_sync_at"),
+
+  // Metadados
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("plaud_config_workspace_id_idx").on(table.workspaceId),
+  index("plaud_config_device_id_idx").on(table.deviceId),
+  index("plaud_config_is_active_idx").on(table.isActive),
+]);
+
+export type PlaudConfig = typeof plaudConfig.$inferSelect;
+export type InsertPlaudConfig = typeof plaudConfig.$inferInsert;
+
+// Histórico de gravações do Plaud (para rastreamento)
+export const plaudRecordings = pgTable("plaud_recordings", {
+  id: serial("id").primaryKey(),
+  configId: integer("config_id")
+    .notNull()
+    .references(() => plaudConfig.id, { onDelete: "cascade" }),
+
+  // Identificação Plaud
+  plaudRecordingId: varchar("plaud_recording_id", { length: 100 }).notNull().unique(),
+  plaudDeviceId: varchar("plaud_device_id", { length: 100 }),
+
+  // Metadados da gravação
+  title: varchar("title", { length: 255 }),
+  duration: integer("duration"),              // Duração em segundos
+  recordedAt: timestamp("recorded_at"),
+  fileSize: integer("file_size"),
+
+  // Status de processamento
+  status: varchar("status", { length: 20 }).default("received"), // received | transcribing | completed | failed
+  errorMessage: text("error_message"),
+
+  // Transcrição recebida
+  transcription: text("transcription"),
+  summary: text("summary"),
+  speakers: jsonb("speakers").$type<{ id: string; name?: string; speakingTime?: number }[]>(),
+
+  // Vinculação ao atendimento
+  atendimentoId: integer("atendimento_id").references(() => atendimentos.id, { onDelete: "set null" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
+
+  // Arquivo no Drive
+  driveFileId: varchar("drive_file_id", { length: 100 }),
+  driveFileUrl: text("drive_file_url"),
+
+  // Metadados
+  rawPayload: jsonb("raw_payload"),           // Payload completo recebido do webhook
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("plaud_recordings_config_id_idx").on(table.configId),
+  index("plaud_recordings_plaud_recording_id_idx").on(table.plaudRecordingId),
+  index("plaud_recordings_atendimento_id_idx").on(table.atendimentoId),
+  index("plaud_recordings_assistido_id_idx").on(table.assistidoId),
+  index("plaud_recordings_status_idx").on(table.status),
+  index("plaud_recordings_recorded_at_idx").on(table.recordedAt),
+]);
+
+export type PlaudRecording = typeof plaudRecordings.$inferSelect;
+export type InsertPlaudRecording = typeof plaudRecordings.$inferInsert;
+
+// ==========================================
 // TEMPLATES DE PEÇAS (Modelos)
 // ==========================================
 
@@ -1348,22 +1577,64 @@ export const atendimentos = pgTable("atendimentos", {
   assistidoId: integer("assistido_id")
     .notNull()
     .references(() => assistidos.id, { onDelete: "cascade" }),
-  
+
+  // Relacionamentos opcionais
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
+  casoId: integer("caso_id"),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+
   // Detalhes
   dataAtendimento: timestamp("data_atendimento").notNull(),
+  duracao: integer("duracao"), // Duração em segundos
   tipo: varchar("tipo", { length: 30 }).notNull(), // 'presencial' | 'videoconferencia' | 'telefone' | 'visita_carcer'
   local: text("local"),
-  
+
   // Resumo
   assunto: text("assunto"),
   resumo: text("resumo"),
-  
+
   // Acompanhantes
   acompanhantes: text("acompanhantes"), // JSON com lista de acompanhantes
-  
+
   // Status
   status: varchar("status", { length: 20 }).default("agendado"), // 'agendado' | 'realizado' | 'cancelado' | 'nao_compareceu'
-  
+
+  // ==========================================
+  // GRAVAÇÃO E TRANSCRIÇÃO (Plaud Integration)
+  // ==========================================
+
+  // Áudio Original
+  audioUrl: text("audio_url"),              // URL do arquivo de áudio no Drive
+  audioDriveFileId: varchar("audio_drive_file_id", { length: 100 }), // ID do arquivo no Drive
+  audioMimeType: varchar("audio_mime_type", { length: 50 }),
+  audioFileSize: integer("audio_file_size"), // Tamanho em bytes
+
+  // Transcrição
+  transcricao: text("transcricao"),          // Texto completo da transcrição
+  transcricaoResumo: text("transcricao_resumo"), // Resumo gerado por IA
+  transcricaoStatus: varchar("transcricao_status", { length: 20 }).default("pending"), // pending | processing | completed | failed
+  transcricaoIdioma: varchar("transcricao_idioma", { length: 10 }).default("pt-BR"),
+
+  // Metadados da transcrição (Plaud)
+  plaudRecordingId: varchar("plaud_recording_id", { length: 100 }), // ID da gravação no Plaud
+  plaudDeviceId: varchar("plaud_device_id", { length: 100 }),       // ID do dispositivo Plaud
+  transcricaoMetadados: jsonb("transcricao_metadados").$type<{
+    speakers?: { id: string; name?: string; segments?: number[] }[];
+    wordTimestamps?: { word: string; start: number; end: number }[];
+    confidence?: number;
+    processingTime?: number;
+  }>(),
+
+  // Pontos-chave extraídos por IA
+  pontosChave: jsonb("pontos_chave").$type<{
+    compromissos?: string[];    // Compromissos assumidos
+    informacoesRelevantes?: string[]; // Informações importantes mencionadas
+    duvidasPendentes?: string[]; // Dúvidas que ficaram pendentes
+    providenciasNecessarias?: string[]; // Providências a tomar
+  }>(),
+
+  // ==========================================
+
   // Metadados
   atendidoPorId: integer("atendido_por_id")
     .references(() => users.id),
@@ -1371,10 +1642,15 @@ export const atendimentos = pgTable("atendimentos", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("atendimentos_assistido_id_idx").on(table.assistidoId),
+  index("atendimentos_processo_id_idx").on(table.processoId),
+  index("atendimentos_caso_id_idx").on(table.casoId),
   index("atendimentos_data_idx").on(table.dataAtendimento),
   index("atendimentos_tipo_idx").on(table.tipo),
   index("atendimentos_status_idx").on(table.status),
   index("atendimentos_atendido_por_idx").on(table.atendidoPorId),
+  index("atendimentos_workspace_id_idx").on(table.workspaceId),
+  index("atendimentos_plaud_recording_id_idx").on(table.plaudRecordingId),
+  index("atendimentos_transcricao_status_idx").on(table.transcricaoStatus),
 ]);
 
 export type Atendimento = typeof atendimentos.$inferSelect;
@@ -1869,6 +2145,23 @@ export const whatsappMessagesRelations = relations(whatsappMessages, ({ one }) =
   sentBy: one(users, { fields: [whatsappMessages.sentById], references: [users.id] }),
 }));
 
+// Evolution API Relations
+export const evolutionConfigRelations = relations(evolutionConfig, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [evolutionConfig.workspaceId], references: [workspaces.id] }),
+  createdBy: one(users, { fields: [evolutionConfig.createdById], references: [users.id] }),
+  contacts: many(whatsappContacts),
+}));
+
+export const whatsappContactsRelations = relations(whatsappContacts, ({ one, many }) => ({
+  config: one(evolutionConfig, { fields: [whatsappContacts.configId], references: [evolutionConfig.id] }),
+  assistido: one(assistidos, { fields: [whatsappContacts.assistidoId], references: [assistidos.id] }),
+  messages: many(whatsappChatMessages),
+}));
+
+export const whatsappChatMessagesRelations = relations(whatsappChatMessages, ({ one }) => ({
+  contact: one(whatsappContacts, { fields: [whatsappChatMessages.contactId], references: [whatsappContacts.id] }),
+}));
+
 export const pecaTemplatesRelations = relations(pecaTemplates, ({ one }) => ({
   createdBy: one(users, { fields: [pecaTemplates.createdById], references: [users.id] }),
 }));
@@ -1879,9 +2172,25 @@ export const calculosPenaRelations = relations(calculosPena, ({ one }) => ({
   createdBy: one(users, { fields: [calculosPena.createdById], references: [users.id] }),
 }));
 
-export const atendimentosRelations = relations(atendimentos, ({ one }) => ({
+export const atendimentosRelations = relations(atendimentos, ({ one, many }) => ({
   assistido: one(assistidos, { fields: [atendimentos.assistidoId], references: [assistidos.id] }),
+  processo: one(processos, { fields: [atendimentos.processoId], references: [processos.id] }),
+  workspace: one(workspaces, { fields: [atendimentos.workspaceId], references: [workspaces.id] }),
   atendidoPor: one(users, { fields: [atendimentos.atendidoPorId], references: [users.id] }),
+  plaudRecordings: many(plaudRecordings),
+}));
+
+// Plaud Relations
+export const plaudConfigRelations = relations(plaudConfig, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [plaudConfig.workspaceId], references: [workspaces.id] }),
+  createdBy: one(users, { fields: [plaudConfig.createdById], references: [users.id] }),
+  recordings: many(plaudRecordings),
+}));
+
+export const plaudRecordingsRelations = relations(plaudRecordings, ({ one }) => ({
+  config: one(plaudConfig, { fields: [plaudRecordings.configId], references: [plaudConfig.id] }),
+  atendimento: one(atendimentos, { fields: [plaudRecordings.atendimentoId], references: [atendimentos.id] }),
+  assistido: one(assistidos, { fields: [plaudRecordings.assistidoId], references: [assistidos.id] }),
 }));
 
 export const bancoPecasRelations = relations(bancoPecas, ({ one }) => ({
@@ -2827,4 +3136,148 @@ export type InsertActivityLog = typeof activityLogs.$inferInsert;
 // Relações de logs
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   user: one(users, { fields: [activityLogs.userId], references: [users.id] }),
+}));
+
+// ==========================================
+// MODELOS DE DOCUMENTOS
+// ==========================================
+
+// Enum de categorias de modelos
+export const modeloCategoriaEnum = pgEnum("modelo_categoria", [
+  "PROVIDENCIA_ADMINISTRATIVA",  // Oficios internos, comunicacoes
+  "PROVIDENCIA_FUNCIONAL",       // Atendimento de presos, requerimentos
+  "PROVIDENCIA_INSTITUCIONAL",   // Documentos institucionais
+  "PECA_PROCESSUAL",             // Peticoes, recursos
+  "COMUNICACAO",                 // Emails, notificacoes
+  "OUTRO",
+]);
+
+// Tabela de modelos de documentos
+export const documentoModelos = pgTable("documento_modelos", {
+  id: serial("id").primaryKey(),
+
+  // Identificacao
+  titulo: varchar("titulo", { length: 200 }).notNull(),
+  descricao: text("descricao"),
+  categoria: modeloCategoriaEnum("categoria").notNull().default("OUTRO"),
+
+  // Conteudo do modelo (texto com {{VARIAVEIS}})
+  conteudo: text("conteudo").notNull(),
+
+  // Tipo de documento
+  tipoPeca: varchar("tipo_peca", { length: 100 }), // oficio, email, requerimento, etc
+  area: areaEnum("area"),
+
+  // Variaveis disponiveis (JSON array)
+  variaveis: jsonb("variaveis").$type<{
+    nome: string;
+    label: string;
+    tipo: "texto" | "data" | "numero" | "selecao" | "auto";
+    obrigatorio: boolean;
+    valorPadrao?: string;
+    opcoes?: string[];
+    origem?: string;
+  }[]>(),
+
+  // Formatacao para exportacao
+  formatacao: jsonb("formatacao").$type<{
+    fonte?: string;
+    tamanhoFonte?: number;
+    margens?: { top: number; bottom: number; left: number; right: number };
+    espacamento?: number;
+    cabecalho?: string;
+    rodape?: string;
+  }>(),
+
+  // Tags para busca
+  tags: jsonb("tags").$type<string[]>(),
+
+  // Visibilidade e controle
+  isPublic: boolean("is_public").default(true),
+  isAtivo: boolean("is_ativo").default(true),
+
+  // Estatisticas de uso
+  totalUsos: integer("total_usos").default(0),
+
+  // Workspace e usuario
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  createdById: integer("created_by_id").references(() => users.id),
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at"),
+}, (table) => [
+  index("documento_modelos_categoria_idx").on(table.categoria),
+  index("documento_modelos_tipo_peca_idx").on(table.tipoPeca),
+  index("documento_modelos_area_idx").on(table.area),
+  index("documento_modelos_is_ativo_idx").on(table.isAtivo),
+  index("documento_modelos_workspace_id_idx").on(table.workspaceId),
+  index("documento_modelos_deleted_at_idx").on(table.deletedAt),
+]);
+
+export type DocumentoModelo = typeof documentoModelos.$inferSelect;
+export type InsertDocumentoModelo = typeof documentoModelos.$inferInsert;
+
+// Tabela de documentos gerados
+export const documentosGerados = pgTable("documentos_gerados", {
+  id: serial("id").primaryKey(),
+
+  // Relacionamentos
+  modeloId: integer("modelo_id").references(() => documentoModelos.id, { onDelete: "set null" }),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
+  demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
+  casoId: integer("caso_id").references(() => casos.id, { onDelete: "set null" }),
+
+  // Conteudo gerado
+  titulo: varchar("titulo", { length: 300 }).notNull(),
+  conteudoFinal: text("conteudo_final").notNull(),
+
+  // Valores das variaveis usadas
+  valoresVariaveis: jsonb("valores_variaveis").$type<Record<string, string>>(),
+
+  // Se foi gerado/aprimorado por IA
+  geradoPorIA: boolean("gerado_por_ia").default(false),
+  promptIA: text("prompt_ia"),
+
+  // Exportacao
+  googleDocId: text("google_doc_id"),
+  googleDocUrl: text("google_doc_url"),
+  driveFileId: text("drive_file_id"),
+
+  // Workspace e usuario
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  createdById: integer("created_by_id").references(() => users.id),
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("documentos_gerados_modelo_id_idx").on(table.modeloId),
+  index("documentos_gerados_processo_id_idx").on(table.processoId),
+  index("documentos_gerados_assistido_id_idx").on(table.assistidoId),
+  index("documentos_gerados_caso_id_idx").on(table.casoId),
+  index("documentos_gerados_workspace_id_idx").on(table.workspaceId),
+]);
+
+export type DocumentoGerado = typeof documentosGerados.$inferSelect;
+export type InsertDocumentoGerado = typeof documentosGerados.$inferInsert;
+
+// Relacoes de modelos
+export const documentoModelosRelations = relations(documentoModelos, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [documentoModelos.workspaceId], references: [workspaces.id] }),
+  createdBy: one(users, { fields: [documentoModelos.createdById], references: [users.id] }),
+  documentosGerados: many(documentosGerados),
+}));
+
+// Relacoes de documentos gerados
+export const documentosGeradosRelations = relations(documentosGerados, ({ one }) => ({
+  modelo: one(documentoModelos, { fields: [documentosGerados.modeloId], references: [documentoModelos.id] }),
+  processo: one(processos, { fields: [documentosGerados.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [documentosGerados.assistidoId], references: [assistidos.id] }),
+  demanda: one(demandas, { fields: [documentosGerados.demandaId], references: [demandas.id] }),
+  caso: one(casos, { fields: [documentosGerados.casoId], references: [casos.id] }),
+  workspace: one(workspaces, { fields: [documentosGerados.workspaceId], references: [workspaces.id] }),
+  createdBy: one(users, { fields: [documentosGerados.createdById], references: [users.id] }),
 }));

@@ -8,8 +8,8 @@
  */
 
 import { db } from "@/lib/db";
-import { processos, driveFiles, driveSyncFolders, driveSyncLogs } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { processos, driveFiles, driveSyncFolders, driveSyncLogs, assistidos, casos } from "@/lib/db/schema";
+import { eq, and, desc, ilike, or, sql } from "drizzle-orm";
 
 // ==========================================
 // TIPOS
@@ -672,6 +672,337 @@ async function logSyncAction(
     });
   } catch (error) {
     console.error("Erro ao registrar log de sincronização:", error);
+  }
+}
+
+// ==========================================
+// VINCULAÇÃO AUTOMÁTICA DE ARQUIVOS
+// ==========================================
+
+/**
+ * Detecta processo pelo nome da pasta pai
+ * Formato esperado: "Nome do Assistido - 0000000-00.0000.0.00.0000"
+ */
+export async function detectProcessoByFolderName(folderName: string): Promise<{
+  processoId: number | null;
+  assistidoId: number | null;
+  confidence: "high" | "medium" | "low";
+} | null> {
+  try {
+    // Padrão de número de processo: NNNNNNN-NN.NNNN.N.NN.NNNN
+    const numeroProcessoRegex = /(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/;
+    const match = folderName.match(numeroProcessoRegex);
+
+    if (match) {
+      const numeroProcesso = match[1];
+
+      // Buscar processo pelo número
+      const [processo] = await db
+        .select({ id: processos.id, assistidoId: processos.assistidoId })
+        .from(processos)
+        .where(eq(processos.numero, numeroProcesso))
+        .limit(1);
+
+      if (processo) {
+        return {
+          processoId: processo.id,
+          assistidoId: processo.assistidoId,
+          confidence: "high",
+        };
+      }
+    }
+
+    // Tentar detectar pelo nome do assistido (parte antes do " - ")
+    const parts = folderName.split(" - ");
+    if (parts.length >= 2) {
+      const nomeAssistido = parts[0].trim();
+
+      // Buscar assistido pelo nome (parcial)
+      const [assistido] = await db
+        .select({ id: assistidos.id })
+        .from(assistidos)
+        .where(ilike(assistidos.nome, `%${nomeAssistido}%`))
+        .limit(1);
+
+      if (assistido) {
+        // Verificar se existe processo vinculado
+        const [processo] = await db
+          .select({ id: processos.id })
+          .from(processos)
+          .where(eq(processos.assistidoId, assistido.id))
+          .limit(1);
+
+        return {
+          processoId: processo?.id || null,
+          assistidoId: assistido.id,
+          confidence: processo ? "medium" : "low",
+        };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Erro ao detectar processo pelo nome da pasta:", error);
+    return null;
+  }
+}
+
+/**
+ * Busca informações da pasta pai de um arquivo
+ */
+export async function getParentFolderInfo(fileId: string): Promise<{
+  parentId: string;
+  parentName: string;
+} | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    // Buscar arquivo com informações do parent
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=parents`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    if (!response.ok) return null;
+    const fileData = await response.json();
+
+    if (!fileData.parents || fileData.parents.length === 0) return null;
+
+    const parentId = fileData.parents[0];
+
+    // Buscar nome da pasta pai
+    const parentResponse = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${parentId}?fields=id,name`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    if (!parentResponse.ok) return null;
+    const parentData = await parentResponse.json();
+
+    return {
+      parentId: parentData.id,
+      parentName: parentData.name,
+    };
+  } catch (error) {
+    console.error("Erro ao buscar pasta pai:", error);
+    return null;
+  }
+}
+
+/**
+ * Vincula automaticamente um arquivo a processo/assistido
+ * baseado no nome da pasta pai
+ */
+export async function autoLinkFileToProcesso(
+  driveFileId: string,
+  dbFileId: number
+): Promise<{
+  linked: boolean;
+  processoId: number | null;
+  assistidoId: number | null;
+}> {
+  try {
+    // Obter informações da pasta pai
+    const parentInfo = await getParentFolderInfo(driveFileId);
+    if (!parentInfo) {
+      return { linked: false, processoId: null, assistidoId: null };
+    }
+
+    // Detectar processo pelo nome da pasta
+    const detection = await detectProcessoByFolderName(parentInfo.parentName);
+    if (!detection) {
+      return { linked: false, processoId: null, assistidoId: null };
+    }
+
+    // Atualizar arquivo no banco com vinculação
+    await db
+      .update(driveFiles)
+      .set({
+        processoId: detection.processoId,
+        assistidoId: detection.assistidoId,
+        updatedAt: new Date(),
+      })
+      .where(eq(driveFiles.id, dbFileId));
+
+    return {
+      linked: true,
+      processoId: detection.processoId,
+      assistidoId: detection.assistidoId,
+    };
+  } catch (error) {
+    console.error("Erro ao vincular arquivo automaticamente:", error);
+    return { linked: false, processoId: null, assistidoId: null };
+  }
+}
+
+/**
+ * Vincula múltiplos arquivos a processos automaticamente
+ * Útil para sincronização em massa
+ */
+export async function autoLinkMultipleFiles(
+  folderId: string
+): Promise<{
+  total: number;
+  linked: number;
+  errors: number;
+}> {
+  const result = { total: 0, linked: 0, errors: 0 };
+
+  try {
+    // Buscar arquivos não vinculados da pasta
+    const unlinkedFiles = await db
+      .select()
+      .from(driveFiles)
+      .where(
+        and(
+          eq(driveFiles.driveFolderId, folderId),
+          eq(driveFiles.isFolder, false),
+          sql`${driveFiles.processoId} IS NULL`
+        )
+      );
+
+    result.total = unlinkedFiles.length;
+
+    for (const file of unlinkedFiles) {
+      try {
+        const linkResult = await autoLinkFileToProcesso(file.driveFileId, file.id);
+        if (linkResult.linked) {
+          result.linked++;
+        }
+      } catch {
+        result.errors++;
+      }
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Erro ao vincular múltiplos arquivos:", error);
+    return result;
+  }
+}
+
+/**
+ * Sincroniza pasta com vinculação automática de arquivos
+ */
+export async function syncFolderWithAutoLink(
+  folderId: string,
+  userId?: number
+): Promise<SyncResult & { linked: number }> {
+  // Primeiro, sincroniza normalmente
+  const syncResult = await syncFolderWithDatabase(folderId, userId);
+
+  // Depois, tenta vincular arquivos automaticamente
+  const linkResult = await autoLinkMultipleFiles(folderId);
+
+  return {
+    ...syncResult,
+    linked: linkResult.linked,
+  };
+}
+
+/**
+ * Busca processos pelo ID da pasta do Drive
+ */
+export async function getProcessoByDriveFolderId(driveFolderId: string): Promise<{
+  id: number;
+  numero: string;
+  assistidoId: number | null;
+} | null> {
+  try {
+    const [processo] = await db
+      .select({
+        id: processos.id,
+        numero: processos.numero,
+        assistidoId: processos.assistidoId,
+      })
+      .from(processos)
+      .where(eq(processos.driveFolderId, driveFolderId))
+      .limit(1);
+
+    return processo || null;
+  } catch (error) {
+    console.error("Erro ao buscar processo por pasta do Drive:", error);
+    return null;
+  }
+}
+
+/**
+ * Vincula arquivo diretamente a um processo
+ */
+export async function linkFileToProcesso(
+  dbFileId: number,
+  processoId: number
+): Promise<boolean> {
+  try {
+    // Buscar assistidoId do processo
+    const [processo] = await db
+      .select({ assistidoId: processos.assistidoId })
+      .from(processos)
+      .where(eq(processos.id, processoId))
+      .limit(1);
+
+    await db
+      .update(driveFiles)
+      .set({
+        processoId,
+        assistidoId: processo?.assistidoId || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(driveFiles.id, dbFileId));
+
+    return true;
+  } catch (error) {
+    console.error("Erro ao vincular arquivo ao processo:", error);
+    return false;
+  }
+}
+
+/**
+ * Vincula arquivo diretamente a um assistido
+ */
+export async function linkFileToAssistido(
+  dbFileId: number,
+  assistidoId: number
+): Promise<boolean> {
+  try {
+    await db
+      .update(driveFiles)
+      .set({
+        assistidoId,
+        updatedAt: new Date(),
+      })
+      .where(eq(driveFiles.id, dbFileId));
+
+    return true;
+  } catch (error) {
+    console.error("Erro ao vincular arquivo ao assistido:", error);
+    return false;
+  }
+}
+
+/**
+ * Remove vinculação de arquivo
+ */
+export async function unlinkFile(dbFileId: number): Promise<boolean> {
+  try {
+    await db
+      .update(driveFiles)
+      .set({
+        processoId: null,
+        assistidoId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(driveFiles.id, dbFileId));
+
+    return true;
+  } catch (error) {
+    console.error("Erro ao remover vinculação:", error);
+    return false;
   }
 }
 
@@ -1431,6 +1762,197 @@ Registrado automaticamente pelo DefensorHub
       success: false,
       message: error instanceof Error ? error.message : "Erro desconhecido",
     };
+  }
+}
+
+// ==========================================
+// FUNÇÕES DE GOOGLE DOCS
+// ==========================================
+
+/**
+ * Cria um novo documento no Google Docs
+ * Retorna o ID do documento e a URL para acesso
+ */
+export async function createGoogleDoc(
+  titulo: string,
+  conteudo: string,
+  folderId?: string
+): Promise<{ docId: string; docUrl: string } | null> {
+  const config = getConfig();
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    console.warn("Google Drive não configurado ou token inválido");
+    return null;
+  }
+
+  try {
+    // 1. Criar documento vazio
+    const createResponse = await fetch(
+      "https://docs.googleapis.com/v1/documents",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title: titulo }),
+      }
+    );
+
+    if (!createResponse.ok) {
+      console.error("Erro ao criar documento:", await createResponse.text());
+      return null;
+    }
+
+    const docData = await createResponse.json();
+    const docId = docData.documentId;
+
+    // 2. Inserir conteúdo no documento
+    if (conteudo.trim()) {
+      const updateResponse = await fetch(
+        `https://docs.googleapis.com/v1/documents/${docId}:batchUpdate`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            requests: [
+              {
+                insertText: {
+                  location: { index: 1 },
+                  text: conteudo,
+                },
+              },
+            ],
+          }),
+        }
+      );
+
+      if (!updateResponse.ok) {
+        console.error("Erro ao inserir conteúdo:", await updateResponse.text());
+        // Documento foi criado mas sem conteúdo, continuamos mesmo assim
+      }
+    }
+
+    // 3. Se uma pasta foi especificada, mover o documento para ela
+    if (folderId) {
+      // Primeiro, obter os parents atuais do documento
+      const fileResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${docId}?fields=parents`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (fileResponse.ok) {
+        const fileData = await fileResponse.json();
+        const previousParents = fileData.parents?.join(",") || "";
+
+        // Mover para a nova pasta
+        await fetch(
+          `https://www.googleapis.com/drive/v3/files/${docId}?addParents=${folderId}&removeParents=${previousParents}`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+      }
+    }
+
+    // URL do documento
+    const docUrl = `https://docs.google.com/document/d/${docId}/edit`;
+
+    return { docId, docUrl };
+  } catch (error) {
+    console.error("Erro ao criar Google Doc:", error);
+    return null;
+  }
+}
+
+/**
+ * Atualiza o conteúdo de um documento existente
+ */
+export async function updateGoogleDoc(
+  docId: string,
+  conteudo: string
+): Promise<boolean> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return false;
+
+  try {
+    // Primeiro, deletar todo o conteúdo existente
+    // Para isso, precisamos obter o tamanho atual do documento
+    const docResponse = await fetch(
+      `https://docs.googleapis.com/v1/documents/${docId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!docResponse.ok) {
+      console.error("Erro ao obter documento:", await docResponse.text());
+      return false;
+    }
+
+    const docData = await docResponse.json();
+    const endIndex = docData.body?.content?.slice(-1)?.[0]?.endIndex || 1;
+
+    // Requests para limpar e inserir novo conteúdo
+    const requests: Array<Record<string, unknown>> = [];
+
+    // Deletar conteúdo existente (se houver)
+    if (endIndex > 2) {
+      requests.push({
+        deleteContentRange: {
+          range: {
+            startIndex: 1,
+            endIndex: endIndex - 1,
+          },
+        },
+      });
+    }
+
+    // Inserir novo conteúdo
+    if (conteudo.trim()) {
+      requests.push({
+        insertText: {
+          location: { index: 1 },
+          text: conteudo,
+        },
+      });
+    }
+
+    if (requests.length > 0) {
+      const updateResponse = await fetch(
+        `https://docs.googleapis.com/v1/documents/${docId}:batchUpdate`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ requests }),
+        }
+      );
+
+      if (!updateResponse.ok) {
+        console.error("Erro ao atualizar documento:", await updateResponse.text());
+        return false;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Erro ao atualizar Google Doc:", error);
+    return false;
   }
 }
 

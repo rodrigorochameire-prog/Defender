@@ -16,6 +16,7 @@ import { audienciasRouter } from "./audiencias";
 import { driveRouter } from "./drive";
 import { profissionaisRouter } from "./profissionais";
 import { diligenciasRouter } from "./diligencias";
+import { atendimentosRouter } from "./atendimentos";
 
 // Routers compartilhados
 import { calendarRouter } from "./calendar";
@@ -23,10 +24,12 @@ import { notificationsRouter } from "./notifications";
 import { notificationTemplatesRouter } from "./notificationTemplates";
 import { documentsRouter } from "./documents";
 import { whatsappRouter } from "./whatsapp";
+import { whatsappChatRouter } from "./whatsapp-chat";
 import { auditLogsRouter } from "./auditLogs";
 import { delegacaoRouter } from "./delegacao";
 import { activityLogsRouter } from "./activity-logs";
 import { juradosRouter } from "./jurados";
+import { modelosRouter } from "./modelos";
 
 
 export const appRouter = router({
@@ -71,6 +74,21 @@ export const appRouter = router({
   // JÚRI - CORPO DE JURADOS
   // ==========================================
   jurados: juradosRouter,
+
+  // ==========================================
+  // MODELOS DE DOCUMENTOS
+  // ==========================================
+  modelos: modelosRouter,
+
+  // ==========================================
+  // WHATSAPP CHAT (EVOLUTION API)
+  // ==========================================
+  whatsappChat: whatsappChatRouter,
+
+  // ==========================================
+  // ATENDIMENTOS (PLAUD INTEGRATION)
+  // ==========================================
+  atendimentos: atendimentosRouter,
 });
 
 export type AppRouter = typeof appRouter;

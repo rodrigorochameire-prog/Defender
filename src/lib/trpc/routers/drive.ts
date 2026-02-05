@@ -24,7 +24,16 @@ import {
   registrarAudienciaNoDrive,
   verificarIntegridadeSincronizacao,
   criarPastaProcesso,
+  // Novas funções de vinculação automática
+  syncFolderWithAutoLink,
+  autoLinkMultipleFiles,
+  autoLinkFileToProcesso,
+  linkFileToProcesso,
+  linkFileToAssistido,
+  unlinkFile,
+  detectProcessoByFolderName,
 } from "@/lib/services/google-drive";
+import { processos, assistidos, casos } from "@/lib/db/schema";
 
 export const driveRouter = router({
   /**
@@ -707,5 +716,334 @@ export const driveRouter = router({
 
         return file;
       }, "Erro ao fazer upload do arquivo");
+    }),
+
+  // ============================================
+  // VINCULAÇÃO AUTOMÁTICA DE ARQUIVOS
+  // ============================================
+
+  /**
+   * Sincroniza pasta com vinculação automática a processos
+   */
+  syncWithAutoLink: adminProcedure
+    .input(z.object({ folderId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const result = await syncFolderWithAutoLink(input.folderId, ctx.user.id);
+        return result;
+      }, "Erro ao sincronizar com vinculação automática");
+    }),
+
+  /**
+   * Vincula arquivos automaticamente a processos de uma pasta
+   */
+  autoLinkFiles: adminProcedure
+    .input(z.object({ folderId: z.string() }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const result = await autoLinkMultipleFiles(input.folderId);
+        return result;
+      }, "Erro ao vincular arquivos automaticamente");
+    }),
+
+  /**
+   * Vincula um arquivo a um processo específico
+   */
+  linkFileToProcesso: protectedProcedure
+    .input(z.object({
+      fileId: z.number(),
+      processoId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const success = await linkFileToProcesso(input.fileId, input.processoId);
+
+        if (!success) {
+          throw Errors.internal("Falha ao vincular arquivo ao processo");
+        }
+
+        // Log
+        await db.insert(driveSyncLogs).values({
+          driveFileId: null,
+          action: "link_processo",
+          status: "success",
+          details: `Arquivo ${input.fileId} vinculado ao processo ${input.processoId}`,
+          userId: ctx.user.id,
+        });
+
+        return { success: true };
+      }, "Erro ao vincular arquivo ao processo");
+    }),
+
+  /**
+   * Vincula um arquivo a um assistido específico
+   */
+  linkFileToAssistido: protectedProcedure
+    .input(z.object({
+      fileId: z.number(),
+      assistidoId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const success = await linkFileToAssistido(input.fileId, input.assistidoId);
+
+        if (!success) {
+          throw Errors.internal("Falha ao vincular arquivo ao assistido");
+        }
+
+        // Log
+        await db.insert(driveSyncLogs).values({
+          driveFileId: null,
+          action: "link_assistido",
+          status: "success",
+          details: `Arquivo ${input.fileId} vinculado ao assistido ${input.assistidoId}`,
+          userId: ctx.user.id,
+        });
+
+        return { success: true };
+      }, "Erro ao vincular arquivo ao assistido");
+    }),
+
+  /**
+   * Remove vinculação de um arquivo
+   */
+  unlinkFile: protectedProcedure
+    .input(z.object({ fileId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        const success = await unlinkFile(input.fileId);
+
+        if (!success) {
+          throw Errors.internal("Falha ao remover vinculação");
+        }
+
+        // Log
+        await db.insert(driveSyncLogs).values({
+          driveFileId: null,
+          action: "unlink",
+          status: "success",
+          details: `Vinculação removida do arquivo ${input.fileId}`,
+          userId: ctx.user.id,
+        });
+
+        return { success: true };
+      }, "Erro ao remover vinculação");
+    }),
+
+  /**
+   * Lista arquivos vinculados a um processo
+   */
+  filesByProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const files = await db
+          .select()
+          .from(driveFiles)
+          .where(eq(driveFiles.processoId, input.processoId))
+          .orderBy(desc(driveFiles.lastModifiedTime));
+
+        return files;
+      }, "Erro ao listar arquivos do processo");
+    }),
+
+  /**
+   * Lista arquivos vinculados a um assistido
+   */
+  filesByAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const files = await db
+          .select()
+          .from(driveFiles)
+          .where(eq(driveFiles.assistidoId, input.assistidoId))
+          .orderBy(desc(driveFiles.lastModifiedTime));
+
+        return files;
+      }, "Erro ao listar arquivos do assistido");
+    }),
+
+  /**
+   * Estatísticas de vinculação
+   */
+  linkStats: protectedProcedure.query(async () => {
+    return safeAsync(async () => {
+      const [totalFiles] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(driveFiles)
+        .where(eq(driveFiles.isFolder, false));
+
+      const [linkedToProcesso] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.isFolder, false),
+            sql`${driveFiles.processoId} IS NOT NULL`
+          )
+        );
+
+      const [linkedToAssistido] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.isFolder, false),
+            sql`${driveFiles.assistidoId} IS NOT NULL`
+          )
+        );
+
+      const [unlinked] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.isFolder, false),
+            sql`${driveFiles.processoId} IS NULL`,
+            sql`${driveFiles.assistidoId} IS NULL`
+          )
+        );
+
+      return {
+        totalFiles: totalFiles?.count || 0,
+        linkedToProcesso: linkedToProcesso?.count || 0,
+        linkedToAssistido: linkedToAssistido?.count || 0,
+        unlinked: unlinked?.count || 0,
+      };
+    }, "Erro ao obter estatísticas de vinculação");
+  }),
+
+  /**
+   * Upload de arquivo com vinculação imediata
+   */
+  uploadWithLink: protectedProcedure
+    .input(z.object({
+      folderId: z.string(),
+      fileName: z.string(),
+      mimeType: z.string(),
+      fileBase64: z.string(),
+      description: z.string().optional(),
+      processoId: z.number().optional(),
+      assistidoId: z.number().optional(),
+      casoId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        // Converter base64 para buffer
+        const base64Data = input.fileBase64.replace(/^data:[^;]+;base64,/, "");
+        const buffer = Buffer.from(base64Data, "base64");
+
+        const file = await uploadFileBuffer(
+          buffer,
+          input.fileName,
+          input.mimeType,
+          input.folderId,
+          input.description,
+          { preventDuplicates: true, updateIfExists: false }
+        );
+
+        if (!file) {
+          throw Errors.internal("Falha ao fazer upload do arquivo");
+        }
+
+        // Se processoId fornecido, buscar assistidoId do processo
+        let assistidoId = input.assistidoId;
+        if (input.processoId && !assistidoId) {
+          const [processo] = await db
+            .select({ assistidoId: processos.assistidoId })
+            .from(processos)
+            .where(eq(processos.id, input.processoId))
+            .limit(1);
+          assistidoId = processo?.assistidoId || undefined;
+        }
+
+        // Inserir no banco local com vinculação
+        await db.insert(driveFiles).values({
+          driveFileId: file.id,
+          driveFolderId: input.folderId,
+          name: file.name,
+          mimeType: file.mimeType,
+          fileSize: file.size ? parseInt(file.size) : null,
+          webViewLink: file.webViewLink,
+          webContentLink: file.webContentLink,
+          thumbnailLink: file.thumbnailLink,
+          iconLink: file.iconLink,
+          driveChecksum: file.md5Checksum,
+          isFolder: false,
+          syncStatus: "synced",
+          lastSyncAt: new Date(),
+          lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : new Date(),
+          createdById: ctx.user.id,
+          // Vinculações
+          processoId: input.processoId,
+          assistidoId: assistidoId,
+        });
+
+        // Log da ação
+        await db.insert(driveSyncLogs).values({
+          driveFileId: file.id,
+          action: "upload_with_link",
+          status: "success",
+          details: `Arquivo ${file.name} enviado e vinculado (processo: ${input.processoId || 'N/A'}, assistido: ${assistidoId || 'N/A'})`,
+          userId: ctx.user.id,
+        });
+
+        return file;
+      }, "Erro ao fazer upload do arquivo");
+    }),
+
+  /**
+   * Busca processos para seleção de vinculação
+   */
+  searchProcessosForLink: protectedProcedure
+    .input(z.object({ search: z.string() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const results = await db
+          .select({
+            id: processos.id,
+            numero: processos.numero,
+            assistidoId: processos.assistidoId,
+            assistidoNome: assistidos.nome,
+          })
+          .from(processos)
+          .leftJoin(assistidos, eq(processos.assistidoId, assistidos.id))
+          .where(
+            or(
+              like(processos.numero, `%${input.search}%`),
+              like(assistidos.nome, `%${input.search}%`)
+            )
+          )
+          .limit(10);
+
+        return results;
+      }, "Erro ao buscar processos");
+    }),
+
+  /**
+   * Busca assistidos para seleção de vinculação
+   */
+  searchAssistidosForLink: protectedProcedure
+    .input(z.object({ search: z.string() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const results = await db
+          .select({
+            id: assistidos.id,
+            nome: assistidos.nome,
+            cpf: assistidos.cpf,
+          })
+          .from(assistidos)
+          .where(
+            or(
+              like(assistidos.nome, `%${input.search}%`),
+              like(assistidos.cpf, `%${input.search}%`)
+            )
+          )
+          .limit(10);
+
+        return results;
+      }, "Erro ao buscar assistidos");
     }),
 });
