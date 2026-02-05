@@ -316,7 +316,11 @@ export const demandas = pgTable("demandas", {
   prazo: date("prazo"), // Prazo fatal
   dataEntrada: date("data_entrada"), // Data que chegou para você
   dataIntimacao: date("data_intimacao"), // Data da intimação
+  dataExpedicao: date("data_expedicao"), // Data da expedição (para cálculo automático)
   dataConclusao: timestamp("data_conclusao"), // Quando foi concluído
+
+  // Cálculo automático de prazo
+  tipoPrazoId: integer("tipo_prazo_id"), // Tipo de prazo usado no cálculo
   
   // Status
   status: statusDemandaEnum("status").default("5_FILA"),
