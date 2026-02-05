@@ -31,6 +31,7 @@ import { activityLogsRouter } from "./activity-logs";
 import { juradosRouter } from "./jurados";
 import { modelosRouter } from "./modelos";
 import { jurisprudenciaRouter } from "./jurisprudencia";
+import { prazosRouter } from "./prazos";
 
 
 export const appRouter = router({
@@ -100,6 +101,11 @@ export const appRouter = router({
   // JURISPRUDÊNCIA - BANCO DE JULGADOS
   // ==========================================
   jurisprudencia: jurisprudenciaRouter,
+
+  // ==========================================
+  // PRAZOS - CÁLCULO AUTOMÁTICO
+  // ==========================================
+  prazos: prazosRouter,
 });
 
 export type AppRouter = typeof appRouter;
