@@ -343,11 +343,9 @@ export const demandas = pgTable("demandas", {
   // Flag de réu preso (prioridade automática)
   reuPreso: boolean("reu_preso").default(false),
 
-  // Tipo de intimação (para VVD especialmente)
-  tipoIntimacao: varchar("tipo_intimacao", { length: 20 }).default("PETICIONAR"), // 'CIENCIA' | 'PETICIONAR' | 'AUDIENCIA' | 'CUMPRIMENTO'
-
-  // Se for VVD, referência para processo VVD
-  processoVVDId: integer("processo_vvd_id"),
+  // TODO: Adicionar via migration quando necessário
+  // tipoIntimacao: varchar("tipo_intimacao", { length: 20 }).default("PETICIONAR"), // 'CIENCIA' | 'PETICIONAR' | 'AUDIENCIA' | 'CUMPRIMENTO'
+  // processoVVDId: integer("processo_vvd_id"),
 
   // Integração Google Calendar
   googleCalendarEventId: text("google_calendar_event_id"), // ID do evento no Google Calendar
