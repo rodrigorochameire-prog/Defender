@@ -30,6 +30,7 @@ import { delegacaoRouter } from "./delegacao";
 import { activityLogsRouter } from "./activity-logs";
 import { juradosRouter } from "./jurados";
 import { modelosRouter } from "./modelos";
+import { jurisprudenciaRouter } from "./jurisprudencia";
 
 
 export const appRouter = router({
@@ -94,6 +95,11 @@ export const appRouter = router({
   // INVESTIGAÇÃO - DILIGÊNCIAS
   // ==========================================
   diligencias: diligenciasRouter,
+
+  // ==========================================
+  // JURISPRUDÊNCIA - BANCO DE JULGADOS
+  // ==========================================
+  jurisprudencia: jurisprudenciaRouter,
 });
 
 export type AppRouter = typeof appRouter;
