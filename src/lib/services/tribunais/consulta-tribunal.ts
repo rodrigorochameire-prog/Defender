@@ -51,6 +51,14 @@ export interface TribunalConfig {
 
 // Configuração dos tribunais suportados
 export const TRIBUNAIS: Record<string, TribunalConfig> = {
+  TJBA: {
+    id: "tjba",
+    nome: "Tribunal de Justica da Bahia",
+    sigla: "TJBA",
+    url: "https://www.tjba.jus.br",
+    apiDisponivel: false,
+    formatoNumero: /^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/,
+  },
   TJMG: {
     id: "tjmg",
     nome: "Tribunal de Justica de Minas Gerais",
@@ -85,6 +93,16 @@ export const TRIBUNAIS: Record<string, TribunalConfig> = {
   },
 };
 
+// URLs específicas do TJBA
+export const TJBA_URLS = {
+  pje1g: "https://pje.tjba.jus.br/pje/login.seam",
+  pje2g: "https://pje2g.tjba.jus.br/pje/login.seam",
+  esaj: "https://esaj.tjba.jus.br/esaj/portal.do",
+  consultaPublica: "https://esaj.tjba.jus.br/cpopg/open.do",
+  seeu: "https://seeu.pje.jus.br",
+  projudi: "https://projudi.tjba.jus.br",
+};
+
 /**
  * Extrai o tribunal do número do processo CNJ
  */
@@ -101,10 +119,10 @@ export function extrairTribunalDoProcesso(numeroProcesso: string): string | null
   if (justica === "8") {
     // Justiça Estadual
     const tribunaisEstaduais: Record<string, string> = {
-      "13": "TJMG",
-      "26": "TJSP",
-      "19": "TJRJ",
-      // Adicionar mais conforme necessário
+      "05": "TJBA", // Bahia
+      "13": "TJMG", // Minas Gerais
+      "19": "TJRJ", // Rio de Janeiro
+      "26": "TJSP", // São Paulo
     };
     return tribunaisEstaduais[tribunal] || null;
   }
@@ -182,10 +200,55 @@ export class ConsultaTJMG extends ConsultaTribunal {
 }
 
 /**
+ * Implementação para TJBA - PJe (placeholder - requer integração real)
+ */
+export class ConsultaTJBA extends ConsultaTribunal {
+  constructor() {
+    super("TJBA");
+  }
+
+  async consultarProcesso(numeroProcesso: string): Promise<ConsultaProcessoResult> {
+    // TODO: Implementar integração real com TJBA/PJe
+    // O PJe do TJBA utiliza:
+    // 1. PJe 1º Grau: https://pje.tjba.jus.br
+    // 2. PJe 2º Grau: https://pje2g.tjba.jus.br
+    // 3. Consulta pública via ESAJ: https://esaj.tjba.jus.br
+
+    console.log(`[TJBA] Consultando processo: ${numeroProcesso}`);
+
+    return {
+      success: false,
+      error: "Integração com TJBA/PJe ainda não implementada. Configure as credenciais de acesso.",
+    };
+  }
+
+  async consultarMovimentacoes(numeroProcesso: string, ultimaData?: Date): Promise<MovimentacaoProcessual[]> {
+    console.log(`[TJBA] Consultando movimentações: ${numeroProcesso}`);
+    return [];
+  }
+
+  /**
+   * Consulta processo no SEEU (Sistema Eletrônico de Execução Unificado)
+   */
+  async consultarSEEU(numeroProcesso: string): Promise<ConsultaProcessoResult> {
+    // O SEEU é o sistema nacional de execução penal
+    // URL: https://seeu.pje.jus.br
+    console.log(`[SEEU] Consultando execução: ${numeroProcesso}`);
+
+    return {
+      success: false,
+      error: "Integração com SEEU ainda não implementada. Requer certificado digital.",
+    };
+  }
+}
+
+/**
  * Factory para criar instância do consultor de tribunal
  */
 export function criarConsultaTribunal(tribunalId: string): ConsultaTribunal {
   switch (tribunalId.toUpperCase()) {
+    case "TJBA":
+      return new ConsultaTJBA();
     case "TJMG":
       return new ConsultaTJMG();
     // Adicionar outros tribunais conforme implementação
