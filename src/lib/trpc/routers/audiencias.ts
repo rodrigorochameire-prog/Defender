@@ -125,6 +125,7 @@ export const audienciasRouter = router({
           processo: {
             id: processos.id,
             numero: processos.numeroAutos,
+            atribuicao: processos.atribuicao,
           },
         })
         .from(audiencias)
