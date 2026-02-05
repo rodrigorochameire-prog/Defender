@@ -93,4 +93,11 @@ export type InngestEvents = {
       userId?: number;
     };
   };
+
+  // Prazos
+  "prazos/check": {
+    data: {
+      userId?: number;
+    };
+  };
 };

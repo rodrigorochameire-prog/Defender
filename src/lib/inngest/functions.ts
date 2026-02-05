@@ -353,6 +353,266 @@ export const syncAllDriveFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// VERIFICAÇÃO DIÁRIA DE PRAZOS
+// ============================================
+
+import { db, demandas, notifications, users, assistidos, processos } from "@/lib/db";
+import { and, eq, lte, gte, isNull, or, sql } from "drizzle-orm";
+
+/**
+ * Verificação diária de prazos críticos
+ * Executa às 6h da manhã para gerar notificações internas
+ */
+export const checkPrazosCriticosFn = inngest.createFunction(
+  {
+    id: "check-prazos-criticos",
+    name: "Check Prazos Criticos Diario",
+    retries: 3,
+  },
+  { cron: "0 6 * * *" }, // Todos os dias às 6h
+  async ({ step }) => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const em7dias = new Date(hoje);
+    em7dias.setDate(em7dias.getDate() + 7);
+
+    // Buscar demandas com prazos críticos
+    const demandasCriticas = await step.run("buscar-demandas-criticas", async () => {
+      return await db.query.demandas.findMany({
+        where: and(
+          or(
+            // Prazo vencido ou nos próximos 7 dias
+            lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
+            lte(demandas.prazoFinal, em7dias)
+          ),
+          // Não concluídas
+          sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO', '7_PROTOCOLADO', '7_CIENCIA')`
+        ),
+        with: {
+          assistido: true,
+          processo: true,
+          responsavel: true,
+        },
+      });
+    });
+
+    if (!demandasCriticas || demandasCriticas.length === 0) {
+      return { success: true, notificationsCreated: 0, message: "Nenhum prazo crítico encontrado" };
+    }
+
+    // Buscar todos os defensores para notificar
+    const defensores = await step.run("buscar-defensores", async () => {
+      return await db.query.users.findMany({
+        where: or(
+          eq(users.role, "defensor"),
+          eq(users.role, "admin")
+        ),
+      });
+    });
+
+    const notificacoesParaCriar: {
+      userId: number;
+      demandaId: number;
+      title: string;
+      message: string;
+      type: string;
+      actionUrl: string;
+    }[] = [];
+
+    for (const demanda of demandasCriticas) {
+      const prazoData = demanda.prazoFinal || (demanda.prazo ? new Date(demanda.prazo) : null);
+      if (!prazoData) continue;
+
+      const prazoDate = new Date(prazoData);
+      prazoDate.setHours(0, 0, 0, 0);
+
+      const diffDias = Math.ceil((prazoDate.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Determinar urgência
+      let tipo: string;
+      let prefixo: string;
+
+      if (diffDias < 0) {
+        tipo = "error";
+        prefixo = `⚠️ VENCIDO (${Math.abs(diffDias)} dias)`;
+      } else if (diffDias === 0) {
+        tipo = "error";
+        prefixo = "🔴 VENCE HOJE";
+      } else if (diffDias === 1) {
+        tipo = "warning";
+        prefixo = "🟠 VENCE AMANHÃ";
+      } else if (diffDias <= 3) {
+        tipo = "warning";
+        prefixo = `🟡 VENCE EM ${diffDias} DIAS`;
+      } else {
+        tipo = "info";
+        prefixo = `📅 Prazo em ${diffDias} dias`;
+      }
+
+      // Adicionar alerta extra para réu preso
+      if (demanda.reuPreso) {
+        prefixo = `🔒 RÉU PRESO - ${prefixo}`;
+        if (tipo === "info") tipo = "warning";
+      }
+
+      const title = `${prefixo}: ${demanda.ato}`;
+      const message = [
+        demanda.assistido?.nome ? `Assistido: ${demanda.assistido.nome}` : "",
+        demanda.processo?.numeroAutos ? `Processo: ${demanda.processo.numeroAutos}` : "",
+        `Prazo: ${prazoDate.toLocaleDateString("pt-BR")}`,
+      ].filter(Boolean).join("\n");
+
+      // Notificar o responsável ou todos os defensores
+      const destinatarios = demanda.responsavelId
+        ? defensores.filter(d => d.id === demanda.responsavelId)
+        : defensores;
+
+      for (const defensor of destinatarios) {
+        notificacoesParaCriar.push({
+          userId: defensor.id,
+          demandaId: demanda.id,
+          title,
+          message,
+          type: tipo,
+          actionUrl: `/admin/demandas/${demanda.id}`,
+        });
+      }
+    }
+
+    // Criar notificações em batch
+    if (notificacoesParaCriar.length > 0) {
+      await step.run("criar-notificacoes", async () => {
+        // Verificar notificações já existentes para evitar duplicatas
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        for (const notif of notificacoesParaCriar) {
+          // Verificar se já existe notificação para esta demanda hoje
+          const existente = await db.query.notifications.findFirst({
+            where: and(
+              eq(notifications.userId, notif.userId),
+              eq(notifications.demandaId, notif.demandaId),
+              gte(notifications.createdAt, hoje)
+            ),
+          });
+
+          if (!existente) {
+            await db.insert(notifications).values({
+              userId: notif.userId,
+              demandaId: notif.demandaId,
+              title: notif.title,
+              message: notif.message,
+              type: notif.type,
+              actionUrl: notif.actionUrl,
+              isRead: false,
+            });
+          }
+        }
+      });
+    }
+
+    return {
+      success: true,
+      demandasVerificadas: demandasCriticas.length,
+      notificationsCreated: notificacoesParaCriar.length,
+    };
+  }
+);
+
+/**
+ * Verificação manual de prazos (trigger por evento)
+ */
+export const checkPrazosManualFn = inngest.createFunction(
+  {
+    id: "check-prazos-manual",
+    name: "Check Prazos Manual",
+    retries: 2,
+  },
+  { event: "prazos/check" },
+  async ({ event, step }) => {
+    const { userId } = event.data || {};
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const em7dias = new Date(hoje);
+    em7dias.setDate(em7dias.getDate() + 7);
+
+    // Buscar demandas críticas
+    const demandasCriticas = await step.run("buscar-demandas", async () => {
+      const whereClause = userId
+        ? and(
+            or(
+              lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
+              lte(demandas.prazoFinal, em7dias)
+            ),
+            sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO', '7_PROTOCOLADO', '7_CIENCIA')`,
+            eq(demandas.responsavelId, userId)
+          )
+        : and(
+            or(
+              lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
+              lte(demandas.prazoFinal, em7dias)
+            ),
+            sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO', '7_PROTOCOLADO', '7_CIENCIA')`
+          );
+
+      return await db.query.demandas.findMany({
+        where: whereClause,
+        with: {
+          assistido: true,
+          processo: true,
+        },
+        orderBy: (d, { asc }) => [asc(d.prazoFinal), asc(d.prazo)],
+      });
+    });
+
+    // Categorizar
+    const vencidos = demandasCriticas.filter(d => {
+      const prazo = d.prazoFinal || (d.prazo ? new Date(d.prazo) : null);
+      return prazo && new Date(prazo) < hoje;
+    });
+
+    const venceHoje = demandasCriticas.filter(d => {
+      const prazo = d.prazoFinal || (d.prazo ? new Date(d.prazo) : null);
+      if (!prazo) return false;
+      const prazoDate = new Date(prazo);
+      prazoDate.setHours(0, 0, 0, 0);
+      return prazoDate.getTime() === hoje.getTime();
+    });
+
+    const proximosDias = demandasCriticas.filter(d => {
+      const prazo = d.prazoFinal || (d.prazo ? new Date(d.prazo) : null);
+      if (!prazo) return false;
+      const prazoDate = new Date(prazo);
+      prazoDate.setHours(0, 0, 0, 0);
+      return prazoDate > hoje && prazoDate <= em7dias;
+    });
+
+    const reuPresoVencido = vencidos.filter(d => d.reuPreso).length;
+
+    return {
+      success: true,
+      resumo: {
+        total: demandasCriticas.length,
+        vencidos: vencidos.length,
+        venceHoje: venceHoje.length,
+        proximosDias: proximosDias.length,
+        reuPresoVencido,
+      },
+      detalhes: demandasCriticas.map(d => ({
+        id: d.id,
+        ato: d.ato,
+        assistido: d.assistido?.nome,
+        prazo: d.prazoFinal || d.prazo,
+        reuPreso: d.reuPreso,
+      })),
+    };
+  }
+);
+
 // Exportar todas as funções para o handler
 export const functions = [
   sendWhatsAppMessageFn,
@@ -364,4 +624,6 @@ export const functions = [
   syncDriveFn,
   syncDriveFolderFn,
   syncAllDriveFn,
+  checkPrazosCriticosFn,
+  checkPrazosManualFn,
 ];

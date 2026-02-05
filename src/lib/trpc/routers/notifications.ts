@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, notifications, users } from "@/lib/db";
-import { eq, and, desc, sql, ne } from "drizzle-orm";
+import { db, notifications, users, demandas } from "@/lib/db";
+import { eq, and, desc, sql, ne, lte, gte, or } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, notificationSchema } from "@/lib/validations";
+import { inngest } from "@/lib/inngest/client";
 
 export const notificationsRouter = router({
   /**
@@ -184,6 +185,90 @@ export const notificationsRouter = router({
         return notification;
       }, "Erro ao enviar notificação");
     }),
+
+  /**
+   * Dispara verificação de prazos críticos e gera notificações
+   */
+  checkPrazosCriticos: protectedProcedure.mutation(async ({ ctx }) => {
+    return safeAsync(async () => {
+      const userId = ctx.user!.id;
+
+      // Disparar via Inngest para processamento assíncrono
+      await inngest.send({
+        name: "prazos/check",
+        data: { userId },
+      });
+
+      return {
+        success: true,
+        message: "Verificação de prazos iniciada. Você receberá notificações em breve."
+      };
+    }, "Erro ao verificar prazos");
+  }),
+
+  /**
+   * Retorna resumo de prazos críticos (sem criar notificações)
+   */
+  resumoPrazos: protectedProcedure.query(async ({ ctx }) => {
+    return safeAsync(async () => {
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+
+      const em7dias = new Date(hoje);
+      em7dias.setDate(em7dias.getDate() + 7);
+
+      // Buscar demandas com prazos críticos
+      const demandasCriticas = await db.query.demandas.findMany({
+        where: and(
+          or(
+            lte(demandas.prazo, em7dias.toISOString().split("T")[0]),
+            lte(demandas.prazoFinal, em7dias)
+          ),
+          sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO', '7_PROTOCOLADO', '7_CIENCIA')`
+        ),
+        with: {
+          assistido: true,
+        },
+      });
+
+      // Categorizar
+      let vencidos = 0;
+      let venceHoje = 0;
+      let proximosDias = 0;
+      let reuPresoVencido = 0;
+      let reuPresoCritico = 0;
+
+      for (const d of demandasCriticas) {
+        const prazo = d.prazoFinal || (d.prazo ? new Date(d.prazo) : null);
+        if (!prazo) continue;
+
+        const prazoDate = new Date(prazo);
+        prazoDate.setHours(0, 0, 0, 0);
+
+        const diffDias = Math.ceil((prazoDate.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDias < 0) {
+          vencidos++;
+          if (d.reuPreso) reuPresoVencido++;
+        } else if (diffDias === 0) {
+          venceHoje++;
+          if (d.reuPreso) reuPresoCritico++;
+        } else if (diffDias <= 7) {
+          proximosDias++;
+          if (d.reuPreso && diffDias <= 3) reuPresoCritico++;
+        }
+      }
+
+      return {
+        total: demandasCriticas.length,
+        vencidos,
+        venceHoje,
+        proximosDias,
+        reuPresoVencido,
+        reuPresoCritico,
+      };
+    }, "Erro ao buscar resumo de prazos");
+  }),
 
   /**
    * Envia notificação para todos os usuários internos (admin)
