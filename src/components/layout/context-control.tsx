@@ -467,97 +467,97 @@ function ContextPopoverContent({
 
   return (
     <div className="divide-y divide-zinc-600/30">
-      {/* Secao: Defensor */}
+      {/* Secao: Defensor Principal */}
       <div className="p-3">
         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
           Defensor
         </p>
 
-        {/* Especializados (Juri/EP/VVD) */}
-        {juriEpVvdDefensores.length > 0 && (
-          <div className="flex gap-2 mb-2">
-            {juriEpVvdDefensores.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => updateDefensor(d.id)}
-                className={cn(
-                  "flex-1 py-2 px-2 rounded-lg transition-all duration-200 text-center",
-                  "border-2",
-                  defensor === d.id
-                    ? "border-emerald-500 bg-emerald-900/30"
-                    : "border-transparent hover:bg-zinc-700/50"
-                )}
-              >
-                <div className={cn(
-                  "w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs mx-auto mb-1",
-                  d.cor
-                )}>
-                  {d.inicial}
-                </div>
-                <p className="text-[10px] font-medium text-zinc-300 truncate">
-                  {d.nomeCurto}
-                </p>
-              </button>
-            ))}
-          </div>
+        {/* Defensores Principais (Juri/EP/VVD) + Visão Geral */}
+        <div className="grid grid-cols-3 gap-2 mb-2">
+          {juriEpVvdDefensores.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => updateDefensor(d.id)}
+              className={cn(
+                "py-3 px-2 rounded-xl transition-all duration-200 text-center",
+                "border-2",
+                defensor === d.id
+                  ? "border-emerald-500 bg-emerald-900/30 shadow-lg shadow-emerald-900/20"
+                  : "border-zinc-700/50 hover:bg-zinc-700/50 hover:border-zinc-600"
+              )}
+            >
+              <div className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm mx-auto mb-1.5 shadow-md",
+                d.cor
+              )}>
+                {d.inicial}
+              </div>
+              <p className="text-[11px] font-semibold text-zinc-200 truncate">
+                {d.nomeCurto}
+              </p>
+            </button>
+          ))}
+        </div>
+
+        {/* Visao Geral - Destaque especial */}
+        {geralOption && (
+          <button
+            onClick={() => updateDefensor(geralOption.id)}
+            className={cn(
+              "w-full py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3",
+              "border-2 mt-2",
+              defensor === geralOption.id
+                ? "border-emerald-500 bg-gradient-to-r from-emerald-900/40 to-emerald-800/30 shadow-lg shadow-emerald-900/20"
+                : "border-zinc-600/50 hover:bg-zinc-700/50 hover:border-zinc-500 bg-zinc-800/30"
+            )}
+          >
+            <Eye className={cn(
+              "w-5 h-5",
+              defensor === geralOption.id ? "text-emerald-400" : "text-zinc-400"
+            )} />
+            <p className={cn(
+              "text-sm font-semibold",
+              defensor === geralOption.id ? "text-emerald-300" : "text-zinc-300"
+            )}>
+              Visão Geral
+            </p>
+          </button>
         )}
 
-        {/* Criminal Geral */}
+        {/* Varas Criminais - Seção discreta para admin */}
         {varasCriminaisDefensores.length > 0 && (
-          <>
-            <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider mb-1.5 mt-2">
-              Varas Criminais
+          <div className="mt-4 pt-3 border-t border-zinc-700/30">
+            <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <Settings2 className="w-3 h-3" />
+              Modo Admin - Varas Criminais
             </p>
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-2">
               {varasCriminaisDefensores.map((d) => (
                 <button
                   key={d.id}
                   onClick={() => updateDefensor(d.id)}
                   className={cn(
-                    "flex-1 py-2 px-2 rounded-lg transition-all duration-200 text-center",
-                    "border-2",
+                    "flex-1 py-1.5 px-2 rounded-lg transition-all duration-200 text-center",
+                    "border opacity-60 hover:opacity-100",
                     defensor === d.id
-                      ? "border-emerald-500 bg-emerald-900/30"
-                      : "border-transparent hover:bg-zinc-700/50"
+                      ? "border-zinc-500 bg-zinc-700/50 opacity-100"
+                      : "border-zinc-700/30 hover:bg-zinc-800/50"
                   )}
                 >
                   <div className={cn(
-                    "w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs mx-auto mb-1",
+                    "w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] mx-auto mb-0.5",
                     d.cor
                   )}>
                     {d.inicial}
                   </div>
-                  <p className="text-[10px] font-medium text-zinc-300 truncate">
+                  <p className="text-[9px] font-medium text-zinc-400 truncate">
                     {d.nomeCurto}
                   </p>
                 </button>
               ))}
             </div>
-          </>
-        )}
-
-        {/* Visao Geral */}
-        {geralOption && (
-          <button
-            onClick={() => updateDefensor(geralOption.id)}
-            className={cn(
-              "w-full py-2 px-3 rounded-lg transition-all duration-200 flex items-center gap-2",
-              "border-2",
-              defensor === geralOption.id
-                ? "border-emerald-500 bg-emerald-900/30"
-                : "border-transparent hover:bg-zinc-700/50"
-            )}
-          >
-            <div className={cn(
-              "w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px]",
-              geralOption.cor
-            )}>
-              {geralOption.inicial}
-            </div>
-            <p className="text-[10px] font-medium text-zinc-300">
-              {geralOption.nome}
-            </p>
-          </button>
+          </div>
         )}
       </div>
 

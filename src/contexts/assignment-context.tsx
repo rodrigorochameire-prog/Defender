@@ -259,18 +259,58 @@ const PETICIONAMENTO_MODULES: MenuSection[] = [
 // Itens gerais que aparecem em todas as especialidades
 // ==========================================
 
-export const CONTEXT_MENU_ITEMS: AssignmentMenuItem[] = [
+// Itens principais (sempre visíveis no topo)
+export const MAIN_MENU_ITEMS: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Demandas", path: "/admin/demandas", icon: "ListTodo", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Agenda", path: "/admin/agenda", icon: "Calendar", description: "Agenda completa de eventos", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
-  { label: "Casos", path: "/admin/casos", icon: "Briefcase", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
-  { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
-  { label: "Processos", path: "/admin/processos", icon: "Scale", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
-  { label: "Drive", path: "/admin/drive", icon: "FolderOpen", description: "Arquivos e documentos", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
-  { label: "Modelos", path: "/admin/modelos", icon: "FileStack", description: "Banco de modelos de documentos", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
-  { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch", description: "Diligências e OSINT", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
-  { label: "Lógica", path: "/admin/logica", icon: "Brain", description: "Contradições e teses", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
-  { label: "Equipe", path: "/admin/equipe", icon: "UsersRound", description: "Gestão da equipe", requiredRoles: ["admin", "defensor", "servidor"] },
+];
+
+// Grupos colapsáveis do menu principal
+export const COLLAPSIBLE_MENU_GROUPS: MenuSection[] = [
+  {
+    id: "cadastros",
+    title: "Cadastros",
+    collapsible: true,
+    defaultOpen: false,
+    items: [
+      { label: "Casos", path: "/admin/casos", icon: "Briefcase", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+      { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
+      { label: "Processos", path: "/admin/processos", icon: "Scale", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+    ],
+  },
+  {
+    id: "documentos",
+    title: "Documentos",
+    collapsible: true,
+    defaultOpen: false,
+    items: [
+      { label: "Drive", path: "/admin/drive", icon: "FolderOpen", description: "Arquivos e documentos", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+      { label: "Modelos", path: "/admin/modelos", icon: "FileText", description: "Banco de modelos", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+    ],
+  },
+  {
+    id: "ferramentas",
+    title: "Ferramentas",
+    collapsible: true,
+    defaultOpen: false,
+    items: [
+      { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch", description: "Diligências e OSINT", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+      { label: "Lógica", path: "/admin/logica", icon: "Brain", description: "Contradições e teses", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+    ],
+  },
+];
+
+// Item de equipe (separado, para admins/defensores)
+export const TEAM_MENU_ITEM: AssignmentMenuItem = {
+  label: "Equipe", path: "/admin/equipe", icon: "UsersRound", description: "Gestão da equipe", requiredRoles: ["admin", "defensor", "servidor"]
+};
+
+// Para compatibilidade - junta todos os itens em uma lista flat
+export const CONTEXT_MENU_ITEMS: AssignmentMenuItem[] = [
+  ...MAIN_MENU_ITEMS,
+  ...COLLAPSIBLE_MENU_GROUPS.flatMap(g => g.items),
+  TEAM_MENU_ITEM,
 ];
 
 // ==========================================

@@ -29,8 +29,9 @@ import { ContextControl } from "@/components/layout/context-control";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { EntitySheetProvider } from "@/contexts/entity-sheet-context";
 import { SidebarLogo } from "@/components/shared/logo";
-import { 
+import {
   useAssignment, CONTEXT_MENU_ITEMS, UTILITIES_MENU,
+  MAIN_MENU_ITEMS, COLLAPSIBLE_MENU_GROUPS, TEAM_MENU_ITEM,
   type MenuSection, type AssignmentMenuItem,
 } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
@@ -190,16 +191,16 @@ function MenuSectionComponent({ section, pathname, isCollapsed, onNavigate, user
   if (section.collapsible && !isCollapsed) {
     return (
       <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mb-1">
-        <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 group">
-          <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-wider group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
+        <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 hover:bg-zinc-700/40 group">
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
             {section.title}
           </span>
           <ChevronDown className={cn(
-            "h-3.5 w-3.5 transition-all duration-300 text-zinc-400 dark:text-zinc-600 group-hover:text-zinc-600 dark:group-hover:text-zinc-400", 
+            "h-3.5 w-3.5 transition-all duration-300 text-zinc-600 group-hover:text-zinc-400",
             isOpen && "rotate-180"
           )} />
         </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-0.5 mt-1">
+        <CollapsibleContent className="space-y-0.5 mt-1 ml-2 pl-2 border-l border-zinc-700/50">
           {visibleItems.map((item) => {
             const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
             return <MenuItem key={item.path} item={item} isActive={isActive} isCollapsed={isCollapsed} onNavigate={onNavigate} userRole={userRole} />;
@@ -303,21 +304,43 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
                     <LayoutDashboard className="w-3.5 h-3.5 text-zinc-400" />
                   </div>
                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                    Navegação
+                    Principal
                   </span>
                   <div className="flex-1 h-px bg-gradient-to-r from-zinc-700/80 to-transparent" />
                 </div>
               )}
-              {CONTEXT_MENU_ITEMS.map((item) => (
-                <MenuItem 
-                  key={item.path} 
-                  item={item} 
-                  isActive={pathname === item.path} 
-                  isCollapsed={isCollapsed} 
+              {/* Itens principais (Dashboard, Demandas, Agenda) */}
+              {MAIN_MENU_ITEMS.map((item) => (
+                <MenuItem
+                  key={item.path}
+                  item={item}
+                  isActive={pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path))}
+                  isCollapsed={isCollapsed}
                   onNavigate={handleNavigate}
                   userRole={userRole}
                 />
               ))}
+
+              {/* Grupos colapsáveis (Cadastros, Documentos, Ferramentas) */}
+              {COLLAPSIBLE_MENU_GROUPS.map((section) => (
+                <MenuSectionComponent
+                  key={section.id}
+                  section={section}
+                  pathname={pathname}
+                  isCollapsed={isCollapsed}
+                  onNavigate={handleNavigate}
+                  userRole={userRole}
+                />
+              ))}
+
+              {/* Item de Equipe (separado) */}
+              <MenuItem
+                item={TEAM_MENU_ITEM}
+                isActive={pathname.startsWith("/admin/equipe")}
+                isCollapsed={isCollapsed}
+                onNavigate={handleNavigate}
+                userRole={userRole}
+              />
             </SidebarMenu>
           </div>
 
