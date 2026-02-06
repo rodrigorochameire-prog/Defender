@@ -406,10 +406,10 @@ export default function Demandas() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"table" | "cards" | "grid">(() => {
     if (typeof window !== "undefined") {
-      // Padrão é "table" (modo planilha) - mais prático para gestão de demandas
-      return (localStorage.getItem("defender_demandas_view_mode") as "table" | "cards" | "grid") || "table";
+      // Padrão é "grid" (modo grid premium) - melhor visualização de cards
+      return (localStorage.getItem("defender_demandas_view_mode") as "table" | "cards" | "grid") || "grid";
     }
-    return "table";
+    return "grid";
   });
 
   // ==========================================
@@ -1091,8 +1091,22 @@ export default function Demandas() {
                     </button>
                   ))}
                 </div>
-                {/* Toggle de Visualização: Planilha / Cards / Grid */}
+                {/* Toggle de Visualização: Grid / Lista / Cards */}
                 <div className="hidden md:flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 gap-0.5">
+                  <button
+                    onClick={() => {
+                      setViewMode("grid");
+                      localStorage.setItem("defender_demandas_view_mode", "grid");
+                    }}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === "grid"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    }`}
+                    title="Grid Premium (Padrão)"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                  </button>
                   <button
                     onClick={() => {
                       setViewMode("table");
@@ -1103,7 +1117,7 @@ export default function Demandas() {
                         ? "bg-emerald-600 text-white shadow-sm"
                         : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                     }`}
-                    title="Lista (Padrão)"
+                    title="Lista"
                   >
                     <Table2 className="w-3.5 h-3.5" />
                   </button>
@@ -1120,20 +1134,6 @@ export default function Demandas() {
                     title="Cards Horizontais"
                   >
                     <LayoutList className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewMode("grid");
-                      localStorage.setItem("defender_demandas_view_mode", "grid");
-                    }}
-                    className={`p-1.5 rounded-md transition-all ${
-                      viewMode === "grid"
-                        ? "bg-emerald-600 text-white shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                    }`}
-                    title="Grid Premium"
-                  >
-                    <LayoutGrid className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <button
@@ -1174,7 +1174,7 @@ export default function Demandas() {
               </div>
             )}
 
-            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : "p-4"} max-h-[calc(100vh-400px)] min-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900`}>
+            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : "p-4"} max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900`}>
               {viewMode === "table" ? (
                 /* ========== MODO PLANILHA (PADRÃO) ========== */
                 <DemandaTableView
