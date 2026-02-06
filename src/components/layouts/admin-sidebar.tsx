@@ -92,7 +92,7 @@ const iconMap: Record<string, React.ElementType> = {
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
   Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
-  ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Plus
+  ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";

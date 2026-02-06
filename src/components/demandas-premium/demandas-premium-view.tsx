@@ -456,39 +456,40 @@ export default function Demandas() {
   });
 
   // Mapear dados do banco para o formato do componente
-  // Por enquanto, mantemos os mocks como base e adicionamos dados do banco se existirem
-  useEffect(() => {
-    if (demandasDB && demandasDB.length > 0) {
-      const mappedDemandas = demandasDB.map((d: any) => ({
-        id: String(d.id),
-        assistido: d.assistido?.nome || d.titulo || "Sem assistido",
-        assistidoId: d.assistido?.id || d.assistidoId || null,
-        processoId: d.processo?.id || d.processoId || null,
-        // Usar substatus granular quando disponível, senão mapear do status coarse do DB
-        status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "fila",
-        prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",
-        data: d.dataEntrada ? new Date(d.dataEntrada + "T12:00:00").toLocaleDateString("pt-BR") : new Date(d.createdAt).toLocaleDateString("pt-BR"),
-        // dataInclusao: timestamp ISO para ordenação por recentes (usado na importação do PJe)
-        dataInclusao: d.createdAt ? new Date(d.createdAt).toISOString() : new Date().toISOString(),
-        processos: d.processo?.numeroAutos
-          ? [{ tipo: "", numero: d.processo.numeroAutos }]
-          : [],
-        ato: d.ato || d.titulo || "",
-        providencias: d.providencias || "",
-        atribuicao: ATRIBUICAO_ENUM_TO_LABEL[d.processo?.atribuicao] || d.atribuicao || "Criminal Geral",
-        estadoPrisional: d.reuPreso ? "preso" : (d.assistido?.statusPrisional || "solto"),
-        prioridade: d.prioridade || "normal",
-        arquivado: d.status === "ARQUIVADO",
-        reuPreso: d.reuPreso || false,
-        substatus: d.substatus || null,
-      }));
-      // Usar apenas dados do banco
-      setDemandas(mappedDemandas);
-    } else {
-      // Se banco vazio, mantém array vazio
-      setDemandas([]);
+  // Usar useMemo para evitar re-renders desnecessários
+  const mappedDemandas = useMemo(() => {
+    if (!demandasDB || demandasDB.length === 0) {
+      return [];
     }
+    return demandasDB.map((d: any) => ({
+      id: String(d.id),
+      assistido: d.assistido?.nome || d.titulo || "Sem assistido",
+      assistidoId: d.assistido?.id || d.assistidoId || null,
+      processoId: d.processo?.id || d.processoId || null,
+      // Usar substatus granular quando disponível, senão mapear do status coarse do DB
+      status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "fila",
+      prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",
+      data: d.dataEntrada ? new Date(d.dataEntrada + "T12:00:00").toLocaleDateString("pt-BR") : new Date(d.createdAt).toLocaleDateString("pt-BR"),
+      // dataInclusao: timestamp ISO para ordenação por recentes (usado na importação do PJe)
+      dataInclusao: d.createdAt ? new Date(d.createdAt).toISOString() : new Date().toISOString(),
+      processos: d.processo?.numeroAutos
+        ? [{ tipo: "", numero: d.processo.numeroAutos }]
+        : [],
+      ato: d.ato || d.titulo || "",
+      providencias: d.providencias || "",
+      atribuicao: ATRIBUICAO_ENUM_TO_LABEL[d.processo?.atribuicao] || d.atribuicao || "Criminal Geral",
+      estadoPrisional: d.reuPreso ? "preso" : (d.assistido?.statusPrisional || "solto"),
+      prioridade: d.prioridade || "normal",
+      arquivado: d.status === "ARQUIVADO",
+      reuPreso: d.reuPreso || false,
+      substatus: d.substatus || null,
+    }));
   }, [demandasDB]);
+
+  // Sincronizar demandas mapeadas com o estado
+  useEffect(() => {
+    setDemandas(mappedDemandas);
+  }, [mappedDemandas]);
 
   // Gerar lista de atos dinamicamente baseado na atribuição selecionada
   const atoOptionsFiltered = useMemo(() => {
