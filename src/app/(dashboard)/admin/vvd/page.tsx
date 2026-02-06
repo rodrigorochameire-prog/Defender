@@ -84,7 +84,7 @@ export default function VVDPage() {
   const intimacoes = intimacoesData || [];
 
   // Função para importar demandas gerais (não-MPU) para a tabela de demandas
-  const handleImportDemandasGerais = async (importedData: any[]) => {
+  const handleImportDemandasGerais = async (importedData: any[], atualizarExistentes?: boolean) => {
     if (importedData.length === 0) return;
 
     // Mapear dados do modal para o formato esperado pela mutation importFromSheets
@@ -99,7 +99,7 @@ export default function VVDPage() {
       atribuicao: "Violência Doméstica",
     }));
 
-    importDemandasMutation.mutate({ rows });
+    importDemandasMutation.mutate({ rows, atualizarExistentes: atualizarExistentes || false });
   };
 
   // Função para atualizar todos os dados após importação

@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle } from "lucide-react";
+import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle, RefreshCw } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -24,7 +25,7 @@ import {
 interface PJeImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (demandas: any[]) => void;
+  onImport: (demandas: any[], atualizarExistentes?: boolean) => void;
   atribuicaoOptions: Array<{ value: string; label: string; icon?: any }>;
   atoOptions: Array<{ value: string; label: string; icon?: any }>;
   statusOptions: Array<{ value: string; label: string; icon?: any }>;
@@ -53,6 +54,9 @@ export function PJeImportModal({
   const [intimacoesMPU, setIntimacoesMPU] = useState<IntimacaoPJeSimples[]>([]);
   const [intimacoesGerais, setIntimacoesGerais] = useState<IntimacaoPJeSimples[]>([]);
   const [tipoIntimacaoVVD, setTipoIntimacaoVVD] = useState<"CIENCIA" | "PETICIONAR">("CIENCIA");
+
+  // Opção para atualizar duplicatas existentes
+  const [atualizarDuplicatas, setAtualizarDuplicatas] = useState(false);
 
   // Mutation para importação VVD
   const importarVVDMutation = trpc.vvd.importarIntimacoesPJe.useMutation({
@@ -139,6 +143,7 @@ export function PJeImportModal({
     setTipoIntimacaoVVD("CIENCIA");
     setResultadoVerificacao(null);
     setIsImporting(false);
+    setAtualizarDuplicatas(false);
   };
 
   const handleImportar = async () => {
@@ -185,10 +190,17 @@ export function PJeImportModal({
       }
     } else {
       // Importação regular - vai para demandas
-      const demandas = intimacoes.map((intimacao) =>
+      // Se atualizarDuplicatas está ativo, incluir também as duplicadas
+      const intimacoesParaImportar = atualizarDuplicatas && resultadoVerificacao
+        ? [...intimacoes, ...resultadoVerificacao.duplicadas]
+        : intimacoes;
+
+      const demandas = intimacoesParaImportar.map((intimacao) =>
         intimacaoToDemanda(intimacao, atribuicao)
       );
-      onImport(demandas);
+
+      // Passar flag indicando que deve atualizar existentes
+      onImport(demandas, atualizarDuplicatas);
       onClose();
       resetModal();
     }
@@ -487,6 +499,30 @@ export function PJeImportModal({
                     <pre className="text-sm text-amber-800 dark:text-amber-200 whitespace-pre-wrap font-sans">
                       {formatarResumoComDuplicatas(resultadoVerificacao)}
                     </pre>
+
+                    {/* Opção para atualizar duplicatas */}
+                    <div className="mt-4 pt-4 border-t border-amber-300 dark:border-amber-700">
+                      <div className="flex items-center gap-3 p-3 bg-white/80 dark:bg-amber-900/20 rounded-lg">
+                        <Checkbox
+                          id="atualizar-duplicatas"
+                          checked={atualizarDuplicatas}
+                          onCheckedChange={(checked) => setAtualizarDuplicatas(checked === true)}
+                          className="border-amber-400 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+                        />
+                        <div className="flex-1">
+                          <Label
+                            htmlFor="atualizar-duplicatas"
+                            className="text-sm font-medium text-amber-900 dark:text-amber-100 cursor-pointer"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 inline mr-1.5" />
+                            Atualizar intimações existentes
+                          </Label>
+                          <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                            Reimporta as duplicatas com a ordem correta do PJe
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -518,19 +554,97 @@ export function PJeImportModal({
             )}
 
             {/* Aviso se não houver intimações novas para importar */}
-            {intimacoes.length === 0 && resultadoVerificacao && (
-              <div className="p-5 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-950/30 dark:to-pink-950/30 border-2 border-red-300 dark:border-red-700 rounded-xl">
+            {intimacoes.length === 0 && resultadoVerificacao && resultadoVerificacao.totalDuplicadas > 0 && (
+              <div className={cn(
+                "p-5 border-2 rounded-xl transition-colors",
+                atualizarDuplicatas
+                  ? "bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-300 dark:border-emerald-700"
+                  : "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-300 dark:border-amber-700"
+              )}>
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-red-500 dark:bg-red-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-500/30">
-                    <AlertTriangle className="w-5 h-5 text-white" />
+                  <div className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg transition-colors",
+                    atualizarDuplicatas
+                      ? "bg-emerald-500 dark:bg-emerald-600 shadow-emerald-500/30"
+                      : "bg-amber-500 dark:bg-amber-600 shadow-amber-500/30"
+                  )}>
+                    {atualizarDuplicatas ? (
+                      <RefreshCw className="w-5 h-5 text-white" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5 text-white" />
+                    )}
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-base text-red-900 dark:text-red-100 mb-2">
-                      Todas as intimações já foram cadastradas
+                    <p className={cn(
+                      "font-bold text-base mb-2",
+                      atualizarDuplicatas
+                        ? "text-emerald-900 dark:text-emerald-100"
+                        : "text-amber-900 dark:text-amber-100"
+                    )}>
+                      {atualizarDuplicatas
+                        ? `${resultadoVerificacao.totalDuplicadas} intimações serão atualizadas`
+                        : "Todas as intimações já foram cadastradas"
+                      }
                     </p>
-                    <p className="text-sm text-red-800 dark:text-red-200">
-                      Não há intimações novas para importar. Todas as {resultadoVerificacao.totalDuplicadas} intimações encontradas já estão no sistema.
+                    <p className={cn(
+                      "text-sm",
+                      atualizarDuplicatas
+                        ? "text-emerald-800 dark:text-emerald-200"
+                        : "text-amber-800 dark:text-amber-200"
+                    )}>
+                      {atualizarDuplicatas
+                        ? "As intimações existentes serão atualizadas com a ordem correta do PJe."
+                        : `Não há intimações novas. Use a opção abaixo para atualizar as ${resultadoVerificacao.totalDuplicadas} existentes.`
+                      }
                     </p>
+
+                    {/* Opção para atualizar duplicatas */}
+                    <div className={cn(
+                      "mt-4 pt-4 border-t",
+                      atualizarDuplicatas
+                        ? "border-emerald-300 dark:border-emerald-700"
+                        : "border-amber-300 dark:border-amber-700"
+                    )}>
+                      <div className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg",
+                        atualizarDuplicatas
+                          ? "bg-white/80 dark:bg-emerald-900/20"
+                          : "bg-white/80 dark:bg-amber-900/20"
+                      )}>
+                        <Checkbox
+                          id="atualizar-duplicatas-todas"
+                          checked={atualizarDuplicatas}
+                          onCheckedChange={(checked) => setAtualizarDuplicatas(checked === true)}
+                          className={cn(
+                            atualizarDuplicatas
+                              ? "border-emerald-400 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                              : "border-amber-400 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+                          )}
+                        />
+                        <div className="flex-1">
+                          <Label
+                            htmlFor="atualizar-duplicatas-todas"
+                            className={cn(
+                              "text-sm font-medium cursor-pointer",
+                              atualizarDuplicatas
+                                ? "text-emerald-900 dark:text-emerald-100"
+                                : "text-amber-900 dark:text-amber-100"
+                            )}
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 inline mr-1.5" />
+                            Atualizar intimações existentes
+                          </Label>
+                          <p className={cn(
+                            "text-xs mt-0.5",
+                            atualizarDuplicatas
+                              ? "text-emerald-700 dark:text-emerald-300"
+                              : "text-amber-700 dark:text-amber-300"
+                          )}>
+                            Reimporta com a ordem correta do PJe
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -736,7 +850,7 @@ export function PJeImportModal({
               <Button
                 type="button"
                 onClick={handleImportar}
-                disabled={isImporting || intimacoes.length === 0}
+                disabled={isImporting || (intimacoes.length === 0 && (!atualizarDuplicatas || !resultadoVerificacao?.totalDuplicadas))}
                 className="h-11 px-6 text-sm font-semibold text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/30"
               >
                 {isImporting ? (
@@ -745,12 +859,26 @@ export function PJeImportModal({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Importando...
+                    {atualizarDuplicatas && intimacoes.length === 0 ? "Atualizando..." : "Importando..."}
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4 mr-2" />
-                    Importar {intimacoes.length} {intimacoes.length === 1 ? "Intimação" : "Intimações"}
+                    {atualizarDuplicatas && intimacoes.length === 0 ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Atualizar {resultadoVerificacao?.totalDuplicadas || 0} {resultadoVerificacao?.totalDuplicadas === 1 ? "Intimação" : "Intimações"}
+                      </>
+                    ) : atualizarDuplicatas && resultadoVerificacao?.totalDuplicadas ? (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Importar {intimacoes.length} + Atualizar {resultadoVerificacao.totalDuplicadas}
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Importar {intimacoes.length} {intimacoes.length === 1 ? "Intimação" : "Intimações"}
+                      </>
+                    )}
                   </>
                 )}
               </Button>

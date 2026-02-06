@@ -763,7 +763,7 @@ export default function Demandas() {
     },
   });
 
-  const handleImportDemandas = async (importedData: any[]) => {
+  const handleImportDemandas = async (importedData: any[], atualizarExistentes?: boolean) => {
     // Mapear dados do modal para o formato esperado pela mutation
     const rows = importedData.map((data) => ({
       assistido: data.assistido || "Não informado",
@@ -777,7 +777,7 @@ export default function Demandas() {
       atribuicao: data.atribuicao || "Substituição Criminal",
     }));
 
-    importFromSheetsMutation.mutate({ rows });
+    importFromSheetsMutation.mutate({ rows, atualizarExistentes: atualizarExistentes || false });
   };
 
   // Função para atualizar demandas existentes (usado pelo SheetsImportModal)

@@ -453,6 +453,7 @@ export const demandasRouter = router({
             atribuicao: z.string().optional(),
           })
         ),
+        atualizarExistentes: z.boolean().optional().default(false),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -520,6 +521,7 @@ export const demandasRouter = router({
 
       const results = {
         imported: 0,
+        updated: 0,
         skipped: 0,
         errors: [] as string[],
       };
@@ -598,11 +600,6 @@ export const demandasRouter = router({
             ),
           });
 
-          if (existingDemanda) {
-            results.skipped++;
-            continue;
-          }
-
           // 4. Mapear status
           const dbStatus = STATUS_TO_DB[row.status || "fila"] || "5_FILA";
           const reuPreso = row.estadoPrisional === "preso";
@@ -624,10 +621,32 @@ export const demandasRouter = router({
             return null;
           };
 
-          // 6. Criar demanda
           // Salvar substatus granular (elaborar, revisar, buscar, etc.) para display
           const substatus = row.status?.toLowerCase().trim() || null;
 
+          if (existingDemanda) {
+            // Se atualizarExistentes está ativo, atualizar a demanda existente
+            if (input.atualizarExistentes) {
+              await db.update(demandas)
+                .set({
+                  prazo: convertDate(row.prazo),
+                  dataEntrada: convertDate(row.dataEntrada),
+                  status: dbStatus as any,
+                  substatus: substatus,
+                  prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
+                  reuPreso,
+                  providencias: row.providencias || null,
+                  updatedAt: new Date(),
+                })
+                .where(eq(demandas.id, existingDemanda.id));
+              results.updated++;
+            } else {
+              results.skipped++;
+            }
+            continue;
+          }
+
+          // 6. Criar demanda
           await db.insert(demandas).values({
             processoId: processo.id,
             assistidoId: assistido.id,
