@@ -9,7 +9,8 @@ import {
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
   Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
-  FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound
+  FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
+  MoreHorizontal, Plus
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -22,9 +23,11 @@ import {
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
-import { AssignmentSwitcher } from "@/components/layout/assignment-switcher";
 import { ContextControl } from "@/components/layout/context-control";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { EntitySheetProvider } from "@/contexts/entity-sheet-context";
@@ -33,8 +36,7 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { StatusBar } from "@/components/layout/status-bar";
 import { DailyProgress } from "@/components/layout/daily-progress";
 import {
-  useAssignment, CONTEXT_MENU_ITEMS, UTILITIES_MENU,
-  MAIN_MENU_ITEMS, COLLAPSIBLE_MENU_GROUPS, TEAM_MENU_ITEM,
+  useAssignment, UTILITIES_MENU,
   type MenuSection, type AssignmentMenuItem,
 } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
@@ -49,17 +51,56 @@ interface AdminSidebarProps {
   userEmail?: string;
 }
 
+// ==========================================
+// MENU SIMPLIFICADO E HARMONIOSO
+// ==========================================
+
+// Menu principal - itens do dia a dia
+const MAIN_NAV: AssignmentMenuItem[] = [
+  { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
+  { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
+  { label: "Agenda", path: "/admin/agenda", icon: "Calendar" },
+  { label: "Casos", path: "/admin/casos", icon: "Briefcase" },
+];
+
+// Menu secundário - dados e registros
+const DATA_NAV: AssignmentMenuItem[] = [
+  { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
+  { label: "Processos", path: "/admin/processos", icon: "Scale" },
+];
+
+// Menu de recursos
+const RESOURCES_NAV: AssignmentMenuItem[] = [
+  { label: "Drive", path: "/admin/drive", icon: "FolderOpen" },
+  { label: "Modelos", path: "/admin/modelos", icon: "FileText" },
+  { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch" },
+  { label: "Lógica", path: "/admin/logica", icon: "Brain" },
+];
+
+// Menu de gestão (admin)
+const ADMIN_NAV: AssignmentMenuItem[] = [
+  { label: "Equipe", path: "/admin/equipe", icon: "UsersRound", requiredRoles: ["admin", "defensor", "servidor"] },
+];
+
+// Itens do menu "Mais" (utilidades)
+const MORE_NAV: AssignmentMenuItem[] = [
+  { label: "WhatsApp", path: "/admin/whatsapp", icon: "MessageCircle" },
+  { label: "Integrações", path: "/admin/integracoes", icon: "Zap" },
+  { label: "Relatórios", path: "/admin/relatorios", icon: "BarChart3", requiredRoles: ["admin", "defensor"] },
+  { label: "Configurações", path: "/admin/settings", icon: "Settings", requiredRoles: ["admin", "defensor"] },
+];
+
 const iconMap: Record<string, React.ElementType> = {
   LayoutDashboard, Users, Calendar, Bell, FileText, User, MessageCircle,
   Settings, BarChart3, Scale, Gavel, Clock, AlertTriangle, Calculator,
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
   Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
-  ChevronRight, ListTodo, Network, UsersRound
+  ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Plus
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
-const DEFAULT_WIDTH = 260;
+const DEFAULT_WIDTH = 240;
 
 export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProps) {
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
@@ -84,21 +125,24 @@ export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProp
   );
 }
 
-function MenuItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
+// ==========================================
+// COMPONENTE DE ITEM DE MENU SIMPLIFICADO
+// ==========================================
+
+function NavItem({ item, isActive, isCollapsed, onNavigate, userRole, compact = false }: {
   item: AssignmentMenuItem;
   isActive: boolean;
   isCollapsed: boolean;
   onNavigate: () => void;
   userRole?: UserRole;
+  compact?: boolean;
 }) {
   const Icon = iconMap[item.icon] || Briefcase;
-  
-  // Filtrar por role se definido
+
   if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
     return null;
   }
-  
-  // Design sofisticado e consistente - sidebar sempre escura
+
   if (isCollapsed) {
     return (
       <SidebarMenuItem>
@@ -107,54 +151,41 @@ function MenuItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
           isActive={isActive}
           tooltip={item.label}
           className={cn(
-            "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
-            isActive 
-              ? "bg-white/95 text-zinc-900 shadow-lg shadow-white/10" 
-              : "text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200"
+            "h-9 w-9 p-0 mx-auto rounded-lg flex items-center justify-center transition-all duration-200",
+            isActive
+              ? "bg-emerald-500/20 text-emerald-400"
+              : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
           )}
         >
           <Link href={item.path} prefetch={true} onClick={onNavigate}>
-            <Icon className={cn(
-              "h-5 w-5 transition-all duration-300", 
-              isActive ? "text-zinc-900" : "text-zinc-400"
-            )} strokeWidth={isActive ? 2.5 : 2} />
+            <Icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2.5 : 2} />
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
   }
-  
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
         asChild
         isActive={isActive}
-        tooltip={item.label}
         className={cn(
-          "h-11 transition-all duration-300 rounded-xl group/item relative overflow-hidden",
-          isActive 
-            ? "bg-white/95 text-zinc-900 shadow-lg shadow-white/10 font-semibold" 
-            : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+          "h-9 rounded-lg transition-all duration-200 group/item",
+          compact ? "px-2" : "px-3",
+          isActive
+            ? "bg-emerald-500/15 text-emerald-400 font-medium"
+            : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
         )}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
-          <div className={cn(
-            "h-7 w-7 rounded-lg flex items-center justify-center mr-1.5 transition-all duration-300",
-            isActive 
-              ? "bg-zinc-900/10" 
-              : "bg-zinc-700/50 group-hover/item:bg-zinc-600/60"
-          )}>
-            <Icon className={cn(
-              "h-4 w-4 transition-all duration-300 flex-shrink-0", 
-              isActive ? "text-zinc-900" : "text-zinc-400 group-hover/item:text-zinc-200"
-            )} strokeWidth={isActive ? 2.5 : 2} />
-          </div>
-          <span className="text-[13px] font-medium truncate">{item.label}</span>
-          {item.isPremium && (
-            <Sparkles className="h-3 w-3 text-amber-400 ml-auto" />
-          )}
-          {isActive && !item.isPremium && (
-            <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-zinc-900/40" />
+          <Icon className={cn(
+            "h-[18px] w-[18px] mr-2.5 transition-colors flex-shrink-0",
+            isActive ? "text-emerald-400" : "text-zinc-500 group-hover/item:text-zinc-400"
+          )} strokeWidth={isActive ? 2.5 : 2} />
+          <span className="text-[13px] truncate">{item.label}</span>
+          {isActive && (
+            <div className="ml-auto w-1 h-1 rounded-full bg-emerald-400" />
           )}
         </Link>
       </SidebarMenuButton>
@@ -162,75 +193,130 @@ function MenuItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
   );
 }
 
-function MenuSectionComponent({ section, pathname, isCollapsed, onNavigate, userRole }: {
-  section: MenuSection;
+// ==========================================
+// DIVISOR SUTIL
+// ==========================================
+
+function NavDivider({ label, collapsed }: { label?: string; collapsed: boolean }) {
+  if (collapsed) {
+    return <div className="my-2 mx-2 h-px bg-zinc-800" />;
+  }
+
+  if (label) {
+    return (
+      <div className="flex items-center gap-2 px-3 pt-4 pb-1">
+        <span className="text-[10px] font-medium text-zinc-600 uppercase tracking-wider">{label}</span>
+        <div className="flex-1 h-px bg-zinc-800/50" />
+      </div>
+    );
+  }
+
+  return <div className="my-2 mx-3 h-px bg-zinc-800/50" />;
+}
+
+// ==========================================
+// MENU "MAIS" EM POPOVER
+// ==========================================
+
+function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
+  items: AssignmentMenuItem[];
+  pathname: string;
+  onNavigate: () => void;
+  userRole?: UserRole;
+  isCollapsed: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const hasActiveItem = items.some(item => pathname.startsWith(item.path));
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "w-full h-9 rounded-lg transition-all duration-200 flex items-center",
+            isCollapsed ? "justify-center px-0" : "px-3",
+            hasActiveItem
+              ? "bg-zinc-800 text-zinc-200"
+              : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60"
+          )}
+        >
+          <MoreHorizontal className="h-[18px] w-[18px]" />
+          {!isCollapsed && <span className="text-[13px] ml-2.5">Mais</span>}
+          {!isCollapsed && <ChevronRight className={cn("h-3.5 w-3.5 ml-auto transition-transform", open && "rotate-90")} />}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        side={isCollapsed ? "right" : "bottom"}
+        align="start"
+        className="w-48 p-1 bg-zinc-900 border-zinc-800"
+      >
+        {items.map((item) => {
+          if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+            return null;
+          }
+          const Icon = iconMap[item.icon] || Briefcase;
+          const isActive = pathname.startsWith(item.path);
+          return (
+            <Link
+              key={item.path}
+              href={item.path}
+              onClick={() => { setOpen(false); onNavigate(); }}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-md text-[13px] transition-colors",
+                isActive
+                  ? "bg-emerald-500/15 text-emerald-400"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ==========================================
+// MÓDULOS ESPECÍFICOS (Júri, EP, VVD)
+// ==========================================
+
+function SpecialtyModules({ modules, pathname, isCollapsed, onNavigate, userRole }: {
+  modules: MenuSection[];
   pathname: string;
   isCollapsed: boolean;
   onNavigate: () => void;
   userRole?: UserRole;
 }) {
-  const [isOpen, setIsOpen] = useState(section.defaultOpen !== false);
-  
-  // Filtrar itens por role
-  const visibleItems = section.items.filter(item => {
-    if (!item.requiredRoles) return true;
-    if (!userRole) return true;
-    return item.requiredRoles.includes(userRole);
-  });
-
-  const hasActiveItem = visibleItems.some(
-    (item) => pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path))
-  );
-
-  useEffect(() => {
-    if (hasActiveItem && !isOpen) {
-      setIsOpen(true);
-    }
-  }, [hasActiveItem, isOpen]);
-  
-  // Se não há itens visíveis, não mostrar a seção
-  if (visibleItems.length === 0) return null;
-
-  if (section.collapsible && !isCollapsed) {
-    return (
-      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mb-1">
-        <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 hover:bg-zinc-700/40 group">
-          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
-            {section.title}
-          </span>
-          <ChevronDown className={cn(
-            "h-3.5 w-3.5 transition-all duration-300 text-zinc-600 group-hover:text-zinc-400",
-            isOpen && "rotate-180"
-          )} />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-0.5 mt-1 ml-2 pl-2 border-l border-zinc-700/50">
-          {visibleItems.map((item) => {
-            const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
-            return <MenuItem key={item.path} item={item} isActive={isActive} isCollapsed={isCollapsed} onNavigate={onNavigate} userRole={userRole} />;
-          })}
-        </CollapsibleContent>
-      </Collapsible>
-    );
-  }
+  if (modules.length === 0) return null;
 
   return (
-    <div className="mb-1">
-      {!isCollapsed && (
-        <div className="px-3 py-2">
-          <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-wider">
-            {section.title}
-          </span>
-        </div>
-      )}
-      <div className="space-y-0.5">
-        {visibleItems.map((item) => {
-          const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
-          return <MenuItem key={item.path} item={item} isActive={isActive} isCollapsed={isCollapsed} onNavigate={onNavigate} userRole={userRole} />;
+    <>
+      <NavDivider label="Especialidade" collapsed={isCollapsed} />
+      <SidebarMenu className="space-y-0.5 px-2">
+        {modules.flatMap(section => section.items).slice(0, 4).map((item) => {
+          const isActive = pathname === item.path || pathname.startsWith(item.path);
+          return (
+            <NavItem
+              key={item.path}
+              item={item}
+              isActive={isActive}
+              isCollapsed={isCollapsed}
+              onNavigate={onNavigate}
+              userRole={userRole}
+              compact
+            />
+          );
         })}
-      </div>
-    </div>
+      </SidebarMenu>
+    </>
   );
 }
+
+// ==========================================
+// CONTEÚDO PRINCIPAL DA SIDEBAR
+// ==========================================
 
 function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }: {
   children: ReactNode;
@@ -244,275 +330,216 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
   const { isAllSelected } = useAtribuicaoFiltro();
   const { user: sessionUser } = usePermissions();
   const { profissionalLogado } = useProfissional();
-  
-  // Verificar se o usuario pode ver modulos especializados (Juri, EP, VVD)
-  // Apenas defensores do grupo juri_ep_vvd e admin podem ver
-  const canSeeSpecializedModules = sessionUser?.role === "admin" || 
+
+  const canSeeSpecializedModules = sessionUser?.role === "admin" ||
     (sessionUser?.role === "defensor" && profissionalLogado?.grupo === "juri_ep_vvd");
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
-  
-  // Role do usuário para filtrar menus
+
   const userRole = sessionUser?.role as UserRole | undefined;
-  
-  // No mobile, a sidebar sempre mostra expandida quando aberta
   const isCollapsed = isMobile ? false : state === "collapsed";
+  const showSpecificModules = !isAllSelected;
 
   useEffect(() => {
     setMounted(true);
   }, []);
-  
-  // Quando "Todas" está selecionado no filtro, não mostrar módulos específicos
-  const showSpecificModules = !isAllSelected;
 
-  const handleNavigate = () => { 
-    if (isMobile && openMobile) setOpenMobile(false); 
+  const handleNavigate = () => {
+    if (isMobile && openMobile) setOpenMobile(false);
   };
-  
-  async function handleLogout() { 
-    await logoutAction(); 
+
+  async function handleLogout() {
+    await logoutAction();
   }
 
   return (
     <>
-      <Sidebar 
-        collapsible="icon" 
+      <Sidebar
+        collapsible="icon"
         className={cn(
-          "border-r border-zinc-700/30",
-          "bg-gradient-to-b from-[#1f1f23] via-[#1a1a1e] to-[#1f1f23]",
-          "shadow-2xl shadow-black/50",
+          "border-r border-zinc-800/50",
+          "bg-[#18181b]",
           "z-40"
         )}
       >
-        {/* Header Premium Escuro */}
+        {/* Header */}
         <SidebarHeader className={cn(
-          "h-16 border-b border-zinc-700/30 flex items-center justify-center",
-          "bg-gradient-to-br from-[#252529] via-[#1f1f23] to-[#252529]"
+          "h-14 border-b border-zinc-800/50 flex items-center",
+          isCollapsed ? "justify-center px-2" : "px-3"
         )}>
           <SidebarLogo collapsed={isCollapsed} />
         </SidebarHeader>
 
-        {/* Content com Scroll Suave */}
-        <SidebarContent className="px-0 py-0 scrollbar-thin scrollbar-thumb-zinc-700/50 scrollbar-track-transparent">
-          {/* Painel de Contexto - Acima de Tudo */}
+        {/* Content */}
+        <SidebarContent className="px-0 py-0">
+          {/* Contexto (Defensor) */}
           <ContextControl collapsed={isCollapsed} />
-          
-          <div className="px-3 pb-5 space-y-6">
+
+          <div className="flex-1 overflow-y-auto py-2">
             {/* Navegação Principal */}
-          <div>
-            <SidebarMenu className="space-y-1">
-              {!isCollapsed && (
-                <div className="px-1 pb-2 flex items-center gap-2">
-                  <div className="h-6 w-6 rounded-lg bg-zinc-800 flex items-center justify-center">
-                    <LayoutDashboard className="w-3.5 h-3.5 text-zinc-400" />
-                  </div>
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                    Principal
-                  </span>
-                  <div className="flex-1 h-px bg-gradient-to-r from-zinc-700/80 to-transparent" />
-                </div>
-              )}
-              {/* Itens principais (Dashboard, Demandas, Agenda) */}
-              {MAIN_MENU_ITEMS.map((item) => (
-                <MenuItem
-                  key={item.path}
-                  item={item}
-                  isActive={pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path))}
-                  isCollapsed={isCollapsed}
-                  onNavigate={handleNavigate}
-                  userRole={userRole}
-                />
-              ))}
+            <SidebarMenu className="space-y-0.5 px-2">
+              {MAIN_NAV.map((item) => {
+                const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
+                return (
+                  <NavItem
+                    key={item.path}
+                    item={item}
+                    isActive={isActive}
+                    isCollapsed={isCollapsed}
+                    onNavigate={handleNavigate}
+                    userRole={userRole}
+                  />
+                );
+              })}
+            </SidebarMenu>
 
-              {/* Grupos colapsáveis (Cadastros, Documentos, Ferramentas) */}
-              {COLLAPSIBLE_MENU_GROUPS.map((section) => (
-                <MenuSectionComponent
-                  key={section.id}
-                  section={section}
-                  pathname={pathname}
-                  isCollapsed={isCollapsed}
-                  onNavigate={handleNavigate}
-                  userRole={userRole}
-                />
-              ))}
+            {/* Dados */}
+            <NavDivider collapsed={isCollapsed} />
+            <SidebarMenu className="space-y-0.5 px-2">
+              {DATA_NAV.map((item) => {
+                const isActive = pathname.startsWith(item.path);
+                return (
+                  <NavItem
+                    key={item.path}
+                    item={item}
+                    isActive={isActive}
+                    isCollapsed={isCollapsed}
+                    onNavigate={handleNavigate}
+                    userRole={userRole}
+                  />
+                );
+              })}
+            </SidebarMenu>
 
-              {/* Item de Equipe (separado) */}
-              <MenuItem
-                item={TEAM_MENU_ITEM}
-                isActive={pathname.startsWith("/admin/equipe")}
+            {/* Recursos */}
+            <NavDivider collapsed={isCollapsed} />
+            <SidebarMenu className="space-y-0.5 px-2">
+              {RESOURCES_NAV.map((item) => {
+                const isActive = pathname.startsWith(item.path);
+                return (
+                  <NavItem
+                    key={item.path}
+                    item={item}
+                    isActive={isActive}
+                    isCollapsed={isCollapsed}
+                    onNavigate={handleNavigate}
+                    userRole={userRole}
+                  />
+                );
+              })}
+            </SidebarMenu>
+
+            {/* Módulos Específicos */}
+            {mounted && !isLoading && modules.length > 0 && showSpecificModules && canSeeSpecializedModules && (
+              <SpecialtyModules
+                modules={modules}
+                pathname={pathname}
                 isCollapsed={isCollapsed}
                 onNavigate={handleNavigate}
                 userRole={userRole}
               />
-            </SidebarMenu>
-          </div>
+            )}
 
-          {/* Módulos Específicos - Só mostra quando uma atribuição específica está selecionada */}
-          {/* Oculto para defensores de varas criminais (Danilo, Cristiane) */}
-          {mounted && !isLoading && modules.length > 0 && showSpecificModules && canSeeSpecializedModules && (
-            <div>
-              <SidebarMenu className="space-y-1">
-                {!isCollapsed && (
-                  <div className="px-1 pb-2 flex items-center gap-2">
-                    <div 
-                      className="h-6 w-6 rounded-lg flex items-center justify-center bg-zinc-700/50"
-                    >
-                      <Target className="w-3.5 h-3.5 text-zinc-400" />
-                    </div>
-                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                      {config.shortName}
-                    </span>
-                    <div className="flex-1 h-px bg-gradient-to-r from-zinc-700/80 to-transparent" />
-                  </div>
-                )}
-                {modules.map((section: MenuSection) => (
-                  <MenuSectionComponent 
-                    key={section.id} 
-                    section={section} 
-                    pathname={pathname} 
-                    isCollapsed={isCollapsed} 
+            {/* Gestão */}
+            <NavDivider collapsed={isCollapsed} />
+            <SidebarMenu className="space-y-0.5 px-2">
+              {ADMIN_NAV.map((item) => {
+                const isActive = pathname.startsWith(item.path);
+                return (
+                  <NavItem
+                    key={item.path}
+                    item={item}
+                    isActive={isActive}
+                    isCollapsed={isCollapsed}
                     onNavigate={handleNavigate}
                     userRole={userRole}
                   />
-                ))}
-              </SidebarMenu>
-            </div>
-          )}
+                );
+              })}
 
-          {/* Utilidades */}
-          <div>
-            <SidebarMenu className="space-y-1">
-              {!isCollapsed && (
-                <div className="px-1 pb-2 flex items-center gap-2">
-                  <div className="h-6 w-6 rounded-lg bg-zinc-700/50 flex items-center justify-center">
-                    <Settings className="w-3.5 h-3.5 text-zinc-400" />
-                  </div>
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                    Utilidades
-                  </span>
-                  <div className="flex-1 h-px bg-gradient-to-r from-zinc-700/80 to-transparent" />
-                </div>
-              )}
-              {UTILITIES_MENU.map((section) => (
-                <MenuSectionComponent 
-                  key={section.id} 
-                  section={section} 
-                  pathname={pathname} 
-                  isCollapsed={isCollapsed} 
-                  onNavigate={handleNavigate}
-                  userRole={userRole}
-                />
-              ))}
+              {/* Menu Mais */}
+              <MoreMenu
+                items={MORE_NAV}
+                pathname={pathname}
+                onNavigate={handleNavigate}
+                userRole={userRole}
+                isCollapsed={isCollapsed}
+              />
             </SidebarMenu>
-          </div>
           </div>
         </SidebarContent>
 
-        {/* Footer Premium Escuro */}
-        <SidebarFooter className={cn(
-          "border-t border-zinc-700/30 p-0",
-          "bg-gradient-to-t from-[#1a1a1e] via-[#1f1f23] to-transparent"
-        )}>
-          {/* Status Bar - Próximo evento e conexão */}
+        {/* Footer */}
+        <SidebarFooter className="border-t border-zinc-800/50 p-0">
+          {/* Status Bar */}
           <StatusBar collapsed={isCollapsed} />
 
-          {/* Card do usuário */}
-          <div className={cn(
-            "p-3"
-          )}>
-          <div className={cn(
-            "flex items-center gap-3 p-2.5 rounded-2xl transition-all duration-300 group/user",
-            "bg-gradient-to-br from-[#2a2a2f] to-[#1f1f23]",
-            "hover:from-[#323238] hover:to-[#252529]",
-            "border border-zinc-600/40",
-            "hover:border-emerald-600/40",
-            "hover:shadow-lg hover:shadow-black/20"
-          )}>
-            <Avatar className={cn(
-              "h-10 w-10 transition-all duration-300",
-              "ring-2 ring-zinc-600/50 ring-offset-2 ring-offset-zinc-900",
-              "group-hover/user:ring-emerald-500/40 group-hover/user:scale-105"
+          {/* Usuário */}
+          <div className="p-2">
+            <div className={cn(
+              "flex items-center gap-2.5 p-2 rounded-lg transition-all duration-200 group/user",
+              "hover:bg-zinc-800/60"
             )}>
-              <AvatarFallback className="bg-gradient-to-br from-zinc-600 via-zinc-700 to-zinc-800 text-white font-bold text-xs shadow-inner">
-                {getInitials(userName)}
-              </AvatarFallback>
-            </Avatar>
-            {!isCollapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-zinc-100 truncate tracking-tight">
-                  {userName}
-                </p>
-                <button 
-                  onClick={handleLogout} 
-                  className={cn(
-                    "text-[11px] flex items-center gap-1.5 mt-0.5 transition-all duration-200",
-                    "text-zinc-500 hover:text-red-400",
-                    "font-medium"
-                  )}
-                >
-                  <LogOut className="w-3 h-3" />
-                  Sair da conta
-                </button>
-              </div>
-            )}
-          </div>
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-zinc-700 text-zinc-300 text-xs font-medium">
+                  {getInitials(userName)}
+                </AvatarFallback>
+              </Avatar>
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-zinc-200 truncate">
+                    {userName}
+                  </p>
+                  <button
+                    onClick={handleLogout}
+                    className="text-[11px] text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    Sair
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </SidebarFooter>
       </Sidebar>
 
       {/* Main Content */}
       <SidebarInset className="flex flex-col min-h-screen bg-zinc-50 dark:bg-zinc-950">
-        {/* Header - Premium unificado com título dinâmico */}
+        {/* Header */}
         <header className={cn(
-          "relative overflow-hidden",
-          "flex h-14 shrink-0 items-center",
-          "sticky top-0 z-30"
+          "flex h-12 shrink-0 items-center",
+          "sticky top-0 z-30",
+          "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg",
+          "border-b border-zinc-200 dark:border-zinc-800"
         )}>
-          {/* Fundo base */}
-          <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/95 via-zinc-800/80 to-zinc-900/95 backdrop-blur-xl" />
-          
-          {/* Linha de brilho superior - toque emerald sutil */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
-          
-          {/* Borda inferior elegante */}
-          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-zinc-800 via-zinc-600/40 to-zinc-800" />
-          
-          {/* Conteúdo - Esquerda: Toggle + Breadcrumbs */}
-          <div className="relative flex items-center gap-3 px-3 flex-1 min-w-0">
-            <SidebarTrigger className="h-7 w-7 rounded-md text-zinc-500 hover:text-emerald-400 hover:bg-zinc-700/50 transition-all duration-300 shrink-0" />
-
-            {/* Separador */}
-            <div className="h-4 w-px bg-zinc-700/50 shrink-0" />
-
-            {/* Breadcrumbs navegáveis */}
+          {/* Esquerda: Toggle + Breadcrumbs */}
+          <div className="flex items-center gap-2 px-3 flex-1 min-w-0">
+            <SidebarTrigger className="h-8 w-8 rounded-md text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" />
+            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
             <Breadcrumbs />
           </div>
-          
-          {/* Conteúdo - Direita: Progresso + Controles */}
-          <div className="relative flex items-center gap-3 px-3">
-            {/* Barra de Progresso do Dia */}
+
+          {/* Direita: Progresso + Controles */}
+          <div className="flex items-center gap-2 px-3">
             <DailyProgress />
 
-            {/* Separador */}
-            <div className="hidden md:block h-4 w-px bg-zinc-700/40" />
+            <div className="hidden md:block h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
 
-            {/* Data */}
-            <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-zinc-400">
-              <span className="capitalize">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })}</span>
+            <div className="hidden lg:block text-[11px] text-zinc-500">
+              {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
             </div>
 
-            {/* Separador */}
-            <div className="hidden lg:block h-4 w-px bg-zinc-700/40" />
+            <div className="hidden lg:block h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
 
-            {/* Controles */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <CommandPalette />
               <ThemeToggle />
               <NotificationsPopover />
             </div>
           </div>
         </header>
-        
+
         {/* Main */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden">
           {children}
