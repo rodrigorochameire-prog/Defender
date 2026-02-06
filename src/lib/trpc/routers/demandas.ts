@@ -452,25 +452,47 @@ export const demandasRouter = router({
       };
 
       // Mapeamento de atribuição para área do processo
+      // Inclui tanto labels quanto values do frontend
       const ATRIBUICAO_TO_AREA: Record<string, string> = {
+        // Labels (texto exibido)
         "Tribunal do Júri": "JURI",
         "Grupo Especial do Júri": "JURI",
         "Violência Doméstica": "VIOLENCIA_DOMESTICA",
+        "Violência Doméstica - Camaçari": "VIOLENCIA_DOMESTICA",
         "Execução Penal": "EXECUCAO_PENAL",
         "Criminal Geral": "SUBSTITUICAO",
         "Substituição": "SUBSTITUICAO",
+        "Substituição Cível": "CIVEL",
         "Curadoria Especial": "CURADORIA",
+        // Values (enum do frontend)
+        "JURI_CAMACARI": "JURI",
+        "GRUPO_JURI": "JURI",
+        "VVD_CAMACARI": "VIOLENCIA_DOMESTICA",
+        "EXECUCAO_PENAL": "EXECUCAO_PENAL",
+        "SUBSTITUICAO": "SUBSTITUICAO",
+        "SUBSTITUICAO_CIVEL": "CIVEL",
       };
 
-      // Mapeamento de atribuição (label do frontend) para enum do banco (processos.atribuicao)
+      // Mapeamento de atribuição para enum do banco (processos.atribuicao)
+      // Inclui tanto labels quanto values do frontend
       const ATRIBUICAO_TO_ENUM: Record<string, string> = {
+        // Labels (texto exibido)
         "Tribunal do Júri": "JURI_CAMACARI",
         "Grupo Especial do Júri": "GRUPO_JURI",
         "Violência Doméstica": "VVD_CAMACARI",
+        "Violência Doméstica - Camaçari": "VVD_CAMACARI",
         "Execução Penal": "EXECUCAO_PENAL",
         "Criminal Geral": "SUBSTITUICAO",
         "Substituição": "SUBSTITUICAO",
+        "Substituição Cível": "SUBSTITUICAO_CIVEL",
         "Curadoria Especial": "SUBSTITUICAO_CIVEL",
+        // Values (enum do frontend) - passa direto
+        "JURI_CAMACARI": "JURI_CAMACARI",
+        "GRUPO_JURI": "GRUPO_JURI",
+        "VVD_CAMACARI": "VVD_CAMACARI",
+        "EXECUCAO_PENAL": "EXECUCAO_PENAL",
+        "SUBSTITUICAO": "SUBSTITUICAO",
+        "SUBSTITUICAO_CIVEL": "SUBSTITUICAO_CIVEL",
       };
 
       const results = {
@@ -509,8 +531,11 @@ export const demandasRouter = router({
           const processoNumero = row.processoNumero?.trim() || "";
           let processo;
 
-          const targetArea = (ATRIBUICAO_TO_AREA[row.atribuicao || ""] || "JURI") as any;
-          const targetAtribuicao = (ATRIBUICAO_TO_ENUM[row.atribuicao || ""] || "SUBSTITUICAO") as any;
+          // Determinar área e atribuição com base no input
+          // Se a atribuição não for encontrada no mapa, usa o valor original (pode já ser o enum)
+          const inputAtribuicao = row.atribuicao || "";
+          const targetArea = (ATRIBUICAO_TO_AREA[inputAtribuicao] || "JURI") as any;
+          const targetAtribuicao = (ATRIBUICAO_TO_ENUM[inputAtribuicao] || inputAtribuicao || "JURI_CAMACARI") as any;
 
           if (processoNumero) {
             processo = await db.query.processos.findFirst({
