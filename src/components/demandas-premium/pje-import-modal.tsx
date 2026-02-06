@@ -311,19 +311,19 @@ export function PJeImportModal({
 
             {/* Banner VVD */}
             {isVVD && (
-              <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border border-purple-200 dark:border-purple-800 rounded-xl">
+              <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center flex-shrink-0">
                     <Shield className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-sm text-purple-900 dark:text-purple-100 mb-1">
+                    <p className="font-medium text-sm text-emerald-900 dark:text-emerald-100 mb-1">
                       Importação Inteligente de VVD
                     </p>
-                    <p className="text-xs text-purple-700 dark:text-purple-300 mb-2">
+                    <p className="text-xs text-emerald-700 dark:text-emerald-300 mb-2">
                       O sistema detecta automaticamente os processos de MPU (MPUMPCrim) e os direciona para a página especial de Medidas Protetivas.
                     </p>
-                    <div className="text-xs text-purple-600 dark:text-purple-400 space-y-1">
+                    <div className="text-xs text-emerald-600 dark:text-emerald-400 space-y-1">
                       <p>• <strong>MPUMPCrim</strong> → Página de MPUs (como Ciência por padrão)</p>
                       <p>• <strong>Demais classes</strong> → Lista de demandas (APOrd, APSum, PetCrim...)</p>
                     </div>
@@ -538,38 +538,38 @@ export function PJeImportModal({
 
             {/* Resumo da separação VVD */}
             {isVVD && intimacoes.length > 0 && (
-              <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border border-purple-200 dark:border-purple-800 rounded-xl">
+              <div className="p-4 bg-gradient-to-r from-zinc-50 to-zinc-100 dark:from-zinc-900/50 dark:to-zinc-800/30 border border-zinc-200 dark:border-zinc-700 rounded-xl">
                 <div className="flex gap-3">
-                  <Shield className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                  <Shield className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="font-medium text-sm text-purple-900 dark:text-purple-100 mb-3">
+                    <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 mb-3">
                       Separação de Intimações VVD
                     </p>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                        <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">
+                      <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                        <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-1">
                           🛡️ MPUs (página especial)
                         </p>
-                        <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
+                        <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
                           {intimacoesMPU.length}
                         </p>
-                        <p className="text-[10px] text-purple-600 dark:text-purple-400">
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
                           Medidas Protetivas de Urgência
                         </p>
                       </div>
-                      <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                        <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mb-1">
+                      <div className="p-3 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                           📋 Demandas Gerais
                         </p>
-                        <p className="text-lg font-bold text-amber-900 dark:text-amber-100">
+                        <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
                           {intimacoesGerais.length}
                         </p>
-                        <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                        <p className="text-[10px] text-zinc-600 dark:text-zinc-400">
                           APOrd, APSum, PetCrim, etc.
                         </p>
                       </div>
                     </div>
-                    <p className="text-xs text-purple-700 dark:text-purple-300 mt-3">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-3">
                       <strong>MPUs</strong> vão para a página especial de Medidas Protetivas.
                       <strong> Demandas gerais</strong> vão para a lista de demandas com atribuição VVD.
                     </p>
@@ -662,8 +662,8 @@ export function PJeImportModal({
             {isVVD && intimacoesMPU.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border border-purple-200 dark:border-purple-800">
-                    <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+                    <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
                     Medidas Protetivas ({intimacoesMPU.length}) → Página Especial VVD
@@ -671,18 +671,18 @@ export function PJeImportModal({
                 </div>
                 <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
                   {intimacoesMPU.map((intimacao, index) => (
-                    <div key={index} className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+                    <div key={index} className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-semibold text-sm text-purple-900 dark:text-purple-100">{intimacao.assistido}</p>
-                          <p className="text-xs text-purple-600 dark:text-purple-400 font-mono">{intimacao.numeroProcesso}</p>
+                          <p className="font-semibold text-sm text-emerald-900 dark:text-emerald-100">{intimacao.assistido}</p>
+                          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-mono">{intimacao.numeroProcesso}</p>
                         </div>
-                        <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 rounded">
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 rounded">
                           MPU
                         </span>
                       </div>
                       {intimacao.crime && (
-                        <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">{intimacao.crime}</p>
+                        <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">{intimacao.crime}</p>
                       )}
                     </div>
                   ))}
@@ -694,8 +694,8 @@ export function PJeImportModal({
             {isVVD && intimacoesGerais.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 flex items-center justify-center border border-amber-200 dark:border-amber-800">
-                    <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+                    <FileText className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                   </div>
                   <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
                     Demandas Gerais ({intimacoesGerais.length}) → Lista de Demandas
@@ -703,18 +703,18 @@ export function PJeImportModal({
                 </div>
                 <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
                   {intimacoesGerais.map((intimacao, index) => (
-                    <div key={index} className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <div key={index} className="p-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-semibold text-sm text-amber-900 dark:text-amber-100">{intimacao.assistido}</p>
-                          <p className="text-xs text-amber-600 dark:text-amber-400 font-mono">{intimacao.numeroProcesso}</p>
+                          <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{intimacao.assistido}</p>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-400 font-mono">{intimacao.numeroProcesso}</p>
                         </div>
-                        <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 rounded">
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded">
                           {intimacao.tipoProcesso || "VVD"}
                         </span>
                       </div>
                       {intimacao.crime && (
-                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">{intimacao.crime}</p>
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">{intimacao.crime}</p>
                       )}
                     </div>
                   ))}
@@ -737,12 +737,7 @@ export function PJeImportModal({
                 type="button"
                 onClick={handleImportar}
                 disabled={isImporting || intimacoes.length === 0}
-                className={cn(
-                  "h-11 px-6 text-sm font-semibold text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed",
-                  isVVD
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-purple-500/30"
-                    : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/30"
-                )}
+                className="h-11 px-6 text-sm font-semibold text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/30"
               >
                 {isImporting ? (
                   <>
@@ -754,8 +749,8 @@ export function PJeImportModal({
                   </>
                 ) : (
                   <>
-                    {isVVD ? <Shield className="w-4 h-4 mr-2" /> : <Download className="w-4 h-4 mr-2" />}
-                    {isVVD ? "Importar para MPUs" : "Importar"} {intimacoes.length} {intimacoes.length === 1 ? "Intimação" : "Intimações"}
+                    <Download className="w-4 h-4 mr-2" />
+                    Importar {intimacoes.length} {intimacoes.length === 1 ? "Intimação" : "Intimações"}
                   </>
                 )}
               </Button>

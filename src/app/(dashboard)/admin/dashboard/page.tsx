@@ -590,7 +590,7 @@ export default function DashboardJuriPage() {
       subtitle: `${percentCriticas}% do total`,
       icon: AlertCircle,
       href: "/admin/demandas",
-      gradient: "amber",
+      gradient: "zinc",
     },
     {
       title: "Reus Presos",
@@ -598,7 +598,7 @@ export default function DashboardJuriPage() {
       subtitle: `${reusPresos} de ${totalAssistidos} reus`,
       icon: Lock,
       href: "/admin/assistidos",
-      gradient: "rose",
+      gradient: "zinc",
     },
     {
       title: isDefensorCriminalGeral ? "Audiencias" : "Proximos Juris",
