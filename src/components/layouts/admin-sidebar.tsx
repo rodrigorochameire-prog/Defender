@@ -55,6 +55,7 @@ interface AdminSidebarProps {
 const MAIN_NAV: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
   { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
+  { label: "Delegações", path: "/admin/delegacoes", icon: "UserCheck", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Agenda", path: "/admin/agenda", icon: "Calendar" },
   { label: "Casos", path: "/admin/casos", icon: "Briefcase" },
 ];

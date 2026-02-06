@@ -15,6 +15,7 @@ import { AdminConfigModal } from "@/components/demandas-premium/admin-config-mod
 import { ImportDropdown } from "@/components/demandas-premium/import-dropdown";
 import { SheetsImportModal } from "@/components/demandas-premium/sheets-import-modal";
 import { SEEUImportModal } from "@/components/demandas-premium/seeu-import-modal";
+import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -69,8 +70,7 @@ const atribuicaoIcons: Record<string, React.ComponentType<{ className?: string }
   "Grupo Especial do Júri": Target,
   "Violência Doméstica": Home,
   "Execução Penal": Lock,
-  "Criminal Geral": Folder,
-  "Substituição": RefreshCw,
+  "Substituição Criminal": RefreshCw,
   "Curadoria Especial": Shield,
 };
 
@@ -93,7 +93,7 @@ const ATRIBUICAO_ENUM_TO_LABEL: Record<string, string> = {
   "GRUPO_JURI": "Grupo Especial do Júri",
   "VVD_CAMACARI": "Violência Doméstica",
   "EXECUCAO_PENAL": "Execução Penal",
-  "SUBSTITUICAO": "Criminal Geral",
+  "SUBSTITUICAO": "Substituição Criminal",
   "SUBSTITUICAO_CIVEL": "Curadoria Especial",
 };
 
@@ -102,8 +102,7 @@ const atribuicaoColors: Record<string, string> = {
   "Grupo Especial do Júri": "text-orange-600 dark:text-orange-500",
   "Violência Doméstica": "text-yellow-600 dark:text-yellow-500",
   "Execução Penal": "text-blue-600 dark:text-blue-500",
-  "Criminal Geral": "text-red-600 dark:text-red-500",
-  "Substituição": "text-purple-600 dark:text-purple-500",
+  "Substituição Criminal": "text-purple-600 dark:text-purple-500",
   "Curadoria Especial": "text-gray-600 dark:text-gray-400",
 };
 
@@ -113,10 +112,8 @@ const atribuicaoOptions = [
   { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri", icon: Target },
   { value: "Violência Doméstica", label: "Violência Doméstica", icon: Home },
   { value: "Execução Penal", label: "Execução Penal", icon: Lock },
-  { value: "Criminal Geral", label: "Criminal Geral", icon: Folder },
-  { value: "Substituição", label: "Substituição", icon: RefreshCw },
+  { value: "Substituição Criminal", label: "Substituição Criminal", icon: RefreshCw },
   { value: "Curadoria Especial", label: "Curadoria Especial", icon: Shield },
-  { value: "Peticionamento Integrado", label: "Peticionamento Integrado", icon: FileText },
 ];
 
 const statusOptions = [
@@ -404,6 +401,19 @@ export default function Demandas() {
   const [isAdminConfigModalOpen, setIsAdminConfigModalOpen] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Estado para o modal de delegação
+  const [delegacaoModalOpen, setDelegacaoModalOpen] = useState(false);
+  const [delegacaoDemanda, setDelegacaoDemanda] = useState<{
+    demandaId: number | null;
+    demandaAto: string;
+    assistidoId: number | null;
+    assistidoNome: string;
+    processoId: number | null;
+    processoNumero: string;
+    destinatarioNome: string;
+  } | null>(null);
+
   const [viewMode, setViewMode] = useState<"table" | "cards" | "grid">(() => {
     if (typeof window !== "undefined") {
       // Padrão é "grid" (modo grid premium) - melhor visualização de cards
@@ -477,7 +487,7 @@ export default function Demandas() {
         : [],
       ato: d.ato || d.titulo || "",
       providencias: d.providencias || "",
-      atribuicao: ATRIBUICAO_ENUM_TO_LABEL[d.processo?.atribuicao] || d.atribuicao || "Criminal Geral",
+      atribuicao: ATRIBUICAO_ENUM_TO_LABEL[d.processo?.atribuicao] || d.atribuicao || "Substituição Criminal",
       estadoPrisional: d.reuPreso ? "preso" : (d.assistido?.statusPrisional || "solto"),
       prioridade: d.prioridade || "normal",
       arquivado: d.status === "ARQUIVADO",
@@ -522,6 +532,9 @@ export default function Demandas() {
     "arquivado": "ARQUIVADO",
   };
 
+  // Status que disparam o modal de delegação
+  const DELEGATION_STATUSES = ["amanda", "emilly", "taissa"];
+
   const handleStatusChange = (demandaId: string, newStatus: string) => {
     // Atualizar localmente para feedback imediato
     setDemandas((prev) =>
@@ -537,6 +550,30 @@ export default function Demandas() {
         status: dbStatus as any,
         substatus: newStatus, // Salvar o status granular
       });
+    }
+
+    // Se o status é de delegação, abrir o modal para adicionar instruções
+    if (DELEGATION_STATUSES.includes(newStatus.toLowerCase())) {
+      const demanda = demandas.find((d) => d.id === demandaId);
+      if (demanda) {
+        // Mapear o nome do status para o nome do destinatário
+        const destinatarioMap: Record<string, string> = {
+          amanda: "Amanda",
+          emilly: "Emilly",
+          taissa: "Taíssa",
+        };
+
+        setDelegacaoDemanda({
+          demandaId: parseInt(demandaId, 10) || null,
+          demandaAto: demanda.ato || "",
+          assistidoId: demanda.assistidoId || null,
+          assistidoNome: demanda.assistido || "",
+          processoId: demanda.processoId || null,
+          processoNumero: demanda.processos?.[0]?.numero || "",
+          destinatarioNome: destinatarioMap[newStatus.toLowerCase()] || newStatus,
+        });
+        setDelegacaoModalOpen(true);
+      }
     }
   };
 
@@ -737,7 +774,7 @@ export default function Demandas() {
       status: data.status || "fila",
       estadoPrisional: data.estadoPrisional || "solto",
       providencias: data.providencias || undefined,
-      atribuicao: data.atribuicao || "Criminal Geral",
+      atribuicao: data.atribuicao || "Substituição Criminal",
     }));
 
     importFromSheetsMutation.mutate({ rows });
@@ -894,10 +931,17 @@ export default function Demandas() {
         return b.data.localeCompare(a.data);
       });
     } else if (sortBy === "recentes") {
+      // Ordenar por data de importação (recentes primeiro)
+      // Quando timestamps são iguais, usa o ID para manter a ordem da lista importada
       return sorted.sort((a, b) => {
         const dateA = a.dataInclusao || a.data || "";
         const dateB = b.dataInclusao || b.data || "";
-        return dateB.localeCompare(dateA);
+        const dateCompare = dateB.localeCompare(dateA);
+        if (dateCompare !== 0) return dateCompare;
+        // Se timestamps iguais, ordenar por ID (maior ID = mais recente/última posição na lista)
+        const idA = parseInt(a.id) || 0;
+        const idB = parseInt(b.id) || 0;
+        return idB - idA;
       });
     } else if (sortBy === "status") {
       return sorted.sort((a, b) => {
@@ -1515,6 +1559,26 @@ export default function Demandas() {
         demandasFiltradas={demandasFiltradas}
       />
       <AdminConfigModal isOpen={isAdminConfigModalOpen} onClose={() => setIsAdminConfigModalOpen(false)} />
+
+      {/* Modal de Delegação - Aparece ao selecionar status de delegação (amanda, emilly, taissa) */}
+      <DelegacaoModal
+        open={delegacaoModalOpen}
+        onOpenChange={setDelegacaoModalOpen}
+        demandaId={delegacaoDemanda?.demandaId}
+        demandaAto={delegacaoDemanda?.demandaAto}
+        assistidoId={delegacaoDemanda?.assistidoId}
+        assistidoNome={delegacaoDemanda?.assistidoNome}
+        processoId={delegacaoDemanda?.processoId}
+        processoNumero={delegacaoDemanda?.processoNumero}
+        onDelegacaoSucesso={() => {
+          setDelegacaoDemanda(null);
+          toast.success(
+            `Tarefa delegada para ${delegacaoDemanda?.destinatarioNome}!`,
+            { description: "As instruções foram enviadas com sucesso." }
+          );
+          utils.demandas.list.invalidate();
+        }}
+      />
     </div>
   );
 }

@@ -485,8 +485,7 @@ export const demandasRouter = router({
         "Violência Doméstica": "VIOLENCIA_DOMESTICA",
         "Violência Doméstica - Camaçari": "VIOLENCIA_DOMESTICA",
         "Execução Penal": "EXECUCAO_PENAL",
-        "Criminal Geral": "SUBSTITUICAO",
-        "Substituição": "SUBSTITUICAO",
+        "Substituição Criminal": "SUBSTITUICAO",
         "Substituição Cível": "CIVEL",
         "Curadoria Especial": "CURADORIA",
         // Values (enum do frontend)
@@ -507,8 +506,7 @@ export const demandasRouter = router({
         "Violência Doméstica": "VVD_CAMACARI",
         "Violência Doméstica - Camaçari": "VVD_CAMACARI",
         "Execução Penal": "EXECUCAO_PENAL",
-        "Criminal Geral": "SUBSTITUICAO",
-        "Substituição": "SUBSTITUICAO",
+        "Substituição Criminal": "SUBSTITUICAO",
         "Substituição Cível": "SUBSTITUICAO_CIVEL",
         "Curadoria Especial": "SUBSTITUICAO_CIVEL",
         // Values (enum do frontend) - passa direto

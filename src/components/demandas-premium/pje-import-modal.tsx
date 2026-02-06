@@ -148,7 +148,7 @@ export function PJeImportModal({
       // - Demais classes vão para demandas gerais com atribuição VVD
       setIsImporting(true);
 
-      // 1. Importar MPUs para tabela especial
+      // 1. Importar MPUs para tabela especial (sempre como CIENCIA por padrão)
       if (intimacoesMPU.length > 0) {
         const intimacoesParaVVD = intimacoesMPU.map((intimacao) => ({
           assistido: intimacao.assistido,
@@ -159,7 +159,7 @@ export function PJeImportModal({
           crime: intimacao.crime,
           pjeDocumentoId: intimacao.idDocumento,
           pjeTipoDocumento: intimacao.tipoDocumento,
-          tipoIntimacao: tipoIntimacaoVVD,
+          tipoIntimacao: "CIENCIA" as const, // MPUs sempre entram como ciência, pode mudar na triagem
         }));
 
         importarVVDMutation.mutate({ intimacoes: intimacoesParaVVD });
@@ -307,61 +307,7 @@ export function PJeImportModal({
                 </p>
               </div>
 
-              {/* Opção específica para VVD - Tipo de Intimação */}
-              {isVVD && (
-                <div className="space-y-2.5 mt-5">
-                  <Label htmlFor="tipoIntimacaoVVD" className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-purple-500 dark:text-purple-400" />
-                    Tipo de Intimação (VVD)
-                    <span className="text-red-500 text-xs">*</span>
-                  </Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setTipoIntimacaoVVD("CIENCIA")}
-                      className={cn(
-                        "p-4 rounded-xl border-2 transition-all text-left",
-                        tipoIntimacaoVVD === "CIENCIA"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-950/30"
-                          : "border-zinc-200 dark:border-zinc-700 hover:border-purple-300"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle2 className={cn(
-                          "w-5 h-5",
-                          tipoIntimacaoVVD === "CIENCIA" ? "text-purple-600" : "text-zinc-400"
-                        )} />
-                        <span className="font-semibold text-sm">Mera Ciência</span>
-                      </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Intimações que não exigem peticionamento. Vão direto para o controle de MPUs.
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTipoIntimacaoVVD("PETICIONAR")}
-                      className={cn(
-                        "p-4 rounded-xl border-2 transition-all text-left",
-                        tipoIntimacaoVVD === "PETICIONAR"
-                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
-                          : "border-zinc-200 dark:border-zinc-700 hover:border-amber-300"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <FileText className={cn(
-                          "w-5 h-5",
-                          tipoIntimacaoVVD === "PETICIONAR" ? "text-amber-600" : "text-zinc-400"
-                        )} />
-                        <span className="font-semibold text-sm">Peticionar</span>
-                      </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Intimações que exigem manifestação nos autos. Ficam pendentes até ação.
-                      </p>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
 
             {/* Banner VVD */}
             {isVVD && (
@@ -372,11 +318,15 @@ export function PJeImportModal({
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-sm text-purple-900 dark:text-purple-100 mb-1">
-                      Importação de Violência Doméstica
+                      Importação Inteligente de VVD
                     </p>
-                    <p className="text-xs text-purple-700 dark:text-purple-300">
-                      Os processos e partes serão cadastrados na página especial de MPUs, separados dos assistidos e processos criminais.
+                    <p className="text-xs text-purple-700 dark:text-purple-300 mb-2">
+                      O sistema detecta automaticamente os processos de MPU (MPUMPCrim) e os direciona para a página especial de Medidas Protetivas.
                     </p>
+                    <div className="text-xs text-purple-600 dark:text-purple-400 space-y-1">
+                      <p>• <strong>MPUMPCrim</strong> → Página de MPUs (como Ciência por padrão)</p>
+                      <p>• <strong>Demais classes</strong> → Lista de demandas (APOrd, APSum, PetCrim...)</p>
+                    </div>
                   </div>
                 </div>
               </div>

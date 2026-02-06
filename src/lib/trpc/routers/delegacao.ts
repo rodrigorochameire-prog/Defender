@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { demandas, delegacoesHistorico, users } from "@/lib/db/schema";
+import { demandas, delegacoesHistorico, users, notifications } from "@/lib/db/schema";
 import { eq, and, desc, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
@@ -153,6 +153,22 @@ export const delegacaoRouter = router({
         })
         .returning();
 
+      // Buscar nome do remetente para a notificação
+      const remetente = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { name: true },
+      });
+
+      // Criar notificação para o destinatário
+      await db.insert(notifications).values({
+        userId: input.destinatarioId,
+        title: "Nova tarefa delegada",
+        message: `${remetente?.name || "Um defensor"} delegou uma nova tarefa para você.`,
+        type: "info",
+        actionUrl: "/admin/delegacoes",
+        isRead: false,
+      });
+
       return delegacao;
     }),
 
@@ -210,6 +226,38 @@ export const delegacaoRouter = router({
             updatedAt: new Date(),
           })
           .where(eq(demandas.id, delegacao.demandaId));
+      }
+
+      // Criar notificação para o remetente quando a delegação é concluída ou devolvida
+      if (["concluida", "devolvida"].includes(input.status)) {
+        const executor = await db.query.users.findFirst({
+          where: eq(users.id, userId),
+          columns: { name: true },
+        });
+
+        const statusLabel = input.status === "concluida" ? "concluiu" : "devolveu";
+        const statusType = input.status === "concluida" ? "success" : "warning";
+
+        await db.insert(notifications).values({
+          userId: delegacao.delegadoDeId,
+          title: input.status === "concluida" ? "Tarefa concluída" : "Tarefa devolvida",
+          message: `${executor?.name || "Um membro da equipe"} ${statusLabel} a tarefa delegada.`,
+          type: statusType,
+          actionUrl: "/admin/delegacoes",
+          isRead: false,
+        });
+      }
+
+      // Notificar o executor quando a delegação é aceita
+      if (input.status === "aceita" && userId !== delegacao.delegadoParaId) {
+        await db.insert(notifications).values({
+          userId: delegacao.delegadoParaId,
+          title: "Delegação aceita",
+          message: "Sua delegação foi aceita. Acompanhe o andamento na página de delegações.",
+          type: "info",
+          actionUrl: "/admin/delegacoes",
+          isRead: false,
+        });
       }
 
       return updated;
