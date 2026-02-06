@@ -235,13 +235,14 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
 
     const lines = rawText.split("\n").filter(line => line.trim());
     const demandas: ParsedDemanda[] = [];
+    let linhasIgnoradas = 0;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
+
       // Dividir por tabulação (padrão do Google Sheets ao copiar)
       const columns = line.split("\t");
-      
+
       // Padrão esperado (com coluna Tipo):
       // [0] Status (ex: "2 - Analisar")
       // [1] Estado Prisional (opcional, ex: "Preso")
@@ -253,8 +254,6 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
       // [7] Prazo (opcional)
       // [8] Providências
 
-      const erros: string[] = [];
-
       const statusRaw = columns[0]?.trim() || "";
       const estadoPrisionalRaw = columns[1]?.trim() || "";
       const dataRaw = columns[2]?.trim() || "";
@@ -265,10 +264,30 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
       const prazoRaw = columns[7]?.trim() || "";
       const providencias = columns[8]?.trim() || "";
 
-      // Validações
-      if (!assistido) {
-        erros.push("Nome do assistido é obrigatório");
+      // FILTRO: Ignorar linhas sem dados essenciais
+      // Uma linha válida precisa ter pelo menos o nome do assistido
+      // Também ignorar linhas que parecem ser cabeçalhos
+      const pareceCabecalho = assistido.toLowerCase().includes("assistido") ||
+                              assistido.toLowerCase().includes("nome") ||
+                              statusRaw.toLowerCase() === "status";
+
+      if (!assistido || pareceCabecalho) {
+        linhasIgnoradas++;
+        continue; // Pular linhas vazias ou cabeçalhos
       }
+
+      // Também ignorar se a linha só tem valores vazios ou espaços
+      const temDadosReais = columns.some(col => col && col.trim().length > 0 &&
+                                          !col.trim().match(/^[\s\-\_\.]+$/));
+      if (!temDadosReais) {
+        linhasIgnoradas++;
+        continue;
+      }
+
+      const erros: string[] = [];
+
+      // Validação adicional: avisar se não tem processo (mas não bloquear)
+      // Não é erro, apenas aviso - processo será criado automaticamente
 
       const status = parseStatus(statusRaw);
       const estadoPrisional = parseEstadoPrisional(estadoPrisionalRaw);
@@ -290,6 +309,11 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
         valido: erros.length === 0,
         erros,
       });
+    }
+
+    // Informar sobre linhas ignoradas
+    if (linhasIgnoradas > 0) {
+      toast.info(`${linhasIgnoradas} linha(s) em branco ou cabeçalho foram ignoradas`);
     }
 
     setParsedDemandas(demandas);
