@@ -755,19 +755,30 @@ export default function Demandas() {
           continue;
         }
 
+        // Mapear status da planilha para status válido do enum
+        const statusMap: Record<string, string> = {
+          'atender': '2_ATENDER',
+          'monitorar': '4_MONITORAR',
+          'fila': '5_FILA',
+          'protocolado': '7_PROTOCOLADO',
+          'ciencia': '7_CIENCIA',
+          'sem_atuacao': '7_SEM_ATUACAO',
+          'urgente': 'URGENTE',
+          'concluido': 'CONCLUIDO',
+          'arquivado': 'ARQUIVADO',
+        };
+
+        const statusNormalizado = data.status?.toLowerCase?.() || 'fila';
+        const statusValido = statusMap[statusNormalizado] || '5_FILA';
+
+        // A mutation espera {id, ...campos} não {id, data: {...}}
         await updateDemandaMutation.mutateAsync({
           id: numericId,
-          data: {
-            assistido: data.assistido,
-            processoNumero: data.processos?.[0]?.numero,
-            ato: data.ato,
-            prazo: data.prazo || undefined,
-            dataEntrada: data.data || undefined,
-            status: data.status,
-            estadoPrisional: data.estadoPrisional,
-            providencias: data.providencias,
-            atribuicao: data.atribuicao,
-          },
+          ato: data.ato || undefined,
+          prazo: data.prazo || undefined,
+          status: statusValido as any,
+          providencias: data.providencias || undefined,
+          reuPreso: data.estadoPrisional === 'Preso',
         });
       } catch (error) {
         console.error(`Erro ao atualizar demanda ${data.id}:`, error);
