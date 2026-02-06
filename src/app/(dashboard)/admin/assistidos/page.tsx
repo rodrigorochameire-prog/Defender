@@ -417,12 +417,14 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 
   return (
     <Card className={cn(
-      // Base Premium - Estilo "Processos" SUTIL
+      // Base Premium - Design clean e harmonioso
       "group relative flex flex-col justify-between overflow-hidden transition-all duration-300",
-      "bg-white dark:bg-zinc-900",
-      "border border-zinc-100 dark:border-zinc-800",
-      "rounded-xl",
-      "hover:shadow-lg",
+      "bg-white dark:bg-zinc-900/95",
+      "border border-zinc-200/80 dark:border-zinc-800/80",
+      "rounded-2xl",
+      "hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-black/30",
+      "hover:border-zinc-300 dark:hover:border-zinc-700",
+      "hover:-translate-y-0.5",
       getCardGlow(),
       // Fixado
       isPinned && "ring-2 ring-amber-400/50 dark:ring-amber-500/30"
@@ -506,24 +508,24 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 
         {/* 1. HEADER: Avatar + Info + Badges */}
         <div className="flex gap-3 items-start">
-          {/* Avatar Premium */}
+          {/* Avatar Premium - Cor neutra com indicador de status */}
           <div className="relative flex-shrink-0">
             <Avatar
               className={cn(
-                "h-12 w-12 cursor-pointer transition-all hover:scale-105",
-                "ring-2 shadow-lg",
+                "h-12 w-12 cursor-pointer transition-all duration-300",
+                "ring-2 shadow-md",
+                "hover:scale-105 hover:shadow-lg",
                 isPreso
-                  ? "ring-rose-400 shadow-rose-500/20"
+                  ? "ring-rose-400/70 shadow-rose-500/20"
                   : isMonitorado
-                    ? "ring-amber-400 shadow-amber-500/20"
-                    : "ring-zinc-200 dark:ring-zinc-700 shadow-zinc-500/10"
+                    ? "ring-amber-400/70 shadow-amber-500/20"
+                    : "ring-zinc-300 dark:ring-zinc-600 shadow-zinc-500/10 hover:ring-emerald-400/50"
               )}
               onClick={onPhotoClick}
             >
               <AvatarImage src={assistido.photoUrl || undefined} alt={assistido.nome} />
               <AvatarFallback
-                className="text-sm font-bold text-white"
-                style={{ backgroundColor: primaryColor }}
+                className="text-sm font-semibold bg-gradient-to-br from-emerald-500 to-emerald-600 text-white"
               >
                 {getInitials(assistido.nome)}
               </AvatarFallback>
@@ -646,49 +648,68 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
           </div>
         )}
 
-        {/* 4. Mini KPIs - Design mais limpo */}
+        {/* 4. Mini KPIs - Design mais limpo com hover */}
         <div className="grid grid-cols-3 gap-2">
           <Link
             href={`/admin/processos?assistido=${assistido.id}`}
-            className="flex flex-col items-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="group/kpi flex flex-col items-center p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 hover:shadow-sm"
           >
-            <Scale className="w-4 h-4 text-zinc-400 mb-1" />
-            <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{assistido.processosAtivos || 0}</span>
-            <span className="text-[9px] text-zinc-400">Processos</span>
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700/50 flex items-center justify-center mb-1.5 group-hover/kpi:bg-emerald-100 dark:group-hover/kpi:bg-emerald-900/30 transition-colors">
+              <Scale className="w-4 h-4 text-zinc-400 group-hover/kpi:text-emerald-600 dark:group-hover/kpi:text-emerald-400 transition-colors" />
+            </div>
+            <span className="text-base font-bold text-zinc-800 dark:text-zinc-200">{assistido.processosAtivos || 0}</span>
+            <span className="text-[9px] text-zinc-400 font-medium">Processos</span>
           </Link>
 
           <Link
             href={`/admin/demandas?assistido=${assistido.id}`}
-            className="flex flex-col items-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="group/kpi flex flex-col items-center p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 hover:shadow-sm"
           >
-            <FileText className="w-4 h-4 text-zinc-400 mb-1" />
-            <span className={cn("text-sm font-bold", assistido.demandasAbertas > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-800 dark:text-zinc-200")}>
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 transition-colors",
+              assistido.demandasAbertas > 0
+                ? "bg-amber-100 dark:bg-amber-900/30"
+                : "bg-zinc-100 dark:bg-zinc-700/50 group-hover/kpi:bg-emerald-100 dark:group-hover/kpi:bg-emerald-900/30"
+            )}>
+              <FileText className={cn(
+                "w-4 h-4 transition-colors",
+                assistido.demandasAbertas > 0
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-zinc-400 group-hover/kpi:text-emerald-600 dark:group-hover/kpi:text-emerald-400"
+              )} />
+            </div>
+            <span className={cn(
+              "text-base font-bold",
+              assistido.demandasAbertas > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-800 dark:text-zinc-200"
+            )}>
               {assistido.demandasAbertas || 0}
             </span>
-            <span className="text-[9px] text-zinc-400">Demandas</span>
+            <span className="text-[9px] text-zinc-400 font-medium">Demandas</span>
           </Link>
 
-          <div className="flex flex-col items-center p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-            <Brain className="w-4 h-4 text-zinc-400 mb-1" />
-            <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{score}</span>
-            <span className="text-[9px] text-zinc-400">Score</span>
+          <div className="group/kpi flex flex-col items-center p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200">
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700/50 flex items-center justify-center mb-1.5 group-hover/kpi:bg-violet-100 dark:group-hover/kpi:bg-violet-900/30 transition-colors">
+              <Brain className="w-4 h-4 text-zinc-400 group-hover/kpi:text-violet-600 dark:group-hover/kpi:text-violet-400 transition-colors" />
+            </div>
+            <span className="text-base font-bold text-zinc-800 dark:text-zinc-200">{score}</span>
+            <span className="text-[9px] text-zinc-400 font-medium">Score</span>
           </div>
         </div>
 
         {/* 5. Próxima Audiência Premium */}
         {assistido.proximaAudiencia && (
           <div className={cn(
-            "flex items-center gap-3 p-3 rounded-lg border",
+            "flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 hover:shadow-sm",
             audienciaHoje
-              ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30"
+              ? "bg-gradient-to-r from-amber-50 to-amber-50/50 dark:from-amber-900/20 dark:to-amber-900/10 border-amber-200/80 dark:border-amber-800/40 hover:border-amber-300 dark:hover:border-amber-700/60"
               : audienciaAmanha
-                ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30"
-                : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800"
+                ? "bg-gradient-to-r from-blue-50 to-blue-50/50 dark:from-blue-900/20 dark:to-blue-900/10 border-blue-200/80 dark:border-blue-800/40 hover:border-blue-300 dark:hover:border-blue-700/60"
+                : "bg-zinc-50/80 dark:bg-zinc-800/40 border-zinc-200/60 dark:border-zinc-700/40 hover:border-zinc-300 dark:hover:border-zinc-600"
           )}>
             <div className={cn(
-              "w-10 h-10 rounded-lg flex items-center justify-center",
-              audienciaHoje && "bg-amber-500 text-white",
-              audienciaAmanha && "bg-blue-500 text-white",
+              "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-transform hover:scale-105",
+              audienciaHoje && "bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-amber-500/30",
+              audienciaAmanha && "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-blue-500/30",
               !audienciaHoje && !audienciaAmanha && "bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400"
             )}>
               <Calendar className="w-5 h-5" />
@@ -696,26 +717,26 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className={cn(
-                  "text-xs font-bold",
+                  "text-xs font-bold tracking-wide",
                   audienciaHoje && "text-amber-700 dark:text-amber-400",
                   audienciaAmanha && "text-blue-700 dark:text-blue-400",
                   !audienciaHoje && !audienciaAmanha && "text-zinc-700 dark:text-zinc-300"
                 )}>
                   {audienciaHoje ? "HOJE" : audienciaAmanha ? "AMANHÃ" : format(parseISO(assistido.proximaAudiencia), "dd/MM")}
                 </span>
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-zinc-500 font-medium">
                   {format(parseISO(assistido.proximaAudiencia), "HH:mm")}
                 </span>
               </div>
-              <p className="text-[10px] text-zinc-500 truncate">
+              <p className="text-[10px] text-zinc-500 truncate mt-0.5">
                 {assistido.tipoProximaAudiencia || "Audiência"}
               </p>
             </div>
             {(audienciaHoje || audienciaAmanha) && (
               <div className={cn(
-                "w-2 h-2 rounded-full",
-                audienciaHoje && "bg-amber-500 animate-pulse",
-                audienciaAmanha && "bg-blue-500"
+                "w-2.5 h-2.5 rounded-full",
+                audienciaHoje && "bg-amber-500 animate-pulse shadow-sm shadow-amber-500/50",
+                audienciaAmanha && "bg-blue-500 shadow-sm shadow-blue-500/50"
               )} />
             )}
           </div>

@@ -11,6 +11,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import {
   ChevronDown,
+  ChevronRight,
   Gavel,
   Shield,
   Lock,
@@ -26,6 +27,11 @@ import {
   Settings2,
   Building2,
 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useAssignment, Assignment } from "@/contexts/assignment-context";
 import { useProfissional, type ProfissionalConfig } from "@/contexts/profissional-context";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -525,39 +531,44 @@ function ContextPopoverContent({
           </button>
         )}
 
-        {/* Varas Criminais - Seção discreta para admin */}
+        {/* Varas Criminais - Seção colapsável para admin */}
         {varasCriminaisDefensores.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-zinc-700/30">
-            <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Settings2 className="w-3 h-3" />
-              Modo Admin - Varas Criminais
-            </p>
-            <div className="flex gap-2">
-              {varasCriminaisDefensores.map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => updateDefensor(d.id)}
-                  className={cn(
-                    "flex-1 py-1.5 px-2 rounded-lg transition-all duration-200 text-center",
-                    "border opacity-60 hover:opacity-100",
-                    defensor === d.id
-                      ? "border-zinc-500 bg-zinc-700/50 opacity-100"
-                      : "border-zinc-700/30 hover:bg-zinc-800/50"
-                  )}
-                >
-                  <div className={cn(
-                    "w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] mx-auto mb-0.5",
-                    d.cor
-                  )}>
-                    {d.inicial}
-                  </div>
-                  <p className="text-[9px] font-medium text-zinc-400 truncate">
-                    {d.nomeCurto}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
+          <Collapsible className="mt-3">
+            <CollapsibleTrigger className="w-full pt-2 border-t border-zinc-700/30 flex items-center justify-between group">
+              <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Settings2 className="w-3 h-3" />
+                Modo Admin
+              </p>
+              <ChevronRight className="w-3 h-3 text-zinc-600 transition-transform group-data-[state=open]:rotate-90" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-2">
+              <div className="flex gap-2">
+                {varasCriminaisDefensores.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => updateDefensor(d.id)}
+                    className={cn(
+                      "flex-1 py-1.5 px-2 rounded-lg transition-all duration-200 text-center",
+                      "border opacity-50 hover:opacity-100",
+                      defensor === d.id
+                        ? "border-zinc-500 bg-zinc-700/50 opacity-100"
+                        : "border-zinc-700/30 hover:bg-zinc-800/50"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] mx-auto mb-0.5",
+                      d.cor
+                    )}>
+                      {d.inicial}
+                    </div>
+                    <p className="text-[9px] font-medium text-zinc-400 truncate">
+                      {d.nomeCurto}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         )}
       </div>
 
