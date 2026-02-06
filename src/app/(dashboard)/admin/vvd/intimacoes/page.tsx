@@ -41,6 +41,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { toast } from "sonner";
+import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 
 type TipoIntimacao = "CIENCIA" | "PETICIONAR" | "AUDIENCIA" | "CUMPRIMENTO" | "todos";
 type StatusIntimacao = "pendente" | "ciencia_dada" | "respondida" | "arquivada" | "todos";
@@ -181,84 +182,51 @@ export default function IntimacoesVVDPage() {
       {/* Conteúdo */}
       <div className="p-4 md:p-6 space-y-6">
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className={cn(statusFiltro === "todos" && "ring-2 ring-purple-500")}>
-          <CardContent className="pt-4 cursor-pointer" onClick={() => setStatusFiltro("todos")}>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <Bell className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{contadores.total}</p>
-                <p className="text-xs text-muted-foreground">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={cn(statusFiltro === "pendente" && "ring-2 ring-blue-500")}>
-          <CardContent className="pt-4 cursor-pointer" onClick={() => setStatusFiltro("pendente")}>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <Clock className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-blue-600">{contadores.pendentes}</p>
-                <p className="text-xs text-muted-foreground">Pendentes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-4 cursor-pointer" onClick={() => {
+      {/* Stats Cards - KPI Premium */}
+      <KPIGrid columns={5}>
+        <KPICardPremium
+          title="Total"
+          value={contadores.total}
+          icon={Bell}
+          gradient="zinc"
+          onClick={() => setStatusFiltro("todos")}
+          active={statusFiltro === "todos"}
+        />
+        <KPICardPremium
+          title="Pendentes"
+          value={contadores.pendentes}
+          icon={Clock}
+          gradient={contadores.pendentes > 0 ? "blue" : "zinc"}
+          onClick={() => setStatusFiltro("pendente")}
+          active={statusFiltro === "pendente"}
+        />
+        <KPICardPremium
+          title="Dar Ciência"
+          value={contadores.ciencias}
+          icon={Eye}
+          gradient="zinc"
+          onClick={() => {
             setTipoFiltro("CIENCIA");
             setStatusFiltro("pendente");
-          }}>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
-                <Eye className="h-5 w-5 text-cyan-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-cyan-600">{contadores.ciencias}</p>
-                <p className="text-xs text-muted-foreground">Dar Ciencia</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-4 cursor-pointer" onClick={() => {
+          }}
+        />
+        <KPICardPremium
+          title="Peticionar"
+          value={contadores.peticionar}
+          icon={FileText}
+          gradient="zinc"
+          onClick={() => {
             setTipoFiltro("PETICIONAR");
             setStatusFiltro("pendente");
-          }}>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-                <FileText className="h-5 w-5 text-violet-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-violet-600">{contadores.peticionar}</p>
-                <p className="text-xs text-muted-foreground">Peticionar</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-red-200 dark:border-red-800">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                <Shield className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-red-600">{contadores.urgentes}</p>
-                <p className="text-xs text-muted-foreground">Urgentes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          }}
+        />
+        <KPICardPremium
+          title="Urgentes"
+          value={contadores.urgentes}
+          icon={Shield}
+          gradient={contadores.urgentes > 0 ? "rose" : "zinc"}
+        />
+      </KPIGrid>
 
       {/* Filters */}
       <Card>

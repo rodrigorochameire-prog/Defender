@@ -39,6 +39,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { PJeImportModal } from "@/components/demandas-premium/pje-import-modal";
 import { toast } from "sonner";
+import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 
 // Opções de atribuição para o modal (apenas VVD pré-selecionado)
 const atribuicaoOptions = [
@@ -170,64 +171,33 @@ export default function VVDPage() {
       {/* Conteúdo */}
       <div className="p-4 md:p-6 space-y-6">
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <FileText className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.totalProcessos || 0}</p>
-                <p className="text-xs text-muted-foreground">Total de Processos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-green-200 dark:border-green-800">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <ShieldCheck className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">{stats?.mpusAtivas || 0}</p>
-                <p className="text-xs text-muted-foreground">MPUs Ativas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-amber-200 dark:border-amber-800">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                <Clock className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-amber-600">{stats?.mpusVencendo || 0}</p>
-                <p className="text-xs text-muted-foreground">Vencendo em 30 dias</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-blue-200 dark:border-blue-800">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <Bell className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-blue-600">{stats?.intimacoesPendentes || 0}</p>
-                <p className="text-xs text-muted-foreground">Intimações Pendentes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Stats Cards - KPI Premium */}
+      <KPIGrid columns={4}>
+        <KPICardPremium
+          title="Total de Processos"
+          value={stats?.totalProcessos || 0}
+          icon={FileText}
+          gradient="zinc"
+        />
+        <KPICardPremium
+          title="MPUs Ativas"
+          value={stats?.mpusAtivas || 0}
+          icon={ShieldCheck}
+          gradient="emerald"
+        />
+        <KPICardPremium
+          title="Vencendo em 30 dias"
+          value={stats?.mpusVencendo || 0}
+          icon={Clock}
+          gradient={stats?.mpusVencendo && stats.mpusVencendo > 0 ? "amber" : "zinc"}
+        />
+        <KPICardPremium
+          title="Intimações Pendentes"
+          value={stats?.intimacoesPendentes || 0}
+          icon={Bell}
+          gradient={stats?.intimacoesPendentes && stats.intimacoesPendentes > 0 ? "blue" : "zinc"}
+        />
+      </KPIGrid>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

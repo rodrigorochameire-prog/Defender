@@ -48,6 +48,7 @@ import Link from "next/link";
 import { format, parseISO, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
+import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -208,53 +209,37 @@ export default function JuriPage() {
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         
-        {/* STATS CARDS - Métricas de gestão (não de resultado) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            { label: "Agendadas", value: stats.agendadas, icon: Calendar, desc: "sessões futuras" },
-            { label: "Este Mês", value: stats.esteMes, icon: Clock, desc: "sessões previstas" },
-            { label: "Adiadas", value: stats.adiadas, icon: AlertTriangle, desc: "aguardando data", highlight: stats.adiadas > 0 },
-            { 
-              label: "Próxima", 
-              value: stats.diasProxima !== null ? (stats.diasProxima === 0 ? "Hoje" : `${stats.diasProxima}d`) : "-", 
-              icon: Zap, 
-              desc: stats.diasProxima !== null && stats.diasProxima <= 7 ? "atenção!" : "dias",
-              highlight: stats.diasProxima !== null && stats.diasProxima <= 7
-            },
-          ].map((stat, idx) => {
-            const Icon = stat.icon;
-            
-            return (
-              <div key={idx} className="group relative p-4 sm:p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300">
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-11 h-11 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center border transition-all",
-                    stat.highlight 
-                      ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
-                      : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20"
-                  )}>
-                    <Icon className={cn(
-                      "w-5 h-5 sm:w-4 sm:h-4 transition-colors",
-                      stat.highlight ? "text-amber-600" : "text-zinc-500 group-hover:text-emerald-600"
-                    )} />
-                  </div>
-                  <div>
-                    {isLoading ? (
-                      <Skeleton className="h-6 w-10" />
-                    ) : (
-                      <p className={cn(
-                        "text-2xl sm:text-xl font-semibold",
-                        stat.highlight ? "text-amber-600" : "text-zinc-700 dark:text-zinc-300"
-                      )}>{stat.value}</p>
-                    )}
-                    <p className="text-xs sm:text-[10px] text-zinc-500 uppercase tracking-wide">{stat.label}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {/* STATS CARDS - KPI Premium */}
+        <KPIGrid columns={4}>
+          <KPICardPremium
+            title="Agendadas"
+            value={isLoading ? "-" : stats.agendadas}
+            subtitle="sessões futuras"
+            icon={Calendar}
+            gradient="zinc"
+          />
+          <KPICardPremium
+            title="Este Mês"
+            value={isLoading ? "-" : stats.esteMes}
+            subtitle="sessões previstas"
+            icon={Clock}
+            gradient="zinc"
+          />
+          <KPICardPremium
+            title="Adiadas"
+            value={isLoading ? "-" : stats.adiadas}
+            subtitle="aguardando data"
+            icon={AlertTriangle}
+            gradient={stats.adiadas > 0 ? "amber" : "zinc"}
+          />
+          <KPICardPremium
+            title="Próxima"
+            value={isLoading ? "-" : (stats.diasProxima !== null ? (stats.diasProxima === 0 ? "Hoje" : `${stats.diasProxima}d`) : "-")}
+            subtitle={stats.diasProxima !== null && stats.diasProxima <= 7 ? "atenção!" : "dias"}
+            icon={Zap}
+            gradient={stats.diasProxima !== null && stats.diasProxima <= 7 ? "emerald" : "zinc"}
+          />
+        </KPIGrid>
 
         {/* PRÓXIMAS SESSÕES - Suavizado */}
         {(loadingProximas || (proximasSessoes && proximasSessoes.length > 0)) && (
