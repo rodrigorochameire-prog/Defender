@@ -11,6 +11,7 @@ export interface IntimacaoPJeSimples {
   atribuicaoDetectada?: string; // Atribuição detectada automaticamente
   camposNaoExtraidos?: string[]; // Lista de campos que precisam ser preenchidos manualmente
   isMPU?: boolean; // Se é processo de Medida Protetiva de Urgência (MPUMPCrim)
+  ordemOriginal?: number; // Posição original na lista do PJe (para ordenação por "recentes")
 }
 
 export interface ResultadoParser {
@@ -117,6 +118,7 @@ export function parsePJeIntimacoes(texto: string): IntimacaoPJeSimples[] {
 export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   const intimacoes: IntimacaoPJeSimples[] = [];
   const processados = new Set<string>(); // Para evitar duplicatas
+  let contadorOrdem = 0; // Contador para preservar ordem original do PJe
 
   // Detectar atribuição automaticamente
   const { atribuicao: atribuicaoDetectada, vara: varaDetectada } = detectarAtribuicao(texto);
@@ -127,8 +129,9 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   // Regex para número de processo CNJ
   const regexProcesso = /(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/;
 
-  // Regex para data de expedição
-  const regexExpedicao = /Expedição eletrônica\s*\((\d{2}\/\d{2}\/\d{4})/i;
+  // Regex para data de expedição (com horário opcional)
+  // Ex: "Expedição eletrônica (06/02/2026 11:00)" ou "Expedição eletrônica (06/02/2026)"
+  const regexExpedicao = /Expedição eletrônica\s*\((\d{2}\/\d{2}\/\d{4})(?:\s+(\d{2}:\d{2}))?\)/i;
 
   // Regex para prazo
   const regexPrazo = /Prazo:\s*(\d+)\s*dias?/i;
@@ -160,10 +163,13 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
       continue;
     }
 
-    // Extrair data de expedição
+    // Extrair data de expedição (com horário se disponível)
     const matchExpedicao = linha.match(regexExpedicao);
     if (matchExpedicao) {
-      intimacaoAtual.dataExpedicao = matchExpedicao[1];
+      // Se tiver horário, incluir no formato "DD/MM/YYYY HH:mm"
+      intimacaoAtual.dataExpedicao = matchExpedicao[2]
+        ? `${matchExpedicao[1]} ${matchExpedicao[2]}`
+        : matchExpedicao[1];
       continue;
     }
 
@@ -233,6 +239,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
             atribuicaoDetectada: atribuicaoDetectada || undefined,
             camposNaoExtraidos: camposNaoExtraidos.length > 0 ? camposNaoExtraidos : undefined,
             isMPU,
+            ordemOriginal: contadorOrdem++,
           });
         }
 
@@ -275,6 +282,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
         atribuicaoDetectada: atribuicaoDetectada || undefined,
         camposNaoExtraidos: camposNaoExtraidos.length > 0 ? camposNaoExtraidos : undefined,
         isMPU,
+        ordemOriginal: contadorOrdem++,
       });
     }
   }
@@ -374,10 +382,13 @@ function parsePJeIntimacoesLegado(texto: string): IntimacaoPJeSimples[] {
       continue;
     }
 
-    // Extrair data de expedição
-    const expedicaoMatch = linha.match(/(?:Expedição eletrônica|Diário Eletrônico|Edital)\s*\((\d{2}\/\d{2}\/\d{4})/i);
+    // Extrair data de expedição (com horário se disponível)
+    const expedicaoMatch = linha.match(/(?:Expedição eletrônica|Diário Eletrônico|Edital)\s*\((\d{2}\/\d{2}\/\d{4})(?:\s+(\d{2}:\d{2}))?\)/i);
     if (expedicaoMatch && !dataExpedicaoAtual) {
-      dataExpedicaoAtual = expedicaoMatch[1];
+      // Se tiver horário, incluir no formato "DD/MM/YYYY HH:mm"
+      dataExpedicaoAtual = expedicaoMatch[2]
+        ? `${expedicaoMatch[1]} ${expedicaoMatch[2]}`
+        : expedicaoMatch[1];
       continue;
     }
 
@@ -473,9 +484,17 @@ export function calcularPrazoDefensoria(dataExpedicao: string, diasPrazoProcessu
 
 export function converterDataParaISO(dataStr: string): string {
   try {
-    const [dia, mes, ano] = dataStr.split('/').map(Number);
+    // Separar data e hora (formato: "DD/MM/YYYY HH:mm" ou "DD/MM/YYYY")
+    const [dataParte, horaParte] = dataStr.split(' ');
+    const [dia, mes, ano] = dataParte.split('/').map(Number);
     const anoCompleto = ano > 2000 ? ano : 2000 + ano;
-    return `${anoCompleto}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+    const dataISO = `${anoCompleto}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+
+    // Se tiver horário, adicionar no formato ISO
+    if (horaParte) {
+      return `${dataISO}T${horaParte}:00`;
+    }
+    return dataISO;
   } catch {
     return new Date().toISOString().split('T')[0];
   }
@@ -509,11 +528,20 @@ export function intimacaoToDemanda(
   // Usar atribuição detectada se disponível e não foi especificada
   const atribuicaoFinal = atribuicao || intimacao.atribuicaoDetectada || 'Criminal';
 
+  // Converter data para ISO (inclui horário se disponível)
+  const dataISO = converterDataParaISO(intimacao.dataExpedicao);
+
   return {
     id: `pje-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     assistido: intimacao.assistido,
     status: 'Analisar',
-    data: converterDataParaISO(intimacao.dataExpedicao),
+    data: dataISO,
+    // dataInclusao com precisão de milissegundos para ordenação precisa
+    // Usa 999 - ordemOriginal para que a primeira da lista (ordem 0) tenha valor maior (999)
+    // e apareça primeiro na ordenação descendente por "recentes"
+    dataInclusao: intimacao.ordemOriginal !== undefined
+      ? `${dataISO.split('T')[0]}T00:00:00.${String(999 - intimacao.ordemOriginal).padStart(3, '0')}`
+      : new Date().toISOString(),
     prazo: '',
     processos: [
       {
@@ -535,6 +563,7 @@ export function intimacaoToDemanda(
       prazoOriginal: intimacao.prazo,
       crime: intimacao.crime,
       vara: intimacao.vara,
+      ordemOriginal: intimacao.ordemOriginal,
     },
   };
 }
