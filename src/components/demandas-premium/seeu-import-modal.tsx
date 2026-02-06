@@ -110,10 +110,9 @@ export function SEEUImportModal({
     try {
       const demandas = resultado.intimacoes.map((intimacao) => {
         const demanda = intimacaoSEEUToDemanda(intimacao);
-        // Sobrescrever tipo de manifestação se usuário escolheu diferente
+        // Sobrescrever status se usuário escolheu tipo diferente
         if (tipoManifestacao !== intimacao.tipoManifestacao) {
-          demanda.tipoIntimacao = tipoManifestacao === "ciencia" ? "CIENCIA" : "PETICIONAR";
-          demanda.status = tipoManifestacao === "ciencia" ? "7_CIENCIA" : "2_ATENDER";
+          demanda.status = tipoManifestacao === "ciencia" ? "ciencia" : "atender";
         }
         return demanda;
       });
