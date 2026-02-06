@@ -29,6 +29,9 @@ import { ContextControl } from "@/components/layout/context-control";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { EntitySheetProvider } from "@/contexts/entity-sheet-context";
 import { SidebarLogo } from "@/components/shared/logo";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { StatusBar } from "@/components/layout/status-bar";
+import { DailyProgress } from "@/components/layout/daily-progress";
 import {
   useAssignment, CONTEXT_MENU_ITEMS, UTILITIES_MENU,
   MAIN_MENU_ITEMS, COLLAPSIBLE_MENU_GROUPS, TEAM_MENU_ITEM,
@@ -407,9 +410,16 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 
         {/* Footer Premium Escuro */}
         <SidebarFooter className={cn(
-          "border-t border-zinc-700/30 p-3",
+          "border-t border-zinc-700/30 p-0",
           "bg-gradient-to-t from-[#1a1a1e] via-[#1f1f23] to-transparent"
         )}>
+          {/* Status Bar - Próximo evento e conexão */}
+          <StatusBar collapsed={isCollapsed} />
+
+          {/* Card do usuário */}
+          <div className={cn(
+            "p-3"
+          )}>
           <div className={cn(
             "flex items-center gap-3 p-2.5 rounded-2xl transition-all duration-300 group/user",
             "bg-gradient-to-br from-[#2a2a2f] to-[#1f1f23]",
@@ -440,11 +450,12 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
                     "font-medium"
                   )}
                 >
-                  <LogOut className="w-3 h-3" /> 
+                  <LogOut className="w-3 h-3" />
                   Sair da conta
                 </button>
               </div>
             )}
+          </div>
           </div>
         </SidebarFooter>
       </Sidebar>
@@ -466,44 +477,33 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           {/* Borda inferior elegante */}
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-zinc-800 via-zinc-600/40 to-zinc-800" />
           
-          {/* Conteúdo - Esquerda: Toggle + Título */}
-          <div className="relative flex items-center gap-3 px-3 flex-1">
-            <SidebarTrigger className="h-7 w-7 rounded-md text-zinc-500 hover:text-emerald-400 hover:bg-zinc-700/50 transition-all duration-300" />
-            
+          {/* Conteúdo - Esquerda: Toggle + Breadcrumbs */}
+          <div className="relative flex items-center gap-3 px-3 flex-1 min-w-0">
+            <SidebarTrigger className="h-7 w-7 rounded-md text-zinc-500 hover:text-emerald-400 hover:bg-zinc-700/50 transition-all duration-300 shrink-0" />
+
             {/* Separador */}
-            <div className="h-4 w-px bg-zinc-700/50" />
-            
-            {/* Título dinâmico baseado na rota */}
-            <span className="text-sm font-semibold text-zinc-100">
-              {pathname === "/admin" || pathname === "/admin/dashboard" ? "Dashboard" : 
-               pathname.startsWith("/admin/demandas") ? "Demandas" :
-               pathname.startsWith("/admin/assistidos") ? "Assistidos" :
-               pathname.startsWith("/admin/juri") ? "Júri" :
-               pathname.startsWith("/admin/casos") ? "Casos" :
-               pathname.startsWith("/admin/agenda") ? "Agenda" :
-               "Ombuds"}
-            </span>
+            <div className="h-4 w-px bg-zinc-700/50 shrink-0" />
+
+            {/* Breadcrumbs navegáveis */}
+            <Breadcrumbs />
           </div>
           
-          {/* Conteúdo - Direita: Indicador + Data + Controles */}
+          {/* Conteúdo - Direita: Progresso + Controles */}
           <div className="relative flex items-center gap-3 px-3">
-            {/* Indicador ativo */}
-            <div className="hidden md:flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400/50" />
-              <span className="text-[10px] text-zinc-500 font-medium">Online</span>
-            </div>
-            
+            {/* Barra de Progresso do Dia */}
+            <DailyProgress />
+
             {/* Separador */}
             <div className="hidden md:block h-4 w-px bg-zinc-700/40" />
-            
+
             {/* Data */}
             <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-zinc-400">
               <span className="capitalize">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })}</span>
             </div>
-            
+
             {/* Separador */}
             <div className="hidden lg:block h-4 w-px bg-zinc-700/40" />
-            
+
             {/* Controles */}
             <div className="flex items-center gap-1">
               <CommandPalette />
