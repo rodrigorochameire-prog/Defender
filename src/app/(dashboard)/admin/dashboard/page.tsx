@@ -673,18 +673,21 @@ export default function DashboardJuriPage() {
   
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      
-      {/* SUB-HEADER BRANCO */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+
+      {/* Header Padrão Defender */}
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <Briefcase className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <Briefcase className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Visão geral das atividades e métricas</span>
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Dashboard</h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Visão geral das atividades e métricas</p>
+            </div>
           </div>
-          
-          <Button 
+
+          <Button
             size="sm"
             onClick={() => setIsCreateModalOpen(true)}
             className="h-7 px-2.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"

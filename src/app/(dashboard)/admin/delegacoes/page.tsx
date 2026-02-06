@@ -366,41 +366,40 @@ export default function DelegacoesPage() {
   const isLoading = activeTab === "recebidas" ? loadingRecebidas : loadingEnviadas;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 p-6">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Header Padrão Defender */}
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shadow-lg shadow-rose-500/20">
-              <UserCheck className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <UserCheck className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
-                Delegações
-              </h1>
-              <p className="text-sm text-zinc-500">
-                Gerencie suas tarefas delegadas
-              </p>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Delegações</h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Gerencie suas tarefas delegadas</p>
             </div>
           </div>
 
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => {
               refetchRecebidas();
               refetchEnviadas();
             }}
-            className="gap-2"
+            className="gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
           >
             <RefreshCw className="w-4 h-4" />
             Atualizar
           </Button>
         </div>
+      </div>
 
+      {/* Conteúdo principal */}
+      <div className="p-4 md:p-6">
         {/* Estatísticas */}
         {stats && (
-          <div className="grid grid-cols-4 gap-4 mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <Card className="p-4 border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
@@ -464,10 +463,6 @@ export default function DelegacoesPage() {
             </Card>
           </div>
         )}
-      </div>
-
-      {/* Conteúdo */}
-      <div className="max-w-7xl mx-auto">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
           <div className="flex items-center justify-between mb-6">
             <TabsList className="bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
