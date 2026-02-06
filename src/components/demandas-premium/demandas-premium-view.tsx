@@ -779,6 +779,8 @@ export default function Demandas() {
           status: statusValido as any,
           providencias: data.providencias || undefined,
           reuPreso: data.estadoPrisional === 'Preso',
+          // Atribuição - atualiza o processo vinculado
+          atribuicao: data.atribuicao || undefined,
         });
       } catch (error) {
         console.error(`Erro ao atualizar demanda ${data.id}:`, error);

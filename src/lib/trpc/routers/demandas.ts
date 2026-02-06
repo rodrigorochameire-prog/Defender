@@ -269,22 +269,27 @@ export const demandasRouter = router({
         prioridade: z.enum(["BAIXA", "NORMAL", "ALTA", "URGENTE", "REU_PRESO"]).optional(),
         providencias: z.string().optional(),
         reuPreso: z.boolean().optional(),
+        // Atribuição - atualiza o processo vinculado
+        atribuicao: z.enum([
+          "JURI_CAMACARI", "GRUPO_JURI", "VVD_CAMACARI",
+          "EXECUCAO_PENAL", "SUBSTITUICAO", "SUBSTITUICAO_CIVEL"
+        ]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...data } = input;
+      const { id, atribuicao, ...data } = input;
       const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
-      
+
       const updateData: any = {
         ...data,
         updatedAt: new Date(),
       };
-      
+
       // Se marcado como concluído, registrar data
       if (data.status === "CONCLUIDO") {
         updateData.concluidoEm = new Date();
       }
-      
+
       // Construir condições de acesso
       let whereCondition;
       if (defensoresVisiveis === "all") {
@@ -294,20 +299,40 @@ export const demandasRouter = router({
       } else {
         whereCondition = and(eq(demandas.id, id), inArray(demandas.defensorId, defensoresVisiveis));
       }
-      
+
       const [atualizado] = await db
         .update(demandas)
         .set(updateData)
         .where(whereCondition)
         .returning();
-      
+
       if (!atualizado) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Demanda não encontrada ou você não tem permissão para editá-la",
         });
       }
-      
+
+      // Se foi passada atribuição, atualizar o processo vinculado
+      if (atribuicao && atualizado.processoId) {
+        const ATRIBUICAO_TO_AREA: Record<string, string> = {
+          "JURI_CAMACARI": "JURI",
+          "GRUPO_JURI": "JURI",
+          "VVD_CAMACARI": "VIOLENCIA_DOMESTICA",
+          "EXECUCAO_PENAL": "EXECUCAO_PENAL",
+          "SUBSTITUICAO": "SUBSTITUICAO",
+          "SUBSTITUICAO_CIVEL": "CIVEL",
+        };
+
+        await db.update(processos)
+          .set({
+            atribuicao: atribuicao as any,
+            area: (ATRIBUICAO_TO_AREA[atribuicao] || "JURI") as any,
+            updatedAt: new Date(),
+          })
+          .where(eq(processos.id, atualizado.processoId));
+      }
+
       return atualizado;
     }),
 
