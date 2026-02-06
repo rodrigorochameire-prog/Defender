@@ -98,42 +98,42 @@ export default function VVDPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Shield className="h-7 w-7 text-purple-600" />
-            Violência Doméstica - MPU
-          </h1>
-          <p className="text-muted-foreground">
-            Controle de Medidas Protetivas de Urgência
-          </p>
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Header Secundário (página especial) */}
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Violência Doméstica</h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Controle de Medidas Protetivas de Urgência</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => {
+              refetchStats();
+              refetchProcessos();
+              refetchIntimacoes();
+            }} className="h-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Atualizar
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setIsPJeImportModalOpen(true)}
+              className="h-8 px-3 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+            >
+              <Upload className="h-3.5 w-3.5 mr-1" />
+              Importar PJe
+            </Button>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => {
-            refetchStats();
-            refetchProcessos();
-            refetchIntimacoes();
-          }}>
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Atualizar
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsPJeImportModalOpen(true)}
-            className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-950/30"
-          >
-            <Upload className="h-4 w-4 mr-1" />
-            Importar PJe
-          </Button>
-          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="h-4 w-4 mr-1" />
-            Nova MPU
-          </Button>
         </div>
       </div>
+
+      {/* Conteúdo */}
+      <div className="p-4 md:p-6 space-y-6">
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -533,6 +533,7 @@ export default function VVDPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
 
       {/* Modal de Importação PJe */}
       <PJeImportModal

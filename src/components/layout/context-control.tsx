@@ -479,14 +479,14 @@ function ContextPopoverContent({
           Defensor
         </p>
 
-        {/* Defensores Principais (Juri/EP/VVD) + Visão Geral */}
-        <div className="grid grid-cols-3 gap-2 mb-2">
+        {/* Defensores Principais (Juri/EP/VVD) */}
+        <div className="flex gap-2 mb-2">
           {juriEpVvdDefensores.map((d) => (
             <button
               key={d.id}
               onClick={() => updateDefensor(d.id)}
               className={cn(
-                "py-3 px-2 rounded-xl transition-all duration-200 text-center",
+                "flex-1 py-2.5 px-2 rounded-xl transition-all duration-200 text-center",
                 "border-2",
                 defensor === d.id
                   ? "border-emerald-500 bg-emerald-900/30 shadow-lg shadow-emerald-900/20"
@@ -494,13 +494,13 @@ function ContextPopoverContent({
               )}
             >
               <div className={cn(
-                "w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm mx-auto mb-1.5 shadow-md",
+                "w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm mx-auto mb-1 shadow-md",
                 d.cor
               )}>
                 {d.inicial}
               </div>
-              <p className="text-[11px] font-semibold text-zinc-200 truncate">
-                {d.nomeCurto}
+              <p className="text-[10px] font-semibold text-zinc-200 leading-tight">
+                {d.nomeCurto.split(' ').slice(0, 2).join(' ')}
               </p>
             </button>
           ))}

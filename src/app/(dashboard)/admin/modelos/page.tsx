@@ -166,39 +166,26 @@ export default function ModelosPage() {
   }, [statsCards.porCategoria]);
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950">
-      {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-        <div className="px-6 py-4">
-          <Breadcrumbs
-            items={[
-              { label: "Dashboard", href: "/admin" },
-              { label: "Modelos" },
-            ]}
-          />
-
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-zinc-100 to-zinc-50 dark:from-zinc-800 dark:to-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                <FileStack className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-                  Banco de Modelos
-                </h1>
-                <p className="text-sm text-zinc-500">
-                  Modelos de documentos com variáveis dinâmicas
-                </p>
-              </div>
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Header Padrão Defender */}
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <FileStack className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
-
-            <Link href="/admin/modelos/novo">
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Novo Modelo
-              </Button>
-            </Link>
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Modelos</h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Banco de modelos com variáveis dinâmicas</p>
+            </div>
           </div>
+
+          <Link href="/admin/modelos/novo">
+            <Button size="sm" className="h-8 px-3 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors">
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Novo Modelo
+            </Button>
+          </Link>
         </div>
       </div>
 

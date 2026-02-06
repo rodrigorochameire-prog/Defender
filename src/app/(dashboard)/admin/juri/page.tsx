@@ -164,8 +164,8 @@ export default function JuriPage() {
       <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center shadow-lg">
-              <Gavel className="w-5 h-5 text-white" />
+            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+              <Gavel className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Tribunal do Júri</h1>
