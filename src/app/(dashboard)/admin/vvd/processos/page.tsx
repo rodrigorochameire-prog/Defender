@@ -115,37 +115,40 @@ export default function ProcessosVVDPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/vvd">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Voltar
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Header Secundário - Padrão Defender */}
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/admin/vvd">
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Voltar
+              </Button>
+            </Link>
+            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Processos VVD</h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Processos de Medidas Protetivas de Urgência</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="h-8">
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Atualizar
             </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <FileText className="h-7 w-7 text-purple-600" />
-              Processos VVD
-            </h1>
-            <p className="text-muted-foreground">
-              Processos de Medidas Protetivas de Urgencia
-            </p>
+            <Button size="sm" className="h-8 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white">
+              <Plus className="h-4 w-4 mr-1" />
+              Novo Processo
+            </Button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Atualizar
-          </Button>
-          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="h-4 w-4 mr-1" />
-            Novo Processo
-          </Button>
-        </div>
       </div>
+
+      {/* Conteúdo */}
+      <div className="p-4 md:p-6 space-y-6">
 
       {/* Filters */}
       <Card>
@@ -635,6 +638,7 @@ export default function ProcessosVVDPage() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

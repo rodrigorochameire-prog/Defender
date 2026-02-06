@@ -152,31 +152,34 @@ export default function IntimacoesVVDPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/vvd">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Voltar
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Bell className="h-7 w-7 text-purple-600" />
-              Intimacoes VVD
-            </h1>
-            <p className="text-muted-foreground">
-              Controle de prazos e ciencias de violencia domestica
-            </p>
+    <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+      {/* Header Secundário - Padrão Defender */}
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/admin/vvd">
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Voltar
+              </Button>
+            </Link>
+            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+              <Bell className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Intimações VVD</h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Controle de prazos e ciências de violência doméstica</p>
+            </div>
           </div>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="h-8">
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Atualizar
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-1" />
-          Atualizar
-        </Button>
       </div>
+
+      {/* Conteúdo */}
+      <div className="p-4 md:p-6 space-y-6">
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -437,6 +440,7 @@ export default function IntimacoesVVDPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

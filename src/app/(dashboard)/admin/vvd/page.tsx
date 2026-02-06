@@ -38,6 +38,7 @@ import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { PJeImportModal } from "@/components/demandas-premium/pje-import-modal";
+import { toast } from "sonner";
 
 // Opções de atribuição para o modal (apenas VVD pré-selecionado)
 const atribuicaoOptions = [
@@ -63,8 +64,42 @@ export default function VVDPage() {
     limit: 50,
   });
 
+  // Mutation para importar demandas gerais (não-MPU) para a tabela de demandas
+  const importDemandasMutation = trpc.demandas.importFromSheets.useMutation({
+    onSuccess: (result) => {
+      if (result.imported > 0) {
+        toast.success(`${result.imported} demandas VVD (não-MPU) importadas para a lista de demandas`);
+      }
+      if (result.errors.length > 0) {
+        result.errors.forEach((err) => toast.error(err));
+      }
+    },
+    onError: (error) => {
+      toast.error(`Erro ao importar demandas: ${error.message}`);
+    },
+  });
+
   const processos = processosData?.processos || [];
   const intimacoes = intimacoesData || [];
+
+  // Função para importar demandas gerais (não-MPU) para a tabela de demandas
+  const handleImportDemandasGerais = async (importedData: any[]) => {
+    if (importedData.length === 0) return;
+
+    // Mapear dados do modal para o formato esperado pela mutation importFromSheets
+    const rows = importedData.map((data) => ({
+      assistido: data.assistido || "Não informado",
+      processoNumero: data.processos?.[0]?.numero || data.numeroProcesso || "",
+      ato: data.ato || "Ciência",
+      prazo: data.prazo || undefined,
+      dataEntrada: data.data || data.dataExpedicao || undefined,
+      status: "fila",
+      providencias: data.providencias || "(ajustar status e ato)",
+      atribuicao: "Violência Doméstica",
+    }));
+
+    importDemandasMutation.mutate({ rows });
+  };
 
   // Função para atualizar todos os dados após importação
   const handleImportComplete = () => {
@@ -539,7 +574,7 @@ export default function VVDPage() {
       <PJeImportModal
         isOpen={isPJeImportModalOpen}
         onClose={() => setIsPJeImportModalOpen(false)}
-        onImport={() => {}} // Não usado para VVD - usa onVVDImportComplete
+        onImport={handleImportDemandasGerais} // Importa demandas não-MPU para tabela de demandas
         atribuicaoOptions={atribuicaoOptions}
         atoOptions={[]}
         statusOptions={[]}
