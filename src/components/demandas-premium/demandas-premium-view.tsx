@@ -743,49 +743,83 @@ export default function Demandas() {
   };
 
   // Função para atualizar demandas existentes (usado pelo SheetsImportModal)
+  // Processa em batches para evitar esgotar o pool de conexões do banco
   const handleUpdateDemandas = async (updatedData: any[]) => {
-    for (const data of updatedData) {
-      try {
-        // Converter ID para número se for string
-        const numericId = typeof data.id === 'string' ? parseInt(data.id, 10) : data.id;
+    const BATCH_SIZE = 5; // Processar 5 por vez para não sobrecarregar o banco
+    const DELAY_BETWEEN_BATCHES = 300; // 300ms entre batches
 
-        // Ignorar se não conseguiu converter para número válido
-        if (isNaN(numericId)) {
-          console.warn(`ID inválido para atualização: ${data.id}`);
-          continue;
+    // Mapear status da planilha para status válido do enum
+    const statusMap: Record<string, string> = {
+      'atender': '2_ATENDER',
+      'monitorar': '4_MONITORAR',
+      'fila': '5_FILA',
+      'protocolado': '7_PROTOCOLADO',
+      'ciencia': '7_CIENCIA',
+      'sem_atuacao': '7_SEM_ATUACAO',
+      'urgente': 'URGENTE',
+      'concluido': 'CONCLUIDO',
+      'arquivado': 'ARQUIVADO',
+    };
+
+    // Dividir em batches
+    const batches: any[][] = [];
+    for (let i = 0; i < updatedData.length; i += BATCH_SIZE) {
+      batches.push(updatedData.slice(i, i + BATCH_SIZE));
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+
+      // Processar cada item do batch sequencialmente
+      for (const data of batch) {
+        try {
+          // Converter ID para número se for string
+          const numericId = typeof data.id === 'string' ? parseInt(data.id, 10) : data.id;
+
+          // Ignorar se não conseguiu converter para número válido
+          if (isNaN(numericId)) {
+            console.warn(`ID inválido para atualização: ${data.id}`);
+            errorCount++;
+            continue;
+          }
+
+          const statusNormalizado = data.status?.toLowerCase?.() || 'fila';
+          const statusValido = statusMap[statusNormalizado] || '5_FILA';
+
+          // A mutation espera {id, ...campos} não {id, data: {...}}
+          await updateDemandaMutation.mutateAsync({
+            id: numericId,
+            ato: data.ato || undefined,
+            prazo: data.prazo || undefined,
+            status: statusValido as any,
+            providencias: data.providencias || undefined,
+            reuPreso: data.estadoPrisional === 'Preso',
+            // Atribuição - atualiza o processo vinculado
+            atribuicao: data.atribuicao || undefined,
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Erro ao atualizar demanda ${data.id}:`, error);
+          errorCount++;
         }
+      }
 
-        // Mapear status da planilha para status válido do enum
-        const statusMap: Record<string, string> = {
-          'atender': '2_ATENDER',
-          'monitorar': '4_MONITORAR',
-          'fila': '5_FILA',
-          'protocolado': '7_PROTOCOLADO',
-          'ciencia': '7_CIENCIA',
-          'sem_atuacao': '7_SEM_ATUACAO',
-          'urgente': 'URGENTE',
-          'concluido': 'CONCLUIDO',
-          'arquivado': 'ARQUIVADO',
-        };
-
-        const statusNormalizado = data.status?.toLowerCase?.() || 'fila';
-        const statusValido = statusMap[statusNormalizado] || '5_FILA';
-
-        // A mutation espera {id, ...campos} não {id, data: {...}}
-        await updateDemandaMutation.mutateAsync({
-          id: numericId,
-          ato: data.ato || undefined,
-          prazo: data.prazo || undefined,
-          status: statusValido as any,
-          providencias: data.providencias || undefined,
-          reuPreso: data.estadoPrisional === 'Preso',
-          // Atribuição - atualiza o processo vinculado
-          atribuicao: data.atribuicao || undefined,
-        });
-      } catch (error) {
-        console.error(`Erro ao atualizar demanda ${data.id}:`, error);
+      // Pausa entre batches (exceto no último)
+      if (batchIndex < batches.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
       }
     }
+
+    // Feedback ao usuário
+    if (errorCount > 0) {
+      toast.warning(`${successCount} atualizadas, ${errorCount} com erro`);
+    } else {
+      toast.success(`${successCount} demandas atualizadas!`);
+    }
+
     // Invalidar cache após atualizações
     utils.demandas.list.invalidate();
   };
