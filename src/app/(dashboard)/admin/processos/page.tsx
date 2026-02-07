@@ -108,13 +108,14 @@ import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
 import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterBar } from "@/components/shared/filter-bar";
-import { 
-  PageContainer, 
-  PageSection, 
+import {
+  PageContainer,
+  PageSection,
   ContentGrid,
   Divider,
   StatBlock
 } from "@/components/shared/page-structure";
+import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 
 // ==========================================
 // TIPOS
@@ -228,125 +229,6 @@ function calcularPrioridade(processo: Processo): number {
   return score;
 }
 
-// ==========================================
-// KPI CARD PREMIUM - Gradientes e Animações
-// ==========================================
-
-interface KPICardPremiumProps {
-  title: string;
-  value: number | string;
-  subtitle?: string;
-  icon: React.ElementType;
-  trend?: { value: number; label: string };
-  gradient: "emerald" | "blue" | "amber" | "rose" | "violet" | "zinc";
-  onClick?: () => void;
-  active?: boolean;
-}
-
-const GRADIENT_CONFIGS = {
-  emerald: {
-    bg: "from-emerald-500/10 via-emerald-500/5 to-transparent",
-    border: "border-emerald-200/50 dark:border-emerald-800/30",
-    icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    text: "text-emerald-600 dark:text-emerald-400",
-    glow: "group-hover:shadow-emerald-500/10",
-  },
-  blue: {
-    bg: "from-blue-500/10 via-blue-500/5 to-transparent",
-    border: "border-blue-200/50 dark:border-blue-800/30",
-    icon: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    text: "text-blue-600 dark:text-blue-400",
-    glow: "group-hover:shadow-blue-500/10",
-  },
-  amber: {
-    bg: "from-amber-500/10 via-amber-500/5 to-transparent",
-    border: "border-amber-200/50 dark:border-amber-800/30",
-    icon: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    text: "text-amber-600 dark:text-amber-400",
-    glow: "group-hover:shadow-amber-500/10",
-  },
-  rose: {
-    bg: "from-rose-500/10 via-rose-500/5 to-transparent",
-    border: "border-rose-200/50 dark:border-rose-800/30",
-    icon: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-    text: "text-rose-600 dark:text-rose-400",
-    glow: "group-hover:shadow-rose-500/10",
-  },
-  violet: {
-    bg: "from-violet-500/10 via-violet-500/5 to-transparent",
-    border: "border-violet-200/50 dark:border-violet-800/30",
-    icon: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-    text: "text-violet-600 dark:text-violet-400",
-    glow: "group-hover:shadow-violet-500/10",
-  },
-  zinc: {
-    bg: "from-zinc-500/10 via-zinc-500/5 to-transparent",
-    border: "border-zinc-200/50 dark:border-zinc-700/50",
-    icon: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
-    text: "text-zinc-600 dark:text-zinc-400",
-    glow: "group-hover:shadow-zinc-500/10",
-  },
-};
-
-function KPICardPremium({ title, value, subtitle, icon: Icon, trend, gradient, onClick, active }: KPICardPremiumProps) {
-  const config = GRADIENT_CONFIGS[gradient];
-
-  return (
-    <div
-      onClick={onClick}
-      className={cn(
-        "group relative p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
-        onClick && "cursor-pointer",
-        active ? config.border : "border-zinc-100 dark:border-zinc-800",
-        "hover:shadow-lg",
-        config.glow
-      )}
-    >
-      {/* Gradient Background */}
-      <div className={cn(
-        "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-        config.bg
-      )} />
-
-      {/* Top accent line */}
-      <div className={cn(
-        "absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-100 transition-opacity",
-        config.text
-      )} />
-
-      <div className="relative flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0 space-y-1">
-          <p className={cn(
-            "text-[10px] font-medium uppercase tracking-wider transition-colors",
-            active ? config.text : "text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300"
-          )}>
-            {title}
-          </p>
-          <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{value}</p>
-          {subtitle && (
-            <p className="text-[10px] text-zinc-400">{subtitle}</p>
-          )}
-          {trend && (
-            <div className={cn(
-              "flex items-center gap-1 text-[10px] font-medium",
-              trend.value >= 0 ? "text-emerald-600" : "text-rose-600"
-            )}>
-              <TrendingUp className={cn("w-3 h-3", trend.value < 0 && "rotate-180")} />
-              <span>{trend.value >= 0 ? "+" : ""}{trend.value}% {trend.label}</span>
-            </div>
-          )}
-        </div>
-        <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300",
-          config.icon,
-          "group-hover:scale-110"
-        )}>
-          <Icon className="w-5 h-5" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ==========================================
 // FILTRO DE PRAZO - Chips Premium
@@ -2015,13 +1897,14 @@ export default function ProcessosPage() {
         <div className="p-4 md:p-6 space-y-4">
 
         {/* KPI Cards Premium - Grid Responsivo */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <KPIGrid columns={6}>
           <KPICardPremium
             title="Total"
             value={stats.total}
             subtitle={`${stats.comarcas} comarcas`}
             icon={Scale}
-            gradient="emerald"
+            gradient="zinc"
+            size="sm"
           />
 
           <KPICardPremium
@@ -2029,9 +1912,10 @@ export default function ProcessosPage() {
             value={stats.juri}
             subtitle="processos"
             icon={Gavel}
-            gradient="blue"
+            gradient="zinc"
             onClick={() => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI")}
             active={areaFilter === "JURI"}
+            size="sm"
           />
 
           <KPICardPremium
@@ -2039,7 +1923,8 @@ export default function ProcessosPage() {
             value={stats.reuPreso}
             subtitle="prioridade máxima"
             icon={Lock}
-            gradient="rose"
+            gradient="zinc"
+            size="sm"
           />
 
           <KPICardPremium
@@ -2047,9 +1932,10 @@ export default function ProcessosPage() {
             value={stats.prazosVencidos}
             subtitle="prazos"
             icon={AlertCircle}
-            gradient="rose"
+            gradient="zinc"
             onClick={() => setPrazoFilter(prazoFilter === "vencidos" ? "all" : "vencidos")}
             active={prazoFilter === "vencidos"}
+            size="sm"
           />
 
           <KPICardPremium
@@ -2057,9 +1943,10 @@ export default function ProcessosPage() {
             value={stats.prazosHoje}
             subtitle="vencem hoje"
             icon={Timer}
-            gradient="amber"
+            gradient="zinc"
             onClick={() => setPrazoFilter(prazoFilter === "hoje" ? "all" : "hoje")}
             active={prazoFilter === "hoje"}
+            size="sm"
           />
 
           <KPICardPremium
@@ -2067,11 +1954,12 @@ export default function ProcessosPage() {
             value={stats.prazosUrgentes}
             subtitle="até 3 dias"
             icon={CalendarClock}
-            gradient="violet"
+            gradient="zinc"
             onClick={() => setPrazoFilter(prazoFilter === "semana" ? "all" : "semana")}
             active={prazoFilter === "semana"}
+            size="sm"
           />
-        </div>
+        </KPIGrid>
 
         {/* Filtros de Prazo - Chips Premium */}
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 p-4">

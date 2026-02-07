@@ -27,6 +27,7 @@ import { CalendarWeekView } from "@/components/agenda/calendar-week-view";
 import { EventoCard } from "@/components/agenda/evento-card";
 import { EventoDetailModal } from "@/components/agenda/evento-detail-modal";
 import { BuscaRegistrosModal } from "@/components/agenda/busca-registros-modal";
+import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -674,20 +675,59 @@ export default function AgendaPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = (data: EventoFormData) => {
-    if (editingEvento) {
-      toast.success("Evento atualizado!");
+  // Mutation para atualizar evento
+  const updateEvento = trpc.audiencias.update.useMutation({
+    onSuccess: () => {
+      toast.success("Evento atualizado com sucesso!");
       setIsEditModalOpen(false);
       setEditingEvento(null);
+      utils.audiencias.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar evento", { description: error.message });
+    },
+  });
+
+  // Mutation para deletar evento
+  const deleteEvento = trpc.audiencias.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Evento deletado com sucesso!");
+      utils.audiencias.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao deletar evento", { description: error.message });
+    },
+  });
+
+  const handleSaveEdit = (data: EventoFormData) => {
+    if (editingEvento) {
+      // Converter data para formato ISO com horário
+      const dataHora = `${data.data}T${data.horarioInicio || "09:00"}:00`;
+
+      updateEvento.mutate({
+        id: parseInt(editingEvento.id),
+        dataAudiencia: dataHora,
+        tipo: data.tipo,
+        local: data.local,
+        titulo: data.titulo,
+        descricao: data.descricao,
+        horario: data.horarioInicio,
+        status: data.status,
+      });
     }
   };
 
   const handleDeleteEvento = (id: string) => {
-    toast.success("Evento deletado!");
+    if (confirm("Tem certeza que deseja deletar este evento?")) {
+      deleteEvento.mutate({ id: parseInt(id) });
+    }
   };
 
   const handleStatusChange = (id: string, newStatus: string) => {
-    toast.success("Status atualizado!");
+    updateEvento.mutate({
+      id: parseInt(id),
+      status: newStatus,
+    });
   };
 
   const importBatch = trpc.audiencias.importBatch.useMutation({
@@ -1009,39 +1049,47 @@ export default function AgendaPage() {
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Cards - 2 colunas em mobile */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
-          value={stats.hoje}
-          label="Hoje"
-          sublabel={format(new Date(), "EEEE", { locale: ptBR })}
-          icon={Clock}
-          onClick={() => setSelectedPeriodo(selectedPeriodo === "hoje" ? null : "hoje")}
-          isActive={selectedPeriodo === "hoje"}
-        />
-        <StatCard
-          value={stats.amanha}
-          label="Amanhã"
-          sublabel={format(addDays(new Date(), 1), "dd/MM")}
-          icon={CalendarDays}
-          onClick={() => setSelectedPeriodo(selectedPeriodo === "amanha" ? null : "amanha")}
-          isActive={selectedPeriodo === "amanha"}
-        />
-        <StatCard
-          value={stats.semana}
-          label="Esta Semana"
-          sublabel="Próximos 7 dias"
-          icon={CalendarRange}
-          onClick={() => setSelectedPeriodo(selectedPeriodo === "semana" ? null : "semana")}
-          isActive={selectedPeriodo === "semana"}
-        />
-        <StatCard
-          value={stats.total}
-          label="Total"
-          sublabel="Eventos cadastrados"
-          icon={CalendarCheck}
-        />
-      </div>
+        {/* Stats Cards - Padrão Dashboard (KPICardPremium) */}
+        <KPIGrid columns={4}>
+          <KPICardPremium
+            title="Hoje"
+            value={stats.hoje}
+            subtitle={format(new Date(), "EEEE", { locale: ptBR })}
+            icon={Clock}
+            gradient="zinc"
+            onClick={() => setSelectedPeriodo(selectedPeriodo === "hoje" ? null : "hoje")}
+            active={selectedPeriodo === "hoje"}
+            size="sm"
+          />
+          <KPICardPremium
+            title="Amanhã"
+            value={stats.amanha}
+            subtitle={format(addDays(new Date(), 1), "dd/MM")}
+            icon={CalendarDays}
+            gradient="zinc"
+            onClick={() => setSelectedPeriodo(selectedPeriodo === "amanha" ? null : "amanha")}
+            active={selectedPeriodo === "amanha"}
+            size="sm"
+          />
+          <KPICardPremium
+            title="Esta Semana"
+            value={stats.semana}
+            subtitle="Próximos 7 dias"
+            icon={CalendarRange}
+            gradient="zinc"
+            onClick={() => setSelectedPeriodo(selectedPeriodo === "semana" ? null : "semana")}
+            active={selectedPeriodo === "semana"}
+            size="sm"
+          />
+          <KPICardPremium
+            title="Total"
+            value={stats.total}
+            subtitle="Eventos cadastrados"
+            icon={CalendarCheck}
+            gradient="zinc"
+            size="sm"
+          />
+        </KPIGrid>
 
       {/* Card de Filtros e Busca */}
       <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">

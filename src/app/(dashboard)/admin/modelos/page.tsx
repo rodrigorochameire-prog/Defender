@@ -204,28 +204,28 @@ export default function ModelosPage() {
             title="Administrativos"
             value={porCategoriaObj.PROVIDENCIA_ADMINISTRATIVA || 0}
             icon={Building2}
-            gradient="blue"
+            gradient="zinc"
             size="sm"
           />
           <KPICardPremium
             title="Funcionais"
             value={porCategoriaObj.PROVIDENCIA_FUNCIONAL || 0}
             icon={Briefcase}
-            gradient="emerald"
+            gradient="zinc"
             size="sm"
           />
           <KPICardPremium
             title="Peças Processuais"
             value={porCategoriaObj.PECA_PROCESSUAL || 0}
             icon={Scale}
-            gradient="amber"
+            gradient="zinc"
             size="sm"
           />
           <KPICardPremium
             title="Documentos Gerados"
             value={statsCards.totalGerados}
             icon={Sparkles}
-            gradient="violet"
+            gradient="zinc"
             size="sm"
           />
         </KPIGrid>
