@@ -8,7 +8,7 @@
 .claude/
 ├── RULES.md              # Regras globais (sempre carregado)
 ├── AGENTS.md             # Documentação do projeto (sempre carregado)
-├── commands/             # Skills especializadas (18 skills)
+├── commands/             # Skills especializadas (19 skills)
 │   │
 │   │ # Desenvolvimento
 │   ├── commit.md             # /commit - Commits padronizados
@@ -35,7 +35,10 @@
 │   ├── update-docs.md        # /update-docs - Atualizar documentação
 │   │
 │   │ # Arquitetura
-│   └── architecture-analysis.md # /architecture-analysis - DDD/Domínios
+│   ├── architecture-analysis.md # /architecture-analysis - DDD/Domínios
+│   │
+│   │ # Ideação
+│   └── ideias-defesa.md      # /ideias-defesa - Gerador de ideias
 │
 ├── mcp.json              # Configuração MCP (Supabase)
 └── settings.local.json   # Permissões locais
@@ -53,6 +56,7 @@
 | "documenta isso", "atualiza a doc" | `/update-docs` |
 | "faz commit" | `/commit` |
 | "corrige estilo", "padrão defender" | `/fix-style` |
+| "ideias", "sugere funcionalidade", "próxima feature" | `/ideias-defesa` |
 
 ## Arquivos Principais
 
