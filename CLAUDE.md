@@ -63,6 +63,8 @@
 | "CI falhou", "build quebrou", "GitHub Actions erro" | `/fix-ci` |
 | "otimizar query", "performance do banco", "índices" | `supabase-postgres-best-practices` |
 | "melhorar UI", "design", "cores", "tipografia" | `ui-ux-pro-max` |
+| "vamos pensar", "explorar ideia", "como fazer X" | `brainstorming` |
+| "criar nova skill" | `skill-creator` |
 
 ## Skills Globais (instaladas via npx skills)
 
@@ -129,20 +131,96 @@ Skill de design com **50+ estilos**, **97 paletas**, **57 pares de fontes** e **
 
 **Localização**: `.agents/skills/ui-ux-pro-max/`
 
+---
+
+### brainstorming
+
+Skill para **transformar ideias em designs** através de diálogo colaborativo.
+
+**Quando usar**: ANTES de qualquer trabalho criativo - criar features, componentes, modificar comportamento.
+
+**Processo**:
+
+| Fase | O que faz |
+|------|-----------|
+| 1. Entender | Verifica contexto do projeto, faz perguntas uma por vez |
+| 2. Explorar | Propõe 2-3 abordagens com trade-offs |
+| 3. Apresentar | Design em seções de 200-300 palavras, validando cada uma |
+| 4. Documentar | Salva em `docs/plans/YYYY-MM-DD-<topic>-design.md` |
+
+**Princípios**:
+- Uma pergunta por vez
+- Múltipla escolha quando possível
+- YAGNI - Remove features desnecessárias
+- Sempre 2-3 abordagens antes de decidir
+
+**Localização**: `.agents/skills/brainstorming/`
+
+---
+
+### skill-creator
+
+Skill oficial da Anthropic para **criar novas skills** personalizadas.
+
+**Quando usar**: Quando quiser criar uma skill específica para o projeto.
+
+**Estrutura de uma Skill**:
+
+```
+skill-name/
+├── SKILL.md           # Obrigatório - Frontmatter + instruções
+├── scripts/           # Scripts executáveis (Python/Bash)
+├── references/        # Documentação carregada sob demanda
+└── assets/            # Arquivos para output (templates, imagens)
+```
+
 **Comandos**:
 
 ```bash
-# Gerar design system
-python3 .agents/skills/ui-ux-pro-max/scripts/search.py "legal dashboard professional" --design-system -p "OMBUDS"
+# Criar nova skill
+python3 .agents/skills/skill-creator/scripts/init_skill.py minha-skill --path .
 
-# Buscar estilos
-python3 .agents/skills/ui-ux-pro-max/scripts/search.py "minimalist dark" --domain style
+# Empacotar skill
+python3 .agents/skills/skill-creator/scripts/package_skill.py ./minha-skill
+```
 
-# Buscar tipografia
-python3 .agents/skills/ui-ux-pro-max/scripts/search.py "professional readable" --domain typography
+**Localização**: `.agents/skills/skill-creator/`
 
-# Buscar paletas
-python3 .agents/skills/ui-ux-pro-max/scripts/search.py "government legal" --domain color
+---
+
+## Fluxo de Trabalho Recomendado
+
+```
+1. IDEAÇÃO
+   ├── /ideias-defesa → Gerar ideias alinhadas com OMBUDS
+   └── brainstorming → Refinar ideia em design detalhado
+
+2. PLANEJAMENTO
+   ├── /tdd → Criar Technical Design Document
+   └── /spec-driven → Criar tasks granulares
+
+3. IMPLEMENTAÇÃO
+   ├── /new-page, /new-router, /db-migrate → Criar estrutura
+   ├── /coding-guidelines → Seguir boas práticas
+   └── supabase-postgres-best-practices → Queries otimizadas
+
+4. QUALIDADE
+   ├── /fix-style → Padronizar visual (Padrão Defender)
+   ├── ui-ux-pro-max → Design profissional
+   ├── /code-review → Revisar código
+   └── /security-review → Verificar segurança
+
+5. VERIFICAÇÃO
+   ├── /validate → Validar implementação
+   ├── /debug → Investigar problemas
+   ├── /browser-test → Testar no navegador
+   └── /fix-ci → Corrigir CI se falhar
+
+6. PUBLICAÇÃO
+   ├── /commit → Commitar mudanças
+   ├── /pr-review → Revisar PR
+   ├── /deploy → Publicar
+   └── /update-docs → Atualizar documentação
 ```
 
 ## Arquivos Principais
