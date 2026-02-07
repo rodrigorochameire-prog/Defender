@@ -8,7 +8,7 @@
 .claude/
 ├── RULES.md              # Regras globais (sempre carregado)
 ├── AGENTS.md             # Documentação do projeto (sempre carregado)
-├── commands/             # Skills especializadas (19 skills)
+├── commands/             # Skills especializadas (21 skills)
 │   │
 │   │ # Desenvolvimento
 │   ├── commit.md             # /commit - Commits padronizados
@@ -17,6 +17,7 @@
 │   ├── db-migrate.md         # /db-migrate - Migrações de banco
 │   ├── coding-guidelines.md  # /coding-guidelines - Diretrizes Karpathy
 │   ├── spec-driven.md        # /spec-driven - Desenvolvimento estruturado
+│   ├── tdd.md                # /tdd - Technical Design Document
 │   │
 │   │ # Qualidade
 │   ├── fix-style.md          # /fix-style - Padronizar estilos
@@ -28,6 +29,7 @@
 │   ├── validate.md           # /validate - Validar implementação
 │   ├── debug.md              # /debug - Debugar problemas
 │   ├── browser-test.md       # /browser-test - Testar no navegador
+│   ├── fix-ci.md             # /fix-ci - Corrigir falhas no CI
 │   │
 │   │ # Publicação
 │   ├── deploy.md             # /deploy - Deploy para Vercel
@@ -57,6 +59,8 @@
 | "faz commit" | `/commit` |
 | "corrige estilo", "padrão defender" | `/fix-style` |
 | "ideias", "sugere funcionalidade", "próxima feature" | `/ideias-defesa` |
+| "criar TDD", "design doc", "especificação técnica" | `/tdd` |
+| "CI falhou", "build quebrou", "GitHub Actions erro" | `/fix-ci` |
 
 ## Arquivos Principais
 
