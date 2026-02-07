@@ -18,7 +18,8 @@
 │   ├── security-review.md    # /security-review - Auditoria de segurança
 │   ├── quality-audit.md      # /quality-audit - Lighthouse/Web Vitals
 │   ├── pr-review.md          # /pr-review - Revisão de PR (gh)
-│   └── spec-driven.md        # /spec-driven - Desenvolvimento estruturado
+│   ├── spec-driven.md        # /spec-driven - Desenvolvimento estruturado
+│   └── architecture-analysis.md # /architecture-analysis - DDD/Domínios
 ├── mcp.json              # Configuração MCP (Supabase)
 └── settings.local.json   # Permissões locais
 ```
