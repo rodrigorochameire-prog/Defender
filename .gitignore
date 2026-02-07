@@ -47,3 +47,6 @@ coverage/
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Credenciais sensíveis
+CREDENCIAIS.md
