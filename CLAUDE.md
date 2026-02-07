@@ -61,6 +61,30 @@
 | "ideias", "sugere funcionalidade", "próxima feature" | `/ideias-defesa` |
 | "criar TDD", "design doc", "especificação técnica" | `/tdd` |
 | "CI falhou", "build quebrou", "GitHub Actions erro" | `/fix-ci` |
+| "otimizar query", "performance do banco", "índices" | `supabase-postgres-best-practices` |
+
+## Skills Globais (instaladas via npx skills)
+
+### supabase-postgres-best-practices
+
+Skill oficial do Supabase com **30 regras** de otimização do PostgreSQL.
+
+**Quando usar**: Ao escrever queries SQL, projetar schemas ou otimizar performance do banco.
+
+**Categorias por Prioridade**:
+
+| Prioridade | Categoria | Exemplos de Regras |
+|------------|-----------|-------------------|
+| 1 - CRITICAL | Query Performance | missing-indexes, composite-indexes, covering-indexes |
+| 2 - CRITICAL | Connection Management | pooling, limits, idle-timeout |
+| 3 - CRITICAL | Security & RLS | rls-basics, rls-performance, privileges |
+| 4 - HIGH | Schema Design | data-types, foreign-key-indexes, partitioning |
+| 5 - MEDIUM-HIGH | Concurrency & Locking | deadlock-prevention, short-transactions |
+| 6 - MEDIUM | Data Access Patterns | batch-inserts, n-plus-one, pagination |
+| 7 - LOW-MEDIUM | Monitoring | explain-analyze, pg-stat-statements |
+| 8 - LOW | Advanced Features | full-text-search, jsonb-indexing |
+
+**Localização**: `~/.agents/skills/supabase-postgres-best-practices/`
 
 ## Arquivos Principais
 
