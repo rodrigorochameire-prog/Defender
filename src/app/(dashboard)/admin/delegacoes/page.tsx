@@ -397,70 +397,92 @@ export default function DelegacoesPage() {
 
       {/* Conteúdo principal */}
       <div className="p-4 md:p-6">
-        {/* Estatísticas */}
+        {/* Estatísticas - Padrão Defender (cores neutras) */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <Card className="p-4 border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                    {stats.pendentes}
-                  </p>
-                  <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
+            {/* Pendentes */}
+            <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+              <div className="flex items-start justify-between gap-2 md:gap-3">
+                <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
+                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
                     Pendentes
                   </p>
+                  <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">
+                    {stats.pendentes}
+                  </p>
+                  <p className="text-[9px] md:text-[10px] text-zinc-400 dark:text-zinc-500">
+                    aguardando ação
+                  </p>
+                </div>
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                  <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
                 </div>
               </div>
-            </Card>
+            </div>
 
-            <Card className="p-4 border-violet-200 dark:border-violet-900/50 bg-violet-50/50 dark:bg-violet-950/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-                  <Play className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
-                    {stats.emAndamento}
-                  </p>
-                  <p className="text-xs text-violet-600/70 dark:text-violet-400/70">
+            {/* Em Andamento */}
+            <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+              <div className="flex items-start justify-between gap-2 md:gap-3">
+                <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
+                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
                     Em Andamento
                   </p>
+                  <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">
+                    {stats.emAndamento}
+                  </p>
+                  <p className="text-[9px] md:text-[10px] text-zinc-400 dark:text-zinc-500">
+                    sendo trabalhado
+                  </p>
+                </div>
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                  <Play className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
                 </div>
               </div>
-            </Card>
+            </div>
 
-            <Card className="p-4 border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                    {stats.concluidas}
-                  </p>
-                  <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
+            {/* Concluídas */}
+            <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+              <div className="flex items-start justify-between gap-2 md:gap-3">
+                <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
+                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
                     Concluídas
                   </p>
+                  <p className="text-lg md:text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+                    {stats.concluidas}
+                  </p>
+                  <p className="text-[9px] md:text-[10px] text-emerald-600 dark:text-emerald-500">
+                    finalizadas
+                  </p>
+                </div>
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0 border border-emerald-200 dark:border-emerald-700">
+                  <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
               </div>
-            </Card>
+            </div>
 
-            <Card className="p-4 border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-zinc-600 dark:text-zinc-400">
+            {/* Total */}
+            <div className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
+              <div className="flex items-start justify-between gap-2 md:gap-3">
+                <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
+                  <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
+                    Total
+                  </p>
+                  <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">
                     {stats.total}
                   </p>
-                  <p className="text-xs text-zinc-500/70 dark:text-zinc-400/70">Total</p>
+                  <p className="text-[9px] md:text-[10px] text-zinc-400 dark:text-zinc-500">
+                    delegações
+                  </p>
+                </div>
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                  <FileText className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         )}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>

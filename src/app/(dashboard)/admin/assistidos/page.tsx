@@ -2058,7 +2058,7 @@ export default function AssistidosPage() {
         </div>
       )}
 
-      {/* KPI Cards Premium - Grid Responsivo - Estilo Compacto igual Processos */}
+      {/* KPI Cards Premium - Padrão Defender (cores neutras) */}
       {!showNaoIdentificados && (
       <>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -2070,19 +2070,18 @@ export default function AssistidosPage() {
               statusFilter === "all" && !showPinnedOnly
                 ? "border-emerald-200/50 dark:border-emerald-800/30"
                 : "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/10"
+              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Total</p>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Total</p>
                 <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.total - naoIdentificadosCount}</p>
                 <p className="text-[9px] text-emerald-600 dark:text-emerald-400">assistidos</p>
               </div>
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                <Users className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                <Users className="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
               </div>
             </div>
           </button>
@@ -2093,27 +2092,20 @@ export default function AssistidosPage() {
             className={cn(
               "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               statusFilter === "CADEIA_PUBLICA"
-                ? "border-rose-200/50 dark:border-rose-800/30"
+                ? "border-emerald-200/50 dark:border-emerald-800/30"
                 : "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-rose-500/10"
+              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className={cn(
-              "absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-rose-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity",
-              stats.presos > 0 && "animate-pulse"
-            )} />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Presos</p>
-                <p className={cn("text-xl font-bold", stats.presos > 0 ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.presos}</p>
-                <p className="text-[9px] text-rose-600 dark:text-rose-400">prioridade</p>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Presos</p>
+                <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.presos}</p>
+                <p className="text-[9px] text-zinc-500 dark:text-zinc-400">prioridade</p>
               </div>
-              <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center",
-                stats.presos > 0 ? "bg-rose-500 text-white" : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-              )}>
-                <Lock className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                <Lock className="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
               </div>
             </div>
           </button>
@@ -2124,48 +2116,45 @@ export default function AssistidosPage() {
             className={cn(
               "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               statusFilter === "MONITORADO"
-                ? "border-amber-200/50 dark:border-amber-800/30"
+                ? "border-emerald-200/50 dark:border-emerald-800/30"
                 : "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-amber-500/10"
+              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Monitorados</p>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Monitorados</p>
                 <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.monitorados}</p>
-                <p className="text-[9px] text-amber-600 dark:text-amber-400">tornozeleira</p>
+                <p className="text-[9px] text-zinc-500 dark:text-zinc-400">tornozeleira</p>
               </div>
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                <Timer className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                <Timer className="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
               </div>
             </div>
           </button>
 
-          {/* Audiencias Hoje */}
+          {/* Audiencias Hoje - mantém azul funcional */}
           <button
             onClick={() => {}}
             className={cn(
               "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-blue-500/10"
+              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className={cn(
-              "absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity",
-              stats.audienciasHoje > 0 && "animate-pulse"
-            )} />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Aud. Hoje</p>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Aud. Hoje</p>
                 <p className={cn("text-xl font-bold", stats.audienciasHoje > 0 ? "text-blue-600 dark:text-blue-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.audienciasHoje}</p>
-                <p className="text-[9px] text-blue-600 dark:text-blue-400">{stats.audienciasSemana} semana</p>
+                <p className="text-[9px] text-blue-600/70 dark:text-blue-400/70">{stats.audienciasSemana} semana</p>
               </div>
               <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center",
-                stats.audienciasHoje > 0 ? "bg-blue-500 text-white" : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                "w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-300",
+                stats.audienciasHoje > 0
+                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400"
+                  : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
               )}>
                 <Calendar className="w-4 h-4" />
               </div>
@@ -2178,19 +2167,18 @@ export default function AssistidosPage() {
             className={cn(
               "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-violet-500/10"
+              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Demandas</p>
-                <p className={cn("text-xl font-bold", stats.comDemandas > 0 ? "text-violet-600 dark:text-violet-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.comDemandas}</p>
-                <p className="text-[9px] text-violet-600 dark:text-violet-400">pendentes</p>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Demandas</p>
+                <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.comDemandas}</p>
+                <p className="text-[9px] text-zinc-500 dark:text-zinc-400">pendentes</p>
               </div>
-              <div className="w-8 h-8 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center">
-                <FileText className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
+                <FileText className="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
               </div>
             </div>
           </button>
@@ -2201,22 +2189,23 @@ export default function AssistidosPage() {
             className={cn(
               "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
               showPinnedOnly
-                ? "border-amber-200/50 dark:border-amber-800/30"
+                ? "border-emerald-200/50 dark:border-emerald-800/30"
                 : "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-amber-500/10"
+              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 via-amber-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">Fixados</p>
-                <p className={cn("text-xl font-bold", showPinnedOnly ? "text-amber-600 dark:text-amber-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.pinned}</p>
-                <p className="text-[9px] text-amber-500 dark:text-amber-400">favoritos</p>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Fixados</p>
+                <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.pinned}</p>
+                <p className="text-[9px] text-zinc-500 dark:text-zinc-400">favoritos</p>
               </div>
               <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center",
-                showPinnedOnly ? "bg-amber-500 text-white" : "bg-amber-400/10 text-amber-500 dark:text-amber-400"
+                "w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-300",
+                showPinnedOnly
+                  ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400"
+                  : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
               )}>
                 <BookmarkCheck className="w-4 h-4" />
               </div>
