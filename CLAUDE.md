@@ -62,6 +62,7 @@
 | "criar TDD", "design doc", "especificação técnica" | `/tdd` |
 | "CI falhou", "build quebrou", "GitHub Actions erro" | `/fix-ci` |
 | "otimizar query", "performance do banco", "índices" | `supabase-postgres-best-practices` |
+| "melhorar UI", "design", "cores", "tipografia" | `ui-ux-pro-max` |
 
 ## Skills Globais (instaladas via npx skills)
 
@@ -85,6 +86,64 @@ Skill oficial do Supabase com **30 regras** de otimização do PostgreSQL.
 | 8 - LOW | Advanced Features | full-text-search, jsonb-indexing |
 
 **Localização**: `~/.agents/skills/supabase-postgres-best-practices/`
+
+---
+
+### ui-ux-pro-max
+
+Skill de design com **50+ estilos**, **97 paletas**, **57 pares de fontes** e **99 regras de UX**.
+
+**Quando usar**: Ao criar/melhorar componentes visuais, escolher cores, tipografia, ou revisar acessibilidade.
+
+**Conteúdo**:
+
+| Categoria | Quantidade | Exemplos |
+|-----------|------------|----------|
+| Estilos | 50+ | Minimalism, Bento Grid, Glassmorphism, Dark Mode |
+| Paletas | 97 | Government, Legal, SaaS, Healthcare |
+| Tipografia | 57 pares | Inter+Fira Code, Poppins+Open Sans |
+| UX Guidelines | 99 regras | Acessibilidade, animações, loading states |
+| Stacks | 10 | React, Next.js, Tailwind, shadcn/ui |
+
+**Recomendações para Padrão Defender**:
+
+| Aspecto | Recomendação |
+|---------|--------------|
+| Tipografia | Adicionar `font-mono` para CPF/números de processo |
+| Loading | Usar skeletons com `animate-pulse` |
+| Interação | Garantir `cursor-pointer` em cards clicáveis |
+| Acessibilidade | Implementar `prefers-reduced-motion` |
+| Layout | Considerar Bento Grid para dashboard |
+
+**Checklist Pre-Delivery**:
+
+```
+[ ] Sem emojis como ícones (usar Lucide)
+[ ] cursor-pointer em elementos clicáveis
+[ ] Hover com transições suaves (150-300ms)
+[ ] Contraste 4.5:1 mínimo (WCAG AA)
+[ ] Focus states visíveis para navegação por teclado
+[ ] Responsivo: 375px, 768px, 1024px, 1440px
+[ ] prefers-reduced-motion respeitado
+```
+
+**Localização**: `.agents/skills/ui-ux-pro-max/`
+
+**Comandos**:
+
+```bash
+# Gerar design system
+python3 .agents/skills/ui-ux-pro-max/scripts/search.py "legal dashboard professional" --design-system -p "OMBUDS"
+
+# Buscar estilos
+python3 .agents/skills/ui-ux-pro-max/scripts/search.py "minimalist dark" --domain style
+
+# Buscar tipografia
+python3 .agents/skills/ui-ux-pro-max/scripts/search.py "professional readable" --domain typography
+
+# Buscar paletas
+python3 .agents/skills/ui-ux-pro-max/scripts/search.py "government legal" --domain color
+```
 
 ## Arquivos Principais
 
