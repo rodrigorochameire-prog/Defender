@@ -13,7 +13,12 @@
 │   ├── new-page.md       # /new-page - Criar página
 │   ├── new-router.md     # /new-router - Criar router tRPC
 │   ├── fix-style.md      # /fix-style - Padronizar estilos
-│   └── db-migrate.md     # /db-migrate - Migrações de banco
+│   ├── db-migrate.md     # /db-migrate - Migrações de banco
+│   ├── coding-guidelines.md  # /coding-guidelines - Diretrizes Karpathy
+│   ├── security-review.md    # /security-review - Auditoria de segurança
+│   ├── quality-audit.md      # /quality-audit - Lighthouse/Web Vitals
+│   ├── pr-review.md          # /pr-review - Revisão de PR (gh)
+│   └── spec-driven.md        # /spec-driven - Desenvolvimento estruturado
 ├── mcp.json              # Configuração MCP (Supabase)
 └── settings.local.json   # Permissões locais
 ```
