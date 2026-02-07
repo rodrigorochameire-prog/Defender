@@ -33,6 +33,7 @@ import { modelosRouter } from "./modelos";
 import { jurisprudenciaRouter } from "./jurisprudencia";
 import { prazosRouter } from "./prazos";
 import { vvdRouter } from "./vvd";
+import { palacioRouter } from "./palacio";
 
 
 export const appRouter = router({
@@ -112,6 +113,11 @@ export const appRouter = router({
   // VVD - VIOLÊNCIA DOMÉSTICA / MPU
   // ==========================================
   vvd: vvdRouter,
+
+  // ==========================================
+  // PALÁCIO DA MENTE - DIAGRAMAS DE INVESTIGAÇÃO
+  // ==========================================
+  palacio: palacioRouter,
 });
 
 export type AppRouter = typeof appRouter;

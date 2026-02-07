@@ -72,6 +72,7 @@ const RESOURCES_NAV: AssignmentMenuItem[] = [
   { label: "Modelos", path: "/admin/modelos", icon: "FileText" },
   { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch" },
   { label: "Lógica", path: "/admin/logica", icon: "Brain" },
+  { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
 ];
 
 // Menu de gestão (admin)

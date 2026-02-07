@@ -65,6 +65,7 @@
 | "melhorar UI", "design", "cores", "tipografia" | `ui-ux-pro-max` |
 | "vamos pensar", "explorar ideia", "como fazer X" | `brainstorming` |
 | "criar nova skill" | `skill-creator` |
+| "criar diagrama", "mapa mental", "visualizar caso" | `excalidraw-diagram` |
 
 ## Skills Globais (instaladas via npx skills)
 
@@ -185,6 +186,34 @@ python3 .agents/skills/skill-creator/scripts/package_skill.py ./minha-skill
 ```
 
 **Localização**: `.agents/skills/skill-creator/`
+
+---
+
+### excalidraw-diagram
+
+Skill para **criar diagramas visuais** no formato Excalidraw.
+
+**Quando usar**: Para visualizar casos, criar mapas mentais, diagramas de relacionamento, timelines.
+
+**Tipos de Diagrama**:
+
+| Tipo | Uso no OMBUDS |
+|------|---------------|
+| **Relationship** | Conexões entre pessoas (suspeitos, testemunhas, vítimas) |
+| **Timeline** | Cronologia dos fatos do caso |
+| **Mind Map** | Hipóteses de defesa, ramificações |
+| **Hierarchy** | Estrutura de provas, cadeia de custódia |
+| **Matrix** | Contradições vs consistências nos depoimentos |
+| **Freeform** | "Quadro de investigação" estilo detetive |
+
+**Formatos de Saída**:
+- `.md` (Obsidian) - Para visualização integrada
+- `.excalidraw` (Standard) - Para excalidraw.com
+- `.excalidraw` (Animated) - Para animações
+
+**Aplicação no OMBUDS**: "Palácio da Mente" para investigação jurídica - página vinculada a Assistidos → Processos → Casos → Investigação.
+
+**Localização**: `.agents/skills/excalidraw-diagram/`
 
 ---
 
