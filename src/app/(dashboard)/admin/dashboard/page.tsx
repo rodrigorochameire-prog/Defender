@@ -509,16 +509,16 @@ export default function DashboardJuriPage() {
   const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
 
-  // Configuração dos tipos de registro (layout 3x2)
+  // Configuração dos tipos de registro (layout 3x2) - Padrão Defender (cores neutras, verde funcional)
   const tiposRegistro = [
-    // Linha 1
+    // Linha 1 - Atendimento tem cor verde funcional (ação principal)
     { id: "atendimento", label: "Atendimento", icon: MessageSquare, color: "text-emerald-600", bgActive: "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300" },
-    { id: "diligencia", label: "Diligência", icon: Search, color: "text-blue-600", bgActive: "bg-blue-100 dark:bg-blue-900/30 border-blue-300" },
-    { id: "informacao", label: "Info", icon: Info, color: "text-amber-600", bgActive: "bg-amber-100 dark:bg-amber-900/30 border-amber-300" },
+    { id: "diligencia", label: "Diligência", icon: Search, color: "text-zinc-600", bgActive: "bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600" },
+    { id: "informacao", label: "Info", icon: Info, color: "text-zinc-600", bgActive: "bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600" },
     // Linha 2
-    { id: "peticao", label: "Petição", icon: FileText, color: "text-purple-600", bgActive: "bg-purple-100 dark:bg-purple-900/30 border-purple-300" },
-    { id: "anotacao", label: "Nota", icon: PenLine, color: "text-zinc-600", bgActive: "bg-zinc-100 dark:bg-zinc-800 border-zinc-300" },
-    { id: "delegacao", label: "Delegar", icon: UserPlus, color: "text-rose-600", bgActive: "bg-rose-100 dark:bg-rose-900/30 border-rose-300" },
+    { id: "peticao", label: "Petição", icon: FileText, color: "text-zinc-600", bgActive: "bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600" },
+    { id: "anotacao", label: "Nota", icon: PenLine, color: "text-zinc-600", bgActive: "bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600" },
+    { id: "delegacao", label: "Delegar", icon: UserPlus, color: "text-zinc-600", bgActive: "bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600" },
   ] as const;
   
   // Estado para modal de delegação
@@ -742,29 +742,29 @@ export default function DashboardJuriPage() {
           </Card>
         )}
 
-        {/* BADGES DE STATUS RÁPIDO */}
+        {/* BADGES DE STATUS RÁPIDO - Estilo neutro */}
         <div className="flex flex-wrap gap-2">
           {estatisticasPrazos.vencidos > 0 && (
-            <Badge variant="destructive" className="py-1 px-3 text-xs">
-              <AlertCircle className="w-3 h-3 mr-1" />
+            <Badge variant="outline" className="py-1 px-3 text-xs border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+              <AlertCircle className="w-3 h-3 mr-1 text-zinc-500" />
               {estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}
             </Badge>
           )}
           {estatisticasPrazos.venceHoje > 0 && (
-            <Badge className="py-1 px-3 text-xs bg-orange-500 hover:bg-orange-600">
-              <Clock className="w-3 h-3 mr-1" />
+            <Badge variant="outline" className="py-1 px-3 text-xs border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+              <Clock className="w-3 h-3 mr-1 text-zinc-500" />
               {estatisticasPrazos.venceHoje} vence{estatisticasPrazos.venceHoje > 1 ? "m" : ""} hoje
             </Badge>
           )}
           {estatisticasPrazos.proximosDias > 0 && (
-            <Badge variant="outline" className="py-1 px-3 text-xs border-amber-300 text-amber-700 dark:text-amber-400">
-              <Calendar className="w-3 h-3 mr-1" />
+            <Badge variant="outline" className="py-1 px-3 text-xs border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400">
+              <Calendar className="w-3 h-3 mr-1 text-zinc-500" />
               {estatisticasPrazos.proximosDias} na semana
             </Badge>
           )}
           {estatisticasPrazos.reuPresoCritico > 0 && (
-            <Badge className="py-1 px-3 text-xs bg-purple-600 hover:bg-purple-700">
-              <Lock className="w-3 h-3 mr-1" />
+            <Badge variant="outline" className="py-1 px-3 text-xs border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+              <Lock className="w-3 h-3 mr-1 text-zinc-500" />
               {estatisticasPrazos.reuPresoCritico} réu preso crítico
             </Badge>
           )}
@@ -777,14 +777,14 @@ export default function DashboardJuriPage() {
             <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                  <AlertCircle className="w-4 h-4 text-zinc-400" />
                   <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Prazos</h3>
                   {estatisticasPrazos.vencidos > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-bold animate-pulse">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold">
                       {estatisticasPrazos.vencidos} VENCIDO{estatisticasPrazos.vencidos > 1 ? "S" : ""}
                     </span>
                   )}
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
                     {demandasPorPrazo.length} total
                   </span>
                 </div>
@@ -834,7 +834,7 @@ export default function DashboardJuriPage() {
                               {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
                             </p>
                             {demanda.reuPreso && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
                                 <Lock className="w-2.5 h-2.5 mr-0.5" />
                                 PRESO
                               </span>
@@ -1647,8 +1647,8 @@ export default function DashboardJuriPage() {
         {/* CARGA DE TRABALHO */}
         <Card className="group/card relative p-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="flex items-start gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center border border-blue-200 dark:border-blue-700">
-              <ListTodo className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
+              <ListTodo className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Carga de Trabalho</h3>
@@ -1658,51 +1658,33 @@ export default function DashboardJuriPage() {
 
           <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
             {/* Prazos Vencidos */}
-            <div className={`p-3 rounded-lg border ${
-              cargaTrabalho.prazosVencidos > 0 
-                ? "bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700" 
-                : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
-            }`}>
+            <div className="p-3 rounded-lg border bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700">
               <div className="flex items-center justify-between mb-1">
-                <span className={`text-[10px] font-medium uppercase ${
-                  cargaTrabalho.prazosVencidos > 0 ? "text-rose-600" : "text-zinc-500"
-                }`}>Prazos Vencidos</span>
-                {cargaTrabalho.prazosVencidos > 0 && (
-                  <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
-                )}
+                <span className="text-[10px] font-medium uppercase text-zinc-500">Prazos Vencidos</span>
+                <AlertCircle className="w-3.5 h-3.5 text-zinc-400" />
               </div>
-              <p className={`text-2xl font-bold ${
-                cargaTrabalho.prazosVencidos > 0 ? "text-rose-600" : "text-zinc-700 dark:text-zinc-300"
-              }`}>{cargaTrabalho.prazosVencidos}</p>
+              <p className="text-2xl font-bold text-zinc-700 dark:text-zinc-300">{cargaTrabalho.prazosVencidos}</p>
               <p className="text-[10px] text-zinc-400">demandas atrasadas</p>
             </div>
 
             {/* Prazos Esta Semana */}
-            <div className={`p-3 rounded-lg border ${
-              cargaTrabalho.prazosEstaSemana > 0 
-                ? "bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700" 
-                : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
-            }`}>
+            <div className="p-3 rounded-lg border bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700">
               <div className="flex items-center justify-between mb-1">
-                <span className={`text-[10px] font-medium uppercase ${
-                  cargaTrabalho.prazosEstaSemana > 0 ? "text-amber-600" : "text-zinc-500"
-                }`}>Esta Semana</span>
-                <Calendar className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[10px] font-medium uppercase text-zinc-500">Esta Semana</span>
+                <Calendar className="w-3.5 h-3.5 text-zinc-400" />
               </div>
-              <p className={`text-2xl font-bold ${
-                cargaTrabalho.prazosEstaSemana > 0 ? "text-amber-600" : "text-zinc-700 dark:text-zinc-300"
-              }`}>{cargaTrabalho.prazosEstaSemana}</p>
+              <p className="text-2xl font-bold text-zinc-700 dark:text-zinc-300">{cargaTrabalho.prazosEstaSemana}</p>
               <p className="text-[10px] text-zinc-400">prazos vencendo</p>
             </div>
 
             {/* Em Andamento */}
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
-              <span className="text-[10px] font-medium text-blue-600 uppercase">Em Andamento</span>
-              <p className="text-2xl font-bold text-blue-600">{cargaTrabalho.emAndamento}</p>
+            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+              <span className="text-[10px] font-medium text-zinc-500 uppercase">Em Andamento</span>
+              <p className="text-2xl font-bold text-zinc-700 dark:text-zinc-300">{cargaTrabalho.emAndamento}</p>
               <p className="text-[10px] text-zinc-400">demandas ativas</p>
             </div>
 
-            {/* Concluídas Este Mês */}
+            {/* Concluídas Este Mês - Único com cor verde funcional */}
             <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] font-medium text-emerald-600 uppercase">Concluídas</span>
