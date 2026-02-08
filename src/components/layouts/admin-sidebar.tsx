@@ -10,7 +10,7 @@ import {
   Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
-  MoreHorizontal, Box, Puzzle, BookUser, Users2
+  MoreHorizontal, Box, Puzzle, BookUser, Users2, Home
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -117,7 +117,7 @@ const iconMap: Record<string, React.ElementType> = {
   Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
-  BookUser, Users2
+  BookUser, Users2, Home
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
@@ -514,6 +514,168 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     <span className="text-[12px] truncate">{item.label}</span>
                     {isActive && (
                       <div className="absolute right-2 w-1 h-1 rounded-full bg-emerald-400" />
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// MENU "PRINCIPAL" COLAPSÁVEL - NEUTRO (INICIA EXPANDIDO)
+// ==========================================
+
+function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
+  items: AssignmentMenuItem[];
+  pathname: string;
+  onNavigate: () => void;
+  userRole?: UserRole;
+  isCollapsed: boolean;
+}) {
+  // Inicia EXPANDIDO (diferente dos outros menus)
+  const [expanded, setExpanded] = useState(true);
+  const hasActiveItem = items.some(item =>
+    pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path))
+  );
+
+  // Auto-expandir se um item está ativo
+  useEffect(() => {
+    if (hasActiveItem && !expanded) {
+      setExpanded(true);
+    }
+  }, [hasActiveItem]);
+
+  if (isCollapsed) {
+    return (
+      <SidebarMenuItem>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
+                hasActiveItem
+                  ? "bg-white/95 text-zinc-900 shadow-lg shadow-white/10"
+                  : "text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200"
+              )}
+            >
+              <Home className="h-5 w-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="start"
+            className="w-56 p-2 bg-[#1f1f23] border-zinc-700/50 shadow-xl shadow-black/30"
+          >
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+              <Home className="h-3 w-3" />
+              Principal
+            </p>
+            {items.map((item) => {
+              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+                return null;
+              }
+              const Icon = iconMap[item.icon] || Briefcase;
+              const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
+                    isActive
+                      ? "bg-white/95 text-zinc-900 font-medium"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </PopoverContent>
+        </Popover>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      {/* Botão principal - Principal */}
+      <SidebarMenuItem>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className={cn(
+            "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
+            hasActiveItem
+              ? "bg-zinc-700/60 text-zinc-100"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+          )}
+        >
+          <div className={cn(
+            "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
+            hasActiveItem
+              ? "bg-white/20"
+              : "bg-zinc-700/50 group-hover/item:bg-zinc-600/60"
+          )}>
+            <Home className={cn(
+              "h-4 w-4 transition-all duration-300",
+              hasActiveItem ? "text-zinc-100" : "text-zinc-400 group-hover/item:text-zinc-200"
+            )} />
+          </div>
+          <span className="text-[13px] font-medium">Principal</span>
+          <ChevronDown className={cn(
+            "h-4 w-4 ml-auto transition-transform duration-300",
+            expanded && "rotate-180"
+          )} />
+        </button>
+      </SidebarMenuItem>
+
+      {/* Sub-itens com animação */}
+      <div className={cn(
+        "overflow-hidden transition-all duration-300 ease-in-out",
+        expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+      )}>
+        <div className="relative pl-4 space-y-0.5">
+          {/* Linha vertical conectora */}
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-zinc-500/30 via-zinc-700/40 to-transparent" />
+
+          {items.map((item) => {
+            if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+              return null;
+            }
+            const Icon = iconMap[item.icon] || Briefcase;
+            const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
+            return (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  className={cn(
+                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                    isActive
+                      ? "bg-white/95 text-zinc-900 font-semibold shadow-lg shadow-white/10"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
+                  )}
+                >
+                  <Link href={item.path} prefetch={true} onClick={onNavigate}>
+                    {/* Indicador de conexão */}
+                    <div className={cn(
+                      "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                      isActive ? "bg-white/50" : "bg-zinc-700/50"
+                    )} />
+                    <Icon className={cn(
+                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      isActive ? "text-zinc-900" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                    )} />
+                    <span className="text-[12px] truncate">{item.label}</span>
+                    {isActive && (
+                      <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-zinc-900/40" />
                     )}
                   </Link>
                 </SidebarMenuButton>
@@ -1004,10 +1166,35 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
 }
 
 // ==========================================
-// MENU "ESPECIALIDADES" COLAPSÁVEL - AMBER
+// MENU "ESPECIALIDADES" COLAPSÁVEL - CORES POR TIPO
 // ==========================================
 
 type Especialidade = "JURI" | "VVD" | "EP";
+
+// Cores distintas por especialidade
+const ESPECIALIDADE_COLORS = {
+  JURI: {
+    bg: "bg-emerald-500/20",
+    text: "text-emerald-400",
+    ring: "ring-emerald-500/30",
+    bgHover: "hover:bg-emerald-700/30",
+    line: "from-emerald-500/30"
+  },
+  VVD: {
+    bg: "bg-yellow-500/20",
+    text: "text-yellow-400",
+    ring: "ring-yellow-500/30",
+    bgHover: "hover:bg-yellow-700/30",
+    line: "from-yellow-500/30"
+  },
+  EP: {
+    bg: "bg-blue-500/20",
+    text: "text-blue-400",
+    ring: "ring-blue-500/30",
+    bgHover: "hover:bg-blue-700/30",
+    line: "from-blue-500/30"
+  }
+};
 
 function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
   pathname: string;
@@ -1068,12 +1255,12 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
               Especialidades
             </p>
 
-            {/* Seletor de especialidade */}
+            {/* Seletor de especialidade com cores distintas */}
             <div className="flex gap-1 px-2 pb-2 mb-2 border-b border-zinc-700/50">
               {[
-                { id: "JURI" as Especialidade, label: "Júri", icon: Gavel },
-                { id: "VVD" as Especialidade, label: "VVD", icon: Shield },
-                { id: "EP" as Especialidade, label: "EP", icon: Lock },
+                { id: "JURI" as Especialidade, label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
+                { id: "VVD" as Especialidade, label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
+                { id: "EP" as Especialidade, label: "EP", icon: Lock, colors: ESPECIALIDADE_COLORS.EP },
               ].map((esp) => (
                 <button
                   key={esp.id}
@@ -1081,11 +1268,11 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                   className={cn(
                     "flex-1 py-1.5 px-2 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1",
                     especialidade === esp.id
-                      ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
+                      ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring}`
                       : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/50"
                   )}
                 >
-                  <esp.icon className="h-3 w-3" />
+                  <esp.icon className={cn("h-3 w-3", especialidade === esp.id && esp.colors.text)} />
                   {esp.label}
                 </button>
               ))}
@@ -1158,15 +1345,18 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
         expanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
       )}>
         <div className="relative pl-4 space-y-0.5">
-          {/* Linha vertical conectora */}
-          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-amber-500/30 via-zinc-700/40 to-transparent" />
+          {/* Linha vertical conectora - cor dinâmica */}
+          <div className={cn(
+            "absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b via-zinc-700/40 to-transparent",
+            ESPECIALIDADE_COLORS[especialidade].line
+          )} />
 
-          {/* Seletor de especialidade inline */}
+          {/* Seletor de especialidade inline com cores distintas */}
           <div className="flex gap-1 py-1.5 pr-2">
             {[
-              { id: "JURI" as Especialidade, label: "Júri", icon: Gavel },
-              { id: "VVD" as Especialidade, label: "VVD", icon: Shield },
-              { id: "EP" as Especialidade, label: "EP", icon: Lock },
+              { id: "JURI" as Especialidade, label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
+              { id: "VVD" as Especialidade, label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
+              { id: "EP" as Especialidade, label: "EP", icon: Lock, colors: ESPECIALIDADE_COLORS.EP },
             ].map((esp) => (
               <button
                 key={esp.id}
@@ -1174,11 +1364,11 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                 className={cn(
                   "flex-1 py-1.5 px-2 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1",
                   especialidade === esp.id
-                    ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
+                    ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring}`
                     : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/50"
                 )}
               >
-                <esp.icon className="h-3 w-3" />
+                <esp.icon className={cn("h-3 w-3", especialidade === esp.id && esp.colors.text)} />
                 {esp.label}
               </button>
             ))}
@@ -1190,6 +1380,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
             }
             const Icon = iconMap[item.icon] || Briefcase;
             const isActive = pathname.startsWith(item.path);
+            const activeColor = ESPECIALIDADE_COLORS[especialidade];
             return (
               <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton
@@ -1198,7 +1389,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                   className={cn(
                     "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                     isActive
-                      ? "bg-amber-500/15 text-amber-400 font-medium"
+                      ? `${activeColor.bg} ${activeColor.text} font-medium`
                       : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
                   )}
                 >
@@ -1206,15 +1397,24 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                     {/* Indicador de conexão */}
                     <div className={cn(
                       "absolute left-[-12px] w-2 h-px transition-all duration-200",
-                      isActive ? "bg-amber-500/50" : "bg-zinc-700/50"
+                      isActive
+                        ? especialidade === "JURI" ? "bg-emerald-500/50"
+                          : especialidade === "VVD" ? "bg-yellow-500/50"
+                          : "bg-blue-500/50"
+                        : "bg-zinc-700/50"
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                      isActive ? "text-amber-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                      isActive ? activeColor.text : "text-zinc-500 group-hover/subitem:text-zinc-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
                     {isActive && (
-                      <div className="absolute right-2 w-1 h-1 rounded-full bg-amber-400" />
+                      <div className={cn(
+                        "absolute right-2 w-1 h-1 rounded-full",
+                        especialidade === "JURI" ? "bg-emerald-400"
+                          : especialidade === "VVD" ? "bg-yellow-400"
+                          : "bg-blue-400"
+                      )} />
                     )}
                   </Link>
                 </SidebarMenuButton>
@@ -1287,21 +1487,15 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           <ContextControl collapsed={isCollapsed} />
 
           <div className="px-3 pb-5">
-            {/* 1. Navegação Principal (Dashboard, Demandas, Agenda) */}
+            {/* 1. Principal (Dashboard, Demandas, Agenda) - Colapsável com ícone Home */}
             <SidebarMenu className="space-y-0.5">
-              {MAIN_NAV.map((item) => {
-                const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
-                return (
-                  <NavItem
-                    key={item.path}
-                    item={item}
-                    isActive={isActive}
-                    isCollapsed={isCollapsed}
-                    onNavigate={handleNavigate}
-                    userRole={userRole}
-                  />
-                );
-              })}
+              <PrincipalMenu
+                items={MAIN_NAV}
+                pathname={pathname}
+                onNavigate={handleNavigate}
+                userRole={userRole}
+                isCollapsed={isCollapsed}
+              />
             </SidebarMenu>
 
             {/* 2. Cadastros (Assistidos, Processos, Casos) - Azul */}
