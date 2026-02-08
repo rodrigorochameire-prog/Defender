@@ -892,7 +892,13 @@ export class EvolutionApiClient {
       throw new Error(`Erro ao verificar status: ${error}`);
     }
 
-    return response.json();
+    // Evolution API retorna { instance: { instanceName, state } }
+    // Precisamos normalizar para { instance: string, state: string }
+    const data = await response.json();
+    return {
+      instance: data.instance?.instanceName || this.instanceName,
+      state: data.instance?.state || "close",
+    };
   }
 
   async getQRCode(): Promise<QRCodeResponse> {
