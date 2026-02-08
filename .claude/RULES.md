@@ -1,235 +1,187 @@
 # RULES.md - Regras Globais do Projeto OMBUDS
 
-> **Carregamento**: Sempre presente no contexto do agente principal
-
-## 1. Identidade do Projeto
-
-- **Nome**: OMBUDS (Gabinete Digital para Defensoria Pública)
-- **Domínio**: Gestão jurídica criminal - Defensoria Pública da Bahia
-- **Stack**: Next.js 15 + tRPC + Drizzle ORM + PostgreSQL + Tailwind CSS
+> **Carregamento**: Sempre presente no contexto
 
 ---
 
-## 2. Regras de Estilo de Código
+## Roteamento por Tipo de Tarefa
 
-### 2.1 TypeScript
-- Sempre usar TypeScript strict mode
-- Nunca usar `any` - preferir `unknown` ou tipos genéricos
-- Interfaces para props de componentes: `interface FooProps {}`
-- Zod para validação de inputs em routers tRPC
+Antes de executar qualquer tarefa, identifique o tipo e consulte os recursos apropriados:
 
-### 2.2 Nomenclatura
-```typescript
-// Arquivos
-kebab-case.tsx          // Componentes React
-kebab-case.ts           // Utilitários e routers
+| Tipo de Tarefa | Onde Buscar | Skill |
+|----------------|-------------|-------|
+| **Criar página** | `AGENTS.md §2` (Arquitetura) + `commands/new-page.md` | `/new-page` |
+| **Criar router tRPC** | `AGENTS.md §3` (Modelo de Dados) + `commands/new-router.md` | `/new-router` |
+| **Corrigir estilos/UI** | `AGENTS.md §4` (Design System) + `commands/fix-style.md` | `/fix-style` |
+| **Migrar banco** | `AGENTS.md §3` + `commands/db-migrate.md` | `/db-migrate` |
+| **Fazer commit** | Este arquivo §6 + `commands/commit.md` | `/commit` |
+| **Bug em mutation** | Este arquivo §3.4 | - |
+| **Bug visual** | `AGENTS.md §4` (Design System) | `/fix-style` |
+| **Integração externa** | `AGENTS.md §5` (Integrações) | - |
 
-// Código
-PascalCase              // Componentes, interfaces, types
-camelCase               // Variáveis, funções, props
-SCREAMING_SNAKE_CASE    // Constantes e enums
+---
+
+## 1. Identidade do Projeto
+
+```yaml
+Nome: OMBUDS
+Domínio: Gestão jurídica criminal - Defensoria Pública da Bahia
+Stack: Next.js 15 + tRPC + Drizzle ORM + PostgreSQL + Tailwind CSS
 ```
 
-### 2.3 Imports (ordem obrigatória)
+---
+
+## 2. Regras de Código
+
+### 2.1 TypeScript
+- ✅ Strict mode sempre
+- ✅ Interfaces para props: `interface FooProps {}`
+- ✅ Zod para validação de inputs tRPC
+- ❌ Nunca usar `any`
+
+### 2.2 Nomenclatura
+```
+Arquivos:     kebab-case.tsx / kebab-case.ts
+Componentes:  PascalCase
+Variáveis:    camelCase
+Constantes:   SCREAMING_SNAKE_CASE
+```
+
+### 2.3 Imports (ordem)
 ```typescript
 // 1. React/Next
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-// 2. Bibliotecas externas
+import { useState } from "react";
+// 2. Libs externas
 import { format } from "date-fns";
-
-// 3. Aliases internos (@/)
+// 3. Internos (@/)
 import { trpc } from "@/lib/trpc/client";
-import { Button } from "@/components/ui/button";
-
 // 4. Tipos
 import type { Processo } from "@/lib/db/schema";
 ```
 
 ---
 
-## 3. Convenções de Projeto
+## 3. Padrões Críticos
 
-### 3.1 Estrutura de Pastas
+### 3.1 Componentes
 ```
-src/
-├── app/                    # App Router (páginas)
-├── components/
-│   ├── ui/                # Componentes base (Radix)
-│   ├── shared/            # Componentes reutilizáveis
-│   └── [feature]/         # Componentes por domínio
-├── lib/
-│   ├── db/                # Schema Drizzle
-│   ├── trpc/routers/      # Routers tRPC
-│   └── services/          # Integrações externas
-└── config/                # Configurações de domínio
+⚠️ ANTES de criar componente:
+   → Verificar /components/shared/
+   → Verificar /components/ui/
+   → NUNCA duplicar
 ```
 
-### 3.2 Componentes
-- **NUNCA** criar componentes duplicados
-- **SEMPRE** verificar se existe em `/components/shared/` antes de criar
-- **SEMPRE** usar componentes do design system
+### 3.2 Estrutura de Pastas
+```
+src/app/                    # Páginas (App Router)
+src/components/shared/      # Componentes reutilizáveis
+src/components/ui/          # Base (Radix/shadcn)
+src/lib/trpc/routers/       # APIs tRPC
+src/lib/services/           # Integrações externas
+src/lib/db/schema.ts        # Schema único do banco
+```
 
-### 3.3 tRPC
+### 3.3 tRPC Router
 ```typescript
-// Padrão de router
-export const exemploRouter = router({
-  list: protectedProcedure
-    .input(z.object({
-      search: z.string().optional(),
-      limit: z.number().default(20),
-    }))
-    .query(async ({ ctx, input }) => {
-      // Implementação
-    }),
-
-  create: protectedProcedure
-    .input(exemploSchema)
-    .mutation(async ({ ctx, input }) => {
-      // Sempre invalidar cache após mutation
-    }),
-});
+// Sempre validar com Zod
+// Sempre usar protectedProcedure
+// Sempre invalidar cache após mutation
 ```
 
-### 3.4 Mutations (CRÍTICO)
+### 3.4 Mutations (CRÍTICO - Bug comum)
 ```typescript
-// ✅ CORRETO - Chamar mutation E mostrar toast
+// ❌ ERRADO - Só toast, não persiste
+const handleSave = () => {
+  toast.success("Salvo!"); // Não chama mutation!
+};
+
+// ✅ CORRETO - Chamar mutation
 const mutation = trpc.entidade.update.useMutation({
   onSuccess: () => {
-    toast.success("Atualizado!");
+    toast.success("Salvo!");
     utils.entidade.list.invalidate();
   },
-  onError: (error) => {
-    toast.error("Erro", { description: error.message });
-  },
 });
-
-// ❌ ERRADO - Só mostrar toast sem chamar mutation
-const handleSave = () => {
-  toast.success("Salvo!"); // NÃO PERSISTE NADA!
-};
 ```
 
 ---
 
-## 4. Restrições de Segurança
+## 4. Segurança
 
 ### 4.1 Dados Sensíveis
-- **NUNCA** commitar arquivos `.env`, `CREDENCIAIS.md`
-- **NUNCA** expor senhas ou tokens em código
-- **SEMPRE** usar variáveis de ambiente para credenciais
+- ❌ Nunca commitar `.env`, `CREDENCIAIS.md`
+- ❌ Nunca expor tokens em código
+- ✅ Sempre usar variáveis de ambiente
 
 ### 4.2 Git
-- **NUNCA** usar `git push --force` em branches compartilhadas
-- **NUNCA** usar `git reset --hard` sem confirmação
-- **SEMPRE** criar commits atômicos com mensagens descritivas
+- ❌ Nunca `git push --force` em branches compartilhadas
+- ❌ Nunca `git reset --hard` sem confirmação
+- ✅ Commits atômicos com mensagens descritivas
 
 ### 4.3 Banco de Dados
-- **NUNCA** fazer DROP TABLE sem backup
-- **NUNCA** fazer UPDATE/DELETE sem WHERE
-- **SEMPRE** usar soft delete (`deletedAt`)
+- ❌ Nunca DROP TABLE sem backup
+- ❌ Nunca UPDATE/DELETE sem WHERE
+- ✅ Sempre usar soft delete (`deletedAt`)
 
 ---
 
-## 5. Padrão de Design "Defender"
+## 5. Design "Defender" (Resumo)
 
-### 5.1 Filosofia
-> **Minimalismo Institucional**: Cores neutras por padrão, cor apenas com significado semântico.
+> **Regra de ouro**: Cores neutras por padrão, cor apenas com significado semântico.
 
-### 5.2 Paleta de Cores
 ```typescript
-// BASE (usar sempre)
-zinc-50/100/200    // Fundos, bordas
-zinc-700/800       // Textos (dark mode)
-white              // Cards
-
-// PRIMÁRIA (uso restrito)
-emerald-500/600    // Ações, hover, estados ativos
-
-// SEMÂNTICAS (apenas quando necessário)
-rose               // Erros, urgências
-amber              // Avisos
-blue               // Informações
-```
-
-### 5.3 Componentes Obrigatórios
-```tsx
-// Stats Cards - SEMPRE usar gradient="zinc"
-<KPICardPremium
-  title="Total"
-  value={123}
-  icon={Scale}
-  gradient="zinc"     // ← OBRIGATÓRIO
-  size="sm"
-/>
+// Stats Cards - SEMPRE zinc
+<KPICardPremium gradient="zinc" />
 
 // Hover - SEMPRE emerald
-className="hover:border-emerald-200/50 dark:hover:border-emerald-800/30"
+className="hover:border-emerald-200/50"
+
+// Proibido
+❌ text-[11px], text-[13px]  // Magic numbers
+❌ gradient="blue/rose/amber" // Sem significado
+❌ Badges com cores sólidas
 ```
 
-### 5.4 Proibições
-- ❌ `text-[11px]`, `text-[13px]` (magic numbers)
-- ❌ Gradientes coloridos sem significado semântico
-- ❌ Badges com cores sólidas (usar outline)
-- ❌ Duplicar componentes existentes
+📖 **Detalhes completos**: Ver `AGENTS.md §4`
 
 ---
 
 ## 6. Padrão de Commits
 
 ```bash
-# Formato
 <tipo>(<escopo>): <descrição>
 
 # Tipos
 feat     # Nova funcionalidade
 fix      # Correção de bug
-style    # Mudanças visuais/CSS
+style    # Mudanças visuais
 refactor # Refatoração
 docs     # Documentação
 chore    # Manutenção
-
-# Exemplos
-feat(juri): adicionar cálculo de prazos
-fix(agenda): corrigir edição de eventos
-style(dashboard): padronizar stats cards
 ```
 
----
-
-## 7. Checklist Obrigatório (Pré-Commit)
-
-- [ ] Build passa sem erros (`npm run build`)
-- [ ] Componentes usam design system (zinc + emerald)
-- [ ] Dark mode funciona
-- [ ] Mutations chamam métodos corretos (não só toast)
-- [ ] Sem código duplicado
-- [ ] Imports organizados
-- [ ] Commit message no padrão
+📖 **Skill completa**: `/commit`
 
 ---
 
-## 8. Comandos Frequentes
+## 7. Checklist Pré-Commit
 
 ```bash
-# Desenvolvimento
-npm run dev                    # Servidor local
-
-# Banco de dados
-npm run db:generate            # Gerar migrations
-npm run db:push                # Aplicar migrations
-npm run db:studio              # Drizzle Studio
-
-# Build
-npm run build                  # Build produção
-
-# Git
-git status                     # Ver alterações
-git diff --stat HEAD           # Resumo de mudanças
+[ ] npm run build          # Sem erros
+[ ] Design system          # zinc + emerald
+[ ] Dark mode              # Funciona
+[ ] Mutations              # Chamam métodos corretos
+[ ] Sem duplicação         # Código limpo
 ```
 
 ---
 
-**Versão**: 1.0
-**Atualizado**: Fevereiro 2026
+## 8. Comandos Rápidos
+
+```bash
+npm run dev           # Desenvolvimento
+npm run build         # Build produção
+npm run db:generate   # Gerar migrations
+npm run db:push       # Aplicar migrations
+npm run db:studio     # Interface visual
+```
