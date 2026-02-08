@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -35,27 +35,20 @@ import {
   Play,
   Plus,
   Trash2,
-  Download,
+  ExternalLink,
   Eye,
   Edit,
-  Video,
-  Users,
-  Layers,
   Clock,
   MoreHorizontal,
   RefreshCw,
   FolderOpen,
-  Clapperboard,
   Scale,
   Swords,
-  FileVideo,
-  Maximize2,
-  Copy,
-  Film,
-  Camera,
-  Move3D,
-  Lightbulb,
   Sparkles,
+  Link2,
+  Copy,
+  CheckCircle2,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -71,15 +64,15 @@ const STATUS_CONFIG = {
 
 // Cores para versões
 const VERSAO_CORES = {
-  acusacao: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400", border: "border-red-300 dark:border-red-800" },
-  defesa: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-300 dark:border-emerald-800" },
-  alternativa: { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-400", border: "border-purple-300 dark:border-purple-800" },
-  comparativa: { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-400", border: "border-blue-300 dark:border-blue-800" },
+  acusacao: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400" },
+  defesa: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400" },
+  alternativa: { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-400" },
 };
 
 interface NovaSimulacaoForm {
   titulo: string;
   descricao: string;
+  splineUrl: string;
 }
 
 export default function Simulador3DPage() {
@@ -88,7 +81,9 @@ export default function Simulador3DPage() {
   const [novaSimulacao, setNovaSimulacao] = useState<NovaSimulacaoForm>({
     titulo: "",
     descricao: "",
+    splineUrl: "",
   });
+  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   // Query para listar casos
   const { data: casos } = trpc.casos.list.useQuery({
@@ -112,7 +107,7 @@ export default function Simulador3DPage() {
       toast.success("Simulação criada com sucesso!");
       refetchSimulacoes();
       setIsCreateDialogOpen(false);
-      setNovaSimulacao({ titulo: "", descricao: "" });
+      setNovaSimulacao({ titulo: "", descricao: "", splineUrl: "" });
     },
     onError: (error) => {
       toast.error(`Erro ao criar simulação: ${error.message}`);
@@ -149,6 +144,13 @@ export default function Simulador3DPage() {
     }
   };
 
+  const handleCopySplineUrl = (url: string, id: number) => {
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    toast.success("URL copiada!");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const casoSelecionado = casos?.items?.find(c => c.id.toString() === selectedCasoId);
 
   return (
@@ -165,7 +167,7 @@ export default function Simulador3DPage() {
                 Simulador 3D
               </h1>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Reconstituição visual dos fatos para o Tribunal do Júri
+                Reconstituição visual com Spline
               </p>
             </div>
           </div>
@@ -204,28 +206,26 @@ export default function Simulador3DPage() {
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Clapperboard className="h-5 w-5 text-cyan-500" />
+                    <Sparkles className="h-5 w-5 text-cyan-500" />
                     Nova Simulação 3D
                   </DialogTitle>
                   <DialogDescription>
-                    Crie uma reconstituição visual dos fatos do caso
+                    Crie uma reconstituição visual dos fatos usando Spline
                   </DialogDescription>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
-                  {/* Título */}
                   <div className="grid gap-2">
                     <Label htmlFor="titulo">Título da Simulação</Label>
                     <Input
                       id="titulo"
                       value={novaSimulacao.titulo}
                       onChange={(e) => setNovaSimulacao(prev => ({ ...prev, titulo: e.target.value }))}
-                      placeholder="Ex: Reconstituição do Homicídio - Versão Defesa"
+                      placeholder="Ex: Reconstituição - Versão Defesa"
                       className="bg-white dark:bg-zinc-800"
                     />
                   </div>
 
-                  {/* Descrição */}
                   <div className="grid gap-2">
                     <Label htmlFor="descricao">Descrição (opcional)</Label>
                     <Textarea
@@ -237,13 +237,22 @@ export default function Simulador3DPage() {
                     />
                   </div>
 
-                  {/* Info sobre versões */}
-                  <div className="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      <Sparkles className="h-4 w-4 inline mr-1 text-cyan-500" />
-                      Duas versões serão criadas automaticamente: <strong>Acusação</strong> e <strong>Defesa</strong>.
-                      Você poderá adicionar versões alternativas depois.
-                    </p>
+                  {/* Info sobre Spline */}
+                  <div className="p-3 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg border border-cyan-200 dark:border-cyan-800">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 text-cyan-600 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium text-cyan-700 dark:text-cyan-300">
+                          Como funciona:
+                        </p>
+                        <ol className="mt-1 text-cyan-600 dark:text-cyan-400 space-y-1 list-decimal list-inside">
+                          <li>Crie a simulação aqui</li>
+                          <li>Acesse <a href="https://spline.design" target="_blank" rel="noopener noreferrer" className="underline font-medium">spline.design</a> para criar a cena 3D</li>
+                          <li>Cole o link de compartilhamento na simulação</li>
+                          <li>Apresente direto no plenário!</li>
+                        </ol>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -264,7 +273,7 @@ export default function Simulador3DPage() {
                     ) : (
                       <>
                         <Plus className="h-4 w-4 mr-2" />
-                        Criar Simulação
+                        Criar
                       </>
                     )}
                   </Button>
@@ -286,44 +295,63 @@ export default function Simulador3DPage() {
             <h3 className="text-xl font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
               Selecione um Caso
             </h3>
-            <p className="text-zinc-500 dark:text-zinc-400 text-center max-w-md">
-              Escolha um caso para criar ou visualizar simulações 3D de reconstituição forense
+            <p className="text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-6">
+              Escolha um caso para criar simulações 3D de reconstituição
             </p>
 
-            {/* Features */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 max-w-3xl">
-              <Card className="bg-white/50 dark:bg-zinc-900/50 border-dashed">
-                <CardContent className="p-4 text-center">
-                  <Move3D className="h-8 w-8 mx-auto mb-2 text-cyan-500" />
-                  <h4 className="font-medium text-zinc-700 dark:text-zinc-300">Cenários 3D</h4>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                    Modele o local do crime com objetos e personagens
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-white/50 dark:bg-zinc-900/50 border-dashed">
-                <CardContent className="p-4 text-center">
-                  <Swords className="h-8 w-8 mx-auto mb-2 text-red-500" />
-                  <h4 className="font-medium text-zinc-700 dark:text-zinc-300">Versões Comparativas</h4>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                    Compare acusação vs defesa lado a lado
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-white/50 dark:bg-zinc-900/50 border-dashed">
-                <CardContent className="p-4 text-center">
-                  <FileVideo className="h-8 w-8 mx-auto mb-2 text-emerald-500" />
-                  <h4 className="font-medium text-zinc-700 dark:text-zinc-300">Exportação em Vídeo</h4>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                    Gere vídeos MP4 para apresentar no plenário
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            {/* Como funciona */}
+            <Card className="max-w-2xl w-full bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/10 dark:to-blue-900/10 border-cyan-200 dark:border-cyan-800">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-cyan-500" />
+                  Como usar o Simulador 3D
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4">
+                    <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center mx-auto mb-2">
+                      <span className="text-cyan-600 font-bold">1</span>
+                    </div>
+                    <h4 className="font-medium text-zinc-700 dark:text-zinc-300">Crie no Spline</h4>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      Use o editor visual gratuito em spline.design
+                    </p>
+                  </div>
+                  <div className="text-center p-4">
+                    <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center mx-auto mb-2">
+                      <span className="text-cyan-600 font-bold">2</span>
+                    </div>
+                    <h4 className="font-medium text-zinc-700 dark:text-zinc-300">Vincule ao Caso</h4>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      Cole o link de compartilhamento aqui
+                    </p>
+                  </div>
+                  <div className="text-center p-4">
+                    <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center mx-auto mb-2">
+                      <span className="text-cyan-600 font-bold">3</span>
+                    </div>
+                    <h4 className="font-medium text-zinc-700 dark:text-zinc-300">Apresente</h4>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      Abra direto no plenário do Júri
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-cyan-200 dark:border-cyan-800">
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href="https://spline.design" target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Abrir Spline Design (gratuito)
+                    </a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         ) : (
           <>
-            {/* Info do Caso Selecionado */}
+            {/* Info do Caso */}
             {casoSelecionado && (
               <Card className="mb-6 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/10 dark:to-blue-900/10 border-cyan-200 dark:border-cyan-800/50">
                 <CardContent className="p-4">
@@ -338,15 +366,18 @@ export default function Simulador3DPage() {
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="outline">{casoSelecionado.atribuicao}</Badge>
-                          <Badge className="bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                            {casoSelecionado.fase || "ativo"}
-                          </Badge>
                           <span className="text-sm text-zinc-500 dark:text-zinc-400">
                             {simulacoes?.length || 0} simulação(ões)
                           </span>
                         </div>
                       </div>
                     </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href="https://spline.design" target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Criar no Spline
+                      </a>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -356,20 +387,19 @@ export default function Simulador3DPage() {
             {isLoadingSimulacoes ? (
               <div className="flex items-center justify-center py-12">
                 <RefreshCw className="h-6 w-6 animate-spin text-cyan-500" />
-                <span className="ml-2 text-zinc-500">Carregando simulações...</span>
+                <span className="ml-2 text-zinc-500">Carregando...</span>
               </div>
             ) : !simulacoes || simulacoes.length === 0 ? (
-              /* Estado vazio - Sem simulações */
               <Card className="border-dashed border-2 border-zinc-300 dark:border-zinc-700">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <div className="p-4 rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-                    <Clapperboard className="h-10 w-10 text-zinc-400" />
+                    <Box className="h-10 w-10 text-zinc-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
                     Nenhuma simulação ainda
                   </h3>
                   <p className="text-zinc-500 dark:text-zinc-400 text-center max-w-md mb-4">
-                    Crie sua primeira simulação 3D para reconstituir os fatos do caso
+                    Crie sua primeira simulação 3D para este caso
                   </p>
                   <Button
                     onClick={() => setIsCreateDialogOpen(true)}
@@ -381,15 +411,16 @@ export default function Simulador3DPage() {
                 </CardContent>
               </Card>
             ) : (
-              /* Grid de Simulações */
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {simulacoes.map((simulacao) => {
                   const statusConfig = STATUS_CONFIG[simulacao.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.RASCUNHO;
+                  const cenaData = simulacao.cenaData as { cenario?: { modeloUrl?: string } } | null;
+                  const splineUrl = cenaData?.cenario?.modeloUrl;
 
                   return (
                     <Card
                       key={simulacao.id}
-                      className="group cursor-pointer transition-all hover:shadow-lg hover:border-cyan-300 dark:hover:border-cyan-700"
+                      className="group transition-all hover:shadow-lg hover:border-cyan-300 dark:hover:border-cyan-700"
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
@@ -408,40 +439,41 @@ export default function Simulador3DPage() {
                           </div>
 
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                window.location.href = `/admin/simulador-3d/${simulacao.id}`;
-                              }}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                window.location.href = `/admin/simulador-3d/${simulacao.id}/preview`;
-                              }}>
-                                <Play className="h-4 w-4 mr-2" />
-                                Visualizar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                toast.info("Exportação em desenvolvimento");
-                              }}>
-                                <Download className="h-4 w-4 mr-2" />
-                                Exportar Vídeo
+                              {splineUrl && (
+                                <>
+                                  <DropdownMenuItem asChild>
+                                    <a href={splineUrl} target="_blank" rel="noopener noreferrer">
+                                      <Play className="h-4 w-4 mr-2" />
+                                      Abrir Simulação
+                                    </a>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleCopySplineUrl(splineUrl, simulacao.id)}>
+                                    {copiedId === simulacao.id ? (
+                                      <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-500" />
+                                    ) : (
+                                      <Copy className="h-4 w-4 mr-2" />
+                                    )}
+                                    Copiar Link
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
+                              <DropdownMenuItem asChild>
+                                <a href="https://spline.design" target="_blank" rel="noopener noreferrer">
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Editar no Spline
+                                </a>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-rose-600"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteSimulacao(simulacao.id);
-                                }}
+                                onClick={() => handleDeleteSimulacao(simulacao.id)}
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Excluir
@@ -458,18 +490,30 @@ export default function Simulador3DPage() {
                           </p>
                         )}
 
-                        {/* Preview placeholder */}
-                        <div className="aspect-video rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-3 overflow-hidden">
-                          {simulacao.thumbnail ? (
-                            <img
-                              src={simulacao.thumbnail}
-                              alt={simulacao.titulo}
-                              className="w-full h-full object-cover"
-                            />
+                        {/* Preview ou placeholder */}
+                        <div
+                          className="aspect-video rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-3 overflow-hidden cursor-pointer"
+                          onClick={() => splineUrl && window.open(splineUrl, '_blank')}
+                        >
+                          {splineUrl ? (
+                            <div className="text-center">
+                              <Play className="h-10 w-10 mx-auto text-cyan-500 mb-2" />
+                              <span className="text-xs text-zinc-500">Clique para abrir</span>
+                            </div>
                           ) : (
-                            <div className="flex flex-col items-center text-zinc-400">
-                              <Move3D className="h-8 w-8 mb-1" />
-                              <span className="text-xs">Sem preview</span>
+                            <div className="text-center p-4">
+                              <Link2 className="h-8 w-8 mx-auto text-zinc-400 mb-2" />
+                              <span className="text-xs text-zinc-500 block">Sem link do Spline</span>
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="text-cyan-500 mt-1"
+                                asChild
+                              >
+                                <a href="https://spline.design" target="_blank" rel="noopener noreferrer">
+                                  Criar agora
+                                </a>
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -483,14 +527,11 @@ export default function Simulador3DPage() {
                                 <Badge
                                   key={versao.id}
                                   variant="outline"
-                                  className={cn("text-xs", cores.bg, cores.text, cores.border)}
+                                  className={cn("text-xs", cores.bg, cores.text)}
                                 >
                                   {versao.tipo === "acusacao" && <Scale className="h-3 w-3 mr-1" />}
                                   {versao.tipo === "defesa" && <Swords className="h-3 w-3 mr-1" />}
                                   {versao.nome}
-                                  {versao.duracao && (
-                                    <span className="ml-1 opacity-70">{versao.duracao}s</span>
-                                  )}
                                 </Badge>
                               );
                             })}
@@ -505,17 +546,15 @@ export default function Simulador3DPage() {
                               {new Date(simulacao.updatedAt).toLocaleDateString("pt-BR", {
                                 day: "2-digit",
                                 month: "short",
-                                hour: "2-digit",
-                                minute: "2-digit"
                               })}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              <span>{simulacao.criadoPor?.name?.split(" ")[0] || "Anônimo"}</span>
-                            </div>
-                          </div>
+                          {splineUrl && (
+                            <Badge variant="outline" className="text-xs bg-cyan-50 dark:bg-cyan-900/20">
+                              <Box className="h-3 w-3 mr-1" />
+                              Spline
+                            </Badge>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -524,43 +563,21 @@ export default function Simulador3DPage() {
               </div>
             )}
 
-            {/* Features Info */}
-            <div className="mt-8 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/10 dark:to-blue-900/10 rounded-lg border border-cyan-200 dark:border-cyan-800/50">
-              <h4 className="font-semibold text-zinc-800 dark:text-zinc-200 mb-3 flex items-center gap-2">
-                <Lightbulb className="h-4 w-4 text-cyan-500" />
-                Recursos do Simulador 3D
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="flex items-start gap-2">
-                  <Move3D className="h-4 w-4 text-cyan-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-zinc-700 dark:text-zinc-300">Cenário Interativo</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Arraste e posicione objetos</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Users className="h-4 w-4 text-cyan-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-zinc-700 dark:text-zinc-300">Personagens Animados</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Mixamo + Ready Player Me</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Film className="h-4 w-4 text-cyan-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-zinc-700 dark:text-zinc-300">Timeline Visual</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Theatre.js para keyframes</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Video className="h-4 w-4 text-cyan-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-zinc-700 dark:text-zinc-300">Export Remotion</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">MP4/WebM de alta qualidade</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Dicas */}
+            <Card className="mt-6 bg-zinc-50 dark:bg-zinc-900/50">
+              <CardContent className="p-4">
+                <h4 className="font-medium text-zinc-700 dark:text-zinc-300 mb-2 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-cyan-500" />
+                  Dicas para criar no Spline
+                </h4>
+                <ul className="text-sm text-zinc-500 dark:text-zinc-400 space-y-1">
+                  <li>• Use formas básicas (cubos, esferas) para representar pessoas</li>
+                  <li>• Adicione setas para indicar movimento e direção</li>
+                  <li>• Use cores diferentes para acusação (vermelho) e defesa (verde)</li>
+                  <li>• Exporte como link público para apresentar no plenário</li>
+                </ul>
+              </CardContent>
+            </Card>
           </>
         )}
       </div>
