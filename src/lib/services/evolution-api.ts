@@ -116,6 +116,23 @@ export interface ProfilePicResponse {
   profilePictureUrl?: string;
 }
 
+export interface EvolutionContact {
+  id: string; // Na verdade é o remoteJid (ex: 557199999999@s.whatsapp.net)
+  pushName?: string;
+  profilePictureUrl?: string | null;
+  owner?: string;
+}
+
+export interface EvolutionChat {
+  id: string;
+  remoteJid: string;
+  name?: string;
+  lastMsgTimestamp?: number;
+  unreadCount?: number;
+  archived?: boolean;
+  owner?: string;
+}
+
 // =============================================================================
 // FUNÇÕES DE INSTÂNCIA
 // =============================================================================
@@ -1219,6 +1236,42 @@ export class EvolutionApiClient {
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`Erro ao arquivar chat: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Busca todos os contatos da instância Evolution API
+   */
+  async findContacts(): Promise<EvolutionContact[]> {
+    const response = await fetch(`${this.apiUrl}/chat/findContacts/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao buscar contatos: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Busca todos os chats da instância Evolution API
+   */
+  async findChats(): Promise<EvolutionChat[]> {
+    const response = await fetch(`${this.apiUrl}/chat/findChats/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao buscar chats: ${error}`);
     }
 
     return response.json();

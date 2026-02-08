@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { ConversationList } from "@/components/whatsapp/ConversationList";
 import { ChatWindow } from "@/components/whatsapp/ChatWindow";
@@ -24,11 +25,17 @@ import {
   Archive,
   RefreshCw,
   Plus,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
 export default function WhatsAppChatPage() {
+  const searchParams = useSearchParams();
+  const phoneParam = searchParams.get("phone");
+  const contactIdParam = searchParams.get("contactId");
+
   // Estado da instância selecionada
   const [selectedConfigId, setSelectedConfigId] = useState<number | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
@@ -49,10 +56,24 @@ export default function WhatsAppChatPage() {
       { enabled: !!selectedConfigId }
     );
 
-  const { data: stats } = trpc.whatsappChat.getStats.useQuery(
+  const { data: stats, refetch: refetchStats } = trpc.whatsappChat.getStats.useQuery(
     { configId: selectedConfigId! },
     { enabled: !!selectedConfigId }
   );
+
+  // Mutation para sincronizar contatos
+  const syncContactsMutation = trpc.whatsappChat.syncContacts.useMutation({
+    onSuccess: (result) => {
+      toast.success(
+        `Sincronização concluída! ${result.inserted} novos contatos, ${result.updated} atualizados.`
+      );
+      refetchContacts();
+      refetchStats();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao sincronizar: ${error.message}`);
+    },
+  });
 
   // Seleciona primeira configuração disponível
   useEffect(() => {
@@ -60,6 +81,37 @@ export default function WhatsAppChatPage() {
       setSelectedConfigId(configs[0].id);
     }
   }, [configs, selectedConfigId]);
+
+  // Seleciona contato por ID ou telefone da URL
+  useEffect(() => {
+    if (!contactsData?.contacts) return;
+
+    // Se tem contactId na URL, seleciona direto
+    if (contactIdParam) {
+      const id = parseInt(contactIdParam);
+      if (!isNaN(id)) {
+        setSelectedContactId(id);
+        return;
+      }
+    }
+
+    // Se tem phone na URL, busca o contato correspondente
+    if (phoneParam) {
+      const normalizedPhone = phoneParam.replace(/\D/g, "");
+      // Busca contato pelo telefone (pode ter prefixo 55 ou não)
+      const contact = contactsData.contacts.find((c: any) => {
+        const contactPhone = c.phone.replace(/\D/g, "");
+        return contactPhone === normalizedPhone ||
+               contactPhone === `55${normalizedPhone}` ||
+               contactPhone.endsWith(normalizedPhone.slice(-9));
+      });
+      if (contact) {
+        setSelectedContactId(contact.id);
+      } else {
+        toast.info(`Contato com telefone ${phoneParam} não encontrado. Sincronize os contatos.`);
+      }
+    }
+  }, [contactsData, phoneParam, contactIdParam]);
 
   // Handlers
   const handleSelectContact = (contactId: number) => {
@@ -154,6 +206,25 @@ export default function WhatsAppChatPage() {
                 )}
               </div>
             )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (selectedConfigId) {
+                  syncContactsMutation.mutate({ configId: selectedConfigId });
+                }
+              }}
+              disabled={!selectedConfigId || syncContactsMutation.isPending}
+              title="Sincronizar contatos do WhatsApp"
+            >
+              {syncContactsMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              <span className="ml-1 hidden sm:inline">Sincronizar</span>
+            </Button>
 
             <Button variant="outline" size="sm" onClick={handleRefresh}>
               <RefreshCw className="h-4 w-4" />

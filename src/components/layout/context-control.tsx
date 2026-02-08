@@ -10,11 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import {
-  ChevronDown,
   ChevronRight,
-  Gavel,
-  Shield,
-  Lock,
   RefreshCw,
   Award,
   Scale,
@@ -23,7 +19,6 @@ import {
   Eye,
   Briefcase,
   Check,
-  Layers,
   Settings2,
   Building2,
 } from "lucide-react";
@@ -58,12 +53,7 @@ interface ContextControlProps {
 // CONFIGURAÇÕES ESTÁTICAS
 // ==========================================
 
-const ATRIBUICOES = [
-  { id: "TODOS" as AtribuicaoFiltro, nome: "Todas", icon: Layers, cor: "text-zinc-500", bg: "bg-zinc-100 dark:bg-zinc-800" },
-  { id: "JURI" as AtribuicaoFiltro, nome: "Juri", icon: Gavel, cor: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" },
-  { id: "VVD" as AtribuicaoFiltro, nome: "VVD", icon: Shield, cor: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" },
-  { id: "EP" as AtribuicaoFiltro, nome: "Exec.", icon: Lock, cor: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-100 dark:bg-zinc-800" },
-];
+// Filtros de atribuição removidos - agora gerenciados via menu Especialidades na sidebar
 
 const WORKSPACES_ESPECIAIS = [
   { id: null as WorkspaceEspecial, nome: "Principal", icon: Briefcase, cor: "text-zinc-500" },
@@ -284,7 +274,6 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
 
   // Dados atuais
   const defensorAtual = defensoresDisplay.find(d => d.id === defensor) || defensoresDisplay[0];
-  const atribuicaoAtual = ATRIBUICOES.find(a => a.id === atribuicao)!;
   const workspaceAtual = WORKSPACES_ESPECIAIS.find(w => w.id === workspace)!;
 
   if (!mounted) {
@@ -333,14 +322,11 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
         </Popover>
 
         {/* Indicadores visuais compactos */}
-        <div className="flex gap-1 mt-2">
-          {atribuicao !== "TODOS" && !isCriminalGeral && (
-            <div className={cn("w-1.5 h-1.5 rounded-full", atribuicaoAtual.cor.replace("text-", "bg-"))} />
-          )}
-          {workspace && (
+        {workspace && (
+          <div className="flex gap-1 mt-2">
             <div className={cn("w-1.5 h-1.5 rounded-full", workspaceAtual.cor.replace("text-", "bg-"))} />
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -373,15 +359,6 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
                 <span className="text-[11px] font-bold text-zinc-100 truncate">
                   {defensorAtual.nome}
                 </span>
-                {atribuicao !== "TODOS" && !isCriminalGeral && (
-                  <>
-                    <span className="text-[10px] text-zinc-500">|</span>
-                    <div className={cn("flex items-center gap-0.5", atribuicaoAtual.cor)}>
-                      <atribuicaoAtual.icon className="w-3 h-3" />
-                      <span className="text-[10px] font-semibold">{atribuicaoAtual.nome}</span>
-                    </div>
-                  </>
-                )}
                 {isCriminalGeral && (
                   <>
                     <span className="text-[10px] text-zinc-500">|</span>
@@ -571,34 +548,6 @@ function ContextPopoverContent({
           </Collapsible>
         )}
       </div>
-
-      {/* Secao: Filtro de Atribuicao - Apenas para especializados */}
-      {!isCriminalGeral && (
-        <div className="p-3">
-          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">
-            Filtrar Atribuicao
-          </p>
-          <div className="grid grid-cols-4 gap-1.5">
-            {ATRIBUICOES.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => updateAtribuicao(a.id)}
-                className={cn(
-                  "py-2 px-1 rounded-lg transition-all duration-200 text-center",
-                  atribuicao === a.id
-                    ? "ring-2 ring-emerald-500 bg-zinc-700/50"
-                    : "hover:bg-zinc-700/50"
-                )}
-              >
-                <a.icon className={cn("w-4 h-4 mx-auto mb-1", a.cor)} />
-                <p className="text-[9px] font-semibold text-zinc-300">
-                  {a.nome}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Secao: Workspace */}
       <div className="p-3">

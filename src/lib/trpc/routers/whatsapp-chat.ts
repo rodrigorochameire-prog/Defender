@@ -932,6 +932,119 @@ export const whatsappChatRouter = router({
     }),
 
   // ===========================================================================
+  // SINCRONIZAÇÃO
+  // ===========================================================================
+
+  /**
+   * Sincroniza contatos da Evolution API com o banco local
+   */
+  syncContacts: protectedProcedure
+    .input(z.object({ configId: z.number() }))
+    .mutation(async ({ input }) => {
+      const [config] = await db
+        .select()
+        .from(evolutionConfig)
+        .where(eq(evolutionConfig.id, input.configId))
+        .limit(1);
+
+      if (!config) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Configuração não encontrada" });
+      }
+
+      // Cria cliente Evolution API
+      const client = new EvolutionApiClient({
+        apiUrl: config.apiUrl,
+        apiKey: config.apiKey,
+        instanceName: config.instanceName,
+      });
+
+      // Busca contatos da Evolution API
+      const contacts = await client.findContacts().catch(() => []);
+
+      // Busca contatos existentes no banco
+      const existingContacts = await db
+        .select()
+        .from(whatsappContacts)
+        .where(eq(whatsappContacts.configId, input.configId));
+
+      const existingPhones = new Set(existingContacts.map(c => c.phone));
+
+      // Filtra apenas contatos individuais (não grupos)
+      // id para individuais: 5571999999999@s.whatsapp.net
+      // id para grupos: 557199999999-123456789@g.us
+      const individualContacts = contacts.filter(c =>
+        c.id &&
+        c.id.endsWith("@s.whatsapp.net") &&
+        !c.id.includes("-")
+      );
+
+      // Prepara contatos para inserção
+      const contactsToInsert = [];
+      const contactsToUpdate = [];
+
+      for (const contact of individualContacts) {
+        const phone = contact.id.replace("@s.whatsapp.net", "");
+
+        if (existingPhones.has(phone)) {
+          // Atualiza contato existente
+          contactsToUpdate.push({
+            phone,
+            pushName: contact.pushName,
+            profilePicUrl: contact.profilePictureUrl,
+          });
+        } else {
+          // Novo contato
+          contactsToInsert.push({
+            configId: input.configId,
+            phone,
+            pushName: contact.pushName,
+            profilePicUrl: contact.profilePictureUrl,
+          });
+        }
+      }
+
+      // Insere novos contatos em lotes
+      let insertedCount = 0;
+      if (contactsToInsert.length > 0) {
+        const batchSize = 100;
+        for (let i = 0; i < contactsToInsert.length; i += batchSize) {
+          const batch = contactsToInsert.slice(i, i + batchSize);
+          await db.insert(whatsappContacts).values(batch);
+          insertedCount += batch.length;
+        }
+      }
+
+      // Atualiza contatos existentes
+      let updatedCount = 0;
+      for (const update of contactsToUpdate) {
+        const updateData: Record<string, unknown> = {
+          updatedAt: new Date(),
+        };
+
+        if (update.pushName) updateData.pushName = update.pushName;
+        if (update.profilePicUrl) updateData.profilePicUrl = update.profilePicUrl;
+
+        await db
+          .update(whatsappContacts)
+          .set(updateData)
+          .where(
+            and(
+              eq(whatsappContacts.configId, input.configId),
+              eq(whatsappContacts.phone, update.phone)
+            )
+          );
+        updatedCount++;
+      }
+
+      return {
+        success: true,
+        inserted: insertedCount,
+        updated: updatedCount,
+        total: individualContacts.length,
+      };
+    }),
+
+  // ===========================================================================
   // ESTATÍSTICAS
   // ===========================================================================
 

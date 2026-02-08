@@ -10,7 +10,7 @@ import {
   Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
-  MoreHorizontal, Box
+  MoreHorizontal, Box, Puzzle, BookUser, Users2
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -31,12 +31,8 @@ import { EntitySheetProvider } from "@/contexts/entity-sheet-context";
 import { SidebarLogo } from "@/components/shared/logo";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { StatusBar } from "@/components/layout/status-bar";
-import {
-  useAssignment,
-  type MenuSection, type AssignmentMenuItem,
-} from "@/contexts/assignment-context";
+import { type AssignmentMenuItem } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
-import { useAtribuicaoFiltro } from "@/components/layout/context-control";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -48,37 +44,62 @@ interface AdminSidebarProps {
 }
 
 // ==========================================
-// MENU SIMPLIFICADO E HARMONIOSO
+// MENU REORGANIZADO - NOVA ESTRUTURA
 // ==========================================
 
-// Menu principal - itens do dia a dia
+// 1. Menu principal - itens do dia a dia (sem Delegações)
 const MAIN_NAV: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
   { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
-  { label: "Delegações", path: "/admin/delegacoes", icon: "UserCheck", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Agenda", path: "/admin/agenda", icon: "Calendar" },
+];
+
+// 2. Cadastros - Assistidos, Processos, Casos (azul)
+const CADASTROS_NAV: AssignmentMenuItem[] = [
+  { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
+  { label: "Processos", path: "/admin/processos", icon: "Scale" },
   { label: "Casos", path: "/admin/casos", icon: "Briefcase" },
 ];
 
-// Menu secundário - dados e registros
-const DATA_NAV: AssignmentMenuItem[] = [
-  { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
-  { label: "Processos", path: "/admin/processos", icon: "Scale" },
-];
-
-// Menu de recursos
-const RESOURCES_NAV: AssignmentMenuItem[] = [
+// 3. Documentos - Drive, Modelos, Jurisprudência (laranja)
+const DOCUMENTOS_NAV: AssignmentMenuItem[] = [
   { label: "Drive", path: "/admin/drive", icon: "FolderOpen" },
   { label: "Modelos", path: "/admin/modelos", icon: "FileText" },
-  { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch" },
+  { label: "Jurisprudência", path: "/admin/jurisprudencia", icon: "Scale" },
+];
+
+// 4. Cowork - Delegações, Equipe (roxo)
+const COWORK_NAV: AssignmentMenuItem[] = [
+  { label: "Delegações", path: "/admin/delegacoes", icon: "UserCheck", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
+  { label: "Equipe", path: "/admin/equipe", icon: "UsersRound", requiredRoles: ["admin", "defensor", "servidor"] },
+];
+
+// 5. Ferramentas - Lógica, Calculadoras, Calc. Prazos, Inteligência, Investigação (verde)
+const TOOLS_NAV: AssignmentMenuItem[] = [
   { label: "Lógica", path: "/admin/logica", icon: "Brain" },
+  { label: "Calculadoras", path: "/admin/calculadoras", icon: "Calculator" },
+  { label: "Calc. Prazos", path: "/admin/calculadora-prazos", icon: "Clock" },
+  { label: "Inteligência", path: "/admin/inteligencia", icon: "Sparkles" },
+  { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch" },
+];
+
+// 6. Módulos específicos por especialidade
+const JURI_MODULES: AssignmentMenuItem[] = [
+  { label: "Sessões do Júri", path: "/admin/juri", icon: "Gavel" },
+  { label: "Plenário Live", path: "/admin/juri/cockpit", icon: "Zap" },
+  { label: "Banco de Jurados", path: "/admin/juri/jurados", icon: "Users" },
   { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
   { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
 ];
 
-// Menu de gestão (admin)
-const ADMIN_NAV: AssignmentMenuItem[] = [
-  { label: "Equipe", path: "/admin/equipe", icon: "UsersRound", requiredRoles: ["admin", "defensor", "servidor"] },
+const VVD_MODULES: AssignmentMenuItem[] = [
+  { label: "Audiências VVD", path: "/admin/vvd", icon: "Shield" },
+  { label: "Medidas Protetivas", path: "/admin/vvd/medidas", icon: "Shield" },
+];
+
+const EP_MODULES: AssignmentMenuItem[] = [
+  { label: "Execução Penal", path: "/admin/execucao-penal", icon: "Lock" },
+  { label: "Calc. Execução Penal", path: "/admin/calculadoras?tipo=ep", icon: "Calculator" },
 ];
 
 // Itens do menu "Mais" (utilidades)
@@ -95,7 +116,8 @@ const iconMap: Record<string, React.ElementType> = {
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
   Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
-  ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box
+  ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
+  BookUser, Users2
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
@@ -346,46 +368,862 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
 }
 
 // ==========================================
-// MÓDULOS ESPECÍFICOS (Júri, EP, VVD)
+// MENU "FERRAMENTAS" COLAPSÁVEL - ESTILO PREMIUM
 // ==========================================
 
-function SpecialtyModules({ modules, pathname, isCollapsed, onNavigate, userRole, configName }: {
-  modules: MenuSection[];
+function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
+  items: AssignmentMenuItem[];
   pathname: string;
-  isCollapsed: boolean;
   onNavigate: () => void;
   userRole?: UserRole;
-  configName: string;
+  isCollapsed: boolean;
 }) {
-  if (modules.length === 0) return null;
+  const [expanded, setExpanded] = useState(false);
+  const hasActiveItem = items.some(item => pathname.startsWith(item.path));
+
+  // Auto-expandir se um item está ativo
+  useEffect(() => {
+    if (hasActiveItem && !expanded) {
+      setExpanded(true);
+    }
+  }, [hasActiveItem]);
+
+  if (isCollapsed) {
+    return (
+      <SidebarMenuItem>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
+                hasActiveItem
+                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                  : "text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200"
+              )}
+            >
+              <Puzzle className="h-5 w-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="start"
+            className="w-56 p-2 bg-[#1f1f23] border-zinc-700/50 shadow-xl shadow-black/30"
+          >
+            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+              <Puzzle className="h-3 w-3" />
+              Ferramentas
+            </p>
+            {items.map((item) => {
+              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+                return null;
+              }
+              const Icon = iconMap[item.icon] || Briefcase;
+              const isActive = pathname.startsWith(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
+                    isActive
+                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </PopoverContent>
+        </Popover>
+      </SidebarMenuItem>
+    );
+  }
 
   return (
-    <>
-      <NavDivider collapsed={isCollapsed} />
-      {!isCollapsed && (
-        <div className="px-4 pb-2 flex items-center gap-2">
-          <Target className="h-3.5 w-3.5 text-zinc-500" />
-          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-            {configName}
-          </span>
+    <div className="space-y-0.5">
+      {/* Botão principal - Ferramentas */}
+      <SidebarMenuItem>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className={cn(
+            "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
+            hasActiveItem
+              ? "bg-emerald-600/15 text-emerald-400"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+          )}
+        >
+          <div className={cn(
+            "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
+            hasActiveItem
+              ? "bg-emerald-500/20"
+              : "bg-zinc-700/50 group-hover/item:bg-zinc-600/60"
+          )}>
+            <Puzzle className={cn(
+              "h-4 w-4 transition-all duration-300",
+              hasActiveItem ? "text-emerald-400" : "text-zinc-400 group-hover/item:text-zinc-200"
+            )} />
+          </div>
+          <span className="text-[13px] font-medium">Ferramentas</span>
+          <ChevronDown className={cn(
+            "h-4 w-4 ml-auto transition-transform duration-300",
+            expanded && "rotate-180"
+          )} />
+        </button>
+      </SidebarMenuItem>
+
+      {/* Sub-itens com animação */}
+      <div className={cn(
+        "overflow-hidden transition-all duration-300 ease-in-out",
+        expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+      )}>
+        <div className="relative pl-4 space-y-0.5">
+          {/* Linha vertical conectora */}
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/30 via-zinc-700/40 to-transparent" />
+
+          {items.map((item) => {
+            if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+              return null;
+            }
+            const Icon = iconMap[item.icon] || Briefcase;
+            const isActive = pathname.startsWith(item.path);
+            return (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  className={cn(
+                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                    isActive
+                      ? "bg-emerald-500/15 text-emerald-400 font-medium"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
+                  )}
+                >
+                  <Link href={item.path} prefetch={true} onClick={onNavigate}>
+                    {/* Indicador de conexão */}
+                    <div className={cn(
+                      "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                      isActive ? "bg-emerald-500/50" : "bg-zinc-700/50"
+                    )} />
+                    <Icon className={cn(
+                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      isActive ? "text-emerald-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                    )} />
+                    <span className="text-[12px] truncate">{item.label}</span>
+                    {isActive && (
+                      <div className="absolute right-2 w-1 h-1 rounded-full bg-emerald-400" />
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </div>
-      )}
-      <SidebarMenu className="space-y-0.5 px-3">
-        {modules.flatMap(section => section.items).slice(0, 5).map((item) => {
-          const isActive = pathname === item.path || pathname.startsWith(item.path);
-          return (
-            <NavItem
-              key={item.path}
-              item={item}
-              isActive={isActive}
-              isCollapsed={isCollapsed}
-              onNavigate={onNavigate}
-              userRole={userRole}
-            />
-          );
-        })}
-      </SidebarMenu>
-    </>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// MENU "CADASTROS" COLAPSÁVEL - AZUL
+// ==========================================
+
+function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
+  items: AssignmentMenuItem[];
+  pathname: string;
+  onNavigate: () => void;
+  userRole?: UserRole;
+  isCollapsed: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const hasActiveItem = items.some(item => pathname.startsWith(item.path));
+
+  // Auto-expandir se um item está ativo
+  useEffect(() => {
+    if (hasActiveItem && !expanded) {
+      setExpanded(true);
+    }
+  }, [hasActiveItem]);
+
+  if (isCollapsed) {
+    return (
+      <SidebarMenuItem>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
+                hasActiveItem
+                  ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/30"
+                  : "text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200"
+              )}
+            >
+              <BookUser className="h-5 w-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="start"
+            className="w-56 p-2 bg-[#1f1f23] border-zinc-700/50 shadow-xl shadow-black/30"
+          >
+            <p className="text-[10px] font-bold text-blue-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+              <BookUser className="h-3 w-3" />
+              Cadastros
+            </p>
+            {items.map((item) => {
+              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+                return null;
+              }
+              const Icon = iconMap[item.icon] || Briefcase;
+              const isActive = pathname.startsWith(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
+                    isActive
+                      ? "bg-blue-500/20 text-blue-400 font-medium"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </PopoverContent>
+        </Popover>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      {/* Botão principal - Cadastros */}
+      <SidebarMenuItem>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className={cn(
+            "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
+            hasActiveItem
+              ? "bg-blue-600/15 text-blue-400"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+          )}
+        >
+          <div className={cn(
+            "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
+            hasActiveItem
+              ? "bg-blue-500/20"
+              : "bg-zinc-700/50 group-hover/item:bg-zinc-600/60"
+          )}>
+            <BookUser className={cn(
+              "h-4 w-4 transition-all duration-300",
+              hasActiveItem ? "text-blue-400" : "text-zinc-400 group-hover/item:text-zinc-200"
+            )} />
+          </div>
+          <span className="text-[13px] font-medium">Cadastros</span>
+          <ChevronDown className={cn(
+            "h-4 w-4 ml-auto transition-transform duration-300",
+            expanded && "rotate-180"
+          )} />
+        </button>
+      </SidebarMenuItem>
+
+      {/* Sub-itens com animação */}
+      <div className={cn(
+        "overflow-hidden transition-all duration-300 ease-in-out",
+        expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+      )}>
+        <div className="relative pl-4 space-y-0.5">
+          {/* Linha vertical conectora */}
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-blue-500/30 via-zinc-700/40 to-transparent" />
+
+          {items.map((item) => {
+            if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+              return null;
+            }
+            const Icon = iconMap[item.icon] || Briefcase;
+            const isActive = pathname.startsWith(item.path);
+            return (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  className={cn(
+                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                    isActive
+                      ? "bg-blue-500/15 text-blue-400 font-medium"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
+                  )}
+                >
+                  <Link href={item.path} prefetch={true} onClick={onNavigate}>
+                    {/* Indicador de conexão */}
+                    <div className={cn(
+                      "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                      isActive ? "bg-blue-500/50" : "bg-zinc-700/50"
+                    )} />
+                    <Icon className={cn(
+                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      isActive ? "text-blue-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                    )} />
+                    <span className="text-[12px] truncate">{item.label}</span>
+                    {isActive && (
+                      <div className="absolute right-2 w-1 h-1 rounded-full bg-blue-400" />
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// MENU "DOCUMENTOS" COLAPSÁVEL - LARANJA
+// ==========================================
+
+function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
+  items: AssignmentMenuItem[];
+  pathname: string;
+  onNavigate: () => void;
+  userRole?: UserRole;
+  isCollapsed: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const hasActiveItem = items.some(item => pathname.startsWith(item.path));
+
+  // Auto-expandir se um item está ativo
+  useEffect(() => {
+    if (hasActiveItem && !expanded) {
+      setExpanded(true);
+    }
+  }, [hasActiveItem]);
+
+  if (isCollapsed) {
+    return (
+      <SidebarMenuItem>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
+                hasActiveItem
+                  ? "bg-orange-600/20 text-orange-400 ring-1 ring-orange-500/30"
+                  : "text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200"
+              )}
+            >
+              <FolderOpen className="h-5 w-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="start"
+            className="w-56 p-2 bg-[#1f1f23] border-zinc-700/50 shadow-xl shadow-black/30"
+          >
+            <p className="text-[10px] font-bold text-orange-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+              <FolderOpen className="h-3 w-3" />
+              Documentos
+            </p>
+            {items.map((item) => {
+              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+                return null;
+              }
+              const Icon = iconMap[item.icon] || Briefcase;
+              const isActive = pathname.startsWith(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
+                    isActive
+                      ? "bg-orange-500/20 text-orange-400 font-medium"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </PopoverContent>
+        </Popover>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      {/* Botão principal - Documentos */}
+      <SidebarMenuItem>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className={cn(
+            "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
+            hasActiveItem
+              ? "bg-orange-600/15 text-orange-400"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+          )}
+        >
+          <div className={cn(
+            "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
+            hasActiveItem
+              ? "bg-orange-500/20"
+              : "bg-zinc-700/50 group-hover/item:bg-zinc-600/60"
+          )}>
+            <FolderOpen className={cn(
+              "h-4 w-4 transition-all duration-300",
+              hasActiveItem ? "text-orange-400" : "text-zinc-400 group-hover/item:text-zinc-200"
+            )} />
+          </div>
+          <span className="text-[13px] font-medium">Documentos</span>
+          <ChevronDown className={cn(
+            "h-4 w-4 ml-auto transition-transform duration-300",
+            expanded && "rotate-180"
+          )} />
+        </button>
+      </SidebarMenuItem>
+
+      {/* Sub-itens com animação */}
+      <div className={cn(
+        "overflow-hidden transition-all duration-300 ease-in-out",
+        expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+      )}>
+        <div className="relative pl-4 space-y-0.5">
+          {/* Linha vertical conectora */}
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-orange-500/30 via-zinc-700/40 to-transparent" />
+
+          {items.map((item) => {
+            if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+              return null;
+            }
+            const Icon = iconMap[item.icon] || Briefcase;
+            const isActive = pathname.startsWith(item.path);
+            return (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  className={cn(
+                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                    isActive
+                      ? "bg-orange-500/15 text-orange-400 font-medium"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
+                  )}
+                >
+                  <Link href={item.path} prefetch={true} onClick={onNavigate}>
+                    {/* Indicador de conexão */}
+                    <div className={cn(
+                      "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                      isActive ? "bg-orange-500/50" : "bg-zinc-700/50"
+                    )} />
+                    <Icon className={cn(
+                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      isActive ? "text-orange-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                    )} />
+                    <span className="text-[12px] truncate">{item.label}</span>
+                    {isActive && (
+                      <div className="absolute right-2 w-1 h-1 rounded-full bg-orange-400" />
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// MENU "COWORK" COLAPSÁVEL - ROXO
+// ==========================================
+
+function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
+  items: AssignmentMenuItem[];
+  pathname: string;
+  onNavigate: () => void;
+  userRole?: UserRole;
+  isCollapsed: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const hasActiveItem = items.some(item => pathname.startsWith(item.path));
+
+  // Auto-expandir se um item está ativo
+  useEffect(() => {
+    if (hasActiveItem && !expanded) {
+      setExpanded(true);
+    }
+  }, [hasActiveItem]);
+
+  if (isCollapsed) {
+    return (
+      <SidebarMenuItem>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
+                hasActiveItem
+                  ? "bg-purple-600/20 text-purple-400 ring-1 ring-purple-500/30"
+                  : "text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200"
+              )}
+            >
+              <Users2 className="h-5 w-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="start"
+            className="w-56 p-2 bg-[#1f1f23] border-zinc-700/50 shadow-xl shadow-black/30"
+          >
+            <p className="text-[10px] font-bold text-purple-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+              <Users2 className="h-3 w-3" />
+              Cowork
+            </p>
+            {items.map((item) => {
+              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+                return null;
+              }
+              const Icon = iconMap[item.icon] || Briefcase;
+              const isActive = pathname.startsWith(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
+                    isActive
+                      ? "bg-purple-500/20 text-purple-400 font-medium"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </PopoverContent>
+        </Popover>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      {/* Botão principal - Cowork */}
+      <SidebarMenuItem>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className={cn(
+            "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
+            hasActiveItem
+              ? "bg-purple-600/15 text-purple-400"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+          )}
+        >
+          <div className={cn(
+            "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
+            hasActiveItem
+              ? "bg-purple-500/20"
+              : "bg-zinc-700/50 group-hover/item:bg-zinc-600/60"
+          )}>
+            <Users2 className={cn(
+              "h-4 w-4 transition-all duration-300",
+              hasActiveItem ? "text-purple-400" : "text-zinc-400 group-hover/item:text-zinc-200"
+            )} />
+          </div>
+          <span className="text-[13px] font-medium">Cowork</span>
+          <ChevronDown className={cn(
+            "h-4 w-4 ml-auto transition-transform duration-300",
+            expanded && "rotate-180"
+          )} />
+        </button>
+      </SidebarMenuItem>
+
+      {/* Sub-itens com animação */}
+      <div className={cn(
+        "overflow-hidden transition-all duration-300 ease-in-out",
+        expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+      )}>
+        <div className="relative pl-4 space-y-0.5">
+          {/* Linha vertical conectora */}
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-purple-500/30 via-zinc-700/40 to-transparent" />
+
+          {items.map((item) => {
+            if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+              return null;
+            }
+            const Icon = iconMap[item.icon] || Briefcase;
+            const isActive = pathname.startsWith(item.path);
+            return (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  className={cn(
+                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                    isActive
+                      ? "bg-purple-500/15 text-purple-400 font-medium"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
+                  )}
+                >
+                  <Link href={item.path} prefetch={true} onClick={onNavigate}>
+                    {/* Indicador de conexão */}
+                    <div className={cn(
+                      "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                      isActive ? "bg-purple-500/50" : "bg-zinc-700/50"
+                    )} />
+                    <Icon className={cn(
+                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      isActive ? "text-purple-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                    )} />
+                    <span className="text-[12px] truncate">{item.label}</span>
+                    {isActive && (
+                      <div className="absolute right-2 w-1 h-1 rounded-full bg-purple-400" />
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// MENU "ESPECIALIDADES" COLAPSÁVEL - AMBER
+// ==========================================
+
+type Especialidade = "JURI" | "VVD" | "EP";
+
+function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
+  pathname: string;
+  onNavigate: () => void;
+  userRole?: UserRole;
+  isCollapsed: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [especialidade, setEspecialidade] = useState<Especialidade>("JURI");
+
+  // Determinar módulos baseado na especialidade selecionada
+  const modules = especialidade === "JURI" ? JURI_MODULES
+    : especialidade === "VVD" ? VVD_MODULES
+    : EP_MODULES;
+
+  const hasActiveItem = [...JURI_MODULES, ...VVD_MODULES, ...EP_MODULES].some(
+    item => pathname.startsWith(item.path)
+  );
+
+  // Auto-expandir se um item está ativo
+  useEffect(() => {
+    if (hasActiveItem && !expanded) {
+      setExpanded(true);
+    }
+    // Detectar especialidade ativa baseado no path
+    if (pathname.includes('/juri') || pathname.includes('/palacio-mente') || pathname.includes('/simulador-3d')) {
+      setEspecialidade("JURI");
+    } else if (pathname.includes('/vvd')) {
+      setEspecialidade("VVD");
+    } else if (pathname.includes('/execucao-penal') || pathname.includes('tipo=ep')) {
+      setEspecialidade("EP");
+    }
+  }, [hasActiveItem, pathname]);
+
+  if (isCollapsed) {
+    return (
+      <SidebarMenuItem>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
+                hasActiveItem
+                  ? "bg-amber-600/20 text-amber-400 ring-1 ring-amber-500/30"
+                  : "text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200"
+              )}
+            >
+              <Target className="h-5 w-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="start"
+            className="w-64 p-2 bg-[#1f1f23] border-zinc-700/50 shadow-xl shadow-black/30"
+          >
+            <p className="text-[10px] font-bold text-amber-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+              <Target className="h-3 w-3" />
+              Especialidades
+            </p>
+
+            {/* Seletor de especialidade */}
+            <div className="flex gap-1 px-2 pb-2 mb-2 border-b border-zinc-700/50">
+              {[
+                { id: "JURI" as Especialidade, label: "Júri", icon: Gavel },
+                { id: "VVD" as Especialidade, label: "VVD", icon: Shield },
+                { id: "EP" as Especialidade, label: "EP", icon: Lock },
+              ].map((esp) => (
+                <button
+                  key={esp.id}
+                  onClick={() => setEspecialidade(esp.id)}
+                  className={cn(
+                    "flex-1 py-1.5 px-2 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1",
+                    especialidade === esp.id
+                      ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/50"
+                  )}
+                >
+                  <esp.icon className="h-3 w-3" />
+                  {esp.label}
+                </button>
+              ))}
+            </div>
+
+            {modules.map((item) => {
+              if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+                return null;
+              }
+              const Icon = iconMap[item.icon] || Briefcase;
+              const isActive = pathname.startsWith(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
+                    isActive
+                      ? "bg-amber-500/20 text-amber-400 font-medium"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </PopoverContent>
+        </Popover>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      {/* Botão principal - Especialidades */}
+      <SidebarMenuItem>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className={cn(
+            "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
+            hasActiveItem
+              ? "bg-amber-600/15 text-amber-400"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+          )}
+        >
+          <div className={cn(
+            "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
+            hasActiveItem
+              ? "bg-amber-500/20"
+              : "bg-zinc-700/50 group-hover/item:bg-zinc-600/60"
+          )}>
+            <Target className={cn(
+              "h-4 w-4 transition-all duration-300",
+              hasActiveItem ? "text-amber-400" : "text-zinc-400 group-hover/item:text-zinc-200"
+            )} />
+          </div>
+          <span className="text-[13px] font-medium">Especialidades</span>
+          <ChevronDown className={cn(
+            "h-4 w-4 ml-auto transition-transform duration-300",
+            expanded && "rotate-180"
+          )} />
+        </button>
+      </SidebarMenuItem>
+
+      {/* Sub-itens com animação */}
+      <div className={cn(
+        "overflow-hidden transition-all duration-300 ease-in-out",
+        expanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+      )}>
+        <div className="relative pl-4 space-y-0.5">
+          {/* Linha vertical conectora */}
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-amber-500/30 via-zinc-700/40 to-transparent" />
+
+          {/* Seletor de especialidade inline */}
+          <div className="flex gap-1 py-1.5 pr-2">
+            {[
+              { id: "JURI" as Especialidade, label: "Júri", icon: Gavel },
+              { id: "VVD" as Especialidade, label: "VVD", icon: Shield },
+              { id: "EP" as Especialidade, label: "EP", icon: Lock },
+            ].map((esp) => (
+              <button
+                key={esp.id}
+                onClick={() => setEspecialidade(esp.id)}
+                className={cn(
+                  "flex-1 py-1.5 px-2 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1",
+                  especialidade === esp.id
+                    ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
+                    : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/50"
+                )}
+              >
+                <esp.icon className="h-3 w-3" />
+                {esp.label}
+              </button>
+            ))}
+          </div>
+
+          {modules.map((item) => {
+            if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+              return null;
+            }
+            const Icon = iconMap[item.icon] || Briefcase;
+            const isActive = pathname.startsWith(item.path);
+            return (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  className={cn(
+                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                    isActive
+                      ? "bg-amber-500/15 text-amber-400 font-medium"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
+                  )}
+                >
+                  <Link href={item.path} prefetch={true} onClick={onNavigate}>
+                    {/* Indicador de conexão */}
+                    <div className={cn(
+                      "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                      isActive ? "bg-amber-500/50" : "bg-zinc-700/50"
+                    )} />
+                    <Icon className={cn(
+                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      isActive ? "text-amber-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                    )} />
+                    <span className="text-[12px] truncate">{item.label}</span>
+                    {isActive && (
+                      <div className="absolute right-2 w-1 h-1 rounded-full bg-amber-400" />
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -401,8 +1239,6 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 }) {
   const pathname = usePathname();
   const { state, openMobile, setOpenMobile } = useSidebar();
-  const { config, modules, isLoading } = useAssignment();
-  const { isAllSelected } = useAtribuicaoFiltro();
   const { user: sessionUser } = usePermissions();
   const { profissionalLogado } = useProfissional();
 
@@ -413,7 +1249,6 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 
   const userRole = sessionUser?.role as UserRole | undefined;
   const isCollapsed = isMobile ? false : state === "collapsed";
-  const showSpecificModules = !isAllSelected;
 
   useEffect(() => {
     setMounted(true);
@@ -452,7 +1287,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           <ContextControl collapsed={isCollapsed} />
 
           <div className="px-3 pb-5">
-            {/* Navegação Principal */}
+            {/* 1. Navegação Principal (Dashboard, Demandas, Agenda) */}
             <SidebarMenu className="space-y-0.5">
               {MAIN_NAV.map((item) => {
                 const isActive = pathname === item.path || (item.path !== "/admin" && pathname.startsWith(item.path));
@@ -469,72 +1304,72 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
               })}
             </SidebarMenu>
 
-            {/* Dados */}
+            {/* 2. Cadastros (Assistidos, Processos, Casos) - Azul */}
             <NavDivider collapsed={isCollapsed} />
             <SidebarMenu className="space-y-0.5">
-              {DATA_NAV.map((item) => {
-                const isActive = pathname.startsWith(item.path);
-                return (
-                  <NavItem
-                    key={item.path}
-                    item={item}
-                    isActive={isActive}
-                    isCollapsed={isCollapsed}
-                    onNavigate={handleNavigate}
-                    userRole={userRole}
-                  />
-                );
-              })}
-            </SidebarMenu>
-
-            {/* Recursos */}
-            <NavDivider collapsed={isCollapsed} />
-            <SidebarMenu className="space-y-0.5">
-              {RESOURCES_NAV.map((item) => {
-                const isActive = pathname.startsWith(item.path);
-                return (
-                  <NavItem
-                    key={item.path}
-                    item={item}
-                    isActive={isActive}
-                    isCollapsed={isCollapsed}
-                    onNavigate={handleNavigate}
-                    userRole={userRole}
-                  />
-                );
-              })}
-            </SidebarMenu>
-
-            {/* Módulos Específicos */}
-            {mounted && !isLoading && modules.length > 0 && showSpecificModules && canSeeSpecializedModules && (
-              <SpecialtyModules
-                modules={modules}
+              <CadastrosMenu
+                items={CADASTROS_NAV}
                 pathname={pathname}
-                isCollapsed={isCollapsed}
                 onNavigate={handleNavigate}
                 userRole={userRole}
-                configName={config.shortName}
+                isCollapsed={isCollapsed}
               />
-            )}
+            </SidebarMenu>
 
-            {/* Gestão + Mais */}
+            {/* 3. Documentos (Drive, Modelos, Jurisprudência) - Laranja */}
             <NavDivider collapsed={isCollapsed} />
             <SidebarMenu className="space-y-0.5">
-              {ADMIN_NAV.map((item) => {
-                const isActive = pathname.startsWith(item.path);
-                return (
-                  <NavItem
-                    key={item.path}
-                    item={item}
-                    isActive={isActive}
-                    isCollapsed={isCollapsed}
+              <DocumentosMenu
+                items={DOCUMENTOS_NAV}
+                pathname={pathname}
+                onNavigate={handleNavigate}
+                userRole={userRole}
+                isCollapsed={isCollapsed}
+              />
+            </SidebarMenu>
+
+            {/* 4. Cowork (Delegações, Equipe) - Roxo */}
+            <NavDivider collapsed={isCollapsed} />
+            <SidebarMenu className="space-y-0.5">
+              <CoworkMenu
+                items={COWORK_NAV}
+                pathname={pathname}
+                onNavigate={handleNavigate}
+                userRole={userRole}
+                isCollapsed={isCollapsed}
+              />
+            </SidebarMenu>
+
+            {/* 5. Ferramentas - Verde */}
+            <NavDivider collapsed={isCollapsed} />
+            <SidebarMenu className="space-y-0.5">
+              <ToolsMenu
+                items={TOOLS_NAV}
+                pathname={pathname}
+                onNavigate={handleNavigate}
+                userRole={userRole}
+                isCollapsed={isCollapsed}
+              />
+            </SidebarMenu>
+
+            {/* 6. Especialidades (Júri/VVD/EP) - Amber */}
+            {canSeeSpecializedModules && (
+              <>
+                <NavDivider collapsed={isCollapsed} />
+                <SidebarMenu className="space-y-0.5">
+                  <EspecialidadesMenu
+                    pathname={pathname}
                     onNavigate={handleNavigate}
                     userRole={userRole}
+                    isCollapsed={isCollapsed}
                   />
-                );
-              })}
+                </SidebarMenu>
+              </>
+            )}
 
-              {/* Menu Mais */}
+            {/* 7. Mais */}
+            <NavDivider collapsed={isCollapsed} />
+            <SidebarMenu className="space-y-0.5">
               <MoreMenu
                 items={MORE_NAV}
                 pathname={pathname}

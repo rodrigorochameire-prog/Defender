@@ -1475,7 +1475,16 @@ export default function AssistidoDetailPage({ params }: { params: Promise<{ id: 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label className="text-xs text-zinc-500">Telefone</Label>
-                          <p className="font-medium">{assistido.telefone || "-"}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{assistido.telefone || "-"}</p>
+                            {assistido.telefone && (
+                              <Link href={`/admin/whatsapp/chat?phone=${assistido.telefone.replace(/\D/g, "")}`}>
+                                <Button size="icon" variant="ghost" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
+                                  <MessageSquare className="w-4 h-4" />
+                                </Button>
+                              </Link>
+                            )}
+                          </div>
                         </div>
                         <div>
                           <Label className="text-xs text-zinc-500">E-mail</Label>
@@ -1487,7 +1496,16 @@ export default function AssistidoDetailPage({ params }: { params: Promise<{ id: 
                         <Label className="text-xs text-zinc-500">Contato de Referência</Label>
                         <p className="font-medium">{assistido.nomeContato}</p>
                         <p className="text-xs text-zinc-500">{assistido.parentescoContato}</p>
-                        <p className="font-medium">{assistido.telefoneContato}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{assistido.telefoneContato}</p>
+                          {assistido.telefoneContato && (
+                            <Link href={`/admin/whatsapp/chat?phone=${assistido.telefoneContato.replace(/\D/g, "")}`}>
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
+                                <MessageSquare className="w-4 h-4" />
+                              </Button>
+                            </Link>
+                          )}
+                        </div>
                       </div>
                       <Separator />
                       <div>

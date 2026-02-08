@@ -2,548 +2,455 @@
 
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   MessageCircle,
   Send,
-  CheckCircle2,
-  XCircle,
   Settings,
-  Phone,
   RefreshCw,
   Loader2,
   ExternalLink,
-  Key,
-  History,
-  Save,
-  Bell,
-  AlertCircle,
-  Copy,
-  Check,
-  Eye,
-  EyeOff,
-  FileText,
-  Calendar,
-  Gavel,
-  Clock,
-  MessageSquare,
-  Zap,
-  Users,
-  ArrowRight,
-  CheckCircle,
-  XOctagon,
-  HelpCircle,
   QrCode,
   Wifi,
   WifiOff,
   Plus,
   Trash2,
+  Users,
+  MessageSquare,
+  ArrowRight,
+  Link2,
+  UserPlus,
+  Download,
+  HelpCircle,
+  Activity,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { format, formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 // ==========================================
 // COMPONENTES
 // ==========================================
 
-function ConnectionStatus({ 
-  isConfigured, 
-  hasAccessToken, 
-  isActive,
-  onActivate,
-  onDeactivate,
-  isLoading 
-}: { 
-  isConfigured: boolean;
-  hasAccessToken: boolean;
-  isActive: boolean;
-  onActivate: () => void;
-  onDeactivate: () => void;
-  isLoading: boolean;
+function StatusCard({
+  config,
+  onRefresh,
+}: {
+  config: any;
+  onRefresh: () => void;
 }) {
-  const getStatus = () => {
-    if (!isConfigured || !hasAccessToken) {
-      return { label: "Não configurado", color: "amber", icon: AlertCircle };
-    }
-    if (isActive) {
-      return { label: "Ativo", color: "emerald", icon: CheckCircle2 };
-    }
-    return { label: "Inativo", color: "zinc", icon: XCircle };
-  };
+  const { data: connectionStatus, isLoading } = trpc.whatsappChat.getConnectionStatus.useQuery(
+    { configId: config.id },
+    { refetchInterval: 15000 }
+  );
 
-  const status = getStatus();
-  const StatusIcon = status.icon;
+  const isConnected = connectionStatus?.state === "open";
 
   return (
     <Card className={cn(
-      "p-6 border-2",
-      status.color === "emerald" && "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10",
-      status.color === "amber" && "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10",
-      status.color === "zinc" && "border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/10"
+      "border-2 transition-all",
+      isConnected
+        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10"
+        : "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10"
     )}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className={cn(
-            "w-14 h-14 rounded-xl flex items-center justify-center",
-            status.color === "emerald" && "bg-emerald-100 dark:bg-emerald-900/30",
-            status.color === "amber" && "bg-amber-100 dark:bg-amber-900/30",
-            status.color === "zinc" && "bg-zinc-100 dark:bg-zinc-800"
-          )}>
-            <MessageCircle className={cn(
-              "w-7 h-7",
-              status.color === "emerald" && "text-emerald-600 dark:text-emerald-400",
-              status.color === "amber" && "text-amber-600 dark:text-amber-400",
-              status.color === "zinc" && "text-zinc-500"
-            )} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">WhatsApp Business</h3>
-              <Badge className={cn(
-                status.color === "emerald" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                status.color === "amber" && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                status.color === "zinc" && "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
-              )}>
-                <StatusIcon className="w-3 h-3 mr-1" />
-                {status.label}
-              </Badge>
-            </div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              {isConfigured && hasAccessToken
-                ? isActive 
-                  ? "Integração ativa. Envie notificações para assistidos."
-                  : "Integração configurada mas inativa."
-                : "Configure as credenciais da API Meta para ativar."
-              }
-            </p>
-          </div>
-        </div>
-        
-        {isConfigured && hasAccessToken && (
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-sm text-zinc-500">
-              {isActive ? "Ativo" : "Inativo"}
-            </span>
-            <Switch
-              checked={isActive}
-              onCheckedChange={(checked) => checked ? onActivate() : onDeactivate()}
-              disabled={isLoading}
-              className="data-[state=checked]:bg-emerald-600"
-            />
+            <div className={cn(
+              "w-12 h-12 rounded-xl flex items-center justify-center",
+              isConnected ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-amber-100 dark:bg-amber-900/30"
+            )}>
+              {isConnected ? (
+                <Wifi className="w-6 h-6 text-emerald-600" />
+              ) : (
+                <WifiOff className="w-6 h-6 text-amber-600" />
+              )}
+            </div>
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                {config.instanceName}
+                <Badge className={cn(
+                  "text-xs",
+                  isConnected
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                )}>
+                  {isLoading ? "Verificando..." : isConnected ? "Conectado" : "Desconectado"}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                {config.phoneNumber || "Número não vinculado"}
+              </CardDescription>
+            </div>
           </div>
-        )}
-      </div>
-    </Card>
-  );
-}
-
-function ConfigurationCard({ 
-  configInfo,
-  currentConfig,
-  onSave,
-  isSaving 
-}: { 
-  configInfo: any;
-  currentConfig: any;
-  onSave: (data: any) => void;
-  isSaving: boolean;
-}) {
-  const [showToken, setShowToken] = useState(false);
-  const [formData, setFormData] = useState({
-    accessToken: "",
-    phoneNumberId: currentConfig?.config?.phoneNumberId || "",
-    businessAccountId: currentConfig?.config?.businessAccountId || "",
-  });
-
-  const handleSave = () => {
-    const data: any = {};
-    if (formData.accessToken) data.accessToken = formData.accessToken;
-    if (formData.phoneNumberId) data.phoneNumberId = formData.phoneNumberId;
-    if (formData.businessAccountId) data.businessAccountId = formData.businessAccountId;
-    
-    if (Object.keys(data).length === 0) {
-      toast.error("Preencha pelo menos um campo");
-      return;
-    }
-    
-    onSave(data);
-  };
-
-  return (
-    <Card className="p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-          <Key className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-            Credenciais da API
-          </h3>
-          <p className="text-sm text-zinc-500">
-            Configure as credenciais do WhatsApp Business API (Meta)
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="accessToken" className="flex items-center gap-2">
-            Access Token *
-            {currentConfig?.config?.hasAccessToken && (
-              <Badge variant="outline" className="text-emerald-600 border-emerald-200">
-                <Check className="w-3 h-3 mr-1" /> Configurado
-              </Badge>
-            )}
-          </Label>
-          <div className="flex gap-2">
-            <Input
-              id="accessToken"
-              type={showToken ? "text" : "password"}
-              value={formData.accessToken}
-              onChange={(e) => setFormData({ ...formData, accessToken: e.target.value })}
-              placeholder={currentConfig?.config?.hasAccessToken ? "••••••••••••••••" : "EAAxxxxxxxx..."}
-              className="font-mono"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowToken(!showToken)}
-            >
-              {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </Button>
-          </div>
-          <p className="text-xs text-zinc-500">
-            Token de acesso permanente ou de longa duração
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="phoneNumberId">Phone Number ID *</Label>
-          <Input
-            id="phoneNumberId"
-            value={formData.phoneNumberId}
-            onChange={(e) => setFormData({ ...formData, phoneNumberId: e.target.value })}
-            placeholder="1234567890123456"
-            className="font-mono"
-          />
-          <p className="text-xs text-zinc-500">
-            ID do número de telefone no painel Meta Business
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="businessAccountId">Business Account ID (opcional)</Label>
-          <Input
-            id="businessAccountId"
-            value={formData.businessAccountId}
-            onChange={(e) => setFormData({ ...formData, businessAccountId: e.target.value })}
-            placeholder="1234567890123456"
-            className="font-mono"
-          />
-        </div>
-
-        <div className="pt-4 flex items-center justify-between">
-          <a 
-            href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-          >
-            <HelpCircle className="w-4 h-4" />
-            Como obter as credenciais
-            <ExternalLink className="w-3 h-3" />
-          </a>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-            Salvar Configuração
+          <Button variant="ghost" size="icon" onClick={onRefresh}>
+            <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
-      </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-2">
+          <Link href="/admin/whatsapp/chat" className="flex-1">
+            <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Abrir Chat
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
     </Card>
   );
 }
 
-function AutomationCard({ 
-  config,
-  onSave,
-  isSaving 
-}: { 
-  config: any;
-  onSave: (data: any) => void;
-  isSaving: boolean;
-}) {
-  const [settings, setSettings] = useState({
-    autoNotifyPrazo: config?.config?.autoNotifyPrazo ?? false,
-    autoNotifyAudiencia: config?.config?.autoNotifyAudiencia ?? false,
-    autoNotifyJuri: config?.config?.autoNotifyJuri ?? false,
-    autoNotifyMovimentacao: config?.config?.autoNotifyMovimentacao ?? false,
-  });
+function StatsCards({ configId }: { configId: number }) {
+  const { data: stats, isLoading } = trpc.whatsappChat.getStats.useQuery(
+    { configId },
+    { refetchInterval: 30000 }
+  );
 
-  const automations = [
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  const statsData = [
     {
-      id: "autoNotifyPrazo",
-      icon: Clock,
-      title: "Lembrete de Prazos",
-      description: "Notifica assistido sobre prazos próximos ao vencimento",
-      color: "amber",
-    },
-    {
-      id: "autoNotifyAudiencia",
-      icon: Calendar,
-      title: "Audiências Agendadas",
-      description: "Envia lembretes de audiências 24h antes",
+      label: "Total de Contatos",
+      value: stats?.totalContacts || 0,
+      icon: Users,
       color: "blue",
     },
     {
-      id: "autoNotifyJuri",
-      icon: Gavel,
-      title: "Sessões do Júri",
-      description: "Notifica sobre plenários do Tribunal do Júri",
+      label: "Mensagens Não Lidas",
+      value: stats?.unreadMessages || 0,
+      icon: MessageSquare,
+      color: stats?.unreadMessages ? "rose" : "zinc",
+    },
+    {
+      label: "Mensagens Enviadas",
+      value: stats?.outboundMessages || 0,
+      icon: Send,
       color: "emerald",
     },
     {
-      id: "autoNotifyMovimentacao",
-      icon: FileText,
-      title: "Movimentações",
-      description: "Informa sobre novas movimentações processuais",
+      label: "Mensagens Recebidas",
+      value: stats?.inboundMessages || 0,
+      icon: MessageCircle,
       color: "violet",
     },
   ];
 
-  const handleToggle = (id: string, value: boolean) => {
-    const newSettings = { ...settings, [id]: value };
-    setSettings(newSettings);
-    onSave(newSettings);
-  };
-
   return (
-    <Card className="p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/30">
-          <Zap className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-            Notificações Automáticas
-          </h3>
-          <p className="text-sm text-zinc-500">
-            Configure quais eventos disparam notificações
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {automations.map((automation) => {
-          const Icon = automation.icon;
-          const isEnabled = settings[automation.id as keyof typeof settings];
-          
-          return (
-            <div
-              key={automation.id}
-              className={cn(
-                "p-4 rounded-xl border transition-all",
-                isEnabled 
-                  ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10" 
-                  : "border-zinc-200 dark:border-zinc-800"
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center",
-                    `bg-${automation.color}-100 dark:bg-${automation.color}-900/30`
-                  )}>
-                    <Icon className={cn("w-5 h-5", `text-${automation.color}-600 dark:text-${automation.color}-400`)} />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                      {automation.title}
-                    </h4>
-                    <p className="text-xs text-zinc-500">{automation.description}</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={isEnabled}
-                  onCheckedChange={(value) => handleToggle(automation.id, value)}
-                  disabled={isSaving}
-                  className="data-[state=checked]:bg-emerald-600"
-                />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {statsData.map((stat) => {
+        const Icon = stat.icon;
+        return (
+          <Card key={stat.label} className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center",
+                stat.color === "blue" && "bg-blue-100 dark:bg-blue-900/30",
+                stat.color === "rose" && "bg-rose-100 dark:bg-rose-900/30",
+                stat.color === "emerald" && "bg-emerald-100 dark:bg-emerald-900/30",
+                stat.color === "violet" && "bg-violet-100 dark:bg-violet-900/30",
+                stat.color === "zinc" && "bg-zinc-100 dark:bg-zinc-800",
+              )}>
+                <Icon className={cn(
+                  "w-5 h-5",
+                  stat.color === "blue" && "text-blue-600",
+                  stat.color === "rose" && "text-rose-600",
+                  stat.color === "emerald" && "text-emerald-600",
+                  stat.color === "violet" && "text-violet-600",
+                  stat.color === "zinc" && "text-zinc-500",
+                )} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  {stat.value.toLocaleString()}
+                </p>
+                <p className="text-xs text-zinc-500">{stat.label}</p>
               </div>
             </div>
-          );
-        })}
-      </div>
-    </Card>
+          </Card>
+        );
+      })}
+    </div>
   );
 }
 
-function SendMessageCard({ 
-  templates,
-  onSend,
-  onSendTest,
-  isSending,
-  isTestSending 
-}: { 
-  templates: any;
-  onSend: (phone: string, message: string, context: string) => void;
-  onSendTest: (phone: string) => void;
-  isSending: boolean;
-  isTestSending: boolean;
-}) {
-  const [phone, setPhone] = useState("");
-  const [message, setMessage] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
-
-  const templateList = templates ? Object.entries(templates).map(([key, value]: [string, any]) => ({
-    id: key,
-    ...value,
-  })) : [];
-
-  const handleSelectTemplate = (templateId: string) => {
-    setSelectedTemplate(templateId);
-    const template = templateList.find(t => t.id === templateId);
-    if (template) {
-      setMessage(template.example);
-    }
-  };
-
-  return (
-    <Card className="p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-          <Send className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-            Enviar Mensagem
-          </h3>
-          <p className="text-sm text-zinc-500">
-            Teste a integração ou envie mensagens manuais
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="phone">Número de Telefone</Label>
-          <Input
-            id="phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="(71) 99999-9999"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Template (opcional)</Label>
-          <Select value={selectedTemplate} onValueChange={handleSelectTemplate}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um template..." />
-            </SelectTrigger>
-            <SelectContent>
-              {templateList.map((template) => (
-                <SelectItem key={template.id} value={template.id}>
-                  {template.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="message">Mensagem</Label>
-          <Textarea
-            id="message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Digite sua mensagem..."
-            rows={6}
-          />
-          <p className="text-xs text-zinc-500">
-            Suporta formatação: *negrito*, _itálico_, ~tachado~
-          </p>
-        </div>
-
-        <div className="flex gap-2 pt-2">
-          <Button
-            variant="outline"
-            onClick={() => onSendTest(phone)}
-            disabled={!phone || isTestSending}
-            className="flex-1"
-          >
-            {isTestSending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-            )}
-            Enviar Teste
-          </Button>
-          <Button
-            onClick={() => onSend(phone, message, "manual")}
-            disabled={!phone || !message || isSending}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-          >
-            {isSending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4 mr-2" />
-            )}
-            Enviar Mensagem
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// ==========================================
-// EVOLUTION API - COMPONENTES
-// ==========================================
-
-function EvolutionApiCard() {
+function QuickActions({ configId }: { configId: number }) {
   const utils = trpc.useUtils();
 
-  // Queries
-  const { data: configs, isLoading: loadingConfigs } = trpc.whatsappChat.listConfigs.useQuery();
+  const syncMutation = trpc.whatsappChat.syncContacts.useMutation({
+    onSuccess: (result) => {
+      toast.success(
+        `Sincronização concluída! ${result.inserted} novos contatos, ${result.updated} atualizados.`
+      );
+      utils.whatsappChat.getStats.invalidate();
+      utils.whatsappChat.listContacts.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao sincronizar: ${error.message}`);
+    },
+  });
 
-  // Mutations
-  const createConfigMutation = trpc.whatsappChat.createConfig.useMutation({
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Activity className="w-5 h-5" />
+          Ações Rápidas
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Link href="/admin/whatsapp/chat" className="block">
+          <Button variant="outline" className="w-full justify-start">
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Abrir Chat
+            <ArrowRight className="w-4 h-4 ml-auto" />
+          </Button>
+        </Link>
+
+        <Button
+          variant="outline"
+          className="w-full justify-start"
+          onClick={() => syncMutation.mutate({ configId })}
+          disabled={syncMutation.isPending}
+        >
+          {syncMutation.isPending ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 mr-2" />
+          )}
+          Sincronizar Contatos
+          {syncMutation.isPending && <span className="ml-auto text-xs text-zinc-500">Sincronizando...</span>}
+        </Button>
+
+        <Link href="/admin/whatsapp/vincular" className="block">
+          <Button variant="outline" className="w-full justify-start">
+            <Link2 className="w-4 h-4 mr-2" />
+            Vincular Contatos a Assistidos
+            <ArrowRight className="w-4 h-4 ml-auto" />
+          </Button>
+        </Link>
+
+        <Link href="/admin/assistidos" className="block">
+          <Button variant="outline" className="w-full justify-start">
+            <Users className="w-4 h-4 mr-2" />
+            Gerenciar Assistidos
+            <ArrowRight className="w-4 h-4 ml-auto" />
+          </Button>
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RecentContacts({ configId }: { configId: number }) {
+  const { data: contactsData, isLoading } = trpc.whatsappChat.listContacts.useQuery({
+    configId,
+    limit: 5,
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Contatos Recentes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-lg" />
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const contacts = contactsData?.contacts || [];
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Clock className="w-5 h-5" />
+          Contatos Recentes
+        </CardTitle>
+        <Link href="/admin/whatsapp/chat">
+          <Button variant="ghost" size="sm">
+            Ver todos
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </Link>
+      </CardHeader>
+      <CardContent>
+        {contacts.length === 0 ? (
+          <div className="text-center py-8 text-zinc-500">
+            <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p>Nenhum contato ainda</p>
+            <p className="text-xs mt-1">Sincronize os contatos do WhatsApp</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {contacts.map((contact: any) => (
+              <Link
+                key={contact.id}
+                href={`/admin/whatsapp/chat?contactId=${contact.id}`}
+                className="block"
+              >
+                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer">
+                  <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-sm font-medium">
+                    {contact.pushName?.[0]?.toUpperCase() || contact.phone?.slice(-2)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                      {contact.pushName || contact.name || formatPhone(contact.phone)}
+                    </p>
+                    <p className="text-xs text-zinc-500 truncate">
+                      {contact.assistido ? (
+                        <span className="flex items-center gap-1">
+                          <Link2 className="w-3 h-3" />
+                          {contact.assistido.nome}
+                        </span>
+                      ) : (
+                        formatPhone(contact.phone)
+                      )}
+                    </p>
+                  </div>
+                  {contact.unreadCount > 0 && (
+                    <Badge variant="destructive" className="text-xs">
+                      {contact.unreadCount}
+                    </Badge>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function UnlinkedContacts({ configId }: { configId: number }) {
+  const { data: contactsData, isLoading } = trpc.whatsappChat.listContacts.useQuery({
+    configId,
+    limit: 100,
+  });
+
+  const unlinkedContacts = useMemo(() => {
+    return (contactsData?.contacts || []).filter((c: any) => !c.assistidoId).slice(0, 5);
+  }, [contactsData]);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Contatos Não Vinculados</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-lg" />
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <UserPlus className="w-5 h-5" />
+            Contatos Não Vinculados
+          </CardTitle>
+          <CardDescription>
+            Vincule contatos a assistidos para melhor organização
+          </CardDescription>
+        </div>
+        <Link href="/admin/whatsapp/vincular">
+          <Button variant="outline" size="sm">
+            Vincular
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </Link>
+      </CardHeader>
+      <CardContent>
+        {unlinkedContacts.length === 0 ? (
+          <div className="text-center py-8 text-zinc-500">
+            <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-emerald-500 opacity-50" />
+            <p>Todos os contatos estão vinculados!</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {unlinkedContacts.map((contact: any) => (
+              <div
+                key={contact.id}
+                className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800"
+              >
+                <div className="w-10 h-10 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center text-sm font-medium">
+                  {contact.pushName?.[0]?.toUpperCase() || "?"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    {contact.pushName || "Sem nome"}
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    {formatPhone(contact.phone)}
+                  </p>
+                </div>
+                <Link href={`/admin/whatsapp/vincular?contactId=${contact.id}`}>
+                  <Button size="sm" variant="outline">
+                    <Link2 className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function InstanceConfig() {
+  const utils = trpc.useUtils();
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [newConfig, setNewConfig] = useState({
+    instanceName: "",
+    apiUrl: "",
+    apiKey: "",
+  });
+
+  const { data: configs, isLoading } = trpc.whatsappChat.listConfigs.useQuery();
+
+  const createMutation = trpc.whatsappChat.createConfig.useMutation({
     onSuccess: () => {
       toast.success("Instância criada com sucesso!");
       utils.whatsappChat.listConfigs.invalidate();
+      setShowNewForm(false);
+      setNewConfig({ instanceName: "", apiUrl: "", apiKey: "" });
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
 
-  const deleteConfigMutation = trpc.whatsappChat.deleteConfig.useMutation({
+  const deleteMutation = trpc.whatsappChat.deleteConfig.useMutation({
     onSuccess: () => {
       toast.success("Instância removida!");
       utils.whatsappChat.listConfigs.invalidate();
@@ -553,83 +460,31 @@ function EvolutionApiCard() {
     },
   });
 
-  // State para novo config
-  const [showNewForm, setShowNewForm] = useState(false);
-  const [newConfig, setNewConfig] = useState({
-    instanceName: "",
-    apiUrl: "http://localhost:8080",
-    apiKey: "",
-  });
-
-  const handleCreateConfig = () => {
-    if (!newConfig.instanceName || !newConfig.apiUrl || !newConfig.apiKey) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-    createConfigMutation.mutate({
-      instanceName: newConfig.instanceName,
-      apiUrl: newConfig.apiUrl,
-      apiKey: newConfig.apiKey,
-      webhookUrl: `${window.location.origin}/api/webhooks/evolution`,
-    });
-    setShowNewForm(false);
-    setNewConfig({ instanceName: "", apiUrl: "http://localhost:8080", apiKey: "" });
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Header com link para o chat */}
-      <Card className="p-6 border-2 border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <MessageSquare className="w-7 h-7 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                Evolution API - Chat em Tempo Real
-              </h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                Converse diretamente com assistidos pelo WhatsApp
-              </p>
-            </div>
-          </div>
-          <Link href="/admin/whatsapp/chat">
-            <Button className="bg-green-600 hover:bg-green-700">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Abrir Chat
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Configuração da Instância
+          </CardTitle>
+          <CardDescription>
+            Gerencie suas conexões WhatsApp via Evolution API
+          </CardDescription>
         </div>
-      </Card>
-
-      {/* Instâncias configuradas */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800">
-              <QrCode className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                Instâncias Evolution API
-              </h3>
-              <p className="text-sm text-zinc-500">
-                Gerencie suas conexões WhatsApp via Evolution API
-              </p>
-            </div>
-          </div>
-          <Button variant="outline" onClick={() => setShowNewForm(!showNewForm)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Instância
-          </Button>
-        </div>
-
-        {/* Formulário de nova instância */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowNewForm(!showNewForm)}
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          Nova
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-4">
         {showNewForm && (
-          <div className="mb-6 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50">
-            <h4 className="font-medium mb-4">Adicionar Nova Instância</h4>
+          <div className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 space-y-4">
+            <h4 className="font-medium">Adicionar Nova Instância</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="instanceName">Nome da Instância *</Label>
@@ -646,7 +501,7 @@ function EvolutionApiCard() {
                   id="apiUrl"
                   value={newConfig.apiUrl}
                   onChange={(e) => setNewConfig({ ...newConfig, apiUrl: e.target.value })}
-                  placeholder="http://localhost:8080"
+                  placeholder="https://evolution-api.exemplo.com"
                 />
               </div>
               <div className="space-y-2">
@@ -660,39 +515,78 @@ function EvolutionApiCard() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowNewForm(false)}>
                 Cancelar
               </Button>
               <Button
-                onClick={handleCreateConfig}
-                disabled={createConfigMutation.isPending}
+                onClick={() => createMutation.mutate({
+                  instanceName: newConfig.instanceName,
+                  apiUrl: newConfig.apiUrl,
+                  apiKey: newConfig.apiKey,
+                  webhookUrl: `${window.location.origin}/api/webhooks/evolution`,
+                })}
+                disabled={createMutation.isPending || !newConfig.instanceName || !newConfig.apiUrl || !newConfig.apiKey}
               >
-                {createConfigMutation.isPending && (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                )}
+                {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Criar Instância
               </Button>
             </div>
           </div>
         )}
 
-        {/* Lista de instâncias */}
-        {loadingConfigs ? (
+        {isLoading ? (
           <div className="space-y-3">
             {[1, 2].map((i) => (
-              <Skeleton key={i} className="h-20 w-full rounded-lg" />
+              <Skeleton key={i} className="h-16 w-full rounded-lg" />
             ))}
           </div>
         ) : configs && configs.length > 0 ? (
           <div className="space-y-3">
             {configs.map((config) => (
-              <EvolutionInstanceCard
+              <div
                 key={config.id}
-                config={config}
-                onDelete={() => deleteConfigMutation.mutate({ id: config.id })}
-                isDeleting={deleteConfigMutation.isPending}
-              />
+                className="flex items-center justify-between p-4 rounded-lg border border-zinc-200 dark:border-zinc-700"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-lg flex items-center justify-center",
+                    config.status === "connected" ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-zinc-100 dark:bg-zinc-800"
+                  )}>
+                    {config.status === "connected" ? (
+                      <Wifi className="w-5 h-5 text-emerald-600" />
+                    ) : (
+                      <WifiOff className="w-5 h-5 text-zinc-500" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium">{config.instanceName}</p>
+                    <p className="text-xs text-zinc-500">{config.apiUrl}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className={cn(
+                    "text-xs",
+                    config.status === "connected"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-zinc-100 text-zinc-700"
+                  )}>
+                    {config.status === "connected" ? "Conectado" : "Desconectado"}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-zinc-400 hover:text-rose-600"
+                    onClick={() => {
+                      if (confirm("Tem certeza que deseja remover esta instância?")) {
+                        deleteMutation.mutate({ id: config.id });
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
@@ -700,311 +594,52 @@ function EvolutionApiCard() {
             <QrCode className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
             <p className="text-zinc-500">Nenhuma instância configurada</p>
             <p className="text-xs text-zinc-400 mt-1">
-              Clique em &quot;Nova Instância&quot; para começar
+              Clique em &quot;Nova&quot; para começar
             </p>
           </div>
         )}
-      </Card>
 
-      {/* Instruções */}
-      <Card className="p-6 bg-zinc-50 dark:bg-zinc-900/50">
-        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-          Como configurar a Evolution API
-        </h3>
-        <ol className="space-y-4 text-sm text-zinc-600 dark:text-zinc-400">
-          <li className="flex items-start gap-3">
-            <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">
-              1
-            </span>
-            <div>
-              <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                Instale a Evolution API via Docker
-              </p>
-              <pre className="mt-2 p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-xs overflow-x-auto">
-                docker run -d --name evolution-api -p 8080:8080 atendai/evolution-api
-              </pre>
-            </div>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">
-              2
-            </span>
-            <div>
-              <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                Configure a API Key no docker-compose.yml
-              </p>
-              <p className="text-xs text-zinc-500">
-                Defina a variável AUTHENTICATION_API_KEY
-              </p>
-            </div>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">
-              3
-            </span>
-            <div>
-              <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                Adicione a instância aqui e escaneie o QR Code
-              </p>
-              <p className="text-xs text-zinc-500">
-                O QR Code aparecerá na página de chat para conexão
-              </p>
-            </div>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="w-6 h-6 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center text-xs font-medium shrink-0">
-              <Check className="w-3 h-3" />
-            </span>
-            <div>
-              <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                Pronto! Acesse o Chat para conversar
-              </p>
-              <p className="text-xs text-zinc-500">
-                As mensagens serão recebidas e enviadas em tempo real
-              </p>
-            </div>
-          </li>
-        </ol>
-        <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+        {/* Instruções */}
+        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+          <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+            <HelpCircle className="w-4 h-4" />
+            Como configurar
+          </h4>
+          <ol className="text-xs text-zinc-500 space-y-2 list-decimal list-inside">
+            <li>Instale a Evolution API em um servidor (Docker ou VPS)</li>
+            <li>Configure a API Key de autenticação</li>
+            <li>Adicione a instância aqui com a URL e API Key</li>
+            <li>Escaneie o QR Code na página de Chat para conectar</li>
+          </ol>
           <a
             href="https://doc.evolution-api.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            className="mt-3 text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
           >
-            <HelpCircle className="w-4 h-4" />
-            Documentação completa da Evolution API
+            Documentação da Evolution API
             <ExternalLink className="w-3 h-3" />
           </a>
         </div>
-      </Card>
-    </div>
-  );
-}
-
-function EvolutionInstanceCard({
-  config,
-  onDelete,
-  isDeleting,
-}: {
-  config: any;
-  onDelete: () => void;
-  isDeleting: boolean;
-}) {
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const getStatusInfo = () => {
-    switch (config.status) {
-      case "connected":
-        return { label: "Conectado", color: "emerald", icon: Wifi };
-      case "connecting":
-        return { label: "Conectando...", color: "amber", icon: Loader2 };
-      case "waiting_qr":
-        return { label: "Aguardando QR", color: "blue", icon: QrCode };
-      case "error":
-        return { label: "Erro", color: "rose", icon: XCircle };
-      default:
-        return { label: "Desconectado", color: "zinc", icon: WifiOff };
-    }
-  };
-
-  const status = getStatusInfo();
-  const StatusIcon = status.icon;
-
-  return (
-    <div
-      className={cn(
-        "p-4 rounded-lg border transition-all",
-        status.color === "emerald" &&
-          "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10",
-        status.color === "amber" &&
-          "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10",
-        status.color === "blue" &&
-          "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10",
-        status.color === "rose" &&
-          "border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-900/10",
-        status.color === "zinc" && "border-zinc-200 dark:border-zinc-700"
-      )}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "w-10 h-10 rounded-lg flex items-center justify-center",
-              status.color === "emerald" && "bg-emerald-100 dark:bg-emerald-900/30",
-              status.color === "amber" && "bg-amber-100 dark:bg-amber-900/30",
-              status.color === "blue" && "bg-blue-100 dark:bg-blue-900/30",
-              status.color === "rose" && "bg-rose-100 dark:bg-rose-900/30",
-              status.color === "zinc" && "bg-zinc-100 dark:bg-zinc-800"
-            )}
-          >
-            <StatusIcon
-              className={cn(
-                "w-5 h-5",
-                status.color === "emerald" && "text-emerald-600",
-                status.color === "amber" && "text-amber-600 animate-spin",
-                status.color === "blue" && "text-blue-600",
-                status.color === "rose" && "text-rose-600",
-                status.color === "zinc" && "text-zinc-500"
-              )}
-            />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                {config.instanceName}
-              </h4>
-              <Badge
-                className={cn(
-                  "text-xs",
-                  status.color === "emerald" &&
-                    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                  status.color === "amber" &&
-                    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                  status.color === "blue" &&
-                    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                  status.color === "rose" &&
-                    "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-                  status.color === "zinc" &&
-                    "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
-                )}
-              >
-                {status.label}
-              </Badge>
-            </div>
-            <p className="text-xs text-zinc-500 mt-0.5">
-              {config.apiUrl}
-              {config.phoneNumber && ` • ${config.phoneNumber}`}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Link href="/admin/whatsapp/chat">
-            <Button variant="outline" size="sm">
-              <MessageSquare className="w-4 h-4 mr-1" />
-              Chat
-            </Button>
-          </Link>
-
-          {showDeleteConfirm ? (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={onDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Confirmar"
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancelar
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-zinc-400 hover:text-rose-600"
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MessageHistoryCard({ messages, isLoading }: { messages: any; isLoading: boolean }) {
-  if (isLoading) {
-    return (
-      <Card className="p-6">
-        <div className="space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-lg" />
-          ))}
-        </div>
-      </Card>
-    );
-  }
-
-  const messageList = messages?.messages || [];
-
-  return (
-    <Card className="p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-          <History className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-            Histórico de Mensagens
-          </h3>
-          <p className="text-sm text-zinc-500">
-            Últimas {messageList.length} mensagens enviadas
-          </p>
-        </div>
-      </div>
-
-      {messageList.length === 0 ? (
-        <div className="text-center py-8">
-          <MessageSquare className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
-          <p className="text-zinc-500">Nenhuma mensagem enviada ainda</p>
-        </div>
-      ) : (
-        <div className="space-y-3 max-h-[500px] overflow-y-auto">
-          {messageList.map((msg: any) => (
-            <div
-              key={msg.id}
-              className={cn(
-                "p-4 rounded-lg border transition-all",
-                msg.status === "sent" && "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10",
-                msg.status === "failed" && "border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-900/10",
-                msg.status === "delivered" && "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10"
-              )}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  {msg.status === "sent" && <CheckCircle className="w-4 h-4 text-emerald-500" />}
-                  {msg.status === "delivered" && <CheckCircle2 className="w-4 h-4 text-blue-500" />}
-                  {msg.status === "failed" && <XOctagon className="w-4 h-4 text-rose-500" />}
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                    {msg.toPhone}
-                  </span>
-                  {msg.assistido && (
-                    <Badge variant="outline" className="text-xs">
-                      {msg.assistido.nome}
-                    </Badge>
-                  )}
-                </div>
-                <span className="text-xs text-zinc-500">
-                  {msg.sentAt ? formatDistanceToNow(new Date(msg.sentAt), { addSuffix: true, locale: ptBR }) : "-"}
-                </span>
-              </div>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2 line-clamp-2">
-                {msg.content}
-              </p>
-              {msg.errorMessage && (
-                <p className="text-xs text-rose-600 mt-2">
-                  Erro: {msg.errorMessage}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      </CardContent>
     </Card>
   );
+}
+
+// ==========================================
+// HELPERS
+// ==========================================
+
+function formatPhone(phone: string): string {
+  if (!phone) return "";
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.length === 13) {
+    return `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`;
+  }
+  if (cleaned.length === 12) {
+    return `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 8)}-${cleaned.slice(8)}`;
+  }
+  return phone;
 }
 
 // ==========================================
@@ -1012,344 +647,113 @@ function MessageHistoryCard({ messages, isLoading }: { messages: any; isLoading:
 // ==========================================
 
 export default function WhatsAppPage() {
-  const [activeTab, setActiveTab] = useState("status");
+  const { data: configs, isLoading, refetch } = trpc.whatsappChat.listConfigs.useQuery();
 
-  // Queries
-  const { data: isConfigured, isLoading: checkingConfig, refetch: refetchConfigured } = trpc.whatsapp.isConfigured.useQuery();
-  const { data: myConfig, refetch: refetchConfig, isLoading: loadingConfig } = trpc.whatsapp.getMyConfig.useQuery();
-  const { data: templates } = trpc.whatsapp.getTemplates.useQuery();
-  const { data: configInfo } = trpc.whatsapp.getConfigInfo.useQuery();
-  const { data: messageHistory, refetch: refetchHistory, isLoading: loadingHistory } = trpc.whatsapp.getMessageHistory.useQuery(
-    { limit: 20 },
-    { enabled: myConfig?.hasConfig }
-  );
+  const primaryConfig = configs?.[0];
 
-  // Mutations
-  const saveConfigMutation = trpc.whatsapp.saveConfig.useMutation({
-    onSuccess: () => {
-      toast.success("Configuração salva!");
-      refetchConfig();
-      refetchConfigured();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const setActiveMutation = trpc.whatsapp.setActive.useMutation({
-    onSuccess: (_, variables) => {
-      toast.success(variables.active ? "WhatsApp ativado!" : "WhatsApp desativado!");
-      refetchConfig();
-      refetchConfigured();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const sendTestMutation = trpc.whatsapp.sendTestMessage.useMutation({
-    onSuccess: () => {
-      toast.success("Mensagem de teste enviada!");
-      refetchHistory();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const sendTextMutation = trpc.whatsapp.sendText.useMutation({
-    onSuccess: () => {
-      toast.success("Mensagem enviada!");
-      refetchHistory();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const verifyConnectionMutation = trpc.whatsapp.verifyConnection.useMutation({
-    onSuccess: (data) => {
-      toast.success(`Conexão verificada! Número: ${data.phoneNumber}`);
-      refetchConfig();
-    },
-    onError: (error) => {
-      toast.error(`Erro: ${error.message}`);
-    },
-  });
-
-  // Loading
-  if (checkingConfig || loadingConfig) {
+  if (isLoading) {
     return (
-      <div className="p-6 max-w-[1200px] mx-auto space-y-6">
-        <Skeleton className="h-12 w-64" />
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Skeleton className="h-64 rounded-xl" />
-          <Skeleton className="h-64 rounded-xl" />
+      <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
+        <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <MessageCircle className="w-4 h-4 text-emerald-600" />
+            </div>
+            <span className="text-sm font-semibold">WhatsApp</span>
+          </div>
+        </div>
+        <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-6">
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  const hasAccessToken = myConfig?.config?.hasAccessToken ?? false;
-  const isActive = myConfig?.config?.isActive ?? false;
-
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header - Padrão Processos */}
+      {/* Header */}
       <div className="px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-              <MessageCircle className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center border border-emerald-200 dark:border-emerald-700">
+              <MessageCircle className="w-4 h-4 text-emerald-600" />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">WhatsApp</span>
-              <span className="text-xs text-zinc-400 dark:text-zinc-500">• Notificações automáticas</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">• Evolution API</span>
             </div>
           </div>
-          
-          <div className="flex items-center gap-1">
-            <a 
-              href="https://business.facebook.com/settings/whatsapp-business-accounts" 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600" title="Meta Business">
-                <ExternalLink className="w-3.5 h-3.5" />
-              </Button>
-            </a>
+
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
-              onClick={() => {
-                refetchConfig();
-                refetchHistory();
-              }}
-              title="Atualizar"
+              className="h-8"
+              onClick={() => refetch()}
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-4 h-4" />
             </Button>
+            {primaryConfig && (
+              <Link href="/admin/whatsapp/chat">
+                <Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-700">
+                  <MessageSquare className="w-4 h-4 mr-1" />
+                  Abrir Chat
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Conteúdo Principal */}
-      <div className="p-4 md:p-6 max-w-[1200px] mx-auto space-y-4">
+      {/* Conteúdo */}
+      <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-6">
+        {/* Status da Conexão Principal */}
+        {primaryConfig ? (
+          <>
+            <StatusCard config={primaryConfig} onRefresh={() => refetch()} />
 
-      {/* Status da Conexão */}
-      <ConnectionStatus
-        isConfigured={myConfig?.hasConfig ?? false}
-        hasAccessToken={hasAccessToken}
-        isActive={isActive}
-        onActivate={() => setActiveMutation.mutate({ active: true })}
-        onDeactivate={() => setActiveMutation.mutate({ active: false })}
-        isLoading={setActiveMutation.isPending}
-      />
+            {/* Estatísticas */}
+            <StatsCards configId={primaryConfig.id} />
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
-          <TabsTrigger 
-            value="status" 
-            className={cn(
-              "rounded-lg px-4 py-2 text-sm font-medium transition-all",
-              activeTab === "status" 
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md" 
-                : "text-zinc-600 dark:text-zinc-400"
-            )}
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Configuração
-          </TabsTrigger>
-          <TabsTrigger 
-            value="send" 
-            className={cn(
-              "rounded-lg px-4 py-2 text-sm font-medium transition-all",
-              activeTab === "send" 
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md" 
-                : "text-zinc-600 dark:text-zinc-400"
-            )}
-            disabled={!hasAccessToken || !isActive}
-          >
-            <Send className="w-4 h-4 mr-2" />
-            Enviar
-          </TabsTrigger>
-          <TabsTrigger 
-            value="automation" 
-            className={cn(
-              "rounded-lg px-4 py-2 text-sm font-medium transition-all",
-              activeTab === "automation" 
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md" 
-                : "text-zinc-600 dark:text-zinc-400"
-            )}
-            disabled={!hasAccessToken}
-          >
-            <Zap className="w-4 h-4 mr-2" />
-            Automação
-          </TabsTrigger>
-          <TabsTrigger
-            value="history"
-            className={cn(
-              "rounded-lg px-4 py-2 text-sm font-medium transition-all",
-              activeTab === "history"
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md"
-                : "text-zinc-600 dark:text-zinc-400"
-            )}
-            disabled={!myConfig?.hasConfig}
-          >
-            <History className="w-4 h-4 mr-2" />
-            Histórico
-          </TabsTrigger>
-          <TabsTrigger
-            value="evolution"
-            className={cn(
-              "rounded-lg px-4 py-2 text-sm font-medium transition-all",
-              activeTab === "evolution"
-                ? "bg-green-600 text-white shadow-md"
-                : "text-zinc-600 dark:text-zinc-400"
-            )}
-          >
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Chat (Evolution)
-          </TabsTrigger>
-        </TabsList>
+            {/* Grid de Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Ações Rápidas */}
+              <QuickActions configId={primaryConfig.id} />
 
-        {/* Tab: Configuração */}
-        <TabsContent value="status" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ConfigurationCard
-              configInfo={configInfo}
-              currentConfig={myConfig}
-              onSave={(data) => saveConfigMutation.mutate(data)}
-              isSaving={saveConfigMutation.isPending}
-            />
-            
-            {/* Instruções */}
-            <Card className="p-6 bg-zinc-50 dark:bg-zinc-900/50">
-              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-                Como configurar a integração
-              </h3>
-              <ol className="space-y-4 text-sm text-zinc-600 dark:text-zinc-400">
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">1</span>
-                  <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">Crie uma conta no Meta Business</p>
-                    <a href="https://business.facebook.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs flex items-center gap-1">
-                      business.facebook.com <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">2</span>
-                  <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">Configure o WhatsApp Business API</p>
-                    <p className="text-xs text-zinc-500">Acesse a seção WhatsApp e adicione um número</p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">3</span>
-                  <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">Gere um Access Token permanente</p>
-                    <p className="text-xs text-zinc-500">Crie um app e gere um token com permissões do WhatsApp</p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium shrink-0">4</span>
-                  <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">Copie o Phone Number ID</p>
-                    <p className="text-xs text-zinc-500">Encontre na seção Configuração da API</p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-emerald-200 dark:bg-emerald-800 flex items-center justify-center text-xs font-medium shrink-0">
-                    <Check className="w-3 h-3" />
-                  </span>
-                  <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">Cole as credenciais aqui e ative</p>
-                    <p className="text-xs text-zinc-500">Teste enviando uma mensagem para seu número</p>
-                  </div>
-                </li>
-              </ol>
-            </Card>
-          </div>
-        </TabsContent>
+              {/* Contatos Recentes */}
+              <RecentContacts configId={primaryConfig.id} />
 
-        {/* Tab: Enviar */}
-        <TabsContent value="send" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <SendMessageCard
-              templates={templates}
-              onSend={(phone, message, context) => sendTextMutation.mutate({ phone, message, context: context as any })}
-              onSendTest={(phone) => sendTestMutation.mutate({ phone })}
-              isSending={sendTextMutation.isPending}
-              isTestSending={sendTestMutation.isPending}
-            />
-            
-            {/* Templates */}
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                  <FileText className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              {/* Contatos Não Vinculados */}
+              <UnlinkedContacts configId={primaryConfig.id} />
+            </div>
+
+            {/* Configuração */}
+            <InstanceConfig />
+          </>
+        ) : (
+          /* Sem configuração */
+          <div className="space-y-6">
+            <Card className="border-2 border-dashed border-zinc-300 dark:border-zinc-700">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
+                  <MessageCircle className="w-8 h-8 text-emerald-600" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                    Templates Jurídicos
-                  </h3>
-                  <p className="text-sm text-zinc-500">
-                    Modelos prontos para notificações
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {templates && Object.entries(templates).map(([key, template]: [string, any]) => (
-                  <div
-                    key={key}
-                    className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-amber-300 dark:hover:border-amber-700 transition-all"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {template.name}
-                      </h4>
-                      <Badge variant="outline" className="text-xs">
-                        {key}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-zinc-500 mb-3">{template.description}</p>
-                    <pre className="text-xs bg-zinc-50 dark:bg-zinc-900 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
-                      {template.example}
-                    </pre>
-                  </div>
-                ))}
-              </div>
+                <h2 className="text-xl font-semibold mb-2">Configure o WhatsApp</h2>
+                <p className="text-zinc-500 text-center max-w-md mb-6">
+                  Conecte sua instância da Evolution API para começar a enviar e receber mensagens
+                  dos assistidos pelo WhatsApp.
+                </p>
+              </CardContent>
             </Card>
+
+            <InstanceConfig />
           </div>
-        </TabsContent>
-
-        {/* Tab: Automação */}
-        <TabsContent value="automation" className="mt-6">
-          <AutomationCard
-            config={myConfig}
-            onSave={(data) => saveConfigMutation.mutate(data)}
-            isSaving={saveConfigMutation.isPending}
-          />
-        </TabsContent>
-
-        {/* Tab: Histórico */}
-        <TabsContent value="history" className="mt-6">
-          <MessageHistoryCard
-            messages={messageHistory}
-            isLoading={loadingHistory}
-          />
-        </TabsContent>
-
-        {/* Tab: Evolution API */}
-        <TabsContent value="evolution" className="mt-6">
-          <EvolutionApiCard />
-        </TabsContent>
-      </Tabs>
+        )}
       </div>
     </div>
   );
