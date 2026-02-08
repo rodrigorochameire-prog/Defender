@@ -874,90 +874,348 @@ export class EvolutionApiClient {
   }
 
   private get headers() {
-    return getHeaders(this.apiKey);
+    return {
+      "Content-Type": "application/json",
+      apikey: this.apiKey,
+    };
   }
 
-  // Instance methods
-  async getConnectionStatus() {
-    return getConnectionStatus(this.instanceName, this.apiKey);
-  }
-
-  async getQRCode() {
-    return getQRCode(this.instanceName, this.apiKey);
-  }
-
-  async logout() {
-    return logoutInstance(this.instanceName, this.apiKey);
-  }
-
-  async restart() {
-    return restartInstance(this.instanceName, this.apiKey);
-  }
-
-  async setWebhook(webhookUrl: string, events?: string[]) {
-    return setWebhook(this.instanceName, webhookUrl, { apiKey: this.apiKey, events });
-  }
-
-  // Message methods
-  async sendText(to: string, text: string, delay?: number) {
-    return sendText(to, text, { instanceName: this.instanceName, apiKey: this.apiKey, delay });
-  }
-
-  async sendImage(to: string, imageUrl: string, caption?: string) {
-    return sendImage(to, imageUrl, { instanceName: this.instanceName, apiKey: this.apiKey, caption });
-  }
-
-  async sendDocument(to: string, documentUrl: string, filename: string, caption?: string) {
-    return sendDocument(to, documentUrl, filename, {
-      instanceName: this.instanceName,
-      apiKey: this.apiKey,
-      caption,
+  // Instance methods - using instance apiUrl
+  async getConnectionStatus(): Promise<ConnectionState> {
+    const response = await fetch(`${this.apiUrl}/instance/connectionState/${this.instanceName}`, {
+      method: "GET",
+      headers: this.headers,
     });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao verificar status: ${error}`);
+    }
+
+    return response.json();
   }
 
-  async sendAudio(to: string, audioUrl: string) {
-    return sendAudio(to, audioUrl, { instanceName: this.instanceName, apiKey: this.apiKey });
-  }
-
-  async sendVideo(to: string, videoUrl: string, caption?: string) {
-    return sendVideo(to, videoUrl, { instanceName: this.instanceName, apiKey: this.apiKey, caption });
-  }
-
-  async sendLocation(to: string, latitude: number, longitude: number, name?: string, address?: string) {
-    return sendLocation(to, latitude, longitude, {
-      instanceName: this.instanceName,
-      apiKey: this.apiKey,
-      name,
-      address,
+  async getQRCode(): Promise<QRCodeResponse> {
+    const response = await fetch(`${this.apiUrl}/instance/connect/${this.instanceName}`, {
+      method: "GET",
+      headers: this.headers,
     });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao buscar QR Code: ${error}`);
+    }
+
+    return response.json();
   }
 
-  async sendContact(to: string, contactName: string, contactPhone: string) {
-    return sendContact(to, contactName, contactPhone, {
-      instanceName: this.instanceName,
-      apiKey: this.apiKey,
+  async logout(): Promise<{ status: string }> {
+    const response = await fetch(`${this.apiUrl}/instance/logout/${this.instanceName}`, {
+      method: "DELETE",
+      headers: this.headers,
     });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao desconectar: ${error}`);
+    }
+
+    return response.json();
   }
 
-  // Chat methods
-  async markAsRead(remoteJid: string) {
-    return markAsRead(remoteJid, { instanceName: this.instanceName, apiKey: this.apiKey });
+  async restart(): Promise<{ status: string }> {
+    const response = await fetch(`${this.apiUrl}/instance/restart/${this.instanceName}`, {
+      method: "PUT",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao reiniciar: ${error}`);
+    }
+
+    return response.json();
   }
 
-  async getProfilePic(phone: string) {
-    return getProfilePic(phone, { instanceName: this.instanceName, apiKey: this.apiKey });
+  async setWebhook(webhookUrl: string, events?: string[]): Promise<{ webhook: { url: string; events: string[] } }> {
+    const response = await fetch(`${this.apiUrl}/webhook/set/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({
+        url: webhookUrl,
+        webhook_by_events: false,
+        webhook_base64: true,
+        events: events ?? [
+          "MESSAGES_UPSERT",
+          "MESSAGES_UPDATE",
+          "MESSAGES_DELETE",
+          "SEND_MESSAGE",
+          "CONNECTION_UPDATE",
+          "QRCODE_UPDATED",
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao configurar webhook: ${error}`);
+    }
+
+    return response.json();
   }
 
-  async checkNumberExists(phone: string) {
-    return checkNumberExists(phone, { instanceName: this.instanceName, apiKey: this.apiKey });
+  // Message methods - using instance apiUrl
+  async sendText(to: string, text: string, delay?: number): Promise<SendMessageResponse> {
+    const number = formatPhoneNumber(to);
+    const response = await fetch(`${this.apiUrl}/message/sendText/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({
+        number: number.replace("@s.whatsapp.net", ""),
+        text,
+        delay,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao enviar mensagem: ${error}`);
+    }
+
+    return response.json();
   }
 
-  async fetchMessages(remoteJid: string, limit?: number) {
-    return fetchMessages(remoteJid, { instanceName: this.instanceName, apiKey: this.apiKey, limit });
+  async sendImage(to: string, imageUrl: string, caption?: string): Promise<SendMessageResponse> {
+    const number = formatPhoneNumber(to);
+    const response = await fetch(`${this.apiUrl}/message/sendMedia/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({
+        number: number.replace("@s.whatsapp.net", ""),
+        mediatype: "image",
+        media: imageUrl,
+        caption,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao enviar imagem: ${error}`);
+    }
+
+    return response.json();
   }
 
-  async archiveChat(remoteJid: string, archive: boolean) {
-    return archiveChat(remoteJid, archive, { instanceName: this.instanceName, apiKey: this.apiKey });
+  async sendDocument(to: string, documentUrl: string, filename: string, caption?: string): Promise<SendMessageResponse> {
+    const number = formatPhoneNumber(to);
+    const response = await fetch(`${this.apiUrl}/message/sendMedia/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({
+        number: number.replace("@s.whatsapp.net", ""),
+        mediatype: "document",
+        media: documentUrl,
+        fileName: filename,
+        caption,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao enviar documento: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async sendAudio(to: string, audioUrl: string): Promise<SendMessageResponse> {
+    const number = formatPhoneNumber(to);
+    const response = await fetch(`${this.apiUrl}/message/sendWhatsAppAudio/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({
+        number: number.replace("@s.whatsapp.net", ""),
+        audio: audioUrl,
+        encoding: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao enviar áudio: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async sendVideo(to: string, videoUrl: string, caption?: string): Promise<SendMessageResponse> {
+    const number = formatPhoneNumber(to);
+    const response = await fetch(`${this.apiUrl}/message/sendMedia/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({
+        number: number.replace("@s.whatsapp.net", ""),
+        mediatype: "video",
+        media: videoUrl,
+        caption,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao enviar vídeo: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async sendLocation(to: string, latitude: number, longitude: number, name?: string, address?: string): Promise<SendMessageResponse> {
+    const number = formatPhoneNumber(to);
+    const response = await fetch(`${this.apiUrl}/message/sendLocation/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({
+        number: number.replace("@s.whatsapp.net", ""),
+        latitude,
+        longitude,
+        name,
+        address,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao enviar localização: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async sendContact(to: string, contactName: string, contactPhone: string): Promise<SendMessageResponse> {
+    const number = formatPhoneNumber(to);
+    const response = await fetch(`${this.apiUrl}/message/sendContact/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({
+        number: number.replace("@s.whatsapp.net", ""),
+        contact: [
+          {
+            fullName: contactName,
+            wuid: formatPhoneNumber(contactPhone).replace("@s.whatsapp.net", ""),
+            phoneNumber: contactPhone,
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao enviar contato: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  // Chat methods - using instance apiUrl
+  async markAsRead(remoteJid: string): Promise<{ read: boolean }> {
+    const response = await fetch(`${this.apiUrl}/chat/markMessageAsRead/${this.instanceName}`, {
+      method: "PUT",
+      headers: this.headers,
+      body: JSON.stringify({
+        readMessages: [
+          {
+            remoteJid,
+            fromMe: false,
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao marcar como lido: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async getProfilePic(phone: string): Promise<ProfilePicResponse> {
+    const number = formatPhoneNumber(phone).replace("@s.whatsapp.net", "");
+    const response = await fetch(`${this.apiUrl}/chat/fetchProfilePictureUrl/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({ number }),
+    });
+
+    if (!response.ok) {
+      return {};
+    }
+
+    return response.json();
+  }
+
+  async checkNumberExists(phone: string): Promise<{ exists: boolean; jid?: string }> {
+    const number = formatPhoneNumber(phone).replace("@s.whatsapp.net", "");
+    const response = await fetch(`${this.apiUrl}/chat/whatsappNumbers/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({ numbers: [number] }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao verificar número: ${error}`);
+    }
+
+    const result = await response.json();
+    const numberInfo = result[0];
+
+    return {
+      exists: numberInfo?.exists ?? false,
+      jid: numberInfo?.jid,
+    };
+  }
+
+  async fetchMessages(remoteJid: string, limit?: number): Promise<EvolutionMessage[]> {
+    const response = await fetch(`${this.apiUrl}/chat/findMessages/${this.instanceName}`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({
+        where: {
+          key: {
+            remoteJid,
+          },
+        },
+        limit: limit ?? 50,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao buscar mensagens: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async archiveChat(remoteJid: string, archive: boolean): Promise<{ archived: boolean }> {
+    const response = await fetch(`${this.apiUrl}/chat/archiveChat/${this.instanceName}`, {
+      method: "PUT",
+      headers: this.headers,
+      body: JSON.stringify({
+        lastMessage: {
+          key: { remoteJid },
+        },
+        archive,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Erro ao arquivar chat: ${error}`);
+    }
+
+    return response.json();
   }
 }
 

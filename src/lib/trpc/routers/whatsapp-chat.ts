@@ -257,7 +257,13 @@ export const whatsappChatRouter = router({
       }
 
       try {
-        const status = await getConnectionStatus(config.instanceName, config.apiKey);
+        // Usa EvolutionApiClient com URL e apiKey do banco de dados
+        const client = new EvolutionApiClient({
+          apiUrl: config.apiUrl,
+          apiKey: config.apiKey,
+          instanceName: config.instanceName,
+        });
+        const status = await client.getConnectionStatus();
 
         // Atualiza status no banco
         await db
@@ -295,7 +301,13 @@ export const whatsappChatRouter = router({
       }
 
       try {
-        const qrCode = await getQRCode(config.instanceName, config.apiKey);
+        // Usa EvolutionApiClient com URL e apiKey do banco de dados
+        const client = new EvolutionApiClient({
+          apiUrl: config.apiUrl,
+          apiKey: config.apiKey,
+          instanceName: config.instanceName,
+        });
+        const qrCode = await client.getQRCode();
 
         // Salva QR Code no banco
         if (qrCode.base64) {
@@ -335,7 +347,13 @@ export const whatsappChatRouter = router({
       }
 
       try {
-        await logoutInstance(config.instanceName, config.apiKey);
+        // Usa EvolutionApiClient com URL e apiKey do banco de dados
+        const client = new EvolutionApiClient({
+          apiUrl: config.apiUrl,
+          apiKey: config.apiKey,
+          instanceName: config.instanceName,
+        });
+        await client.logout();
 
         await db
           .update(evolutionConfig)
@@ -373,7 +391,13 @@ export const whatsappChatRouter = router({
       }
 
       try {
-        await restartInstance(config.instanceName, config.apiKey);
+        // Usa EvolutionApiClient com URL e apiKey do banco de dados
+        const client = new EvolutionApiClient({
+          apiUrl: config.apiUrl,
+          apiKey: config.apiKey,
+          instanceName: config.instanceName,
+        });
+        await client.restart();
 
         await db
           .update(evolutionConfig)
