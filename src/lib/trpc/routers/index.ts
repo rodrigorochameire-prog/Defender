@@ -34,6 +34,7 @@ import { jurisprudenciaRouter } from "./jurisprudencia";
 import { prazosRouter } from "./prazos";
 import { vvdRouter } from "./vvd";
 import { palacioRouter } from "./palacio";
+import { simuladorRouter } from "./simulador";
 
 
 export const appRouter = router({
@@ -118,6 +119,11 @@ export const appRouter = router({
   // PALÁCIO DA MENTE - DIAGRAMAS DE INVESTIGAÇÃO
   // ==========================================
   palacio: palacioRouter,
+
+  // ==========================================
+  // SIMULADOR 3D - RECONSTITUIÇÃO FORENSE
+  // ==========================================
+  simulador: simuladorRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -10,7 +10,7 @@ import {
   Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
-  MoreHorizontal
+  MoreHorizontal, Box
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -73,6 +73,7 @@ const RESOURCES_NAV: AssignmentMenuItem[] = [
   { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch" },
   { label: "Lógica", path: "/admin/logica", icon: "Brain" },
   { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
+  { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
 ];
 
 // Menu de gestão (admin)
@@ -94,7 +95,7 @@ const iconMap: Record<string, React.ElementType> = {
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
   Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
-  ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal
+  ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
