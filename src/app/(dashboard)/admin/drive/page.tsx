@@ -52,6 +52,10 @@ import {
   Link2,
   CloudOff,
   CheckCircle2,
+  Gavel,
+  Shield,
+  Lock,
+  Scale,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -108,6 +112,74 @@ function formatFileSize(bytes?: number | null): string {
   }
   return `${size.toFixed(1)} ${units[unitIndex]}`;
 }
+
+// ==========================================
+// ATRIBUIÇÕES DO DRIVE
+// ==========================================
+
+type DriveAtribuicao = "JURI" | "VVD" | "EP" | "SUBSTITUICAO";
+
+const DRIVE_ATRIBUICOES: {
+  id: DriveAtribuicao;
+  label: string;
+  icon: React.ElementType;
+  folderId: string;
+  colors: {
+    bg: string;
+    text: string;
+    ring: string;
+    bgHover: string;
+  };
+}[] = [
+  {
+    id: "JURI",
+    label: "Júri",
+    icon: Gavel,
+    folderId: "1_S-2qdqO0n1npNcs0PnoagBM4ZtwKhk-",
+    colors: {
+      bg: "bg-emerald-500/20",
+      text: "text-emerald-400",
+      ring: "ring-emerald-500/30",
+      bgHover: "hover:bg-emerald-700/30",
+    },
+  },
+  {
+    id: "VVD",
+    label: "Violência Doméstica",
+    icon: Shield,
+    folderId: "1fN2GiGlNzc61g01ZeBMg9ZBy1hexx0ti",
+    colors: {
+      bg: "bg-yellow-500/20",
+      text: "text-yellow-400",
+      ring: "ring-yellow-500/30",
+      bgHover: "hover:bg-yellow-700/30",
+    },
+  },
+  {
+    id: "EP",
+    label: "Execução Penal",
+    icon: Lock,
+    folderId: "1-mbwgP3-ygVVjoN9RPTbHwnaicnBAv0q",
+    colors: {
+      bg: "bg-blue-500/20",
+      text: "text-blue-400",
+      ring: "ring-blue-500/30",
+      bgHover: "hover:bg-blue-700/30",
+    },
+  },
+  {
+    id: "SUBSTITUICAO",
+    label: "Substituição Criminal",
+    icon: Scale,
+    folderId: "1eNDT0j-5KQkzYXbqK6IBa9sIMT3QFWVU",
+    colors: {
+      bg: "bg-purple-500/20",
+      text: "text-purple-400",
+      ring: "ring-purple-500/30",
+      bgHover: "hover:bg-purple-700/30",
+    },
+  },
+];
 
 // ==========================================
 // COMPONENTES
@@ -270,9 +342,18 @@ export default function DrivePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
+  // Atribuição selecionada (padrão: JURI)
+  const [selectedAtribuicao, setSelectedAtribuicao] = useState<DriveAtribuicao>("JURI");
+
+  // Obter a configuração da atribuição atual
+  const currentAtribuicao = DRIVE_ATRIBUICOES.find(a => a.id === selectedAtribuicao) || DRIVE_ATRIBUICOES[0];
+
+  // Usar o folderId da atribuição selecionada
+  const atribuicaoFolderId = currentAtribuicao.folderId;
+
   // Verificar se o Drive está configurado
   const { data: configStatus, isLoading: isCheckingConfig } = trpc.drive.isConfigured.useQuery();
-  
+
   // Estatísticas
   const { data: stats, isLoading: isLoadingStats } = trpc.drive.stats.useQuery(undefined, {
     enabled: configStatus?.configured === true,
@@ -283,22 +364,21 @@ export default function DrivePage() {
     enabled: configStatus?.configured === true,
   });
 
-  // Arquivos da pasta selecionada
-  const { data: filesData, isLoading: isLoadingFiles, refetch: refetchFiles } = trpc.drive.files.useQuery(
-    { 
-      folderId: selectedFolderId || (syncFolders?.[0]?.driveFolderId || ""),
-      parentFileId: null,
-      limit: 100,
+  // Arquivos da pasta selecionada (usando a pasta da atribuição)
+  const { data: filesData, isLoading: isLoadingFiles, refetch: refetchFiles } = trpc.drive.filesFromDrive.useQuery(
+    {
+      folderId: selectedFolderId || atribuicaoFolderId,
+      pageSize: 100,
     },
     {
-      enabled: configStatus?.configured === true && (!!selectedFolderId || (syncFolders && syncFolders.length > 0)),
+      enabled: configStatus?.configured === true && !!atribuicaoFolderId,
     }
   );
 
   // Sincronizar pasta
   const syncMutation = trpc.drive.syncFolder.useMutation({
     onSuccess: (result) => {
-      toast.success(`Sincronizado: ${result.added} novos, ${result.updated} atualizados`);
+      toast.success(`Sincronizado: ${result.filesAdded} novos, ${result.filesUpdated} atualizados`);
       refetchFiles();
     },
     onError: (error) => {
@@ -367,7 +447,7 @@ export default function DrivePage() {
   }
 
   const files = filesData?.files || [];
-  const currentFolderId = selectedFolderId || syncFolders?.[0]?.driveFolderId;
+  const currentFolderId = selectedFolderId || atribuicaoFolderId;
   const currentFolder = syncFolders?.find(f => f.driveFolderId === currentFolderId);
 
   return (
@@ -425,6 +505,37 @@ export default function DrivePage() {
 
       {/* Content */}
       <div className="p-4 md:p-6 space-y-4">
+        {/* Seletor de Atribuição */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-3 uppercase tracking-wider">
+            Selecione a Atribuição
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {DRIVE_ATRIBUICOES.map((atrib) => {
+              const Icon = atrib.icon;
+              const isSelected = selectedAtribuicao === atrib.id;
+              return (
+                <button
+                  key={atrib.id}
+                  onClick={() => {
+                    setSelectedAtribuicao(atrib.id);
+                    setSelectedFolderId(null); // Resetar pasta selecionada
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                    isSelected
+                      ? `${atrib.colors.bg} ${atrib.colors.text} ring-1 ${atrib.colors.ring}`
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  {atrib.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Stats Cards - Mobile-first */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
@@ -614,7 +725,7 @@ export default function DrivePage() {
                         file={file}
                         viewMode="list"
                         onPreview={() => file.webViewLink && window.open(file.webViewLink, "_blank")}
-                        onDelete={() => deleteMutation.mutate({ fileId: file.driveFileId })}
+                        onDelete={() => deleteMutation.mutate({ fileId: file.id })}
                       />
                     ))}
                 </div>
@@ -628,7 +739,7 @@ export default function DrivePage() {
                         file={file}
                         viewMode="grid"
                         onPreview={() => file.webViewLink && window.open(file.webViewLink, "_blank")}
-                        onDelete={() => deleteMutation.mutate({ fileId: file.driveFileId })}
+                        onDelete={() => deleteMutation.mutate({ fileId: file.id })}
                       />
                     ))}
                 </div>
