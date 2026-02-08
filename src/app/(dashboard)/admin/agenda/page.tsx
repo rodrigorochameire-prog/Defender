@@ -89,7 +89,9 @@ interface AgendaItem {
   horarioFim: string;
   local: string;
   assistido: string;
+  assistidoId?: number | null;
   processo: string;
+  processoId?: number | null;
   atribuicao: string;
   atribuicaoKey?: string;
   status: string;
@@ -105,6 +107,7 @@ interface AgendaItem {
   dataInclusao: string;
   responsavel?: string;
   registro?: RegistroAudienciaData;
+  fonte?: "audiencias" | "calendar"; // Indica de qual tabela veio
 }
 
 interface EventoFormData {
@@ -540,8 +543,20 @@ export default function AgendaPage() {
   const [selectedEvento, setSelectedEvento] = useState<any | null>(null);
 
   // Buscar audiências do banco via tRPC (sem limite para mostrar todos os eventos)
-  const { data: audienciasData, isLoading, refetch } = trpc.audiencias.list.useQuery();
-  
+  const { data: audienciasData, isLoading: isLoadingAudiencias, refetch } = trpc.audiencias.list.useQuery();
+
+  // Buscar eventos do calendário (calendarEvents) - período amplo para pegar todos
+  const hoje = new Date();
+  const inicioAno = new Date(hoje.getFullYear() - 1, 0, 1); // 1 ano atrás
+  const fimAno = new Date(hoje.getFullYear() + 2, 11, 31); // 2 anos à frente
+  const { data: calendarData, isLoading: isLoadingCalendar } = trpc.calendar.list.useQuery({
+    start: inicioAno.toISOString(),
+    end: fimAno.toISOString(),
+  });
+
+  // Loading combinado
+  const isLoading = isLoadingAudiencias || isLoadingCalendar;
+
   // Utils para invalidar queries após mutações
   const utils = trpc.useUtils();
 
@@ -594,44 +609,90 @@ export default function AgendaPage() {
     return "SUBSTITUICAO";
   };
 
-  // Transformar dados do banco para o formato de AgendaItem
+  // Transformar dados do banco para o formato de AgendaItem (mesclando audiencias + calendarEvents)
   const eventos: AgendaItem[] = useMemo(() => {
-    if (!audienciasData) return [];
-    
-    return audienciasData.map((a) => {
-      // Extrair atribuição do processo
-      const atribuicaoKey = mapAtribuicaoToKey(a.processo?.atribuicao, a.processo?.area);
-      const atribuicaoConfig = getAtribuicaoColors(atribuicaoKey);
-      
-      return {
-        id: a.id.toString(),
-        titulo: a.titulo || `Audiência - ${a.tipo}`,
-        tipo: "audiencia",
-        // Usar format() ao invés de toISOString() para respeitar timezone local
-        data: format(new Date(a.dataHora), "yyyy-MM-dd"),
-        horarioInicio: a.horario || format(new Date(a.dataHora), "HH:mm"),
-        horarioFim: "",
-        local: a.local || "",
-        assistido: a.assistido?.nome || "",
-        assistidoId: a.assistido?.id || a.assistidoId || null,
-        processo: a.processo?.numero || "",
-        processoId: a.processo?.id || a.processoId || null,
-        atribuicao: atribuicaoConfig.label,
-        atribuicaoKey: atribuicaoKey,
-        status: a.status || "confirmado",
-        descricao: a.descricao || "",
-        prioridade: "media",
-        recorrencia: "nenhuma",
-        lembretes: [],
-        tags: [],
-        participantes: [],
-        observacoes: "",
-        documentos: [],
-        dataInclusao: new Date().toISOString(),
-        responsavel: "def-1",
-      };
-    });
-  }, [audienciasData]);
+    const items: AgendaItem[] = [];
+
+    // 1. Processar audiências (tabela audiencias)
+    if (audienciasData) {
+      audienciasData.forEach((a) => {
+        const atribuicaoKey = mapAtribuicaoToKey(a.processo?.atribuicao, a.processo?.area);
+        const atribuicaoConfig = getAtribuicaoColors(atribuicaoKey);
+
+        items.push({
+          id: `audiencia-${a.id}`,
+          titulo: a.titulo || `Audiência - ${a.tipo}`,
+          tipo: "audiencia",
+          data: format(new Date(a.dataHora), "yyyy-MM-dd"),
+          horarioInicio: a.horario || format(new Date(a.dataHora), "HH:mm"),
+          horarioFim: "",
+          local: a.local || "",
+          assistido: a.assistido?.nome || "",
+          assistidoId: a.assistido?.id ?? a.assistidoId ?? undefined,
+          processo: a.processo?.numero || "",
+          processoId: a.processo?.id ?? a.processoId ?? undefined,
+          atribuicao: atribuicaoConfig.label,
+          atribuicaoKey: atribuicaoKey,
+          status: a.status || "confirmado",
+          descricao: a.descricao || "",
+          prioridade: "media",
+          recorrencia: "nenhuma",
+          lembretes: [],
+          tags: [],
+          participantes: [],
+          observacoes: "",
+          documentos: [],
+          dataInclusao: new Date().toISOString(),
+          responsavel: "def-1",
+          fonte: "audiencias" as const,
+        });
+      });
+    }
+
+    // 2. Processar eventos do calendário (tabela calendarEvents)
+    if (calendarData) {
+      calendarData.forEach((e) => {
+        // Mapear tipo de evento para atribuição
+        const tipoEvento = e.eventType || "custom";
+        const atribuicaoKey = tipoEvento === "audiencia" ? "JURI" :
+                             tipoEvento === "juri" ? "JURI" :
+                             tipoEvento === "prazo" ? "SUBSTITUICAO" :
+                             "SUBSTITUICAO";
+        const atribuicaoConfig = getAtribuicaoColors(atribuicaoKey);
+
+        items.push({
+          id: `calendar-${e.id}`,
+          titulo: e.title || `Evento - ${tipoEvento}`,
+          tipo: tipoEvento,
+          data: format(new Date(e.eventDate), "yyyy-MM-dd"),
+          horarioInicio: e.isAllDay ? "" : format(new Date(e.eventDate), "HH:mm"),
+          horarioFim: e.endDate ? format(new Date(e.endDate), "HH:mm") : "",
+          local: e.location || "",
+          assistido: e.assistido?.nome || "",
+          assistidoId: e.assistido?.id ?? e.assistidoId ?? undefined,
+          processo: e.processo?.numeroAutos || "",
+          processoId: e.processo?.id ?? e.processoId ?? undefined,
+          atribuicao: atribuicaoConfig.label,
+          atribuicaoKey: atribuicaoKey,
+          status: e.status || "scheduled",
+          descricao: e.description || "",
+          prioridade: e.priority || "normal",
+          recorrencia: e.isRecurring ? (e.recurrenceType || "nenhuma") : "nenhuma",
+          lembretes: e.reminderMinutes ? [`${e.reminderMinutes}min antes`] : [],
+          tags: [],
+          participantes: [],
+          observacoes: e.notes || "",
+          documentos: [],
+          dataInclusao: new Date().toISOString(),
+          responsavel: "def-1",
+          fonte: "calendar" as const,
+        });
+      });
+    }
+
+    // 3. Ordenar por data
+    return items.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+  }, [audienciasData, calendarData]);
 
   // Navegar automaticamente para o mês do primeiro evento se não houver eventos no mês atual
   useEffect(() => {
@@ -700,26 +761,48 @@ export default function AgendaPage() {
   });
 
   const handleSaveEdit = (data: EventoFormData) => {
-    if (editingEvento) {
-      // Converter data para formato ISO com horário
-      const dataHora = `${data.data}T${data.horarioInicio || "09:00"}:00`;
+    if (editingEvento && editingEvento.id) {
+      // Extrair ID numérico e fonte do ID composto (ex: "audiencia-123" ou "calendar-456")
+      const idParts = editingEvento.id.split("-");
+      const fonte = idParts[0]; // "audiencia" ou "calendar"
+      const numericId = parseInt(idParts.slice(1).join("-")); // Pegar número após o prefixo
 
-      updateEvento.mutate({
-        id: parseInt(editingEvento.id),
-        dataAudiencia: dataHora,
-        tipo: data.tipo,
-        local: data.local,
-        titulo: data.titulo,
-        descricao: data.descricao,
-        horario: data.horarioInicio,
-        status: data.status,
-      });
+      // Converter data para formato ISO com horário
+      const dataStr = data.data || format(new Date(), "yyyy-MM-dd");
+      const dataHora = `${dataStr}T${data.horarioInicio || "09:00"}:00`;
+
+      // Por enquanto, só atualiza eventos da tabela audiencias
+      if (fonte === "audiencia") {
+        updateEvento.mutate({
+          id: numericId,
+          dataAudiencia: dataHora,
+          tipo: data.tipo,
+          local: data.local,
+          titulo: data.titulo,
+          descricao: data.descricao,
+          horario: data.horarioInicio,
+          status: data.status,
+        });
+      } else {
+        // TODO: Implementar update para calendarEvents
+        toast.info("Edição de eventos do calendário ainda não implementada");
+      }
     }
   };
 
   const handleDeleteEvento = (id: string) => {
     if (confirm("Tem certeza que deseja deletar este evento?")) {
-      deleteEvento.mutate({ id: parseInt(id) });
+      // Extrair ID numérico e fonte do ID composto
+      const idParts = id.split("-");
+      const fonte = idParts[0];
+      const numericId = parseInt(idParts.slice(1).join("-"));
+
+      if (fonte === "audiencia") {
+        deleteEvento.mutate({ id: numericId });
+      } else {
+        // TODO: Implementar delete para calendarEvents
+        toast.info("Deleção de eventos do calendário ainda não implementada");
+      }
     }
   };
 
