@@ -35,6 +35,7 @@ import { prazosRouter } from "./prazos";
 import { vvdRouter } from "./vvd";
 import { palacioRouter } from "./palacio";
 import { simuladorRouter } from "./simulador";
+import { distribuicaoRouter } from "./distribuicao";
 
 
 export const appRouter = router({
@@ -124,6 +125,11 @@ export const appRouter = router({
   // SIMULADOR 3D - RECONSTITUIÇÃO FORENSE
   // ==========================================
   simulador: simuladorRouter,
+
+  // ==========================================
+  // DISTRIBUIÇÃO AUTOMÁTICA DE DOCUMENTOS
+  // ==========================================
+  distribuicao: distribuicaoRouter,
 });
 
 export type AppRouter = typeof appRouter;

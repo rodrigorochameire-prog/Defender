@@ -926,6 +926,219 @@ interface DistribuicaoMultiplosReus {
 - **Copiados** para cada pasta (mais espaço, mais seguro)
 - **Atalhos do Drive** apontando para arquivo único (menos espaço)
 
+### 9.6 Sistema de Aprendizado Progressivo
+
+O sistema pode aprender novos padrões à medida que o usuário corrige classificações incorretas.
+
+#### Conceito
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   FLUXO DE APRENDIZADO                           │
+└─────────────────────────────────────────────────────────────────┘
+
+    Documento novo          Sistema extrai         Usuário valida
+         │                      dados                    │
+         ▼                        │                      ▼
+    ┌─────────┐              ┌────▼────┐           ┌─────────┐
+    │   PDF   │─────────────►│ Regex + │──────────►│ Correto?│
+    └─────────┘              │   IA    │           └────┬────┘
+                             └─────────┘                │
+                                                   SIM  │  NÃO
+                                                   ┌────┴────┐
+                                                   ▼         ▼
+                                             ┌─────────┐ ┌─────────┐
+                                             │ Salvar  │ │ Corrigir│
+                                             │ no BD   │ │ + Salvar│
+                                             └─────────┘ └────┬────┘
+                                                              │
+                                                              ▼
+                                                    ┌─────────────────┐
+                                                    │ Registrar padrão│
+                                                    │ na tabela de    │
+                                                    │ aprendizado     │
+                                                    └─────────────────┘
+```
+
+#### Tabela de Padrões Aprendidos
+
+```sql
+CREATE TABLE extraction_patterns (
+  id SERIAL PRIMARY KEY,
+
+  -- Padrão detectado
+  pattern_type VARCHAR(50) NOT NULL,  -- 'orgao', 'classe', 'parte', 'numero'
+  original_value TEXT NOT NULL,        -- Valor original extraído
+
+  -- Correção do usuário
+  corrected_value TEXT,                -- Valor corrigido (se aplicável)
+  correct_atribuicao atribuicao,       -- Atribuição correta
+
+  -- Contexto adicional
+  regex_used TEXT,                     -- Regex que foi usado
+  confidence_before INTEGER,           -- Confiança antes da correção
+
+  -- Metadados
+  documento_exemplo TEXT,              -- ID do documento de exemplo
+  created_by INTEGER REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  times_used INTEGER DEFAULT 1,        -- Quantas vezes esse padrão foi aplicado
+
+  UNIQUE(pattern_type, original_value)
+);
+
+-- Exemplos de registros:
+-- ('orgao', 'VARA CRIMINAL DE CANDEIAS', NULL, 'SUBSTITUICAO', ...)
+-- ('parte', 'FLAGRANTEADO', NULL, NULL, ...)  -- Novo tipo de parte
+-- ('orgao', 'JUIZADO ESPECIAL CRIMINAL DE CAMAÇARI', NULL, 'SUBSTITUICAO', ...)
+```
+
+#### Fluxo de Correção na UI
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Distribuição - Documento: Denúncia_8001234.pdf                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  📄 Dados Extraídos:                                             │
+│                                                                  │
+│  Número:     8001234-56.2025.8.05.0039                          │
+│  Órgão:      JUIZADO ESPECIAL CRIMINAL DE CAMAÇARI   [Editar]   │
+│  Classe:     TERMO CIRCUNSTANCIADO                   [Editar]   │
+│  Assistido:  JOÃO DA SILVA (AUTOR DO FATO)           [Editar]   │
+│                                                                  │
+│  🏷️ Atribuição Sugerida: SUBSTITUIÇÃO (50% confiança)           │
+│                                                                  │
+│  ⚠️ Confiança baixa. Por favor, confirme a atribuição:          │
+│                                                                  │
+│  ○ JURI          ○ VVD          ○ EP          ● SUBSTITUIÇÃO    │
+│                                                                  │
+│  ☑️ Lembrar deste padrão para o futuro                          │
+│     "JUIZADO ESPECIAL CRIMINAL DE CAMAÇARI" → SUBSTITUIÇÃO      │
+│                                                                  │
+│  [Cancelar]                              [Confirmar Distribuição]│
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Implementação do Aprendizado
+
+```typescript
+interface LearnedPattern {
+  patternType: 'orgao' | 'classe' | 'parte' | 'numero';
+  originalValue: string;
+  correctedValue?: string;
+  correctAtribuicao?: 'JURI' | 'VVD' | 'EP' | 'SUBSTITUICAO';
+  timesUsed: number;
+}
+
+// Ao identificar atribuição, primeiro verificar padrões aprendidos
+async function identificarAtribuicaoComAprendizado(
+  orgaoJulgador: string,
+  classeDemanda?: string,
+  assuntos?: string
+): Promise<AtribuicaoResult> {
+
+  // 1. Buscar padrão aprendido para este órgão
+  const patternAprendido = await db.query.extractionPatterns.findFirst({
+    where: and(
+      eq(extractionPatterns.patternType, 'orgao'),
+      eq(extractionPatterns.originalValue, orgaoJulgador)
+    )
+  });
+
+  if (patternAprendido?.correctAtribuicao) {
+    // Incrementar contador de uso
+    await db.update(extractionPatterns)
+      .set({ timesUsed: sql`times_used + 1` })
+      .where(eq(extractionPatterns.id, patternAprendido.id));
+
+    return {
+      atribuicao: patternAprendido.correctAtribuicao,
+      confianca: 100,
+      motivo: `Padrão aprendido (usado ${patternAprendido.timesUsed}x)`
+    };
+  }
+
+  // 2. Se não encontrou, usar lógica padrão
+  return identificarAtribuicao(orgaoJulgador, classeDemanda, assuntos);
+}
+
+// Ao usuário corrigir, salvar padrão
+async function salvarPadraoAprendido(
+  patternType: string,
+  originalValue: string,
+  correctAtribuicao: string,
+  userId: number
+) {
+  await db.insert(extractionPatterns)
+    .values({
+      patternType,
+      originalValue,
+      correctAtribuicao,
+      createdBy: userId,
+    })
+    .onConflictDoUpdate({
+      target: [extractionPatterns.patternType, extractionPatterns.originalValue],
+      set: {
+        correctAtribuicao,
+        timesUsed: sql`times_used + 1`,
+      }
+    });
+}
+```
+
+#### Novos Tipos de Partes (Aprendidos)
+
+Quando um novo tipo de parte é encontrado (ex: `FLAGRANTEADO`, `AUTOR DO FATO`), o sistema:
+
+1. Tenta extrair com regex existente
+2. Se falhar, pergunta ao usuário
+3. Se usuário confirmar, adiciona ao banco de padrões
+
+```typescript
+// Regex dinâmico baseado em padrões aprendidos
+async function getPartesRegex(): Promise<RegExp> {
+  // Buscar tipos de parte aprendidos
+  const tiposAprendidos = await db.query.extractionPatterns.findMany({
+    where: eq(extractionPatterns.patternType, 'parte'),
+    columns: { originalValue: true }
+  });
+
+  const tiposBase = ['RÉU', 'REU', 'INVESTIGADO', 'CUSTODIADO', 'REQUERIDO', 'PROMOVIDO', 'FLAGRANTEADO'];
+  const todosOsTipos = [...new Set([...tiposBase, ...tiposAprendidos.map(p => p.originalValue)])];
+
+  const pattern = `([A-Za-zÇÃÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜçãéíóúâêîôûàèìòùäëïöü\\s]+)\\s*\\((${todosOsTipos.join('|')})\\)`;
+
+  return new RegExp(pattern, 'gi');
+}
+```
+
+#### Dashboard de Padrões Aprendidos
+
+```
+/admin/configuracoes/padroes-aprendidos
+
+┌─────────────────────────────────────────────────────────────────┐
+│  Padrões Aprendidos                              [+ Adicionar]  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Órgãos Julgadores (12 padrões)                                 │
+│  ├── JUIZADO ESPECIAL CRIMINAL DE CAMAÇARI → SUBSTITUIÇÃO (5x)  │
+│  ├── 2ª VARA CRIMINAL DE LAURO DE FREITAS → SUBSTITUIÇÃO (3x)   │
+│  └── VARA CÍVEL DE CAMAÇARI → SUBSTITUIÇÃO (1x)                 │
+│                                                                  │
+│  Tipos de Parte (3 padrões)                                     │
+│  ├── FLAGRANTEADO (15x)                                         │
+│  ├── AUTOR DO FATO (8x)                                         │
+│  └── APENADO (4x)                                               │
+│                                                                  │
+│  Classes (2 padrões)                                            │
+│  ├── TERMO CIRCUNSTANCIADO → SUBSTITUIÇÃO (12x)                 │
+│  └── HABEAS CORPUS → JURI (2x)                                  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ### 9.7 Prompt para OCR (Gemini Vision) - Fallback
 
 Quando a extração por regex falha (PDFs escaneados/imagem), usar Gemini Vision:

@@ -478,6 +478,65 @@ export async function listAllFilesRecursively(
 }
 
 /**
+ * Baixa o conteúdo binário de um arquivo do Drive
+ * @param fileId - ID do arquivo no Google Drive
+ * @returns ArrayBuffer com o conteúdo do arquivo ou null em caso de erro
+ */
+export async function downloadFileContent(fileId: string): Promise<ArrayBuffer | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    console.error("Token de acesso não disponível para download");
+    return null;
+  }
+
+  try {
+    // Primeiro, verifica se é um documento Google (precisa de export)
+    const fileInfo = await getFileInfo(fileId);
+
+    if (!fileInfo) {
+      console.error("Arquivo não encontrado:", fileId);
+      return null;
+    }
+
+    let downloadUrl: string;
+
+    // Se for documento Google, usa endpoint de export
+    if (fileInfo.mimeType.startsWith("application/vnd.google-apps.")) {
+      // Mapeia tipos Google para formatos de export
+      const exportMimeType =
+        fileInfo.mimeType === "application/vnd.google-apps.document"
+          ? "application/pdf"
+          : fileInfo.mimeType === "application/vnd.google-apps.spreadsheet"
+            ? "application/pdf"
+            : fileInfo.mimeType === "application/vnd.google-apps.presentation"
+              ? "application/pdf"
+              : "application/pdf";
+
+      downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${encodeURIComponent(exportMimeType)}`;
+    } else {
+      // Para arquivos normais, usa download direto
+      downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+    }
+
+    const response = await fetch(downloadUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.error("Erro ao baixar arquivo:", response.status, await response.text());
+      return null;
+    }
+
+    return await response.arrayBuffer();
+  } catch (error) {
+    console.error("Erro ao baixar conteúdo do arquivo:", error);
+    return null;
+  }
+}
+
+/**
  * Obtém informações de um arquivo específico
  */
 export async function getFileInfo(fileId: string): Promise<DriveFileInfo | null> {
@@ -1330,36 +1389,6 @@ export async function trashFileInDrive(fileId: string): Promise<boolean> {
 // ==========================================
 
 /**
- * Baixa o conteúdo de um arquivo do Drive
- */
-export async function downloadFileContent(fileId: string): Promise<Buffer | null> {
-  const accessToken = await getAccessToken();
-  if (!accessToken) return null;
-
-  try {
-    const response = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      console.error("Erro ao baixar arquivo:", await response.text());
-      return null;
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  } catch (error) {
-    console.error("Erro ao baixar arquivo:", error);
-    return null;
-  }
-}
-
-/**
  * Exporta um arquivo do Google Docs/Sheets/Slides para um formato específico
  */
 export async function exportGoogleDoc(
@@ -2014,4 +2043,355 @@ export async function verificarIntegridadeSincronizacao(
     console.error("Erro ao verificar integridade:", error);
     return resultado;
   }
+}
+
+// ==========================================
+// FUNÇÕES DE DISTRIBUIÇÃO HIERÁRQUICA
+// ==========================================
+
+import {
+  ATRIBUICAO_FOLDER_IDS,
+  SPECIAL_FOLDER_IDS,
+  toTitleCase,
+} from "@/lib/utils/text-extraction";
+
+/**
+ * Busca uma pasta por nome dentro de um parent folder
+ */
+export async function searchFolderByName(
+  name: string,
+  parentFolderId: string
+): Promise<DriveFolder | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    // Busca exata por nome (case insensitive no Drive)
+    const query = `name='${name.replace(/'/g, "\\'")}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,webViewLink)`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Erro ao buscar pasta:", await response.text());
+      return null;
+    }
+
+    const data = await response.json();
+    if (data.files && data.files.length > 0) {
+      return {
+        id: data.files[0].id,
+        name: data.files[0].name,
+        webViewLink: data.files[0].webViewLink,
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Erro ao buscar pasta:", error);
+    return null;
+  }
+}
+
+/**
+ * Busca pastas que contenham parte do nome (para homonímia)
+ */
+export async function searchFoldersByPartialName(
+  partialName: string,
+  parentFolderId: string,
+  limit = 10
+): Promise<DriveFolder[]> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return [];
+
+  try {
+    const query = `name contains '${partialName.replace(/'/g, "\\'")}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,webViewLink)&pageSize=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    return (data.files || []).map((f: any) => ({
+      id: f.id,
+      name: f.name,
+      webViewLink: f.webViewLink,
+    }));
+  } catch (error) {
+    console.error("Erro ao buscar pastas:", error);
+    return [];
+  }
+}
+
+/**
+ * Lista todas as subpastas de uma pasta
+ */
+export async function listSubfolders(folderId: string): Promise<DriveFolder[]> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return [];
+
+  try {
+    const query = `'${folderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,webViewLink)&orderBy=name&pageSize=100`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    return (data.files || []).map((f: any) => ({
+      id: f.id,
+      name: f.name,
+      webViewLink: f.webViewLink,
+    }));
+  } catch (error) {
+    console.error("Erro ao listar subpastas:", error);
+    return [];
+  }
+}
+
+/**
+ * Cria pasta do assistido na estrutura hierárquica
+ * Hierarquia: Atribuição → Assistido (Title Case) → Processo → Documentos
+ *
+ * @param atribuicao - JURI, VVD, EP ou SUBSTITUICAO
+ * @param nomeAssistido - Nome do assistido (será convertido para Title Case)
+ * @returns Pasta criada ou existente
+ */
+export async function createOrFindAssistidoFolder(
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO",
+  nomeAssistido: string
+): Promise<DriveFolder | null> {
+  const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao];
+  const nomePasta = toTitleCase(nomeAssistido);
+
+  // Primeiro, buscar pasta existente
+  const existente = await searchFolderByName(nomePasta, parentFolderId);
+  if (existente) {
+    return existente;
+  }
+
+  // Se não existe, criar
+  return await createFolder(nomePasta, parentFolderId);
+}
+
+/**
+ * Cria pasta do processo dentro da pasta do assistido
+ *
+ * @param assistidoFolderId - ID da pasta do assistido
+ * @param numeroProcesso - Número do processo (será usado como nome da pasta)
+ * @returns Pasta criada ou existente
+ */
+export async function createOrFindProcessoFolder(
+  assistidoFolderId: string,
+  numeroProcesso: string
+): Promise<DriveFolder | null> {
+  // Primeiro, buscar pasta existente
+  const existente = await searchFolderByName(numeroProcesso, assistidoFolderId);
+  if (existente) {
+    return existente;
+  }
+
+  // Se não existe, criar
+  return await createFolder(numeroProcesso, assistidoFolderId);
+}
+
+/**
+ * Lista arquivos pendentes na pasta de Distribuição
+ */
+export async function listDistributionPendingFiles(): Promise<DriveFileInfo[]> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return [];
+
+  try {
+    const folderId = SPECIAL_FOLDER_IDS.DISTRIBUICAO;
+    const query = `'${folderId}' in parents and mimeType='application/pdf' and trashed=false`;
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,size,modifiedTime,createdTime,webViewLink,thumbnailLink,parents)&orderBy=createdTime desc&pageSize=50`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    return data.files || [];
+  } catch (error) {
+    console.error("Erro ao listar arquivos de distribuição:", error);
+    return [];
+  }
+}
+
+/**
+ * Move arquivo para a pasta correta na estrutura hierárquica
+ * e atualiza a pasta de origem (remove da Distribuição)
+ */
+export async function distributeFileToPasta(
+  fileId: string,
+  targetFolderId: string,
+  sourceFolderId?: string
+): Promise<DriveFileInfo | null> {
+  return await moveFileInDrive(
+    fileId,
+    targetFolderId,
+    sourceFolderId || SPECIAL_FOLDER_IDS.DISTRIBUICAO
+  );
+}
+
+/**
+ * Fluxo completo de distribuição:
+ * 1. Cria pasta do assistido se não existir
+ * 2. Cria pasta do processo se não existir
+ * 3. Move arquivo para pasta do processo
+ *
+ * @returns { assistidoFolder, processoFolder, movedFile }
+ */
+export async function distributeFileComplete(
+  fileId: string,
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO",
+  nomeAssistido: string,
+  numeroProcesso: string
+): Promise<{
+  success: boolean;
+  assistidoFolder: DriveFolder | null;
+  processoFolder: DriveFolder | null;
+  movedFile: DriveFileInfo | null;
+  error?: string;
+}> {
+  try {
+    // 1. Criar ou encontrar pasta do assistido
+    const assistidoFolder = await createOrFindAssistidoFolder(
+      atribuicao,
+      nomeAssistido
+    );
+    if (!assistidoFolder) {
+      return {
+        success: false,
+        assistidoFolder: null,
+        processoFolder: null,
+        movedFile: null,
+        error: "Não foi possível criar pasta do assistido",
+      };
+    }
+
+    // 2. Criar ou encontrar pasta do processo
+    const processoFolder = await createOrFindProcessoFolder(
+      assistidoFolder.id,
+      numeroProcesso
+    );
+    if (!processoFolder) {
+      return {
+        success: false,
+        assistidoFolder,
+        processoFolder: null,
+        movedFile: null,
+        error: "Não foi possível criar pasta do processo",
+      };
+    }
+
+    // 3. Mover arquivo
+    const movedFile = await distributeFileToPasta(fileId, processoFolder.id);
+    if (!movedFile) {
+      return {
+        success: false,
+        assistidoFolder,
+        processoFolder,
+        movedFile: null,
+        error: "Não foi possível mover o arquivo",
+      };
+    }
+
+    return {
+      success: true,
+      assistidoFolder,
+      processoFolder,
+      movedFile,
+    };
+  } catch (error) {
+    console.error("Erro na distribuição completa:", error);
+    return {
+      success: false,
+      assistidoFolder: null,
+      processoFolder: null,
+      movedFile: null,
+      error: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
+}
+
+/**
+ * Obtém contagem de arquivos em uma pasta
+ */
+export async function getFileCountInFolder(folderId: string): Promise<number> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return 0;
+
+  try {
+    const query = `'${folderId}' in parents and trashed=false`;
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id)&pageSize=100`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return 0;
+    }
+
+    const data = await response.json();
+    return (data.files || []).length;
+  } catch (error) {
+    return 0;
+  }
+}
+
+/**
+ * Lista pastas de assistidos com contagem de processos
+ */
+export async function listAssistidoFoldersWithCount(
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO"
+): Promise<Array<DriveFolder & { processoCount: number }>> {
+  const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao];
+  const folders = await listSubfolders(parentFolderId);
+
+  // Para cada pasta, obter contagem de subpastas (processos)
+  const foldersWithCount = await Promise.all(
+    folders.map(async (folder) => {
+      const subfolders = await listSubfolders(folder.id);
+      return {
+        ...folder,
+        processoCount: subfolders.length,
+      };
+    })
+  );
+
+  return foldersWithCount;
 }

@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   File,
   Link,
-  LinkOff,
+  Unlink,
   Scale,
   User,
   FolderOpen,
@@ -65,7 +65,7 @@ export function DriveLinkStats({ className }: DriveLinkStatsProps) {
     {
       label: "Não Vinculados",
       value: stats?.unlinked || 0,
-      icon: LinkOff,
+      icon: Unlink,
       color: "amber",
       description: "Sem vinculação",
     },

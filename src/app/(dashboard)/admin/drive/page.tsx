@@ -214,29 +214,42 @@ function EmptyDriveState({ onConfigure }: { onConfigure: () => void }) {
   );
 }
 
-function FileCard({ 
-  file, 
-  viewMode, 
-  onPreview, 
-  onDelete 
-}: { 
-  file: any; 
+function FileCard({
+  file,
+  viewMode,
+  onPreview,
+  onDelete,
+  onNavigate,
+}: {
+  file: any;
   viewMode: "grid" | "list";
   onPreview: () => void;
   onDelete: () => void;
+  onNavigate?: (folderId: string, folderName: string) => void;
 }) {
   const fileType = getFileType(file.mimeType);
   const Icon = FILE_ICONS[fileType] || FILE_ICONS.default;
   const colorClass = FILE_COLORS[fileType] || FILE_COLORS.default;
+  const isFolder = fileType === "folder";
+
+  // Handler de click - navegar se for pasta, preview se for arquivo
+  const handleClick = () => {
+    if (isFolder && onNavigate) {
+      onNavigate(file.id, file.name);
+    } else {
+      onPreview();
+    }
+  };
 
   if (viewMode === "list") {
     return (
-      <div 
+      <div
         className={cn(
           "flex items-center gap-4 px-4 py-3 transition-all cursor-pointer group",
-          "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0"
+          "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0",
+          isFolder && "hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10"
         )}
-        onClick={onPreview}
+        onClick={handleClick}
       >
         <div className={cn(
           "w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0", 
@@ -294,13 +307,14 @@ function FileCard({
 
   // Grid view
   return (
-    <div 
+    <div
       className={cn(
         "group cursor-pointer rounded-xl overflow-hidden transition-all",
         "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800",
-        "hover:shadow-lg hover:border-zinc-300 dark:hover:border-zinc-700"
+        "hover:shadow-lg hover:border-zinc-300 dark:hover:border-zinc-700",
+        isFolder && "hover:border-emerald-300 dark:hover:border-emerald-700"
       )}
-      onClick={onPreview}
+      onClick={handleClick}
     >
       <div className="aspect-square bg-zinc-50 dark:bg-zinc-800/50 flex items-center justify-center relative">
         {file.thumbnailLink ? (
@@ -337,10 +351,19 @@ function FileCard({
 // PÁGINA PRINCIPAL
 // ==========================================
 
+// Interface para item do breadcrumb
+interface BreadcrumbItem {
+  id: string;
+  name: string;
+}
+
 export default function DrivePage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+
+  // Stack de navegação para breadcrumbs
+  const [navigationStack, setNavigationStack] = useState<BreadcrumbItem[]>([]);
 
   // Atribuição selecionada (padrão: JURI)
   const [selectedAtribuicao, setSelectedAtribuicao] = useState<DriveAtribuicao>("JURI");
@@ -450,6 +473,34 @@ export default function DrivePage() {
   const currentFolderId = selectedFolderId || atribuicaoFolderId;
   const currentFolder = syncFolders?.find(f => f.driveFolderId === currentFolderId);
 
+  // Função para navegar para dentro de uma pasta
+  const navigateToFolder = (folderId: string, folderName: string) => {
+    setNavigationStack(prev => [...prev, { id: folderId, name: folderName }]);
+    setSelectedFolderId(folderId);
+  };
+
+  // Função para navegar para um nível específico do breadcrumb
+  const navigateToBreadcrumb = (index: number) => {
+    if (index === -1) {
+      // Voltar para a raiz da atribuição
+      setNavigationStack([]);
+      setSelectedFolderId(null);
+    } else {
+      // Navegar para um nível específico
+      const newStack = navigationStack.slice(0, index + 1);
+      setNavigationStack(newStack);
+      setSelectedFolderId(newStack[newStack.length - 1]?.id || null);
+    }
+  };
+
+  // Função para voltar um nível
+  const navigateBack = () => {
+    if (navigationStack.length === 0) return;
+    const newStack = navigationStack.slice(0, -1);
+    setNavigationStack(newStack);
+    setSelectedFolderId(newStack.length > 0 ? newStack[newStack.length - 1].id : null);
+  };
+
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
@@ -520,6 +571,7 @@ export default function DrivePage() {
                   onClick={() => {
                     setSelectedAtribuicao(atrib.id);
                     setSelectedFolderId(null); // Resetar pasta selecionada
+                    setNavigationStack([]); // Resetar navegação
                   }}
                   className={cn(
                     "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
@@ -535,6 +587,52 @@ export default function DrivePage() {
             })}
           </div>
         </div>
+
+        {/* Breadcrumbs de Navegação */}
+        {(navigationStack.length > 0 || selectedFolderId) && (
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
+            <div className="flex items-center gap-1 text-sm overflow-x-auto">
+              {/* Botão Home - Raiz da Atribuição */}
+              <button
+                onClick={() => navigateToBreadcrumb(-1)}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-400"
+              >
+                <Home className="w-4 h-4" />
+                <span className="font-medium">{currentAtribuicao.label}</span>
+              </button>
+
+              {/* Items do Breadcrumb */}
+              {navigationStack.map((item, index) => (
+                <div key={item.id} className="flex items-center">
+                  <ChevronRight className="w-4 h-4 text-zinc-400 mx-1" />
+                  <button
+                    onClick={() => navigateToBreadcrumb(index)}
+                    className={cn(
+                      "px-2 py-1 rounded-md transition-colors max-w-[200px] truncate",
+                      index === navigationStack.length - 1
+                        ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium"
+                        : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    )}
+                    title={item.name}
+                  >
+                    {item.name}
+                  </button>
+                </div>
+              ))}
+
+              {/* Botão Voltar (se não estiver na raiz) */}
+              {navigationStack.length > 0 && (
+                <button
+                  onClick={navigateBack}
+                  className="ml-auto flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 text-xs font-medium"
+                >
+                  <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+                  Voltar
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Stats Cards - Mobile-first */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -726,6 +824,7 @@ export default function DrivePage() {
                         viewMode="list"
                         onPreview={() => file.webViewLink && window.open(file.webViewLink, "_blank")}
                         onDelete={() => deleteMutation.mutate({ fileId: file.id })}
+                        onNavigate={navigateToFolder}
                       />
                     ))}
                 </div>
@@ -740,6 +839,7 @@ export default function DrivePage() {
                         viewMode="grid"
                         onPreview={() => file.webViewLink && window.open(file.webViewLink, "_blank")}
                         onDelete={() => deleteMutation.mutate({ fileId: file.id })}
+                        onNavigate={navigateToFolder}
                       />
                     ))}
                 </div>

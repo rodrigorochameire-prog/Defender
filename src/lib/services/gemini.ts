@@ -554,11 +554,263 @@ Responda APENAS com o JSON válido, sem texto adicional.
   } catch {
     // Se não for JSON válido, retorna como texto
   }
-  
+
   return {
     conteudo: response.text(),
     dadosEstruturados,
     modeloUsado: GEMINI_MODELS.FLASH,
     tokensUtilizados: response.usageMetadata?.totalTokenCount,
   };
+}
+
+// ==========================================
+// EXTRAÇÃO DE DADOS DE PDF JURÍDICO (Vision)
+// ==========================================
+
+export interface ExtracaoPdfResult {
+  success: boolean;
+  numeroProcesso: string | null;
+  orgaoJulgador: string | null;
+  classeDemanda: string | null;
+  assuntos: string | null;
+  assistidos: Array<{ nome: string; papel: string }>;
+  tipoDocumento: string | null;
+  dataDocumento: string | null;
+  resumo: string | null;
+  textoCompleto?: string;
+  tokensUtilizados?: number;
+  error?: string;
+}
+
+/**
+ * Extrai dados estruturados de um PDF jurídico usando Gemini Vision
+ *
+ * @param pdfBase64 - Conteúdo do PDF em base64
+ * @param mimeType - Tipo MIME do arquivo (geralmente 'application/pdf')
+ * @returns Dados extraídos estruturados
+ */
+export async function extrairDadosPdfJuridico(
+  pdfBase64: string,
+  mimeType: string = "application/pdf"
+): Promise<ExtracaoPdfResult> {
+  try {
+    if (!isGeminiConfigured()) {
+      return {
+        success: false,
+        numeroProcesso: null,
+        orgaoJulgador: null,
+        classeDemanda: null,
+        assuntos: null,
+        assistidos: [],
+        tipoDocumento: null,
+        dataDocumento: null,
+        resumo: null,
+        error: "Gemini API não está configurada",
+      };
+    }
+
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODELS.FLASH,
+      safetySettings: SAFETY_SETTINGS,
+    });
+
+    const prompt = `
+Você é um extrator de dados de documentos jurídicos brasileiros.
+Analise o documento PDF abaixo e extraia TODAS as informações estruturadas.
+
+## INSTRUÇÕES DE EXTRAÇÃO
+
+### 1. NÚMERO DO PROCESSO
+Busque padrões como:
+- "Número: X.XXXXXXX-XX.XXXX.X.XX.XXXX"
+- "Processo: X.XXXXXXX-XX.XXXX.X.XX.XXXX"
+- "Autos nº X.XXXXXXX-XX.XXXX.X.XX.XXXX"
+Formato CNJ: NNNNNNN-DD.AAAA.J.TR.OOOO
+
+### 2. ÓRGÃO JULGADOR
+Busque:
+- "Órgão julgador: [NOME]"
+- "Vara/Juízo: [NOME]"
+- Varas criminais, Tribunal do Júri, VVD, Execução Penal, etc.
+
+### 3. CLASSE DA DEMANDA
+Busque:
+- "Classe: [NOME]"
+- Ação Penal, Inquérito Policial, Execução da Pena, etc.
+
+### 4. ASSUNTOS
+Busque:
+- "Assuntos: [LISTA]"
+- "Assunto: [NOME]"
+- Tipos penais: Homicídio, Roubo, Tráfico, etc.
+
+### 5. PARTES (ASSISTIDOS)
+Busque nomes de réus, investigados, custodiados, promovidos:
+- "NOME COMPLETO (RÉU)"
+- "NOME COMPLETO (INVESTIGADO)"
+- "NOME COMPLETO (CUSTODIADO)"
+- "NOME COMPLETO (PROMOVIDO)"
+- "NOME COMPLETO (REQUERIDO)"
+- "NOME COMPLETO (AUTOR DO FATO)"
+- Tipo: "Promovido" ... Nome: "FULANO"
+
+IMPORTANTE:
+- NÃO inclua advogados, defensores, promotores ou juízes
+- NÃO inclua "MINISTÉRIO PÚBLICO", "DEFENSORIA", "TRIBUNAL"
+- APENAS inclua pessoas físicas que são réus/investigados/etc
+
+### 6. TIPO DO DOCUMENTO
+Identifique: Denúncia, Sentença, Decisão, Despacho, Intimação, Ata, Laudo, Certidão, etc.
+
+### 7. DATA DO DOCUMENTO
+Extraia a data principal do documento no formato DD/MM/YYYY.
+
+### 8. RESUMO
+Faça um resumo de 2-3 frases do conteúdo do documento.
+
+## FORMATO DE RESPOSTA
+Responda APENAS com JSON válido, sem markdown ou texto adicional:
+
+{
+  "numeroProcesso": "string ou null",
+  "orgaoJulgador": "string ou null",
+  "classeDemanda": "string ou null",
+  "assuntos": "string ou null",
+  "assistidos": [
+    { "nome": "NOME COMPLETO EM MAIÚSCULAS", "papel": "RÉU|INVESTIGADO|CUSTODIADO|PROMOVIDO|REQUERIDO" }
+  ],
+  "tipoDocumento": "string ou null",
+  "dataDocumento": "DD/MM/YYYY ou null",
+  "resumo": "string ou null"
+}
+`;
+
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType,
+          data: pdfBase64,
+        },
+      },
+      { text: prompt },
+    ]);
+
+    const response = result.response;
+    const responseText = response.text();
+
+    // Tenta extrair JSON da resposta
+    let jsonStr = responseText;
+
+    // Remove possíveis marcadores de código
+    if (responseText.includes("```json")) {
+      jsonStr = responseText.split("```json")[1].split("```")[0].trim();
+    } else if (responseText.includes("```")) {
+      jsonStr = responseText.split("```")[1].split("```")[0].trim();
+    }
+
+    try {
+      const parsed = JSON.parse(jsonStr);
+
+      return {
+        success: true,
+        numeroProcesso: parsed.numeroProcesso || null,
+        orgaoJulgador: parsed.orgaoJulgador || null,
+        classeDemanda: parsed.classeDemanda || null,
+        assuntos: parsed.assuntos || null,
+        assistidos: (parsed.assistidos || []).map((a: { nome?: string; papel?: string }) => ({
+          nome: a.nome || "",
+          papel: a.papel || "RÉU",
+        })),
+        tipoDocumento: parsed.tipoDocumento || null,
+        dataDocumento: parsed.dataDocumento || null,
+        resumo: parsed.resumo || null,
+        tokensUtilizados: response.usageMetadata?.totalTokenCount,
+      };
+    } catch (parseError) {
+      console.error("Erro ao parsear resposta do Gemini:", parseError);
+      console.error("Resposta recebida:", responseText);
+
+      return {
+        success: false,
+        numeroProcesso: null,
+        orgaoJulgador: null,
+        classeDemanda: null,
+        assuntos: null,
+        assistidos: [],
+        tipoDocumento: null,
+        dataDocumento: null,
+        resumo: null,
+        textoCompleto: responseText,
+        error: "Não foi possível estruturar a resposta do Gemini",
+      };
+    }
+  } catch (error) {
+    console.error("Erro na extração com Gemini:", error);
+    return {
+      success: false,
+      numeroProcesso: null,
+      orgaoJulgador: null,
+      classeDemanda: null,
+      assuntos: null,
+      assistidos: [],
+      tipoDocumento: null,
+      dataDocumento: null,
+      resumo: null,
+      error: error instanceof Error ? error.message : "Erro desconhecido na extração",
+    };
+  }
+}
+
+/**
+ * Extrai dados de PDF a partir de URL do Google Drive
+ *
+ * @param fileId - ID do arquivo no Google Drive
+ * @returns Dados extraídos estruturados
+ */
+export async function extrairDadosPdfDoDrive(
+  fileId: string
+): Promise<ExtracaoPdfResult> {
+  try {
+    // Importa a função de download do Drive
+    const { downloadFileContent } = await import("./google-drive");
+
+    // Baixa o conteúdo do arquivo
+    const fileContent = await downloadFileContent(fileId);
+
+    if (!fileContent) {
+      return {
+        success: false,
+        numeroProcesso: null,
+        orgaoJulgador: null,
+        classeDemanda: null,
+        assuntos: null,
+        assistidos: [],
+        tipoDocumento: null,
+        dataDocumento: null,
+        resumo: null,
+        error: "Não foi possível baixar o arquivo do Drive",
+      };
+    }
+
+    // Converte para base64
+    const base64Content = Buffer.from(fileContent).toString("base64");
+
+    // Processa com Gemini Vision
+    return await extrairDadosPdfJuridico(base64Content, "application/pdf");
+  } catch (error) {
+    console.error("Erro ao extrair PDF do Drive:", error);
+    return {
+      success: false,
+      numeroProcesso: null,
+      orgaoJulgador: null,
+      classeDemanda: null,
+      assuntos: null,
+      assistidos: [],
+      tipoDocumento: null,
+      dataDocumento: null,
+      resumo: null,
+      error: error instanceof Error ? error.message : "Erro ao baixar ou processar arquivo",
+    };
+  }
 }

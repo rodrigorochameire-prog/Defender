@@ -10,7 +10,7 @@ import {
   Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
-  MoreHorizontal, Box, Puzzle, BookUser, Users2, Home
+  MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -61,8 +61,9 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Casos", path: "/admin/casos", icon: "Briefcase" },
 ];
 
-// 3. Documentos - Drive, Modelos, Jurisprudência (laranja)
+// 3. Documentos - Drive, Modelos, Jurisprudência, Distribuição (laranja)
 const DOCUMENTOS_NAV: AssignmentMenuItem[] = [
+  { label: "Distribuição", path: "/admin/distribuicao", icon: "FolderInput" },
   { label: "Drive", path: "/admin/drive", icon: "FolderOpen" },
   { label: "Modelos", path: "/admin/modelos", icon: "FileText" },
   { label: "Jurisprudência", path: "/admin/jurisprudencia", icon: "Scale" },
@@ -117,7 +118,7 @@ const iconMap: Record<string, React.ElementType> = {
   Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
-  BookUser, Users2, Home
+  BookUser, Users2, Home, FolderInput
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";

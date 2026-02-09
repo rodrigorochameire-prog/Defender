@@ -14,12 +14,13 @@ export const assistidosRouter = router({
       z.object({
         search: z.string().optional(),
         statusPrisional: z.string().optional(),
+        atribuicaoPrimaria: z.string().optional(), // Filtro por atribuição primária
         limit: z.number().min(1).max(100).default(50),
         offset: z.number().min(0).default(0),
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const { search, statusPrisional, limit = 50, offset = 0 } = input || {};
+      const { search, statusPrisional, atribuicaoPrimaria, limit = 50, offset = 0 } = input || {};
       // Assistidos são compartilhados - não filtrar por workspace
       getWorkspaceScope(ctx.user); // Apenas para validar autenticação
       
@@ -37,6 +38,20 @@ export const assistidosRouter = router({
       
       if (statusPrisional && statusPrisional !== "all") {
         conditions.push(eq(assistidos.statusPrisional, statusPrisional as any));
+      }
+
+      // Filtro por atribuição primária
+      if (atribuicaoPrimaria && atribuicaoPrimaria !== "all") {
+        // Mapear atribuições simplificadas para valores do enum
+        const atribuicaoMap: Record<string, string[]> = {
+          "JURI": ["JURI_CAMACARI", "GRUPO_JURI"],
+          "VVD": ["VVD_CAMACARI"],
+          "EXECUCAO": ["EXECUCAO_PENAL"],
+          "SUBSTITUICAO": ["SUBSTITUICAO"],
+          "SUBSTITUICAO_CIVEL": ["SUBSTITUICAO_CIVEL"],
+        };
+        const valores = atribuicaoMap[atribuicaoPrimaria] || [atribuicaoPrimaria];
+        conditions.push(inArray(assistidos.atribuicaoPrimaria, valores as any));
       }
 
       // Dados compartilhados - não filtrar por workspace
@@ -211,6 +226,11 @@ export const assistidosRouter = router({
         observacoes: z.string().optional(),
         defensorId: z.number().optional(),
         workspaceId: z.number().optional(),
+        atribuicaoPrimaria: z.enum([
+          "JURI_CAMACARI", "VVD_CAMACARI", "EXECUCAO_PENAL",
+          "SUBSTITUICAO", "SUBSTITUICAO_CIVEL", "GRUPO_JURI"
+        ]).optional(),
+        driveFolderId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -291,9 +311,11 @@ export const assistidosRouter = router({
           observacoes: input.observacoes || null,
           defensorId: input.defensorId || ctx.user.id,
           workspaceId,
+          atribuicaoPrimaria: input.atribuicaoPrimaria || "SUBSTITUICAO",
+          driveFolderId: input.driveFolderId || null,
         })
         .returning();
-      
+
       return novoAssistido;
     }),
   
@@ -422,6 +444,11 @@ export const assistidosRouter = router({
         observacoes: z.string().optional(),
         defensorId: z.number().optional(),
         photoUrl: z.string().optional(),
+        atribuicaoPrimaria: z.enum([
+          "JURI_CAMACARI", "VVD_CAMACARI", "EXECUCAO_PENAL",
+          "SUBSTITUICAO", "SUBSTITUICAO_CIVEL", "GRUPO_JURI"
+        ]).optional(),
+        driveFolderId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

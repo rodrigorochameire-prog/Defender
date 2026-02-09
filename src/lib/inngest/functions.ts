@@ -613,6 +613,130 @@ export const checkPrazosManualFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// DISTRIBUIÇÃO AUTOMÁTICA DE DOCUMENTOS
+// ============================================
+
+import { listDistributionPendingFiles } from "@/lib/services/google-drive";
+import { SPECIAL_FOLDER_IDS } from "@/lib/utils/text-extraction";
+
+/**
+ * Verificação periódica da pasta de distribuição
+ * Executa a cada 5 minutos para detectar novos arquivos
+ */
+export const checkDistributionFolderFn = inngest.createFunction(
+  {
+    id: "check-distribution-folder",
+    name: "Check Distribution Folder",
+    retries: 3,
+  },
+  { cron: "*/5 * * * *" }, // A cada 5 minutos
+  async ({ step }) => {
+    const files = await step.run("list-pending-files", async () => {
+      return await listDistributionPendingFiles();
+    });
+
+    if (!files || files.length === 0) {
+      return { success: true, pendingFiles: 0 };
+    }
+
+    // Criar notificação se houver arquivos pendentes
+    await step.run("create-notification", async () => {
+      // Verificar se já existe notificação recente (últimos 30 minutos)
+      const trintaMinutosAtras = new Date();
+      trintaMinutosAtras.setMinutes(trintaMinutosAtras.getMinutes() - 30);
+
+      const existente = await db.query.notifications.findFirst({
+        where: and(
+          eq(notifications.title, "📁 Documentos para Distribuição"),
+          gte(notifications.createdAt, trintaMinutosAtras)
+        ),
+      });
+
+      if (!existente) {
+        // Buscar admins e defensores
+        const adminUsers = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(or(eq(users.role, "admin"), eq(users.role, "defensor")));
+
+        if (adminUsers.length === 0) return;
+
+        const message =
+          files.length === 1
+            ? `Novo documento aguardando distribuição: ${files[0].name}`
+            : `${files.length} documentos aguardando distribuição`;
+
+        // Criar notificação para cada admin/defensor
+        for (const user of adminUsers) {
+          await db.insert(notifications).values({
+            userId: user.id,
+            title: "📁 Documentos para Distribuição",
+            message: message,
+            type: "info",
+            actionUrl: "/admin/distribuicao",
+            isRead: false,
+          });
+        }
+      }
+    });
+
+    return {
+      success: true,
+      pendingFiles: files.length,
+      fileNames: files.map((f) => f.name),
+    };
+  }
+);
+
+/**
+ * Processar distribuição automática de um arquivo
+ * Triggered quando arquivo é adicionado via webhook
+ */
+export const processDistributionFileFn = inngest.createFunction(
+  {
+    id: "process-distribution-file",
+    name: "Process Distribution File",
+    retries: 3,
+  },
+  { event: "distribution/process.file" },
+  async ({ event, step }) => {
+    const { fileId, fileName } = event.data;
+
+    if (!fileId) {
+      return { success: false, error: "No file ID provided" };
+    }
+
+    // Por enquanto, apenas cria notificação
+    // A extração automática pode ser implementada aqui
+    await step.run("create-notification", async () => {
+      // Buscar admins e defensores
+      const adminUsers = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(or(eq(users.role, "admin"), eq(users.role, "defensor")));
+
+      for (const user of adminUsers) {
+        await db.insert(notifications).values({
+          userId: user.id,
+          title: "📄 Novo Documento Recebido",
+          message: `Arquivo "${fileName}" recebido e aguardando distribuição.`,
+          type: "info",
+          actionUrl: "/admin/distribuicao",
+          isRead: false,
+        });
+      }
+    });
+
+    return {
+      success: true,
+      fileId,
+      fileName,
+      status: "pending_distribution",
+    };
+  }
+);
+
 // Exportar todas as funções para o handler
 export const functions = [
   sendWhatsAppMessageFn,
@@ -626,4 +750,6 @@ export const functions = [
   syncAllDriveFn,
   checkPrazosCriticosFn,
   checkPrazosManualFn,
+  checkDistributionFolderFn,
+  processDistributionFileFn,
 ];
