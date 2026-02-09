@@ -377,15 +377,21 @@ export interface GoogleAccountInfo {
 
 /**
  * Obtém informações da conta Google autenticada (quem gerou o refresh token)
+ * Usa a API Drive About que funciona com qualquer token que tenha acesso ao Drive
  * Útil para saber qual conta precisa ter acesso às pastas
  */
 export async function getAuthenticatedAccountInfo(): Promise<GoogleAccountInfo | null> {
   const accessToken = await getAccessToken();
-  if (!accessToken) return null;
+  if (!accessToken) {
+    console.log("[Google Drive] Sem access token para obter info da conta");
+    return null;
+  }
 
   try {
+    // Usar a API Drive About - funciona com qualquer token que tenha acesso ao Drive
+    // Não precisa do escopo userinfo.email
     const response = await fetch(
-      "https://www.googleapis.com/oauth2/v2/userinfo",
+      "https://www.googleapis.com/drive/v3/about?fields=user(displayName,emailAddress,photoLink)",
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -394,18 +400,25 @@ export async function getAuthenticatedAccountInfo(): Promise<GoogleAccountInfo |
     );
 
     if (!response.ok) {
-      console.error("Erro ao obter informações da conta:", await response.text());
+      const errorText = await response.text();
+      console.error("[Google Drive] Erro ao obter about:", errorText);
       return null;
     }
 
     const data = await response.json();
-    return {
-      email: data.email,
-      name: data.name,
-      picture: data.picture,
-    };
+    console.log("[Google Drive] About response:", JSON.stringify(data));
+
+    if (data.user) {
+      return {
+        email: data.user.emailAddress,
+        name: data.user.displayName,
+        picture: data.user.photoLink,
+      };
+    }
+
+    return null;
   } catch (error) {
-    console.error("Erro ao obter informações da conta:", error);
+    console.error("[Google Drive] Erro ao obter informações da conta:", error);
     return null;
   }
 }
