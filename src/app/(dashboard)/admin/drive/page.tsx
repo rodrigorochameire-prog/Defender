@@ -12,7 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -35,19 +34,10 @@ import {
   ExternalLink,
   Download,
   Eye,
-  Clock,
   RefreshCw,
-  Plus,
   MoreHorizontal,
   ChevronRight,
   Home,
-  Star,
-  Trash2,
-  FolderPlus,
-  Upload,
-  HardDrive,
-  Settings,
-  AlertCircle,
   Loader2,
   Link2,
   CloudOff,
@@ -56,9 +46,21 @@ import {
   Shield,
   Lock,
   Scale,
+  Upload,
+  Settings,
+  FolderPlus,
+  X,
+  Play,
+  Pause,
+  Volume2,
+  Calendar,
+  User,
+  FileType,
+  Clock,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -111,6 +113,12 @@ function formatFileSize(bytes?: number | null): string {
     unitIndex++;
   }
   return `${size.toFixed(1)} ${units[unitIndex]}`;
+}
+
+function isNewFile(date: Date | string | null): boolean {
+  if (!date) return false;
+  const fileDate = typeof date === 'string' ? new Date(date) : date;
+  return differenceInDays(new Date(), fileDate) <= 7;
 }
 
 // ==========================================
@@ -169,7 +177,7 @@ const DRIVE_ATRIBUICOES: {
   },
   {
     id: "SUBSTITUICAO",
-    label: "Substituição Criminal",
+    label: "Substituição",
     icon: Scale,
     folderId: "1eNDT0j-5KQkzYXbqK6IBa9sIMT3QFWVU",
     colors: {
@@ -185,7 +193,7 @@ const DRIVE_ATRIBUICOES: {
 // COMPONENTES
 // ==========================================
 
-function EmptyDriveState({ onConfigure }: { onConfigure: () => void }) {
+function EmptyDriveState() {
   return (
     <div className="min-h-[50vh] flex items-center justify-center p-6">
       <Card className="max-w-md w-full p-8 text-center border-dashed border-2 bg-zinc-50/50 dark:bg-zinc-900/50">
@@ -196,21 +204,137 @@ function EmptyDriveState({ onConfigure }: { onConfigure: () => void }) {
           Google Drive não configurado
         </h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">
-          Configure a integração com o Google Drive para armazenar e organizar os documentos da defensoria de forma centralizada.
+          Configure a integração com o Google Drive para armazenar e organizar os documentos da defensoria.
         </p>
-        <div className="space-y-3">
-          <Link href="/admin/settings/drive">
-            <Button className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-900">
-              <Settings className="w-4 h-4 mr-2" />
-              Configurar Integração
-            </Button>
-          </Link>
-          <p className="text-xs text-zinc-400">
-            Você precisará de credenciais OAuth do Google Cloud
-          </p>
-        </div>
+        <Link href="/admin/settings/drive">
+          <Button className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-900">
+            <Settings className="w-4 h-4 mr-2" />
+            Configurar Integração
+          </Button>
+        </Link>
       </Card>
     </div>
+  );
+}
+
+// Preview Modal Component
+function PreviewModal({
+  file,
+  isOpen,
+  onClose,
+}: {
+  file: any;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const fileType = getFileType(file?.mimeType || '');
+  const isImage = fileType === 'image';
+  const isPdf = fileType === 'pdf';
+  const isAudio = fileType === 'audio';
+  const isVideo = fileType === 'video';
+
+  if (!file) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                isPdf ? "bg-rose-100 dark:bg-rose-900/30" :
+                isImage ? "bg-violet-100 dark:bg-violet-900/30" :
+                isAudio ? "bg-cyan-100 dark:bg-cyan-900/30" :
+                "bg-zinc-100 dark:bg-zinc-800"
+              )}>
+                {isPdf && <FileText className="w-5 h-5 text-rose-500" />}
+                {isImage && <ImageIcon className="w-5 h-5 text-violet-500" />}
+                {isAudio && <Music className="w-5 h-5 text-cyan-500" />}
+                {isVideo && <Film className="w-5 h-5 text-amber-500" />}
+                {!isPdf && !isImage && !isAudio && !isVideo && <File className="w-5 h-5 text-zinc-500" />}
+              </div>
+              <div className="min-w-0">
+                <DialogTitle className="text-base font-semibold truncate pr-4">
+                  {file.name}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-zinc-500">
+                  {formatFileSize(file.fileSize)} • {file.lastModifiedTime && formatDistanceToNow(new Date(file.lastModifiedTime), { addSuffix: true, locale: ptBR })}
+                </DialogDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {file.webViewLink && (
+                <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Abrir no Drive
+                  </Button>
+                </a>
+              )}
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950 min-h-[400px] max-h-[70vh]">
+          {isPdf && file.webViewLink && (
+            <iframe
+              src={`${file.webViewLink.replace('/view', '/preview')}`}
+              className="w-full h-[70vh] border-0"
+              title={file.name}
+            />
+          )}
+
+          {isImage && file.thumbnailLink && (
+            <div className="flex items-center justify-center p-8 h-full">
+              <img
+                src={file.thumbnailLink.replace('=s220', '=s1000')}
+                alt={file.name}
+                className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-lg"
+              />
+            </div>
+          )}
+
+          {isAudio && file.webContentLink && (
+            <div className="flex flex-col items-center justify-center p-12 h-full">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center mb-8 shadow-lg">
+                <Music className="w-16 h-16 text-white" />
+              </div>
+              <audio controls className="w-full max-w-md">
+                <source src={file.webContentLink} />
+                Seu navegador não suporta o elemento de áudio.
+              </audio>
+            </div>
+          )}
+
+          {isVideo && file.webContentLink && (
+            <div className="flex items-center justify-center p-4 h-full">
+              <video controls className="max-w-full max-h-[60vh] rounded-lg shadow-lg">
+                <source src={file.webContentLink} />
+                Seu navegador não suporta o elemento de vídeo.
+              </video>
+            </div>
+          )}
+
+          {!isPdf && !isImage && !isAudio && !isVideo && (
+            <div className="flex flex-col items-center justify-center p-12 h-full text-center">
+              <File className="w-20 h-20 text-zinc-300 dark:text-zinc-600 mb-4" />
+              <p className="text-zinc-600 dark:text-zinc-400 mb-4">
+                Preview não disponível para este tipo de arquivo
+              </p>
+              {file.webViewLink && (
+                <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
+                  <Button>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Abrir no Google Drive
+                  </Button>
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -231,8 +355,8 @@ function FileCard({
   const Icon = FILE_ICONS[fileType] || FILE_ICONS.default;
   const colorClass = FILE_COLORS[fileType] || FILE_COLORS.default;
   const isFolder = fileType === "folder";
+  const isNew = isNewFile(file.lastModifiedTime || file.createdAt);
 
-  // Handler de click - navegar se for pasta, preview se for arquivo
   const handleClick = () => {
     if (isFolder && onNavigate) {
       onNavigate(file.id, file.name);
@@ -252,21 +376,34 @@ function FileCard({
         onClick={handleClick}
       >
         <div className={cn(
-          "w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0", 
-          file.isFolder ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-zinc-100 dark:bg-zinc-800"
+          "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+          isFolder ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-zinc-100 dark:bg-zinc-800"
         )}>
           <Icon className={cn("w-5 h-5", colorClass)} />
         </div>
-        
+
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{file.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{file.name}</p>
+            {isNew && (
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] px-1.5 py-0 font-medium">
+                <Sparkles className="w-3 h-3 mr-0.5" />
+                NOVO
+              </Badge>
+            )}
+          </div>
           <p className="text-xs text-zinc-500 truncate">
-            {file.isFolder ? "Pasta" : formatFileSize(file.fileSize)}
+            {isFolder ? "Pasta" : formatFileSize(file.fileSize)}
             {file.lastModifiedTime && ` • ${formatDistanceToNow(new Date(file.lastModifiedTime), { addSuffix: true, locale: ptBR })}`}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {!isFolder && (
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onPreview(); }}>
+              <Eye className="w-4 h-4" />
+            </Button>
+          )}
           {file.webViewLink && (
             <a href={file.webViewLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -293,11 +430,6 @@ function FileCard({
                   </a>
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onDelete} className="text-rose-600">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -320,11 +452,24 @@ function FileCard({
         {file.thumbnailLink ? (
           <img src={file.thumbnailLink} alt={file.name} className="w-full h-full object-cover" />
         ) : (
-          <Icon className={cn("w-14 h-14", colorClass)} />
+          <Icon className={cn("w-12 h-12", colorClass)} />
         )}
-        
-        {/* Overlay de ações no hover */}
+
+        {isNew && (
+          <div className="absolute top-2 right-2">
+            <Badge variant="secondary" className="bg-emerald-500 text-white text-[10px] px-1.5 py-0">
+              NOVO
+            </Badge>
+          </div>
+        )}
+
+        {/* Overlay de ações */}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+          {!isFolder && (
+            <Button size="sm" variant="secondary" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onPreview(); }}>
+              <Eye className="w-4 h-4" />
+            </Button>
+          )}
           {file.webViewLink && (
             <a href={file.webViewLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
               <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
@@ -332,15 +477,12 @@ function FileCard({
               </Button>
             </a>
           )}
-          <Button size="sm" variant="secondary" className="h-8 w-8 p-0" onClick={onPreview}>
-            <Eye className="w-4 h-4" />
-          </Button>
         </div>
       </div>
       <div className="p-3">
         <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">{file.name}</p>
         <p className="text-xs text-zinc-500 mt-1">
-          {file.isFolder ? "Pasta" : formatFileSize(file.fileSize)}
+          {isFolder ? "Pasta" : formatFileSize(file.fileSize)}
         </p>
       </div>
     </div>
@@ -351,7 +493,6 @@ function FileCard({
 // PÁGINA PRINCIPAL
 // ==========================================
 
-// Interface para item do breadcrumb
 interface BreadcrumbItem {
   id: string;
   name: string;
@@ -361,38 +502,32 @@ export default function DrivePage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-
-  // Stack de navegação para breadcrumbs
   const [navigationStack, setNavigationStack] = useState<BreadcrumbItem[]>([]);
-
-  // Atribuição selecionada (padrão: JURI)
   const [selectedAtribuicao, setSelectedAtribuicao] = useState<DriveAtribuicao>("JURI");
 
-  // Obter a configuração da atribuição atual
-  const currentAtribuicao = DRIVE_ATRIBUICOES.find(a => a.id === selectedAtribuicao) || DRIVE_ATRIBUICOES[0];
+  // Preview state
+  const [previewFile, setPreviewFile] = useState<any>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  // Usar o folderId da atribuição selecionada
+  const currentAtribuicao = DRIVE_ATRIBUICOES.find(a => a.id === selectedAtribuicao) || DRIVE_ATRIBUICOES[0];
   const atribuicaoFolderId = currentAtribuicao.folderId;
 
-  // Verificar se o Drive está configurado
+  // Queries
   const { data: configStatus, isLoading: isCheckingConfig } = trpc.drive.isConfigured.useQuery();
 
-  // Estatísticas
   const { data: stats, isLoading: isLoadingStats } = trpc.drive.stats.useQuery(undefined, {
     enabled: configStatus?.configured === true,
   });
 
-  // Pastas sincronizadas
-  const { data: syncFolders, isLoading: isLoadingFolders, refetch: refetchFolders } = trpc.drive.syncFolders.useQuery(undefined, {
+  const { data: syncFolders, isLoading: isLoadingFolders } = trpc.drive.syncFolders.useQuery(undefined, {
     enabled: configStatus?.configured === true,
   });
 
-  // Arquivos da pasta selecionada (do banco de dados local, não do Drive API)
   const { data: filesData, isLoading: isLoadingFiles, refetch: refetchFiles } = trpc.drive.files.useQuery(
     {
-      folderId: atribuicaoFolderId, // Sempre a pasta raiz da atribuição
-      parentDriveFileId: selectedFolderId || undefined, // Se navegou para subpasta, filtrar pelo driveFileId do parent
-      parentFileId: selectedFolderId ? undefined : null, // Se na raiz, mostrar só itens sem parent
+      folderId: atribuicaoFolderId,
+      parentDriveFileId: selectedFolderId || undefined,
+      parentFileId: selectedFolderId ? undefined : null,
       limit: 200,
     },
     {
@@ -400,10 +535,10 @@ export default function DrivePage() {
     }
   );
 
-  // Sincronizar pasta
+  // Mutations
   const syncMutation = trpc.drive.syncFolder.useMutation({
     onSuccess: (result) => {
-      toast.success(`Sincronizado: ${result.filesAdded} novos, ${result.filesUpdated} atualizados`);
+      toast.success(`Sincronizado: ${result.filesAdded || 0} novos, ${result.filesUpdated || 0} atualizados`);
       refetchFiles();
     },
     onError: (error) => {
@@ -411,7 +546,6 @@ export default function DrivePage() {
     },
   });
 
-  // Excluir arquivo
   const deleteMutation = trpc.drive.deleteFile.useMutation({
     onSuccess: () => {
       toast.success("Arquivo excluído");
@@ -435,10 +569,11 @@ export default function DrivePage() {
             </div>
           </div>
         </div>
-        <div className="p-4 md:p-6 space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-4 md:p-6 space-y-4">
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-28 rounded-2xl" />
+              <Skeleton key={i} className="h-24 rounded-xl" />
             ))}
           </div>
           <Skeleton className="h-[400px] w-full rounded-xl" />
@@ -451,7 +586,6 @@ export default function DrivePage() {
   if (!configStatus?.configured) {
     return (
       <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-        {/* Header Padrão Defender */}
         <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
@@ -459,14 +593,11 @@ export default function DrivePage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Drive</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Gestão de documentos
-              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Gestão de documentos</p>
             </div>
           </div>
         </div>
-
-        <EmptyDriveState onConfigure={() => {}} />
+        <EmptyDriveState />
       </div>
     );
   }
@@ -475,27 +606,26 @@ export default function DrivePage() {
   const currentFolderId = selectedFolderId || atribuicaoFolderId;
   const currentFolder = syncFolders?.find(f => f.driveFolderId === currentFolderId);
 
-  // Função para navegar para dentro de uma pasta
+  // Contagem de arquivos novos
+  const newFilesCount = files.filter(f => isNewFile(f.lastModifiedTime || f.createdAt)).length;
+
+  // Navegação
   const navigateToFolder = (folderId: string, folderName: string) => {
     setNavigationStack(prev => [...prev, { id: folderId, name: folderName }]);
     setSelectedFolderId(folderId);
   };
 
-  // Função para navegar para um nível específico do breadcrumb
   const navigateToBreadcrumb = (index: number) => {
     if (index === -1) {
-      // Voltar para a raiz da atribuição
       setNavigationStack([]);
       setSelectedFolderId(null);
     } else {
-      // Navegar para um nível específico
       const newStack = navigationStack.slice(0, index + 1);
       setNavigationStack(newStack);
       setSelectedFolderId(newStack[newStack.length - 1]?.id || null);
     }
   };
 
-  // Função para voltar um nível
   const navigateBack = () => {
     if (navigationStack.length === 0) return;
     const newStack = navigationStack.slice(0, -1);
@@ -503,63 +633,59 @@ export default function DrivePage() {
     setSelectedFolderId(newStack.length > 0 ? newStack[newStack.length - 1].id : null);
   };
 
+  // Preview handlers
+  const openPreview = (file: any) => {
+    setPreviewFile(file);
+    setIsPreviewOpen(true);
+  };
+
+  const closePreview = () => {
+    setIsPreviewOpen(false);
+    setPreviewFile(null);
+  };
+
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header Padrão Defender */}
+      {/* Header */}
       <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg flex-shrink-0">
               <FolderOpen className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Drive</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Gestão de documentos • {stats?.totalFiles || 0} arquivos</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                Gestão de documentos • {stats?.totalFiles || 0} arquivos
+              </p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-1">
+
+          <div className="flex items-center gap-1 flex-shrink-0">
             <Link href="/admin/distribuicao">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-amber-600"
-                title="Distribuição"
-              >
-                <FolderPlus className="w-3.5 h-3.5" />
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-400 hover:text-amber-600" title="Distribuição">
+                <FolderPlus className="w-4 h-4" />
               </Button>
             </Link>
             <Link href="/admin/settings/drive">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
-                title="Configurações"
-              >
-                <Settings className="w-3.5 h-3.5" />
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600" title="Configurações">
+                <Settings className="w-4 h-4" />
               </Button>
             </Link>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600"
               onClick={() => currentFolderId && syncMutation.mutate({ folderId: currentFolderId })}
               disabled={syncMutation.isPending || !currentFolderId}
               title="Sincronizar"
             >
-              {syncMutation.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="w-3.5 h-3.5" />
-              )}
+              {syncMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             </Button>
             <Link href="/admin/drive/upload">
-              <Button
-                size="sm"
-                className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
-              >
-                <Upload className="w-3.5 h-3.5 mr-1" />
-                Upload
+              <Button size="sm" className="h-8 px-3 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium">
+                <Upload className="w-4 h-4 mr-1.5" />
+                <span className="hidden sm:inline">Upload</span>
               </Button>
             </Link>
           </div>
@@ -567,9 +693,9 @@ export default function DrivePage() {
       </div>
 
       {/* Content */}
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="p-4 md:p-6 space-y-4 max-w-full overflow-hidden">
         {/* Seletor de Atribuição */}
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+        <Card className="p-4">
           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-3 uppercase tracking-wider">
             Selecione a Atribuição
           </p>
@@ -582,45 +708,44 @@ export default function DrivePage() {
                   key={atrib.id}
                   onClick={() => {
                     setSelectedAtribuicao(atrib.id);
-                    setSelectedFolderId(null); // Resetar pasta selecionada
-                    setNavigationStack([]); // Resetar navegação
+                    setSelectedFolderId(null);
+                    setNavigationStack([]);
                   }}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                     isSelected
                       ? `${atrib.colors.bg} ${atrib.colors.text} ring-1 ${atrib.colors.ring}`
                       : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                   )}
                 >
                   <Icon className="w-4 h-4" />
-                  {atrib.label}
+                  <span className="hidden sm:inline">{atrib.label}</span>
+                  <span className="sm:hidden">{atrib.id}</span>
                 </button>
               );
             })}
           </div>
-        </div>
+        </Card>
 
-        {/* Breadcrumbs de Navegação */}
+        {/* Breadcrumbs */}
         {(navigationStack.length > 0 || selectedFolderId) && (
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
-            <div className="flex items-center gap-1 text-sm overflow-x-auto">
-              {/* Botão Home - Raiz da Atribuição */}
+          <Card className="p-3">
+            <div className="flex items-center gap-1 text-sm overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => navigateToBreadcrumb(-1)}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-400"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-400 flex-shrink-0"
               >
                 <Home className="w-4 h-4" />
                 <span className="font-medium">{currentAtribuicao.label}</span>
               </button>
 
-              {/* Items do Breadcrumb */}
               {navigationStack.map((item, index) => (
-                <div key={item.id} className="flex items-center">
+                <div key={item.id} className="flex items-center flex-shrink-0">
                   <ChevronRight className="w-4 h-4 text-zinc-400 mx-1" />
                   <button
                     onClick={() => navigateToBreadcrumb(index)}
                     className={cn(
-                      "px-2 py-1 rounded-md transition-colors max-w-[200px] truncate",
+                      "px-2 py-1 rounded-md transition-colors max-w-[150px] truncate",
                       index === navigationStack.length - 1
                         ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium"
                         : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
@@ -632,90 +757,85 @@ export default function DrivePage() {
                 </div>
               ))}
 
-              {/* Botão Voltar (se não estiver na raiz) */}
               {navigationStack.length > 0 && (
                 <button
                   onClick={navigateBack}
-                  className="ml-auto flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 text-xs font-medium"
+                  className="ml-auto flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-600 dark:text-zinc-400 text-xs font-medium flex-shrink-0"
                 >
                   <ChevronRight className="w-3.5 h-3.5 rotate-180" />
                   Voltar
                 </button>
               )}
             </div>
-          </div>
+          </Card>
         )}
 
-        {/* Stats Cards - Mobile-first */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Arquivos</p>
-                <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.totalFiles || 0}</p>
-                <p className="text-xs sm:text-[10px] text-zinc-400">no total</p>
+          <Card className="p-4 group hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all cursor-pointer">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide">Arquivos</p>
+                <p className="text-2xl font-semibold text-zinc-700 dark:text-zinc-300 mt-1">{stats?.totalFiles || 0}</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">no total</p>
               </div>
-              <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-                <File className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                <File className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Pastas</p>
-                <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.totalFolders || 0}</p>
-                <p className="text-xs sm:text-[10px] text-zinc-400">organizadas</p>
+          <Card className="p-4 group hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all cursor-pointer">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide">Pastas</p>
+                <p className="text-2xl font-semibold text-zinc-700 dark:text-zinc-300 mt-1">{stats?.totalFolders || 0}</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">organizadas</p>
               </div>
-              <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-                <FolderOpen className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                <FolderOpen className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Sincronizadas</p>
-                <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.syncedFolders || 0}</p>
-                <p className="text-xs sm:text-[10px] text-zinc-400">com Google Drive</p>
+          <Card className="p-4 group hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all cursor-pointer">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide">Sincronizadas</p>
+                <p className="text-2xl font-semibold text-zinc-700 dark:text-zinc-300 mt-1">{stats?.syncedFolders || 0}</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">com Drive</p>
               </div>
-              <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-                <Link2 className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                <Link2 className="w-4 h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="group relative p-5 sm:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0 space-y-1">
-                <p className="text-xs sm:text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 transition-colors">Pendentes</p>
-                <p className="text-2xl sm:text-xl font-semibold text-zinc-700 dark:text-zinc-300">{stats?.pendingSync || 0}</p>
-                <p className="text-xs sm:text-[10px] text-zinc-400">a sincronizar</p>
+          <Card className="p-4 group hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all cursor-pointer">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide">Novos</p>
+                <p className="text-2xl font-semibold text-emerald-600 mt-1">{newFilesCount}</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">últimos 7 dias</p>
               </div>
-              <div className="w-11 h-11 sm:w-9 sm:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all">
-                <CheckCircle2 className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-500 group-hover:text-emerald-600 transition-colors" />
+              <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
               </div>
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Main Content */}
-        <div className="flex gap-6">
-          {/* Sidebar */}
-          <div className="hidden lg:block w-72 flex-shrink-0">
-            <Card className="overflow-hidden sticky top-4 rounded-xl">
-              <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+        <div className="flex gap-4 lg:gap-6">
+          {/* Sidebar - Hidden on mobile */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
+            <Card className="sticky top-4 overflow-hidden">
+              <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30">
                 <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
                   Pastas Sincronizadas
                 </h3>
               </div>
-              <div className="p-2">
+              <div className="p-2 max-h-[300px] overflow-y-auto">
                 {isLoadingFolders ? (
                   <div className="space-y-2">
                     {[1, 2, 3].map((i) => (
@@ -727,39 +847,36 @@ export default function DrivePage() {
                     {syncFolders.map((folder) => (
                       <button
                         key={folder.id}
-                        onClick={() => setSelectedFolderId(folder.driveFolderId)}
+                        onClick={() => {
+                          setSelectedFolderId(folder.driveFolderId);
+                          setNavigationStack([]);
+                        }}
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all",
-                          selectedFolderId === folder.driveFolderId || (!selectedFolderId && folder.id === syncFolders[0]?.id)
-                            ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-medium shadow-md"
+                          "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all",
+                          currentFolderId === folder.driveFolderId
+                            ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-medium"
                             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         )}
                       >
                         <FolderOpen className="w-4 h-4 flex-shrink-0" />
-                        <span className="flex-1 text-left truncate">{folder.name}</span>
+                        <span className="truncate">{folder.name}</span>
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-6 text-center text-sm text-zinc-500">
-                    <FolderOpen className="w-10 h-10 mx-auto mb-3 text-zinc-300 dark:text-zinc-600" />
-                    <p className="font-medium mb-1">Nenhuma pasta</p>
-                    <p className="text-xs text-zinc-400">Configure pastas para sincronizar</p>
-                    <Link href="/admin/settings/drive">
-                      <Button variant="link" size="sm" className="mt-3">
-                        Configurar
-                      </Button>
-                    </Link>
+                  <div className="p-4 text-center text-sm text-zinc-500">
+                    <FolderOpen className="w-8 h-8 mx-auto mb-2 text-zinc-300 dark:text-zinc-600" />
+                    <p className="text-xs">Nenhuma pasta sincronizada</p>
                   </div>
                 )}
               </div>
             </Card>
           </div>
 
-          {/* Main content */}
+          {/* File List */}
           <div className="flex-1 min-w-0">
             {/* Toolbar */}
-            <Card className="mb-4 p-3 rounded-xl">
+            <Card className="mb-4 p-3">
               <div className="flex items-center gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -767,17 +884,14 @@ export default function DrivePage() {
                     placeholder="Buscar arquivos..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 h-10 bg-zinc-50 dark:bg-zinc-800 border-0 rounded-xl"
+                    className="pl-9 h-10 bg-zinc-50 dark:bg-zinc-800 border-0"
                   />
                 </div>
-                <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
+                <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg flex-shrink-0">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn(
-                      "h-8 w-8 p-0 rounded-md",
-                      viewMode === "list" && "bg-white dark:bg-zinc-700 shadow-sm"
-                    )}
+                    className={cn("h-8 w-8 p-0 rounded-md", viewMode === "list" && "bg-white dark:bg-zinc-700 shadow-sm")}
                     onClick={() => setViewMode("list")}
                   >
                     <List className="w-4 h-4" />
@@ -785,10 +899,7 @@ export default function DrivePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn(
-                      "h-8 w-8 p-0 rounded-md",
-                      viewMode === "grid" && "bg-white dark:bg-zinc-700 shadow-sm"
-                    )}
+                    className={cn("h-8 w-8 p-0 rounded-md", viewMode === "grid" && "bg-white dark:bg-zinc-700 shadow-sm")}
                     onClick={() => setViewMode("grid")}
                   >
                     <LayoutGrid className="w-4 h-4" />
@@ -798,19 +909,23 @@ export default function DrivePage() {
             </Card>
 
             {/* Files */}
-            <Card className="rounded-xl overflow-hidden">
-              {/* Header da listagem */}
+            <Card className="overflow-hidden">
               <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex items-center justify-between">
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  {currentFolder?.name || "Arquivos"}
+                  {navigationStack.length > 0 ? navigationStack[navigationStack.length - 1].name : currentAtribuicao.label}
                 </span>
                 <span className="text-xs text-zinc-500">
                   {files.length} item{files.length !== 1 && 's'}
+                  {newFilesCount > 0 && (
+                    <Badge variant="secondary" className="ml-2 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px]">
+                      {newFilesCount} novo{newFilesCount !== 1 && 's'}
+                    </Badge>
+                  )}
                 </span>
               </div>
 
               {isLoadingFiles ? (
-                <div className="p-6 space-y-3">
+                <div className="p-4 space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
                     <Skeleton key={i} className="h-14 w-full rounded-lg" />
                   ))}
@@ -822,11 +937,11 @@ export default function DrivePage() {
                     Pasta vazia
                   </h3>
                   <p className="text-sm text-zinc-500 max-w-sm mx-auto">
-                    {currentFolderId ? "Esta pasta não contém arquivos sincronizados" : "Selecione uma pasta na barra lateral"}
+                    Esta pasta não contém arquivos sincronizados
                   </p>
                 </div>
               ) : viewMode === "list" ? (
-                <div>
+                <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {files
                     .filter(f => !searchTerm || f.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map((file) => (
@@ -834,14 +949,14 @@ export default function DrivePage() {
                         key={file.id || file.driveFileId}
                         file={{ ...file, id: file.driveFileId || file.id }}
                         viewMode="list"
-                        onPreview={() => file.webViewLink && window.open(file.webViewLink, "_blank")}
+                        onPreview={() => openPreview({ ...file, id: file.driveFileId || file.id })}
                         onDelete={() => deleteMutation.mutate({ fileId: file.driveFileId || file.id })}
                         onNavigate={navigateToFolder}
                       />
                     ))}
                 </div>
               ) : (
-                <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
                   {files
                     .filter(f => !searchTerm || f.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map((file) => (
@@ -849,7 +964,7 @@ export default function DrivePage() {
                         key={file.id || file.driveFileId}
                         file={{ ...file, id: file.driveFileId || file.id }}
                         viewMode="grid"
-                        onPreview={() => file.webViewLink && window.open(file.webViewLink, "_blank")}
+                        onPreview={() => openPreview({ ...file, id: file.driveFileId || file.id })}
                         onDelete={() => deleteMutation.mutate({ fileId: file.driveFileId || file.id })}
                         onNavigate={navigateToFolder}
                       />
@@ -860,6 +975,13 @@ export default function DrivePage() {
           </div>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      <PreviewModal
+        file={previewFile}
+        isOpen={isPreviewOpen}
+        onClose={closePreview}
+      />
     </div>
   );
 }
