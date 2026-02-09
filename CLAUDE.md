@@ -8,7 +8,7 @@
 .claude/
 ├── RULES.md              # Regras globais (sempre carregado)
 ├── AGENTS.md             # Documentação do projeto (sempre carregado)
-├── commands/             # Skills especializadas (21 skills)
+├── commands/             # Skills especializadas (22 skills)
 │   │
 │   │ # Desenvolvimento
 │   ├── commit.md             # /commit - Commits padronizados
@@ -33,6 +33,7 @@
 │   │
 │   │ # Publicação
 │   ├── deploy.md             # /deploy - Deploy para Vercel
+│   ├── merge-main-push.md    # /merge-main-push - Merge para main + deploy
 │   ├── pr-review.md          # /pr-review - Revisão de PR (gh)
 │   ├── update-docs.md        # /update-docs - Atualizar documentação
 │   │
@@ -55,6 +56,7 @@
 | "debug", "não funciona", "dá erro" | `/debug` |
 | "revisa esse código", "tá bom assim?" | `/code-review` |
 | "deploy", "publica", "vercel" | `/deploy` |
+| "merge main and push", "publica no main" | `/merge-main-push` |
 | "documenta isso", "atualiza a doc" | `/update-docs` |
 | "faz commit" | `/commit` |
 | "corrige estilo", "padrão defender" | `/fix-style` |
