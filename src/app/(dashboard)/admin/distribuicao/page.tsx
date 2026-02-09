@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +71,8 @@ import {
   ChevronUp,
   LayoutGrid,
   List,
+  CloudUpload,
+  File,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -128,6 +130,198 @@ type AtribuicaoType = keyof typeof ATRIBUICAO_CONFIG;
 // ==========================================
 // COMPONENTES
 // ==========================================
+
+// Componente de Upload Dropzone
+function UploadDropzone({
+  onUploadComplete,
+  isUploading,
+  setIsUploading,
+}: {
+  onUploadComplete: () => void;
+  isUploading: boolean;
+  setIsUploading: (value: boolean) => void;
+}) {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ name: string; progress: number }[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+
+      const files = Array.from(e.dataTransfer.files).filter(
+        (file) =>
+          file.type === "application/pdf" ||
+          file.type.startsWith("image/")
+      );
+
+      if (files.length === 0) {
+        toast.error("Por favor, arraste apenas arquivos PDF ou imagens.");
+        return;
+      }
+
+      await uploadFiles(files);
+    },
+    []
+  );
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      await uploadFiles(files);
+    }
+    // Reset input
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  };
+
+  const uploadFiles = async (files: File[]) => {
+    setIsUploading(true);
+    setUploadProgress(files.map((f) => ({ name: f.name, progress: 0 })));
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Atualizar progresso
+        setUploadProgress((prev) =>
+          prev.map((p, idx) =>
+            idx === i ? { ...p, progress: 10 } : p
+          )
+        );
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        setUploadProgress((prev) =>
+          prev.map((p, idx) =>
+            idx === i ? { ...p, progress: 50 } : p
+          )
+        );
+
+        const response = await fetch("/api/drive/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        setUploadProgress((prev) =>
+          prev.map((p, idx) =>
+            idx === i ? { ...p, progress: 90 } : p
+          )
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || `Erro ao enviar ${file.name}`);
+        }
+
+        setUploadProgress((prev) =>
+          prev.map((p, idx) =>
+            idx === i ? { ...p, progress: 100 } : p
+          )
+        );
+
+        toast.success(`${file.name} enviado com sucesso!`);
+      }
+
+      // Aguardar um pouco e atualizar a lista
+      setTimeout(() => {
+        onUploadComplete();
+        setUploadProgress([]);
+      }, 500);
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      toast.error(error instanceof Error ? error.message : "Erro no upload");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "relative border-2 border-dashed rounded-xl p-6 transition-all cursor-pointer",
+        "flex flex-col items-center justify-center gap-3 min-h-[160px]",
+        isDragOver
+          ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
+          : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 bg-white dark:bg-zinc-900"
+      )}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDragOver(true);
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+      }}
+      onDrop={handleDrop}
+      onClick={() => !isUploading && inputRef.current?.click()}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".pdf,image/*"
+        multiple
+        className="hidden"
+        onChange={handleFileSelect}
+        disabled={isUploading}
+      />
+
+      {isUploading ? (
+        <div className="w-full space-y-3">
+          {uploadProgress.map((file, idx) => (
+            <div key={idx} className="space-y-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="truncate max-w-[200px] text-zinc-700 dark:text-zinc-300">
+                  {file.name}
+                </span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                  {file.progress}%
+                </span>
+              </div>
+              <Progress value={file.progress} className="h-2" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          <div
+            className={cn(
+              "w-14 h-14 rounded-xl flex items-center justify-center",
+              isDragOver
+                ? "bg-emerald-500/20"
+                : "bg-zinc-100 dark:bg-zinc-800"
+            )}
+          >
+            <CloudUpload
+              className={cn(
+                "w-7 h-7",
+                isDragOver
+                  ? "text-emerald-500"
+                  : "text-zinc-400 dark:text-zinc-500"
+              )}
+            />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Arraste arquivos PDF aqui
+            </p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              ou clique para selecionar
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-zinc-400">
+            <File className="w-3.5 h-3.5" />
+            <span>PDF, PNG, JPG (max. 50MB)</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 function FileCard({
   file,
@@ -840,6 +1034,7 @@ export default function DistribuicaoPage() {
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
   const [viewMode, setViewMode] = useState<"split" | "list">("split");
+  const [isUploading, setIsUploading] = useState(false);
 
   // Queries
   const { data: pendingFiles, isLoading: isLoadingFiles, refetch: refetchFiles } =
@@ -1107,6 +1302,15 @@ export default function DistribuicaoPage() {
                 </TabsList>
 
                 <TabsContent value="pending" className="flex-1 overflow-auto m-0 pr-1">
+                  {/* Upload Dropzone */}
+                  <div className="mb-4">
+                    <UploadDropzone
+                      onUploadComplete={() => refetchFiles()}
+                      isUploading={isUploading}
+                      setIsUploading={setIsUploading}
+                    />
+                  </div>
+
                   {isLoadingFiles ? (
                     <div className="space-y-3">
                       {[1, 2, 3].map((i) => (
@@ -1242,6 +1446,13 @@ export default function DistribuicaoPage() {
                     </Badge>
                   )}
                 </div>
+
+                {/* Upload Dropzone */}
+                <UploadDropzone
+                  onUploadComplete={() => refetchFiles()}
+                  isUploading={isUploading}
+                  setIsUploading={setIsUploading}
+                />
 
                 {isLoadingFiles ? (
                   <div className="space-y-3">
