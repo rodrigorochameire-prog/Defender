@@ -10,6 +10,9 @@
 ├── AGENTS.md             # Documentação do projeto (sempre carregado)
 ├── commands/             # Skills especializadas (22 skills)
 │   │
+│   │ # Meta
+│   ├── tool-selection.md     # /tool-selection - CLI vs Browser (IMPORTANTE)
+│   │
 │   │ # Desenvolvimento
 │   ├── commit.md             # /commit - Commits padronizados
 │   ├── new-page.md           # /new-page - Criar página
@@ -46,6 +49,22 @@
 ├── mcp.json              # Configuração MCP (Supabase)
 └── settings.local.json   # Permissões locais
 ```
+
+## ⚠️ Regra de Ouro - Seleção de Ferramentas
+
+> **Para operações de backend/dados, usar CLI, scripts ou acesso direto ao banco.**
+> **MCP Chrome apenas para testar UX ou quando precisar interagir como usuário.**
+
+| Tarefa | Usar | NÃO Usar |
+|--------|------|----------|
+| Inserir/atualizar dados | `node -e`, SQL direto | Browser automation |
+| Deploy | `vercel --prod` | Clicar no Vercel Dashboard |
+| Env vars | `vercel env add` | Editar via UI |
+| Testar UX/layout | MCP Chrome | - |
+
+Detalhes: `/tool-selection`
+
+---
 
 ## Skills por Linguagem Natural
 
