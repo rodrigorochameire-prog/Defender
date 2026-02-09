@@ -64,6 +64,7 @@ import {
   Users,
   Scale,
   Gavel,
+  FolderSync,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -318,9 +319,13 @@ const SPECIAL_FOLDER_IDS = {
 
 function SuggestedFolders({
   onAdd,
+  onRegisterAll,
+  isRegistering,
   existingFolderIds = []
 }: {
   onAdd: (folder: { name: string; description: string; folderId: string }) => void;
+  onRegisterAll?: () => void;
+  isRegistering?: boolean;
   existingFolderIds?: string[];
 }) {
   const suggestions = [
@@ -379,13 +384,31 @@ function SuggestedFolders({
 
   return (
     <Card className="p-4 border-dashed">
-      <div className="mb-3">
-        <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Pastas de Atribuição
-        </h4>
-        <p className="text-xs text-zinc-500 mt-1">
-          Estrutura: Atribuição → Assistido → Processo → Documentos
-        </p>
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Pastas de Atribuição
+          </h4>
+          <p className="text-xs text-zinc-500 mt-1">
+            Estrutura: Atribuição → Assistido → Processo → Documentos
+          </p>
+        </div>
+        {onRegisterAll && availableSuggestions.length > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onRegisterAll}
+            disabled={isRegistering}
+            className="border-emerald-300 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+          >
+            {isRegistering ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <FolderSync className="w-4 h-4 mr-2" />
+            )}
+            Registrar Todas
+          </Button>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-2">
         {availableSuggestions.map((suggestion) => {
@@ -495,6 +518,24 @@ export default function DriveConfigPage() {
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao sincronizar");
+    },
+  });
+
+  const registerAllMutation = trpc.drive.registerAllAtribuicoes.useMutation({
+    onSuccess: (data) => {
+      const registered = data.results.filter(r => r.status === "registered").length;
+      const reactivated = data.results.filter(r => r.status === "reactivated").length;
+      const existing = data.results.filter(r => r.status === "already_exists").length;
+
+      if (registered > 0 || reactivated > 0) {
+        toast.success(`${registered + reactivated} pastas configuradas! (${existing} já existiam)`);
+      } else {
+        toast.info("Todas as pastas já estavam configuradas");
+      }
+      refetchFolders();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao registrar pastas");
     },
   });
 
@@ -682,6 +723,8 @@ export default function DriveConfigPage() {
           {/* Sugestões */}
           <SuggestedFolders
             onAdd={handleSuggestionClick}
+            onRegisterAll={() => registerAllMutation.mutate()}
+            isRegistering={registerAllMutation.isPending}
             existingFolderIds={syncFolders?.map(f => f.driveFolderId) || []}
           />
 

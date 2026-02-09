@@ -108,6 +108,63 @@ export const driveRouter = router({
     }),
 
   /**
+   * Registra todas as pastas de atribuição de uma vez
+   * Útil para configurar rapidamente o sistema
+   */
+  registerAllAtribuicoes: adminProcedure.mutation(async ({ ctx }) => {
+    const { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
+
+    const folders = [
+      { id: ATRIBUICAO_FOLDER_IDS.JURI, name: "Júri", description: "Assistidos da atribuição do Tribunal do Júri" },
+      { id: ATRIBUICAO_FOLDER_IDS.VVD, name: "VVD", description: "Violência e Vítimas Domésticas" },
+      { id: ATRIBUICAO_FOLDER_IDS.EP, name: "Execução Penal", description: "Assistidos em Execução Penal" },
+      { id: ATRIBUICAO_FOLDER_IDS.SUBSTITUICAO, name: "Substituição", description: "Substituição Criminal" },
+      { id: SPECIAL_FOLDER_IDS.DISTRIBUICAO, name: "Distribuição", description: "Pasta para distribuição de documentos" },
+    ];
+
+    const results = [];
+
+    for (const folder of folders) {
+      try {
+        // Verificar se já existe
+        const [existing] = await db
+          .select()
+          .from(driveSyncFolders)
+          .where(eq(driveSyncFolders.driveFolderId, folder.id))
+          .limit(1);
+
+        if (existing) {
+          // Reativar se estiver inativo
+          if (!existing.isActive) {
+            await db
+              .update(driveSyncFolders)
+              .set({ isActive: true, updatedAt: new Date() })
+              .where(eq(driveSyncFolders.id, existing.id));
+            results.push({ name: folder.name, status: "reactivated" });
+          } else {
+            results.push({ name: folder.name, status: "already_exists" });
+          }
+        } else {
+          // Registrar nova pasta
+          const result = await registerSyncFolder(
+            folder.id,
+            folder.name,
+            folder.description,
+            "bidirectional",
+            ctx.user.id
+          );
+          results.push({ name: folder.name, status: result.success ? "registered" : "failed" });
+        }
+      } catch (error) {
+        console.error(`Erro ao registrar pasta ${folder.name}:`, error);
+        results.push({ name: folder.name, status: "error" });
+      }
+    }
+
+    return { results };
+  }),
+
+  /**
    * Remove uma pasta da sincronização
    */
   removeFolder: adminProcedure
