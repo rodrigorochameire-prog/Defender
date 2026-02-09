@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, driveFiles, driveSyncFolders, driveSyncLogs } from "@/lib/db";
-import { eq, and, desc, sql, isNull, or, like } from "drizzle-orm";
+import { eq, and, desc, sql, isNull, or, like, not } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
   listFilesInFolder,
@@ -34,7 +34,7 @@ import {
   unlinkFile,
   detectProcessoByFolderName,
 } from "@/lib/services/google-drive";
-import { processos, assistidos, casos } from "@/lib/db/schema";
+import { processos, assistidos, casos, demandas } from "@/lib/db/schema";
 
 export const driveRouter = router({
   /**
@@ -1072,5 +1072,320 @@ export const driveRouter = router({
 
         return results;
       }, "Erro ao buscar assistidos");
+    }),
+
+  /**
+   * Busca assistido pelo nome da pasta (para sidebar contextual)
+   */
+  getAssistidoByFolderName: protectedProcedure
+    .input(z.object({ folderName: z.string() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        // Busca fuzzy pelo nome - a pasta geralmente tem o nome do assistido
+        const normalizedName = input.folderName.trim().toLowerCase();
+
+        // Buscar assistido que tenha nome similar
+        const results = await db
+          .select({
+            id: assistidos.id,
+            nome: assistidos.nome,
+            cpf: assistidos.cpf,
+            statusPrisional: assistidos.statusPrisional,
+            localPrisao: assistidos.localPrisao,
+            telefone: assistidos.telefone,
+            telefoneContato: assistidos.telefoneContato,
+            nomeContato: assistidos.nomeContato,
+            photoUrl: assistidos.photoUrl,
+            driveFolderId: assistidos.driveFolderId,
+          })
+          .from(assistidos)
+          .where(
+            or(
+              // Match exato (case insensitive)
+              sql`LOWER(${assistidos.nome}) = ${normalizedName}`,
+              // Match parcial
+              sql`LOWER(${assistidos.nome}) LIKE ${`%${normalizedName}%`}`,
+              // Nome da pasta pode ser parte do nome
+              sql`${normalizedName} LIKE '%' || LOWER(${assistidos.nome}) || '%'`
+            )
+          )
+          .limit(1);
+
+        if (results.length === 0) return null;
+
+        const assistido = results[0];
+
+        // Buscar processos do assistido
+        const processosResult = await db
+          .select({
+            id: processos.id,
+            numero: processos.numero,
+            status: processos.status,
+            vara: processos.vara,
+            tipoAcao: processos.tipoAcao,
+          })
+          .from(processos)
+          .where(eq(processos.assistidoId, assistido.id))
+          .limit(5);
+
+        // Buscar próximas demandas
+        const demandasResult = await db
+          .select({
+            id: demandas.id,
+            ato: demandas.ato,
+            prazoFatal: demandas.prazoFatal,
+            status: demandas.status,
+            prioridade: demandas.prioridade,
+          })
+          .from(demandas)
+          .where(
+            and(
+              eq(demandas.assistidoId, assistido.id),
+              not(eq(demandas.status, "CONCLUIDO")),
+              not(eq(demandas.status, "ARQUIVADO"))
+            )
+          )
+          .orderBy(demandas.prazoFatal)
+          .limit(3);
+
+        return {
+          ...assistido,
+          processos: processosResult,
+          demandas: demandasResult,
+        };
+      }, "Erro ao buscar assistido");
+    }),
+
+  /**
+   * Atualiza tags de um arquivo
+   */
+  updateFileTags: protectedProcedure
+    .input(z.object({
+      fileId: z.number(),
+      tags: z.array(z.string()),
+    }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        await db
+          .update(driveFiles)
+          .set({
+            description: JSON.stringify({ tags: input.tags }),
+            updatedAt: new Date(),
+          })
+          .where(eq(driveFiles.id, input.fileId));
+
+        return { success: true };
+      }, "Erro ao atualizar tags");
+    }),
+
+  /**
+   * Busca arquivos com filtro por tags
+   */
+  filesWithTags: protectedProcedure
+    .input(z.object({
+      folderId: z.string(),
+      tags: z.array(z.string()).optional(),
+      limit: z.number().default(100),
+    }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        let query = db
+          .select()
+          .from(driveFiles)
+          .where(eq(driveFiles.driveFolderId, input.folderId))
+          .limit(input.limit);
+
+        const files = await query;
+
+        // Filtrar por tags se especificado
+        if (input.tags && input.tags.length > 0) {
+          return files.filter(file => {
+            try {
+              const desc = JSON.parse(file.description || '{}');
+              const fileTags = desc.tags || [];
+              return input.tags!.some(tag => fileTags.includes(tag));
+            } catch {
+              return false;
+            }
+          });
+        }
+
+        return files;
+      }, "Erro ao buscar arquivos com tags");
+    }),
+
+  /**
+   * Timeline de documentos (ordenados por data)
+   */
+  timeline: protectedProcedure
+    .input(z.object({
+      folderId: z.string(),
+      assistidoId: z.number().optional(),
+      processoId: z.number().optional(),
+    }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        let conditions = [
+          eq(driveFiles.driveFolderId, input.folderId),
+          eq(driveFiles.isFolder, false), // Apenas arquivos, não pastas
+        ];
+
+        if (input.assistidoId) {
+          conditions.push(eq(driveFiles.assistidoId, input.assistidoId));
+        }
+
+        if (input.processoId) {
+          conditions.push(eq(driveFiles.processoId, input.processoId));
+        }
+
+        const files = await db
+          .select()
+          .from(driveFiles)
+          .where(and(...conditions))
+          .orderBy(desc(driveFiles.lastModifiedTime));
+
+        // Agrupar por mês/ano
+        const grouped: Record<string, typeof files> = {};
+
+        for (const file of files) {
+          const date = file.lastModifiedTime || file.createdAt;
+          const key = date
+            ? new Date(date).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long' })
+            : 'Sem data';
+
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(file);
+        }
+
+        return {
+          files,
+          grouped,
+          total: files.length,
+        };
+      }, "Erro ao buscar timeline");
+    }),
+
+  /**
+   * Estatísticas detalhadas por atribuição
+   */
+  statsDetailed: protectedProcedure
+    .input(z.object({ folderId: z.string().optional() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        // Total de arquivos
+        const [totalResult] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(driveFiles)
+          .where(input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined);
+
+        // Arquivos por tipo
+        const byType = await db
+          .select({
+            mimeType: driveFiles.mimeType,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(driveFiles)
+          .where(
+            and(
+              input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined,
+              eq(driveFiles.isFolder, false)
+            )
+          )
+          .groupBy(driveFiles.mimeType);
+
+        // Arquivos novos (últimos 7 dias)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const [newFilesResult] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(driveFiles)
+          .where(
+            and(
+              input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined,
+              sql`${driveFiles.lastModifiedTime} > ${sevenDaysAgo}`
+            )
+          );
+
+        // Arquivos por pasta (top 10)
+        const byFolder = await db
+          .select({
+            parentFileId: driveFiles.parentFileId,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(driveFiles)
+          .where(
+            and(
+              input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined,
+              sql`${driveFiles.parentFileId} IS NOT NULL`
+            )
+          )
+          .groupBy(driveFiles.parentFileId)
+          .orderBy(desc(sql`count(*)`))
+          .limit(10);
+
+        // Tamanho total
+        const [sizeResult] = await db
+          .select({ total: sql<number>`COALESCE(SUM(${driveFiles.fileSize}), 0)::bigint` })
+          .from(driveFiles)
+          .where(input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined);
+
+        // Categorizar tipos de arquivos
+        const categories: Record<string, number> = {
+          pdf: 0,
+          document: 0,
+          image: 0,
+          audio: 0,
+          video: 0,
+          other: 0,
+        };
+
+        for (const item of byType) {
+          const mime = item.mimeType?.toLowerCase() || '';
+          if (mime.includes('pdf')) categories.pdf += item.count;
+          else if (mime.includes('document') || mime.includes('word') || mime.includes('text')) categories.document += item.count;
+          else if (mime.includes('image')) categories.image += item.count;
+          else if (mime.includes('audio')) categories.audio += item.count;
+          else if (mime.includes('video')) categories.video += item.count;
+          else categories.other += item.count;
+        }
+
+        return {
+          totalFiles: totalResult?.count || 0,
+          newFiles: newFilesResult?.count || 0,
+          totalSize: Number(sizeResult?.total || 0),
+          byCategory: categories,
+          topFolders: byFolder,
+        };
+      }, "Erro ao buscar estatísticas");
+    }),
+
+  /**
+   * Vincular arquivo a assistido/processo
+   */
+  linkFileToEntity: protectedProcedure
+    .input(z.object({
+      fileId: z.number(),
+      assistidoId: z.number().optional(),
+      processoId: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const updates: any = { updatedAt: new Date() };
+
+        if (input.assistidoId !== undefined) {
+          updates.assistidoId = input.assistidoId;
+        }
+        if (input.processoId !== undefined) {
+          updates.processoId = input.processoId;
+        }
+
+        await db
+          .update(driveFiles)
+          .set(updates)
+          .where(eq(driveFiles.id, input.fileId));
+
+        return { success: true };
+      }, "Erro ao vincular arquivo");
     }),
 });
