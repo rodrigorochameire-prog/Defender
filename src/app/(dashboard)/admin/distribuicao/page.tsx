@@ -354,6 +354,20 @@ function ProcessoExistenteCard({
   );
 }
 
+// Tipos de processo para seleção
+type TipoProcesso = "AP" | "IP" | "APF" | "CAUTELAR" | "EP" | "MPU" | "ANPP" | "OUTRO";
+
+const TIPO_PROCESSO_CONFIG: Record<TipoProcesso, { label: string; description: string; isDependente: boolean }> = {
+  AP: { label: "Ação Penal", description: "Processo principal", isDependente: false },
+  IP: { label: "Inquérito Policial", description: "Vinculado à AP", isDependente: true },
+  APF: { label: "Auto de Prisão em Flagrante", description: "Vinculado à AP", isDependente: true },
+  CAUTELAR: { label: "Medida Cautelar", description: "Vinculado à AP", isDependente: true },
+  EP: { label: "Execução Penal", description: "Processo independente", isDependente: false },
+  MPU: { label: "Medida Protetiva", description: "Lei Maria da Penha", isDependente: false },
+  ANPP: { label: "ANPP", description: "Acordo de Não Persecução", isDependente: false },
+  OUTRO: { label: "Outro", description: "Tipo não classificado", isDependente: false },
+};
+
 // Card de Dados Extraídos com melhor layout
 function ExtractedDataCard({
   data,
@@ -377,6 +391,8 @@ function ExtractedDataCard({
     tipoDocumento?: string | null;
     dataDocumento?: string | null;
     resumo?: string | null;
+    tipoProcesso?: TipoProcesso | null;
+    apRelacionada?: string | null;
   };
   processoExistente: {
     id: number;
@@ -390,6 +406,8 @@ function ExtractedDataCard({
     atribuicao: AtribuicaoType;
     assistidoNome: string;
     numeroProcesso: string;
+    tipoProcesso: TipoProcesso;
+    apRelacionada?: string | null;
   }) => void;
   onCancel: () => void;
   onLinkToProcesso: (processoId: number) => void;
@@ -397,6 +415,8 @@ function ExtractedDataCard({
     atribuicao: AtribuicaoType;
     assistidoNome: string;
     numeroProcesso: string;
+    tipoProcesso: TipoProcesso;
+    apRelacionada?: string | null;
   }) => void;
   isLoading: boolean;
   showCreateDemanda: boolean;
@@ -410,10 +430,18 @@ function ExtractedDataCard({
   const [numeroProcesso, setNumeroProcesso] = useState(
     data.numeroProcesso || ""
   );
+  const [tipoProcesso, setTipoProcesso] = useState<TipoProcesso>(
+    data.tipoProcesso || "OUTRO"
+  );
+  const [apRelacionada, setApRelacionada] = useState<string>(
+    data.apRelacionada || ""
+  );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [ignoreExistingProcesso, setIgnoreExistingProcesso] = useState(false);
 
   const atribConfig = ATRIBUICAO_CONFIG[selectedAtribuicao];
+  const tipoConfig = TIPO_PROCESSO_CONFIG[tipoProcesso];
+  const isDependente = tipoConfig.isDependente;
 
   // Verificar se todos os campos obrigatórios estão preenchidos
   const canSubmit = selectedAssistido.trim() && numeroProcesso.trim();
@@ -523,6 +551,64 @@ function ExtractedDataCard({
 
           {/* Formulário de Confirmação */}
           <div className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+            {/* Tipo de Processo */}
+            <div className="space-y-2">
+              <Label className="text-xs flex items-center gap-2">
+                <Briefcase className="w-3.5 h-3.5" />
+                Tipo de Processo
+              </Label>
+              <Select
+                value={tipoProcesso}
+                onValueChange={(v) => setTipoProcesso(v as TipoProcesso)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(TIPO_PROCESSO_CONFIG).map(([key, config]) => (
+                    <SelectItem key={key} value={key}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{config.label}</span>
+                        <span className="text-xs text-zinc-500">
+                          ({config.description})
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Alerta se for tipo dependente */}
+              {isDependente && (
+                <div className="flex items-start gap-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs">
+                    Este tipo de processo será vinculado a uma Ação Penal.
+                    {apRelacionada
+                      ? ` Será colocado dentro da AP ${apRelacionada}.`
+                      : " Se não houver AP, ficará avulso até uma AP ser criada."
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* AP Relacionada (apenas para tipos dependentes) */}
+            {isDependente && (
+              <div className="space-y-2">
+                <Label className="text-xs">Número da AP Relacionada (opcional)</Label>
+                <Input
+                  value={apRelacionada}
+                  onChange={(e) => setApRelacionada(e.target.value)}
+                  placeholder="0000000-00.0000.0.00.0000"
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-zinc-500">
+                  Se souber o número da Ação Penal, informe aqui para vincular automaticamente.
+                </p>
+              </div>
+            )}
+
             {/* Atribuição */}
             <div className="space-y-2">
               <Label className="text-xs">Atribuição</Label>
@@ -612,6 +698,8 @@ function ExtractedDataCard({
                     atribuicao: selectedAtribuicao,
                     assistidoNome: selectedAssistido,
                     numeroProcesso,
+                    tipoProcesso,
+                    apRelacionada: apRelacionada || null,
                   })
                 }
                 disabled={isLoading || !canSubmit}
@@ -633,6 +721,8 @@ function ExtractedDataCard({
                     atribuicao: selectedAtribuicao,
                     assistidoNome: selectedAssistido,
                     numeroProcesso,
+                    tipoProcesso,
+                    apRelacionada: apRelacionada || null,
                   })
                 }
                 disabled={isLoading || !canSubmit}
@@ -735,6 +825,8 @@ export default function DistribuicaoPage() {
     atribuicao: AtribuicaoType;
     assistidoNome: string;
     numeroProcesso: string;
+    tipoProcesso: TipoProcesso;
+    apRelacionada?: string | null;
     createDemanda?: boolean;
   } | null>(null);
   const [processoExistente, setProcessoExistente] = useState<{
@@ -832,6 +924,8 @@ export default function DistribuicaoPage() {
     atribuicao: AtribuicaoType;
     assistidoNome: string;
     numeroProcesso: string;
+    tipoProcesso: TipoProcesso;
+    apRelacionada?: string | null;
   }, createDemanda = false) => {
     // Buscar assistidos similares
     const similar = await searchSimilarMutation.mutateAsync({

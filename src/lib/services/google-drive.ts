@@ -2148,6 +2148,14 @@ import {
   toTitleCase,
 } from "@/lib/utils/text-extraction";
 
+import type { TipoProcesso } from "./gemini";
+
+// Tipos dependentes (vão dentro de uma AP)
+const TIPOS_DEPENDENTES: TipoProcesso[] = ["IP", "APF", "CAUTELAR"];
+
+// Tipos independentes (ficam no nível raiz do assistido)
+const TIPOS_INDEPENDENTES: TipoProcesso[] = ["AP", "EP", "MPU", "ANPP", "OUTRO"];
+
 /**
  * Busca uma pasta por nome dentro de um parent folder
  */
@@ -2487,4 +2495,314 @@ export async function listAssistidoFoldersWithCount(
   );
 
   return foldersWithCount;
+}
+
+// ==========================================
+// DISTRIBUIÇÃO INTELIGENTE - HIERARQUIA AP
+// ==========================================
+
+/**
+ * Formata nome da pasta do processo com prefixo do tipo
+ *
+ * @example
+ * formatProcessoFolderName("AP", "0000123-45.2024.8.05.0047") // "AP 0000123-45.2024.8.05.0047"
+ * formatProcessoFolderName("EP", "0000456-78.2024.8.05.0047") // "EP 0000456-78.2024.8.05.0047"
+ */
+export function formatProcessoFolderName(
+  tipoProcesso: TipoProcesso,
+  numeroProcesso: string
+): string {
+  // Para tipos independentes, usar prefixo
+  if (TIPOS_INDEPENDENTES.includes(tipoProcesso)) {
+    return `${tipoProcesso} ${numeroProcesso}`;
+  }
+  // Para tipos dependentes dentro de AP, não usar prefixo no número
+  return numeroProcesso;
+}
+
+/**
+ * Busca pasta de AP existente pelo número no assistido
+ */
+export async function findApFolderByNumber(
+  assistidoFolderId: string,
+  apNumber: string
+): Promise<DriveFolder | null> {
+  const folders = await listSubfolders(assistidoFolderId);
+
+  // Buscar pasta que começa com "AP " e contém o número
+  for (const folder of folders) {
+    if (folder.name.startsWith("AP ") && folder.name.includes(apNumber)) {
+      return folder;
+    }
+    // Também buscar por número exato (caso antigo)
+    if (folder.name === apNumber || folder.name.includes(apNumber)) {
+      return folder;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Lista processos avulsos (IP/APF/Cautelares sem AP vinculada) de um assistido
+ */
+export async function listProcessosAvulsos(
+  assistidoFolderId: string
+): Promise<Array<DriveFolder & { tipoProcesso: TipoProcesso }>> {
+  const folders = await listSubfolders(assistidoFolderId);
+  const avulsos: Array<DriveFolder & { tipoProcesso: TipoProcesso }> = [];
+
+  for (const folder of folders) {
+    const name = folder.name.toUpperCase();
+
+    // Identificar tipo pelo prefixo ou padrão
+    let tipoProcesso: TipoProcesso | null = null;
+
+    if (name.startsWith("IP ") || name.includes("INQUÉRITO") || name.includes("INQUERITO")) {
+      tipoProcesso = "IP";
+    } else if (name.startsWith("APF ") || name.includes("FLAGRANTE")) {
+      tipoProcesso = "APF";
+    } else if (name.includes("CAUTELAR") || name.includes("PREVENTIVA") || name.includes("TEMPORÁRIA")) {
+      tipoProcesso = "CAUTELAR";
+    }
+
+    // Se é um tipo dependente no nível raiz, é avulso
+    if (tipoProcesso && TIPOS_DEPENDENTES.includes(tipoProcesso)) {
+      avulsos.push({
+        ...folder,
+        tipoProcesso,
+      });
+    }
+  }
+
+  return avulsos;
+}
+
+/**
+ * Move uma pasta de processo avulso para dentro de uma AP
+ */
+export async function moveProcessoToAp(
+  processoFolderId: string,
+  apFolderId: string,
+  tipoProcesso: TipoProcesso
+): Promise<DriveFolder | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    // Primeiro, obter info da pasta para saber parent atual
+    const infoResponse = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${processoFolderId}?fields=id,name,parents`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!infoResponse.ok) return null;
+    const info = await infoResponse.json();
+
+    // Criar subpasta do tipo dentro da AP se não existir
+    let tipoFolder = await searchFolderByName(tipoProcesso, apFolderId);
+    if (!tipoFolder) {
+      tipoFolder = await createFolder(tipoProcesso, apFolderId);
+    }
+    if (!tipoFolder) return null;
+
+    // Mover a pasta do processo para dentro da pasta do tipo
+    const currentParent = info.parents?.[0];
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${processoFolderId}?addParents=${tipoFolder.id}&removeParents=${currentParent}&fields=id,name,webViewLink`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error("Erro ao mover processo para AP:", error);
+    return null;
+  }
+}
+
+/**
+ * Cria pasta do processo com estrutura hierárquica inteligente
+ *
+ * - AP, EP, MPU, ANPP: pasta no nível raiz do assistido com prefixo
+ * - IP, APF, Cautelar: subpasta dentro da AP relacionada (ou avulso se não houver AP)
+ */
+export async function createOrFindProcessoFolderHierarchical(
+  assistidoFolderId: string,
+  numeroProcesso: string,
+  tipoProcesso: TipoProcesso,
+  apRelacionada?: string | null
+): Promise<{
+  folder: DriveFolder | null;
+  isAvulso: boolean;
+  apFolder?: DriveFolder | null;
+}> {
+  // 1. Se é tipo independente, criar no nível raiz
+  if (TIPOS_INDEPENDENTES.includes(tipoProcesso)) {
+    const folderName = formatProcessoFolderName(tipoProcesso, numeroProcesso);
+
+    // Buscar existente
+    let folder = await searchFolderByName(folderName, assistidoFolderId);
+
+    // Também buscar sem prefixo (compatibilidade com pastas antigas)
+    if (!folder) {
+      folder = await searchFolderByName(numeroProcesso, assistidoFolderId);
+    }
+
+    // Criar se não existe
+    if (!folder) {
+      folder = await createFolder(folderName, assistidoFolderId);
+    }
+
+    return { folder, isAvulso: false };
+  }
+
+  // 2. É tipo dependente (IP, APF, Cautelar) - tentar encontrar AP relacionada
+  let apFolder: DriveFolder | null = null;
+
+  if (apRelacionada) {
+    apFolder = await findApFolderByNumber(assistidoFolderId, apRelacionada);
+  }
+
+  // 3. Se encontrou AP, criar subpasta dentro dela
+  if (apFolder) {
+    // Criar pasta do tipo (IP, APF, CAUTELAR) dentro da AP
+    let tipoFolder = await searchFolderByName(tipoProcesso, apFolder.id);
+    if (!tipoFolder) {
+      tipoFolder = await createFolder(tipoProcesso, apFolder.id);
+    }
+
+    if (tipoFolder) {
+      // Criar pasta do processo dentro da pasta do tipo
+      let processoFolder = await searchFolderByName(numeroProcesso, tipoFolder.id);
+      if (!processoFolder) {
+        processoFolder = await createFolder(numeroProcesso, tipoFolder.id);
+      }
+
+      return { folder: processoFolder, isAvulso: false, apFolder };
+    }
+  }
+
+  // 4. Não encontrou AP - criar como avulso no nível raiz com prefixo
+  const folderName = `${tipoProcesso} ${numeroProcesso}`;
+  let folder = await searchFolderByName(folderName, assistidoFolderId);
+  if (!folder) {
+    folder = await createFolder(folderName, assistidoFolderId);
+  }
+
+  return { folder, isAvulso: true };
+}
+
+/**
+ * Distribuição inteligente com hierarquia AP → dependentes
+ *
+ * Fluxo:
+ * 1. Cria/encontra pasta do assistido
+ * 2. Determina estrutura baseado no tipo de processo
+ * 3. Move arquivo para pasta correta
+ * 4. Se criou AP nova, busca processos avulsos para sugerir vinculação
+ */
+export async function distributeFileIntelligent(
+  fileId: string,
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO",
+  nomeAssistido: string,
+  numeroProcesso: string,
+  tipoProcesso: TipoProcesso,
+  apRelacionada?: string | null
+): Promise<{
+  success: boolean;
+  assistidoFolder: DriveFolder | null;
+  processoFolder: DriveFolder | null;
+  movedFile: DriveFileInfo | null;
+  isAvulso: boolean;
+  apFolder?: DriveFolder | null;
+  processosAvulsos?: Array<DriveFolder & { tipoProcesso: TipoProcesso }>;
+  error?: string;
+}> {
+  try {
+    // 1. Criar ou encontrar pasta do assistido
+    const assistidoFolder = await createOrFindAssistidoFolder(
+      atribuicao,
+      nomeAssistido
+    );
+    if (!assistidoFolder) {
+      return {
+        success: false,
+        assistidoFolder: null,
+        processoFolder: null,
+        movedFile: null,
+        isAvulso: false,
+        error: "Não foi possível criar pasta do assistido",
+      };
+    }
+
+    // 2. Criar pasta do processo com hierarquia inteligente
+    const { folder: processoFolder, isAvulso, apFolder } =
+      await createOrFindProcessoFolderHierarchical(
+        assistidoFolder.id,
+        numeroProcesso,
+        tipoProcesso,
+        apRelacionada
+      );
+
+    if (!processoFolder) {
+      return {
+        success: false,
+        assistidoFolder,
+        processoFolder: null,
+        movedFile: null,
+        isAvulso: false,
+        error: "Não foi possível criar pasta do processo",
+      };
+    }
+
+    // 3. Mover arquivo
+    const movedFile = await distributeFileToPasta(fileId, processoFolder.id);
+    if (!movedFile) {
+      return {
+        success: false,
+        assistidoFolder,
+        processoFolder,
+        movedFile: null,
+        isAvulso,
+        apFolder,
+        error: "Não foi possível mover o arquivo",
+      };
+    }
+
+    // 4. Se criou uma AP nova, buscar processos avulsos para sugerir vinculação
+    let processosAvulsos: Array<DriveFolder & { tipoProcesso: TipoProcesso }> = [];
+    if (tipoProcesso === "AP") {
+      processosAvulsos = await listProcessosAvulsos(assistidoFolder.id);
+    }
+
+    return {
+      success: true,
+      assistidoFolder,
+      processoFolder,
+      movedFile,
+      isAvulso,
+      apFolder,
+      processosAvulsos,
+    };
+  } catch (error) {
+    console.error("Erro na distribuição inteligente:", error);
+    return {
+      success: false,
+      assistidoFolder: null,
+      processoFolder: null,
+      movedFile: null,
+      isAvulso: false,
+      error: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
 }

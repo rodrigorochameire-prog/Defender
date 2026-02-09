@@ -567,6 +567,23 @@ Responda APENAS com o JSON válido, sem texto adicional.
 // EXTRAÇÃO DE DADOS DE PDF JURÍDICO (Vision)
 // ==========================================
 
+// Tipos de processo para distribuição hierárquica
+export type TipoProcesso =
+  | "AP"        // Ação Penal - principal, agrupa dependentes
+  | "IP"        // Inquérito Policial - dependente da AP
+  | "APF"       // Auto de Prisão em Flagrante - dependente da AP
+  | "CAUTELAR"  // Medidas cautelares - dependente da AP
+  | "EP"        // Execução Penal - independente
+  | "MPU"       // Medida Protetiva de Urgência - independente
+  | "ANPP"      // Acordo de Não Persecução Penal - independente
+  | "OUTRO";    // Outros tipos
+
+// Tipos dependentes (vão dentro de uma AP)
+export const TIPOS_DEPENDENTES: TipoProcesso[] = ["IP", "APF", "CAUTELAR"];
+
+// Tipos independentes (ficam no nível raiz do assistido)
+export const TIPOS_INDEPENDENTES: TipoProcesso[] = ["AP", "EP", "MPU", "ANPP", "OUTRO"];
+
 export interface ExtracaoPdfResult {
   success: boolean;
   numeroProcesso: string | null;
@@ -577,6 +594,9 @@ export interface ExtracaoPdfResult {
   tipoDocumento: string | null;
   dataDocumento: string | null;
   resumo: string | null;
+  // Novos campos para distribuição inteligente
+  tipoProcesso: TipoProcesso | null;
+  apRelacionada: string | null; // Número da AP relacionada (se IP/APF/Cautelar)
   textoCompleto?: string;
   tokensUtilizados?: number;
   error?: string;
@@ -605,6 +625,8 @@ export async function extrairDadosPdfJuridico(
         tipoDocumento: null,
         dataDocumento: null,
         resumo: null,
+        tipoProcesso: null,
+        apRelacionada: null,
         error: "Gemini API não está configurada",
       };
     }
@@ -669,6 +691,29 @@ Extraia a data principal do documento no formato DD/MM/YYYY.
 ### 8. RESUMO
 Faça um resumo de 2-3 frases do conteúdo do documento.
 
+### 9. TIPO DO PROCESSO (MUITO IMPORTANTE!)
+Classifique o tipo do processo com base na classe da demanda e contexto:
+
+| Tipo | Quando usar |
+|------|-------------|
+| AP | Ação Penal, Ação Penal Pública, Denúncia |
+| IP | Inquérito Policial, Relatório de Inquérito |
+| APF | Auto de Prisão em Flagrante |
+| CAUTELAR | Prisão Preventiva, Prisão Temporária, Busca e Apreensão, Interceptação, Medidas Cautelares Diversas |
+| EP | Execução Penal, Guia de Execução, PEC (Processo de Execução Criminal) |
+| MPU | Medida Protetiva de Urgência (Lei Maria da Penha) |
+| ANPP | Acordo de Não Persecução Penal |
+| OUTRO | Qualquer outro tipo não listado |
+
+### 10. AÇÃO PENAL RELACIONADA (APENAS para IP, APF ou CAUTELAR)
+Se o documento for um IP, APF ou CAUTELAR, busque referências a uma Ação Penal relacionada:
+- "Referente à Ação Penal nº ..."
+- "Autos da AP ..."
+- "... originário da Ação Penal ..."
+- Menção a número de processo que seja uma AP
+
+Retorne o número da AP relacionada se encontrar, ou null se não encontrar.
+
 ## FORMATO DE RESPOSTA
 Responda APENAS com JSON válido, sem markdown ou texto adicional:
 
@@ -682,7 +727,9 @@ Responda APENAS com JSON válido, sem markdown ou texto adicional:
   ],
   "tipoDocumento": "string ou null",
   "dataDocumento": "DD/MM/YYYY ou null",
-  "resumo": "string ou null"
+  "resumo": "string ou null",
+  "tipoProcesso": "AP|IP|APF|CAUTELAR|EP|MPU|ANPP|OUTRO",
+  "apRelacionada": "número da AP relacionada ou null"
 }
 `;
 
@@ -712,6 +759,31 @@ Responda APENAS com JSON válido, sem markdown ou texto adicional:
     try {
       const parsed = JSON.parse(jsonStr);
 
+      // Validar tipoProcesso
+      const tiposValidos: TipoProcesso[] = ["AP", "IP", "APF", "CAUTELAR", "EP", "MPU", "ANPP", "OUTRO"];
+      let tipoProcesso: TipoProcesso | null = null;
+      if (parsed.tipoProcesso && tiposValidos.includes(parsed.tipoProcesso)) {
+        tipoProcesso = parsed.tipoProcesso as TipoProcesso;
+      } else if (parsed.classeDemanda) {
+        // Tentar inferir do classeDemanda
+        const classe = parsed.classeDemanda.toUpperCase();
+        if (classe.includes("AÇÃO PENAL") || classe.includes("DENUNCIA") || classe.includes("DENÚNCIA")) {
+          tipoProcesso = "AP";
+        } else if (classe.includes("INQUÉRITO") || classe.includes("INQUERITO")) {
+          tipoProcesso = "IP";
+        } else if (classe.includes("FLAGRANTE") || classe.includes("APF")) {
+          tipoProcesso = "APF";
+        } else if (classe.includes("EXECUÇÃO") || classe.includes("EXECUCAO") || classe.includes("PEC") || classe.includes("GUIA")) {
+          tipoProcesso = "EP";
+        } else if (classe.includes("PROTETIVA") || classe.includes("MARIA DA PENHA") || classe.includes("MPU")) {
+          tipoProcesso = "MPU";
+        } else if (classe.includes("ANPP") || classe.includes("NÃO PERSECUÇÃO") || classe.includes("NAO PERSECUCAO")) {
+          tipoProcesso = "ANPP";
+        } else if (classe.includes("CAUTELAR") || classe.includes("PREVENTIVA") || classe.includes("TEMPORÁRIA") || classe.includes("TEMPORARIA")) {
+          tipoProcesso = "CAUTELAR";
+        }
+      }
+
       return {
         success: true,
         numeroProcesso: parsed.numeroProcesso || null,
@@ -725,6 +797,8 @@ Responda APENAS com JSON válido, sem markdown ou texto adicional:
         tipoDocumento: parsed.tipoDocumento || null,
         dataDocumento: parsed.dataDocumento || null,
         resumo: parsed.resumo || null,
+        tipoProcesso,
+        apRelacionada: parsed.apRelacionada || null,
         tokensUtilizados: response.usageMetadata?.totalTokenCount,
       };
     } catch (parseError) {
@@ -741,6 +815,8 @@ Responda APENAS com JSON válido, sem markdown ou texto adicional:
         tipoDocumento: null,
         dataDocumento: null,
         resumo: null,
+        tipoProcesso: null,
+        apRelacionada: null,
         textoCompleto: responseText,
         error: "Não foi possível estruturar a resposta do Gemini",
       };
@@ -757,6 +833,8 @@ Responda APENAS com JSON válido, sem markdown ou texto adicional:
       tipoDocumento: null,
       dataDocumento: null,
       resumo: null,
+      tipoProcesso: null,
+      apRelacionada: null,
       error: error instanceof Error ? error.message : "Erro desconhecido na extração",
     };
   }
@@ -789,6 +867,8 @@ export async function extrairDadosPdfDoDrive(
         tipoDocumento: null,
         dataDocumento: null,
         resumo: null,
+        tipoProcesso: null,
+        apRelacionada: null,
         error: "Não foi possível baixar o arquivo do Drive",
       };
     }
@@ -810,6 +890,8 @@ export async function extrairDadosPdfDoDrive(
       tipoDocumento: null,
       dataDocumento: null,
       resumo: null,
+      tipoProcesso: null,
+      apRelacionada: null,
       error: error instanceof Error ? error.message : "Erro ao baixar ou processar arquivo",
     };
   }

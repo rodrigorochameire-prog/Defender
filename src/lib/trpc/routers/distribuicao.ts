@@ -13,9 +13,14 @@ import { getWorkspaceScope } from "../workspace";
 import {
   listDistributionPendingFiles,
   distributeFileComplete,
+  distributeFileIntelligent,
   searchFoldersByPartialName,
+  listProcessosAvulsos,
+  moveProcessoToAp,
+  findApFolderByNumber,
   ATRIBUICAO_FOLDER_IDS,
 } from "@/lib/services/google-drive";
+import type { TipoProcesso } from "@/lib/services/gemini";
 import {
   extractFromPdfText,
   identificarAtribuicao,
@@ -171,6 +176,9 @@ export const distribuicaoRouter = router({
         tipoDocumento: extracted.tipoDocumento,
         dataDocumento: extracted.dataDocumento,
         resumo: extracted.resumo,
+        // Novos campos para distribuição inteligente
+        tipoProcesso: extracted.tipoProcesso || null,
+        apRelacionada: extracted.apRelacionada || null,
         tokensUtilizados: extracted.tokensUtilizados,
         usouPadrao: !!atribuicaoFromPattern,
       };
@@ -251,7 +259,7 @@ export const distribuicaoRouter = router({
         .slice(0, 10);
     }),
 
-  // Processar distribuição de um arquivo
+  // Processar distribuição de um arquivo com hierarquia inteligente
   distribute: protectedProcedure
     .input(
       z.object({
@@ -261,6 +269,9 @@ export const distribuicaoRouter = router({
         numeroProcesso: z.string(),
         assistidoId: z.number().optional(), // Se já existe
         createNewAssistido: z.boolean().default(false),
+        // Novos campos para distribuição inteligente
+        tipoProcesso: z.enum(["AP", "IP", "APF", "CAUTELAR", "EP", "MPU", "ANPP", "OUTRO"]).optional(),
+        apRelacionada: z.string().optional().nullable(),
         // Dados originais para aprendizado
         orgaoOriginal: z.string().optional(),
         atribuicaoOriginal: z.string().optional(),
@@ -306,12 +317,17 @@ export const distribuicaoRouter = router({
         }
       }
 
-      // Executar a distribuição no Drive
-      const result = await distributeFileComplete(
+      // Usar tipo de processo padrão se não informado
+      const tipoProcesso = input.tipoProcesso || "OUTRO";
+
+      // Executar distribuição inteligente com hierarquia
+      const result = await distributeFileIntelligent(
         input.fileId,
         input.atribuicao,
         assistidoNome,
-        input.numeroProcesso
+        input.numeroProcesso,
+        tipoProcesso as TipoProcesso,
+        input.apRelacionada
       );
 
       if (!result.success) {
@@ -394,6 +410,14 @@ export const distribuicaoRouter = router({
         assistidoFolderId: result.assistidoFolder?.id,
         processoFolderId: result.processoFolder?.id,
         movedFileId: result.movedFile?.id,
+        // Novos campos para UI
+        isAvulso: result.isAvulso,
+        apFolderId: result.apFolder?.id,
+        processosAvulsos: result.processosAvulsos?.map((p) => ({
+          id: p.id,
+          name: p.name,
+          tipoProcesso: p.tipoProcesso,
+        })),
       };
     }),
 
@@ -638,5 +662,84 @@ export const distribuicaoRouter = router({
         processoFolderId: result.processoFolder?.id,
         movedFileId: result.movedFile?.id,
       };
+    }),
+
+  // Listar processos avulsos (IP/APF/Cautelares sem AP) de um assistido
+  listAvulsos: protectedProcedure
+    .input(
+      z.object({
+        assistidoFolderId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      getWorkspaceScope(ctx.user);
+
+      const avulsos = await listProcessosAvulsos(input.assistidoFolderId);
+      return avulsos.map((p) => ({
+        id: p.id,
+        name: p.name,
+        tipoProcesso: p.tipoProcesso,
+        webViewLink: p.webViewLink,
+      }));
+    }),
+
+  // Mover processo avulso para dentro de uma AP
+  moveToAp: protectedProcedure
+    .input(
+      z.object({
+        processoFolderId: z.string(),
+        apFolderId: z.string(),
+        tipoProcesso: z.enum(["IP", "APF", "CAUTELAR"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      getWorkspaceScope(ctx.user);
+
+      const result = await moveProcessoToAp(
+        input.processoFolderId,
+        input.apFolderId,
+        input.tipoProcesso
+      );
+
+      if (!result) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Não foi possível mover o processo para a AP",
+        });
+      }
+
+      return {
+        success: true,
+        movedFolder: {
+          id: result.id,
+          name: result.name,
+        },
+      };
+    }),
+
+  // Buscar APs existentes de um assistido para vincular
+  listAps: protectedProcedure
+    .input(
+      z.object({
+        assistidoFolderId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      getWorkspaceScope(ctx.user);
+
+      // Importar função de listar subpastas
+      const { listSubfolders } = await import("@/lib/services/google-drive");
+      const folders = await listSubfolders(input.assistidoFolderId);
+
+      // Filtrar apenas pastas que começam com "AP "
+      const aps = folders.filter(
+        (f) => f.name.startsWith("AP ") || f.name.match(/^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/)
+      );
+
+      return aps.map((ap) => ({
+        id: ap.id,
+        name: ap.name,
+        webViewLink: ap.webViewLink,
+      }));
     }),
 });
