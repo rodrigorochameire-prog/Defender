@@ -517,9 +517,19 @@ export default function DrivePage() {
           </div>
           
           <div className="flex items-center gap-1">
+            <Link href="/admin/distribuicao">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-zinc-400 hover:text-amber-600"
+                title="Distribuição"
+              >
+                <FolderPlus className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
             <Link href="/admin/settings/drive">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
                 title="Configurações"
@@ -527,7 +537,7 @@ export default function DrivePage() {
                 <Settings className="w-3.5 h-3.5" />
               </Button>
             </Link>
-            <Button 
+            <Button
               variant="ghost"
               size="sm"
               className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
@@ -542,7 +552,7 @@ export default function DrivePage() {
               )}
             </Button>
             <Link href="/admin/drive/upload">
-              <Button 
+              <Button
                 size="sm"
                 className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
               >

@@ -1426,7 +1426,17 @@ export async function exportGoogleDoc(
 // ==========================================
 
 /**
+ * Resultado do registro de pasta
+ */
+export interface RegisterFolderResult {
+  success: boolean;
+  error?: string;
+  folderName?: string;
+}
+
+/**
  * Registra uma pasta para sincronização
+ * Retorna resultado com mensagem de erro detalhada em caso de falha
  */
 export async function registerSyncFolder(
   folderId: string,
@@ -1434,13 +1444,31 @@ export async function registerSyncFolder(
   description?: string,
   syncDirection: string = "bidirectional",
   userId?: number
-): Promise<boolean> {
+): Promise<RegisterFolderResult> {
   try {
+    // Verificar se o Drive está configurado
+    if (!isGoogleDriveConfigured()) {
+      return {
+        success: false,
+        error: "Google Drive não está configurado. Verifique as variáveis de ambiente.",
+      };
+    }
+
     // Verificar se a pasta existe no Drive
     const folderInfo = await getFolderInfo(folderId);
     if (!folderInfo) {
-      console.error("Pasta não encontrada no Drive:", folderId);
-      return false;
+      return {
+        success: false,
+        error: `Não foi possível acessar a pasta "${folderId}". Verifique se o ID está correto e se a pasta está compartilhada com a conta de serviço.`,
+      };
+    }
+
+    // Verificar se é realmente uma pasta
+    if (folderInfo.mimeType !== "application/vnd.google-apps.folder") {
+      return {
+        success: false,
+        error: `O ID informado corresponde a um arquivo, não a uma pasta. MimeType: ${folderInfo.mimeType}`,
+      };
     }
 
     // Inserir ou atualizar registro
@@ -1467,13 +1495,21 @@ export async function registerSyncFolder(
         },
       });
 
-    // Sincronizar imediatamente
-    await syncFolderWithDatabase(folderId, userId);
+    // Sincronizar imediatamente (não bloqueia o resultado)
+    syncFolderWithDatabase(folderId, userId).catch((err) => {
+      console.error(`[Drive] Erro na sincronização inicial da pasta ${folderId}:`, err);
+    });
 
-    return true;
+    return {
+      success: true,
+      folderName: folderInfo.name,
+    };
   } catch (error) {
     console.error("Erro ao registrar pasta para sincronização:", error);
-    return false;
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erro desconhecido ao registrar pasta",
+    };
   }
 }
 

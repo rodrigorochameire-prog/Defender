@@ -269,35 +269,113 @@ function SyncFolderCard({
   );
 }
 
-function SuggestedFolders({ onAdd }: { onAdd: (folder: { name: string; description: string }) => void }) {
+// IDs das pastas de atribuição
+const ATRIBUICAO_FOLDER_IDS = {
+  JURI: "1_S-2qdqO0n1npNcs0PnoagBM4ZtwKhk-",
+  VVD: "1fN2GiGlNzc61g01ZeBMg9ZBy1hexx0ti",
+  EP: "1-mbwgP3-ygVVjoN9RPTbHwnaicnBAv0q",
+  SUBSTITUICAO: "1eNDT0j-5KQkzYXbqK6IBa9sIMT3QFWVU",
+};
+
+// Pastas especiais
+const SPECIAL_FOLDER_IDS = {
+  JURISPRUDENCIA: "1Dvpn1r6b5nZ3bALst9_YEbZHlRDSPw7S",
+  DISTRIBUICAO: "1dw8Hfpt_NLtLZ8DYDIcgjauo_xtM1nH4",
+};
+
+function SuggestedFolders({
+  onAdd,
+  existingFolderIds = []
+}: {
+  onAdd: (folder: { name: string; description: string; folderId: string }) => void;
+  existingFolderIds?: string[];
+}) {
   const suggestions = [
-    { name: "Assistidos", description: "Documentos organizados por assistido", icon: Users },
-    { name: "Processos", description: "Arquivos organizados por número de processo", icon: Scale },
-    { name: "Pautas", description: "Pautas de audiências e sessões do júri", icon: FileText },
-    { name: "Júri", description: "Documentos específicos do Tribunal do Júri", icon: Gavel },
+    {
+      name: "Júri",
+      description: "Assistidos da atribuição do Tribunal do Júri",
+      icon: Gavel,
+      folderId: ATRIBUICAO_FOLDER_IDS.JURI,
+      color: "emerald" as const,
+    },
+    {
+      name: "VVD",
+      description: "Violência e Vítimas Domésticas",
+      icon: Users,
+      folderId: ATRIBUICAO_FOLDER_IDS.VVD,
+      color: "amber" as const,
+    },
+    {
+      name: "Execução Penal",
+      description: "Assistidos em Execução Penal",
+      icon: Scale,
+      folderId: ATRIBUICAO_FOLDER_IDS.EP,
+      color: "blue" as const,
+    },
+    {
+      name: "Substituição",
+      description: "Assistidos em Substituição",
+      icon: FileText,
+      folderId: ATRIBUICAO_FOLDER_IDS.SUBSTITUICAO,
+      color: "zinc" as const,
+    },
   ];
+
+  // Filtrar sugestões que já estão registradas
+  const availableSuggestions = suggestions.filter(
+    s => !existingFolderIds.includes(s.folderId)
+  );
+
+  if (availableSuggestions.length === 0) {
+    return null;
+  }
+
+  const colorClasses = {
+    emerald: "hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10",
+    amber: "hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/10",
+    blue: "hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/10",
+    zinc: "hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800/50",
+  };
+
+  const iconColorClasses = {
+    emerald: "text-emerald-600 dark:text-emerald-400",
+    amber: "text-amber-600 dark:text-amber-400",
+    blue: "text-blue-600 dark:text-blue-400",
+    zinc: "text-zinc-600 dark:text-zinc-400",
+  };
 
   return (
     <Card className="p-4 border-dashed">
-      <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
-        Estrutura sugerida de pastas
-      </h4>
+      <div className="mb-3">
+        <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          Pastas de Atribuição
+        </h4>
+        <p className="text-xs text-zinc-500 mt-1">
+          Estrutura: Atribuição → Assistido → Processo → Documentos
+        </p>
+      </div>
       <div className="grid grid-cols-2 gap-2">
-        {suggestions.map((suggestion) => {
+        {availableSuggestions.map((suggestion) => {
           const Icon = suggestion.icon;
           return (
             <button
               key={suggestion.name}
               onClick={() => onAdd(suggestion)}
-              className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-all text-left group"
+              className={cn(
+                "p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 transition-all text-left group",
+                colorClasses[suggestion.color]
+              )}
             >
               <div className="flex items-center gap-2">
-                <Icon className="w-4 h-4 text-zinc-400 group-hover:text-emerald-600" />
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
+                <Icon className={cn("w-4 h-4 text-zinc-400 group-hover:" + iconColorClasses[suggestion.color])} />
+                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   {suggestion.name}
                 </span>
               </div>
               <p className="text-xs text-zinc-500 mt-1">{suggestion.description}</p>
+              <code className="text-[10px] text-zinc-400 font-mono mt-2 block truncate">
+                {suggestion.folderId}
+              </code>
             </button>
           );
         })}
@@ -416,9 +494,10 @@ export default function DriveConfigPage() {
     syncMutation.mutate({ folderId: folder.driveFolderId });
   };
 
-  const handleSuggestionClick = (suggestion: { name: string; description: string }) => {
+  const handleSuggestionClick = (suggestion: { name: string; description: string; folderId?: string }) => {
     setFormData({
       ...formData,
+      folderId: suggestion.folderId || "",
       name: suggestion.name,
       description: suggestion.description,
     });
@@ -457,6 +536,12 @@ export default function DriveConfigPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link href="/admin/distribuicao">
+            <Button variant="outline" size="sm">
+              <FolderPlus className="w-4 h-4 mr-2" />
+              Distribuição
+            </Button>
+          </Link>
           <Link href="/admin/drive">
             <Button variant="outline" size="sm">
               <FolderOpen className="w-4 h-4 mr-2" />
@@ -555,9 +640,10 @@ export default function DriveConfigPage() {
           )}
 
           {/* Sugestões */}
-          {(!syncFolders || syncFolders.length < 4) && (
-            <SuggestedFolders onAdd={handleSuggestionClick} />
-          )}
+          <SuggestedFolders
+            onAdd={handleSuggestionClick}
+            existingFolderIds={syncFolders?.map(f => f.driveFolderId) || []}
+          />
 
           {/* Instruções */}
           <Card className="p-6 bg-zinc-50 dark:bg-zinc-900/50">

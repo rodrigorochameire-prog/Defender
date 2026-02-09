@@ -79,7 +79,7 @@ export const driveRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const success = await registerSyncFolder(
+        const result = await registerSyncFolder(
           input.folderId,
           input.name,
           input.description,
@@ -87,11 +87,11 @@ export const driveRouter = router({
           ctx.user.id
         );
 
-        if (!success) {
-          throw Errors.internal("Falha ao registrar pasta para sincronização");
+        if (!result.success) {
+          throw Errors.validation(result.error || "Falha ao registrar pasta para sincronização");
         }
 
-        return { success: true };
+        return { success: true, folderName: result.folderName };
       }, "Erro ao registrar pasta para sincronização");
     }),
 
