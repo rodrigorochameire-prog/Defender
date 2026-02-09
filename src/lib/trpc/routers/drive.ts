@@ -18,6 +18,7 @@ import {
   getFileInfo,
   isGoogleDriveConfigured,
   getRootFolderLink,
+  getAuthenticatedAccountInfo,
   findExistingFile,
   syncPautaDocument,
   syncMultiplePautaDocuments,
@@ -53,6 +54,17 @@ export const driveRouter = router({
       const link = await getRootFolderLink();
       return { link };
     }, "Erro ao obter link da pasta raiz");
+  }),
+
+  /**
+   * Obtém informações da conta Google autenticada
+   * Útil para saber qual conta precisa ter acesso às pastas
+   */
+  getAccountInfo: adminProcedure.query(async () => {
+    return safeAsync(async () => {
+      const accountInfo = await getAuthenticatedAccountInfo();
+      return accountInfo;
+    }, "Erro ao obter informações da conta");
   }),
 
   /**

@@ -367,6 +367,50 @@ export function isGoogleDriveConfigured(): boolean {
 }
 
 /**
+ * Informações da conta Google autenticada
+ */
+export interface GoogleAccountInfo {
+  email: string;
+  name?: string;
+  picture?: string;
+}
+
+/**
+ * Obtém informações da conta Google autenticada (quem gerou o refresh token)
+ * Útil para saber qual conta precisa ter acesso às pastas
+ */
+export async function getAuthenticatedAccountInfo(): Promise<GoogleAccountInfo | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    const response = await fetch(
+      "https://www.googleapis.com/oauth2/v2/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Erro ao obter informações da conta:", await response.text());
+      return null;
+    }
+
+    const data = await response.json();
+    return {
+      email: data.email,
+      name: data.name,
+      picture: data.picture,
+    };
+  } catch (error) {
+    console.error("Erro ao obter informações da conta:", error);
+    return null;
+  }
+}
+
+/**
  * Obtém o link da pasta raiz configurada
  */
 export async function getRootFolderLink(): Promise<string | null> {

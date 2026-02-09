@@ -91,7 +91,15 @@ interface SyncFolder {
 // COMPONENTES
 // ==========================================
 
-function ConnectionStatus({ isConfigured }: { isConfigured: boolean }) {
+function ConnectionStatus({
+  isConfigured,
+  accountEmail,
+  accountName,
+}: {
+  isConfigured: boolean;
+  accountEmail?: string | null;
+  accountName?: string | null;
+}) {
   return (
     <Card className={cn(
       "p-6 border-2",
@@ -112,8 +120,8 @@ function ConnectionStatus({ isConfigured }: { isConfigured: boolean }) {
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Google Drive</h3>
               <Badge className={cn(
-                isConfigured 
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" 
+                isConfigured
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                   : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
               )}>
                 {isConfigured ? (
@@ -124,7 +132,7 @@ function ConnectionStatus({ isConfigured }: { isConfigured: boolean }) {
               </Badge>
             </div>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              {isConfigured 
+              {isConfigured
                 ? "Integração ativa. Configure as pastas para sincronização abaixo."
                 : "Configure as variáveis de ambiente para conectar ao Google Drive."
               }
@@ -140,7 +148,32 @@ function ConnectionStatus({ isConfigured }: { isConfigured: boolean }) {
           </Button>
         )}
       </div>
-      
+
+      {/* Mostrar conta autenticada */}
+      {isConfigured && accountEmail && (
+        <div className="mt-4 p-4 bg-white dark:bg-zinc-900 rounded-lg border border-emerald-200 dark:border-emerald-800">
+          <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+            Conta Google autenticada:
+          </h4>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                {accountEmail.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div>
+              {accountName && (
+                <p className="font-medium text-zinc-900 dark:text-zinc-100">{accountName}</p>
+              )}
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">{accountEmail}</p>
+            </div>
+          </div>
+          <p className="text-xs text-zinc-500 mt-3">
+            💡 As pastas do Drive devem estar <strong>compartilhadas</strong> com esta conta para funcionar.
+          </p>
+        </div>
+      )}
+
       {!isConfigured && (
         <div className="mt-6 p-4 bg-white dark:bg-zinc-900 rounded-lg border border-amber-200 dark:border-amber-800">
           <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-3">
@@ -413,6 +446,9 @@ export default function DriveConfigPage() {
   const { data: rootLink } = trpc.drive.getRootLink.useQuery(undefined, {
     enabled: configStatus?.configured === true,
   });
+  const { data: accountInfo } = trpc.drive.getAccountInfo.useQuery(undefined, {
+    enabled: configStatus?.configured === true,
+  });
 
   // Mutations
   const registerMutation = trpc.drive.registerFolder.useMutation({
@@ -560,7 +596,11 @@ export default function DriveConfigPage() {
       </div>
 
       {/* Status da Conexão */}
-      <ConnectionStatus isConfigured={isConfigured} />
+      <ConnectionStatus
+        isConfigured={isConfigured}
+        accountEmail={accountInfo?.email}
+        accountName={accountInfo?.name}
+      />
 
       {/* Pastas Sincronizadas */}
       {isConfigured && (
