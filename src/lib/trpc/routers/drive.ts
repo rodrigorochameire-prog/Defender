@@ -164,6 +164,7 @@ export const driveRouter = router({
       z.object({
         folderId: z.string(),
         parentFileId: z.number().nullable().optional(),
+        parentDriveFileId: z.string().optional(), // ID do Drive do parent (alternativa a parentFileId)
         search: z.string().optional(),
         mimeType: z.string().optional(),
         limit: z.number().default(100),
@@ -174,7 +175,21 @@ export const driveRouter = router({
       return safeAsync(async () => {
         let conditions = [eq(driveFiles.driveFolderId, input.folderId)];
 
-        if (input.parentFileId !== undefined) {
+        // Se tiver parentDriveFileId, buscar o ID do banco primeiro
+        if (input.parentDriveFileId) {
+          const [parentFolder] = await db
+            .select({ id: driveFiles.id })
+            .from(driveFiles)
+            .where(eq(driveFiles.driveFileId, input.parentDriveFileId))
+            .limit(1);
+
+          if (parentFolder) {
+            conditions.push(eq(driveFiles.parentFileId, parentFolder.id));
+          } else {
+            // Parent não encontrado, retornar vazio
+            return { files: [], total: 0 };
+          }
+        } else if (input.parentFileId !== undefined) {
           if (input.parentFileId === null) {
             conditions.push(isNull(driveFiles.parentFileId));
           } else {

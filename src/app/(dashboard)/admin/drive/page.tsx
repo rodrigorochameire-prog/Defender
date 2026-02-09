@@ -390,7 +390,8 @@ export default function DrivePage() {
   // Arquivos da pasta selecionada (do banco de dados local, não do Drive API)
   const { data: filesData, isLoading: isLoadingFiles, refetch: refetchFiles } = trpc.drive.files.useQuery(
     {
-      folderId: selectedFolderId || atribuicaoFolderId,
+      folderId: atribuicaoFolderId, // Sempre a pasta raiz da atribuição
+      parentDriveFileId: selectedFolderId || undefined, // Se navegou para subpasta, filtrar pelo driveFileId do parent
       parentFileId: selectedFolderId ? undefined : null, // Se na raiz, mostrar só itens sem parent
       limit: 200,
     },
