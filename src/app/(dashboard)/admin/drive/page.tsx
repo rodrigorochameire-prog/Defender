@@ -387,11 +387,12 @@ export default function DrivePage() {
     enabled: configStatus?.configured === true,
   });
 
-  // Arquivos da pasta selecionada (usando a pasta da atribuição)
-  const { data: filesData, isLoading: isLoadingFiles, refetch: refetchFiles } = trpc.drive.filesFromDrive.useQuery(
+  // Arquivos da pasta selecionada (do banco de dados local, não do Drive API)
+  const { data: filesData, isLoading: isLoadingFiles, refetch: refetchFiles } = trpc.drive.files.useQuery(
     {
       folderId: selectedFolderId || atribuicaoFolderId,
-      pageSize: 100,
+      parentFileId: selectedFolderId ? undefined : null, // Se na raiz, mostrar só itens sem parent
+      limit: 200,
     },
     {
       enabled: configStatus?.configured === true && !!atribuicaoFolderId,
@@ -829,11 +830,11 @@ export default function DrivePage() {
                     .filter(f => !searchTerm || f.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map((file) => (
                       <FileCard
-                        key={file.id}
-                        file={file}
+                        key={file.id || file.driveFileId}
+                        file={{ ...file, id: file.driveFileId || file.id }}
                         viewMode="list"
                         onPreview={() => file.webViewLink && window.open(file.webViewLink, "_blank")}
-                        onDelete={() => deleteMutation.mutate({ fileId: file.id })}
+                        onDelete={() => deleteMutation.mutate({ fileId: file.driveFileId || file.id })}
                         onNavigate={navigateToFolder}
                       />
                     ))}
@@ -844,11 +845,11 @@ export default function DrivePage() {
                     .filter(f => !searchTerm || f.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map((file) => (
                       <FileCard
-                        key={file.id}
-                        file={file}
+                        key={file.id || file.driveFileId}
+                        file={{ ...file, id: file.driveFileId || file.id }}
                         viewMode="grid"
                         onPreview={() => file.webViewLink && window.open(file.webViewLink, "_blank")}
-                        onDelete={() => deleteMutation.mutate({ fileId: file.id })}
+                        onDelete={() => deleteMutation.mutate({ fileId: file.driveFileId || file.id })}
                         onNavigate={navigateToFolder}
                       />
                     ))}
