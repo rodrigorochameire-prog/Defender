@@ -848,35 +848,83 @@ GREGORIO NASCIMENTO BARBOSA (REU)
 JOSE FERNANDES TELES DA SILVA (REU)
 ```
 
-**Estratégia de Distribuição**:
+**IMPORTANTE**: Nem todos os réus são assistidos pela Defensoria Pública. A Defensoria pode representar apenas 1, 2 ou todos os réus de um processo.
 
-1. **Opção A: Pasta compartilhada** (recomendado)
-   - Criar pasta com nome do primeiro réu
-   - Registrar todos os réus no banco com referência à mesma pasta
-   - UI mostra: "João da Silva (+2 corréus)"
+**Estratégia: Seleção Manual de Assistidos**
 
-2. **Opção B: Múltiplas pastas**
-   - Copiar documento para pasta de cada réu
-   - Maior consumo de espaço
-   - Mais difícil de gerenciar
+Quando múltiplos réus são detectados, o sistema deve:
 
-3. **Opção C: Pasta com nomes concatenados**
-   - "João da Silva, Maria Santos, Pedro Lima"
-   - Problema: nomes muito longos
+1. **Listar todos os réus encontrados** no documento
+2. **Solicitar seleção** de quais são assistidos pela Defensoria
+3. **Criar pasta/registro** apenas para os assistidos selecionados
 
-**Implementação recomendada (Opção A)**:
+**Fluxo de UI**:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Múltiplos réus detectados neste processo                       │
+│                                                                  │
+│  Selecione quais são assistidos pela Defensoria Pública:        │
+│                                                                  │
+│  ☑️ KASSIO KAILAN BARRETO DE ARAUJO                             │
+│  ☐ GREGORIO NASCIMENTO BARBOSA                                  │
+│  ☑️ JOSE FERNANDES TELES DA SILVA                               │
+│                                                                  │
+│  [ ] Selecionar todos                                           │
+│                                                                  │
+│  [Cancelar]                              [Confirmar Seleção]    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Cenários de Distribuição**:
+
+| Cenário | Ação |
+|---------|------|
+| **1 assistido selecionado** | Criar pasta única com nome do assistido |
+| **2+ assistidos do mesmo processo** | Criar pasta para cada assistido + vincular ao mesmo processo |
+| **Nenhum selecionado** | Mover para pasta "Não Distribuído" para revisão manual |
+
+**Implementação**:
 
 ```typescript
-interface ProcessoMultiplosReus {
+interface DistribuicaoMultiplosReus {
+  // Réus detectados no documento
+  reusDetectados: string[];
+
+  // Réus selecionados como assistidos (após seleção do usuário)
+  assistidosSelecionados: {
+    nome: string;
+    assistidoId?: number;   // Se já existe no banco
+    criarNovo?: boolean;    // Se precisa criar
+  }[];
+
+  // Processo é compartilhado entre todos os assistidos selecionados
   processoId: number;
-  reuPrincipal: number;        // assistidoId do primeiro réu (dono da pasta)
-  correusIds: number[];         // IDs dos outros réus
-  driveFolderId: string;        // Pasta única compartilhada
+  numeroProcesso: string;
 }
 
-// Na tabela processos, adicionar campo:
-// correus_ids: integer[] (array de assistidoIds)
+// Cada assistido selecionado terá:
+// - Sua própria pasta no Drive (Atribuição/NomeAssistido)
+// - Subpasta do processo (compartilhada via link ou duplicada)
+// - Vínculo na tabela processos_assistidos (N:N)
 ```
+
+**Estrutura de Pastas para Múltiplos Assistidos**:
+
+```
+📁 Júri
+├── 📁 Kassio Kailan Barreto de Araujo
+│   └── 📁 8004980-08.2026.8.05.0039
+│       └── 📄 Denúncia.pdf
+│
+└── 📁 Jose Fernandes Teles da Silva
+    └── 📁 8004980-08.2026.8.05.0039  ← Mesmo processo!
+        └── 📄 Denúncia.pdf           ← Cópia ou atalho
+```
+
+**Nota**: Documentos compartilhados podem ser:
+- **Copiados** para cada pasta (mais espaço, mais seguro)
+- **Atalhos do Drive** apontando para arquivo único (menos espaço)
 
 ### 9.7 Prompt para OCR (Gemini Vision) - Fallback
 
