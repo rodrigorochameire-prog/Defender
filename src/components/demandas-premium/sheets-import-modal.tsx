@@ -52,20 +52,33 @@ interface ParsedDemanda {
 
 // Mapeamento de status da planilha para status do sistema
 const STATUS_MAP: Record<string, string> = {
-  "analisar": "analisar",
-  "elaborar": "elaborar",
-  "elaborando": "elaborando",
-  "atender": "atender",
-  "buscar": "buscar",
-  "revisar": "revisar",
-  "protocolar": "protocolar",
-  "protocolado": "protocolado",
-  "monitorar": "monitorar",
-  "fila": "fila",
-  "relatório": "monitorar",
-  "emilly": "fila", // Delegação para pessoa específica -> fila
-  "urgente": "urgente",
-  "resolvido": "resolvido",
+  // Status padrão do sistema
+  "analisar": "Analisar",
+  "elaborar": "Elaborar",
+  "elaborando": "Elaborando",
+  "atender": "Atender",
+  "buscar": "Buscar",
+  "revisar": "Revisar",
+  "protocolar": "Protocolar",
+  "protocolado": "Protocolado",
+  "monitorar": "Monitorar",
+  "fila": "Fila",
+  "relatório": "Monitorar",
+  "urgente": "Urgente",
+  "resolvido": "Resolvido",
+  "arquivado": "Arquivado",
+
+  // Status de ciência/conhecimento
+  "ciência": "Ciência",
+  "ciencia": "Ciência",
+
+  // Delegação para pessoas específicas (mantém como status)
+  "amanda": "Amanda",
+  "emilly": "Emilly",
+  "lucas": "Lucas",
+  "maria": "Maria",
+  "joão": "João",
+  "joao": "João",
 };
 
 // Opções de atribuição - usando IDs do sistema para compatibilidade
@@ -148,21 +161,24 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
   const [demandasNovas, setDemandasNovas] = useState<ParsedDemanda[]>([]);
   const [duplicatas, setDuplicatas] = useState<DuplicataInfo[]>([]);
 
-  // Função para extrair status do texto (ex: "2 - Analisar" -> "analisar")
+  // Função para extrair status do texto (ex: "2 - Analisar" -> "Analisar")
   const parseStatus = (statusText: string): string => {
-    if (!statusText) return "fila";
-    
-    // Remove números e traços do início
-    const cleaned = statusText.replace(/^\d+\s*-\s*/i, "").trim().toLowerCase();
-    
+    if (!statusText) return "Fila";
+
+    // Remove números e traços do início (ex: "2 - Analisar" -> "Analisar")
+    const cleaned = statusText.replace(/^\d+\s*-\s*/i, "").trim();
+    const cleanedLower = cleaned.toLowerCase();
+
     // Busca no mapa de status
     for (const [key, value] of Object.entries(STATUS_MAP)) {
-      if (cleaned.includes(key)) {
+      if (cleanedLower.includes(key)) {
         return value;
       }
     }
-    
-    return "fila";
+
+    // Se não encontrou no mapa, retorna o status original (capitalizado)
+    // Isso permite status personalizados como nomes de pessoas
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   };
 
   // Função para normalizar estado prisional
