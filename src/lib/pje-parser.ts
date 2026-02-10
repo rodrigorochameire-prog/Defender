@@ -142,7 +142,8 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   // Regex para tipo de processo e crime
   // Ex: "MPUMPCrim 8005252-02.2026.8.05.0039 Maus Tratos"
   // Ex: "APOrd 8011331-31.2025.8.05.0039 Ameaça"
-  const regexTipoProcessoCrime = /^(MPUMPCrim|APOrd|APSum|PetCrim|AuPrFl|Juri|InsanAc|LibProv|EP|VD|APFD)\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})\s*(.*)?$/i;
+  // Ex: "APri 8236693-68.2025.8.05.0001 Contra a Mulher"
+  const regexTipoProcessoCrime = /^(MPUMPCrim|APOrd|APSum|APri|PetCrim|AuPrFl|Juri|InsanAc|LibProv|EP|VD|APFD)\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})\s*(.*)?$/i;
 
   // Regex para partes do processo (VÍTIMA X RÉU)
   // Captura o nome após o "X" que é o RÉU (nosso assistido)
@@ -347,7 +348,7 @@ function parsePJeIntimacoesLegado(texto: string): IntimacaoPJeSimples[] {
                    !contemPalavraExcluida &&
                    !linha.startsWith('/') &&
                    !linha.startsWith('X ') &&
-                   !linha.match(/^(Juri|InsanAc|LibProv|PetCrim|EP|VD|MPUMPCrim|APOrd|APSum|AuPrFl)\s/i) &&
+                   !linha.match(/^(Juri|InsanAc|LibProv|PetCrim|EP|VD|MPUMPCrim|APOrd|APSum|APri|AuPrFl|APFD)\s/i) &&
                    linha.length > 5 &&
                    linha.length < 80 &&
                    !linha.match(/^\d/) &&

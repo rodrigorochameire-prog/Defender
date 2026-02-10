@@ -48,7 +48,10 @@ export function PJeImportModal({
   const [isImporting, setIsImporting] = useState(false);
 
   // Configurações globais - APENAS ATRIBUIÇÃO
-  const [atribuicao, setAtribuicao] = useState("Júri");
+  // Inicializa com a primeira opção disponível, ou "Júri" como fallback
+  const [atribuicao, setAtribuicao] = useState(
+    atribuicaoOptions.length > 0 ? atribuicaoOptions[0].value : "Júri"
+  );
 
   // Para VVD - separação de MPU e demandas gerais
   const [intimacoesMPU, setIntimacoesMPU] = useState<IntimacaoPJeSimples[]>([]);
@@ -139,7 +142,7 @@ export function PJeImportModal({
     setIntimacoesMPU([]);
     setIntimacoesGerais([]);
     setEtapa("configurar");
-    setAtribuicao("Júri");
+    setAtribuicao(atribuicaoOptions.length > 0 ? atribuicaoOptions[0].value : "Júri");
     setTipoIntimacaoVVD("CIENCIA");
     setResultadoVerificacao(null);
     setIsImporting(false);

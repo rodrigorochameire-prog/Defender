@@ -194,12 +194,12 @@ export const vvdRouter = router({
         vitima = v;
       }
 
-      // Buscar intimações
+      // Buscar intimações - ordenar por data de expedição (mais recentes primeiro)
       const intimacoes = await db
         .select()
         .from(intimacoesVVD)
         .where(eq(intimacoesVVD.processoVVDId, input.id))
-        .orderBy(desc(intimacoesVVD.createdAt));
+        .orderBy(desc(intimacoesVVD.dataExpedicao), desc(intimacoesVVD.createdAt));
 
       // Buscar histórico
       const historico = await db
@@ -338,7 +338,7 @@ export const vvdRouter = router({
         .leftJoin(processosVVD, eq(intimacoesVVD.processoVVDId, processosVVD.id))
         .leftJoin(partesVVD, eq(processosVVD.autorId, partesVVD.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(intimacoesVVD.createdAt))
+        .orderBy(desc(intimacoesVVD.dataExpedicao), desc(intimacoesVVD.createdAt))
         .limit(input.limit)
         .offset(input.offset);
 
