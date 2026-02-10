@@ -52,13 +52,12 @@ const exportFields = [
 ];
 
 // Campos no formato da planilha Google Sheets do usuário
-// Ordem: Status | Prisão | Data | Assistido | Tipo | Autos | Ato | Prazo | Providências
+// Formato compatível com a planilha de Demandas (Júri, EP, VVD, etc.)
+// Ordem: Status | (vazio) | (vazio) | Assistido | Autos | Ato | Prazo | Providências
+// As colunas vazias (B, C) mantêm compatibilidade com a estrutura existente
 const sheetsFields = [
   { key: "status", label: "Status" },
-  { key: "estadoPrisional", label: "Prisão" },
-  { key: "data", label: "Data" },
   { key: "assistido", label: "Assistido" },
-  { key: "tipo", label: "Tipo" },
   { key: "autos", label: "Autos" },
   { key: "ato", label: "Ato" },
   { key: "prazo", label: "Prazo" },
@@ -237,6 +236,7 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
   };
 
   // Preparar dados para formato da planilha Google Sheets
+  // Formato: Status | Prisão | Data | Assistido | Tipo (PPL/ANPP/PRD) | Autos | Ato | Prazo | Providências
   const prepareSheetsData = () => {
     return dataToExport.map((demanda) => {
       // Extrair tipo e número do processo
@@ -244,43 +244,70 @@ export function ExportModal({ isOpen, onClose, demandas, demandasFiltradas }: Ex
       let autos = "";
       if (demanda.processos && demanda.processos.length > 0) {
         const processo = demanda.processos[0];
+        // Tipo: PPL, ANPP, PRD, ou vazio se não definido
         tipo = processo.tipo || "";
         autos = processo.numero || "";
       }
 
-      // Estado prisional
-      const prisao = demanda.estadoPrisional === "preso" ? "Preso" : demanda.reuPreso ? "Preso" : "";
+      // Estado prisional - normalizar para "Preso" ou vazio
+      let prisao = "";
+      const estadoPrisional = (demanda.estadoPrisional || "").toLowerCase();
+      if (estadoPrisional === "preso" || demanda.reuPreso === true) {
+        prisao = "Preso";
+      }
+
+      // Data no formato DD/MM/YYYY (se vier no formato ISO, converter)
+      let data = demanda.data || "";
+      if (data && data.includes("-")) {
+        // Formato ISO (YYYY-MM-DD) -> DD/MM/YYYY
+        const partes = data.split("-");
+        if (partes.length === 3) {
+          data = `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+      }
+
+      // Prazo no formato DD/MM/YYYY
+      let prazo = demanda.prazo || "";
+      if (prazo && prazo.includes("-")) {
+        // Formato ISO (YYYY-MM-DD) -> DD/MM/YYYY
+        const partes = prazo.split("-");
+        if (partes.length === 3) {
+          prazo = `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+      }
 
       return {
         status: mapStatusToPlanilha(demanda.status, demanda.substatus),
         prisao: prisao,
-        data: demanda.data || "",
+        data: data,
         assistido: demanda.assistido || "",
         tipo: tipo,
         autos: autos,
         ato: demanda.ato || "",
-        prazo: demanda.prazo || "",
+        prazo: prazo,
         providencias: demanda.providencias || "",
       };
     });
   };
 
   // Exportar para clipboard no formato tabulado (para colar no Google Sheets)
+  // Formato compatível com planilha EP: Status | (vazio) | (vazio) | Assistido | Autos | Ato | Prazo | Providências
+  // NOTA: Data e Tipo removidos para compatibilidade com estrutura existente das planilhas
   const exportToClipboard = async () => {
     const data = prepareSheetsData();
 
     // Criar texto tabulado (TSV - Tab Separated Values)
+    // Ordem alinhada com planilhas existentes (colunas B e C vazias como na estrutura original)
     const rows = data.map((row) =>
       [
-        row.status,
-        row.prisao,
-        row.data,
-        row.assistido,
-        row.tipo,
-        row.autos,
-        row.ato,
-        row.prazo,
-        row.providencias,
+        row.status,       // A: Status
+        "",               // B: (vazio)
+        "",               // C: (vazio)
+        row.assistido,    // D: Assistido
+        row.autos,        // E: Autos (número do processo)
+        row.ato,          // F: Ato
+        row.prazo,        // G: Prazo
+        row.providencias, // H: Providências
       ].join("\t")
     );
 

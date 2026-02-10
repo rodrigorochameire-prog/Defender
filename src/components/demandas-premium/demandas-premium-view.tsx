@@ -62,6 +62,25 @@ import {
   Eye,
   Zap,
   XCircle,
+  MessageSquare,
+  ScrollText,
+  FileUp,
+  Send,
+  Clock,
+  Users,
+  Clipboard,
+  AlertCircle,
+  ArrowUp,
+  ArrowDown,
+  PenTool,
+  FileQuestion,
+  FilePlus,
+  HelpCircle,
+  Inbox,
+  Bell,
+  BellOff,
+  UserCheck,
+  type LucideIcon,
 } from "lucide-react";
 
 // Ícones e cores por atribuição
@@ -100,10 +119,142 @@ const ATRIBUICAO_ENUM_TO_LABEL: Record<string, string> = {
 const atribuicaoColors: Record<string, string> = {
   "Tribunal do Júri": "text-green-600 dark:text-green-500",
   "Grupo Especial do Júri": "text-orange-600 dark:text-orange-500",
-  "Violência Doméstica": "text-yellow-600 dark:text-yellow-500",
+  "Violência Doméstica": "text-amber-600 dark:text-amber-500",
   "Execução Penal": "text-blue-600 dark:text-blue-500",
   "Substituição Criminal": "text-purple-600 dark:text-purple-500",
   "Curadoria Especial": "text-gray-600 dark:text-gray-400",
+};
+
+// Cores HEX para bordas de atribuição (usadas nos cards)
+const ATRIBUICAO_BORDER_COLORS: Record<string, string> = {
+  "Tribunal do Júri": "#22c55e",        // Verde
+  "Grupo Especial do Júri": "#f97316",  // Laranja
+  "Violência Doméstica": "#f59e0b",     // Âmbar/Amarelo
+  "Execução Penal": "#3b82f6",          // Azul
+  "Substituição Criminal": "#8b5cf6",   // Roxo
+  "Curadoria Especial": "#71717a",      // Cinza
+};
+
+// Background suave para atribuição
+const ATRIBUICAO_BG_COLORS: Record<string, string> = {
+  "Tribunal do Júri": "bg-green-50 dark:bg-green-950/20",
+  "Grupo Especial do Júri": "bg-orange-50 dark:bg-orange-950/20",
+  "Violência Doméstica": "bg-amber-50 dark:bg-amber-950/20",
+  "Execução Penal": "bg-blue-50 dark:bg-blue-950/20",
+  "Substituição Criminal": "bg-purple-50 dark:bg-purple-950/20",
+  "Curadoria Especial": "bg-zinc-50 dark:bg-zinc-800/30",
+};
+
+// ==========================================
+// CONFIGURAÇÃO DE ATOS - Apenas ícones (cores neutras)
+// ==========================================
+
+// Mapeamento de categorias de atos para ícones Lucide (cores neutras para não conflitar)
+const getAtoIcon = (ato: string): LucideIcon => {
+  const atoLower = ato?.toLowerCase() || "";
+
+  // Respostas e Contestações
+  if (atoLower.includes("resposta à acusação") || atoLower.includes("contestação")) return MessageSquare;
+  // Alegações finais / Memoriais
+  if (atoLower.includes("alegações finais") || atoLower.includes("memoriais")) return ScrollText;
+  // Recursos - Apelação, RESE, Agravo
+  if (atoLower.includes("apelação") || atoLower.includes("rese") || atoLower.includes("agravo") || atoLower.includes("razões") || atoLower.includes("contrarrazões")) return ArrowUp;
+  // Embargos de Declaração
+  if (atoLower.includes("embargos")) return FileQuestion;
+  // Habeas Corpus
+  if (atoLower.includes("habeas corpus")) return Shield;
+  // Liberdade - Revogação/Relaxamento
+  if (atoLower.includes("revogação") || atoLower.includes("relaxamento") || atoLower.includes("liberdade")) return Lock;
+  // MPU (Medidas Protetivas)
+  if (atoLower.includes("mpu") || atoLower.includes("medida protetiva") || atoLower.includes("modulação")) return ShieldCheck;
+  // Ciências (todas)
+  if (atoLower.includes("ciência")) return Eye;
+  // Manifestação
+  if (atoLower.includes("manifestação")) return PenTool;
+  // Petição intermediária
+  if (atoLower.includes("petição") || atoLower.includes("peticao")) return FileText;
+  // Diligências / Documentos / Testemunhas
+  if (atoLower.includes("diligência") || atoLower.includes("testemunha") || atoLower.includes("documento") || atoLower.includes("juntada")) return Clipboard;
+  // Execução Penal - Progressão/Indulto
+  if (atoLower.includes("progressão") || atoLower.includes("indulto")) return ArrowDown;
+  // Execução Penal - Designações
+  if (atoLower.includes("designação") || atoLower.includes("admonitória") || atoLower.includes("justificação")) return Clock;
+  // Transferência
+  if (atoLower.includes("transferência")) return RefreshCw;
+  // ANPP
+  if (atoLower.includes("anpp") || atoLower.includes("não persecução")) return UserCheck;
+  // Ofício
+  if (atoLower.includes("ofício")) return Send;
+  // Mandado de Segurança
+  if (atoLower.includes("mandado de segurança")) return AlertCircle;
+  // Atualização de endereço
+  if (atoLower.includes("endereço") || atoLower.includes("endereco")) return Home;
+  // Quesitos
+  if (atoLower.includes("quesito")) return HelpCircle;
+  // Incidente de insanidade
+  if (atoLower.includes("insanidade") || atoLower.includes("incidente")) return AlertTriangle;
+  // Desaforamento
+  if (atoLower.includes("desaforamento")) return Target;
+  // Prosseguimento do feito
+  if (atoLower.includes("prosseguimento")) return Inbox;
+  // Restituição
+  if (atoLower.includes("restituição")) return Folder;
+  // Default - Outros
+  return FileText;
+};
+
+// Componente helper para renderizar ato com ícone (cores neutras)
+const AtoWithIcon = ({ ato, className = "" }: { ato: string; className?: string }) => {
+  const Icon = getAtoIcon(ato);
+
+  return (
+    <div className={`inline-flex items-center gap-1.5 ${className}`}>
+      <Icon className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+      <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate max-w-[180px]">{ato}</span>
+    </div>
+  );
+};
+
+// Mapeamento de status para ícones Lucide
+const getStatusIcon = (status: string): LucideIcon => {
+  const statusLower = status?.toLowerCase() || "";
+
+  if (statusLower.includes("urgente")) return AlertTriangle;
+  if (statusLower.includes("analisar")) return Search;
+  if (statusLower.includes("elaborar") || statusLower.includes("elaborando")) return FileEdit;
+  if (statusLower.includes("revisar") || statusLower.includes("revisando")) return FileCheck;
+  if (statusLower.includes("protocolar")) return Upload;
+  if (statusLower.includes("protocolado")) return CheckCircle2;
+  if (statusLower.includes("monitorar")) return Eye;
+  if (statusLower.includes("fila")) return ListTodo;
+  if (statusLower.includes("resolvido") || statusLower.includes("concluído")) return CheckCircle2;
+  if (statusLower.includes("ciência") || statusLower.includes("ciencia")) return Bell;
+  if (statusLower.includes("sem atuação") || statusLower.includes("sem atuacao")) return BellOff;
+  if (statusLower.includes("amanda") || statusLower.includes("emilly") || statusLower.includes("taissa")) return Users;
+  if (statusLower.includes("buscar")) return Search;
+  if (statusLower.includes("documento")) return Clipboard;
+  if (statusLower.includes("testemunha")) return Users;
+
+  return ListTodo; // Default
+};
+
+// Componente helper para renderizar status com ícone (usa cores do STATUS_GROUPS)
+const StatusWithIcon = ({ status, statusConfig }: { status: string; statusConfig: any }) => {
+  const Icon = getStatusIcon(status);
+  const statusColor = STATUS_GROUPS[statusConfig.group as keyof typeof STATUS_GROUPS]?.color || "#A1A1AA";
+
+  return (
+    <div
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+      style={{
+        backgroundColor: `${statusColor}20`,
+        color: statusColor,
+      }}
+    >
+      <Icon className="w-3 h-3" />
+      <span>{status}</span>
+    </div>
+  );
 };
 
 const atribuicaoOptions = [
@@ -192,6 +343,13 @@ function DemandaGridCard({
 
   const AtribuicaoIcon = atribuicaoIcons[demanda.atribuicao] || Scale;
 
+  // Cor da atribuição para a borda do card
+  const atribuicaoBorderColor = ATRIBUICAO_BORDER_COLORS[demanda.atribuicao] || "#71717a";
+
+  // Cor do status do STATUS_GROUPS
+  const statusColor = STATUS_GROUPS[statusConfig.group]?.color || "#A1A1AA";
+  const StatusIcon = getStatusIcon(demanda.substatus || demanda.status);
+
   // Calcular prazo
   const calcularPrazo = (prazoStr: string) => {
     if (!prazoStr) return null;
@@ -218,19 +376,17 @@ function DemandaGridCard({
 
   return (
     <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden transition-all duration-300 hover:shadow-lg">
-      {/* ✨ BORDA SUPERIOR PREMIUM - SUTIL no hover */}
+      {/* BORDA LATERAL ESQUERDA - COR DA ATRIBUIÇÃO (sempre visível) */}
       <div
-        className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{
-          background: `linear-gradient(to right, transparent, ${borderColor}, transparent)`
-        }}
+        className="absolute inset-y-0 left-0 w-1 rounded-l-xl"
+        style={{ backgroundColor: atribuicaoBorderColor }}
       />
 
-      {/* Gradiente de fundo - SUTIL no hover */}
+      {/* Gradiente de fundo sutil baseado na atribuição - no hover */}
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none rounded-xl transition-opacity duration-500"
         style={{
-          background: `linear-gradient(to bottom right, ${borderColor}15 0%, ${borderColor}08 30%, transparent 60%)`
+          background: `linear-gradient(to bottom right, ${atribuicaoBorderColor}10 0%, ${atribuicaoBorderColor}05 30%, transparent 60%)`
         }}
       />
 
@@ -301,19 +457,24 @@ function DemandaGridCard({
       )}
 
       {/* Conteúdo do Card */}
-      <div className="p-3 space-y-2.5 relative z-10">
-        {/* Header: Status + Prazo + Quick Actions */}
-        <div className="flex items-center justify-between">
-          <Badge
-            className="text-[9px] px-1.5 py-0.5 font-medium"
-            style={{ backgroundColor: `${borderColor}20`, color: borderColor }}
+      <div className="pl-4 pr-3 py-3 space-y-2.5 relative z-10">
+        {/* Header: Status PROEMINENTE + Prazo + Quick Actions */}
+        <div className="flex items-center justify-between gap-2">
+          {/* STATUS - Maior e mais visível */}
+          <div
+            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-semibold"
+            style={{
+              backgroundColor: `${statusColor}20`,
+              color: statusColor,
+            }}
           >
-            {statusConfig.label}
-          </Badge>
+            <StatusIcon className="w-3.5 h-3.5" />
+            <span>{demanda.substatus || statusConfig.label}</span>
+          </div>
 
           <div className="flex items-center gap-1">
             {prazoInfo && (
-              <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                 prazoInfo.urgent
                   ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
                   : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
@@ -321,7 +482,7 @@ function DemandaGridCard({
                 {prazoInfo.text}
               </span>
             )}
-            {/* Botão Quick Actions ⚡ */}
+            {/* Botão Quick Actions */}
             <button
               onClick={() => setShowQuickActions(true)}
               className="w-6 h-6 rounded flex items-center justify-center text-zinc-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all"
@@ -331,39 +492,45 @@ function DemandaGridCard({
           </div>
         </div>
 
-        {/* Assistido */}
+        {/* Assistido + Indicador de Preso */}
         <div className="flex items-center gap-2">
           {isPreso && (
             <div className="w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
               <Lock className="w-2.5 h-2.5 text-white" />
             </div>
           )}
-          <p className="font-medium text-sm text-zinc-800 dark:text-zinc-100 truncate">
+          <p className="font-semibold text-sm text-zinc-800 dark:text-zinc-100 truncate">
             {demanda.assistido}
           </p>
         </div>
 
-        {/* Ato */}
-        <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
-          {demanda.ato}
-        </p>
+        {/* Ato - com ícone mas cores neutras */}
+        <AtoWithIcon ato={demanda.ato} />
 
-        {/* Footer: Atribuição */}
-        <div className="flex items-center gap-1 text-[9px] text-zinc-400 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-          <AtribuicaoIcon className="w-3 h-3 flex-shrink-0" />
-          <span className="truncate">{demanda.atribuicao}</span>
-        </div>
-
-        {/* Número do Processo - linha separada para não truncar */}
-        {demanda.processos?.[0] && (
-          <button
-            onClick={() => copyToClipboard(demanda.processos[0].numero, "Processo copiado!")}
-            className="w-full text-[10px] font-mono text-zinc-500 hover:text-emerald-600 transition-colors text-left truncate"
-            title={demanda.processos[0].numero}
+        {/* Footer: Atribuição colorida + Processo */}
+        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <div
+            className="flex items-center gap-1 text-[10px] font-medium"
+            style={{ color: atribuicaoBorderColor }}
           >
-            {demanda.processos[0].numero}
-          </button>
-        )}
+            <AtribuicaoIcon className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">{demanda.atribuicao}</span>
+          </div>
+
+          {/* Número do Processo */}
+          {demanda.processos?.[0] && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                copyToClipboard(demanda.processos[0].numero, "Processo copiado!");
+              }}
+              className="text-[9px] font-mono text-zinc-400 hover:text-emerald-600 transition-colors truncate max-w-[120px]"
+              title={demanda.processos[0].numero}
+            >
+              {demanda.processos[0].numero}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1215,8 +1382,8 @@ export default function Demandas() {
                     </button>
                   ))}
                 </div>
-                {/* Toggle de Visualização: Grid / Lista / Cards */}
-                <div className="hidden md:flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 gap-0.5">
+                {/* Toggle de Visualização: Grid / Lista / Cards - Mobile e Desktop */}
+                <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 gap-0.5">
                   <button
                     onClick={() => {
                       setViewMode("grid");
@@ -1410,6 +1577,8 @@ export default function Demandas() {
                       <tbody>
                         {demandasOrdenadas.map((demanda, index) => {
                           const statusConfig = getStatusConfig(demanda.status);
+                          const atribuicaoColor = ATRIBUICAO_BORDER_COLORS[demanda.atribuicao] || "#71717a";
+                          const AtribuicaoIconComp = atribuicaoIcons[demanda.atribuicao] || Scale;
                           return (
                             <tr
                               key={demanda.id}
@@ -1421,17 +1590,32 @@ export default function Demandas() {
                               }}
                               title="Clique para copiar linha"
                             >
-                              <td className="px-2 py-1.5 text-zinc-400 font-mono">{index + 1}</td>
+                              {/* Indicador de cor da atribuição */}
+                              <td className="px-2 py-1.5 text-zinc-400 font-mono relative">
+                                <span
+                                  className="absolute left-0 inset-y-0 w-0.5"
+                                  style={{ backgroundColor: atribuicaoColor }}
+                                />
+                                {index + 1}
+                              </td>
                               <td className="px-2 py-1.5 font-medium text-zinc-800 dark:text-zinc-200 max-w-[150px] truncate">{demanda.assistido}</td>
                               <td className="px-2 py-1.5 font-mono text-zinc-600 dark:text-zinc-400 max-w-[180px] truncate">{demanda.processos?.[0]?.numero || '-'}</td>
-                              <td className="px-2 py-1.5 text-zinc-700 dark:text-zinc-300">{demanda.ato}</td>
+                              <td className="px-2 py-1.5">
+                                <AtoWithIcon ato={demanda.ato} />
+                              </td>
                               <td className="px-2 py-1.5 text-zinc-600 dark:text-zinc-400">{demanda.prazo ? new Date(demanda.prazo + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
                               <td className="px-2 py-1.5">
-                                <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium ${statusConfig.bgColor} ${statusConfig.textColor}`}>
-                                  {demanda.substatus || statusConfig.label}
-                                </span>
+                                <StatusWithIcon status={demanda.substatus || demanda.status} statusConfig={statusConfig} />
                               </td>
-                              <td className="px-2 py-1.5 text-zinc-600 dark:text-zinc-400 max-w-[120px] truncate">{demanda.atribuicao}</td>
+                              <td className="px-2 py-1.5">
+                                <div
+                                  className="inline-flex items-center gap-1 text-[10px] font-medium"
+                                  style={{ color: atribuicaoColor }}
+                                >
+                                  <AtribuicaoIconComp className="w-3 h-3" />
+                                  <span className="truncate max-w-[100px]">{demanda.atribuicao}</span>
+                                </div>
+                              </td>
                               <td className="px-2 py-1.5 text-zinc-500 dark:text-zinc-500 max-w-[200px] truncate">{demanda.providencias || '-'}</td>
                             </tr>
                           );
