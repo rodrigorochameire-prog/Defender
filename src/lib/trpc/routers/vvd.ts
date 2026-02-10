@@ -524,6 +524,8 @@ export const vvdRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      console.log("[VVD Import] Iniciando importação de", input.intimacoes.length, "intimações");
+
       const resultados = {
         processosNovos: 0,
         partesNovas: 0,
@@ -532,6 +534,7 @@ export const vvdRouter = router({
       };
 
       for (const intimacao of input.intimacoes) {
+        console.log("[VVD Import] Processando:", intimacao.assistido, intimacao.numeroProcesso);
         try {
           // 1. Buscar ou criar a parte (autor)
           let [parteExistente] = await db
@@ -565,6 +568,14 @@ export const vvdRouter = router({
             .limit(1);
 
           if (!processoExistente) {
+            // Calcular data de reanálise: 1 ano após a data de expedição
+            const dataExpedicao = intimacao.dataExpedicao
+              ? new Date(intimacao.dataExpedicao.split('/').reverse().join('-'))
+              : new Date();
+            const dataReanalise = new Date(dataExpedicao);
+            dataReanalise.setFullYear(dataReanalise.getFullYear() + 1);
+            const dataReanaliseStr = dataReanalise.toISOString().split('T')[0];
+
             [processoExistente] = await db
               .insert(processosVVD)
               .values({
@@ -572,6 +583,11 @@ export const vvdRouter = router({
                 numeroAutos: intimacao.numeroProcesso,
                 tipoProcesso: intimacao.tipoProcesso || "MPU",
                 crime: intimacao.crime,
+                mpuAtiva: true, // MPU importada começa como ativa
+                dataDecisaoMPU: intimacao.dataExpedicao
+                  ? intimacao.dataExpedicao.split('/').reverse().join('-')
+                  : new Date().toISOString().split('T')[0],
+                dataVencimentoMPU: dataReanaliseStr, // Data de reanálise: 1 ano
                 defensorId: ctx.user.id,
               })
               .returning();
@@ -579,11 +595,18 @@ export const vvdRouter = router({
           }
 
           // 3. Criar a intimação
+          // Converter data de dd/MM/yyyy para yyyy-MM-dd se necessário
+          let dataExpedicaoFormatada = intimacao.dataExpedicao;
+          if (intimacao.dataExpedicao && intimacao.dataExpedicao.includes('/')) {
+            const [dia, mes, ano] = intimacao.dataExpedicao.split('/');
+            dataExpedicaoFormatada = `${ano}-${mes}-${dia}`;
+          }
+
           await db.insert(intimacoesVVD).values({
             processoVVDId: processoExistente.id,
             tipoIntimacao: intimacao.tipoIntimacao,
             ato: intimacao.pjeTipoDocumento || "Intimação",
-            dataExpedicao: intimacao.dataExpedicao,
+            dataExpedicao: dataExpedicaoFormatada,
             prazoDias: intimacao.prazo,
             pjeDocumentoId: intimacao.pjeDocumentoId,
             pjeTipoDocumento: intimacao.pjeTipoDocumento,
@@ -593,6 +616,7 @@ export const vvdRouter = router({
             defensorId: ctx.user.id,
           });
           resultados.intimacoesNovas++;
+          console.log("[VVD Import] Intimação criada para processo:", processoExistente.id);
         } catch (error) {
           resultados.erros.push(
             `Erro ao importar ${intimacao.assistido}: ${error instanceof Error ? error.message : "Erro desconhecido"}`

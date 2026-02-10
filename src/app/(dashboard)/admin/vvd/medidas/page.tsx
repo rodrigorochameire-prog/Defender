@@ -238,7 +238,7 @@ export default function MonitoramentoMPUPage() {
       return (
         <Badge className="bg-rose-500 hover:bg-rose-600">
           <ShieldAlert className="w-3 h-3 mr-1" />
-          Vencida ({Math.abs(diasRestantes)}d)
+          Reanálise ({Math.abs(diasRestantes)}d atrás)
         </Badge>
       );
     }
@@ -339,21 +339,21 @@ export default function MonitoramentoMPUPage() {
             onClick={() => setFilterVencimento("ativas")}
           />
           <KPICardPremium
-            title="Vencidas"
+            title="Reanálise Pendente"
             value={mpuStats.vencidas}
             icon={ShieldAlert}
             gradient={mpuStats.vencidas > 0 ? "rose" : "zinc"}
             onClick={() => setFilterVencimento("vencidas")}
           />
           <KPICardPremium
-            title="Vence em 7 dias"
+            title="Reanálise em 7 dias"
             value={mpuStats.vencendo7dias}
             icon={AlertTriangle}
             gradient={mpuStats.vencendo7dias > 0 ? "rose" : "zinc"}
             onClick={() => setFilterVencimento("7dias")}
           />
           <KPICardPremium
-            title="Vence em 30 dias"
+            title="Reanálise em 30 dias"
             value={mpuStats.vencendo30dias}
             icon={Clock}
             gradient={mpuStats.vencendo30dias > 0 ? "amber" : "zinc"}
@@ -371,12 +371,12 @@ export default function MonitoramentoMPUPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-rose-800 dark:text-rose-200">
-                    Atenção: MPUs requerem ação imediata!
+                    Atenção: MPUs requerem reanálise!
                   </p>
                   <p className="text-sm text-rose-600 dark:text-rose-300">
-                    {mpuStats.vencidas > 0 && `${mpuStats.vencidas} vencida(s)`}
+                    {mpuStats.vencidas > 0 && `${mpuStats.vencidas} pendente(s) de reanálise`}
                     {mpuStats.vencidas > 0 && mpuStats.vencendo7dias > 0 && " • "}
-                    {mpuStats.vencendo7dias > 0 && `${mpuStats.vencendo7dias} vencendo em 7 dias`}
+                    {mpuStats.vencendo7dias > 0 && `${mpuStats.vencendo7dias} para reanálise em 7 dias`}
                   </p>
                 </div>
                 <Button
@@ -384,7 +384,7 @@ export default function MonitoramentoMPUPage() {
                   className="bg-rose-600 hover:bg-rose-700"
                   onClick={() => setFilterVencimento("vencidas")}
                 >
-                  Ver Urgentes
+                  Ver Pendentes
                 </Button>
               </div>
             </CardContent>
@@ -414,9 +414,9 @@ export default function MonitoramentoMPUPage() {
                   <SelectContent>
                     <SelectItem value="todos">Todos</SelectItem>
                     <SelectItem value="ativas">MPU Ativa</SelectItem>
-                    <SelectItem value="vencidas">Vencidas</SelectItem>
-                    <SelectItem value="7dias">Vence em 7 dias</SelectItem>
-                    <SelectItem value="30dias">Vence em 30 dias</SelectItem>
+                    <SelectItem value="vencidas">Reanálise Pendente</SelectItem>
+                    <SelectItem value="7dias">Reanálise em 7 dias</SelectItem>
+                    <SelectItem value="30dias">Reanálise em 30 dias</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -432,7 +432,7 @@ export default function MonitoramentoMPUPage() {
                     <TableHead>Processo</TableHead>
                     <TableHead>Crime</TableHead>
                     <TableHead>Status MPU</TableHead>
-                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Reanálise</TableHead>
                     <TableHead>Distância</TableHead>
                     <TableHead className="w-[100px]">Ações</TableHead>
                   </TableRow>
@@ -619,7 +619,7 @@ export default function MonitoramentoMPUPage() {
                     </div>
                     {processoDetalhes.dataVencimentoMPU && (
                       <div className="text-right">
-                        <p className="text-sm font-medium">Vencimento</p>
+                        <p className="text-sm font-medium">Próxima Reanálise</p>
                         <p className="text-lg font-bold">
                           {format(parseISO(processoDetalhes.dataVencimentoMPU), "dd/MM/yyyy", { locale: ptBR })}
                         </p>
@@ -668,7 +668,7 @@ export default function MonitoramentoMPUPage() {
                                 {evento.novaDataVencimento && (
                                   <Badge variant="secondary" className="text-xs">
                                     <Calendar className="w-3 h-3 mr-1" />
-                                    Novo venc: {format(parseISO(evento.novaDataVencimento), "dd/MM/yyyy")}
+                                    Reanálise: {format(parseISO(evento.novaDataVencimento), "dd/MM/yyyy")}
                                   </Badge>
                                 )}
                                 {evento.novaDistancia && (
@@ -760,7 +760,7 @@ export default function MonitoramentoMPUPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Nova Data de Vencimento</Label>
+                <Label>Nova Data de Reanálise</Label>
                 <Input
                   type="date"
                   value={novoEvento.novaDataVencimento}
