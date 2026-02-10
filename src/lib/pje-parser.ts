@@ -846,16 +846,17 @@ export interface ResultadoParserSEEU {
 /**
  * Parser para intimações do SEEU (Sistema Eletrônico de Execução Unificada)
  * Extrai dados da "Mesa do Defensor" do SEEU
+ * Suporta dois formatos:
+ * 1. Tabela com tabs (copy/paste direto da página)
+ * 2. Texto linha por linha (formato antigo)
  */
 export function parseSEEUIntimacoes(texto: string): ResultadoParserSEEU {
   const intimacoes: IntimacaoSEEU[] = [];
-  const linhas = texto.split('\n').map(l => l.trim()).filter(l => l);
-  let contadorOrdem = 0; // Contador para preservar ordem original do SEEU
+  let contadorOrdem = 0;
 
   // Detectar tipo de manifestação (aba ativa)
   let tipoManifestacao = "manifestacao";
   if (texto.includes("Ciência (") || texto.includes("Ciência(")) {
-    // Verifica se é a aba ativa
     const matchCiencia = texto.match(/Ciência\s*\((\d+)\)/);
     if (matchCiencia) {
       tipoManifestacao = "ciencia";
@@ -868,8 +869,32 @@ export function parseSEEUIntimacoes(texto: string): ResultadoParserSEEU {
     }
   }
 
+  // MODO 1: Detectar formato de tabela com tabs
+  // Procurar por linhas que começam com número sequencial seguido de processo CNJ
+  const regexLinhaTabela = /^(\d+)\t(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/;
+  const linhasComTab = texto.split('\n').filter(l => regexLinhaTabela.test(l.trim()));
+
+  if (linhasComTab.length > 0) {
+    // Formato de tabela detectado - processar cada linha
+    for (const linha of linhasComTab) {
+      const intimacao = parseLinhaTabelaSEEU(linha, tipoManifestacao, contadorOrdem++);
+      if (intimacao) {
+        intimacoes.push(intimacao);
+      }
+    }
+
+    return {
+      intimacoes,
+      totalEncontradas: intimacoes.length,
+      tipoManifestacao,
+      sistema: "SEEU",
+    };
+  }
+
+  // MODO 2: Formato linha por linha (fallback)
+  const linhas = texto.split('\n').map(l => l.trim()).filter(l => l);
+
   // Regex para detectar início de uma intimação (número sequencial + número CNJ)
-  // Padrão: número + número do processo CNJ
   const regexProcessoCNJ = /^(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})\s*/;
   const regexSeqProcesso = /^(\d+)\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/;
 
@@ -1021,6 +1046,126 @@ export function parseSEEUIntimacoes(texto: string): ResultadoParserSEEU {
     totalEncontradas: intimacoes.length,
     tipoManifestacao,
     sistema: "SEEU",
+  };
+}
+
+/**
+ * Parseia uma linha de tabela do SEEU (formato com tabs)
+ * Formato esperado: Seq\tProcesso\tClasse\tPartes\tData Envio\tÚltimo Dia\tPrazo\t...
+ *
+ * Exemplo de linha:
+ * 1404	2000191-39.2024.8.05.0039 	Execução da Pena\n(Acordo de Não Persecução Penal)	...
+ */
+function parseLinhaTabelaSEEU(
+  textoCompleto: string,
+  tipoManifestacao: string,
+  ordemOriginal: number
+): IntimacaoSEEU | null {
+  // O texto pode ter múltiplas linhas (células da tabela)
+  // Vamos juntar tudo e processar
+  const linhas = textoCompleto.split('\n').map(l => l.trim());
+  const primeiraLinha = linhas[0] || '';
+
+  // Extrair Seq e Processo da primeira linha
+  const matchSeqProcesso = primeiraLinha.match(/^(\d+)\t(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/);
+  if (!matchSeqProcesso) return null;
+
+  const seq = parseInt(matchSeqProcesso[1]);
+  const numeroProcesso = matchSeqProcesso[2];
+
+  // Juntar todo o texto para buscar informações
+  const textoJunto = textoCompleto.replace(/\t/g, ' ').replace(/\n/g, ' ');
+
+  // Extrair classe processual
+  let classeProcessual = '';
+  if (textoJunto.includes('Execução da Pena')) {
+    classeProcessual = 'Execução da Pena';
+  } else if (textoJunto.includes('Execução de Medidas Alternativas')) {
+    classeProcessual = 'Execução de Medidas Alternativas no Juízo Comum';
+  } else if (textoJunto.includes('Carta Precatória')) {
+    classeProcessual = 'Carta Precatória Criminal';
+  }
+
+  // Extrair assunto principal (entre parênteses após classe)
+  let assuntoPrincipal = '';
+  const matchAssunto = textoJunto.match(/\((Acordo de Não Persecução Penal|Pena Privativa de Liberdade|Pena Restritiva de Direitos|Internação)[^)]*\)/i);
+  if (matchAssunto) {
+    assuntoPrincipal = matchAssunto[1];
+  }
+
+  // Extrair nome do Executado
+  let assistido = '';
+  const matchExecutado = textoJunto.match(/Executado:\s*([A-ZÀÁÂÃÉÊÍÓÔÕÚÇ][A-ZÀÁÂÃÉÊÍÓÔÕÚÇ\s]+)/i);
+  if (matchExecutado) {
+    assistido = toTitleCase(matchExecutado[1].trim());
+  } else {
+    // Tentar outro padrão - nome em maiúsculas após "Executado:"
+    const matchNome = textoJunto.match(/Executado:\s*\n?\s*([A-ZÀÁÂÃÉÊÍÓÔÕÚÇ][A-ZÀÁÂÃÉÊÍÓÔÕÚÇ\s]+)/);
+    if (matchNome) {
+      assistido = toTitleCase(matchNome[1].trim());
+    }
+  }
+
+  // Extrair datas (formato DD/MM/YYYY)
+  const matchDatas = textoJunto.match(/(\d{2}\/\d{2}\/\d{4})/g);
+  let dataEnvio = '';
+  let ultimoDia = '';
+  if (matchDatas && matchDatas.length >= 1) {
+    dataEnvio = matchDatas[0];
+    if (matchDatas.length >= 2) {
+      ultimoDia = matchDatas[1];
+    }
+  }
+
+  // Extrair prazo
+  let prazo: number | undefined;
+  const matchPrazo = textoJunto.match(/(\d+)\s*dias?\s*(corridos|úteis)?/i);
+  if (matchPrazo) {
+    prazo = parseInt(matchPrazo[1]);
+  }
+
+  // Validar dados mínimos
+  if (!numeroProcesso || !assistido) {
+    // Tentar extrair nome de outra forma - procurar nome em maiúsculas
+    const nomesMaiusculos = textoJunto.match(/[A-ZÀÁÂÃÉÊÍÓÔÕÚÇ]{2,}(?:\s+[A-ZÀÁÂÃÉÊÍÓÔÕÚÇ]+)+/g);
+    if (nomesMaiusculos) {
+      // Filtrar nomes que não são estados/autoridades
+      const nomesValidos = nomesMaiusculos.filter(n =>
+        !n.includes('ESTADO') &&
+        !n.includes('MINISTÉRIO') &&
+        !n.includes('PÚBLICO') &&
+        !n.includes('BAHIA') &&
+        !n.includes('SERGIPE') &&
+        n.split(' ').length >= 2 // Pelo menos nome e sobrenome
+      );
+      if (nomesValidos.length > 0) {
+        assistido = toTitleCase(nomesValidos[nomesValidos.length - 1]); // Pegar o último (geralmente é o executado)
+      }
+    }
+  }
+
+  if (!numeroProcesso || !assistido) {
+    return null;
+  }
+
+  return {
+    assistido,
+    numeroProcesso,
+    dataExpedicao: dataEnvio,
+    dataEnvio,
+    ultimoDia,
+    seq,
+    classeProcessual,
+    assuntoPrincipal,
+    prazo,
+    tipoManifestacao: tipoManifestacao as any,
+    tipoDocumento: tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação',
+    crime: assuntoPrincipal,
+    tipoProcesso: classeProcessual || 'Execução Penal',
+    atribuicaoDetectada: 'Execução Penal',
+    vara: 'Vara de Execuções Penais',
+    ordemOriginal,
+    preAnalise: textoJunto.includes('Livre') ? 'Livre' : undefined,
   };
 }
 
