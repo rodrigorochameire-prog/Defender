@@ -321,12 +321,14 @@ function SuggestedFolders({
   onAdd,
   onRegisterAll,
   isRegistering,
-  existingFolderIds = []
+  existingFolderIds = [],
+  accountEmail,
 }: {
   onAdd: (folder: { name: string; description: string; folderId: string }) => void;
   onRegisterAll?: () => void;
   isRegistering?: boolean;
   existingFolderIds?: string[];
+  accountEmail?: string | null;
 }) {
   const suggestions = [
     {
@@ -410,6 +412,27 @@ function SuggestedFolders({
           </Button>
         )}
       </div>
+
+      {/* Alerta de compartilhamento */}
+      {accountEmail && (
+        <div className="mb-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+            <div className="text-xs">
+              <p className="font-medium text-amber-700 dark:text-amber-300">
+                Importante: Compartilhe as pastas no Google Drive
+              </p>
+              <p className="text-amber-600 dark:text-amber-400 mt-1">
+                Cada pasta deve estar compartilhada com{" "}
+                <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded font-mono text-[10px]">
+                  {accountEmail}
+                </code>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
         {availableSuggestions.map((suggestion) => {
           const Icon = suggestion.icon;
@@ -726,6 +749,7 @@ export default function DriveConfigPage() {
             onRegisterAll={() => registerAllMutation.mutate()}
             isRegistering={registerAllMutation.isPending}
             existingFolderIds={syncFolders?.map(f => f.driveFolderId) || []}
+            accountEmail={accountInfo?.email}
           />
 
           {/* Instruções */}

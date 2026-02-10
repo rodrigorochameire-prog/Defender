@@ -135,6 +135,14 @@ export const driveRouter = router({
         );
 
         if (!result.success) {
+          // Se erro de acesso, incluir email da conta de serviço na mensagem
+          if (result.error?.includes("Não foi possível acessar")) {
+            const accountInfo = await getAuthenticatedAccountInfo();
+            const emailInfo = accountInfo?.email
+              ? `\n\nCompartilhe a pasta com: ${accountInfo.email}`
+              : "\n\nVerifique as configurações da conta de serviço.";
+            throw Errors.validation(result.error + emailInfo);
+          }
           throw Errors.validation(result.error || "Falha ao registrar pasta para sincronização");
         }
 
