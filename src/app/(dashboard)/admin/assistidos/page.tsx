@@ -89,6 +89,8 @@ import {
   FolderOpen,
   HardDrive,
   Link2Off,
+  ExternalLink,
+  FileStack,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -186,6 +188,7 @@ interface AssistidoUI {
   numeroProcesso?: string;
   faseProcessual?: string;
   driveFolderId?: string | null;
+  driveFilesCount?: number;
 }
 
 // Configuracoes de status e fases
@@ -586,27 +589,46 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 
           {/* Drive + Pin Buttons */}
           <div className="flex items-center gap-1">
-            {/* Drive Link Indicator */}
+            {/* Drive Link Indicator with Counter & Quick Action */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div
-                    className={cn(
-                      "h-7 w-7 rounded-md flex items-center justify-center transition-all cursor-pointer",
-                      assistido.driveFolderId
-                        ? "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
-                        : "text-zinc-300 hover:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    )}
-                  >
-                    {assistido.driveFolderId ? (
+                  {assistido.driveFolderId ? (
+                    <a
+                      href={`https://drive.google.com/drive/folders/${assistido.driveFolderId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "h-7 rounded-md flex items-center gap-1.5 px-2 transition-all cursor-pointer",
+                        "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20",
+                        "hover:bg-emerald-100 dark:hover:bg-emerald-900/30",
+                        "border border-emerald-200/50 dark:border-emerald-800/30"
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <HardDrive className="w-3.5 h-3.5" />
-                    ) : (
+                      {(assistido.driveFilesCount ?? 0) > 0 && (
+                        <span className="text-[10px] font-medium tabular-nums">
+                          {assistido.driveFilesCount}
+                        </span>
+                      )}
+                      <ExternalLink className="w-3 h-3 opacity-60" />
+                    </a>
+                  ) : (
+                    <div
+                      className={cn(
+                        "h-7 w-7 rounded-md flex items-center justify-center transition-all cursor-pointer",
+                        "text-zinc-300 hover:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      )}
+                    >
                       <Link2Off className="w-3.5 h-3.5" />
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="text-xs">
-                  {assistido.driveFolderId ? "Pasta vinculada no Drive" : "Sem pasta no Drive"}
+                  {assistido.driveFolderId
+                    ? `Abrir pasta no Drive${(assistido.driveFilesCount ?? 0) > 0 ? ` (${assistido.driveFilesCount} arquivo${(assistido.driveFilesCount ?? 0) > 1 ? 's' : ''})` : ''}`
+                    : "Sem pasta no Drive"}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -1682,10 +1704,13 @@ export default function AssistidosPage() {
         // Novos campos
         comarcas: comarcasStr ? comarcasStr.split(',').filter(Boolean) : [],
         // Score calculado no cliente para evitar query pesada
-        scoreComplexidade: ((a as any).processosCount || 0) * 10 + 
-          ((a as any).demandasAbertasCount || 0) * 5 + 
+        scoreComplexidade: ((a as any).processosCount || 0) * 10 +
+          ((a as any).demandasAbertasCount || 0) * 5 +
           (["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional || "") ? 20 : 0),
         ultimoEvento: null,
+        // Drive integration
+        driveFolderId: a.driveFolderId || null,
+        driveFilesCount: (a as any).driveFilesCount || 0,
       };
     });
   }, [assistidosData]);

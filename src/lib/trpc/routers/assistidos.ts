@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes } from "@/lib/db/schema";
+import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles } from "@/lib/db/schema";
 import { eq, ilike, or, desc, sql, and, isNull, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
@@ -102,7 +102,27 @@ export const assistidosRouter = router({
         .groupBy(demandas.assistidoId);
       
       const demandasCountMap = new Map(demandasCountData.map(d => [d.assistidoId, d.count]));
-      
+
+      // Contagem de arquivos do Drive por assistido (para quem tem pasta vinculada)
+      const assistidosComPasta = result.filter(a => a.driveFolderId);
+      let driveFilesCountMap = new Map<number, number>();
+
+      if (assistidosComPasta.length > 0) {
+        const driveFilesCountData = await db
+          .select({
+            assistidoId: driveFiles.assistidoId,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(driveFiles)
+          .where(and(
+            inArray(driveFiles.assistidoId, assistidosComPasta.map(a => a.id)),
+            sql`${driveFiles.isFolder} = false` // Só conta arquivos, não pastas
+          ))
+          .groupBy(driveFiles.assistidoId);
+
+        driveFilesCountMap = new Map(driveFilesCountData.map(d => [d.assistidoId!, d.count]));
+      }
+
       // Próxima audiência por assistido
       const audienciasData = await db
         .select({
@@ -173,6 +193,7 @@ export const assistidosRouter = router({
           // Dados agregados
           processosCount: processosCountMap.get(a.id) || 0,
           demandasAbertasCount: demandasCountMap.get(a.id) || 0,
+          driveFilesCount: driveFilesCountMap.get(a.id) || 0, // Contagem de arquivos no Drive
           proximaAudiencia: audienciasMap.get(a.id)?.toISOString() || null,
           areas: processoData ? Array.from(processoData.areas).join(',') : null,
           atribuicoes: processoData ? Array.from(processoData.atribuicoes).join(',') : null,
