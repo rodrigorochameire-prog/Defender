@@ -65,6 +65,7 @@ import {
   Scale,
   Gavel,
   FolderSync,
+  Wand2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -666,6 +667,33 @@ export default function DriveConfigPage() {
         accountEmail={accountInfo?.email}
         accountName={accountInfo?.name}
       />
+
+      {/* Auto-Vinculação Card */}
+      {isConfigured && (
+        <Card className="p-4 border-violet-200 dark:border-violet-800 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600">
+                <Wand2 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-violet-900 dark:text-violet-100">
+                  Auto-Vincular Assistidos
+                </h3>
+                <p className="text-sm text-violet-600 dark:text-violet-300">
+                  Vincule automaticamente assistidos às pastas do Drive pelo nome
+                </p>
+              </div>
+            </div>
+            <Link href="/admin/settings/drive/auto-vincular">
+              <Button className="bg-violet-600 hover:bg-violet-700 text-white gap-2">
+                <Wand2 className="w-4 h-4" />
+                Abrir
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       {/* Pastas Sincronizadas */}
       {isConfigured && (
