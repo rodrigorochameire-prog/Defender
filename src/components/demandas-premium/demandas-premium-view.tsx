@@ -787,15 +787,49 @@ export default function Demandas() {
     const DELAY_BETWEEN_BATCHES = 300; // 300ms entre batches
 
     // Mapear status da planilha para status válido do enum
+    // Chaves são em minúsculas para comparação case-insensitive
     const statusMap: Record<string, string> = {
-      'atender': '2_ATENDER',
-      'monitorar': '4_MONITORAR',
-      'fila': '5_FILA',
-      'protocolado': '7_PROTOCOLADO',
-      'ciencia': '7_CIENCIA',
-      'sem_atuacao': '7_SEM_ATUACAO',
-      'urgente': 'URGENTE',
-      'concluido': 'CONCLUIDO',
+      // 1 - Urgente
+      'urgente': 'Urgente',
+
+      // 2 - Análise/Elaboração
+      'analisar': 'Analisar',
+      'relatório': 'Relatório',
+      'relatorio': 'Relatório',
+      'atender': 'Atender',
+      'elaborar': 'Elaborar',
+      'buscar': 'Buscar',
+      'revisar': 'Revisar',
+      'elaborando': 'Elaborando',
+
+      // 3 - Protocolar
+      'protocolar': 'Protocolar',
+
+      // 4 - Delegação para pessoas/estágios
+      'amanda': 'Amanda',
+      'estágio - taissa': 'Estágio - Taissa',
+      'estagio - taissa': 'Estágio - Taissa',
+      'taissa': 'Estágio - Taissa',
+      'emilly': 'Emilly',
+      'monitorar': 'Monitorar',
+
+      // 5 - Fila
+      'fila': 'Fila',
+
+      // 6 - Documentos/Testemunhas
+      'documentos': 'Documentos',
+      'testemunhas': 'Testemunhas',
+
+      // 7 - Finalizados
+      'protocolado': 'Protocolado',
+      'sigad': 'Sigad',
+      'ciência': 'Ciência',
+      'ciencia': 'Ciência',
+      'peticionamento irregular': 'Peticionamento irregular',
+      'resolvido': 'Resolvido',
+      'constituiu advogado': 'Constituiu advogado',
+      'sem atuação': 'Sem atuação',
+      'sem atuacao': 'Sem atuação',
       'arquivado': 'ARQUIVADO',
     };
 
@@ -825,7 +859,8 @@ export default function Demandas() {
           }
 
           const statusNormalizado = data.status?.toLowerCase?.() || 'fila';
-          const statusValido = statusMap[statusNormalizado] || '5_FILA';
+          // Busca no mapa, se não encontrar usa o status original (capitalizado)
+          const statusValido = statusMap[statusNormalizado] || data.status || 'Fila';
 
           // A mutation espera {id, ...campos} não {id, data: {...}}
           await updateDemandaMutation.mutateAsync({
