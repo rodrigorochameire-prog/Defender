@@ -293,26 +293,43 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
       // Dividir por tabulação (padrão do Google Sheets ao copiar)
       const columns = line.split("\t");
 
-      // Padrão esperado (com coluna Tipo):
-      // [0] Status (ex: "2 - Analisar")
-      // [1] Estado Prisional (opcional, ex: "Preso")
-      // [2] Data (ex: "23.01.26")
-      // [3] Assistido
-      // [4] Tipo (ex: "AP", "IP", "MPU") - NOVO
-      // [5] Autos/Processo
-      // [6] Ato
-      // [7] Prazo (opcional)
-      // [8] Providências
+      // Detectar formato da planilha:
+      // Formato 1 (8 colunas - sem Tipo):
+      //   Status | Prisão | Data | Assistido | Autos | Ato | Prazo | Providências
+      //   [0]      [1]      [2]     [3]        [4]     [5]   [6]      [7]
+      //
+      // Formato 2 (9 colunas - com Tipo):
+      //   Status | Prisão | Data | Assistido | Tipo | Autos | Ato | Prazo | Providências
+      //   [0]      [1]      [2]     [3]        [4]    [5]     [6]   [7]      [8]
+
+      const temColunaTipo = columns.length >= 9;
 
       const statusRaw = columns[0]?.trim() || "";
       const estadoPrisionalRaw = columns[1]?.trim() || "";
       const dataRaw = columns[2]?.trim() || "";
       const assistido = columns[3]?.trim() || "";
-      const tipoProcessoRaw = columns[4]?.trim() || "";
-      const processoRaw = columns[5]?.trim() || "";
-      const ato = columns[6]?.trim() || "";
-      const prazoRaw = columns[7]?.trim() || "";
-      const providencias = columns[8]?.trim() || "";
+
+      let tipoProcessoRaw: string;
+      let processoRaw: string;
+      let ato: string;
+      let prazoRaw: string;
+      let providencias: string;
+
+      if (temColunaTipo) {
+        // Formato com 9 colunas (inclui Tipo)
+        tipoProcessoRaw = columns[4]?.trim() || "";
+        processoRaw = columns[5]?.trim() || "";
+        ato = columns[6]?.trim() || "";
+        prazoRaw = columns[7]?.trim() || "";
+        providencias = columns[8]?.trim() || "";
+      } else {
+        // Formato com 8 colunas (sem Tipo)
+        tipoProcessoRaw = "";
+        processoRaw = columns[4]?.trim() || "";
+        ato = columns[5]?.trim() || "";
+        prazoRaw = columns[6]?.trim() || "";
+        providencias = columns[7]?.trim() || "";
+      }
 
       // FILTRO: Ignorar linhas sem dados essenciais
       // Uma linha válida precisa ter pelo menos o nome do assistido
