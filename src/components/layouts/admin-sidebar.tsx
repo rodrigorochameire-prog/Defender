@@ -94,8 +94,11 @@ const JURI_MODULES: AssignmentMenuItem[] = [
 ];
 
 const VVD_MODULES: AssignmentMenuItem[] = [
-  { label: "Audiências VVD", path: "/admin/vvd", icon: "Shield" },
-  { label: "Medidas Protetivas", path: "/admin/vvd/medidas", icon: "Shield" },
+  { label: "Dashboard VVD", path: "/admin/vvd", icon: "LayoutDashboard" },
+  { label: "Monitoramento MPU", path: "/admin/vvd/medidas", icon: "ShieldCheck" },
+  { label: "Processos VVD", path: "/admin/vvd/processos", icon: "FileText" },
+  { label: "Intimações", path: "/admin/vvd/intimacoes", icon: "Bell" },
+  { label: "Partes", path: "/admin/vvd/partes", icon: "Users" },
 ];
 
 const EP_MODULES: AssignmentMenuItem[] = [
