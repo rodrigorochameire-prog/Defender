@@ -860,16 +860,17 @@ export default function Demandas() {
 
           const statusNormalizado = data.status?.toLowerCase?.() || 'fila';
           // Busca no mapa, se não encontrar usa o status original (capitalizado)
-          const statusValido = statusMap[statusNormalizado] || data.status || 'Fila';
+          const substatusValido = statusMap[statusNormalizado] || data.status || 'Fila';
 
           // A mutation espera {id, ...campos} não {id, data: {...}}
+          // O status da planilha vai para substatus (status granular)
           await updateDemandaMutation.mutateAsync({
             id: numericId,
             ato: data.ato || undefined,
             prazo: data.prazo || undefined,
-            status: statusValido as any,
+            substatus: substatusValido, // Status granular da planilha
             providencias: data.providencias || undefined,
-            reuPreso: data.estadoPrisional === 'Preso',
+            reuPreso: data.estadoPrisional?.toLowerCase?.() === 'preso',
             // Atribuição - atualiza o processo vinculado
             atribuicao: data.atribuicao || undefined,
           });

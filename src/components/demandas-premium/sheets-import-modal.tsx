@@ -150,20 +150,37 @@ function saoMesmaDemanda(nova: ParsedDemanda, existente: any): boolean {
 function identificarDiferencas(nova: ParsedDemanda, existente: any): string[] {
   const diferencas: string[] = [];
 
-  if (nova.status !== existente.status) {
-    diferencas.push(`Status: ${existente.status} → ${nova.status}`);
+  // Comparar substatus (status granular da planilha) - case-insensitive
+  const novoStatus = nova.status?.toLowerCase?.() || '';
+  const existenteSubstatus = existente.substatus?.toLowerCase?.() || '';
+  if (novoStatus && novoStatus !== existenteSubstatus) {
+    diferencas.push(`Status: ${existente.substatus || 'vazio'} → ${nova.status}`);
   }
-  if (nova.ato !== existente.ato) {
+
+  // Comparar ato - case-insensitive
+  const novoAto = nova.ato?.toLowerCase?.() || '';
+  const existenteAto = existente.ato?.toLowerCase?.() || '';
+  if (novoAto && novoAto !== existenteAto && nova.ato !== "Demanda importada") {
     diferencas.push(`Ato: ${existente.ato || 'vazio'} → ${nova.ato}`);
   }
-  if (nova.prazo !== existente.prazo) {
+
+  // Comparar prazo
+  if (nova.prazo && nova.prazo !== existente.prazo) {
     diferencas.push(`Prazo: ${existente.prazo || 'vazio'} → ${nova.prazo}`);
   }
-  if (nova.providencias !== existente.providencias) {
+
+  // Comparar providências
+  const novasProv = nova.providencias?.trim?.() || '';
+  const existenteProv = existente.providencias?.trim?.() || '';
+  if (novasProv && novasProv !== existenteProv) {
     diferencas.push(`Providências atualizadas`);
   }
-  if (nova.estadoPrisional !== existente.estadoPrisional) {
-    diferencas.push(`Estado: ${existente.estadoPrisional} → ${nova.estadoPrisional}`);
+
+  // Comparar estado prisional
+  const novoEstado = nova.estadoPrisional?.toLowerCase?.() || 'solto';
+  const existenteEstado = existente.reuPreso ? 'preso' : 'solto';
+  if (novoEstado !== existenteEstado) {
+    diferencas.push(`Estado: ${existenteEstado} → ${novoEstado}`);
   }
 
   return diferencas;
