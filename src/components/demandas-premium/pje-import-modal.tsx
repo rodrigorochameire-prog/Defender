@@ -158,7 +158,7 @@ export function PJeImportModal({
 
       // 1. Importar MPUs para tabela especial (sempre como CIENCIA por padrão)
       if (intimacoesMPU.length > 0) {
-        const intimacoesParaVVD = intimacoesMPU.map((intimacao) => ({
+        const intimacoesParaVVD = intimacoesMPU.map((intimacao, index) => ({
           assistido: intimacao.assistido,
           numeroProcesso: intimacao.numeroProcesso,
           dataExpedicao: intimacao.dataExpedicao,
@@ -168,6 +168,7 @@ export function PJeImportModal({
           pjeDocumentoId: intimacao.idDocumento,
           pjeTipoDocumento: intimacao.tipoDocumento,
           tipoIntimacao: "CIENCIA" as const, // MPUs sempre entram como ciência, pode mudar na triagem
+          ordemOriginal: intimacao.ordemOriginal ?? index, // Preserva ordem do PJe
         }));
 
         importarVVDMutation.mutate({ intimacoes: intimacoesParaVVD });

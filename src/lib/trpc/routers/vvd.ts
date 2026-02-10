@@ -519,6 +519,7 @@ export const vvdRouter = router({
             pjeDocumentoId: z.string().optional(),
             pjeTipoDocumento: z.string().optional(),
             tipoIntimacao: z.enum(["CIENCIA", "PETICIONAR"]).default("CIENCIA"),
+            ordemOriginal: z.number().optional(), // Posição original na lista do PJe (para ordenação)
           })
         ),
       })
@@ -602,6 +603,14 @@ export const vvdRouter = router({
             dataExpedicaoFormatada = `${ano}-${mes}-${dia}`;
           }
 
+          // Criar timestamp com milissegundos precisos para preservar ordem do PJe
+          // A primeira intimação (ordem 0) terá maior valor de ms (999) para aparecer primeiro em DESC
+          const ordemMs = intimacao.ordemOriginal !== undefined
+            ? 999 - intimacao.ordemOriginal
+            : 0;
+          const createdAtPreciso = new Date();
+          createdAtPreciso.setMilliseconds(ordemMs);
+
           await db.insert(intimacoesVVD).values({
             processoVVDId: processoExistente.id,
             tipoIntimacao: intimacao.tipoIntimacao,
@@ -614,6 +623,7 @@ export const vvdRouter = router({
               ? "(ajustar status e ato)"
               : "(peticionar nos autos)",
             defensorId: ctx.user.id,
+            createdAt: createdAtPreciso, // Timestamp com ordem precisa do PJe
           });
           resultados.intimacoesNovas++;
           console.log("[VVD Import] Intimação criada para processo:", processoExistente.id);
