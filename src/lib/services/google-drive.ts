@@ -1516,7 +1516,7 @@ export async function registerSyncFolder(
     if (!folderInfo) {
       return {
         success: false,
-        error: `Não foi possível acessar a pasta "${folderId}". Verifique se o ID está correto e se a pasta está compartilhada com a conta de serviço.`,
+        error: `Não foi possível acessar a pasta "${folderId}". Verifique se o ID está correto e se a pasta está na sua conta Google ou compartilhada com ela (Editor).`,
       };
     }
 

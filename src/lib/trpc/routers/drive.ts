@@ -135,12 +135,12 @@ export const driveRouter = router({
         );
 
         if (!result.success) {
-          // Se erro de acesso, incluir email da conta de serviço na mensagem
+          // Se erro de acesso, incluir email da conta autenticada na mensagem
           if (result.error?.includes("Não foi possível acessar")) {
             const accountInfo = await getAuthenticatedAccountInfo();
             const emailInfo = accountInfo?.email
-              ? `\n\nCompartilhe a pasta com: ${accountInfo.email}`
-              : "\n\nVerifique as configurações da conta de serviço.";
+              ? `\n\nA pasta deve estar acessível pela conta: ${accountInfo.email}`
+              : "\n\nVerifique se a pasta está compartilhada com sua conta Google.";
             throw Errors.validation(result.error + emailInfo);
           }
           throw Errors.validation(result.error || "Falha ao registrar pasta para sincronização");

@@ -420,13 +420,14 @@ function SuggestedFolders({
             <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
             <div className="text-xs">
               <p className="font-medium text-amber-700 dark:text-amber-300">
-                Importante: Compartilhe as pastas no Google Drive
+                As pastas devem ser acessíveis por sua conta Google
               </p>
               <p className="text-amber-600 dark:text-amber-400 mt-1">
-                Cada pasta deve estar compartilhada com{" "}
+                As pastas precisam estar na sua conta{" "}
                 <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded font-mono text-[10px]">
                   {accountEmail}
                 </code>
+                {" "}ou compartilhadas com ela (Editor).
               </p>
             </div>
           </div>
