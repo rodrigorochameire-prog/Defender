@@ -13,6 +13,7 @@ import { demandasRouter } from "./demandas";
 import { juriRouter } from "./juri";
 import { avaliacaoJuriRouter } from "./avaliacaoJuri";
 import { audienciasRouter } from "./audiencias";
+import { eventosRouter } from "./eventos";
 import { driveRouter } from "./drive";
 import { profissionaisRouter } from "./profissionais";
 import { diligenciasRouter } from "./diligencias";
@@ -56,6 +57,7 @@ export const appRouter = router({
   juri: juriRouter,
   avaliacaoJuri: avaliacaoJuriRouter,
   audiencias: audienciasRouter,
+  eventos: eventosRouter, // Alias para audiências (usado por daily-progress, status-bar)
   drive: driveRouter,
   profissionais: profissionaisRouter,
   diligencias: diligenciasRouter,

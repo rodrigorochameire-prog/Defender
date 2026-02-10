@@ -447,6 +447,12 @@ export const demandasRouter = router({
             ato: z.string().min(1),
             prazo: z.string().optional(),
             dataEntrada: z.string().optional(),
+            // dataExpedicaoCompleta para verificação de duplicatas (inclui data+hora)
+            // Formato: "YYYY-MM-DDTHH:mm:00" ou "DD/MM/YYYY HH:mm"
+            dataExpedicaoCompleta: z.string().optional(),
+            // dataInclusao para ordenação precisa (usado por SEEU/PJe)
+            // Formato ISO com milissegundos: "2026-01-27T00:00:00.999"
+            dataInclusao: z.string().optional(),
             status: z.string().optional(),
             estadoPrisional: z.string().optional(),
             providencias: z.string().optional(),
@@ -591,20 +597,7 @@ export const demandasRouter = router({
             processo = newProcesso;
           }
 
-          // 3. Verificar duplicata (mesmo processo + mesmo ato)
-          const existingDemanda = await db.query.demandas.findFirst({
-            where: and(
-              eq(demandas.processoId, processo.id),
-              eq(demandas.ato, row.ato),
-              isNull(demandas.deletedAt),
-            ),
-          });
-
-          // 4. Mapear status
-          const dbStatus = STATUS_TO_DB[row.status || "fila"] || "5_FILA";
-          const reuPreso = row.estadoPrisional === "preso";
-
-          // 5. Converter datas do formato DD/MM/YY ou DD/MM/YYYY para YYYY-MM-DD
+          // 3. Converter datas primeiro (precisamos para verificar duplicata)
           const convertDate = (dateStr: string | undefined): string | null => {
             if (!dateStr || !dateStr.trim()) return null;
             const cleaned = dateStr.trim().replace(/\./g, "/");
@@ -621,6 +614,61 @@ export const demandasRouter = router({
             return null;
           };
 
+          // Converter data de entrada para usar na verificação de duplicata
+          const dataEntradaConvertida = convertDate(row.dataEntrada);
+
+          // 4. Verificar duplicata: mesmo processo + mesma data de expedição
+          // Isso permite múltiplas demandas do mesmo processo para diferentes intimações
+          // (ex: Resposta à Acusação vs Alegações Finais - datas diferentes)
+          // Também busca em demandas dos últimos 30 dias para evitar duplicatas recentes
+          let existingDemanda;
+
+          // Extrair apenas a data (sem hora) da dataExpedicaoCompleta para comparação com o banco
+          // O banco armazena apenas date, então precisamos comparar apenas a parte da data
+          let dataExpedicaoParaBusca = dataEntradaConvertida;
+          if (row.dataExpedicaoCompleta) {
+            // Se tem dataExpedicaoCompleta (com hora), extrair apenas a data
+            // Formatos possíveis: "YYYY-MM-DDTHH:mm:00" ou "DD/MM/YYYY HH:mm"
+            if (row.dataExpedicaoCompleta.includes('T')) {
+              dataExpedicaoParaBusca = row.dataExpedicaoCompleta.split('T')[0];
+            } else if (row.dataExpedicaoCompleta.includes(' ')) {
+              // Formato "DD/MM/YYYY HH:mm"
+              const [dataParte] = row.dataExpedicaoCompleta.split(' ');
+              dataExpedicaoParaBusca = convertDate(dataParte);
+            } else {
+              dataExpedicaoParaBusca = convertDate(row.dataExpedicaoCompleta);
+            }
+          }
+
+          if (dataExpedicaoParaBusca) {
+            // Se tem data de expedição, verificar por processo + data
+            existingDemanda = await db.query.demandas.findFirst({
+              where: and(
+                eq(demandas.processoId, processo.id),
+                eq(demandas.dataEntrada, dataExpedicaoParaBusca),
+                isNull(demandas.deletedAt),
+              ),
+            });
+          } else {
+            // Se não tem data, verificar demandas recentes (últimos 30 dias)
+            // do mesmo processo que também não têm data de entrada
+            const trintaDiasAtras = new Date();
+            trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+
+            existingDemanda = await db.query.demandas.findFirst({
+              where: and(
+                eq(demandas.processoId, processo.id),
+                isNull(demandas.dataEntrada),
+                gte(demandas.createdAt, trintaDiasAtras),
+                isNull(demandas.deletedAt),
+              ),
+            });
+          }
+
+          // 5. Mapear status
+          const dbStatus = STATUS_TO_DB[row.status || "fila"] || "5_FILA";
+          const reuPreso = row.estadoPrisional === "preso";
+
           // Salvar substatus granular (elaborar, revisar, buscar, etc.) para display
           const substatus = row.status?.toLowerCase().trim() || null;
 
@@ -629,6 +677,7 @@ export const demandasRouter = router({
             if (input.atualizarExistentes) {
               await db.update(demandas)
                 .set({
+                  ato: row.ato, // Atualizar o ato também (pode mudar de Ciência para Manifestação)
                   prazo: convertDate(row.prazo),
                   dataEntrada: convertDate(row.dataEntrada),
                   status: dbStatus as any,
@@ -647,6 +696,9 @@ export const demandasRouter = router({
           }
 
           // 6. Criar demanda
+          // Se dataInclusao foi fornecida (para ordenação precisa do SEEU/PJe), usá-la como createdAt
+          const createdAtValue = row.dataInclusao ? new Date(row.dataInclusao) : new Date();
+
           await db.insert(demandas).values({
             processoId: processo.id,
             assistidoId: assistido.id,
@@ -660,6 +712,7 @@ export const demandasRouter = router({
             providencias: row.providencias || null,
             defensorId: defensorId || ctx.user.id,
             workspaceId: workspaceId,
+            createdAt: createdAtValue, // Usa dataInclusao se fornecida para ordenação precisa
           }).returning();
 
           results.imported++;

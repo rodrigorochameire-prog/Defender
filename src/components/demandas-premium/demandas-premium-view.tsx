@@ -414,10 +414,10 @@ export default function Demandas() {
     destinatarioNome: string;
   } | null>(null);
 
-  const [viewMode, setViewMode] = useState<"table" | "cards" | "grid">(() => {
+  const [viewMode, setViewMode] = useState<"table" | "cards" | "grid" | "compact">(() => {
     if (typeof window !== "undefined") {
       // Padrão é "grid" (modo grid premium) - melhor visualização de cards
-      return (localStorage.getItem("defender_demandas_view_mode") as "table" | "cards" | "grid") || "grid";
+      return (localStorage.getItem("defender_demandas_view_mode") as "table" | "cards" | "grid" | "compact") || "grid";
     }
     return "grid";
   });
@@ -771,13 +771,20 @@ export default function Demandas() {
       ato: data.ato || "Outros",
       prazo: data.prazo || undefined,
       dataEntrada: data.data || undefined,
+      // dataExpedicaoCompleta para verificação de duplicatas (inclui data+hora se disponível)
+      // Vem do pjeData.dataExpedicao (PJe) ou data (se já tiver hora)
+      dataExpedicaoCompleta: data.pjeData?.dataExpedicao || data.data || undefined,
+      // Usar dataInclusao se fornecida (para ordenação precisa do SEEU/PJe)
+      dataInclusao: data.dataInclusao || undefined,
       status: data.status || "fila",
       estadoPrisional: data.estadoPrisional || "solto",
       providencias: data.providencias || undefined,
       atribuicao: data.atribuicao || "Substituição Criminal",
     }));
 
-    importFromSheetsMutation.mutate({ rows, atualizarExistentes: atualizarExistentes || false });
+    // Por padrão, sempre atualizar existentes para evitar duplicatas
+    // A verificação de duplicata é feita apenas por processoId (sem validar ato)
+    importFromSheetsMutation.mutate({ rows, atualizarExistentes: atualizarExistentes ?? true });
   };
 
   // Função para atualizar demandas existentes (usado pelo SheetsImportModal)
@@ -1252,6 +1259,20 @@ export default function Demandas() {
                   >
                     <LayoutList className="w-3.5 h-3.5" />
                   </button>
+                  <button
+                    onClick={() => {
+                      setViewMode("compact");
+                      localStorage.setItem("defender_demandas_view_mode", "compact");
+                    }}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === "compact"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    }`}
+                    title="Tabela Compacta (para comparação)"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
                 </div>
                 <button
                   onClick={() => setShowArchived(!showArchived)}
@@ -1291,7 +1312,7 @@ export default function Demandas() {
               </div>
             )}
 
-            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : "p-4"} max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900`}>
+            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : viewMode === "compact" ? "p-2" : "p-4"} max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900`}>
               {viewMode === "table" ? (
                 /* ========== MODO PLANILHA (PADRÃO) ========== */
                 <DemandaTableView
@@ -1359,6 +1380,66 @@ export default function Demandas() {
                     })
                   )}
                 </>
+              ) : viewMode === "compact" ? (
+                /* ========== MODO COMPACTO - TABELA PARA COMPARAÇÃO ========== */
+                <div className="overflow-x-auto">
+                  <div className="mb-3 px-2 py-2 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+                    <p className="text-xs text-purple-700 dark:text-purple-300">
+                      <Eye className="w-3 h-3 inline mr-1" />
+                      <strong>Modo Comparação:</strong> Visualização compacta para conferir com planilhas/PJe/SEEU. Copie linhas ou compare dados facilmente.
+                    </p>
+                  </div>
+                  {demandasOrdenadas.length === 0 ? (
+                    <div className="text-center py-16">
+                      <p className="text-sm text-zinc-500">Nenhuma demanda encontrada</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-[11px] border-collapse">
+                      <thead className="bg-zinc-100 dark:bg-zinc-800 sticky top-0">
+                        <tr>
+                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">#</th>
+                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Assistido</th>
+                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Processo</th>
+                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Ato</th>
+                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Prazo</th>
+                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Status</th>
+                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Atribuição</th>
+                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Providências</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {demandasOrdenadas.map((demanda, index) => {
+                          const statusConfig = getStatusConfig(demanda.status);
+                          return (
+                            <tr
+                              key={demanda.id}
+                              className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer border-b border-zinc-100 dark:border-zinc-800"
+                              onClick={() => {
+                                // Copiar linha para clipboard
+                                const linha = `${demanda.assistido}\t${demanda.processos?.[0]?.numero || '-'}\t${demanda.ato}\t${demanda.prazo || '-'}\t${demanda.substatus || demanda.status}\t${demanda.atribuicao}`;
+                                copyToClipboard(linha, "Linha copiada!");
+                              }}
+                              title="Clique para copiar linha"
+                            >
+                              <td className="px-2 py-1.5 text-zinc-400 font-mono">{index + 1}</td>
+                              <td className="px-2 py-1.5 font-medium text-zinc-800 dark:text-zinc-200 max-w-[150px] truncate">{demanda.assistido}</td>
+                              <td className="px-2 py-1.5 font-mono text-zinc-600 dark:text-zinc-400 max-w-[180px] truncate">{demanda.processos?.[0]?.numero || '-'}</td>
+                              <td className="px-2 py-1.5 text-zinc-700 dark:text-zinc-300">{demanda.ato}</td>
+                              <td className="px-2 py-1.5 text-zinc-600 dark:text-zinc-400">{demanda.prazo ? new Date(demanda.prazo + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
+                              <td className="px-2 py-1.5">
+                                <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium ${statusConfig.bgColor} ${statusConfig.textColor}`}>
+                                  {demanda.substatus || statusConfig.label}
+                                </span>
+                              </td>
+                              <td className="px-2 py-1.5 text-zinc-600 dark:text-zinc-400 max-w-[120px] truncate">{demanda.atribuicao}</td>
+                              <td className="px-2 py-1.5 text-zinc-500 dark:text-zinc-500 max-w-[200px] truncate">{demanda.providencias || '-'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               ) : (
                 /* ========== MODO GRID PREMIUM ========== */
                 <>
@@ -1578,6 +1659,7 @@ export default function Demandas() {
         isOpen={isSEEUImportModalOpen}
         onClose={() => setIsSEEUImportModalOpen(false)}
         onImport={handleImportDemandas}
+        onUpdate={handleUpdateDemandas}
         demandasExistentes={allDemandas}
       />
       <ChartConfigModal

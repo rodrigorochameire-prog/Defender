@@ -502,7 +502,7 @@ export default function DashboardVarasCriminaisPage() {
           <Card className="border-zinc-200 dark:border-zinc-800 p-4">
             <h3 className="font-bold text-zinc-900 dark:text-zinc-50 mb-4">Visão Geral</h3>
             <div className="h-[180px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
                 <PieChart>
                   <Pie
                     data={dadosDonut}

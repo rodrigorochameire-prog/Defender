@@ -1453,7 +1453,7 @@ export default function DashboardJuriPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <ResponsiveContainer width="100%" height={160}>
+              <ResponsiveContainer width="100%" height={160} minWidth={0} minHeight={160}>
                 <PieChart>
                   <Pie data={dadosDonut} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={5} dataKey="value">
                     {dadosDonut.map((entry, index) => (

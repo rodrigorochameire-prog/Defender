@@ -48,6 +48,7 @@ interface ParsedDemanda {
   atribuicao: string;
   valido: boolean;
   erros: string[];
+  ordemOriginal?: number; // Posição original na planilha (para ordenação por "recentes")
 }
 
 // Mapeamento de status da planilha para status do sistema
@@ -126,21 +127,42 @@ function normalizarNome(nome: string): string {
 }
 
 // Função para verificar se duas demandas são duplicatas
+// Critério: mesmo processo + mesma data de expedição
+// Isso permite múltiplas demandas do mesmo processo para diferentes intimações
 function saoMesmaDemanda(nova: ParsedDemanda, existente: any): boolean {
-  // Comparar por número de processo (mais confiável)
+  // Comparar por número de processo
   const processoNovo = nova.processos[0]?.numero;
   const processoExistente = existente.processos?.[0]?.numero;
 
-  if (processoNovo && processoExistente && processoNovo === processoExistente) {
-    return true;
+  // Se processos são diferentes, verificar fallback por nome + data
+  if (!processoNovo || !processoExistente || processoNovo !== processoExistente) {
+    // Fallback: comparar por nome + data (para casos sem processo)
+    const nomeNovo = normalizarNome(nova.assistido);
+    const nomeExistente = normalizarNome(existente.assistido || '');
+
+    if (nomeNovo === nomeExistente && nova.data && nova.data === existente.data) {
+      return true;
+    }
+    return false;
   }
 
-  // Comparar por nome + data (fallback)
-  const nomeNovo = normalizarNome(nova.assistido);
-  const nomeExistente = normalizarNome(existente.assistido || '');
+  // Mesmo processo - verificar data de expedição (data de entrada)
+  const dataNovaISO = nova.data; // Já deve estar em formato ISO
+  const dataExistente = existente.dataEntrada || existente.data;
 
-  if (nomeNovo === nomeExistente && nova.data === existente.data) {
-    return true;
+  // Se ambas têm data, comparar - é duplicata se mesma data
+  if (dataNovaISO && dataExistente) {
+    return dataNovaISO === dataExistente;
+  }
+
+  // Se nenhuma tem data, verificar se demanda existente é recente (últimos 30 dias)
+  if (!dataNovaISO && !dataExistente) {
+    const createdAt = existente.createdAt ? new Date(existente.createdAt) : null;
+    if (createdAt) {
+      const trintaDiasAtras = new Date();
+      trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+      return createdAt >= trintaDiasAtras;
+    }
   }
 
   return false;
@@ -286,6 +308,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
     const lines = rawText.split("\n").filter(line => line.trim());
     const demandas: ParsedDemanda[] = [];
     let linhasIgnoradas = 0;
+    let contadorOrdem = 0; // Contador para preservar ordem original da planilha
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -375,6 +398,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
         atribuicao: selectedAtribuicao,
         valido: erros.length === 0,
         erros,
+        ordemOriginal: contadorOrdem++, // Preservar ordem original da planilha
       });
     }
 
@@ -436,19 +460,31 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
 
     // 1. Importar demandas novas
     if (demandasNovas.length > 0) {
-      const demandasParaImportar = demandasNovas.map(d => ({
-        id: d.id,
-        status: d.status,
-        estadoPrisional: d.estadoPrisional,
-        data: d.data,
-        prazo: d.prazo,
-        assistido: d.assistido,
-        processos: d.processos,
-        ato: d.ato,
-        providencias: d.providencias,
-        atribuicao: d.atribuicao,
-        arquivado: false,
-      }));
+      const demandasParaImportar = demandasNovas.map(d => {
+        // Calcular dataInclusao com precisão de milissegundos para ordenação
+        // Usa 999 - ordemOriginal para que a primeira da lista (ordem 0) tenha valor maior (999)
+        // e apareça primeiro na ordenação descendente por "recentes"
+        let dataInclusao: string | undefined;
+        if (d.ordemOriginal !== undefined) {
+          const hoje = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+          dataInclusao = `${hoje}T00:00:00.${String(999 - d.ordemOriginal).padStart(3, '0')}`;
+        }
+
+        return {
+          id: d.id,
+          status: d.status,
+          estadoPrisional: d.estadoPrisional,
+          data: d.data,
+          dataInclusao, // Para ordenação precisa preservando ordem original da planilha
+          prazo: d.prazo,
+          assistido: d.assistido,
+          processos: d.processos,
+          ato: d.ato,
+          providencias: d.providencias,
+          atribuicao: d.atribuicao,
+          arquivado: false,
+        };
+      });
 
       onImport(demandasParaImportar);
     }

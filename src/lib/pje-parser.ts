@@ -606,6 +606,8 @@ export interface ResultadoVerificacaoDuplicatas {
 
 /**
  * Verifica se uma intimação já existe nas demandas cadastradas
+ * Critério principal: processo + data de expedição
+ * Isso permite múltiplas demandas do mesmo processo para diferentes intimações
  */
 export function verificarDuplicatas(
   intimacoes: IntimacaoPJeSimples[],
@@ -614,27 +616,47 @@ export function verificarDuplicatas(
   const novas: IntimacaoPJeSimples[] = [];
   const duplicadas: IntimacaoPJeSimples[] = [];
 
+  // Data de corte: últimos 30 dias (para demandas sem data)
+  const trintaDiasAtras = new Date();
+  trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+
   for (const intimacao of intimacoes) {
     const isDuplicada = demandasExistentes.some(demanda => {
-      const nomeIntimacao = normalizarNome(intimacao.assistido);
-      const nomeDemanda = normalizarNome(demanda.assistido);
-
-      const nomesCompativeis = nomeIntimacao === nomeDemanda ||
-                               calcularSimilaridade(nomeIntimacao, nomeDemanda) > 0.85;
-
-      const processoCompativel = demanda.processos?.some((proc: any) =>
-        proc.numero === intimacao.numeroProcesso
-      ) || false;
-
-      const dataIntimacao = converterDataParaISO(intimacao.dataExpedicao);
-      const dataCompativel = demanda.data === dataIntimacao;
-
+      // 1. Verificar por ID do documento PJe (mais confiável)
       const idDocumentoCompativel = intimacao.idDocumento && demanda.pjeData?.idDocumento
         ? demanda.pjeData.idDocumento === intimacao.idDocumento
         : false;
 
-      return idDocumentoCompativel ||
-             (nomesCompativeis && processoCompativel && dataCompativel);
+      if (idDocumentoCompativel) return true;
+
+      // 2. Verificar processo
+      const processoCompativel = demanda.processos?.some((proc: any) =>
+        proc.numero === intimacao.numeroProcesso
+      ) || false;
+
+      if (!processoCompativel) return false;
+
+      // 3. Mesmo processo - verificar data de expedição
+      const dataIntimacao = converterDataParaISO(intimacao.dataExpedicao);
+      const dataDemanda = demanda.dataEntrada || demanda.data;
+
+      // Se ambas têm data, comparar
+      if (dataIntimacao && dataDemanda) {
+        return dataIntimacao === dataDemanda;
+      }
+
+      // Se nenhuma tem data, verificar se demanda é recente (últimos 30 dias)
+      if (!dataIntimacao && !dataDemanda) {
+        const createdAt = demanda.createdAt ? new Date(demanda.createdAt) : null;
+        if (createdAt && createdAt >= trintaDiasAtras) {
+          // Verificar também nome para maior precisão
+          const nomeIntimacao = normalizarNome(intimacao.assistido);
+          const nomeDemanda = normalizarNome(demanda.assistido);
+          return nomeIntimacao === nomeDemanda || calcularSimilaridade(nomeIntimacao, nomeDemanda) > 0.85;
+        }
+      }
+
+      return false;
     });
 
     if (isDuplicada) {
@@ -828,6 +850,7 @@ export interface ResultadoParserSEEU {
 export function parseSEEUIntimacoes(texto: string): ResultadoParserSEEU {
   const intimacoes: IntimacaoSEEU[] = [];
   const linhas = texto.split('\n').map(l => l.trim()).filter(l => l);
+  let contadorOrdem = 0; // Contador para preservar ordem original do SEEU
 
   // Detectar tipo de manifestação (aba ativa)
   let tipoManifestacao = "manifestacao";
@@ -983,6 +1006,9 @@ export function parseSEEUIntimacoes(texto: string): ResultadoParserSEEU {
         // Tipo de processo
         intimacao.tipoProcesso = intimacao.classeProcessual || 'Execução Penal';
 
+        // Adicionar ordem original para preservar ordem do SEEU
+        intimacao.ordemOriginal = contadorOrdem++;
+
         intimacoes.push(intimacao);
       }
     } else {
@@ -1022,16 +1048,30 @@ export function intimacaoSEEUToDemanda(intimacao: IntimacaoSEEU): any {
     }
   }
 
-  // Determinar ato baseado no tipo de manifestação e assunto
-  let ato = intimacao.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação';
+  // Determinar tipo de processo baseado no assunto (ANPP, PPL, PRD)
+  // EP é a atribuição, não o tipo de processo
+  let tipoProcesso = 'PPL'; // Padrão: Pena Privativa de Liberdade
   if (intimacao.assuntoPrincipal) {
     if (intimacao.assuntoPrincipal.includes('Acordo de Não Persecução')) {
-      ato = 'ANPP - ' + ato;
+      tipoProcesso = 'ANPP';
     } else if (intimacao.assuntoPrincipal.includes('Pena Privativa')) {
-      ato = 'PPL - ' + ato;
+      tipoProcesso = 'PPL';
     } else if (intimacao.assuntoPrincipal.includes('Pena Restritiva')) {
-      ato = 'PRD - ' + ato;
+      tipoProcesso = 'PRD';
     }
+  }
+
+  // Ato: Manifestação como padrão (Ciência apenas se for aba de ciência)
+  const ato = intimacao.tipoManifestacao === 'ciencia' ? 'Ciência' : 'Manifestação';
+
+  // Calcular dataInclusao com precisão de milissegundos para ordenação
+  // Usa 999 - ordemOriginal para que a primeira da lista (ordem 0) tenha valor maior (999)
+  // e apareça primeiro na ordenação descendente por "recentes"
+  let dataInclusao: string;
+  if (intimacao.ordemOriginal !== undefined && dataEntrada) {
+    dataInclusao = `${dataEntrada}T00:00:00.${String(999 - intimacao.ordemOriginal).padStart(3, '0')}`;
+  } else {
+    dataInclusao = new Date().toISOString();
   }
 
   // Formato compatível com handleImportDemandas que espera:
@@ -1041,19 +1081,24 @@ export function intimacaoSEEUToDemanda(intimacao: IntimacaoSEEU): any {
     assistido: intimacao.assistido,
     processos: [
       {
-        tipo: 'EP', // Execução Penal
+        tipo: tipoProcesso, // ANPP, PPL ou PRD
         numero: intimacao.numeroProcesso,
       }
     ],
     data: dataEntrada,
+    dataInclusao, // Para ordenação precisa preservando ordem original do SEEU
     prazo: prazoFinal,
-    ato,
+    ato, // Manifestação ou Ciência
     atribuicao: 'EXECUCAO_PENAL',
-    status: intimacao.tipoManifestacao === 'ciencia' ? 'ciencia' : 'atender',
+    status: 'analisar', // Padrão: Analisar
     estadoPrisional: 'Preso', // Padrão para execução penal
     providencias: intimacao.assuntoPrincipal
       ? `${intimacao.classeProcessual || 'Execução Penal'} - ${intimacao.assuntoPrincipal}`
       : intimacao.classeProcessual || 'Execução Penal',
+    pjeData: {
+      ...intimacao,
+      ordemOriginal: intimacao.ordemOriginal,
+    },
   };
 }
 
