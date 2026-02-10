@@ -51,34 +51,51 @@ interface ParsedDemanda {
 }
 
 // Mapeamento de status da planilha para status do sistema
+// Números são apenas para ordenação na planilha e são ignorados (ex: "2 - Analisar" → "Analisar")
 const STATUS_MAP: Record<string, string> = {
-  // Status padrão do sistema
+  // 1 - Urgente
+  "urgente": "Urgente",
+
+  // 2 - Análise/Elaboração
   "analisar": "Analisar",
-  "elaborar": "Elaborar",
-  "elaborando": "Elaborando",
+  "relatório": "Relatório",
   "atender": "Atender",
+  "elaborar": "Elaborar",
   "buscar": "Buscar",
   "revisar": "Revisar",
-  "protocolar": "Protocolar",
-  "protocolado": "Protocolado",
-  "monitorar": "Monitorar",
-  "fila": "Fila",
-  "relatório": "Monitorar",
-  "urgente": "Urgente",
-  "resolvido": "Resolvido",
-  "arquivado": "Arquivado",
+  "elaborando": "Elaborando",
 
-  // Status de ciência/conhecimento
+  // 3 - Protocolar
+  "protocolar": "Protocolar",
+
+  // 4 - Delegação para pessoas/estágios
+  "amanda": "Amanda",
+  "estágio - taissa": "Estágio - Taissa",
+  "estagio - taissa": "Estágio - Taissa",
+  "taissa": "Estágio - Taissa",
+  "emilly": "Emilly",
+  "monitorar": "Monitorar",
+
+  // 5 - Fila
+  "fila": "Fila",
+
+  // 6 - Documentos/Testemunhas
+  "documentos": "Documentos",
+  "testemunhas": "Testemunhas",
+
+  // 7 - Finalizados
+  "protocolado": "Protocolado",
+  "sigad": "Sigad",
   "ciência": "Ciência",
   "ciencia": "Ciência",
-
-  // Delegação para pessoas específicas (mantém como status)
-  "amanda": "Amanda",
-  "emilly": "Emilly",
-  "lucas": "Lucas",
-  "maria": "Maria",
-  "joão": "João",
-  "joao": "João",
+  "peticionamento irregular": "Peticionamento irregular",
+  "peticionamento ir": "Peticionamento irregular",
+  "resolvido": "Resolvido",
+  "constituiu advogado": "Constituiu advogado",
+  "constituiu advoga": "Constituiu advogado",
+  "sem atuação": "Sem atuação",
+  "sem atuacao": "Sem atuação",
+  "arquivado": "Arquivado",
 };
 
 // Opções de atribuição - usando IDs do sistema para compatibilidade
