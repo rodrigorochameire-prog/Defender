@@ -87,6 +87,8 @@ import {
   Zap,
   ArrowUpDown,
   FolderOpen,
+  HardDrive,
+  Link2Off,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -183,6 +185,7 @@ interface AssistidoUI {
   dataPrisao?: string | null;
   numeroProcesso?: string;
   faseProcessual?: string;
+  driveFolderId?: string | null;
 }
 
 // Configuracoes de status e fases
@@ -525,7 +528,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
             >
               <AvatarImage src={assistido.photoUrl || undefined} alt={assistido.nome} />
               <AvatarFallback
-                className="text-sm font-semibold bg-gradient-to-br from-emerald-500 to-emerald-600 text-white"
+                className="text-sm font-semibold bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-600"
               >
                 {getInitials(assistido.nome)}
               </AvatarFallback>
@@ -581,20 +584,48 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
             </div>
           </div>
 
-          {/* Pin Button */}
-          <Button
-            size="icon"
-            variant="ghost"
-            className={cn(
-              "h-7 w-7 transition-all",
-              isPinned
-                ? "text-amber-500 bg-amber-100/50 dark:bg-amber-900/30"
-                : "text-zinc-300 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-            )}
-            onClick={onTogglePin}
-          >
-            {isPinned ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-          </Button>
+          {/* Drive + Pin Buttons */}
+          <div className="flex items-center gap-1">
+            {/* Drive Link Indicator */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className={cn(
+                      "h-7 w-7 rounded-md flex items-center justify-center transition-all cursor-pointer",
+                      assistido.driveFolderId
+                        ? "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+                        : "text-zinc-300 hover:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    )}
+                  >
+                    {assistido.driveFolderId ? (
+                      <HardDrive className="w-3.5 h-3.5" />
+                    ) : (
+                      <Link2Off className="w-3.5 h-3.5" />
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  {assistido.driveFolderId ? "Pasta vinculada no Drive" : "Sem pasta no Drive"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Pin Button */}
+            <Button
+              size="icon"
+              variant="ghost"
+              className={cn(
+                "h-7 w-7 transition-all",
+                isPinned
+                  ? "text-amber-500 bg-amber-100/50 dark:bg-amber-900/30"
+                  : "text-zinc-300 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+              )}
+              onClick={onTogglePin}
+            >
+              {isPinned ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+            </Button>
+          </div>
         </div>
 
         {/* 2. Badges de Atribuição - Simplificados */}

@@ -36,6 +36,41 @@ import {
 } from "@/lib/services/google-drive";
 import { processos, assistidos, casos, demandas } from "@/lib/db/schema";
 
+/**
+ * Calcula a similaridade entre duas strings usando distância de Levenshtein normalizada
+ */
+function calculateSimilarity(str1: string, str2: string): number {
+  const s1 = str1.toLowerCase();
+  const s2 = str2.toLowerCase();
+
+  if (s1 === s2) return 1;
+  if (s1.length === 0 || s2.length === 0) return 0;
+
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= s1.length; i++) {
+    matrix[i] = [i];
+  }
+
+  for (let j = 0; j <= s2.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= s1.length; i++) {
+    for (let j = 1; j <= s2.length; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1, // deletion
+        matrix[i][j - 1] + 1, // insertion
+        matrix[i - 1][j - 1] + cost // substitution
+      );
+    }
+  }
+
+  const maxLen = Math.max(s1.length, s2.length);
+  return 1 - matrix[s1.length][s2.length] / maxLen;
+}
+
 export const driveRouter = router({
   /**
    * Verifica se o Google Drive está configurado
@@ -163,6 +198,172 @@ export const driveRouter = router({
 
     return { results };
   }),
+
+  /**
+   * Auto-vincula assistidos com pastas do Drive pelo nome
+   * Busca pastas nas atribuições que correspondem ao nome do assistido
+   */
+  autoLinkAssistidosByName: adminProcedure.mutation(async ({ ctx }) => {
+    const { ATRIBUICAO_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
+    const { toTitleCase } = await import("@/lib/utils/text-extraction");
+
+    // Buscar todos os assistidos sem pasta vinculada
+    const assistidosSemPasta = await db
+      .select({
+        id: assistidos.id,
+        nome: assistidos.nome,
+        atribuicaoPrincipal: assistidos.atribuicaoPrincipal,
+      })
+      .from(assistidos)
+      .where(isNull(assistidos.driveFolderId));
+
+    const results = {
+      total: assistidosSemPasta.length,
+      linked: 0,
+      notFound: 0,
+      errors: 0,
+      details: [] as { nome: string; status: string; folderId?: string }[],
+    };
+
+    for (const assistido of assistidosSemPasta) {
+      try {
+        // Determinar a atribuição para buscar
+        const atribuicao = assistido.atribuicaoPrincipal || "JURI";
+        const atribuicaoFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao as keyof typeof ATRIBUICAO_FOLDER_IDS];
+
+        if (!atribuicaoFolderId) {
+          results.notFound++;
+          results.details.push({ nome: assistido.nome, status: "atribuicao_invalida" });
+          continue;
+        }
+
+        // Buscar subpastas na pasta da atribuição
+        const subfolders = await listFilesInFolder(atribuicaoFolderId);
+        if (!subfolders || subfolders.length === 0) {
+          results.notFound++;
+          results.details.push({ nome: assistido.nome, status: "pasta_atribuicao_vazia" });
+          continue;
+        }
+
+        // Normalizar nome do assistido para comparação
+        const nomeNormalizado = toTitleCase(assistido.nome).toLowerCase().trim();
+        const nomeSimplificado = nomeNormalizado.replace(/\s+/g, " ");
+
+        // Buscar pasta com nome similar
+        let matchingFolder = null;
+        for (const folder of subfolders) {
+          if (folder.mimeType !== "application/vnd.google-apps.folder") continue;
+
+          const folderNameNormalizado = folder.name.toLowerCase().trim();
+          const folderNameSimplificado = folderNameNormalizado.replace(/\s+/g, " ");
+
+          // Match exato ou parcial (começa com)
+          if (
+            folderNameSimplificado === nomeSimplificado ||
+            folderNameSimplificado.startsWith(nomeSimplificado) ||
+            nomeSimplificado.startsWith(folderNameSimplificado) ||
+            // Fuzzy match: pelo menos 80% de similaridade
+            calculateSimilarity(folderNameSimplificado, nomeSimplificado) > 0.8
+          ) {
+            matchingFolder = folder;
+            break;
+          }
+        }
+
+        if (matchingFolder) {
+          // Vincular assistido à pasta
+          await db
+            .update(assistidos)
+            .set({ driveFolderId: matchingFolder.id, updatedAt: new Date() })
+            .where(eq(assistidos.id, assistido.id));
+
+          results.linked++;
+          results.details.push({
+            nome: assistido.nome,
+            status: "linked",
+            folderId: matchingFolder.id,
+          });
+        } else {
+          results.notFound++;
+          results.details.push({ nome: assistido.nome, status: "pasta_nao_encontrada" });
+        }
+      } catch (error) {
+        console.error(`Erro ao vincular ${assistido.nome}:`, error);
+        results.errors++;
+        results.details.push({ nome: assistido.nome, status: "error" });
+      }
+    }
+
+    return results;
+  }),
+
+  /**
+   * Busca sugestões de pastas para vincular a um assistido específico
+   */
+  suggestFoldersForAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const { ATRIBUICAO_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
+      const { toTitleCase } = await import("@/lib/utils/text-extraction");
+
+      // Buscar assistido
+      const [assistido] = await db
+        .select()
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+
+      if (!assistido) {
+        return { suggestions: [], assistidoNome: "" };
+      }
+
+      const atribuicao = assistido.atribuicaoPrincipal || "JURI";
+      const atribuicaoFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao as keyof typeof ATRIBUICAO_FOLDER_IDS];
+
+      if (!atribuicaoFolderId) {
+        return { suggestions: [], assistidoNome: assistido.nome };
+      }
+
+      // Buscar subpastas
+      const subfolders = await listFilesInFolder(atribuicaoFolderId);
+      if (!subfolders || subfolders.length === 0) {
+        return { suggestions: [], assistidoNome: assistido.nome };
+      }
+
+      const nomeNormalizado = toTitleCase(assistido.nome).toLowerCase().trim();
+
+      // Calcular similaridade para cada pasta
+      const suggestions = subfolders
+        .filter((f) => f.mimeType === "application/vnd.google-apps.folder")
+        .map((folder) => {
+          const folderNameNormalizado = folder.name.toLowerCase().trim();
+          const similarity = calculateSimilarity(folderNameNormalizado, nomeNormalizado);
+          return {
+            id: folder.id,
+            name: folder.name,
+            similarity,
+          };
+        })
+        .filter((s) => s.similarity > 0.3) // Mínimo 30% de similaridade
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 5); // Top 5 sugestões
+
+      return { suggestions, assistidoNome: assistido.nome };
+    }),
+
+  /**
+   * Vincula manualmente um assistido a uma pasta do Drive
+   */
+  linkAssistidoToFolder: adminProcedure
+    .input(z.object({ assistidoId: z.number(), folderId: z.string() }))
+    .mutation(async ({ input }) => {
+      await db
+        .update(assistidos)
+        .set({ driveFolderId: input.folderId, updatedAt: new Date() })
+        .where(eq(assistidos.id, input.assistidoId));
+
+      return { success: true };
+    }),
 
   /**
    * Remove uma pasta da sincronização
