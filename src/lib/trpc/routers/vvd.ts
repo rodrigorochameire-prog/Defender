@@ -596,20 +596,43 @@ export const vvdRouter = router({
           }
 
           // 3. Criar a intimação
-          // Converter data de dd/MM/yyyy para yyyy-MM-dd se necessário
+          // Converter data de dd/MM/yyyy HH:mm para yyyy-MM-dd e extrair hora/minuto
           let dataExpedicaoFormatada = intimacao.dataExpedicao;
-          if (intimacao.dataExpedicao && intimacao.dataExpedicao.includes('/')) {
-            const [dia, mes, ano] = intimacao.dataExpedicao.split('/');
-            dataExpedicaoFormatada = `${ano}-${mes}-${dia}`;
+          let horaExpedicao = "00";
+          let minutoExpedicao = "00";
+
+          if (intimacao.dataExpedicao) {
+            // Separar data e hora (formato: "DD/MM/YYYY HH:mm" ou "DD/MM/YYYY")
+            const [dataParte, horaParte] = intimacao.dataExpedicao.split(' ');
+
+            if (dataParte && dataParte.includes('/')) {
+              const [dia, mes, ano] = dataParte.split('/');
+              dataExpedicaoFormatada = `${ano}-${mes}-${dia}`;
+            }
+
+            // Extrair hora e minuto se disponíveis
+            if (horaParte && horaParte.includes(':')) {
+              const [hora, minuto] = horaParte.split(':');
+              horaExpedicao = hora;
+              minutoExpedicao = minuto;
+            }
           }
 
-          // Criar timestamp com milissegundos precisos para preservar ordem do PJe
-          // A primeira intimação (ordem 0) terá maior valor de ms (999) para aparecer primeiro em DESC
-          const ordemMs = intimacao.ordemOriginal !== undefined
-            ? 999 - intimacao.ordemOriginal
-            : 0;
+          // Criar timestamp com hora/minuto da expedição para ordenação precisa
+          // Usa a data de hoje mas com hora/minuto da expedição original
           const createdAtPreciso = new Date();
-          createdAtPreciso.setMilliseconds(ordemMs);
+          const temHora = horaExpedicao !== "00" || minutoExpedicao !== "00";
+
+          if (temHora) {
+            // Usa hora/minuto da expedição
+            createdAtPreciso.setHours(parseInt(horaExpedicao, 10));
+            createdAtPreciso.setMinutes(parseInt(minutoExpedicao, 10));
+            createdAtPreciso.setSeconds(0);
+            createdAtPreciso.setMilliseconds(0);
+          } else if (intimacao.ordemOriginal !== undefined) {
+            // Fallback: usa ordemOriginal nos milissegundos (999 - ordem para DESC)
+            createdAtPreciso.setMilliseconds(999 - intimacao.ordemOriginal);
+          }
 
           await db.insert(intimacoesVVD).values({
             processoVVDId: processoExistente.id,
@@ -623,7 +646,7 @@ export const vvdRouter = router({
               ? "(ajustar status e ato)"
               : "(peticionar nos autos)",
             defensorId: ctx.user.id,
-            createdAt: createdAtPreciso, // Timestamp com ordem precisa do PJe
+            createdAt: createdAtPreciso, // Timestamp com hora/minuto da expedição
           });
           resultados.intimacoesNovas++;
           console.log("[VVD Import] Intimação criada para processo:", processoExistente.id);
