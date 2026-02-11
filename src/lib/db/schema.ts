@@ -2684,6 +2684,189 @@ export const driveSyncLogsRelations = relations(driveSyncLogs, ({ one }) => ({
 }));
 
 // ==========================================
+// VINCULAÇÃO ASSISTIDOS-PROCESSOS (MUITOS-PARA-MUITOS)
+// ==========================================
+
+// Papel do assistido no processo
+export const papelProcessoEnum = pgEnum("papel_processo", [
+  "REU",          // Réu principal
+  "CORREU",       // Corréu
+  "VITIMA",       // Vítima (casos de defesa da vítima)
+  "TESTEMUNHA",   // Testemunha de defesa
+  "DENUNCIANTE",  // Denunciante (ação penal privada)
+  "QUERELANTE",   // Querelante
+  "ASSISTENTE",   // Assistente de acusação
+]);
+
+// Status da extração de conteúdo
+export const extractionStatusEnum = pgEnum("extraction_status", [
+  "PENDING",      // Aguardando extração
+  "PROCESSING",   // Em processamento
+  "COMPLETED",    // Extração concluída
+  "FAILED",       // Falha na extração
+  "SKIPPED",      // Pulado (arquivo não suportado)
+]);
+
+// Tipo de análise do agente
+export const analysisTypeEnum = pgEnum("analysis_type", [
+  "EXTRACAO",     // Extração de dados estruturados
+  "ESTRATEGIA",   // Análise estratégica completa
+  "PREPARACAO",   // Preparação de audiência
+  "ENRIQUECIMENTO", // Enriquecimento de dados
+]);
+
+// Tabela de vinculação muitos-para-muitos
+export const assistidosProcessos = pgTable("assistidos_processos", {
+  id: serial("id").primaryKey(),
+
+  // FKs
+  assistidoId: integer("assistido_id")
+    .notNull()
+    .references(() => assistidos.id, { onDelete: "cascade" }),
+  processoId: integer("processo_id")
+    .notNull()
+    .references(() => processos.id, { onDelete: "cascade" }),
+
+  // Papel no processo
+  papel: papelProcessoEnum("papel").default("REU").notNull(),
+  isPrincipal: boolean("is_principal").default(true), // É o processo principal do assistido?
+
+  // Observações
+  observacoes: text("observacoes"),
+
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("assistidos_processos_assistido_id_idx").on(table.assistidoId),
+  index("assistidos_processos_processo_id_idx").on(table.processoId),
+  index("assistidos_processos_papel_idx").on(table.papel),
+  uniqueIndex("assistidos_processos_unique_idx").on(table.assistidoId, table.processoId, table.papel),
+]);
+
+export type AssistidoProcesso = typeof assistidosProcessos.$inferSelect;
+export type InsertAssistidoProcesso = typeof assistidosProcessos.$inferInsert;
+
+// ==========================================
+// CONTEÚDO EXTRAÍDO DE ARQUIVOS DO DRIVE
+// ==========================================
+
+export const driveFileContents = pgTable("drive_file_contents", {
+  id: serial("id").primaryKey(),
+
+  // Vinculação com arquivo do Drive
+  driveFileId: integer("drive_file_id")
+    .notNull()
+    .references(() => driveFiles.id, { onDelete: "cascade" }),
+
+  // Status da extração
+  extractionStatus: extractionStatusEnum("extraction_status").default("PENDING").notNull(),
+
+  // Conteúdo extraído
+  contentMarkdown: text("content_markdown"),      // Markdown extraído pelo Docling
+  contentText: text("content_text"),              // Texto puro (fallback)
+
+  // Dados estruturados extraídos pelo agente
+  extractedData: jsonb("extracted_data"),         // JSON com dados estruturados
+
+  // Classificação do documento
+  documentType: varchar("document_type", { length: 100 }), // Denúncia, Laudo, etc.
+  documentSubtype: varchar("document_subtype", { length: 100 }), // Mais específico
+
+  // Metadados da extração
+  extractedAt: timestamp("extracted_at"),
+  processingTimeMs: integer("processing_time_ms"),
+  pageCount: integer("page_count"),
+  tableCount: integer("table_count"),
+  imageCount: integer("image_count"),
+  wordCount: integer("word_count"),
+
+  // Erros (se houver)
+  errorMessage: text("error_message"),
+  errorStack: text("error_stack"),
+
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("drive_file_contents_drive_file_id_idx").on(table.driveFileId),
+  index("drive_file_contents_extraction_status_idx").on(table.extractionStatus),
+  index("drive_file_contents_document_type_idx").on(table.documentType),
+]);
+
+export type DriveFileContent = typeof driveFileContents.$inferSelect;
+export type InsertDriveFileContent = typeof driveFileContents.$inferInsert;
+
+// ==========================================
+// ANÁLISES GERADAS POR AGENTES IA
+// ==========================================
+
+export const agentAnalyses = pgTable("agent_analyses", {
+  id: serial("id").primaryKey(),
+
+  // Entidade analisada
+  entityType: varchar("entity_type", { length: 50 }).notNull(), // ASSISTIDO, PROCESSO, CASO, EVENTO
+  entityId: integer("entity_id").notNull(),
+
+  // Tipo de análise
+  analysisType: analysisTypeEnum("analysis_type").notNull(),
+  atribuicao: atribuicaoEnum("atribuicao"), // JURI, VVD, etc.
+
+  // Documentos de entrada
+  inputDocumentIds: jsonb("input_document_ids"),  // IDs dos driveFileContents usados
+  inputSummary: text("input_summary"),            // Resumo do input
+
+  // Resultado estruturado
+  output: jsonb("output").notNull(),              // JSON com análise completa
+
+  // Métricas de qualidade
+  confidence: real("confidence"),                 // 0.0 a 1.0
+  completeness: real("completeness"),             // Quantos campos preenchidos
+
+  // Metadados do modelo
+  modelUsed: varchar("model_used", { length: 100 }),
+  tokensInput: integer("tokens_input"),
+  tokensOutput: integer("tokens_output"),
+  processingTimeMs: integer("processing_time_ms"),
+
+  // Quem solicitou
+  requestedById: integer("requested_by_id").references(() => users.id),
+
+  // Status
+  isApproved: boolean("is_approved"),            // Usuário aprovou as sugestões?
+  approvedAt: timestamp("approved_at"),
+  approvedById: integer("approved_by_id").references(() => users.id),
+
+  // Metadados
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("agent_analyses_entity_idx").on(table.entityType, table.entityId),
+  index("agent_analyses_analysis_type_idx").on(table.analysisType),
+  index("agent_analyses_atribuicao_idx").on(table.atribuicao),
+  index("agent_analyses_created_at_idx").on(table.createdAt),
+  index("agent_analyses_is_approved_idx").on(table.isApproved),
+]);
+
+export type AgentAnalysis = typeof agentAnalyses.$inferSelect;
+export type InsertAgentAnalysis = typeof agentAnalyses.$inferInsert;
+
+// Relações das novas tabelas
+export const assistidosProcessosRelations = relations(assistidosProcessos, ({ one }) => ({
+  assistido: one(assistidos, { fields: [assistidosProcessos.assistidoId], references: [assistidos.id] }),
+  processo: one(processos, { fields: [assistidosProcessos.processoId], references: [processos.id] }),
+}));
+
+export const driveFileContentsRelations = relations(driveFileContents, ({ one }) => ({
+  driveFile: one(driveFiles, { fields: [driveFileContents.driveFileId], references: [driveFiles.id] }),
+}));
+
+export const agentAnalysesRelations = relations(agentAnalyses, ({ one }) => ({
+  requestedBy: one(users, { fields: [agentAnalyses.requestedById], references: [users.id] }),
+  approvedBy: one(users, { fields: [agentAnalyses.approvedById], references: [users.id] }),
+}));
+
+// ==========================================
 // PEÇAS PROCESSUAIS ESTRUTURADAS
 // (Denúncia, Pronúncia, Laudos, Atas, etc.)
 // ==========================================

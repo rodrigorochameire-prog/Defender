@@ -27,6 +27,9 @@ const envSchema = z.object({
   WHATSAPP_BUSINESS_ACCOUNT_ID: z.string().optional(),
   WHATSAPP_WEBHOOK_VERIFY_TOKEN: z.string().optional(),
 
+  // Python Backend (Docling + LangChain)
+  PYTHON_BACKEND_URL: z.string().optional().default("http://localhost:8000"),
+
   // App
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   NEXT_PUBLIC_APP_URL: z.string().default("http://localhost:3000"),
