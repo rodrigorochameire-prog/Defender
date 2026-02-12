@@ -52,7 +52,9 @@ import {
   XCircle,
   MapPin,
   Check,
+  Sparkles,
 } from "lucide-react";
+import { BriefingSection } from "@/components/briefing";
 
 export interface Depoente {
   id: string;
@@ -326,7 +328,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
     dataRegistro: new Date().toISOString(),
   });
 
-  const [activeTab, setActiveTab] = useState<"geral" | "depoentes" | "manifestacoes" | "anotacoes" | "historico" | "registro">("geral");
+  const [activeTab, setActiveTab] = useState<"geral" | "briefing" | "depoentes" | "manifestacoes" | "anotacoes" | "historico" | "registro">("geral");
   const [editandoDepoente, setEditandoDepoente] = useState<Depoente | null>(null);
   const [novoDepoenteNome, setNovoDepoenteNome] = useState("");
   const [novoDepoenteTipo, setNovoDepoenteTipo] = useState<Depoente["tipo"]>("testemunha");
@@ -592,6 +594,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
           <div className="flex gap-0 px-2 md:px-4">
             {[
               { key: "geral", label: "Geral", icon: FileText },
+              { key: "briefing", label: "Briefing", icon: Sparkles },
               { key: "depoentes", label: "Depoentes", icon: Users, count: registro.depoentes.length },
               { key: "anotacoes", label: "Anotações", icon: Notebook },
               { key: "manifestacoes", label: "Manifestações", icon: MessageSquare },
@@ -1210,6 +1213,21 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                       )}
                     </>
                   )}
+                </motion.div>
+              )}
+
+              {activeTab === "briefing" && (
+                <motion.div key="briefing" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="max-w-5xl mx-auto">
+                  <BriefingSection
+                    audienciaId={evento.audienciaId ? Number(evento.audienciaId) : undefined}
+                    processoId={evento.processoId ? Number(evento.processoId) : undefined}
+                    casoId={evento.casoId ? Number(evento.casoId) : undefined}
+                    evento={evento}
+                    onSaveBriefing={(briefing) => {
+                      // Opcional: preencher campos do registro com dados do briefing
+                      toast.success("Briefing salvo e vinculado à audiência");
+                    }}
+                  />
                 </motion.div>
               )}
 

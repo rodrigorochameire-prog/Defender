@@ -38,6 +38,7 @@ import { palacioRouter } from "./palacio";
 import { simuladorRouter } from "./simulador";
 import { distribuicaoRouter } from "./distribuicao";
 import { smartExtractRouter } from "./smart-extract";
+import { briefingRouter } from "./briefing";
 
 
 export const appRouter = router({
@@ -138,6 +139,11 @@ export const appRouter = router({
   // EXTRAÇÃO INTELIGENTE DE DOCUMENTOS (IA)
   // ==========================================
   smartExtract: smartExtractRouter,
+
+  // ==========================================
+  // BRIEFING DE AUDIÊNCIAS (IA)
+  // ==========================================
+  briefing: briefingRouter,
 });
 
 export type AppRouter = typeof appRouter;

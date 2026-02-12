@@ -329,6 +329,53 @@ export interface PrepareAudienciaResponse {
 }
 
 // ==========================================
+// TIPOS - BRIEFING POR TESTEMUNHA
+// ==========================================
+
+export interface TestemunhaInfo {
+  nome: string;
+  tipo: "ACUSACAO" | "DEFESA";
+}
+
+export interface ArquivoProcessado {
+  drive_file_id?: string;
+  file_name: string;
+  content: string;
+  source_type: "delegacia" | "juizo" | "outro";
+}
+
+export interface BriefingAudienciaRequest {
+  processo_id: number;
+  caso_id?: number;
+  audiencia_id?: number;
+  testemunhas: TestemunhaInfo[];
+  arquivos: ArquivoProcessado[];
+}
+
+export interface TestemunhaBriefing {
+  nome: string;
+  tipo: string;
+  arquivos_encontrados: Array<{ nome: string; tipo: string }>;
+  versao_delegacia?: string;
+  versao_juizo?: string;
+  contradicoes: string[];
+  pontos_fortes: string[];
+  pontos_fracos: string[];
+  perguntas_sugeridas: string[];
+  credibilidade_score?: number;
+  credibilidade_justificativa?: string;
+}
+
+export interface BriefingAudienciaResponse {
+  success: boolean;
+  testemunhas: TestemunhaBriefing[];
+  resumo_geral?: string;
+  estrategia_recomendada?: string;
+  ordem_inquiricao_sugerida: string[];
+  error?: string;
+}
+
+// ==========================================
 // CLIENTE
 // ==========================================
 
@@ -589,6 +636,25 @@ class PythonBackendClient {
         entity_id: casoId,
         content,
       } satisfies EnrichRequest),
+    });
+  }
+
+  /**
+   * Gera briefing detalhado por testemunha para audiência
+   *
+   * Fluxo:
+   * 1. Identifica qual testemunha corresponde a cada arquivo
+   * 2. Agrupa depoimentos por testemunha (delegacia/juízo)
+   * 3. Analisa contradições entre versões
+   * 4. Sugere perguntas estratégicas por testemunha
+   * 5. Gera estratégia geral e ordem de inquirição
+   */
+  async briefingAudiencia(
+    request: BriefingAudienciaRequest
+  ): Promise<BriefingAudienciaResponse> {
+    return this.request<BriefingAudienciaResponse>("/briefing/audiencia", {
+      method: "POST",
+      body: JSON.stringify(request),
     });
   }
 }
