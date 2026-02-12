@@ -341,15 +341,7 @@ export interface ArquivoProcessado {
   drive_file_id?: string;
   file_name: string;
   content: string;
-  source_type: "delegacia" | "juizo" | "outro";
-}
-
-export interface BriefingAudienciaRequest {
-  processo_id: number;
-  caso_id?: number;
-  audiencia_id?: number;
-  testemunhas: TestemunhaInfo[];
-  arquivos: ArquivoProcessado[];
+  source_type: "delegacia" | "juizo" | "laudo" | "relatorio" | "certidao" | "antecedentes" | "ro" | "outro";
 }
 
 export interface TestemunhaBriefing {
@@ -359,6 +351,7 @@ export interface TestemunhaBriefing {
   versao_delegacia?: string;
   versao_juizo?: string;
   contradicoes: string[];
+  contradicoes_com_laudos: string[];
   pontos_fortes: string[];
   pontos_fracos: string[];
   perguntas_sugeridas: string[];
@@ -366,11 +359,92 @@ export interface TestemunhaBriefing {
   credibilidade_justificativa?: string;
 }
 
+export interface LaudoAnalise {
+  tipo_laudo: string;
+  arquivo_origem: string;
+  resumo: string;
+  conclusoes_principais: string[];
+  pontos_favoraveis_defesa: string[];
+  pontos_desfavoraveis: string[];
+  inconsistencias_internas: string[];
+  perguntas_para_perito: string[];
+  correlacao_depoimentos: string[];
+  quesitos_complementares: string[];
+}
+
+export interface AntecedenteInfo {
+  nome: string;
+  tipo_pessoa: string;
+  possui_antecedentes: boolean;
+  processos_anteriores: Array<{
+    numero: string;
+    vara: string;
+    tipo_crime: string;
+    status: string;
+    pena?: string;
+    data?: string;
+  }>;
+  ros_anteriores: Array<{
+    numero: string;
+    data: string;
+    tipo: string;
+    resumo: string;
+    papel: string;
+  }>;
+  observacoes: string[];
+  relevancia_para_defesa: string;
+}
+
+export interface CorrelacaoProva {
+  tipo: "contradiz" | "confirma" | "complementa" | "diverge";
+  prova_1: string;
+  prova_2: string;
+  descricao: string;
+  impacto_defesa: "favoravel" | "desfavoravel" | "neutro";
+  perguntas_sugeridas: string[];
+}
+
+export interface PessoaInfo {
+  nome: string;
+  tipo: "REU" | "VITIMA" | "TESTEMUNHA";
+  cpf?: string;
+}
+
+export interface BriefingAudienciaRequest {
+  processo_id: number;
+  caso_id?: number;
+  audiencia_id?: number;
+  testemunhas: TestemunhaInfo[];
+  pessoas?: PessoaInfo[];
+  arquivos: ArquivoProcessado[];
+}
+
 export interface BriefingAudienciaResponse {
   success: boolean;
+  // Análise de testemunhas
   testemunhas: TestemunhaBriefing[];
+  // Análise de provas técnicas
+  laudos: LaudoAnalise[];
+  relatorios: Array<{
+    tipo: string;
+    arquivo_origem: string;
+    resumo: string;
+    informacoes_relevantes: string[];
+    inconsistencias: string[];
+    pontos_atencao: string[];
+  }>;
+  // Antecedentes
+  antecedentes: AntecedenteInfo[];
+  // Correlações entre provas
+  correlacoes: CorrelacaoProva[];
+  // Estratégia geral
   resumo_geral?: string;
+  cenario_probatorio?: string;
+  tese_principal_sugerida?: string;
+  teses_subsidiarias: string[];
   estrategia_recomendada?: string;
+  riscos_identificados: string[];
+  oportunidades_defesa: string[];
   ordem_inquiricao_sugerida: string[];
   error?: string;
 }
