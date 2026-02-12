@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -45,17 +46,23 @@ import {
   Trash2,
   RefreshCw,
   FolderOpen,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FileUploadWithLink } from "./FileUploadWithLink";
+import { SmartExtractButton } from "./SmartExtractButton";
 
 interface FilesByProcessoProps {
   processoId: number;
   driveFolderId?: string;
   showUpload?: boolean;
+  showSmartExtract?: boolean;
+  assistidoId?: number; // Para extração inteligente
+  casoId?: number; // Para extração inteligente
   className?: string;
 }
 
@@ -113,9 +120,14 @@ export function FilesByProcesso({
   processoId,
   driveFolderId,
   showUpload = true,
+  showSmartExtract = true,
+  assistidoId,
+  casoId,
   className,
 }: FilesByProcessoProps) {
   const [fileToUnlink, setFileToUnlink] = useState<number | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const utils = trpc.useUtils();
 
@@ -144,6 +156,38 @@ export function FilesByProcesso({
     if (fileToUnlink) {
       unlinkMutation.mutate({ fileId: fileToUnlink });
     }
+  };
+
+  // Funções de seleção múltipla
+  const toggleFileSelection = (fileId: number) => {
+    setSelectedFiles((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(fileId)) {
+        newSet.delete(fileId);
+      } else {
+        newSet.add(fileId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllFiles = () => {
+    if (!files) return;
+    if (selectedFiles.size === files.length) {
+      setSelectedFiles(new Set());
+    } else {
+      setSelectedFiles(new Set(files.map((f) => f.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedFiles(new Set());
+    setIsSelectionMode(false);
+  };
+
+  const handleExtractComplete = () => {
+    clearSelection();
+    refetch();
   };
 
   if (isLoading) {
@@ -176,9 +220,64 @@ export function FilesByProcesso({
               </CardTitle>
               <CardDescription>
                 {files?.length || 0} arquivo(s) vinculado(s)
+                {selectedFiles.size > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {selectedFiles.size} selecionado(s)
+                  </Badge>
+                )}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              {/* Botão de Extração Inteligente */}
+              {showSmartExtract && files && files.length > 0 && (
+                <>
+                  {isSelectionMode ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleAllFiles}
+                        className="gap-1"
+                      >
+                        {selectedFiles.size === files.length ? (
+                          <CheckSquare className="h-4 w-4" />
+                        ) : (
+                          <Square className="h-4 w-4" />
+                        )}
+                        {selectedFiles.size === files.length ? "Limpar" : "Todos"}
+                      </Button>
+                      <SmartExtractButton
+                        entityType="processo"
+                        entityId={processoId}
+                        driveFolderId={driveFolderId}
+                        selectedFileIds={Array.from(selectedFiles)}
+                        assistidoId={assistidoId}
+                        casoId={casoId}
+                        onExtractComplete={handleExtractComplete}
+                        disabled={selectedFiles.size === 0}
+                        size="sm"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearSelection}
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsSelectionMode(true)}
+                      className="gap-1"
+                    >
+                      <CheckSquare className="h-4 w-4" />
+                      Selecionar
+                    </Button>
+                  )}
+                </>
+              )}
               <Button variant="ghost" size="icon" onClick={() => refetch()}>
                 <RefreshCw className="h-4 w-4" />
               </Button>
@@ -199,11 +298,30 @@ export function FilesByProcesso({
                 const FileIcon = getFileIcon(file.mimeType);
                 const color = getMimeTypeColor(file.mimeType);
 
+                const isSelected = selectedFiles.has(file.id);
+
                 return (
                   <div
                     key={file.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border transition-colors",
+                      isSelected
+                        ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20"
+                        : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900",
+                      isSelectionMode && "cursor-pointer"
+                    )}
+                    onClick={isSelectionMode ? () => toggleFileSelection(file.id) : undefined}
                   >
+                    {/* Checkbox no modo seleção */}
+                    {isSelectionMode && (
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleFileSelection(file.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="mr-1"
+                      />
+                    )}
+
                     <div
                       className={cn(
                         "w-10 h-10 rounded-lg flex items-center justify-center",

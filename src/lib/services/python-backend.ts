@@ -180,6 +180,102 @@ export interface PrepareAudienciaRequest {
   documentos: string[];
 }
 
+// ==========================================
+// TIPOS - SMART EXTRACT
+// ==========================================
+
+export interface FileInfo {
+  drive_file_id?: string;
+  file_name: string;
+  mime_type?: string;
+}
+
+export interface SmartExtractRequest {
+  files: FileInfo[];
+  target_entities: ("assistido" | "processo" | "caso")[];
+  assistido_id?: number;
+  processo_id?: number;
+  caso_id?: number;
+}
+
+export interface ExtractionDetail {
+  file_name: string;
+  status: "success" | "error" | "skipped";
+  content_type: "document" | "image" | "audio" | "video" | "unknown";
+  content_preview?: string;
+  error?: string;
+  duration_seconds?: number;
+}
+
+export interface SmartExtractResponse {
+  success: boolean;
+  suggestions?: {
+    assistido?: {
+      nome_completo?: string;
+      cpf?: string;
+      rg?: string;
+      data_nascimento?: string;
+      filiacao_mae?: string;
+      filiacao_pai?: string;
+      endereco?: string;
+      telefone?: string;
+      profissao?: string;
+      escolaridade?: string;
+      estado_civil?: string;
+      naturalidade?: string;
+      status_prisional?: string;
+      local_prisao?: string;
+      data_prisao?: string;
+    };
+    processo?: {
+      numero?: string;
+      vara?: string;
+      comarca?: string;
+      juiz?: string;
+      promotor?: string;
+      crimes?: string[];
+      partes?: Array<{ nome: string; papel: string }>;
+      data_fato?: string;
+      fase_processual?: string;
+    };
+    caso?: {
+      titulo?: string;
+      codigo?: string;
+      crimes?: string[];
+      data_fato?: string;
+      local_fato?: string;
+      narrativa_acusacao?: string;
+      narrativa_defesa?: string;
+      tese_principal?: string;
+      teses_subsidiarias?: string[];
+      testemunhas?: Array<{ nome: string; papel: string; resumo: string }>;
+      pontos_fortes?: string[];
+      pontos_fracos?: string[];
+      status?: string;
+      fase?: string;
+    };
+  };
+  confidence?: number;
+  extraction_details?: ExtractionDetail[];
+  consolidated_content_preview?: string;
+  error?: string;
+}
+
+export interface TranscribeRequest {
+  drive_file_id?: string;
+  file_name: string;
+  language?: string;
+}
+
+export interface TranscribeResponse {
+  success: boolean;
+  transcript?: string;
+  confidence?: number;
+  language?: string;
+  duration_seconds?: number;
+  error?: string;
+}
+
 export interface PrepareAudienciaResponse {
   success: boolean;
   briefing?: {
@@ -411,6 +507,88 @@ class PythonBackendClient {
         atribuicao,
         documentos,
       } satisfies PrepareAudienciaRequest),
+    });
+  }
+
+  /**
+   * Extração inteligente de múltiplos arquivos
+   */
+  async smartExtract(
+    files: FileInfo[],
+    targetEntities: ("assistido" | "processo" | "caso")[],
+    options?: {
+      assistidoId?: number;
+      processoId?: number;
+      casoId?: number;
+    }
+  ): Promise<SmartExtractResponse> {
+    return this.request<SmartExtractResponse>("/extract/smart", {
+      method: "POST",
+      body: JSON.stringify({
+        files,
+        target_entities: targetEntities,
+        assistido_id: options?.assistidoId,
+        processo_id: options?.processoId,
+        caso_id: options?.casoId,
+      } satisfies SmartExtractRequest),
+    });
+  }
+
+  /**
+   * Transcreve áudio/vídeo do Drive
+   */
+  async transcribeFromDrive(
+    driveFileId: string,
+    fileName: string,
+    language: string = "pt-BR"
+  ): Promise<TranscribeResponse> {
+    return this.request<TranscribeResponse>("/transcribe", {
+      method: "POST",
+      body: JSON.stringify({
+        drive_file_id: driveFileId,
+        file_name: fileName,
+        language,
+      } satisfies TranscribeRequest),
+    });
+  }
+
+  /**
+   * Transcreve áudio/vídeo via upload
+   */
+  async transcribeFromUpload(
+    file: File,
+    language: string = "pt-BR"
+  ): Promise<TranscribeResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(
+      `${this.baseUrl}/transcribe/upload?language=${encodeURIComponent(language)}`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Python Backend Error: ${response.status} - ${error}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Extrai dados para preencher Caso
+   */
+  async enrichCaso(content: string, casoId: number): Promise<EnrichResponse> {
+    return this.request<EnrichResponse>("/enrich/caso", {
+      method: "POST",
+      body: JSON.stringify({
+        entity_type: "caso",
+        entity_id: casoId,
+        content,
+      } satisfies EnrichRequest),
     });
   }
 }

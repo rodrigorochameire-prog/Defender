@@ -37,6 +37,7 @@ import { vvdRouter } from "./vvd";
 import { palacioRouter } from "./palacio";
 import { simuladorRouter } from "./simulador";
 import { distribuicaoRouter } from "./distribuicao";
+import { smartExtractRouter } from "./smart-extract";
 
 
 export const appRouter = router({
@@ -132,6 +133,11 @@ export const appRouter = router({
   // DISTRIBUIÇÃO AUTOMÁTICA DE DOCUMENTOS
   // ==========================================
   distribuicao: distribuicaoRouter,
+
+  // ==========================================
+  // EXTRAÇÃO INTELIGENTE DE DOCUMENTOS (IA)
+  // ==========================================
+  smartExtract: smartExtractRouter,
 });
 
 export type AppRouter = typeof appRouter;
