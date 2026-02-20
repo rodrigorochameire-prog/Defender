@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { processos, assistidos, audiencias, movimentacoes, demandas, calendarEvents } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql, and, isNull } from "drizzle-orm";
+import { processos, assistidos, assistidosProcessos, audiencias, movimentacoes, demandas, calendarEvents, driveFiles, users } from "@/lib/db/schema";
+import { eq, ilike, or, desc, asc, sql, and, isNull, ne } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope } from "../workspace";
 
@@ -74,23 +75,137 @@ export const processosRouter = router({
       return result;
     }),
 
-  // Buscar processo por ID
+  // Buscar processo por ID (enriquecido)
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
       const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
-      const conditions = [eq(processos.id, input.id)];
 
+      const baseConditions = [eq(processos.id, input.id)];
       if (!isAdmin) {
-        conditions.push(eq(processos.workspaceId, workspaceId));
+        baseConditions.push(eq(processos.workspaceId, workspaceId));
       }
 
-      const [processo] = await db
-        .select()
-        .from(processos)
-        .where(and(...conditions));
-      
-      return processo || null;
+      // Alias para assistidos na query de demandas (evita conflito de nome com o join de partes)
+      const assistidosDemanda = alias(assistidos, "assistidos_demanda");
+
+      const [baseRows, assistidosRows, audienciasRows, demandasRows, driveFilesRows] =
+        await Promise.all([
+          // Base
+          db
+            .select()
+            .from(processos)
+            .where(and(...baseConditions))
+            .limit(1),
+
+          // Partes (assistidos vinculados via assistidosProcessos)
+          db
+            .select({
+              id: assistidos.id,
+              nome: assistidos.nome,
+              cpf: assistidos.cpf,
+              papel: assistidosProcessos.papel,
+              isPrincipal: assistidosProcessos.isPrincipal,
+              statusPrisional: assistidos.statusPrisional,
+            })
+            .from(assistidosProcessos)
+            .innerJoin(assistidos, eq(assistidosProcessos.assistidoId, assistidos.id))
+            .where(
+              and(
+                eq(assistidosProcessos.processoId, input.id),
+                isNull(assistidos.deletedAt),
+              ),
+            ),
+
+          // Audiências
+          db
+            .select({
+              id: audiencias.id,
+              dataAudiencia: audiencias.dataAudiencia,
+              tipo: audiencias.tipo,
+              local: audiencias.local,
+              status: audiencias.status,
+              resultado: audiencias.resultado,
+            })
+            .from(audiencias)
+            .where(eq(audiencias.processoId, input.id))
+            .orderBy(desc(audiencias.dataAudiencia)),
+
+          // Demandas — todos defensores (sem filtro por defensorId)
+          db
+            .select({
+              id: demandas.id,
+              ato: demandas.ato,
+              tipoAto: demandas.tipoAto,
+              status: demandas.status,
+              prazo: demandas.prazo,
+              assistidoId: demandas.assistidoId,
+              assistidoNome: assistidosDemanda.nome,
+              defensorId: demandas.defensorId,
+              defensorNome: users.name,
+            })
+            .from(demandas)
+            .leftJoin(users, eq(demandas.defensorId, users.id))
+            .leftJoin(assistidosDemanda, eq(demandas.assistidoId, assistidosDemanda.id))
+            .where(
+              and(
+                eq(demandas.processoId, input.id),
+                isNull(demandas.deletedAt),
+              ),
+            )
+            .orderBy(asc(demandas.prazo)),
+
+          // Drive files (processoId = input.id)
+          db
+            .select({
+              id: driveFiles.id,
+              name: driveFiles.name,
+              mimeType: driveFiles.mimeType,
+              webViewLink: driveFiles.webViewLink,
+              lastModifiedTime: driveFiles.lastModifiedTime,
+              isFolder: driveFiles.isFolder,
+              parentFileId: driveFiles.parentFileId,
+              driveFolderId: driveFiles.driveFolderId,
+            })
+            .from(driveFiles)
+            .where(eq(driveFiles.processoId, input.id))
+            .orderBy(desc(driveFiles.lastModifiedTime))
+            .limit(100),
+        ]);
+
+      if (baseRows.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
+      }
+
+      const base = baseRows[0]!;
+
+      // Processos vinculados (mesmo casoId, exceto o atual)
+      const processosVinculados = base.casoId
+        ? await db
+            .select({
+              id: processos.id,
+              numeroAutos: processos.numeroAutos,
+              vara: processos.vara,
+              assunto: processos.assunto,
+            })
+            .from(processos)
+            .where(
+              and(
+                eq(processos.casoId, base.casoId),
+                ne(processos.id, input.id),
+                isNull(processos.deletedAt),
+              ),
+            )
+        : [];
+
+      return {
+        ...base,
+        assistidos: assistidosRows,
+        audiencias: audienciasRows,
+        demandas: demandasRows,
+        driveFiles: driveFilesRows,
+        processosVinculados,
+      };
     }),
 
   // Criar novo processo
