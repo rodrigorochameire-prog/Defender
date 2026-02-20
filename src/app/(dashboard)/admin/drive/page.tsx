@@ -74,6 +74,7 @@ import {
   TrendingUp,
   Briefcase,
   History,
+  Mic,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, differenceInDays, format } from "date-fns";
@@ -81,6 +82,7 @@ import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import Link from "next/link";
+import { TranscriptViewer } from "@/components/shared/transcript-viewer";
 
 // ==========================================
 // CONSTANTES E TIPOS
@@ -575,12 +577,14 @@ function FileCard({
   onPreview,
   onNavigate,
   onTagUpdate,
+  onTranscribe,
 }: {
   file: any;
   viewMode: "grid" | "list";
   onPreview: () => void;
   onNavigate?: (folderId: string, folderName: string) => void;
   onTagUpdate?: (tags: string[]) => void;
+  onTranscribe?: () => void;
 }) {
   const fileType = getFileType(file.mimeType);
   const Icon = FILE_ICONS[fileType] || FILE_ICONS.default;
@@ -643,6 +647,17 @@ function FileCard({
           {!isFolder && (
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onPreview(); }}>
               <Eye className="w-4 h-4" />
+            </Button>
+          )}
+          {(isAudio || isVideo) && onTranscribe && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-cyan-500 hover:text-cyan-600"
+              title="Transcrever áudio"
+              onClick={(e) => { e.stopPropagation(); onTranscribe(); }}
+            >
+              <Mic className="w-4 h-4" />
             </Button>
           )}
           {file.webViewLink && (
@@ -827,6 +842,68 @@ export default function DrivePage() {
   // Preview state
   const [previewFile, setPreviewFile] = useState<any>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  // Transcription state
+  const [transcriptionDialog, setTranscriptionDialog] = useState<{
+    fileId: string;
+    fileName: string;
+    transcript: string | null;
+    summary: string | null;
+    isTranscribing: boolean;
+  } | null>(null);
+  const [isSummarizingDrive, setIsSummarizingDrive] = useState(false);
+
+  const handleTranscribeDriveFile = async (fileId: string, fileName: string) => {
+    setTranscriptionDialog({
+      fileId,
+      fileName,
+      transcript: null,
+      summary: null,
+      isTranscribing: true,
+    });
+    try {
+      const res = await fetch("/api/ai/transcribe-drive-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ driveFileId: fileId }),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err?.error ?? "Falha na transcrição.");
+      }
+      const json = (await res.json()) as { transcript?: string };
+      setTranscriptionDialog((prev) =>
+        prev ? { ...prev, transcript: json.transcript ?? "", isTranscribing: false } : null
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao transcrever.";
+      toast.error(message);
+      setTranscriptionDialog((prev) =>
+        prev ? { ...prev, isTranscribing: false } : null
+      );
+    }
+  };
+
+  const handleSummarizeDrive = async () => {
+    if (!transcriptionDialog?.transcript) return;
+    setIsSummarizingDrive(true);
+    try {
+      const res = await fetch("/api/ai/summarize-transcript", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: transcriptionDialog.transcript }),
+      });
+      if (!res.ok) throw new Error("Falha ao gerar resumo");
+      const json = (await res.json()) as { summary?: string };
+      setTranscriptionDialog((prev) =>
+        prev ? { ...prev, summary: json.summary ?? "" } : null
+      );
+    } catch {
+      toast.error("Não foi possível gerar o resumo.");
+    } finally {
+      setIsSummarizingDrive(false);
+    }
+  };
 
   const currentAtribuicao = DRIVE_ATRIBUICOES.find(a => a.id === selectedAtribuicao) || DRIVE_ATRIBUICOES[0];
   const atribuicaoFolderId = currentAtribuicao.folderId;
@@ -1205,27 +1282,39 @@ export default function DrivePage() {
                   </div>
                 ) : viewMode === "list" ? (
                   <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    {displayFiles.map((file) => (
-                      <FileCard
-                        key={file.id || file.driveFileId}
-                        file={{ ...file, id: file.driveFileId || file.id }}
-                        viewMode="list"
-                        onPreview={() => { setPreviewFile({ ...file, id: file.driveFileId || file.id }); setIsPreviewOpen(true); }}
-                        onNavigate={navigateToFolder}
-                      />
-                    ))}
+                    {displayFiles.map((file) => {
+                      const fileId = file.driveFileId || file.id;
+                      const fileMime = file.mimeType ?? "";
+                      const isMedia = fileMime.startsWith("audio/") || fileMime.startsWith("video/");
+                      return (
+                        <FileCard
+                          key={fileId}
+                          file={{ ...file, id: fileId }}
+                          viewMode="list"
+                          onPreview={() => { setPreviewFile({ ...file, id: fileId }); setIsPreviewOpen(true); }}
+                          onNavigate={navigateToFolder}
+                          onTranscribe={isMedia ? () => handleTranscribeDriveFile(fileId, file.name) : undefined}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {displayFiles.map((file) => (
-                      <FileCard
-                        key={file.id || file.driveFileId}
-                        file={{ ...file, id: file.driveFileId || file.id }}
-                        viewMode="grid"
-                        onPreview={() => { setPreviewFile({ ...file, id: file.driveFileId || file.id }); setIsPreviewOpen(true); }}
-                        onNavigate={navigateToFolder}
-                      />
-                    ))}
+                    {displayFiles.map((file) => {
+                      const fileId = file.driveFileId || file.id;
+                      const fileMime = file.mimeType ?? "";
+                      const isMedia = fileMime.startsWith("audio/") || fileMime.startsWith("video/");
+                      return (
+                        <FileCard
+                          key={fileId}
+                          file={{ ...file, id: fileId }}
+                          viewMode="grid"
+                          onPreview={() => { setPreviewFile({ ...file, id: fileId }); setIsPreviewOpen(true); }}
+                          onNavigate={navigateToFolder}
+                          onTranscribe={isMedia ? () => handleTranscribeDriveFile(fileId, file.name) : undefined}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </Card>
@@ -1319,6 +1408,25 @@ export default function DrivePage() {
         isOpen={isPreviewOpen}
         onClose={() => { setIsPreviewOpen(false); setPreviewFile(null); }}
       />
+
+      {/* Transcription Dialog */}
+      {transcriptionDialog && (
+        <TranscriptViewer
+          open={!!transcriptionDialog}
+          onOpenChange={(open) => {
+            if (!open) setTranscriptionDialog(null);
+          }}
+          transcript={transcriptionDialog.isTranscribing ? "" : (transcriptionDialog.transcript ?? "")}
+          summary={transcriptionDialog.summary}
+          title={
+            transcriptionDialog.isTranscribing
+              ? "Transcrevendo..."
+              : `Transcrição — ${transcriptionDialog.fileName}`
+          }
+          onSummarize={handleSummarizeDrive}
+          isSummarizing={isSummarizingDrive || transcriptionDialog.isTranscribing}
+        />
+      )}
     </div>
   );
 }
