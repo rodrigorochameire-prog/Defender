@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql, and, isNull, inArray } from "drizzle-orm";
+import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles, assistidosProcessos, users } from "@/lib/db/schema";
+import { eq, ilike, or, desc, sql, and, isNull, inArray, asc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 
@@ -205,19 +205,111 @@ export const assistidosRouter = router({
       });
     }),
 
-  // Buscar assistido por ID
+  // Buscar assistido por ID (enriquecido)
   // Assistidos são COMPARTILHADOS
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      getWorkspaceScope(ctx.user); // Validar autenticação
-      
-      const [assistido] = await db
-        .select()
-        .from(assistidos)
-        .where(eq(assistidos.id, input.id));
-      
-      return assistido || null;
+      const workspaceId = ctx.user.workspaceId;
+
+      const [baseRows, processosRows, audienciasRows, demandasRows, driveFilesRows] =
+        await Promise.all([
+          // Base
+          db
+            .select()
+            .from(assistidos)
+            .where(
+              workspaceId
+                ? and(eq(assistidos.id, input.id), eq(assistidos.workspaceId, workspaceId))
+                : eq(assistidos.id, input.id),
+            )
+            .limit(1),
+
+          // Processos vinculados via assistidos_processos
+          db
+            .select({
+              id: processos.id,
+              numeroAutos: processos.numeroAutos,
+              vara: processos.vara,
+              assunto: processos.assunto,
+              fase: processos.fase,
+              situacao: processos.situacao,
+              papel: assistidosProcessos.papel,
+            })
+            .from(assistidosProcessos)
+            .innerJoin(processos, eq(assistidosProcessos.processoId, processos.id))
+            .where(
+              and(
+                eq(assistidosProcessos.assistidoId, input.id),
+                isNull(processos.deletedAt),
+              ),
+            ),
+
+          // Audiências
+          db
+            .select({
+              id: audiencias.id,
+              dataAudiencia: audiencias.dataAudiencia,
+              tipo: audiencias.tipo,
+              local: audiencias.local,
+              status: audiencias.status,
+              processoId: audiencias.processoId,
+            })
+            .from(audiencias)
+            .where(eq(audiencias.assistidoId, input.id))
+            .orderBy(desc(audiencias.dataAudiencia)),
+
+          // Demandas — todos defensores
+          db
+            .select({
+              id: demandas.id,
+              ato: demandas.ato,
+              tipoAto: demandas.tipoAto,
+              status: demandas.status,
+              prazo: demandas.prazo,
+              processoId: demandas.processoId,
+              defensorId: demandas.defensorId,
+              defensorNome: users.name,
+            })
+            .from(demandas)
+            .leftJoin(users, eq(demandas.defensorId, users.id))
+            .where(
+              and(
+                eq(demandas.assistidoId, input.id),
+                isNull(demandas.deletedAt),
+              ),
+            )
+            .orderBy(asc(demandas.prazo)),
+
+          // Drive files
+          db
+            .select({
+              id: driveFiles.id,
+              name: driveFiles.name,
+              mimeType: driveFiles.mimeType,
+              webViewLink: driveFiles.webViewLink,
+              lastModifiedTime: driveFiles.lastModifiedTime,
+              isFolder: driveFiles.isFolder,
+              parentFileId: driveFiles.parentFileId,
+              driveFolderId: driveFiles.driveFolderId,
+            })
+            .from(driveFiles)
+            .where(eq(driveFiles.assistidoId, input.id))
+            .orderBy(desc(driveFiles.lastModifiedTime))
+            .limit(100),
+        ]);
+
+      if (baseRows.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+      }
+
+      return {
+        ...baseRows[0],
+        processos: processosRows,
+        audiencias: audienciasRows,
+        demandas: demandasRows,
+        driveFiles: driveFilesRows,
+      };
     }),
 
   // Criar novo assistido
