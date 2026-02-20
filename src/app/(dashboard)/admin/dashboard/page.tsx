@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { DEMANDA_STATUS, isStatusConcluido } from "@/config/demanda-status";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { toast } from "sonner";
 import {
   Users,
@@ -1134,8 +1135,8 @@ export default function DashboardJuriPage() {
                 <AlertCircle className="w-4 h-4 text-zinc-400" />
                 <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Prazos</h3>
                 {estatisticasPrazos.vencidos > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 font-bold">
-                    {estatisticasPrazos.vencidos} VENCIDO{estatisticasPrazos.vencidos > 1 ? "S" : ""}
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-semibold">
+                    {estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}
                   </span>
                 )}
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
@@ -1150,7 +1151,7 @@ export default function DashboardJuriPage() {
             </div>
           </div>
 
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[500px] overflow-y-auto">
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[360px] overflow-y-auto">
             {loadingDemandas ? (
               <div className="p-4 space-y-2">
                 {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
@@ -1165,24 +1166,26 @@ export default function DashboardJuriPage() {
                 const prazoInfo = formatPrazo(demanda.prazo);
                 const isVencido = prazoInfo.vencido;
                 const isReuPresoCritico = demanda.reuPreso && (isVencido || prazoInfo.diasRestantes === 0);
+                const atribuicao = demanda.processo?.atribuicao;
+                const atColors = getAtribuicaoColors(atribuicao);
 
                 return (
-                  <div key={demanda.id} className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${
+                  <div key={demanda.id} className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 transition-colors border-l-2",
                     isReuPresoCritico
-                      ? "bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 border-l-4 border-red-500"
-                      : isVencido
-                      ? "bg-red-50/50 dark:bg-red-950/20 hover:bg-red-100/50 dark:hover:bg-red-950/30"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-                  }`}>
+                      ? "bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 border-l-red-500"
+                      : `${atColors.border} hover:bg-zinc-50 dark:hover:bg-zinc-800/50`
+                  )}>
                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      isVencido ? "bg-red-600 animate-pulse" :
+                      isReuPresoCritico ? "bg-red-600 animate-pulse" :
+                      isVencido ? "bg-rose-400" :
                       prazoInfo.cor === "red" ? "bg-red-500" :
                       prazoInfo.cor === "yellow" ? "bg-amber-500" : "bg-zinc-400"
                     }`} />
                     <Link href={`/admin/demandas/${demanda.id}`} className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className={`text-sm font-medium truncate ${
-                          isVencido ? "text-red-700 dark:text-red-300" : "text-zinc-800 dark:text-zinc-200"
+                          isReuPresoCritico ? "text-red-700 dark:text-red-300" : "text-zinc-800 dark:text-zinc-200"
                         }`}>
                           {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
                         </p>
@@ -1190,6 +1193,11 @@ export default function DashboardJuriPage() {
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
                             <Lock className="w-2.5 h-2.5 mr-0.5" />
                             PRESO
+                          </span>
+                        )}
+                        {atribuicao && (
+                          <span className={cn("text-[9px] px-1 py-0.5 rounded-full font-medium", atColors.bgSolid, atColors.text)}>
+                            {atColors.shortLabel}
                           </span>
                         )}
                       </div>
@@ -1203,8 +1211,10 @@ export default function DashboardJuriPage() {
                         onUpdate={handleQuickStatusUpdate}
                       />
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap ${
-                        isVencido
+                        isReuPresoCritico
                           ? "bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300 animate-pulse"
+                          : isVencido
+                          ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
                           : prazoInfo.cor === "red"
                           ? "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400"
                           : prazoInfo.cor === "yellow"
