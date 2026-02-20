@@ -84,6 +84,7 @@ export const demandasRouter = router({
           processoId: demandas.processoId,
           assistidoId: demandas.assistidoId,
           defensorId: demandas.defensorId,
+          ordemManual: demandas.ordemManual,
           createdAt: demandas.createdAt,
           processo: {
             id: processos.id,
@@ -101,7 +102,7 @@ export const demandasRouter = router({
         .leftJoin(processos, eq(demandas.processoId, processos.id))
         .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(demandas.prazo)
+        .orderBy(sql`${demandas.ordemManual} ASC NULLS LAST, ${demandas.prazo} ASC NULLS LAST`)
         .limit(limit)
         .offset(offset);
 
@@ -794,6 +795,20 @@ export const demandasRouter = router({
     }),
 
   // Buscar processos por número (para autocomplete de vinculação)
+  reordenar: protectedProcedure
+    .input(z.object({
+      items: z.array(z.object({ id: z.number(), ordem: z.number() })),
+    }))
+    .mutation(async ({ input }) => {
+      for (const item of input.items) {
+        await db
+          .update(demandas)
+          .set({ ordemManual: item.ordem })
+          .where(eq(demandas.id, item.id));
+      }
+      return { success: true };
+    }),
+
   searchProcessos: protectedProcedure
     .input(z.object({ search: z.string().min(1), assistidoId: z.number().optional() }))
     .query(async ({ ctx, input }) => {

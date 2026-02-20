@@ -89,6 +89,8 @@ interface DemandaCompactViewProps {
   onProcessoLink?: (id: string, processoId: number, numero: string) => void;
   searchAssistidosFn?: (query: string) => { id: number; label: string; sublabel?: string }[];
   searchProcessosFn?: (query: string) => { id: number; label: string; sublabel?: string }[];
+  onAssistidoQueryChange?: (query: string) => void;
+  onProcessoQueryChange?: (query: string) => void;
   isLoadingAssistidoSearch?: boolean;
   isLoadingProcessoSearch?: boolean;
   onEdit: (demanda: Demanda) => void;
@@ -222,6 +224,8 @@ const CompactRow = React.memo(function CompactRow({
   onProcessoLink,
   searchAssistidosFn,
   searchProcessosFn,
+  onAssistidoQueryChange,
+  onProcessoQueryChange,
   isLoadingAssistidoSearch,
   isLoadingProcessoSearch,
   onEdit,
@@ -251,6 +255,8 @@ const CompactRow = React.memo(function CompactRow({
   onProcessoLink?: (id: string, processoId: number, numero: string) => void;
   searchAssistidosFn?: (query: string) => { id: number; label: string; sublabel?: string }[];
   searchProcessosFn?: (query: string) => { id: number; label: string; sublabel?: string }[];
+  onAssistidoQueryChange?: (query: string) => void;
+  onProcessoQueryChange?: (query: string) => void;
   isLoadingAssistidoSearch?: boolean;
   isLoadingProcessoSearch?: boolean;
   onEdit: (demanda: Demanda) => void;
@@ -367,6 +373,7 @@ const CompactRow = React.memo(function CompactRow({
                   onTextChange={(text) => onAssistidoChange(demanda.id, text)}
                   placeholder="Buscar assistido..."
                   searchFn={searchAssistidosFn}
+                  onQueryChange={onAssistidoQueryChange}
                   isLoading={isLoadingAssistidoSearch}
                   icon="user"
                   activateOnDoubleClick
@@ -424,6 +431,7 @@ const CompactRow = React.memo(function CompactRow({
                   onTextChange={(text) => onProcessoChange(demanda.id, text)}
                   placeholder="Buscar processo..."
                   searchFn={searchProcessosFn}
+                  onQueryChange={onProcessoQueryChange}
                   isLoading={isLoadingProcessoSearch}
                   icon="briefcase"
                   activateOnDoubleClick
@@ -719,6 +727,8 @@ export function DemandaCompactView({
   onProcessoLink,
   searchAssistidosFn,
   searchProcessosFn,
+  onAssistidoQueryChange,
+  onProcessoQueryChange,
   isLoadingAssistidoSearch,
   isLoadingProcessoSearch,
   onEdit,
@@ -987,6 +997,8 @@ export function DemandaCompactView({
                     onProcessoLink={onProcessoLink}
                     searchAssistidosFn={searchAssistidosFn}
                     searchProcessosFn={searchProcessosFn}
+                    onAssistidoQueryChange={onAssistidoQueryChange}
+                    onProcessoQueryChange={onProcessoQueryChange}
                     isLoadingAssistidoSearch={isLoadingAssistidoSearch}
                     isLoadingProcessoSearch={isLoadingProcessoSearch}
                     onEdit={onEdit}
@@ -1061,6 +1073,7 @@ export function DemandaCompactView({
                               onTextChange={(text) => onAssistidoChange(demanda.id, text)}
                               placeholder="Buscar assistido..."
                               searchFn={searchAssistidosFn}
+                              onQueryChange={onAssistidoQueryChange}
                               isLoading={isLoadingAssistidoSearch}
                               icon="user"
                               className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors truncate flex items-center gap-1 group/edit flex-1 min-w-0 text-[12px] font-semibold text-zinc-800 dark:text-zinc-200"
@@ -1093,6 +1106,7 @@ export function DemandaCompactView({
                               onTextChange={(text) => onProcessoChange(demanda.id, text)}
                               placeholder="Buscar processo..."
                               searchFn={searchProcessosFn}
+                              onQueryChange={onProcessoQueryChange}
                               isLoading={isLoadingProcessoSearch}
                               icon="briefcase"
                               className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors truncate flex items-center gap-1 group/edit flex-1 min-w-0 font-mono text-[10px] text-zinc-500 dark:text-zinc-400"

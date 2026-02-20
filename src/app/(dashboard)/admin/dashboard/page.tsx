@@ -12,6 +12,7 @@ import { PedidoTrabalhoModal } from "@/components/cowork/pedido-trabalho-modal";
 import { ParecerModal } from "@/components/cowork/parecer-modal";
 import { CoberturaModal } from "@/components/cowork/cobertura-modal";
 import { MuralEquipe } from "@/components/cowork/mural-equipe";
+import { ParecerRecebidoCard, usePareceresPendentesCount } from "@/components/cowork/parecer-recebido-card";
 import {
   Sheet,
   SheetContent,
@@ -241,6 +242,31 @@ function QuickStatusButton({ demandaId, currentSubstatus, onUpdate }: {
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+// ============================================
+// ============================================
+// PARECERES RECEBIDOS SECTION
+// ============================================
+
+function ParecerRecebidoSection() {
+  const count = usePareceresPendentesCount();
+  if (count === 0) return null;
+  return (
+    <div className="border-t border-zinc-100 dark:border-zinc-800">
+      <div className="px-3 pt-2 pb-1 flex items-center gap-1.5">
+        <p className="text-[9px] font-medium text-zinc-400 uppercase tracking-wide">
+          Pareceres aguardando resposta
+        </p>
+        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
+          {count}
+        </span>
+      </div>
+      <div className="px-3 pb-3">
+        <ParecerRecebidoCard />
+      </div>
+    </div>
   );
 }
 
@@ -1054,6 +1080,8 @@ export default function DashboardJuriPage() {
                 )}
               </div>
             )}
+          {/* Pareceres aguardando resposta */}
+          <ParecerRecebidoSection />
           </div>
         </Card>
 

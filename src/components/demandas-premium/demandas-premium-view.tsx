@@ -30,6 +30,7 @@ import { PageHeader } from "@/components/demandas-premium/PageHeader";
 import { DemandaCard } from "@/components/demandas-premium/DemandaCard";
 import { DemandaTableView } from "@/components/demandas-premium/DemandaTableView";
 import { DemandaCompactView } from "@/components/demandas-premium/DemandaCompactView";
+import { arrayMove } from "@dnd-kit/sortable";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import {
   ListTodo,
@@ -643,6 +644,8 @@ export default function Demandas() {
   });
 
   // Mutation para deletar demanda (soft delete)
+  const reordenarMutation = trpc.demandas.reordenar.useMutation();
+
   const deleteDemandaMutation = trpc.demandas.delete.useMutation({
     onSuccess: () => {
       toast.success("Demanda deletada!");
@@ -865,9 +868,9 @@ export default function Demandas() {
     toast.success(`Processo vinculado: ${numero}`);
   };
 
-  // Funções de busca para InlineAutocomplete
+  // Funções de busca para InlineAutocomplete — devem ser PURAS (sem setState)
   const searchAssistidosFn = useCallback((query: string) => {
-    setAssistidoSearchQuery(query);
+    if (query.length < 2) return [];
     return assistidoSearchResults.map((a) => ({
       id: a.id,
       label: a.nome,
@@ -876,7 +879,7 @@ export default function Demandas() {
   }, [assistidoSearchResults]);
 
   const searchProcessosFn = useCallback((query: string) => {
-    setProcessoSearchQuery(query);
+    if (query.length < 2) return [];
     return processoSearchResults.map((p) => ({
       id: p.id,
       label: p.numeroAutos,
@@ -1284,6 +1287,20 @@ export default function Demandas() {
   }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicao, selectedEstadoPrisional, selectedTipoAto, selectedStatusGroup, showArchived]);
 
   // Handler para click no header de coluna (multi-column sort)
+  const handleReorder = useCallback((activeId: string, overId: string) => {
+    setDemandas((prev) => {
+      const oldIndex = prev.findIndex((d) => d.id === activeId);
+      const newIndex = prev.findIndex((d) => d.id === overId);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const reordered = arrayMove(prev, oldIndex, newIndex);
+      // Persist order to DB (fire-and-forget)
+      reordenarMutation.mutate({
+        items: reordered.map((item, index) => ({ id: Number(item.id), ordem: index })),
+      });
+      return reordered;
+    });
+  }, [reordenarMutation]);
+
   const handleColumnSort = useCallback((columnId: string) => {
     setSortStack(prev => {
       const existingIdx = prev.findIndex(s => s.column === columnId);
@@ -1534,25 +1551,27 @@ export default function Demandas() {
                     </button>
                   )}
                 </div>
-                <div className="flex gap-1 overflow-x-auto scrollbar-none">
-                  {["status", "prazo", "assistido", "ato", "recentes"].map((sort) => {
-                    const isActive = sortStack.length === 1 && sortStack[0].column === sort;
-                    return (
-                      <button
-                        key={sort}
-                        onClick={() => setSortStack([{ column: sort, direction: "asc" }])}
-                        className={`px-2 md:px-2.5 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-semibold transition-all whitespace-nowrap ${
-                          isActive
-                            ? "bg-emerald-600 text-white shadow-sm"
-                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                        }`}
-                      >
-                        {sort === "recentes" && <Sparkles className="w-2.5 md:w-3 h-2.5 md:h-3 inline mr-0.5 md:mr-1" />}
-                        {sort.charAt(0).toUpperCase() + sort.slice(1)}
-                      </button>
-                    );
-                  })}
-                </div>
+                {viewMode !== "compact" && (
+                  <div className="flex gap-1 overflow-x-auto scrollbar-none">
+                    {["status", "prazo", "assistido", "ato", "recentes"].map((sort) => {
+                      const isActive = sortStack.length === 1 && sortStack[0].column === sort;
+                      return (
+                        <button
+                          key={sort}
+                          onClick={() => setSortStack([{ column: sort, direction: "asc" }])}
+                          className={`px-2 md:px-2.5 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-semibold transition-all whitespace-nowrap ${
+                            isActive
+                              ? "bg-emerald-600 text-white shadow-sm"
+                              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                          }`}
+                        >
+                          {sort === "recentes" && <Sparkles className="w-2.5 md:w-3 h-2.5 md:h-3 inline mr-0.5 md:mr-1" />}
+                          {sort.charAt(0).toUpperCase() + sort.slice(1)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 {/* Toggle de Visualização: Grid / Lista / Cards - Mobile e Desktop */}
                 <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 gap-0.5">
                   <button
@@ -1735,6 +1754,8 @@ export default function Demandas() {
                   onProcessoLink={handleProcessoLink}
                   searchAssistidosFn={searchAssistidosFn}
                   searchProcessosFn={searchProcessosFn}
+                  onAssistidoQueryChange={setAssistidoSearchQuery}
+                  onProcessoQueryChange={setProcessoSearchQuery}
                   isLoadingAssistidoSearch={loadingAssistidoSearch}
                   isLoadingProcessoSearch={loadingProcessoSearch}
                   onEdit={handleEditDemanda}
@@ -1749,6 +1770,7 @@ export default function Demandas() {
                   onAtribuicaoFilter={setSelectedAtribuicao}
                   sortStack={sortStack}
                   onColumnSort={handleColumnSort}
+                  onReorder={handleReorder}
                 />
               ) : (
                 /* ========== MODO GRID PREMIUM ========== */

@@ -16,6 +16,7 @@ interface InlineAutocompleteProps {
   onTextChange?: (text: string) => void;
   placeholder?: string;
   searchFn: (query: string) => AutocompleteOption[];
+  onQueryChange?: (query: string) => void;
   isLoading?: boolean;
   icon?: "user" | "briefcase";
   className?: string;
@@ -29,6 +30,7 @@ export function InlineAutocomplete({
   onTextChange,
   placeholder = "Buscar...",
   searchFn,
+  onQueryChange,
   isLoading = false,
   icon = "user",
   className,
@@ -41,6 +43,7 @@ export function InlineAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // searchFn must be pure (no setState) — it just maps existing results
   const results = searchFn(query);
   const IconComp = icon === "user" ? User : Briefcase;
 
@@ -115,9 +118,11 @@ export function InlineAutocomplete({
             type="text"
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
-              setShowResults(e.target.value.length >= 2);
+              const q = e.target.value;
+              setQuery(q);
+              setShowResults(q.length >= 2);
               setSelectedIndex(0);
+              onQueryChange?.(q);
             }}
             onKeyDown={handleKeyDown}
             className="w-full text-[11px] px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"

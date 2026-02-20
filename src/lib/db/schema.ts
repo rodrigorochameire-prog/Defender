@@ -361,6 +361,9 @@ export const demandas = pgTable("demandas", {
   // Caso (Case-Centric)
   casoId: integer("caso_id"),
   
+  // Ordenação manual (drag-and-drop persist)
+  ordemManual: integer("ordem_manual"),
+
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
