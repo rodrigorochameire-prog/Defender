@@ -40,8 +40,11 @@ import {
   Gavel,
   Home,
   AlertCircle,
+  Mic,
 } from "lucide-react";
 import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
+import { AudioRecorderButton } from "@/components/shared/audio-recorder";
+import { TranscriptViewer } from "@/components/shared/transcript-viewer";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -182,6 +185,46 @@ export function RegistroRapidoAprimorado({
   const [processoSearchQuery, setProcessoSearchQuery] = useState("");
   const [delegacaoModalOpen, setDelegacaoModalOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Estados de transcrição
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [showTranscriptViewer, setShowTranscriptViewer] = useState(false);
+
+  // Transcrição: handler quando áudio é transcrito
+  const handleTranscriptReady = (text: string) => {
+    setTranscript(text);
+    // Append no campo de descrição
+    setData((prev) => ({
+      ...prev,
+      descricao: prev.descricao ? `${prev.descricao}\n\n${text}` : text,
+    }));
+    setShowTranscriptViewer(true);
+  };
+
+  // Gerar resumo jurídico via Gemini
+  const handleSummarize = async () => {
+    if (!transcript) return;
+    setIsSummarizing(true);
+    try {
+      const res = await fetch("/api/ai/summarize-transcript", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transcript,
+          assistidoNome: data.assistidoNome || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("Falha ao gerar resumo");
+      const json = (await res.json()) as { summary?: string };
+      setSummary(json.summary ?? "");
+    } catch {
+      toast.error("Não foi possível gerar o resumo.");
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
 
   // Filtrar assistidos pela busca (excluindo "Não identificado")
   const assistidosFiltrados = useMemo(() => {
@@ -602,12 +645,42 @@ export function RegistroRapidoAprimorado({
           <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">
             Descrição
           </label>
-          <Textarea
-            placeholder={TIPOS_REGISTRO[data.tipo]?.description || "Descreva o registro..."}
-            value={data.descricao}
-            onChange={(e) => setData(prev => ({ ...prev, descricao: e.target.value }))}
-            className="min-h-[80px] text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none"
-          />
+          <div className="relative">
+            <Textarea
+              placeholder={TIPOS_REGISTRO[data.tipo]?.description || "Descreva o registro..."}
+              value={data.descricao}
+              onChange={(e) => setData(prev => ({ ...prev, descricao: e.target.value }))}
+              className="min-h-[80px] text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none pr-10"
+            />
+            <div className="absolute top-1.5 right-1.5">
+              <AudioRecorderButton
+                compact
+                onTranscriptReady={handleTranscriptReady}
+              />
+            </div>
+          </div>
+          {transcript && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowTranscriptViewer(true)}
+                className="text-[11px] text-violet-600 hover:text-violet-700 flex items-center gap-1"
+              >
+                <Mic className="h-3 w-3" />
+                Ver transcrição
+              </button>
+              {!summary && (
+                <button
+                  type="button"
+                  onClick={handleSummarize}
+                  disabled={isSummarizing}
+                  className="text-[11px] text-zinc-400 hover:text-zinc-600 disabled:opacity-50"
+                >
+                  {isSummarizing ? "Resumindo..." : "Resumir atendimento"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Opções Avançadas */}
@@ -731,6 +804,20 @@ export function RegistroRapidoAprimorado({
           setData(prev => ({ ...prev, descricao: "" }));
         }}
       />
+
+      {/* Transcript Viewer */}
+      {showTranscriptViewer && transcript && (
+        <TranscriptViewer
+          open={showTranscriptViewer}
+          onOpenChange={setShowTranscriptViewer}
+          transcript={transcript}
+          summary={summary}
+          assistidoNome={data.assistidoNome || undefined}
+          onSummarize={handleSummarize}
+          isSummarizing={isSummarizing}
+          title="Transcrição do Atendimento"
+        />
+      )}
     </Card>
   );
 }
