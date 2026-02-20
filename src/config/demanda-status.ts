@@ -113,6 +113,17 @@ export const DEMANDA_STATUS = {
   sem_atuacao: { label: "Sem atuação", group: "concluida" as StatusGroup, icon: XCircle },
 } as const;
 
+/** Status do DB que indicam demanda concluída — excluir de contagem de prazos */
+export const STATUS_CONCLUIDOS = [
+  "CONCLUIDO", "ARQUIVADO", "7_PROTOCOLADO", "7_CIENCIA", "7_SEM_ATUACAO",
+] as const;
+
+/** Verifica se um status de demanda é considerado concluído */
+export function isStatusConcluido(status: string | null | undefined): boolean {
+  if (!status) return false;
+  return (STATUS_CONCLUIDOS as readonly string[]).includes(status);
+}
+
 export function getStatusConfig(status: string) {
   // Validação para evitar erro quando status é undefined ou null
   if (!status) {

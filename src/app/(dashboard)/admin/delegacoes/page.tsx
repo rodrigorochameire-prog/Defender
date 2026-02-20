@@ -34,6 +34,10 @@ import {
   User,
   Briefcase,
   FileText,
+  FileEdit,
+  BookOpen,
+  Search,
+  MoreHorizontal,
   MessageSquare,
   ArrowRight,
   Loader2,
@@ -46,7 +50,10 @@ import {
   Eye,
   Filter,
   RefreshCw,
+  ClipboardCheck,
+  Stamp,
 } from "lucide-react";
+import { PedidoTrabalhoModal } from "@/components/cowork/pedido-trabalho-modal";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -68,8 +75,23 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
     color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
     icon: <Play className="w-3.5 h-3.5" />,
   },
+  aguardando_revisao: {
+    label: "Aguard. Revisao",
+    color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    icon: <ClipboardCheck className="w-3.5 h-3.5" />,
+  },
+  revisado: {
+    label: "Revisado",
+    color: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+    icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+  },
+  protocolado: {
+    label: "Protocolado",
+    color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    icon: <Stamp className="w-3.5 h-3.5" />,
+  },
   concluida: {
-    label: "Concluída",
+    label: "Concluida",
     color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
   },
@@ -83,6 +105,16 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
     color: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
     icon: <XCircle className="w-3.5 h-3.5" />,
   },
+};
+
+// Mapeamento de tipo de pedido para icones e labels
+const TIPO_CONFIG: Record<string, { label: string; icon: React.ReactNode }> = {
+  minuta: { label: "Minuta", icon: <FileEdit className="w-3.5 h-3.5" /> },
+  atendimento: { label: "Atendimento", icon: <UserCheck className="w-3.5 h-3.5" /> },
+  diligencia: { label: "Diligencia", icon: <Search className="w-3.5 h-3.5" /> },
+  analise: { label: "Analise", icon: <BookOpen className="w-3.5 h-3.5" /> },
+  outro: { label: "Outro", icon: <MoreHorizontal className="w-3.5 h-3.5" /> },
+  delegacao_generica: { label: "Tarefa", icon: <Send className="w-3.5 h-3.5" /> },
 };
 
 // Props do card de delegação
@@ -137,50 +169,66 @@ function DelegacaoCard({
       />
 
       <div className="p-4 pt-5">
-        {/* Header: Status + Data */}
+        {/* Header: Tipo + Status + Data */}
         <div className="flex items-center justify-between mb-3">
-          <Badge className={cn("gap-1 text-[10px] font-medium", statusConfig.color)}>
-            {statusConfig.icon}
-            {statusConfig.label}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {delegacao.tipo && TIPO_CONFIG[delegacao.tipo] && (
+              <Badge variant="outline" className="gap-1 text-[10px] font-medium text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700">
+                {TIPO_CONFIG[delegacao.tipo].icon}
+                {TIPO_CONFIG[delegacao.tipo].label}
+              </Badge>
+            )}
+            <Badge className={cn("gap-1 text-[10px] font-medium", statusConfig.color)}>
+              {statusConfig.icon}
+              {statusConfig.label}
+            </Badge>
+          </div>
           <span className="text-[10px] text-zinc-500">{dataFormatada}</span>
         </div>
 
-        {/* Contexto: Assistido e Processo */}
-        {delegacao.demanda && (
-          <div className="mb-3 p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5">
-            {delegacao.demanda.assistido && (
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-5 h-5 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
-                  <User className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+        {/* Contexto: Assistido e Processo (direto ou via demanda) */}
+        {(() => {
+          const assistidoNome = delegacao.assistido?.nome || delegacao.demanda?.assistido?.nome;
+          const processoNumero = delegacao.processo?.numero || delegacao.processo?.numeroAutos || delegacao.demanda?.processo?.numeroAutos;
+          const demandaAto = delegacao.demanda?.ato;
+
+          if (!assistidoNome && !processoNumero && !demandaAto) return null;
+
+          return (
+            <div className="mb-3 p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5">
+              {assistidoNome && (
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-5 h-5 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                    <User className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate">
+                    {assistidoNome}
+                  </span>
                 </div>
-                <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate">
-                  {delegacao.demanda.assistido.nome}
-                </span>
-              </div>
-            )}
-            {delegacao.demanda.processo && (
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-5 h-5 rounded bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
-                  <Briefcase className="w-3 h-3 text-violet-600 dark:text-violet-400" />
+              )}
+              {processoNumero && (
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-5 h-5 rounded bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
+                    <Briefcase className="w-3 h-3 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-mono text-[11px] truncate">
+                    {processoNumero}
+                  </span>
                 </div>
-                <span className="text-zinc-600 dark:text-zinc-400 font-mono text-[11px] truncate">
-                  {delegacao.demanda.processo.numeroAutos}
-                </span>
-              </div>
-            )}
-            {delegacao.demanda.ato && (
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-5 h-5 rounded bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+              )}
+              {demandaAto && (
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-5 h-5 rounded bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <span className="text-zinc-600 dark:text-zinc-400 truncate">
+                    {demandaAto}
+                  </span>
                 </div>
-                <span className="text-zinc-600 dark:text-zinc-400 truncate">
-                  {delegacao.demanda.ato}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          );
+        })()}
 
         {/* Instruções */}
         <div className="mb-3">
@@ -280,7 +328,26 @@ function DelegacaoCard({
             </Button>
           )}
 
-          {tipo === "recebida" && delegacao.status === "em_andamento" && (
+          {/* Em andamento: Minuta → "Enviar p/ revisao", Outros → "Concluir" */}
+          {tipo === "recebida" && delegacao.status === "em_andamento" && delegacao.tipo === "minuta" && (
+            <Button
+              size="sm"
+              className="flex-1 text-xs h-8 rounded-lg bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={() => onAtualizarStatus(delegacao.id, "aguardando_revisao")}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <>
+                  <ClipboardCheck className="w-3.5 h-3.5 mr-1" />
+                  Enviar p/ Revisao
+                </>
+              )}
+            </Button>
+          )}
+
+          {tipo === "recebida" && delegacao.status === "em_andamento" && delegacao.tipo !== "minuta" && (
             <Button
               size="sm"
               className="flex-1 text-xs h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -293,6 +360,44 @@ function DelegacaoCard({
                 <>
                   <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                   Concluir
+                </>
+              )}
+            </Button>
+          )}
+
+          {/* Aguardando revisao: Defensor revisa (tab enviadas) */}
+          {tipo === "enviada" && delegacao.status === "aguardando_revisao" && (
+            <Button
+              size="sm"
+              className="flex-1 text-xs h-8 rounded-lg bg-teal-600 hover:bg-teal-700 text-white"
+              onClick={() => onAtualizarStatus(delegacao.id, "revisado")}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <>
+                  <Check className="w-3.5 h-3.5 mr-1" />
+                  Aprovar Revisao
+                </>
+              )}
+            </Button>
+          )}
+
+          {/* Revisado: Defensor protocola (tab enviadas) */}
+          {tipo === "enviada" && delegacao.status === "revisado" && (
+            <Button
+              size="sm"
+              className="flex-1 text-xs h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => onAtualizarStatus(delegacao.id, "protocolado")}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <>
+                  <Stamp className="w-3.5 h-3.5 mr-1" />
+                  Protocolado
                 </>
               )}
             </Button>
@@ -310,6 +415,7 @@ export default function DelegacoesPage() {
   const [delegacaoDetalhes, setDelegacaoDetalhes] = useState<any>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [observacoes, setObservacoes] = useState("");
+  const [pedidoModalOpen, setPedidoModalOpen] = useState(false);
 
   const utils = trpc.useUtils();
 
@@ -380,18 +486,28 @@ export default function DelegacoesPage() {
             </div>
           </div>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              refetchRecebidas();
-              refetchEnviadas();
-            }}
-            className="gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Atualizar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                refetchRecebidas();
+                refetchEnviadas();
+              }}
+              className="gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Atualizar
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setPedidoModalOpen(true)}
+              className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm"
+            >
+              <Send className="w-4 h-4" />
+              Novo Pedido
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -521,7 +637,8 @@ export default function DelegacoesPage() {
                   <SelectItem value="pendente">Pendentes</SelectItem>
                   <SelectItem value="aceita">Aceitas</SelectItem>
                   <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                  <SelectItem value="concluida">Concluídas</SelectItem>
+                  <SelectItem value="aguardando_revisao">Aguard. Revisao</SelectItem>
+                  <SelectItem value="concluida">Concluidas</SelectItem>
                   <SelectItem value="devolvida">Devolvidas</SelectItem>
                 </SelectContent>
               </Select>
@@ -648,46 +765,92 @@ export default function DelegacoesPage() {
                 </div>
               )}
 
-              {/* Contexto */}
-              {delegacaoDetalhes.demanda && (
-                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-2">
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                    Contexto
-                  </p>
-                  {delegacaoDetalhes.demanda.assistido && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <User className="w-4 h-4 text-emerald-500" />
-                      <span className="font-medium">
-                        {delegacaoDetalhes.demanda.assistido.nome}
-                      </span>
-                    </div>
-                  )}
-                  {delegacaoDetalhes.demanda.processo && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Briefcase className="w-4 h-4 text-violet-500" />
-                      <span className="font-mono text-xs">
-                        {delegacaoDetalhes.demanda.processo.numeroAutos}
-                      </span>
-                    </div>
-                  )}
-                  {delegacaoDetalhes.demanda.ato && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <FileText className="w-4 h-4 text-amber-500" />
-                      <span>{delegacaoDetalhes.demanda.ato}</span>
-                    </div>
-                  )}
+              {/* Contexto (direto ou via demanda) */}
+              {(() => {
+                const assistidoNome = delegacaoDetalhes.assistido?.nome || delegacaoDetalhes.demanda?.assistido?.nome;
+                const processoNumero = delegacaoDetalhes.processo?.numero || delegacaoDetalhes.processo?.numeroAutos || delegacaoDetalhes.demanda?.processo?.numeroAutos;
+                const demandaAto = delegacaoDetalhes.demanda?.ato;
+
+                if (!assistidoNome && !processoNumero && !demandaAto) return null;
+
+                return (
+                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                      Contexto
+                    </p>
+                    {assistidoNome && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <User className="w-4 h-4 text-emerald-500" />
+                        <span className="font-medium">
+                          {assistidoNome}
+                        </span>
+                      </div>
+                    )}
+                    {processoNumero && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Briefcase className="w-4 h-4 text-violet-500" />
+                        <span className="font-mono text-xs">
+                          {processoNumero}
+                        </span>
+                      </div>
+                    )}
+                    {demandaAto && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <FileText className="w-4 h-4 text-amber-500" />
+                        <span>{demandaAto}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Tipo do pedido */}
+              {delegacaoDetalhes.tipo && TIPO_CONFIG[delegacaoDetalhes.tipo] && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-zinc-500">Tipo:</span>
+                  <Badge variant="outline" className="gap-1 text-zinc-600 dark:text-zinc-400">
+                    {TIPO_CONFIG[delegacaoDetalhes.tipo].icon}
+                    {TIPO_CONFIG[delegacaoDetalhes.tipo].label}
+                  </Badge>
                 </div>
               )}
 
-              {/* Instruções */}
+              {/* Prioridade */}
+              {delegacaoDetalhes.prioridade && delegacaoDetalhes.prioridade !== "NORMAL" && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-zinc-500">Prioridade:</span>
+                  <Badge className={cn(
+                    "text-[10px]",
+                    delegacaoDetalhes.prioridade === "URGENTE"
+                      ? "bg-rose-100 text-rose-700"
+                      : "bg-zinc-100 text-zinc-600"
+                  )}>
+                    {delegacaoDetalhes.prioridade === "URGENTE" ? "Urgente" : "Baixa"}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Instrucoes */}
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                  Instruções
+                  Instrucoes
                 </p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg whitespace-pre-wrap">
                   {delegacaoDetalhes.instrucoes}
                 </p>
               </div>
+
+              {/* Orientacoes (se houver) */}
+              {delegacaoDetalhes.orientacoes && (
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    Orientacoes / Referencias
+                  </p>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 whitespace-pre-wrap">
+                    {delegacaoDetalhes.orientacoes}
+                  </p>
+                </div>
+              )}
 
               {/* Observações (se houver) */}
               {delegacaoDetalhes.observacoes && (
@@ -766,7 +929,25 @@ export default function DelegacoesPage() {
               </Button>
             )}
 
-            {activeTab === "recebidas" && delegacaoDetalhes?.status === "em_andamento" && (
+            {/* Em andamento: Minuta → enviar p/ revisao, Outros → concluir */}
+            {activeTab === "recebidas" && delegacaoDetalhes?.status === "em_andamento" && delegacaoDetalhes?.tipo === "minuta" && (
+              <Button
+                onClick={() =>
+                  handleAtualizarStatus(delegacaoDetalhes.id, "aguardando_revisao", observacoes || undefined)
+                }
+                disabled={atualizarStatus.isPending}
+                className="rounded-xl bg-orange-600 hover:bg-orange-700"
+              >
+                {atualizarStatus.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                ) : (
+                  <ClipboardCheck className="w-4 h-4 mr-1.5" />
+                )}
+                Enviar para Revisao
+              </Button>
+            )}
+
+            {activeTab === "recebidas" && delegacaoDetalhes?.status === "em_andamento" && delegacaoDetalhes?.tipo !== "minuta" && (
               <Button
                 onClick={() =>
                   handleAtualizarStatus(delegacaoDetalhes.id, "concluida", observacoes || undefined)
@@ -779,12 +960,58 @@ export default function DelegacoesPage() {
                 ) : (
                   <CheckCircle2 className="w-4 h-4 mr-1.5" />
                 )}
-                Marcar como Concluída
+                Marcar como Concluida
+              </Button>
+            )}
+
+            {/* Aguardando revisao: Defensor aprova */}
+            {activeTab === "enviadas" && delegacaoDetalhes?.status === "aguardando_revisao" && (
+              <Button
+                onClick={() =>
+                  handleAtualizarStatus(delegacaoDetalhes.id, "revisado", observacoes || undefined)
+                }
+                disabled={atualizarStatus.isPending}
+                className="rounded-xl bg-teal-600 hover:bg-teal-700"
+              >
+                {atualizarStatus.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4 mr-1.5" />
+                )}
+                Aprovar Revisao
+              </Button>
+            )}
+
+            {/* Revisado: Defensor marca como protocolado */}
+            {activeTab === "enviadas" && delegacaoDetalhes?.status === "revisado" && (
+              <Button
+                onClick={() =>
+                  handleAtualizarStatus(delegacaoDetalhes.id, "protocolado", observacoes || undefined)
+                }
+                disabled={atualizarStatus.isPending}
+                className="rounded-xl bg-emerald-600 hover:bg-emerald-700"
+              >
+                {atualizarStatus.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Stamp className="w-4 h-4 mr-1.5" />
+                )}
+                Marcar Protocolado
               </Button>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Novo Pedido de Trabalho */}
+      <PedidoTrabalhoModal
+        open={pedidoModalOpen}
+        onOpenChange={setPedidoModalOpen}
+        onSucesso={() => {
+          utils.delegacao.delegacoesEnviadas.invalidate();
+          utils.delegacao.estatisticas.invalidate();
+        }}
+      />
     </div>
   );
 }

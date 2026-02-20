@@ -39,6 +39,10 @@ import { simuladorRouter } from "./simulador";
 import { distribuicaoRouter } from "./distribuicao";
 import { smartExtractRouter } from "./smart-extract";
 import { briefingRouter } from "./briefing";
+import { coberturaRouter } from "./cobertura";
+import { acompanhamentoRouter } from "./acompanhamento";
+import { parecerRouter } from "./parecer";
+import { muralRouter } from "./mural";
 
 
 export const appRouter = router({
@@ -144,6 +148,26 @@ export const appRouter = router({
   // BRIEFING DE AUDIÊNCIAS (IA)
   // ==========================================
   briefing: briefingRouter,
+
+  // ==========================================
+  // COWORK - COBERTURA (AFASTAMENTOS)
+  // ==========================================
+  cobertura: coberturaRouter,
+
+  // ==========================================
+  // COWORK - ACOMPANHAMENTO (SEGUIR ENTIDADES)
+  // ==========================================
+  acompanhamento: acompanhamentoRouter,
+
+  // ==========================================
+  // COWORK - PARECER (CONSULTAS RÁPIDAS)
+  // ==========================================
+  parecer: parecerRouter,
+
+  // ==========================================
+  // COWORK - MURAL DE EQUIPE (NOTAS)
+  // ==========================================
+  mural: muralRouter,
 });
 
 export type AppRouter = typeof appRouter;

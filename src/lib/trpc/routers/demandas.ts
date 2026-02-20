@@ -274,10 +274,17 @@ export const demandasRouter = router({
           "JURI_CAMACARI", "GRUPO_JURI", "VVD_CAMACARI",
           "EXECUCAO_PENAL", "SUBSTITUICAO", "SUBSTITUICAO_CIVEL"
         ]).optional(),
+        // Edição de nome do assistido (atualiza tabela assistidos)
+        assistidoNome: z.string().min(1).optional(),
+        // Edição de número do processo (atualiza tabela processos)
+        processoNumero: z.string().min(1).optional(),
+        // Reassociar demanda a outro assistido/processo existente
+        assistidoId: z.number().optional(),
+        processoId: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, atribuicao, ...data } = input;
+      const { id, atribuicao, assistidoNome, processoNumero, assistidoId: newAssistidoId, processoId: newProcessoId, ...data } = input;
       const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
 
       const updateData: any = {
@@ -331,6 +338,34 @@ export const demandasRouter = router({
             updatedAt: new Date(),
           })
           .where(eq(processos.id, atualizado.processoId));
+      }
+
+      // Se foi passado assistidoNome, atualizar nome na tabela assistidos
+      if (assistidoNome && atualizado.assistidoId) {
+        await db.update(assistidos)
+          .set({ nome: assistidoNome, updatedAt: new Date() })
+          .where(eq(assistidos.id, atualizado.assistidoId));
+      }
+
+      // Se foi passado processoNumero, atualizar número na tabela processos
+      if (processoNumero && atualizado.processoId) {
+        await db.update(processos)
+          .set({ numeroAutos: processoNumero, updatedAt: new Date() })
+          .where(eq(processos.id, atualizado.processoId));
+      }
+
+      // Se foi passado assistidoId, reassociar demanda a outro assistido existente
+      if (newAssistidoId !== undefined) {
+        await db.update(demandas)
+          .set({ assistidoId: newAssistidoId, updatedAt: new Date() })
+          .where(eq(demandas.id, id));
+      }
+
+      // Se foi passado processoId, reassociar demanda a outro processo existente
+      if (newProcessoId !== undefined) {
+        await db.update(demandas)
+          .set({ processoId: newProcessoId, updatedAt: new Date() })
+          .where(eq(demandas.id, id));
       }
 
       return atualizado;
@@ -721,6 +756,74 @@ export const demandasRouter = router({
           results.skipped++;
         }
       }
+
+      return results;
+    }),
+
+  // Buscar assistidos por nome ou CPF (para autocomplete de vinculação)
+  searchAssistidos: protectedProcedure
+    .input(z.object({ search: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const { workspaceId } = getWorkspaceScope(ctx.user);
+
+      const conditions = [
+        isNull(assistidos.deletedAt),
+        or(
+          ilike(assistidos.nome, `%${input.search}%`),
+          sql`${assistidos.cpf} ILIKE ${'%' + input.search + '%'}`
+        ),
+      ];
+
+      // Filtrar por workspace se disponível
+      if (workspaceId) {
+        conditions.push(eq(assistidos.workspaceId, workspaceId));
+      }
+
+      const results = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          cpf: assistidos.cpf,
+          statusPrisional: assistidos.statusPrisional,
+        })
+        .from(assistidos)
+        .where(and(...conditions))
+        .limit(8);
+
+      return results;
+    }),
+
+  // Buscar processos por número (para autocomplete de vinculação)
+  searchProcessos: protectedProcedure
+    .input(z.object({ search: z.string().min(1), assistidoId: z.number().optional() }))
+    .query(async ({ ctx, input }) => {
+      const { workspaceId } = getWorkspaceScope(ctx.user);
+
+      const conditions: any[] = [
+        isNull(processos.deletedAt),
+        ilike(processos.numeroAutos, `%${input.search}%`),
+      ];
+
+      // Filtrar por assistido se fornecido
+      if (input.assistidoId) {
+        conditions.push(eq(processos.assistidoId, input.assistidoId));
+      }
+
+      // Filtrar por workspace se disponível
+      if (workspaceId) {
+        conditions.push(eq(processos.workspaceId, workspaceId));
+      }
+
+      const results = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          vara: processos.vara,
+          area: processos.area,
+        })
+        .from(processos)
+        .where(and(...conditions))
+        .limit(8);
 
       return results;
     }),

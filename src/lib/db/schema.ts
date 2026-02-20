@@ -389,7 +389,6 @@ export type InsertDemanda = typeof demandas.$inferInsert;
 export const delegacoesHistorico = pgTable("delegacoes_historico", {
   id: serial("id").primaryKey(),
   demandaId: integer("demanda_id")
-    .notNull()
     .references(() => demandas.id, { onDelete: "cascade" }),
   
   // Quem delegou e para quem
@@ -405,14 +404,25 @@ export const delegacoesHistorico = pgTable("delegacoes_historico", {
   dataAceitacao: timestamp("data_aceitacao"),
   dataConclusao: timestamp("data_conclusao"),
   
+  // Tipo de pedido: 'minuta' | 'atendimento' | 'diligencia' | 'analise' | 'outro' | 'delegacao_generica'
+  tipo: varchar("tipo", { length: 30 }).default("delegacao_generica"),
+
   // Detalhes
   instrucoes: text("instrucoes"), // Instruções do defensor
+  orientacoes: text("orientacoes"), // Orientações adicionais (referências, modelos, etc.)
   observacoes: text("observacoes"), // Observações da execução
   prazoSugerido: date("prazo_sugerido"),
-  
-  // Status: 'pendente' | 'aceita' | 'em_andamento' | 'concluida' | 'devolvida' | 'cancelada'
-  status: varchar("status", { length: 20 }).default("pendente").notNull(),
-  
+
+  // Status: 'pendente' | 'aceita' | 'em_andamento' | 'aguardando_revisao' | 'revisado' | 'protocolado' | 'concluida' | 'devolvida' | 'cancelada'
+  status: varchar("status", { length: 25 }).default("pendente").notNull(),
+
+  // Contexto direto (para pedidos sem demanda associada)
+  assistidoId: integer("assistido_id").references(() => assistidos.id),
+  processoId: integer("processo_id").references(() => processos.id),
+
+  // Prioridade
+  prioridade: varchar("prioridade", { length: 10 }).default("NORMAL"),
+
   // Workspace
   workspaceId: integer("workspace_id").references(() => workspaces.id),
   
@@ -422,6 +432,9 @@ export const delegacoesHistorico = pgTable("delegacoes_historico", {
   index("delegacoes_historico_delegado_de_id_idx").on(table.delegadoDeId),
   index("delegacoes_historico_delegado_para_id_idx").on(table.delegadoParaId),
   index("delegacoes_historico_status_idx").on(table.status),
+  index("delegacoes_historico_tipo_idx").on(table.tipo),
+  index("delegacoes_historico_assistido_id_idx").on(table.assistidoId),
+  index("delegacoes_historico_processo_id_idx").on(table.processoId),
   index("delegacoes_historico_workspace_id_idx").on(table.workspaceId),
 ]);
 
@@ -2327,6 +2340,8 @@ export const demandasRelations = relations(demandas, ({ one, many }) => ({
 
 export const delegacoesHistoricoRelations = relations(delegacoesHistorico, ({ one }) => ({
   demanda: one(demandas, { fields: [delegacoesHistorico.demandaId], references: [demandas.id] }),
+  assistido: one(assistidos, { fields: [delegacoesHistorico.assistidoId], references: [assistidos.id] }),
+  processo: one(processos, { fields: [delegacoesHistorico.processoId], references: [processos.id] }),
   delegadoDe: one(users, { fields: [delegacoesHistorico.delegadoDeId], references: [users.id], relationName: "delegadoDe" }),
   delegadoPara: one(users, { fields: [delegacoesHistorico.delegadoParaId], references: [users.id], relationName: "delegadoPara" }),
   workspace: one(workspaces, { fields: [delegacoesHistorico.workspaceId], references: [workspaces.id] }),
@@ -4842,4 +4857,67 @@ export const distributionHistoryRelations = relations(distributionHistory, ({ on
   processo: one(processos, { fields: [distributionHistory.processoId], references: [processos.id] }),
   correctedByUser: one(users, { fields: [distributionHistory.correctedBy], references: [users.id] }),
   workspace: one(workspaces, { fields: [distributionHistory.workspaceId], references: [workspaces.id] }),
+}));
+
+// ==========================================
+// COWORK - PARECERES (CONSULTAS RÁPIDAS)
+// ==========================================
+
+export const pareceres = pgTable("pareceres", {
+  id: serial("id").primaryKey(),
+  solicitanteId: integer("solicitante_id").notNull().references(() => users.id),
+  respondedorId: integer("respondedor_id").notNull().references(() => users.id),
+  assistidoId: integer("assistido_id").references(() => assistidos.id),
+  processoId: integer("processo_id").references(() => processos.id),
+  pergunta: text("pergunta").notNull(),
+  resposta: text("resposta"),
+  status: varchar("status", { length: 20 }).notNull().default("solicitado"), // 'solicitado' | 'respondido' | 'lido'
+  urgencia: varchar("urgencia", { length: 20 }).notNull().default("normal"), // 'normal' | 'urgente'
+  dataSolicitacao: timestamp("data_solicitacao").defaultNow().notNull(),
+  dataResposta: timestamp("data_resposta"),
+  workspaceId: integer("workspace_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("pareceres_solicitante_id_idx").on(table.solicitanteId),
+  index("pareceres_respondedor_id_idx").on(table.respondedorId),
+  index("pareceres_status_idx").on(table.status),
+  index("pareceres_workspace_id_idx").on(table.workspaceId),
+]);
+
+export type Parecer = typeof pareceres.$inferSelect;
+export type InsertParecer = typeof pareceres.$inferInsert;
+
+export const pareceresRelations = relations(pareceres, ({ one }) => ({
+  solicitante: one(users, { fields: [pareceres.solicitanteId], references: [users.id] }),
+  respondedor: one(users, { fields: [pareceres.respondedorId], references: [users.id] }),
+  assistido: one(assistidos, { fields: [pareceres.assistidoId], references: [assistidos.id] }),
+  processo: one(processos, { fields: [pareceres.processoId], references: [processos.id] }),
+}));
+
+// ==========================================
+// COWORK - MURAL DE EQUIPE (NOTAS)
+// ==========================================
+
+export const muralNotas = pgTable("mural_notas", {
+  id: serial("id").primaryKey(),
+  autorId: integer("autor_id").notNull().references(() => users.id),
+  mensagem: text("mensagem").notNull(),
+  assistidoId: integer("assistido_id").references(() => assistidos.id),
+  processoId: integer("processo_id").references(() => processos.id),
+  fixado: boolean("fixado").default(false).notNull(),
+  workspaceId: integer("workspace_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("mural_notas_autor_id_idx").on(table.autorId),
+  index("mural_notas_workspace_id_idx").on(table.workspaceId),
+  index("mural_notas_fixado_idx").on(table.fixado),
+]);
+
+export type MuralNota = typeof muralNotas.$inferSelect;
+export type InsertMuralNota = typeof muralNotas.$inferInsert;
+
+export const muralNotasRelations = relations(muralNotas, ({ one }) => ({
+  autor: one(users, { fields: [muralNotas.autorId], references: [users.id] }),
+  assistido: one(assistidos, { fields: [muralNotas.assistidoId], references: [assistidos.id] }),
+  processo: one(processos, { fields: [muralNotas.processoId], references: [processos.id] }),
 }));

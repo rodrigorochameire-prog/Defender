@@ -17,9 +17,9 @@ import { SheetsImportModal } from "@/components/demandas-premium/sheets-import-m
 import { SEEUImportModal } from "@/components/demandas-premium/seeu-import-modal";
 import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
-import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO } from "@/config/atos-por-atribuicao";
+import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { Card } from "@/components/ui/card";
@@ -29,6 +29,8 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/demandas-premium/PageHeader";
 import { DemandaCard } from "@/components/demandas-premium/DemandaCard";
 import { DemandaTableView } from "@/components/demandas-premium/DemandaTableView";
+import { DemandaCompactView } from "@/components/demandas-premium/DemandaCompactView";
+import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import {
   ListTodo,
   Plus,
@@ -60,6 +62,7 @@ import {
   Table2,
   LayoutGrid,
   Eye,
+  Rows3,
   Zap,
   XCircle,
   MessageSquare,
@@ -538,7 +541,11 @@ function DemandaGridCard({
 
 export default function Demandas() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("status");
+  // Ordenação multi-coluna empilhada (click-to-stack)
+  type SortCriterion = { column: string; direction: "asc" | "desc" };
+  const [sortStack, setSortStack] = useState<SortCriterion[]>([
+    { column: "status", direction: "asc" }
+  ]);
   const [demandas, setDemandas] = useState<any[]>([]);
   const [selectedPrazoFilter, setSelectedPrazoFilter] = useState<string | null>(null);
   const [selectedAtribuicao, setSelectedAtribuicao] = useState<string | null>(null);
@@ -583,10 +590,10 @@ export default function Demandas() {
 
   const [viewMode, setViewMode] = useState<"table" | "cards" | "grid" | "compact">(() => {
     if (typeof window !== "undefined") {
-      // Padrão é "grid" (modo grid premium) - melhor visualização de cards
-      return (localStorage.getItem("defender_demandas_view_mode") as "table" | "cards" | "grid" | "compact") || "grid";
+      // Padrão é "compact" (modo planilha editável)
+      return (localStorage.getItem("defender_demandas_view_mode") as "table" | "cards" | "grid" | "compact") || "compact";
     }
-    return "grid";
+    return "compact";
   });
 
   // ==========================================
@@ -597,7 +604,21 @@ export default function Demandas() {
   });
 
   const utils = trpc.useUtils();
-  
+
+  // Search queries para autocomplete de vinculação
+  const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
+  const [processoSearchQuery, setProcessoSearchQuery] = useState("");
+
+  const { data: assistidoSearchResults = [], isLoading: loadingAssistidoSearch } = trpc.demandas.searchAssistidos.useQuery(
+    { search: assistidoSearchQuery },
+    { enabled: assistidoSearchQuery.length >= 2 }
+  );
+
+  const { data: processoSearchResults = [], isLoading: loadingProcessoSearch } = trpc.demandas.searchProcessos.useQuery(
+    { search: processoSearchQuery },
+    { enabled: processoSearchQuery.length >= 2 }
+  );
+
   // Mutation para criar demanda
   const createDemandaMutation = trpc.demandas.create.useMutation({
     onSuccess: () => {
@@ -782,6 +803,136 @@ export default function Demandas() {
     toast.success("Providências atualizadas!");
   };
 
+  const handleAssistidoChange = (demandaId: string, nome: string) => {
+    // Optimistic update local
+    setDemandas((prev) =>
+      prev.map((d) => (d.id === demandaId ? { ...d, assistido: nome } : d))
+    );
+
+    const numericId = parseInt(demandaId, 10);
+    if (!isNaN(numericId)) {
+      updateDemandaMutation.mutate({ id: numericId, assistidoNome: nome });
+    }
+
+    toast.success("Nome atualizado!");
+  };
+
+  const handleProcessoChange = (demandaId: string, numero: string) => {
+    // Optimistic update local
+    setDemandas((prev) =>
+      prev.map((d) =>
+        d.id === demandaId
+          ? { ...d, processos: d.processos?.length ? [{ ...d.processos[0], numero }] : [{ tipo: "", numero }] }
+          : d
+      )
+    );
+
+    const numericId = parseInt(demandaId, 10);
+    if (!isNaN(numericId)) {
+      updateDemandaMutation.mutate({ id: numericId, processoNumero: numero });
+    }
+
+    toast.success("Numero do processo atualizado!");
+  };
+
+  // Vincular demanda a um assistido existente (via autocomplete)
+  const handleAssistidoLink = (demandaId: string, assistidoId: number, nome: string) => {
+    setDemandas((prev) =>
+      prev.map((d) =>
+        d.id === demandaId ? { ...d, assistido: nome, assistidoId: assistidoId } : d
+      )
+    );
+    const numericId = parseInt(demandaId, 10);
+    if (!isNaN(numericId)) {
+      updateDemandaMutation.mutate({ id: numericId, assistidoId });
+    }
+    toast.success(`Assistido vinculado: ${nome}`);
+  };
+
+  // Vincular demanda a um processo existente (via autocomplete)
+  const handleProcessoLink = (demandaId: string, processoId: number, numero: string) => {
+    setDemandas((prev) =>
+      prev.map((d) =>
+        d.id === demandaId
+          ? { ...d, processos: [{ tipo: d.processos?.[0]?.tipo || "", numero }], processoId }
+          : d
+      )
+    );
+    const numericId = parseInt(demandaId, 10);
+    if (!isNaN(numericId)) {
+      updateDemandaMutation.mutate({ id: numericId, processoId });
+    }
+    toast.success(`Processo vinculado: ${numero}`);
+  };
+
+  // Funções de busca para InlineAutocomplete
+  const searchAssistidosFn = useCallback((query: string) => {
+    setAssistidoSearchQuery(query);
+    return assistidoSearchResults.map((a) => ({
+      id: a.id,
+      label: a.nome,
+      sublabel: a.cpf || a.statusPrisional || undefined,
+    }));
+  }, [assistidoSearchResults]);
+
+  const searchProcessosFn = useCallback((query: string) => {
+    setProcessoSearchQuery(query);
+    return processoSearchResults.map((p) => ({
+      id: p.id,
+      label: p.numeroAutos,
+      sublabel: [p.vara, p.area].filter(Boolean).join(" - ") || undefined,
+    }));
+  }, [processoSearchResults]);
+
+  const handlePrazoChange = (demandaId: string, newPrazo: string) => {
+    // newPrazo chega como YYYY-MM-DD do date picker
+    setDemandas((prev) =>
+      prev.map((d) =>
+        d.id === demandaId
+          ? { ...d, prazo: new Date(newPrazo + "T12:00:00").toLocaleDateString("pt-BR") }
+          : d
+      )
+    );
+
+    const numericId = parseInt(demandaId, 10);
+    if (!isNaN(numericId)) {
+      updateDemandaMutation.mutate({
+        id: numericId,
+        prazo: newPrazo,
+      });
+    }
+
+    toast.success("Prazo atualizado!");
+  };
+
+  const ATRIBUICAO_LABEL_TO_ENUM: Record<string, string> = {
+    "Tribunal do Júri": "JURI_CAMACARI",
+    "Grupo Especial do Júri": "GRUPO_JURI",
+    "Violência Doméstica": "VVD_CAMACARI",
+    "Execução Penal": "EXECUCAO_PENAL",
+    "Substituição Criminal": "SUBSTITUICAO",
+    "Curadoria Especial": "SUBSTITUICAO_CIVEL",
+  };
+
+  const handleAtribuicaoChange = (demandaId: string, newAtribuicao: string) => {
+    setDemandas((prev) =>
+      prev.map((d) =>
+        d.id === demandaId ? { ...d, atribuicao: newAtribuicao } : d
+      )
+    );
+
+    const numericId = parseInt(demandaId, 10);
+    const enumValue = ATRIBUICAO_LABEL_TO_ENUM[newAtribuicao];
+    if (!isNaN(numericId) && enumValue) {
+      updateDemandaMutation.mutate({
+        id: numericId,
+        atribuicao: enumValue as any,
+      });
+    }
+
+    toast.success(`Atribuição alterada para "${newAtribuicao}"!`);
+  };
+
   const handleSaveNewDemanda = (demandaData: DemandaFormData) => {
     // Por enquanto usar dados locais (mock) até o modal estar preparado
     // para selecionar assistidos e processos do banco de dados
@@ -903,6 +1054,16 @@ export default function Demandas() {
         deleteDemandaMutation.mutate({ id: numericId });
       }
     }
+    setSelectedIds(new Set());
+    setIsSelectMode(false);
+  };
+
+  const handleBatchStatusChange = (newStatus: string) => {
+    if (selectedIds.size === 0) return;
+    for (const id of selectedIds) {
+      handleStatusChange(id, newStatus);
+    }
+    toast.success(`Status de ${selectedIds.size} demanda(s) atualizado para "${DEMANDA_STATUS[newStatus as keyof typeof DEMANDA_STATUS]?.label || newStatus}"`);
     setSelectedIds(new Set());
     setIsSelectMode(false);
   };
@@ -1122,52 +1283,80 @@ export default function Demandas() {
     });
   }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicao, selectedEstadoPrisional, selectedTipoAto, selectedStatusGroup, showArchived]);
 
-  // Ordenar demandas
-  const demandasOrdenadas = useMemo(() => {
-    const sorted = [...demandasFiltradas];
-    
-    if (sortBy === "prazo") {
-      return sorted.sort((a, b) => {
+  // Handler para click no header de coluna (multi-column sort)
+  const handleColumnSort = useCallback((columnId: string) => {
+    setSortStack(prev => {
+      const existingIdx = prev.findIndex(s => s.column === columnId);
+      if (existingIdx === -1) {
+        // Nova coluna: adiciona no topo (prioridade mais alta)
+        return [{ column: columnId, direction: "asc" as const }, ...prev];
+      }
+      const existing = prev[existingIdx];
+      if (existing.direction === "asc") {
+        // Segunda vez: inverter para desc
+        const next = [...prev];
+        next[existingIdx] = { ...existing, direction: "desc" as const };
+        return next;
+      }
+      // Terceira vez: remover o critério
+      return prev.filter((_, i) => i !== existingIdx);
+    });
+  }, []);
+
+  // Função de comparação por coluna
+  const STATUS_GROUP_ORDER = ["urgente", "preparacao", "delegacao", "monitoramento", "fila", "diligencias", "concluida"];
+
+  function compareByColumn(a: any, b: any, column: string): number {
+    switch (column) {
+      case "assistido":
+        return (a.assistido || "").localeCompare(b.assistido || "");
+      case "processo":
+        return (a.processos?.[0]?.numero || "").localeCompare(b.processos?.[0]?.numero || "");
+      case "ato": {
+        const pa = ATO_PRIORITY[a.ato] ?? 50;
+        const pb = ATO_PRIORITY[b.ato] ?? 50;
+        return pa - pb;
+      }
+      case "prazo": {
+        if (!a.prazo && !b.prazo) return 0;
         if (!a.prazo) return 1;
         if (!b.prazo) return -1;
         return a.prazo.localeCompare(b.prazo);
-      });
-    } else if (sortBy === "assistido") {
-      return sorted.sort((a, b) => a.assistido.localeCompare(b.assistido));
-    } else if (sortBy === "data") {
-      return sorted.sort((a, b) => {
-        if (!a.data) return 1;
-        if (!b.data) return -1;
-        return b.data.localeCompare(a.data);
-      });
-    } else if (sortBy === "recentes") {
-      // Ordenar por data de importação (recentes primeiro)
-      // Quando timestamps são iguais, usa o ID para manter a ordem da lista importada
-      return sorted.sort((a, b) => {
+      }
+      case "status": {
+        const ga = STATUS_GROUP_ORDER.indexOf(getStatusConfig(a.status).group);
+        const gb = STATUS_GROUP_ORDER.indexOf(getStatusConfig(b.status).group);
+        return ga - gb;
+      }
+      case "atribuicao":
+        return (a.atribuicao || "").localeCompare(b.atribuicao || "");
+      case "recentes": {
         const dateA = a.dataInclusao || a.data || "";
         const dateB = b.dataInclusao || b.data || "";
         const dateCompare = dateB.localeCompare(dateA);
         if (dateCompare !== 0) return dateCompare;
-        // Se timestamps iguais, ordenar por ID (maior ID = mais recente/última posição na lista)
         const idA = parseInt(a.id) || 0;
         const idB = parseInt(b.id) || 0;
         return idB - idA;
-      });
-    } else if (sortBy === "status") {
-      return sorted.sort((a, b) => {
-        const statusA = getStatusConfig(a.status);
-        const statusB = getStatusConfig(b.status);
-        const groupOrder = ["urgente", "preparacao", "delegacao", "monitoramento", "fila", "diligencias", "concluida"];
-        const indexA = groupOrder.indexOf(statusA.group);
-        const indexB = groupOrder.indexOf(statusB.group);
-        return indexA - indexB;
-      });
-    } else if (sortBy === "ato") {
-      return sorted.sort((a, b) => a.ato.localeCompare(b.ato));
+      }
+      default:
+        return 0;
     }
-    
-    return sorted;
-  }, [demandasFiltradas, sortBy]);
+  }
+
+  // Ordenar demandas (multi-coluna)
+  const demandasOrdenadas = useMemo(() => {
+    if (sortStack.length === 0) return demandasFiltradas;
+
+    const sorted = [...demandasFiltradas];
+    return sorted.sort((a, b) => {
+      for (const criterion of sortStack) {
+        const cmp = compareByColumn(a, b, criterion.column);
+        if (cmp !== 0) return criterion.direction === "asc" ? cmp : -cmp;
+      }
+      return 0;
+    });
+  }, [demandasFiltradas, sortStack]);
 
   // Estatísticas
   const statsData = useMemo(() => {
@@ -1199,32 +1388,32 @@ export default function Demandas() {
 
     return [
       {
-        label: "Em Preparação",
-        value: emPreparacao.toString(),
+        title: "Em Preparação",
+        value: emPreparacao,
+        subtitle: `${demandasAtivas.length > 0 ? Math.round((emPreparacao / demandasAtivas.length) * 100) : 0}% do total`,
         icon: FileEdit,
-        change: `${Math.round((emPreparacao / demandasAtivas.length) * 100)}%`,
-        changeLabel: "do total",
+        gradient: "emerald" as const,
       },
       {
-        label: "Prazos Críticos",
-        value: prazosCriticos.toString(),
+        title: "Prazos Críticos",
+        value: prazosCriticos,
+        subtitle: `${demandasAtivas.length > 0 ? Math.round((prazosCriticos / demandasAtivas.length) * 100) : 0}% do total`,
         icon: AlertTriangle,
-        change: `${Math.round((prazosCriticos / demandasAtivas.length) * 100)}%`,
-        changeLabel: "do total",
+        gradient: (prazosCriticos > 0 ? "rose" : "zinc") as "rose" | "zinc",
       },
       {
-        label: "Rus Presos",
+        title: "Réus Presos",
         value: `${percentualPresos}%`,
+        subtitle: `${reusPresos} de ${totalComEstadoPrisional} réus`,
         icon: Lock,
-        change: `${reusPresos}`,
-        changeLabel: `de ${totalComEstadoPrisional} réus`,
+        gradient: (reusPresos > 0 ? "amber" : "zinc") as "amber" | "zinc",
       },
       {
-        label: "Cautelares Diversas",
-        value: comCautelar.toString(),
+        title: "Cautelares Diversas",
+        value: comCautelar,
+        subtitle: `${totalComEstadoPrisional > 0 ? Math.round((comCautelar / totalComEstadoPrisional) * 100) : 0}% do total`,
         icon: ShieldCheck,
-        change: `${Math.round((comCautelar / totalComEstadoPrisional) * 100) || 0}%`,
-        changeLabel: "do total",
+        gradient: "zinc" as const,
       },
     ];
   }, [demandas]);
@@ -1285,41 +1474,20 @@ export default function Demandas() {
 
       {/* Conteúdo Principal */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Cards - 2 colunas em mobile */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {statsData.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={index}
-                className="group relative p-3 md:p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03] dark:hover:shadow-emerald-500/[0.05]"
-              >
-                {/* Linha superior sutil no hover */}
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-                
-                <div className="flex items-start justify-between gap-2 md:gap-3">
-                  <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                    <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 truncate uppercase tracking-wide group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors duration-300">
-                      {stat.label}
-                    </p>
-                    <p className="text-lg md:text-xl font-semibold text-zinc-700 dark:text-zinc-300">
-                      {stat.value}
-                    </p>
-                    <p className="text-[9px] md:text-[10px] text-zinc-400 dark:text-zinc-500">
-                      <span className="text-emerald-600 dark:text-emerald-500 font-medium">
-                        {stat.change}
-                      </span>{" "}
-                      {stat.changeLabel}
-                    </p>
-                  </div>
-                  <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
-                    <Icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {/* Stats Cards - KPICardPremium (mesmo componente do Dashboard) */}
+        <KPIGrid columns={4}>
+          {statsData.map((stat, index) => (
+            <KPICardPremium
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              subtitle={stat.subtitle}
+              icon={stat.icon}
+              gradient={stat.gradient}
+              size="sm"
+            />
+          ))}
+        </KPIGrid>
 
         {/* Filtros e Infográficos */}
         <div className="space-y-4">
@@ -1367,23 +1535,40 @@ export default function Demandas() {
                   )}
                 </div>
                 <div className="flex gap-1 overflow-x-auto scrollbar-none">
-                  {["status", "prazo", "assistido", "ato", "recentes"].map((sort) => (
-                    <button
-                      key={sort}
-                      onClick={() => setSortBy(sort)}
-                      className={`px-2 md:px-2.5 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-semibold transition-all whitespace-nowrap ${
-                        sortBy === sort
-                          ? "bg-emerald-600 text-white shadow-sm"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                      }`}
-                    >
-                      {sort === "recentes" && <Sparkles className="w-2.5 md:w-3 h-2.5 md:h-3 inline mr-0.5 md:mr-1" />}
-                      {sort.charAt(0).toUpperCase() + sort.slice(1)}
-                    </button>
-                  ))}
+                  {["status", "prazo", "assistido", "ato", "recentes"].map((sort) => {
+                    const isActive = sortStack.length === 1 && sortStack[0].column === sort;
+                    return (
+                      <button
+                        key={sort}
+                        onClick={() => setSortStack([{ column: sort, direction: "asc" }])}
+                        className={`px-2 md:px-2.5 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-semibold transition-all whitespace-nowrap ${
+                          isActive
+                            ? "bg-emerald-600 text-white shadow-sm"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                        }`}
+                      >
+                        {sort === "recentes" && <Sparkles className="w-2.5 md:w-3 h-2.5 md:h-3 inline mr-0.5 md:mr-1" />}
+                        {sort.charAt(0).toUpperCase() + sort.slice(1)}
+                      </button>
+                    );
+                  })}
                 </div>
                 {/* Toggle de Visualização: Grid / Lista / Cards - Mobile e Desktop */}
                 <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 gap-0.5">
+                  <button
+                    onClick={() => {
+                      setViewMode("compact");
+                      localStorage.setItem("defender_demandas_view_mode", "compact");
+                    }}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === "compact"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    }`}
+                    title="Planilha Editável"
+                  >
+                    <Rows3 className="w-3.5 h-3.5" />
+                  </button>
                   <button
                     onClick={() => {
                       setViewMode("grid");
@@ -1394,7 +1579,7 @@ export default function Demandas() {
                         ? "bg-emerald-600 text-white shadow-sm"
                         : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                     }`}
-                    title="Grid Premium (Padrão)"
+                    title="Grid Premium"
                   >
                     <LayoutGrid className="w-3.5 h-3.5" />
                   </button>
@@ -1425,20 +1610,6 @@ export default function Demandas() {
                     title="Cards Horizontais"
                   >
                     <LayoutList className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewMode("compact");
-                      localStorage.setItem("defender_demandas_view_mode", "compact");
-                    }}
-                    className={`p-1.5 rounded-md transition-all ${
-                      viewMode === "compact"
-                        ? "bg-emerald-600 text-white shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                    }`}
-                    title="Tabela Compacta (para comparação)"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <button
@@ -1479,7 +1650,7 @@ export default function Demandas() {
               </div>
             )}
 
-            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : viewMode === "compact" ? "p-2" : "p-4"} max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900`}>
+            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : viewMode === "compact" ? "p-0" : "p-4"} max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900`}>
               {viewMode === "table" ? (
                 /* ========== MODO PLANILHA (PADRÃO) ========== */
                 <DemandaTableView
@@ -1548,82 +1719,37 @@ export default function Demandas() {
                   )}
                 </>
               ) : viewMode === "compact" ? (
-                /* ========== MODO COMPACTO - TABELA PARA COMPARAÇÃO ========== */
-                <div className="overflow-x-auto">
-                  <div className="mb-3 px-2 py-2 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
-                    <p className="text-xs text-purple-700 dark:text-purple-300">
-                      <Eye className="w-3 h-3 inline mr-1" />
-                      <strong>Modo Comparação:</strong> Visualização compacta para conferir com planilhas/PJe/SEEU. Copie linhas ou compare dados facilmente.
-                    </p>
-                  </div>
-                  {demandasOrdenadas.length === 0 ? (
-                    <div className="text-center py-16">
-                      <p className="text-sm text-zinc-500">Nenhuma demanda encontrada</p>
-                    </div>
-                  ) : (
-                    <table className="w-full text-[11px] border-collapse">
-                      <thead className="bg-zinc-100 dark:bg-zinc-800 sticky top-0">
-                        <tr>
-                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">#</th>
-                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Assistido</th>
-                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Processo</th>
-                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Ato</th>
-                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Prazo</th>
-                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Status</th>
-                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Atribuição</th>
-                          <th className="px-2 py-1.5 text-left font-semibold text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">Providências</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {demandasOrdenadas.map((demanda, index) => {
-                          const statusConfig = getStatusConfig(demanda.status);
-                          const atribuicaoColor = ATRIBUICAO_BORDER_COLORS[demanda.atribuicao] || "#71717a";
-                          const AtribuicaoIconComp = atribuicaoIcons[demanda.atribuicao] || Scale;
-                          return (
-                            <tr
-                              key={demanda.id}
-                              className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer border-b border-zinc-100 dark:border-zinc-800"
-                              onClick={() => {
-                                // Copiar linha para clipboard
-                                const linha = `${demanda.assistido}\t${demanda.processos?.[0]?.numero || '-'}\t${demanda.ato}\t${demanda.prazo || '-'}\t${demanda.substatus || demanda.status}\t${demanda.atribuicao}`;
-                                copyToClipboard(linha, "Linha copiada!");
-                              }}
-                              title="Clique para copiar linha"
-                            >
-                              {/* Indicador de cor da atribuição */}
-                              <td className="px-2 py-1.5 text-zinc-400 font-mono relative">
-                                <span
-                                  className="absolute left-0 inset-y-0 w-0.5"
-                                  style={{ backgroundColor: atribuicaoColor }}
-                                />
-                                {index + 1}
-                              </td>
-                              <td className="px-2 py-1.5 font-medium text-zinc-800 dark:text-zinc-200 max-w-[150px] truncate">{demanda.assistido}</td>
-                              <td className="px-2 py-1.5 font-mono text-zinc-600 dark:text-zinc-400 max-w-[180px] truncate">{demanda.processos?.[0]?.numero || '-'}</td>
-                              <td className="px-2 py-1.5">
-                                <AtoWithIcon ato={demanda.ato} />
-                              </td>
-                              <td className="px-2 py-1.5 text-zinc-600 dark:text-zinc-400">{demanda.prazo ? new Date(demanda.prazo + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
-                              <td className="px-2 py-1.5">
-                                <StatusWithIcon status={demanda.substatus || demanda.status} statusConfig={statusConfig} />
-                              </td>
-                              <td className="px-2 py-1.5">
-                                <div
-                                  className="inline-flex items-center gap-1 text-[10px] font-medium"
-                                  style={{ color: atribuicaoColor }}
-                                >
-                                  <AtribuicaoIconComp className="w-3 h-3" />
-                                  <span className="truncate max-w-[100px]">{demanda.atribuicao}</span>
-                                </div>
-                              </td>
-                              <td className="px-2 py-1.5 text-zinc-500 dark:text-zinc-500 max-w-[200px] truncate">{demanda.providencias || '-'}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
+                /* ========== MODO COMPACTO - PLANILHA EDITÁVEL ========== */
+                <DemandaCompactView
+                  demandas={demandasOrdenadas}
+                  atribuicaoIcons={atribuicaoIcons}
+                  atribuicaoColors={ATRIBUICAO_BORDER_COLORS}
+                  onStatusChange={handleStatusChange}
+                  onAtoChange={handleAtoChange}
+                  onProvidenciasChange={handleProvidenciasChange}
+                  onPrazoChange={handlePrazoChange}
+                  onAtribuicaoChange={handleAtribuicaoChange}
+                  onAssistidoChange={handleAssistidoChange}
+                  onProcessoChange={handleProcessoChange}
+                  onAssistidoLink={handleAssistidoLink}
+                  onProcessoLink={handleProcessoLink}
+                  searchAssistidosFn={searchAssistidosFn}
+                  searchProcessosFn={searchProcessosFn}
+                  isLoadingAssistidoSearch={loadingAssistidoSearch}
+                  isLoadingProcessoSearch={loadingProcessoSearch}
+                  onEdit={handleEditDemanda}
+                  onArchive={handleArchiveDemanda}
+                  onUnarchive={handleUnarchiveDemanda}
+                  onDelete={handleDeleteDemanda}
+                  copyToClipboard={copyToClipboard}
+                  isSelectMode={isSelectMode}
+                  selectedIds={selectedIds}
+                  onToggleSelect={handleToggleSelect}
+                  selectedAtribuicao={selectedAtribuicao}
+                  onAtribuicaoFilter={setSelectedAtribuicao}
+                  sortStack={sortStack}
+                  onColumnSort={handleColumnSort}
+                />
               ) : (
                 /* ========== MODO GRID PREMIUM ========== */
                 <>
@@ -1685,15 +1811,45 @@ export default function Demandas() {
                   </span>
                   <div className="ml-auto flex items-center gap-2">
                     {selectedIds.size > 0 && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="h-7 text-xs gap-1.5"
-                        onClick={handleDeleteSelected}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        Deletar ({selectedIds.size})
-                      </Button>
+                      <>
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleBatchStatusChange(e.target.value);
+                              e.target.value = "";
+                            }
+                          }}
+                          className="h-7 text-[11px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
+                        >
+                          <option value="" disabled>Alterar status...</option>
+                          <optgroup label="Preparação">
+                            <option value="atender">Atender</option>
+                            <option value="analisar">Analisar</option>
+                            <option value="elaborar">Elaborar</option>
+                            <option value="revisar">Revisar</option>
+                          </optgroup>
+                          <optgroup label="Fila / Monitorar">
+                            <option value="fila">Fila</option>
+                            <option value="monitorar">Monitorar</option>
+                          </optgroup>
+                          <optgroup label="Concluída">
+                            <option value="protocolado">Protocolado</option>
+                            <option value="ciencia">Ciência</option>
+                            <option value="resolvido">Resolvido</option>
+                            <option value="sem_atuacao">Sem atuação</option>
+                          </optgroup>
+                        </select>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="h-7 text-xs gap-1.5"
+                          onClick={handleDeleteSelected}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Deletar ({selectedIds.size})
+                        </Button>
+                      </>
                     )}
                     <Button
                       variant="ghost"

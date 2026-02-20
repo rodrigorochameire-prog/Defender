@@ -2,43 +2,97 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { demandas, delegacoesHistorico, users, notifications } from "@/lib/db/schema";
-import { eq, and, desc, isNull } from "drizzle-orm";
+import { eq, and, desc, isNull, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
-// Schema de validação para criar delegação
-const criarDelegacaoSchema = z.object({
+// ==========================================
+// TIPOS DE PEDIDO DE TRABALHO
+// ==========================================
+export const TIPOS_PEDIDO = {
+  minuta: { label: "Minuta", icon: "FileEdit", workflow: ["pendente", "aceita", "em_andamento", "aguardando_revisao", "revisado", "protocolado"] },
+  atendimento: { label: "Atendimento", icon: "UserCheck", workflow: ["pendente", "aceita", "em_andamento", "concluida"] },
+  diligencia: { label: "Diligencia", icon: "Search", workflow: ["pendente", "aceita", "em_andamento", "concluida"] },
+  analise: { label: "Analise", icon: "BookOpen", workflow: ["pendente", "aceita", "em_andamento", "concluida"] },
+  outro: { label: "Outro", icon: "MoreHorizontal", workflow: ["pendente", "aceita", "em_andamento", "concluida"] },
+  delegacao_generica: { label: "Tarefa", icon: "Send", workflow: ["pendente", "aceita", "em_andamento", "concluida", "devolvida"] },
+} as const;
+
+export type TipoPedido = keyof typeof TIPOS_PEDIDO;
+
+// Todos os status possíveis
+export const ALL_STATUS = [
+  "pendente", "aceita", "em_andamento",
+  "aguardando_revisao", "revisado", "protocolado",
+  "concluida", "devolvida", "cancelada",
+] as const;
+
+export type StatusPedido = typeof ALL_STATUS[number];
+
+// Status que indicam "ativo" (não finalizado)
+export const STATUS_ATIVOS = ["pendente", "aceita", "em_andamento", "aguardando_revisao"] as const;
+
+// Status que indicam "finalizado"
+export const STATUS_FINALIZADOS = ["revisado", "protocolado", "concluida", "devolvida", "cancelada"] as const;
+
+// Schema de validação para criar pedido de trabalho
+const criarPedidoSchema = z.object({
+  tipo: z.enum(["minuta", "atendimento", "diligencia", "analise", "outro", "delegacao_generica"]).default("delegacao_generica"),
   demandaId: z.number().optional(),
   destinatarioId: z.number(),
   instrucoes: z.string().min(1, "Instruções são obrigatórias"),
+  orientacoes: z.string().optional(),
   prazoSugerido: z.string().optional(),
   prioridade: z.enum(["NORMAL", "URGENTE", "BAIXA"]).default("NORMAL"),
   assistidoId: z.number().optional(),
   processoId: z.number().optional(),
 });
 
-// Schema para atualizar status da delegação
+// Schema para atualizar status
 const atualizarStatusSchema = z.object({
   delegacaoId: z.number(),
-  status: z.enum(["aceita", "em_andamento", "concluida", "devolvida", "cancelada"]),
+  status: z.enum(["aceita", "em_andamento", "aguardando_revisao", "revisado", "protocolado", "concluida", "devolvida", "cancelada"]),
   observacoes: z.string().optional(),
 });
 
+// Labels amigáveis para notificações
+const STATUS_LABELS: Record<string, string> = {
+  pendente: "Pendente",
+  aceita: "Aceita",
+  em_andamento: "Em andamento",
+  aguardando_revisao: "Aguardando revisão",
+  revisado: "Revisado",
+  protocolado: "Protocolado",
+  concluida: "Concluída",
+  devolvida: "Devolvida",
+  cancelada: "Cancelada",
+};
+
 export const delegacaoRouter = router({
-  // Listar delegações recebidas pelo usuário atual
+  // Listar delegações/pedidos recebidos pelo usuário atual
   minhasDelegacoes: protectedProcedure
     .input(z.object({
-      status: z.enum(["pendente", "aceita", "em_andamento", "concluida", "devolvida", "todas"]).optional(),
+      status: z.enum(["pendente", "aceita", "em_andamento", "aguardando_revisao", "concluida", "devolvida", "todas", "ativos"]).optional(),
+      tipo: z.enum(["minuta", "atendimento", "diligencia", "analise", "outro", "delegacao_generica", "todos"]).optional(),
     }).optional())
     .query(async ({ ctx, input }) => {
       const userId = ctx.user.id;
       const status = input?.status;
+      const tipo = input?.tipo;
 
       const whereConditions = [
         eq(delegacoesHistorico.delegadoParaId, userId),
       ];
 
       if (status && status !== "todas") {
-        whereConditions.push(eq(delegacoesHistorico.status, status));
+        if (status === "ativos") {
+          whereConditions.push(inArray(delegacoesHistorico.status, [...STATUS_ATIVOS]));
+        } else {
+          whereConditions.push(eq(delegacoesHistorico.status, status));
+        }
+      }
+
+      if (tipo && tipo !== "todos") {
+        whereConditions.push(eq(delegacoesHistorico.tipo, tipo));
       }
 
       const delegacoes = await db.query.delegacoesHistorico.findMany({
@@ -50,6 +104,8 @@ export const delegacaoRouter = router({
               processo: true,
             },
           },
+          assistido: true,
+          processo: true,
           delegadoDe: true,
         },
         orderBy: [desc(delegacoesHistorico.dataDelegacao)],
@@ -58,21 +114,31 @@ export const delegacaoRouter = router({
       return delegacoes;
     }),
 
-  // Listar delegações enviadas pelo usuário atual
+  // Listar delegações/pedidos enviados pelo usuário atual
   delegacoesEnviadas: protectedProcedure
     .input(z.object({
-      status: z.enum(["pendente", "aceita", "em_andamento", "concluida", "devolvida", "todas"]).optional(),
+      status: z.enum(["pendente", "aceita", "em_andamento", "aguardando_revisao", "concluida", "devolvida", "todas", "ativos"]).optional(),
+      tipo: z.enum(["minuta", "atendimento", "diligencia", "analise", "outro", "delegacao_generica", "todos"]).optional(),
     }).optional())
     .query(async ({ ctx, input }) => {
       const userId = ctx.user.id;
       const status = input?.status;
+      const tipo = input?.tipo;
 
       const whereConditions = [
         eq(delegacoesHistorico.delegadoDeId, userId),
       ];
 
       if (status && status !== "todas") {
-        whereConditions.push(eq(delegacoesHistorico.status, status));
+        if (status === "ativos") {
+          whereConditions.push(inArray(delegacoesHistorico.status, [...STATUS_ATIVOS]));
+        } else {
+          whereConditions.push(eq(delegacoesHistorico.status, status));
+        }
+      }
+
+      if (tipo && tipo !== "todos") {
+        whereConditions.push(eq(delegacoesHistorico.tipo, tipo));
       }
 
       const delegacoes = await db.query.delegacoesHistorico.findMany({
@@ -84,6 +150,8 @@ export const delegacaoRouter = router({
               processo: true,
             },
           },
+          assistido: true,
+          processo: true,
           delegadoPara: true,
         },
         orderBy: [desc(delegacoesHistorico.dataDelegacao)],
@@ -92,9 +160,9 @@ export const delegacaoRouter = router({
       return delegacoes;
     }),
 
-  // Criar nova delegação
+  // Criar novo pedido de trabalho / delegação
   criar: protectedProcedure
-    .input(criarDelegacaoSchema)
+    .input(criarPedidoSchema)
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id;
       const userRole = ctx.user.role;
@@ -103,7 +171,7 @@ export const delegacaoRouter = router({
       if (!["admin", "defensor"].includes(userRole)) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Apenas defensores podem delegar tarefas",
+          message: "Apenas defensores podem criar pedidos de trabalho",
         });
       }
 
@@ -143,12 +211,17 @@ export const delegacaoRouter = router({
       // Criar registro no histórico
       const [delegacao] = await db.insert(delegacoesHistorico)
         .values({
-          demandaId: input.demandaId || 0, // TODO: Criar demanda se não existir
+          tipo: input.tipo,
+          demandaId: input.demandaId || null,
           delegadoDeId: userId,
           delegadoParaId: input.destinatarioId,
           instrucoes: input.instrucoes,
+          orientacoes: input.orientacoes || null,
           prazoSugerido: input.prazoSugerido ? new Date(input.prazoSugerido).toISOString().split("T")[0] : null,
+          prioridade: input.prioridade,
           status: "pendente",
+          assistidoId: input.assistidoId || null,
+          processoId: input.processoId || null,
           workspaceId: ctx.user.workspaceId || null,
         })
         .returning();
@@ -159,12 +232,15 @@ export const delegacaoRouter = router({
         columns: { name: true },
       });
 
+      // Label do tipo para notificação
+      const tipoLabel = TIPOS_PEDIDO[input.tipo]?.label || "Tarefa";
+
       // Criar notificação para o destinatário
       await db.insert(notifications).values({
         userId: input.destinatarioId,
-        title: "Nova tarefa delegada",
-        message: `${remetente?.name || "Um defensor"} delegou uma nova tarefa para você.`,
-        type: "info",
+        title: `Novo pedido: ${tipoLabel}`,
+        message: `${remetente?.name || "Um defensor"} enviou um pedido de ${tipoLabel.toLowerCase()} para você.`,
+        type: input.prioridade === "URGENTE" ? "warning" : "info",
         actionUrl: "/admin/delegacoes",
         isRead: false,
       });
@@ -172,7 +248,7 @@ export const delegacaoRouter = router({
       return delegacao;
     }),
 
-  // Atualizar status da delegação
+  // Atualizar status da delegação/pedido
   atualizarStatus: protectedProcedure
     .input(atualizarStatusSchema)
     .mutation(async ({ ctx, input }) => {
@@ -186,7 +262,7 @@ export const delegacaoRouter = router({
       if (!delegacao) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Delegação não encontrada",
+          message: "Pedido não encontrado",
         });
       }
 
@@ -194,7 +270,7 @@ export const delegacaoRouter = router({
       if (delegacao.delegadoParaId !== userId && delegacao.delegadoDeId !== userId) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Você não tem permissão para atualizar esta delegação",
+          message: "Você não tem permissão para atualizar este pedido",
         });
       }
 
@@ -205,7 +281,7 @@ export const delegacaoRouter = router({
 
       if (input.status === "aceita") {
         updateData.dataAceitacao = new Date();
-      } else if (input.status === "concluida") {
+      } else if (["concluida", "protocolado", "revisado"].includes(input.status)) {
         updateData.dataConclusao = new Date();
       }
 
@@ -218,7 +294,7 @@ export const delegacaoRouter = router({
         .where(eq(delegacoesHistorico.id, input.delegacaoId))
         .returning();
 
-      // Atualizar demanda associada
+      // Atualizar demanda associada (se houver)
       if (delegacao.demandaId) {
         await db.update(demandas)
           .set({
@@ -228,32 +304,70 @@ export const delegacaoRouter = router({
           .where(eq(demandas.id, delegacao.demandaId));
       }
 
-      // Criar notificação para o remetente quando a delegação é concluída ou devolvida
-      if (["concluida", "devolvida"].includes(input.status)) {
-        const executor = await db.query.users.findFirst({
-          where: eq(users.id, userId),
-          columns: { name: true },
-        });
+      // Notificações baseadas no novo status
+      const executor = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { name: true },
+      });
+      const executorName = executor?.name || "Um membro da equipe";
+      const tipoLabel = delegacao.tipo ? (TIPOS_PEDIDO[delegacao.tipo as TipoPedido]?.label || "Tarefa") : "Tarefa";
 
-        const statusLabel = input.status === "concluida" ? "concluiu" : "devolveu";
-        const statusType = input.status === "concluida" ? "success" : "warning";
+      // Notificar remetente em transições importantes
+      if (["aguardando_revisao", "concluida", "devolvida", "protocolado"].includes(input.status)) {
+        const messages: Record<string, { title: string; message: string; type: string }> = {
+          aguardando_revisao: {
+            title: `${tipoLabel} pronta para revisão`,
+            message: `${executorName} finalizou a ${tipoLabel.toLowerCase()} e aguarda sua revisão.`,
+            type: "info",
+          },
+          concluida: {
+            title: `${tipoLabel} concluída`,
+            message: `${executorName} concluiu o pedido de ${tipoLabel.toLowerCase()}.`,
+            type: "success",
+          },
+          devolvida: {
+            title: `${tipoLabel} devolvida`,
+            message: `${executorName} devolveu o pedido de ${tipoLabel.toLowerCase()}.`,
+            type: "warning",
+          },
+          protocolado: {
+            title: `${tipoLabel} protocolada`,
+            message: `${executorName} marcou a ${tipoLabel.toLowerCase()} como protocolada.`,
+            type: "success",
+          },
+        };
 
+        const msg = messages[input.status];
+        if (msg) {
+          await db.insert(notifications).values({
+            userId: delegacao.delegadoDeId,
+            title: msg.title,
+            message: msg.message,
+            type: msg.type,
+            actionUrl: "/admin/delegacoes",
+            isRead: false,
+          });
+        }
+      }
+
+      // Notificar destinatário quando defensor revisa/aprova
+      if (["revisado"].includes(input.status) && userId === delegacao.delegadoDeId) {
         await db.insert(notifications).values({
-          userId: delegacao.delegadoDeId,
-          title: input.status === "concluida" ? "Tarefa concluída" : "Tarefa devolvida",
-          message: `${executor?.name || "Um membro da equipe"} ${statusLabel} a tarefa delegada.`,
-          type: statusType,
+          userId: delegacao.delegadoParaId,
+          title: `${tipoLabel} revisada e aprovada`,
+          message: `${executorName} revisou e aprovou sua ${tipoLabel.toLowerCase()}.`,
+          type: "success",
           actionUrl: "/admin/delegacoes",
           isRead: false,
         });
       }
 
-      // Notificar o executor quando a delegação é aceita
+      // Notificar executor quando delegação é aceita (por outro)
       if (input.status === "aceita" && userId !== delegacao.delegadoParaId) {
         await db.insert(notifications).values({
           userId: delegacao.delegadoParaId,
-          title: "Delegação aceita",
-          message: "Sua delegação foi aceita. Acompanhe o andamento na página de delegações.",
+          title: "Pedido aceito",
+          message: "Seu pedido foi aceito. Acompanhe o andamento na página de delegações.",
           type: "info",
           actionUrl: "/admin/delegacoes",
           isRead: false,
@@ -268,11 +382,10 @@ export const delegacaoRouter = router({
     .query(async ({ ctx }) => {
       const userId = ctx.user.id;
 
-      // Buscar servidores e estagiários do mesmo workspace
+      // Buscar servidores e estagiários
       const membros = await db.query.users.findMany({
         where: and(
           isNull(users.deletedAt),
-          // Filtrar por role servidor ou estagiário
         ),
         columns: {
           id: true,
@@ -284,8 +397,8 @@ export const delegacaoRouter = router({
         },
       });
 
-      // Filtrar apenas servidores e estagiários
-      return membros.filter(m => 
+      // Filtrar apenas servidores e estagiários (excluindo o próprio usuário)
+      return membros.filter(m =>
         ["servidor", "estagiario"].includes(m.role) && m.id !== userId
       );
     }),
@@ -303,8 +416,8 @@ export const delegacaoRouter = router({
         });
 
         const pendentes = recebidas.filter(d => d.status === "pendente").length;
-        const emAndamento = recebidas.filter(d => ["aceita", "em_andamento"].includes(d.status)).length;
-        const concluidas = recebidas.filter(d => d.status === "concluida").length;
+        const emAndamento = recebidas.filter(d => ["aceita", "em_andamento", "aguardando_revisao"].includes(d.status)).length;
+        const concluidas = recebidas.filter(d => ["concluida", "revisado", "protocolado"].includes(d.status)).length;
 
         return { pendentes, emAndamento, concluidas, total: recebidas.length };
       } else {
@@ -315,9 +428,10 @@ export const delegacaoRouter = router({
 
         const pendentes = enviadas.filter(d => d.status === "pendente").length;
         const emAndamento = enviadas.filter(d => ["aceita", "em_andamento"].includes(d.status)).length;
-        const concluidas = enviadas.filter(d => d.status === "concluida").length;
+        const aguardandoRevisao = enviadas.filter(d => d.status === "aguardando_revisao").length;
+        const concluidas = enviadas.filter(d => ["concluida", "revisado", "protocolado"].includes(d.status)).length;
 
-        return { pendentes, emAndamento, concluidas, total: enviadas.length };
+        return { pendentes, emAndamento, aguardandoRevisao, concluidas, total: enviadas.length };
       }
     }),
 });

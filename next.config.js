@@ -20,6 +20,11 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Manter mais páginas em memória no dev (menos recompilações, mais estável)
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000,   // 60s (default 15s)
+    pagesBufferLength: 5,         // 5 páginas (default 2)
+  },
 };
 
 module.exports = nextConfig;

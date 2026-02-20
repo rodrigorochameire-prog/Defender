@@ -725,8 +725,8 @@ export function RegistroRapidoAprimorado({
         assistidoNome={data.assistidoNome}
         processoId={data.processoId}
         processoNumero={data.processoNumero}
-        onDelegacaoSucesso={(delegacao) => {
-          toast.success(`Tarefa delegada para ${delegacao.destinatarioNome}!`);
+        onDelegacaoSucesso={() => {
+          toast.success("Tarefa delegada com sucesso!");
           handleClearAssistido();
           setData(prev => ({ ...prev, descricao: "" }));
         }}
