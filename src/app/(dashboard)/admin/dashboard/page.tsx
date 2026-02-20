@@ -686,12 +686,18 @@ export default function DashboardJuriPage() {
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
 
-        {/* ===== 1. REGISTRO RÁPIDO (Premium - single-column layout) ===== */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-          <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-emerald-500" />
-              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Registro Rápido</h3>
+        {/* ===== GRID: REGISTRO RÁPIDO + EQUIPE & COWORK ===== */}
+        <div className="grid grid-cols-1 lg:grid-cols-[5fr_3fr] gap-4 items-start">
+
+        {/* ===== 1. REGISTRO RÁPIDO ===== */}
+        <Card className="group/card relative bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-zinc-700">
+          <div className="px-4 py-3 border-b border-zinc-800/80 flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+            </div>
+            <h3 className="text-sm font-semibold text-zinc-100">Registro Rápido</h3>
+            <div className="ml-auto flex items-center gap-1.5">
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Atendimento</span>
             </div>
           </div>
           <div className="p-4 space-y-3">
@@ -705,15 +711,15 @@ export default function DashboardJuriPage() {
                     variant="outline"
                     role="combobox"
                     aria-expanded={assistidoSearchOpen}
-                    className="w-full h-10 justify-between text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-700 focus:ring-emerald-500/20 transition-all duration-200"
+                    className="w-full h-9 justify-between text-sm bg-zinc-900 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600 text-zinc-100 focus:ring-emerald-500/20 transition-all duration-200"
                   >
                     {atendimentoRapido.assistidoId ? (
                       <span className="flex items-center gap-2 truncate">
-                        <User className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                        <span className="truncate">{atendimentoRapido.assistidoNome}</span>
+                        <User className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <span className="truncate text-zinc-100">{atendimentoRapido.assistidoNome}</span>
                       </span>
                     ) : (
-                      <span className="text-zinc-400 flex items-center gap-2">
+                      <span className="text-zinc-500 flex items-center gap-2">
                         <Search className="w-4 h-4" />
                         Buscar por nome, CPF ou vulgo...
                       </span>
@@ -791,25 +797,25 @@ export default function DashboardJuriPage() {
 
             {/* Card do Assistido Selecionado */}
             {assistidoSelecionado && (
-              <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
+              <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                 <Avatar className="h-7 w-7 flex-shrink-0">
                   <AvatarImage src={assistidoSelecionado.photoUrl || ""} />
-                  <AvatarFallback className="text-[9px] bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
+                  <AvatarFallback className="text-[9px] bg-emerald-900 text-emerald-300">
                     {assistidoSelecionado.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100 truncate">
+                  <p className="text-sm font-medium text-emerald-300 truncate">
                     {assistidoSelecionado.nome}
                   </p>
                   <div className="flex items-center gap-2 text-[10px] text-zinc-500">
                     {assistidoSelecionado.situacaoPrisional === "PRESO" && (
-                      <span className="flex items-center gap-0.5 text-red-600">
+                      <span className="flex items-center gap-0.5 text-rose-400">
                         <Lock className="w-2 h-2" /> Preso
                       </span>
                     )}
                     {processosDoAssistido.length > 0 && (
-                      <span className="text-emerald-600 dark:text-emerald-400">
+                      <span className="text-emerald-500">
                         {processosDoAssistido.length} processo{processosDoAssistido.length > 1 ? "s" : ""}
                       </span>
                     )}
@@ -818,7 +824,7 @@ export default function DashboardJuriPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-zinc-400 hover:text-red-500 flex-shrink-0"
+                  className="h-6 w-6 text-zinc-600 hover:text-rose-400 flex-shrink-0"
                   onClick={() => setAtendimentoRapido(prev => ({ ...prev, assistidoId: null, assistidoNome: "", processoId: null }))}
                 >
                   <X className="w-3 h-3" />
@@ -828,7 +834,7 @@ export default function DashboardJuriPage() {
 
             {/* Tipo de Registro */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
+              <label className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">Tipo</label>
               <div className="flex flex-wrap gap-1.5">
                 {tiposRegistro.map((tipo) => {
                   const Icon = tipo.icon;
@@ -846,14 +852,14 @@ export default function DashboardJuriPage() {
                       }}
                       className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
                         isSelected && !isDelegacao
-                          ? `${tipo.bgActive} ${tipo.color}`
+                          ? `${tipo.bgActive} ${tipo.color} border border-transparent`
                           : isDelegacao
-                            ? "border border-rose-200 dark:border-rose-800 hover:border-rose-400 dark:hover:border-rose-600 bg-rose-50 dark:bg-rose-900/20 text-rose-500"
-                            : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-500"
+                            ? "border border-zinc-700 hover:border-rose-700 bg-zinc-900 text-rose-400 hover:bg-rose-900/20"
+                            : "border border-zinc-800 hover:border-zinc-600 bg-zinc-900 text-zinc-400 hover:text-zinc-200"
                       }`}
                       title={tipo.label}
                     >
-                      <Icon className={`w-3.5 h-3.5 ${isSelected && !isDelegacao ? tipo.color : isDelegacao ? "text-rose-500" : "text-zinc-400"}`} />
+                      <Icon className={`w-3.5 h-3.5 ${isSelected && !isDelegacao ? tipo.color : isDelegacao ? "text-rose-400" : "text-zinc-500"}`} />
                       <span className="hidden sm:inline">{tipo.label}</span>
                     </button>
                   );
@@ -863,7 +869,7 @@ export default function DashboardJuriPage() {
 
             {/* Descrição */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Descrição</label>
+              <label className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">Descrição</label>
               <Textarea
                 placeholder={
                   atendimentoRapido.tipo === "atendimento" ? "Descreva o atendimento realizado..." :
@@ -875,7 +881,7 @@ export default function DashboardJuriPage() {
                 value={atendimentoRapido.descricao}
                 onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, descricao: e.target.value }))}
                 rows={3}
-                className="w-full text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                className="w-full text-sm bg-zinc-900 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 resize-none focus:ring-emerald-500/20 focus:border-emerald-600 transition-colors"
               />
             </div>
 
@@ -883,20 +889,20 @@ export default function DashboardJuriPage() {
             <div>
               <button
                 onClick={() => setShowDetalhes(!showDetalhes)}
-                className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 uppercase tracking-wide transition-colors"
+                className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-600 hover:text-zinc-400 uppercase tracking-wide transition-colors"
               >
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showDetalhes ? "rotate-180" : ""}`} />
                 Detalhes opcionais
               </button>
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showDetalhes ? "max-h-40 opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-900 border border-zinc-800">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Processo vinculado</label>
+                    <label className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">Processo vinculado</label>
                     <select
                       value={atendimentoRapido.processoId || ""}
                       onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, processoId: e.target.value ? Number(e.target.value) : null }))}
                       disabled={!atendimentoRapido.assistidoId || processosDoAssistido.length === 0}
-                      className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 disabled:opacity-40 transition-colors"
+                      className="w-full h-8 text-xs rounded-md border border-zinc-700 bg-zinc-800 text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-600 disabled:opacity-40 transition-colors"
                     >
                       <option value="">
                         {!atendimentoRapido.assistidoId ? "Selecione um assistido primeiro" :
@@ -911,21 +917,21 @@ export default function DashboardJuriPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Prazo</label>
+                    <label className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">Prazo</label>
                     <input
                       type="date"
                       value={atendimentoRapido.prazo}
                       onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, prazo: e.target.value }))}
-                      className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                      className="w-full h-8 text-xs rounded-md border border-zinc-700 bg-zinc-800 text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-colors"
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Botão Submit (full-width, contextual) */}
+            {/* Botão Submit */}
             <Button
-              className="w-full h-10 text-sm font-medium bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full h-9 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white shadow-none transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
               disabled={!atendimentoRapido.assistidoId || !atendimentoRapido.descricao.trim()}
               onClick={() => {
                 if (atendimentoRapido.assistidoId && atendimentoRapido.descricao.trim()) {
@@ -938,7 +944,7 @@ export default function DashboardJuriPage() {
                 }
               }}
             >
-              <Send className="w-4 h-4 mr-2" />
+              <Send className="w-3.5 h-3.5 mr-2" />
               {!atendimentoRapido.assistidoId
                 ? "Selecione um assistido"
                 : !atendimentoRapido.descricao.trim()
@@ -948,15 +954,17 @@ export default function DashboardJuriPage() {
           </div>
         </Card>
 
-        {/* ===== 2. EQUIPE & COWORK (seção independente) ===== */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-          <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+        {/* ===== 2. EQUIPE & COWORK ===== */}
+        <Card className="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-zinc-700">
+          <div className="px-4 py-3 border-b border-zinc-800/80">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-zinc-500" />
-                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Equipe & Cowork</h3>
+                <div className="w-6 h-6 rounded-md bg-zinc-800 flex items-center justify-center">
+                  <Users className="w-3.5 h-3.5 text-zinc-400" />
+                </div>
+                <h3 className="text-sm font-semibold text-zinc-100">Equipe & Cowork</h3>
                 {delegacoesAtivas.length > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium">
                     {delegacoesAtivas.length} ativa{delegacoesAtivas.length > 1 ? "s" : ""}
                   </span>
                 )}
@@ -964,23 +972,23 @@ export default function DashboardJuriPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                className="h-7 text-xs text-zinc-500 hover:text-emerald-400 hover:bg-zinc-800"
                 onClick={() => setPedidoTrabalhoModalOpen(true)}
               >
                 <Send className="w-3 h-3 mr-1" />
-                Pedir Trabalho
+                Delegar
               </Button>
             </div>
           </div>
 
-          <div className="max-h-[350px] overflow-y-auto">
+          <div className="max-h-[420px] overflow-y-auto">
             {/* Atalhos Cowork */}
             <div className="p-3 pb-2">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {[
-                  { icon: FileEdit, label: "Pedir Minuta", desc: "Elaborar peca", onClick: () => { setPedidoTrabalhoModalOpen(true); } },
-                  { icon: BookOpen, label: "Pedir Parecer", desc: "Consulta rapida", onClick: () => { setParecerModalOpen(true); } },
-                  { icon: Shield, label: "Cobrir Colega", desc: "Cobertura temporaria", onClick: () => { setCoberturaModalOpen(true); } },
+                  { icon: FileEdit, label: "Pedir Minuta", desc: "Elaborar peça", onClick: () => { setPedidoTrabalhoModalOpen(true); } },
+                  { icon: BookOpen, label: "Pedir Parecer", desc: "Consulta rápida", onClick: () => { setParecerModalOpen(true); } },
+                  { icon: Shield, label: "Cobrir Colega", desc: "Cobertura temporária", onClick: () => { setCoberturaModalOpen(true); } },
                   { icon: MessageSquare, label: "Mural", desc: "Notas da equipe", onClick: () => { setMuralSheetOpen(true); } },
                 ].map((feat, i) => {
                   const FeatIcon = feat.icon;
@@ -988,13 +996,13 @@ export default function DashboardJuriPage() {
                     <button
                       key={i}
                       onClick={feat.onClick}
-                      className="p-2.5 rounded-lg border text-left transition-all duration-200 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 hover:border-emerald-200 dark:hover:border-emerald-800 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 cursor-pointer"
+                      className="p-2.5 rounded-lg border text-left transition-all duration-200 bg-zinc-900 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/80 cursor-pointer group"
                     >
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <FeatIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                        <span className="text-[10px] font-semibold text-zinc-700 dark:text-zinc-300">{feat.label}</span>
+                        <FeatIcon className="w-3.5 h-3.5 text-zinc-500 group-hover:text-emerald-400 transition-colors" />
+                        <span className="text-[10px] font-semibold text-zinc-400 group-hover:text-zinc-200 transition-colors">{feat.label}</span>
                       </div>
-                      <p className="text-[9px] text-zinc-400">{feat.desc}</p>
+                      <p className="text-[9px] text-zinc-600">{feat.desc}</p>
                     </button>
                   );
                 })}
@@ -1004,20 +1012,20 @@ export default function DashboardJuriPage() {
             {/* Pedidos ativos */}
             {loadingDelegacoesEnviadas ? (
               <div className="px-3 pb-3 space-y-2">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
               </div>
             ) : delegacoesAtivas.length === 0 ? (
               <div className="px-3 pb-4 text-center">
-                <UserCheck className="w-7 h-7 mx-auto mb-1.5 text-zinc-300" />
+                <UserCheck className="w-7 h-7 mx-auto mb-1.5 text-zinc-700" />
                 <p className="text-xs text-zinc-500">Nenhum pedido ativo</p>
-                <p className="text-[10px] text-zinc-400 mt-0.5">Envie pedidos de trabalho para sua equipe</p>
+                <p className="text-[10px] text-zinc-600 mt-0.5">Delegue trabalho para sua equipe</p>
               </div>
             ) : (
-              <div className="border-t border-zinc-100 dark:border-zinc-800">
+              <div className="border-t border-zinc-800">
                 <div className="px-3 pt-2 pb-1">
-                  <p className="text-[9px] font-medium text-zinc-400 uppercase tracking-wide">Pedidos ativos</p>
+                  <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wide">Pedidos ativos</p>
                 </div>
-                <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <div className="divide-y divide-zinc-800/60">
                   {delegacoesAtivas.map((deleg: any) => {
                     const tipoIcons: Record<string, any> = {
                       minuta: FileEdit,
@@ -1030,26 +1038,25 @@ export default function DashboardJuriPage() {
                     const TipoIcon = tipoIcons[deleg.tipo || "delegacao_generica"] || Send;
 
                     const statusConfig: Record<string, { label: string; color: string }> = {
-                      pendente: { label: "Pendente", color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" },
-                      aceita: { label: "Aceita", color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" },
-                      em_andamento: { label: "Em andamento", color: "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400" },
-                      aguardando_revisao: { label: "Aguard. revisao", color: "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400" },
+                      pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-400" },
+                      aceita: { label: "Aceita", color: "bg-blue-500/15 text-blue-400" },
+                      em_andamento: { label: "Em andamento", color: "bg-zinc-700 text-zinc-300" },
+                      aguardando_revisao: { label: "Aguard. revisão", color: "bg-violet-500/15 text-violet-400" },
                     };
-                    const status = statusConfig[deleg.status] || { label: deleg.status, color: "bg-zinc-100 text-zinc-600" };
+                    const status = statusConfig[deleg.status] || { label: deleg.status, color: "bg-zinc-800 text-zinc-500" };
 
-                    // Resolve assistido name from direct or via demanda
                     const assistidoName = deleg.assistido?.nome || deleg.demanda?.assistido?.nome || "";
 
                     return (
-                      <div key={deleg.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                        <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                          <TipoIcon className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+                      <div key={deleg.id} className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-zinc-900/80 transition-colors">
+                        <div className="w-7 h-7 rounded-md bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                          <TipoIcon className="w-3 h-3 text-zinc-500" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                          <p className="text-xs font-medium text-zinc-300 truncate">
                             {deleg.instrucoes?.slice(0, 50) || "Pedido de trabalho"}
                           </p>
-                          <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
+                          <div className="flex items-center gap-1.5 text-[10px] text-zinc-600">
                             <span>{deleg.delegadoPara?.name || "Equipe"}</span>
                             {assistidoName && (
                               <>
@@ -1065,7 +1072,7 @@ export default function DashboardJuriPage() {
                             )}
                           </div>
                         </div>
-                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded whitespace-nowrap ${status.color}`}>
+                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${status.color}`}>
                           {status.label}
                         </span>
                       </div>
@@ -1073,8 +1080,8 @@ export default function DashboardJuriPage() {
                   })}
                 </div>
                 {delegacoesAtivas.length >= 5 && (
-                  <div className="px-3 py-2 border-t border-zinc-100 dark:border-zinc-800">
-                    <Link href="/admin/delegacoes" className="text-[10px] text-emerald-600 hover:text-emerald-700 font-medium">
+                  <div className="px-3 py-2 border-t border-zinc-800">
+                    <Link href="/admin/delegacoes" className="text-[10px] text-emerald-500 hover:text-emerald-400 font-medium transition-colors">
                       Ver todos os pedidos →
                     </Link>
                   </div>
@@ -1085,6 +1092,8 @@ export default function DashboardJuriPage() {
           <ParecerRecebidoSection />
           </div>
         </Card>
+
+        </div>{/* fim grid Registro + Equipe */}
 
         {/* ===== 3. KPI CARDS (todos zinc) ===== */}
         <KPIGrid columns={4}>
