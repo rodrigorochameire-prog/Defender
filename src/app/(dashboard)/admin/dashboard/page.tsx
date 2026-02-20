@@ -690,14 +690,12 @@ export default function DashboardJuriPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[5fr_3fr] gap-4 items-start">
 
         {/* ===== 1. REGISTRO RÁPIDO ===== */}
-        <Card className="group/card relative bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-zinc-700">
-          <div className="px-4 py-3 border-b border-zinc-800/80 flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
-              <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-            </div>
-            <h3 className="text-sm font-semibold text-zinc-100">Registro Rápido</h3>
+        <Card className="group/card relative bg-white dark:bg-zinc-900 border-l-2 border-l-emerald-500 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-emerald-200/60 dark:hover:border-emerald-800/40">
+          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-emerald-500" />
+            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Registro Rápido</h3>
             <div className="ml-auto flex items-center gap-1.5">
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Atendimento</span>
+              <span className="text-[10px] text-zinc-400 uppercase tracking-wide">Atendimento</span>
             </div>
           </div>
           <div className="p-4 space-y-3">
@@ -711,15 +709,15 @@ export default function DashboardJuriPage() {
                     variant="outline"
                     role="combobox"
                     aria-expanded={assistidoSearchOpen}
-                    className="w-full h-9 justify-between text-sm bg-zinc-900 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600 text-zinc-100 focus:ring-emerald-500/20 transition-all duration-200"
+                    className="w-full h-9 justify-between text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-700 focus:ring-emerald-500/20 transition-all duration-200"
                   >
                     {atendimentoRapido.assistidoId ? (
                       <span className="flex items-center gap-2 truncate">
-                        <User className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        <span className="truncate text-zinc-100">{atendimentoRapido.assistidoNome}</span>
+                        <User className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        <span className="truncate">{atendimentoRapido.assistidoNome}</span>
                       </span>
                     ) : (
-                      <span className="text-zinc-500 flex items-center gap-2">
+                      <span className="text-zinc-400 flex items-center gap-2">
                         <Search className="w-4 h-4" />
                         Buscar por nome, CPF ou vulgo...
                       </span>
@@ -797,25 +795,25 @@ export default function DashboardJuriPage() {
 
             {/* Card do Assistido Selecionado */}
             {assistidoSelecionado && (
-              <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
                 <Avatar className="h-7 w-7 flex-shrink-0">
                   <AvatarImage src={assistidoSelecionado.photoUrl || ""} />
-                  <AvatarFallback className="text-[9px] bg-emerald-900 text-emerald-300">
+                  <AvatarFallback className="text-[9px] bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
                     {assistidoSelecionado.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-emerald-300 truncate">
+                  <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100 truncate">
                     {assistidoSelecionado.nome}
                   </p>
                   <div className="flex items-center gap-2 text-[10px] text-zinc-500">
                     {assistidoSelecionado.situacaoPrisional === "PRESO" && (
-                      <span className="flex items-center gap-0.5 text-rose-400">
+                      <span className="flex items-center gap-0.5 text-red-600">
                         <Lock className="w-2 h-2" /> Preso
                       </span>
                     )}
                     {processosDoAssistido.length > 0 && (
-                      <span className="text-emerald-500">
+                      <span className="text-emerald-600 dark:text-emerald-400">
                         {processosDoAssistido.length} processo{processosDoAssistido.length > 1 ? "s" : ""}
                       </span>
                     )}
@@ -824,7 +822,7 @@ export default function DashboardJuriPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-zinc-600 hover:text-rose-400 flex-shrink-0"
+                  className="h-6 w-6 text-zinc-400 hover:text-red-500 flex-shrink-0"
                   onClick={() => setAtendimentoRapido(prev => ({ ...prev, assistidoId: null, assistidoNome: "", processoId: null }))}
                 >
                   <X className="w-3 h-3" />
@@ -834,7 +832,7 @@ export default function DashboardJuriPage() {
 
             {/* Tipo de Registro */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">Tipo</label>
+              <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
               <div className="flex flex-wrap gap-1.5">
                 {tiposRegistro.map((tipo) => {
                   const Icon = tipo.icon;
@@ -852,14 +850,14 @@ export default function DashboardJuriPage() {
                       }}
                       className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
                         isSelected && !isDelegacao
-                          ? `${tipo.bgActive} ${tipo.color} border border-transparent`
+                          ? `${tipo.bgActive} ${tipo.color}`
                           : isDelegacao
-                            ? "border border-zinc-700 hover:border-rose-700 bg-zinc-900 text-rose-400 hover:bg-rose-900/20"
-                            : "border border-zinc-800 hover:border-zinc-600 bg-zinc-900 text-zinc-400 hover:text-zinc-200"
+                            ? "border border-rose-200 dark:border-rose-800 hover:border-rose-400 dark:hover:border-rose-600 bg-rose-50 dark:bg-rose-900/20 text-rose-500"
+                            : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-500"
                       }`}
                       title={tipo.label}
                     >
-                      <Icon className={`w-3.5 h-3.5 ${isSelected && !isDelegacao ? tipo.color : isDelegacao ? "text-rose-400" : "text-zinc-500"}`} />
+                      <Icon className={`w-3.5 h-3.5 ${isSelected && !isDelegacao ? tipo.color : isDelegacao ? "text-rose-500" : "text-zinc-400"}`} />
                       <span className="hidden sm:inline">{tipo.label}</span>
                     </button>
                   );
@@ -869,7 +867,7 @@ export default function DashboardJuriPage() {
 
             {/* Descrição */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">Descrição</label>
+              <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Descrição</label>
               <Textarea
                 placeholder={
                   atendimentoRapido.tipo === "atendimento" ? "Descreva o atendimento realizado..." :
@@ -881,7 +879,7 @@ export default function DashboardJuriPage() {
                 value={atendimentoRapido.descricao}
                 onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, descricao: e.target.value }))}
                 rows={3}
-                className="w-full text-sm bg-zinc-900 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 resize-none focus:ring-emerald-500/20 focus:border-emerald-600 transition-colors"
+                className="w-full text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
               />
             </div>
 
@@ -889,20 +887,20 @@ export default function DashboardJuriPage() {
             <div>
               <button
                 onClick={() => setShowDetalhes(!showDetalhes)}
-                className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-600 hover:text-zinc-400 uppercase tracking-wide transition-colors"
+                className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 uppercase tracking-wide transition-colors"
               >
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showDetalhes ? "rotate-180" : ""}`} />
                 Detalhes opcionais
               </button>
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showDetalhes ? "max-h-40 opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-900 border border-zinc-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">Processo vinculado</label>
+                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Processo vinculado</label>
                     <select
                       value={atendimentoRapido.processoId || ""}
                       onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, processoId: e.target.value ? Number(e.target.value) : null }))}
                       disabled={!atendimentoRapido.assistidoId || processosDoAssistido.length === 0}
-                      className="w-full h-8 text-xs rounded-md border border-zinc-700 bg-zinc-800 text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-600 disabled:opacity-40 transition-colors"
+                      className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 disabled:opacity-40 transition-colors"
                     >
                       <option value="">
                         {!atendimentoRapido.assistidoId ? "Selecione um assistido primeiro" :
@@ -917,12 +915,12 @@ export default function DashboardJuriPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">Prazo</label>
+                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Prazo</label>
                     <input
                       type="date"
                       value={atendimentoRapido.prazo}
                       onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, prazo: e.target.value }))}
-                      className="w-full h-8 text-xs rounded-md border border-zinc-700 bg-zinc-800 text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-colors"
+                      className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
                     />
                   </div>
                 </div>
@@ -955,16 +953,14 @@ export default function DashboardJuriPage() {
         </Card>
 
         {/* ===== 2. EQUIPE & COWORK ===== */}
-        <Card className="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-zinc-700">
-          <div className="px-4 py-3 border-b border-zinc-800/80">
+        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-emerald-200/40 dark:hover:border-emerald-800/30">
+          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800/60">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-zinc-800 flex items-center justify-center">
-                  <Users className="w-3.5 h-3.5 text-zinc-400" />
-                </div>
-                <h3 className="text-sm font-semibold text-zinc-100">Equipe & Cowork</h3>
+                <Users className="w-4 h-4 text-zinc-500" />
+                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Equipe & Cowork</h3>
                 {delegacoesAtivas.length > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium">
                     {delegacoesAtivas.length} ativa{delegacoesAtivas.length > 1 ? "s" : ""}
                   </span>
                 )}
@@ -972,7 +968,7 @@ export default function DashboardJuriPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-zinc-500 hover:text-emerald-400 hover:bg-zinc-800"
+                className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                 onClick={() => setPedidoTrabalhoModalOpen(true)}
               >
                 <Send className="w-3 h-3 mr-1" />
@@ -981,7 +977,7 @@ export default function DashboardJuriPage() {
             </div>
           </div>
 
-          <div className="max-h-[420px] overflow-y-auto">
+          <div className="max-h-[480px] overflow-y-auto">
             {/* Atalhos Cowork */}
             <div className="p-3 pb-2">
               <div className="grid grid-cols-2 gap-2">
@@ -996,13 +992,13 @@ export default function DashboardJuriPage() {
                     <button
                       key={i}
                       onClick={feat.onClick}
-                      className="p-2.5 rounded-lg border text-left transition-all duration-200 bg-zinc-900 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/80 cursor-pointer group"
+                      className="p-2.5 rounded-lg border text-left transition-all duration-200 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 hover:border-emerald-200 dark:hover:border-emerald-800 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 cursor-pointer group"
                     >
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <FeatIcon className="w-3.5 h-3.5 text-zinc-500 group-hover:text-emerald-400 transition-colors" />
-                        <span className="text-[10px] font-semibold text-zinc-400 group-hover:text-zinc-200 transition-colors">{feat.label}</span>
+                        <FeatIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700 transition-colors" />
+                        <span className="text-[10px] font-semibold text-zinc-700 dark:text-zinc-300">{feat.label}</span>
                       </div>
-                      <p className="text-[9px] text-zinc-600">{feat.desc}</p>
+                      <p className="text-[9px] text-zinc-400">{feat.desc}</p>
                     </button>
                   );
                 })}
@@ -1012,20 +1008,20 @@ export default function DashboardJuriPage() {
             {/* Pedidos ativos */}
             {loadingDelegacoesEnviadas ? (
               <div className="px-3 pb-3 space-y-2">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
               </div>
             ) : delegacoesAtivas.length === 0 ? (
               <div className="px-3 pb-4 text-center">
-                <UserCheck className="w-7 h-7 mx-auto mb-1.5 text-zinc-700" />
+                <UserCheck className="w-7 h-7 mx-auto mb-1.5 text-zinc-300" />
                 <p className="text-xs text-zinc-500">Nenhum pedido ativo</p>
-                <p className="text-[10px] text-zinc-600 mt-0.5">Delegue trabalho para sua equipe</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">Delegue trabalho para sua equipe</p>
               </div>
             ) : (
-              <div className="border-t border-zinc-800">
+              <div className="border-t border-zinc-100 dark:border-zinc-800">
                 <div className="px-3 pt-2 pb-1">
-                  <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wide">Pedidos ativos</p>
+                  <p className="text-[9px] font-medium text-zinc-400 uppercase tracking-wide">Pedidos ativos</p>
                 </div>
-                <div className="divide-y divide-zinc-800/60">
+                <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {delegacoesAtivas.map((deleg: any) => {
                     const tipoIcons: Record<string, any> = {
                       minuta: FileEdit,
@@ -1038,25 +1034,25 @@ export default function DashboardJuriPage() {
                     const TipoIcon = tipoIcons[deleg.tipo || "delegacao_generica"] || Send;
 
                     const statusConfig: Record<string, { label: string; color: string }> = {
-                      pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-400" },
-                      aceita: { label: "Aceita", color: "bg-blue-500/15 text-blue-400" },
-                      em_andamento: { label: "Em andamento", color: "bg-zinc-700 text-zinc-300" },
-                      aguardando_revisao: { label: "Aguard. revisão", color: "bg-violet-500/15 text-violet-400" },
+                      pendente: { label: "Pendente", color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" },
+                      aceita: { label: "Aceita", color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" },
+                      em_andamento: { label: "Em andamento", color: "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400" },
+                      aguardando_revisao: { label: "Aguard. revisão", color: "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400" },
                     };
-                    const status = statusConfig[deleg.status] || { label: deleg.status, color: "bg-zinc-800 text-zinc-500" };
+                    const status = statusConfig[deleg.status] || { label: deleg.status, color: "bg-zinc-100 text-zinc-600" };
 
                     const assistidoName = deleg.assistido?.nome || deleg.demanda?.assistido?.nome || "";
 
                     return (
-                      <div key={deleg.id} className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-zinc-900/80 transition-colors">
-                        <div className="w-7 h-7 rounded-md bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                          <TipoIcon className="w-3 h-3 text-zinc-500" />
+                      <div key={deleg.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                          <TipoIcon className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-zinc-300 truncate">
+                          <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate">
                             {deleg.instrucoes?.slice(0, 50) || "Pedido de trabalho"}
                           </p>
-                          <div className="flex items-center gap-1.5 text-[10px] text-zinc-600">
+                          <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
                             <span>{deleg.delegadoPara?.name || "Equipe"}</span>
                             {assistidoName && (
                               <>
@@ -1072,7 +1068,7 @@ export default function DashboardJuriPage() {
                             )}
                           </div>
                         </div>
-                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${status.color}`}>
+                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded whitespace-nowrap ${status.color}`}>
                           {status.label}
                         </span>
                       </div>
@@ -1080,8 +1076,8 @@ export default function DashboardJuriPage() {
                   })}
                 </div>
                 {delegacoesAtivas.length >= 5 && (
-                  <div className="px-3 py-2 border-t border-zinc-800">
-                    <Link href="/admin/delegacoes" className="text-[10px] text-emerald-500 hover:text-emerald-400 font-medium transition-colors">
+                  <div className="px-3 py-2 border-t border-zinc-100 dark:border-zinc-800">
+                    <Link href="/admin/delegacoes" className="text-[10px] text-emerald-600 hover:text-emerald-700 font-medium">
                       Ver todos os pedidos →
                     </Link>
                   </div>
@@ -1335,116 +1331,10 @@ export default function DashboardJuriPage() {
             </div>
           </Card>
         ) : (
-          /* Especializado: Próximos Júris + Audiências */
-          <>
-            <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-              <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Gavel className="w-4 h-4 text-zinc-500" />
-                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Próximos Júris</h3>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
-                      {jurisProximos.length}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md p-0.5">
-                      {[
-                        { id: "todos", label: "Todos" },
-                        { id: "rodrigo", label: "Dr. Rodrigo" },
-                        { id: "juliane", label: "Dra. Juliane" },
-                      ].map((opt) => (
-                        <button
-                          key={opt.id}
-                          onClick={() => setFiltroDefensorJuri(opt.id as typeof filtroDefensorJuri)}
-                          className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
-                            filtroDefensorJuri === opt.id
-                              ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow-sm"
-                              : "text-zinc-500 hover:text-zinc-700"
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                    <Link href="/admin/juri">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
+          /* Especializado: Audiências (esq) + Júris (dir) lado a lado */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {loadingJuris ? (
-                  <div className="p-4 space-y-2">
-                    {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
-                  </div>
-                ) : jurisProximos.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <Gavel className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
-                    <p className="text-sm text-zinc-500">Nenhum júri agendado</p>
-                  </div>
-                ) : (
-                  jurisProximos.map((juri: any) => {
-                    const dataSessao = juri.dataSessao ? new Date(juri.dataSessao) : null;
-                    const diasRestantes = dataSessao ? differenceInDays(dataSessao, new Date()) : null;
-
-                    return (
-                      <Link href={`/admin/juri/${juri.id}`} key={juri.id}>
-                        <div className="flex items-center gap-3 px-3 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                          <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
-                            diasRestantes !== null && diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30" :
-                            diasRestantes !== null && diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30" :
-                            "bg-zinc-100 dark:bg-zinc-800"
-                          }`}>
-                            <span className={`text-sm font-bold ${
-                              diasRestantes !== null && diasRestantes <= 3 ? "text-rose-700 dark:text-rose-400" :
-                              diasRestantes !== null && diasRestantes <= 7 ? "text-amber-700 dark:text-amber-400" :
-                              "text-zinc-700 dark:text-zinc-300"
-                            }`}>
-                              {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
-                            </span>
-                            <span className="text-[9px] text-zinc-500 uppercase">
-                              {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : ""}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                              {juri.assistidoNome || "Réu"}
-                            </p>
-                            <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                              <span>{juri.horario || "Horário a definir"}</span>
-                              {juri.defensorNome && (
-                                <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
-                                  {juri.defensorNome}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {juri.status === "CANCELADA" && <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
-                          {juri.status === "REDESIGNADA" && <RefreshCw className="w-4 h-4 text-orange-500 flex-shrink-0" />}
-                          {juri.status === "REALIZADA" && <CircleCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
-                          {diasRestantes !== null && (
-                            <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
-                              diasRestantes <= 0 ? "bg-rose-500 text-white" :
-                              diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
-                              diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
-                              "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-                            }`}>
-                              {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
-                            </span>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })
-                )}
-              </div>
-            </Card>
-
-            {/* AUDIÊNCIAS DA SEMANA */}
+            {/* AUDIÊNCIAS DA SEMANA — esquerda */}
             <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
               <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
                 <div className="flex items-center justify-between">
@@ -1539,7 +1429,116 @@ export default function DashboardJuriPage() {
                 )}
               </div>
             </Card>
-          </>
+
+            {/* PRÓXIMOS JÚRIS — direita */}
+            <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+              <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Gavel className="w-4 h-4 text-zinc-500" />
+                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Próximos Júris</h3>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
+                      {jurisProximos.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md p-0.5">
+                      {[
+                        { id: "todos", label: "Todos" },
+                        { id: "rodrigo", label: "Dr. Rodrigo" },
+                        { id: "juliane", label: "Dra. Juliane" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.id}
+                          onClick={() => setFiltroDefensorJuri(opt.id as typeof filtroDefensorJuri)}
+                          className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
+                            filtroDefensorJuri === opt.id
+                              ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow-sm"
+                              : "text-zinc-500 hover:text-zinc-700"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    <Link href="/admin/juri">
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[400px] overflow-y-auto">
+                {loadingJuris ? (
+                  <div className="p-4 space-y-2">
+                    {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                  </div>
+                ) : jurisProximos.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <Gavel className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+                    <p className="text-sm text-zinc-500">Nenhum júri agendado</p>
+                  </div>
+                ) : (
+                  jurisProximos.map((juri: any) => {
+                    const dataSessao = juri.dataSessao ? new Date(juri.dataSessao) : null;
+                    const diasRestantes = dataSessao ? differenceInDays(dataSessao, new Date()) : null;
+
+                    return (
+                      <Link href={`/admin/juri/${juri.id}`} key={juri.id}>
+                        <div className="flex items-center gap-3 px-3 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                          <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
+                            diasRestantes !== null && diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30" :
+                            diasRestantes !== null && diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30" :
+                            "bg-zinc-100 dark:bg-zinc-800"
+                          }`}>
+                            <span className={`text-sm font-bold ${
+                              diasRestantes !== null && diasRestantes <= 3 ? "text-rose-700 dark:text-rose-400" :
+                              diasRestantes !== null && diasRestantes <= 7 ? "text-amber-700 dark:text-amber-400" :
+                              "text-zinc-700 dark:text-zinc-300"
+                            }`}>
+                              {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
+                            </span>
+                            <span className="text-[9px] text-zinc-500 uppercase">
+                              {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : ""}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                              {juri.assistidoNome || "Réu"}
+                            </p>
+                            <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                              <span>{juri.horario || "Horário a definir"}</span>
+                              {juri.defensorNome && (
+                                <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
+                                  {juri.defensorNome}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {juri.status === "CANCELADA" && <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
+                          {juri.status === "REDESIGNADA" && <RefreshCw className="w-4 h-4 text-orange-500 flex-shrink-0" />}
+                          {juri.status === "REALIZADA" && <CircleCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
+                          {diasRestantes !== null && (
+                            <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
+                              diasRestantes <= 0 ? "bg-rose-500 text-white" :
+                              diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
+                              diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
+                              "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                            }`}>
+                              {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })
+                )}
+              </div>
+            </Card>
+
+          </div>
         )}
       </div>
 
