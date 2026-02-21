@@ -97,32 +97,38 @@ class EnrichmentOrchestrator:
             if caso_id and extracted_data:
                 facts = self._extract_facts_from_document(extracted_data, doc_type)
                 for fact in facts:
-                    result = await self.supabase.create_case_fact(
-                        caso_id=caso_id,
-                        descricao=fact["descricao"],
-                        tipo=fact.get("tipo", "incontroverso"),
-                        fonte=f"enrichment:document:{doc_type}",
-                        confidence=fact.get("confidence", confidence),
-                    )
-                    if result:
-                        entities_created.append({"type": "case_fact", "id": result.get("id")})
+                    try:
+                        result = await self.supabase.create_case_fact(
+                            caso_id=caso_id,
+                            descricao=fact["descricao"],
+                            tipo=fact.get("tipo", "incontroverso"),
+                            fonte=f"enrichment:document:{doc_type}",
+                            confidence=fact.get("confidence", confidence),
+                        )
+                        if result:
+                            entities_created.append({"type": "case_fact", "id": result.get("id")})
+                    except Exception as e:
+                        logger.warning("Failed to save case_fact to Supabase: %s", e)
 
             # 5c. Criar anotação
             if assistido_id or processo_id:
-                anotacao = await self.supabase.create_anotacao(
-                    assistido_id=assistido_id,
-                    processo_id=processo_id,
-                    caso_id=caso_id,
-                    conteudo=f"[Enrichment] Documento {doc_type} processado automaticamente",
-                    tipo="enrichment",
-                    metadata={
-                        "document_type": doc_type,
-                        "area": area,
-                        "confidence": confidence,
-                    },
-                )
-                if anotacao:
-                    entities_created.append({"type": "anotacao", "id": anotacao.get("id")})
+                try:
+                    anotacao = await self.supabase.create_anotacao(
+                        assistido_id=assistido_id,
+                        processo_id=processo_id,
+                        caso_id=caso_id,
+                        conteudo=f"[Enrichment] Documento {doc_type} processado automaticamente",
+                        tipo="enrichment",
+                        metadata={
+                            "document_type": doc_type,
+                            "area": area,
+                            "confidence": confidence,
+                        },
+                    )
+                    if anotacao:
+                        entities_created.append({"type": "anotacao", "id": anotacao.get("id")})
+                except Exception as e:
+                    logger.warning("Failed to save document anotacao to Supabase: %s", e)
 
             elapsed = time.time() - start
             logger.info(
@@ -221,12 +227,12 @@ class EnrichmentOrchestrator:
         for intimacao in intimacoes:
             numero = intimacao.get("numero_processo")
             if numero:
-                processo = await self.supabase.find_processo_by_numero(numero)
-                if processo:
-                    processos_atualizados.append(processo["id"])
-
-                    # Atualizar enrichmentData da demanda se existir
-                    # (será implementado na integração Next.js)
+                try:
+                    processo = await self.supabase.find_processo_by_numero(numero)
+                    if processo:
+                        processos_atualizados.append(processo["id"])
+                except Exception as e:
+                    logger.warning("Failed to find processo %s in Supabase: %s", numero, e)
 
         elapsed = time.time() - start
         logger.info(
@@ -267,44 +273,53 @@ class EnrichmentOrchestrator:
         # Gravar caseFacts
         if caso_id:
             for fact in result.get("facts", []):
-                fact_result = await self.supabase.create_case_fact(
-                    caso_id=caso_id,
-                    descricao=fact.get("descricao", ""),
-                    tipo=fact.get("tipo", "incontroverso"),
-                    fonte="enrichment:transcript",
-                    confidence=fact.get("confidence", 0.5),
-                )
-                if fact_result:
-                    entities_created.append({"type": "case_fact", "id": fact_result.get("id")})
+                try:
+                    fact_result = await self.supabase.create_case_fact(
+                        caso_id=caso_id,
+                        descricao=fact.get("descricao", ""),
+                        tipo=fact.get("tipo", "incontroverso"),
+                        fonte="enrichment:transcript",
+                        confidence=fact.get("confidence", 0.5),
+                    )
+                    if fact_result:
+                        entities_created.append({"type": "case_fact", "id": fact_result.get("id")})
+                except Exception as e:
+                    logger.warning("Failed to save transcript case_fact to Supabase: %s", e)
 
             # Gravar casePersonas
             for person in result.get("persons_mentioned", []):
-                persona_result = await self.supabase.create_case_persona(
-                    caso_id=caso_id,
-                    nome=person.get("nome", ""),
-                    papel=person.get("papel", "outro"),
-                    descricao=person.get("descricao", ""),
-                )
-                if persona_result:
-                    entities_created.append({"type": "case_persona", "id": persona_result.get("id")})
+                try:
+                    persona_result = await self.supabase.create_case_persona(
+                        caso_id=caso_id,
+                        nome=person.get("nome", ""),
+                        papel=person.get("papel", "outro"),
+                        descricao=person.get("descricao", ""),
+                    )
+                    if persona_result:
+                        entities_created.append({"type": "case_persona", "id": persona_result.get("id")})
+                except Exception as e:
+                    logger.warning("Failed to save case_persona to Supabase: %s", e)
 
         # Gravar anotação com resumo
         resumo = result.get("resumo_para_prontuario", "")
         if resumo:
-            anotacao = await self.supabase.create_anotacao(
-                assistido_id=assistido_id,
-                processo_id=processo_id,
-                caso_id=caso_id,
-                conteudo=resumo,
-                tipo="enrichment:transcript",
-                urgencia=result.get("urgency_level", "low"),
-                metadata={
-                    "key_points": result.get("key_points", []),
-                    "teses_possiveis": result.get("teses_possiveis", []),
-                },
-            )
-            if anotacao:
-                entities_created.append({"type": "anotacao", "id": anotacao.get("id")})
+            try:
+                anotacao = await self.supabase.create_anotacao(
+                    assistido_id=assistido_id,
+                    processo_id=processo_id,
+                    caso_id=caso_id,
+                    conteudo=resumo,
+                    tipo="enrichment:transcript",
+                    urgencia=result.get("urgency_level", "low"),
+                    metadata={
+                        "key_points": result.get("key_points", []),
+                        "teses_possiveis": result.get("teses_possiveis", []),
+                    },
+                )
+                if anotacao:
+                    entities_created.append({"type": "anotacao", "id": anotacao.get("id")})
+            except Exception as e:
+                logger.warning("Failed to save transcript anotacao to Supabase: %s", e)
 
         elapsed = time.time() - start
         logger.info(
@@ -335,9 +350,12 @@ class EnrichmentOrchestrator:
         for aud in audiencias:
             numero = aud.get("numero_processo")
             if numero:
-                processo = await self.supabase.find_processo_by_numero(numero)
-                if processo:
-                    processos_vinculados.append(processo["id"])
+                try:
+                    processo = await self.supabase.find_processo_by_numero(numero)
+                    if processo:
+                        processos_vinculados.append(processo["id"])
+                except Exception as e:
+                    logger.warning("Failed to find processo %s in Supabase: %s", numero, e)
 
         elapsed = time.time() - start
         logger.info(
@@ -369,19 +387,22 @@ class EnrichmentOrchestrator:
         # Gravar anotação se urgente ou se assistido identificado
         urgency = result.get("urgency_level", "low")
         if urgency in ("high", "critical") or assistido_id:
-            anotacao = await self.supabase.create_anotacao(
-                assistido_id=assistido_id,
-                conteudo=result.get("resumo", message[:200]),
-                tipo="enrichment:whatsapp",
-                urgencia=urgency,
-                metadata={
-                    "contact_id": contact_id,
-                    "subject": result.get("subject"),
-                    "extracted_info": result.get("extracted_info", {}),
-                },
-            )
-            if anotacao:
-                entities_created.append({"type": "anotacao", "id": anotacao.get("id")})
+            try:
+                anotacao = await self.supabase.create_anotacao(
+                    assistido_id=assistido_id,
+                    conteudo=result.get("resumo", message[:200]),
+                    tipo="enrichment:whatsapp",
+                    urgencia=urgency,
+                    metadata={
+                        "contact_id": contact_id,
+                        "subject": result.get("subject"),
+                        "extracted_info": result.get("extracted_info", {}),
+                    },
+                )
+                if anotacao:
+                    entities_created.append({"type": "anotacao", "id": anotacao.get("id")})
+            except Exception as e:
+                logger.warning("Failed to save WhatsApp anotacao to Supabase: %s", e)
 
         elapsed = time.time() - start
         logger.info(
