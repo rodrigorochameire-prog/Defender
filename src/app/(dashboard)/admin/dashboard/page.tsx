@@ -1186,62 +1186,75 @@ export default function DashboardJuriPage() {
                 const atribuicao = demanda.processo?.atribuicao;
                 const atColors = getAtribuicaoColors(atribuicao);
 
+                // Cor da barra lateral de atribuição
+                const barColor = isReuPresoCritico
+                  ? "bg-red-500"
+                  : atColors.bgSolid || "bg-zinc-300 dark:bg-zinc-600";
+
                 return (
-                  <div key={demanda.id} className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 transition-colors border-l-2",
-                    isReuPresoCritico
-                      ? "bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 border-l-red-500"
-                      : `${atColors.border} hover:bg-zinc-50 dark:hover:bg-zinc-800/50`
-                  )}>
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      isReuPresoCritico ? "bg-red-600 animate-pulse" :
-                      isVencido ? "bg-rose-400" :
-                      prazoInfo.cor === "red" ? "bg-red-500" :
-                      prazoInfo.cor === "yellow" ? "bg-amber-500" : "bg-zinc-400"
-                    }`} />
-                    <Link href={`/admin/demandas/${demanda.id}`} className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className={`text-sm font-medium truncate ${
-                          isReuPresoCritico ? "text-red-700 dark:text-red-300" : "text-zinc-800 dark:text-zinc-200"
-                        }`}>
-                          {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
-                        </p>
-                        {demanda.reuPreso && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
-                            <Lock className="w-2.5 h-2.5 mr-0.5" />
-                            PRESO
-                          </span>
-                        )}
-                        {atribuicao && (
-                          <span className={cn("text-[9px] px-1 py-0.5 rounded-full font-medium", atColors.bgSolid, atColors.text)}>
-                            {atColors.shortLabel}
-                          </span>
-                        )}
+                  <Link
+                    href={`/admin/demandas/${demanda.id}`}
+                    key={demanda.id}
+                    className={cn(
+                      "flex items-stretch gap-0 transition-colors group",
+                      isReuPresoCritico
+                        ? "bg-red-50/60 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/30"
+                        : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+                    )}
+                  >
+                    {/* Barra de cor de atribuição — substitui a bolinha */}
+                    <div className={cn("w-1 flex-shrink-0 rounded-r-sm my-1.5 ml-1", barColor)} />
+
+                    <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
+                      {/* Info principal */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className={`text-[13px] font-semibold truncate leading-tight ${
+                            isReuPresoCritico ? "text-red-700 dark:text-red-300" : "text-zinc-800 dark:text-zinc-200"
+                          }`}>
+                            {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
+                          </p>
+                          {demanda.reuPreso && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-zinc-800 dark:bg-zinc-700 text-white flex-shrink-0">
+                              <Lock className="w-2 h-2" />
+                              Preso
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {atribuicao && (
+                            <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0", atColors.bgSolid, atColors.text)}>
+                              {atColors.shortLabel}
+                            </span>
+                          )}
+                          <p className="text-[11px] text-zinc-400 truncate">{demanda.ato}</p>
+                        </div>
                       </div>
-                      <p className="text-[11px] text-zinc-400 truncate">{demanda.ato}</p>
-                    </Link>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {/* Botão de ação rápida de status */}
-                      <QuickStatusButton
-                        demandaId={demanda.id}
-                        currentSubstatus={demanda.substatus}
-                        onUpdate={handleQuickStatusUpdate}
-                      />
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap ${
-                        isReuPresoCritico
-                          ? "bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300 animate-pulse"
-                          : isVencido
-                          ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
-                          : prazoInfo.cor === "red"
-                          ? "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400"
-                          : prazoInfo.cor === "yellow"
-                          ? "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-                      }`}>
-                        {prazoInfo.texto}
-                      </span>
+
+                      {/* Direita: ação + prazo */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <QuickStatusButton
+                          demandaId={demanda.id}
+                          currentSubstatus={demanda.substatus}
+                          onUpdate={handleQuickStatusUpdate}
+                        />
+                        <span className={cn(
+                          "text-[11px] font-semibold px-2 py-1 rounded-md whitespace-nowrap tabular-nums",
+                          isReuPresoCritico
+                            ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+                            : isVencido
+                            ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
+                            : prazoInfo.cor === "red"
+                            ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                            : prazoInfo.cor === "yellow"
+                            ? "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+                        )}>
+                          {prazoInfo.texto}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 );
               })
             )}
