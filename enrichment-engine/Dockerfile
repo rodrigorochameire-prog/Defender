@@ -1,10 +1,11 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS base
 
 WORKDIR /app
 
 # Dependências do sistema para Docling (OCR, PDF rendering)
+# libgl1 substitui libgl1-mesa-glx em Debian Trixie+
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     poppler-utils \
     tesseract-ocr \
