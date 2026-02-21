@@ -112,15 +112,14 @@ class SupabaseService:
         """
         client = self._get_client()
 
-        fact_data = {
+        # Schema real: titulo (NOT NULL), descricao, tipo, tags, status
+        fact_data: dict[str, Any] = {
             "caso_id": caso_id,
+            "titulo": descricao[:200] if descricao else "Fato extraído",
             "descricao": descricao,
             "tipo": tipo,
-            "fonte": fonte,
-            "confidence": confidence,
+            "tags": [fonte, f"confidence:{confidence:.2f}"],
         }
-        if data_fato:
-            fact_data["data_fato"] = data_fato
 
         try:
             result = client.table("case_facts").insert(fact_data).execute()
@@ -151,18 +150,21 @@ class SupabaseService:
         """
         client = self._get_client()
 
-        persona_data = {
+        # Schema real: caso_id, nome, tipo (NOT NULL), status, perfil, observacoes
+        persona_data: dict[str, Any] = {
             "caso_id": caso_id,
             "nome": nome,
-            "papel": papel,
-            "fonte": fonte,
+            "tipo": papel,  # schema usa 'tipo', não 'papel'
+            "status": "pendente",
         }
         if descricao:
-            persona_data["descricao"] = descricao
+            persona_data["observacoes"] = descricao
+        if fonte:
+            persona_data["perfil"] = {"fonte": fonte}
 
         try:
             result = client.table("case_personas").insert(persona_data).execute()
-            logger.info("Created case_persona | caso=%d nome=%s papel=%s", caso_id, nome, papel)
+            logger.info("Created case_persona | caso=%d nome=%s tipo=%s", caso_id, nome, papel)
             return result.data[0] if result.data else {}
         except Exception as e:
             logger.error("Failed to create case_persona: %s", e)
@@ -189,14 +191,26 @@ class SupabaseService:
             caso_id: ID do caso (opcional)
             conteudo: Texto da anotação
             tipo: Tipo (enrichment, transcript, whatsapp, etc)
-            urgencia: low, medium, high, critical
-            metadata: JSON com dados extras
+            urgencia: low, medium, high, critical (incluído no conteúdo)
+            metadata: JSON com dados extras (incluído no conteúdo)
         """
         client = self._get_client()
 
+        # Enriquecer conteúdo com urgência e metadata se disponíveis
+        full_conteudo = conteudo
+        if urgencia and urgencia != "low":
+            full_conteudo = f"[{urgencia.upper()}] {conteudo}"
+        if metadata:
+            import json
+            full_conteudo += f"\n\n---\nMetadados: {json.dumps(metadata, ensure_ascii=False, default=str)}"
+
+        # Schema real: conteudo (NOT NULL), tipo, importante, created_by_id (NOT NULL)
+        # Não tem: metadata, urgencia
         anotacao_data: dict[str, Any] = {
-            "conteudo": conteudo,
-            "tipo": tipo,
+            "conteudo": full_conteudo,
+            "tipo": tipo[:30],  # varchar(30)
+            "created_by_id": self.settings.system_user_id,
+            "importante": urgencia in ("high", "critical") if urgencia else False,
         }
 
         if assistido_id:
@@ -205,10 +219,6 @@ class SupabaseService:
             anotacao_data["processo_id"] = processo_id
         if caso_id:
             anotacao_data["caso_id"] = caso_id
-        if urgencia:
-            anotacao_data["urgencia"] = urgencia
-        if metadata:
-            anotacao_data["metadata"] = metadata
 
         try:
             result = client.table("anotacoes").insert(anotacao_data).execute()
@@ -239,24 +249,25 @@ class SupabaseService:
         Args:
             fact_id: ID do caseFact
             documento_id: ID do documento fonte
-            descricao: Descrição da evidência
+            descricao: Descrição da evidência (trecho)
             tipo_evidencia: documento, depoimento, pericia, etc
             confidence: Score de confiança (0-1)
         """
         client = self._get_client()
 
-        evidence_data = {
+        # Schema real: fact_id, documento_id, source_type, source_id, trecho, contradicao, confianca
+        evidence_data: dict[str, Any] = {
             "fact_id": fact_id,
-            "descricao": descricao,
-            "tipo_evidencia": tipo_evidencia,
-            "confidence": confidence,
+            "source_type": tipo_evidencia,
+            "trecho": descricao,
+            "confianca": int(confidence * 100),  # Schema usa 0-100 inteiro
         }
         if documento_id:
             evidence_data["documento_id"] = documento_id
 
         try:
             result = client.table("fact_evidence").insert(evidence_data).execute()
-            logger.info("Created fact_evidence | fact=%d confidence=%.2f", fact_id, confidence)
+            logger.info("Created fact_evidence | fact=%d confianca=%d", fact_id, evidence_data["confianca"])
             return result.data[0] if result.data else {}
         except Exception as e:
             logger.error("Failed to create fact_evidence: %s", e)

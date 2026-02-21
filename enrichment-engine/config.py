@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     # --- Supabase ---
     supabase_url: str = ""
     supabase_service_role_key: str = ""
+    system_user_id: int = 1  # User ID para created_by_id em anotações automáticas
 
     # --- Docling ---
     docling_max_file_size_mb: int = 50
