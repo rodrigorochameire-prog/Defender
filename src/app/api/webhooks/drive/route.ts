@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, driveWebhooks, driveSyncLogs, notifications, users } from "@/lib/db";
-import { eq, or } from "drizzle-orm";
+import { driveFiles } from "@/lib/db/schema";
+import { eq, or, inArray } from "drizzle-orm";
 import { syncFolderWithDatabase, listDistributionPendingFiles } from "@/lib/services/google-drive";
 import { SPECIAL_FOLDER_IDS } from "@/lib/utils/text-extraction";
 import { enrichmentClient } from "@/lib/services/enrichment-client";
@@ -136,22 +137,61 @@ export async function POST(request: NextRequest) {
           `[Drive Webhook] Mudança detectada, sincronizando pasta ${webhook.folderId}`
         );
 
-        // Sincronização assíncrona (não bloqueia a resposta)
-        syncFolderWithDatabase(webhook.folderId).catch((error) => {
-          console.error(`[Drive Webhook] Erro na sincronização:`, error);
-        });
+        // Sincronização assíncrona + enrichment dos novos arquivos
+        syncFolderWithDatabase(webhook.folderId)
+          .then(async (syncResult) => {
+            // Enriquecer novos arquivos automaticamente (fire-and-forget)
+            if (syncResult.newFileIds.length > 0) {
+              console.log(`[Drive Webhook] ${syncResult.newFileIds.length} novo(s) arquivo(s) para enrichment`);
+
+              // Buscar detalhes dos novos arquivos
+              const newFiles = await db
+                .select({
+                  id: driveFiles.id,
+                  webContentLink: driveFiles.webContentLink,
+                  webViewLink: driveFiles.webViewLink,
+                  mimeType: driveFiles.mimeType,
+                  name: driveFiles.name,
+                  assistidoId: driveFiles.assistidoId,
+                  processoId: driveFiles.processoId,
+                })
+                .from(driveFiles)
+                .where(inArray(driveFiles.id, syncResult.newFileIds));
+
+              for (const file of newFiles) {
+                // Apenas enriquecer PDFs e documentos (não imagens/vídeos do sync)
+                const enrichableMimes = [
+                  "application/pdf",
+                  "application/msword",
+                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ];
+                if (!file.mimeType || !enrichableMimes.includes(file.mimeType)) continue;
+
+                const fileUrl = file.webContentLink || file.webViewLink;
+                if (!fileUrl) continue;
+
+                enrichmentClient.enrichAsync(
+                  () => enrichmentClient.enrichDocument({
+                    fileUrl,
+                    mimeType: file.mimeType || "application/pdf",
+                    assistidoId: file.assistidoId,
+                    processoId: file.processoId,
+                    casoId: null,
+                    defensorId: "webhook",
+                  }),
+                  `Drive enrichment for file ${file.name} (id: ${file.id})`,
+                ).catch(() => {});
+              }
+            }
+          })
+          .catch((error) => {
+            console.error(`[Drive Webhook] Erro na sincronização:`, error);
+          });
 
         // Se for a pasta de distribuição, processar e notificar
         if (isDistributionFolder && (resourceState === "add" || resourceState === "change")) {
           processDistributionFolder().catch(console.error);
         }
-
-        // Enrichment Engine: enriquecer novos documentos (async, non-blocking)
-        // TODO: Quando syncFolderWithDatabase retornar IDs dos arquivos novos,
-        // chamar enrichmentClient.enrichDocument() para cada um.
-        // Por enquanto, o enrichment será chamado via UI ou tRPC quando o documento
-        // for aberto pela primeira vez.
-        console.log(`[Drive Webhook] Enrichment Engine: ponto de integração pronto para pasta ${webhook.folderId}`);
         break;
 
       case "remove":

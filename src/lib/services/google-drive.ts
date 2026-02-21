@@ -53,6 +53,8 @@ export interface SyncResult {
   filesUpdated: number;
   filesRemoved: number;
   errors: string[];
+  /** IDs dos novos arquivos inseridos no banco (para enrichment) */
+  newFileIds: number[];
 }
 
 export interface GoogleDriveConfig {
@@ -648,6 +650,7 @@ export async function syncFolderWithDatabase(
     filesUpdated: 0,
     filesRemoved: 0,
     errors: [],
+    newFileIds: [],
   };
 
   try {
@@ -682,7 +685,7 @@ export async function syncFolderWithDatabase(
 
       if (!existing) {
         // Novo arquivo - inserir
-        await db.insert(driveFiles).values({
+        const [inserted] = await db.insert(driveFiles).values({
           driveFileId: driveFile.id,
           driveFolderId: folderId,
           name: driveFile.name,
@@ -699,8 +702,11 @@ export async function syncFolderWithDatabase(
           syncStatus: "synced",
           lastSyncAt: new Date(),
           createdById: userId,
-        });
+        }).returning({ id: driveFiles.id });
         result.filesAdded++;
+        if (inserted) {
+          result.newFileIds.push(inserted.id);
+        }
       } else {
         // Arquivo existente - verificar se precisa atualizar
         const driveModified = driveFile.modifiedTime ? new Date(driveFile.modifiedTime) : null;
