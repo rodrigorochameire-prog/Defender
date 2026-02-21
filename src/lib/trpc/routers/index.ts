@@ -43,6 +43,7 @@ import { coberturaRouter } from "./cobertura";
 import { acompanhamentoRouter } from "./acompanhamento";
 import { parecerRouter } from "./parecer";
 import { muralRouter } from "./mural";
+import { enrichmentRouter } from "./enrichment";
 
 
 export const appRouter = router({
@@ -168,6 +169,11 @@ export const appRouter = router({
   // COWORK - MURAL DE EQUIPE (NOTAS)
   // ==========================================
   mural: muralRouter,
+
+  // ==========================================
+  // ENRICHMENT ENGINE (SISTEMA NERVOSO DEFENSIVO)
+  // ==========================================
+  enrichment: enrichmentRouter,
 });
 
 export type AppRouter = typeof appRouter;
