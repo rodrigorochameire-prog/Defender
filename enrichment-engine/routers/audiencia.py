@@ -4,11 +4,11 @@ Fluxo: Texto pauta → Gemini (extração) → Supabase (gravar)
 """
 
 import logging
-import time
 
 from fastapi import APIRouter, HTTPException, status
 
 from models.schemas import AudienciaInput, AudienciaOutput
+from services.enrichment_orchestrator import get_orchestrator
 
 logger = logging.getLogger("enrichment-engine.audiencia")
 router = APIRouter()
@@ -23,26 +23,23 @@ async def enrich_audiencia(input_data: AudienciaInput) -> AudienciaOutput:
     2. Gemini extrai: tipo, partes, juiz, data, hora, sala, processo
     3. Grava no Supabase: audiências, vincula a processos
     """
-    start = time.time()
-    text_len = len(input_data.pauta_text)
     logger.info(
         "Enriching audiencia | chars=%d defensor=%s",
-        text_len,
+        len(input_data.pauta_text),
         input_data.defensor_id,
     )
 
     try:
-        # TODO: Fase 3 — importar e usar GeminiService com prompt audiência
-        # TODO: Fase 4 — importar e usar SupabaseService
-        # TODO: Fase 5 — orquestrar fluxo completo
-
-        elapsed = time.time() - start
-        logger.info("Audiencia enriched in %.1fs", elapsed)
+        orchestrator = get_orchestrator()
+        result = await orchestrator.enrich_audiencia(
+            pauta_text=input_data.pauta_text,
+            defensor_id=input_data.defensor_id,
+        )
 
         return AudienciaOutput(
-            audiencias=[],
-            audiencias_criadas=[],
-            processos_vinculados=[],
+            audiencias=result.get("audiencias", []),
+            audiencias_criadas=result.get("audiencias_criadas", []),
+            processos_vinculados=result.get("processos_vinculados", []),
         )
 
     except Exception as e:

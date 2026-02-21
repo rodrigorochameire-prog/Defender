@@ -4,11 +4,11 @@ Fluxo: Texto bruto → Gemini (extração) → Supabase (gravar)
 """
 
 import logging
-import time
 
 from fastapi import APIRouter, HTTPException, status
 
 from models.schemas import PjeInput, PjeOutput
+from services.enrichment_orchestrator import get_orchestrator
 
 logger = logging.getLogger("enrichment-engine.pje")
 router = APIRouter()
@@ -23,28 +23,25 @@ async def enrich_pje_text(input_data: PjeInput) -> PjeOutput:
     2. Gemini com prompt jurídico extrai: processo, partes, crime, fase, prazo
     3. Grava no Supabase: demandas, processos, assistidos, casePersonas
     """
-    start = time.time()
-    text_len = len(input_data.raw_text)
     logger.info(
         "Enriching PJe text | chars=%d defensor=%s",
-        text_len,
+        len(input_data.raw_text),
         input_data.defensor_id,
     )
 
     try:
-        # TODO: Fase 3 — importar e usar GeminiService com prompt PJe
-        # TODO: Fase 4 — importar e usar SupabaseService
-        # TODO: Fase 5 — orquestrar fluxo completo
-
-        elapsed = time.time() - start
-        logger.info("PJe text enriched in %.1fs | chars=%d", elapsed, text_len)
+        orchestrator = get_orchestrator()
+        result = await orchestrator.enrich_pje_text(
+            raw_text=input_data.raw_text,
+            defensor_id=input_data.defensor_id,
+        )
 
         return PjeOutput(
-            intimacoes=[],
-            processos_atualizados=[],
-            demandas_criadas=[],
-            assistidos_identificados=[],
-            total_processadas=0,
+            intimacoes=result.get("intimacoes", []),
+            processos_atualizados=result.get("processos_atualizados", []),
+            demandas_criadas=result.get("demandas_criadas", []),
+            assistidos_identificados=result.get("assistidos_identificados", []),
+            total_processadas=result.get("total_processadas", 0),
         )
 
     except Exception as e:

@@ -364,6 +364,21 @@ export const demandas = pgTable("demandas", {
   // Ordenação manual (drag-and-drop persist)
   ordemManual: integer("ordem_manual"),
 
+  // Enrichment Engine (Sistema Nervoso Defensivo)
+  enrichmentData: jsonb("enrichment_data").$type<{
+    crime?: string;
+    artigos?: string[];
+    qualificadoras?: string[];
+    fase_processual?: string;
+    atribuicao_detectada?: string;
+    reu_preso_detectado?: boolean;
+    intimado?: string;
+    correus?: string[];
+    vitima?: string;
+    urgencia?: string;
+    confidence?: number;
+  }>(),
+
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -668,7 +683,19 @@ export const documentos = pgTable("documentos", {
   
   // Template
   isTemplate: boolean("is_template").default(false), // Se é um modelo reutilizável
-  
+
+  // Enrichment Engine (Sistema Nervoso Defensivo)
+  enrichmentStatus: varchar("enrichment_status", { length: 20 }), // pending | processing | enriched | failed
+  enrichmentData: jsonb("enrichment_data").$type<{
+    document_type?: string;
+    sub_type?: string;
+    area?: string;
+    extracted_data?: Record<string, unknown>;
+    confidence?: number;
+    markdown_preview?: string;
+  }>(),
+  enrichedAt: timestamp("enriched_at"),
+
   // Metadados
   uploadedById: integer("uploaded_by_id")
     .notNull()
@@ -683,6 +710,7 @@ export const documentos = pgTable("documentos", {
   index("documentos_categoria_idx").on(table.categoria),
   index("documentos_is_template_idx").on(table.isTemplate),
   index("documentos_workspace_id_idx").on(table.workspaceId),
+  index("documentos_enrichment_status_idx").on(table.enrichmentStatus),
 ]);
 
 export type Documento = typeof documentos.$inferSelect;
@@ -1900,6 +1928,20 @@ export const atendimentos = pgTable("atendimentos", {
 
   // ==========================================
 
+  // Enrichment Engine (Sistema Nervoso Defensivo)
+  enrichmentStatus: varchar("enrichment_status", { length: 20 }), // pending | processing | enriched | failed
+  enrichmentData: jsonb("enrichment_data").$type<{
+    key_points?: string[];
+    facts?: { descricao: string; tipo: string; confidence: number }[];
+    persons_mentioned?: { nome: string; papel: string }[];
+    contradictions?: string[];
+    suggested_actions?: string[];
+    teses_possiveis?: string[];
+    urgency_level?: string;
+    confidence?: number;
+  }>(),
+  enrichedAt: timestamp("enriched_at"),
+
   // Metadados
   atendidoPorId: integer("atendido_por_id")
     .references(() => users.id),
@@ -1914,6 +1956,7 @@ export const atendimentos = pgTable("atendimentos", {
   index("atendimentos_status_idx").on(table.status),
   index("atendimentos_atendido_por_idx").on(table.atendidoPorId),
   index("atendimentos_workspace_id_idx").on(table.workspaceId),
+  index("atendimentos_enrichment_status_idx").on(table.enrichmentStatus),
   index("atendimentos_plaud_recording_id_idx").on(table.plaudRecordingId),
   index("atendimentos_transcricao_status_idx").on(table.transcricaoStatus),
 ]);
