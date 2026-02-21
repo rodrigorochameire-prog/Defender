@@ -26,6 +26,7 @@ import {
   extractMediaInfo,
   extractPhoneFromJid,
 } from "@/lib/services/evolution-api";
+import { enrichmentClient } from "@/lib/services/enrichment-client";
 
 // Tipos de evento da Evolution API
 type EvolutionEvent =
@@ -228,9 +229,20 @@ async function handleMessageUpsert(configId: number, message: EvolutionMessage) 
       `[Evolution Webhook] Mensagem salva: ${type} de ${fromMe ? "mim" : phone} - "${text?.substring(0, 50) || "[mídia]"}"`
     );
 
+    // Enrichment Engine: triagem de urgência (async, non-blocking)
+    if (!fromMe && text && text.length > 3) {
+      enrichmentClient.enrichAsync(
+        () => enrichmentClient.enrichWhatsApp({
+          message: text,
+          contactId: String(contact.id),
+          assistidoId: contact.assistidoId ?? undefined,
+        }),
+        `WhatsApp triage for contact ${contact.id}`,
+      ).catch(() => {}); // fire-and-forget
+    }
+
     // TODO: Disparar evento para atualização em tempo real (SSE/WebSocket/Pusher)
     // TODO: Verificar se há auto-reply configurado
-    // TODO: Verificar se deve processar com IA
   } catch (error) {
     console.error("[Evolution Webhook] Erro ao processar mensagem:", error);
     throw error;

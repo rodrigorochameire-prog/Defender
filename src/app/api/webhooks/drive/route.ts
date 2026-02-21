@@ -3,6 +3,7 @@ import { db, driveWebhooks, driveSyncLogs, notifications, users } from "@/lib/db
 import { eq, or } from "drizzle-orm";
 import { syncFolderWithDatabase, listDistributionPendingFiles } from "@/lib/services/google-drive";
 import { SPECIAL_FOLDER_IDS } from "@/lib/utils/text-extraction";
+import { enrichmentClient } from "@/lib/services/enrichment-client";
 
 /**
  * Webhook do Google Drive
@@ -144,6 +145,13 @@ export async function POST(request: NextRequest) {
         if (isDistributionFolder && (resourceState === "add" || resourceState === "change")) {
           processDistributionFolder().catch(console.error);
         }
+
+        // Enrichment Engine: enriquecer novos documentos (async, non-blocking)
+        // TODO: Quando syncFolderWithDatabase retornar IDs dos arquivos novos,
+        // chamar enrichmentClient.enrichDocument() para cada um.
+        // Por enquanto, o enrichment será chamado via UI ou tRPC quando o documento
+        // for aberto pela primeira vez.
+        console.log(`[Drive Webhook] Enrichment Engine: ponto de integração pronto para pasta ${webhook.folderId}`);
         break;
 
       case "remove":

@@ -20,6 +20,7 @@ import {
 import { eq, and, desc, isNull } from "drizzle-orm";
 import { uploadFileToDrive } from "./google-drive";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { enrichmentClient } from "@/lib/services/enrichment-client";
 
 // ==========================================
 // TIPOS
@@ -276,6 +277,28 @@ async function handleTranscriptionCompleted(
       await uploadRecordingToDrive(existingRecording.id, config.driveFolderId);
     } catch (error) {
       console.error("[Plaud] Erro ao fazer upload para Drive:", error);
+    }
+  }
+
+  // Enrichment Engine: enriquecer transcrição (async, non-blocking)
+  if (payload.data.transcription && existingRecording.atendimentoId) {
+    // Buscar atendimento para obter assistidoId e processoId
+    const [atendimento] = await db
+      .select({ assistidoId: atendimentos.assistidoId, processoId: atendimentos.processoId, casoId: atendimentos.casoId })
+      .from(atendimentos)
+      .where(eq(atendimentos.id, existingRecording.atendimentoId))
+      .limit(1);
+
+    if (atendimento) {
+      enrichmentClient.enrichAsync(
+        () => enrichmentClient.enrichTranscript({
+          transcript: payload.data.transcription!,
+          assistidoId: atendimento.assistidoId,
+          processoId: atendimento.processoId,
+          casoId: atendimento.casoId,
+        }),
+        `Transcript enrichment for atendimento ${existingRecording.atendimentoId}`,
+      ).catch(() => {}); // fire-and-forget
     }
   }
 
