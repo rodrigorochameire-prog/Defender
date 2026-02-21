@@ -8,7 +8,7 @@ pydantic-settings>=2.0
 docling>=2.70.0
 
 # === AI ===
-google-generativeai>=0.8.0
+google-genai>=1.0.0
 
 # === Database ===
 supabase>=2.0.0

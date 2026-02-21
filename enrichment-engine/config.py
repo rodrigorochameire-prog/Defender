@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # --- Gemini ---
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-2.5-flash"
     gemini_max_retries: int = 3
     gemini_timeout: int = 60  # seconds
     gemini_rate_limit: int = 60  # requests per minute

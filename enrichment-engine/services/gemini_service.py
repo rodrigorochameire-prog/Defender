@@ -1,6 +1,8 @@
 """
 Gemini Service — Extração semântica via Google Gemini Flash.
-Wrapper com retry, rate limiting e response_mime_type JSON.
+Wrapper com retry, rate limiting e response JSON.
+
+Usa o pacote `google-genai` (novo SDK unificado do Google).
 """
 
 import json
@@ -18,30 +20,22 @@ class GeminiService:
 
     def __init__(self):
         self.settings = get_settings()
-        self._model = None
+        self._client = None
         self._request_times: list[float] = []
 
-    def _get_model(self):
-        """Lazy init do Gemini model."""
-        if self._model is None:
+    def _get_client(self):
+        """Lazy init do Gemini client."""
+        if self._client is None:
             try:
-                import google.generativeai as genai
+                from google import genai
 
-                genai.configure(api_key=self.settings.gemini_api_key)
-                self._model = genai.GenerativeModel(
-                    self.settings.gemini_model,
-                    generation_config={
-                        "response_mime_type": "application/json",
-                        "temperature": 0.1,  # Baixa — extração precisa
-                        "max_output_tokens": 8192,
-                    },
-                )
-                logger.info("Gemini model initialized: %s", self.settings.gemini_model)
+                self._client = genai.Client(api_key=self.settings.gemini_api_key)
+                logger.info("Gemini client initialized: model=%s", self.settings.gemini_model)
             except ImportError as e:
-                logger.error("google-generativeai not installed: %s", e)
-                raise RuntimeError("Google Generative AI library not available") from e
+                logger.error("google-genai not installed: %s", e)
+                raise RuntimeError("Google GenAI library not available") from e
 
-        return self._model
+        return self._client
 
     def _check_rate_limit(self):
         """Rate limiting simples — sliding window."""
@@ -67,7 +61,7 @@ class GeminiService:
         Returns:
             dict com dados extraídos conforme prompt
         """
-        model = self._get_model()
+        client = self._get_client()
         self._check_rate_limit()
 
         full_prompt = f"{prompt}\n\n---\n\nTEXTO PARA ANÁLISE:\n\n{context}"
@@ -85,15 +79,24 @@ class GeminiService:
         last_error = None
         for attempt in range(1, self.settings.gemini_max_retries + 1):
             try:
+                from google.genai import types
+
                 start = time.time()
-                response = model.generate_content(full_prompt)
+                response = client.models.generate_content(
+                    model=self.settings.gemini_model,
+                    contents=full_prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.1,  # Baixa — extração precisa
+                        max_output_tokens=8192,
+                    ),
+                )
                 elapsed = time.time() - start
 
                 logger.info(
-                    "Gemini response | attempt=%d time=%.1fs tokens=%s",
+                    "Gemini response | attempt=%d time=%.1fs",
                     attempt,
                     elapsed,
-                    getattr(response, "usage_metadata", "?"),
                 )
 
                 # Parse JSON response
