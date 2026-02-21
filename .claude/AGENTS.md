@@ -23,8 +23,40 @@ Sistema de gestão jurídica para a **Defensoria Pública da Bahia**, focado em:
 | **Backend** | tRPC (type-safe API) |
 | **Banco** | PostgreSQL + Drizzle ORM |
 | **UI** | Radix UI + shadcn/ui customizado |
-| **IA** | Google Gemini (análise de casos) |
+| **IA** | Google Gemini (análise de casos), Enrichment Engine |
+| **Enrichment** | Python FastAPI + Docling + Gemini Flash (Railway) |
 | **Integrações** | WhatsApp, Google Drive/Calendar, PJe |
+
+---
+
+## 1.3 Enrichment Engine (Sistema Nervoso Defensivo)
+
+Serviço Python (FastAPI) hospedado no Railway que enriquece automaticamente dados importados.
+
+**Arquitetura**: `Next.js (Vercel) → REST API → Enrichment Engine (Railway) → Supabase`
+
+| Componente | Função |
+|------------|--------|
+| **Docling** (IBM) | Parsing de PDFs/DOCX → Markdown (OCR pt-BR, tabelas) |
+| **Gemini Flash** | Extração semântica com prompts especializados por tipo |
+| **Supabase** | Gravação de caseFacts, casePersonas, anotações |
+
+**Endpoints** (`/enrich/*`):
+- `POST /enrich/document` — PDF/DOCX do Drive
+- `POST /enrich/pje-text` — Intimações PJe (extração profunda)
+- `POST /enrich/transcript` — Transcrição de atendimento
+- `POST /enrich/audiencia` — Pauta de audiência
+- `POST /enrich/whatsapp` — Triagem de mensagem WhatsApp
+- `GET /health` — Status do serviço
+
+**Integração Next.js**: `src/lib/services/enrichment-client.ts`
+- Chamado nos webhooks: Drive, Plaud (transcrição), Evolution (WhatsApp)
+- Modo fire-and-forget via `enrichAsync()` (não bloqueia o fluxo)
+- Auth: header `X-API-Key`
+
+**Projeto**: `enrichment-engine/` (raiz do monorepo)
+
+**DB**: Colunas `enrichment_status`, `enrichment_data` (jsonb), `enriched_at` em documentos, atendimentos, demandas.
 
 ---
 
