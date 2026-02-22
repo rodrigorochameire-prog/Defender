@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     docling_ocr_enabled: bool = True
     docling_ocr_lang: str = "por"
 
+    # --- Solar (Defensoria Pública - DPEBA) ---
+    solar_username: str = ""
+    solar_password: str = ""
+    solar_base_url: str = "https://solar.defensoria.ba.def.br"
+    solar_session_timeout: int = 1800  # 30 min - conservative Keycloak session
+    solar_rate_limit_seconds: float = 3.0  # delay between page navigations
+    solar_max_pdfs_per_sync: int = 10  # max PDFs to download per processo
+    solar_headless: bool = True  # False for local debugging
+
     # --- Limites ---
     max_text_length: int = 100_000  # chars
     rate_limit_per_minute: int = 100

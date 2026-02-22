@@ -180,6 +180,82 @@ class WhatsAppOutput(BaseModel):
     entities_created: list[dict] = Field(default_factory=list)
 
 
+# === Solar ===
+
+class SolarSyncInput(BaseModel):
+    """Input para /solar/sync-processo."""
+    numero_processo: str = Field(..., min_length=5, description="Número do processo (formato CNJ)")
+    processo_id: int | None = Field(None, description="ID do processo no OMBUDS (se já conhecido)")
+    assistido_id: int | None = Field(None, description="ID do assistido no OMBUDS")
+    caso_id: int | None = Field(None, description="ID do caso no OMBUDS")
+    download_pdfs: bool = Field(True, description="Se deve baixar PDFs de documentos")
+
+
+class SolarPdfDownload(BaseModel):
+    """Um PDF baixado do Solar, codificado em base64."""
+    filename: str
+    content_base64: str
+    mime_type: str = "application/pdf"
+    tipo_documento: str | None = None
+
+
+class SolarSyncOutput(BaseModel):
+    """Output de /solar/sync-processo."""
+    success: bool
+    numero_processo: str
+    processo_data: dict = Field(default_factory=dict, description="Dados do processo extraídos")
+    movimentacoes_encontradas: int = 0
+    movimentacoes_novas: int = 0
+    documentos_baixados: int = 0
+    anotacoes_criadas: list[dict] = Field(default_factory=list)
+    case_facts_criados: list[dict] = Field(default_factory=list)
+    pdfs: list[SolarPdfDownload] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+
+
+class SolarBatchInput(BaseModel):
+    """Input para /solar/sync-batch."""
+    processos: list[SolarSyncInput] = Field(..., max_length=20, description="Max 20 processos por batch")
+    max_concurrent: int = Field(default=1, ge=1, le=5, description="Max processos simultâneos")
+
+
+class SolarBatchOutput(BaseModel):
+    """Output de /solar/sync-batch."""
+    total: int
+    succeeded: int
+    failed: int
+    results: list[SolarSyncOutput] = Field(default_factory=list)
+
+
+class SolarAvisoItem(BaseModel):
+    """Um aviso pendente do Solar."""
+    tipo: str | None = None
+    numero_processo: str | None = None
+    descricao: str | None = None
+    data_publicacao: str | None = None
+    prazo: str | None = None
+    lido: bool = False
+    ombuds_processo_id: int | None = None
+    ombuds_assistido_id: int | None = None
+
+
+class SolarAvisosOutput(BaseModel):
+    """Output de /solar/avisos."""
+    avisos: list[SolarAvisoItem] = Field(default_factory=list)
+    total: int = 0
+    error: str | None = None
+
+
+class SolarStatusOutput(BaseModel):
+    """Output de GET /solar/status."""
+    configured: bool
+    authenticated: bool
+    session_age_seconds: int | None = None
+    solar_reachable: bool = False
+    selectors_mapped: bool = False
+    unmapped_selectors: list[str] = Field(default_factory=list)
+
+
 # === Health ===
 
 class HealthResponse(BaseModel):
@@ -189,3 +265,4 @@ class HealthResponse(BaseModel):
     docling_available: bool
     gemini_configured: bool
     supabase_configured: bool
+    solar_configured: bool = False

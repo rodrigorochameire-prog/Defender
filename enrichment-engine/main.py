@@ -17,6 +17,7 @@ from routers.pje import router as pje_router
 from routers.transcript import router as transcript_router
 from routers.audiencia import router as audiencia_router
 from routers.whatsapp import router as whatsapp_router
+from routers.solar import router as solar_router
 
 # Logging estruturado (sem PII)
 logging.basicConfig(
@@ -44,6 +45,8 @@ async def lifespan(app: FastAPI):
         logger.warning("SUPABASE_URL not set — Supabase service will fail")
     if not settings.enrichment_api_key:
         logger.warning("ENRICHMENT_API_KEY not set — all authenticated routes blocked")
+    if not settings.solar_username:
+        logger.warning("SOLAR_USERNAME not set — Solar integration disabled")
 
     yield
 
@@ -77,6 +80,7 @@ def create_app() -> FastAPI:
     app.include_router(transcript_router, prefix="/enrich", tags=["Enrich"])
     app.include_router(audiencia_router, prefix="/enrich", tags=["Enrich"])
     app.include_router(whatsapp_router, prefix="/enrich", tags=["Enrich"])
+    app.include_router(solar_router, tags=["Solar"])
 
     return app
 

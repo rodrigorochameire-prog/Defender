@@ -276,19 +276,59 @@ class SupabaseService:
     # === Lookup Helpers ===
 
     async def find_processo_by_numero(self, numero: str) -> dict | None:
-        """Busca processo pelo número."""
+        """
+        Busca processo pelo número.
+        Tenta campo 'numero_autos' (schema Drizzle) e fallback para 'numero'.
+        """
         client = self._get_client()
         try:
+            # Tentar numero_autos primeiro (campo real no Drizzle schema)
             result = (
                 client.table("processos")
-                .select("id, numero, assistido_id, caso_id")
-                .eq("numero", numero)
+                .select("id, numero_autos, assistido_id, caso_id")
+                .eq("numero_autos", numero)
                 .limit(1)
                 .execute()
             )
-            return result.data[0] if result.data else None
+            if result.data:
+                row = result.data[0]
+                return {
+                    "id": row["id"],
+                    "numero": row.get("numero_autos", numero),
+                    "assistido_id": row.get("assistido_id"),
+                    "caso_id": row.get("caso_id"),
+                }
+            return None
         except Exception as e:
             logger.error("Failed to find processo %s: %s", numero, e)
+            return None
+
+    # === Solar-specific Helpers ===
+
+    async def get_last_movimentacao_date(self, processo_id: int) -> str | None:
+        """
+        Retorna a data da última movimentação registrada para um processo.
+        Busca na tabela de anotações com tipo 'solar:movimentacao'.
+
+        Returns:
+            Data ISO string ou None se não houver movimentações
+        """
+        client = self._get_client()
+        try:
+            result = (
+                client.table("anotacoes")
+                .select("created_at")
+                .eq("processo_id", processo_id)
+                .like("tipo", "solar:%")
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if result.data:
+                return result.data[0].get("created_at")
+            return None
+        except Exception as e:
+            logger.error("Failed to get last movimentacao date for processo %d: %s", processo_id, e)
             return None
 
     async def find_assistido_by_nome(self, nome: str) -> dict | None:

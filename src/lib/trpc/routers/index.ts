@@ -44,6 +44,7 @@ import { acompanhamentoRouter } from "./acompanhamento";
 import { parecerRouter } from "./parecer";
 import { muralRouter } from "./mural";
 import { enrichmentRouter } from "./enrichment";
+import { solarRouter } from "./solar";
 
 
 export const appRouter = router({
@@ -174,6 +175,11 @@ export const appRouter = router({
   // ENRICHMENT ENGINE (SISTEMA NERVOSO DEFENSIVO)
   // ==========================================
   enrichment: enrichmentRouter,
+
+  // ==========================================
+  // SOLAR (INTEGRAÇÃO DPEBA - PROCESSOS)
+  // ==========================================
+  solar: solarRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -117,6 +117,73 @@ export interface EnrichmentHealthResponse {
   docling_available: boolean;
   gemini_configured: boolean;
   supabase_configured: boolean;
+  solar_configured: boolean;
+}
+
+// === Solar Types ===
+
+export interface SolarSyncInput {
+  numeroProcesso: string;
+  processoId?: number | null;
+  assistidoId?: number | null;
+  casoId?: number | null;
+  downloadPdfs?: boolean;
+}
+
+export interface SolarPdfDownload {
+  filename: string;
+  content_base64: string;
+  mime_type: string;
+  tipo_documento?: string;
+}
+
+export interface SolarSyncOutput {
+  success: boolean;
+  numero_processo: string;
+  processo_data: Record<string, unknown>;
+  movimentacoes_encontradas: number;
+  movimentacoes_novas: number;
+  documentos_baixados: number;
+  anotacoes_criadas: { type: string; id?: number; movimentacao_tipo?: string }[];
+  case_facts_criados: { type: string; id?: number }[];
+  pdfs: SolarPdfDownload[];
+  errors: string[];
+}
+
+export interface SolarBatchInput {
+  processos: SolarSyncInput[];
+  maxConcurrent?: number;
+}
+
+export interface SolarBatchOutput {
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: SolarSyncOutput[];
+}
+
+export interface SolarAvisosOutput {
+  avisos: {
+    tipo?: string;
+    numero_processo?: string;
+    descricao?: string;
+    data_publicacao?: string;
+    prazo?: string;
+    lido: boolean;
+    ombuds_processo_id?: number;
+    ombuds_assistido_id?: number;
+  }[];
+  total: number;
+  error?: string;
+}
+
+export interface SolarStatusOutput {
+  configured: boolean;
+  authenticated: boolean;
+  session_age_seconds: number | null;
+  solar_reachable: boolean;
+  selectors_mapped: boolean;
+  unmapped_selectors: string[];
 }
 
 // === Client ===
@@ -262,6 +329,69 @@ class EnrichmentClient {
     }
 
     return (await response.json()) as EnrichmentHealthResponse;
+  }
+
+  // === Solar Methods ===
+
+  /**
+   * Sincronizar um processo via Solar (DPEBA).
+   * Chamado pelo: tRPC solar.syncProcesso
+   */
+  async solarSyncProcesso(input: SolarSyncInput): Promise<SolarSyncOutput> {
+    return this.request<SolarSyncOutput>("/solar/sync-processo", {
+      numero_processo: input.numeroProcesso,
+      processo_id: input.processoId,
+      assistido_id: input.assistidoId,
+      caso_id: input.casoId,
+      download_pdfs: input.downloadPdfs ?? true,
+    });
+  }
+
+  /**
+   * Sincronizar múltiplos processos via Solar (max 20).
+   * Chamado pelo: tRPC solar.syncBatch
+   */
+  async solarSyncBatch(input: SolarBatchInput): Promise<SolarBatchOutput> {
+    return this.request<SolarBatchOutput>("/solar/sync-batch", {
+      processos: input.processos.map((p) => ({
+        numero_processo: p.numeroProcesso,
+        processo_id: p.processoId,
+        assistido_id: p.assistidoId,
+        caso_id: p.casoId,
+        download_pdfs: p.downloadPdfs ?? true,
+      })),
+      max_concurrent: input.maxConcurrent ?? 1,
+    });
+  }
+
+  /**
+   * Listar avisos pendentes do Solar (intimações PJe/SEEU).
+   * Chamado pelo: tRPC solar.avisos
+   */
+  async solarAvisos(): Promise<SolarAvisosOutput> {
+    return this.request<SolarAvisosOutput>("/solar/avisos", {});
+  }
+
+  /**
+   * Status da integração Solar.
+   * Chamado pelo: tRPC solar.status
+   */
+  async solarStatus(): Promise<SolarStatusOutput> {
+    if (!this.baseUrl) {
+      throw new Error("ENRICHMENT_ENGINE_URL not configured");
+    }
+
+    const response = await fetch(`${this.baseUrl}/solar/status`, {
+      method: "GET",
+      headers: { "X-API-Key": this.apiKey },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Solar status check failed: ${response.status}`);
+    }
+
+    return (await response.json()) as SolarStatusOutput;
   }
 
   /**

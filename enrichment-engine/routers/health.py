@@ -33,4 +33,5 @@ async def health_check() -> HealthResponse:
         docling_available=docling_available,
         gemini_configured=bool(settings.gemini_api_key),
         supabase_configured=bool(settings.supabase_url and settings.supabase_service_role_key),
+        solar_configured=bool(settings.solar_username and settings.solar_password),
     )

@@ -16,6 +16,9 @@ supabase>=2.0.0
 # === HTTP ===
 httpx>=0.27.0
 
+# === Browser Automation (Solar scraping) ===
+playwright>=1.40.0
+
 # === Utils ===
 python-multipart>=0.0.9
 
