@@ -269,8 +269,7 @@ export const enrichmentRouter = router({
               persons_mentioned: [],
               contradictions: [],
               suggested_actions: [],
-              urgency_level: "low" as const,
-              error: error instanceof Error ? error.message : "Unknown error",
+              urgency_level: "low",
             },
             updatedAt: new Date(),
           })
