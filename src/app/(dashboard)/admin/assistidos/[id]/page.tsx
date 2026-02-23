@@ -37,6 +37,14 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const [sigadResult, setSigadResult] = useState<{
     success: boolean;
     ja_existia_solar?: boolean;
+    verificacao_processo?: boolean | null;
+    sigad_processo?: string | null;
+    dados_para_enriquecer?: {
+      nomeMae?: string | null;
+      dataNascimento?: string | null;
+      naturalidade?: string | null;
+      telefone?: string | null;
+    } | null;
     solar_url?: string | null;
     nome_sigad?: string | null;
     message?: string | null;
@@ -46,11 +54,18 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     onSuccess: (result) => {
       setSigadResult(result);
       if (result.success) {
+        const camposEnriquecidos = result.message?.includes("Campos enriquecidos:")
+          ? result.message.split("Campos enriquecidos:")[1]?.trim()
+          : null;
         toast.success(
           result.ja_existia_solar
             ? "Assistido já está cadastrado no Solar"
+            : camposEnriquecidos
+            ? `Exportado ao Solar. Campos preenchidos: ${camposEnriquecidos}`
             : "Assistido exportado ao Solar com sucesso",
         );
+      } else if (result.error === "processo_nao_corresponde") {
+        toast.warning(`Processo no SIGAD não corresponde: ${result.sigad_processo ?? "desconhecido"}`);
       } else {
         toast.error(result.message ?? result.error ?? "Erro ao exportar ao Solar");
       }
@@ -227,50 +242,85 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
       {/* Solar / SIGAD Actions */}
       {data.cpf && (
-        <div className="px-6 py-2.5 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-3">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-[11px] gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50"
-            disabled={exportarViaSigad.isPending}
-            onClick={() => exportarViaSigad.mutate({ assistidoId: Number(id) })}
-          >
-            {exportarViaSigad.isPending ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Sun className="h-3 w-3" />
-            )}
-            {exportarViaSigad.isPending ? "Exportando..." : "Exportar ao Solar via SIGAD"}
-          </Button>
-
-          {sigadResult && (
-            <div className="flex items-center gap-1.5 text-[11px]">
-              {sigadResult.success ? (
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+        <div className="px-6 py-2.5 border-b border-zinc-100 dark:border-zinc-800 flex flex-col gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-[11px] gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50"
+              disabled={exportarViaSigad.isPending}
+              onClick={() => exportarViaSigad.mutate({ assistidoId: Number(id) })}
+            >
+              {exportarViaSigad.isPending ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
-                <AlertCircle className="h-3.5 w-3.5 text-rose-500" />
+                <Sun className="h-3 w-3" />
               )}
-              <span className={sigadResult.success ? "text-emerald-700" : "text-rose-600"}>
-                {sigadResult.ja_existia_solar
-                  ? "Já no Solar"
-                  : sigadResult.success
-                  ? "Exportado"
-                  : sigadResult.error === "cpf_ausente"
-                  ? "Sem CPF no SIGAD"
-                  : sigadResult.error === "nao_encontrado"
-                  ? "Não encontrado no SIGAD"
-                  : "Erro"}
-              </span>
-              {sigadResult.solar_url && (
-                <a
-                  href={sigadResult.solar_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-0.5 text-amber-600 hover:underline ml-1"
+              {exportarViaSigad.isPending ? "Exportando ao Solar..." : "Exportar ao Solar via SIGAD"}
+            </Button>
+
+            {sigadResult && (
+              <div className="flex items-center gap-1.5 text-[11px]">
+                {sigadResult.success ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                ) : sigadResult.error === "processo_nao_corresponde" ? (
+                  <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                ) : (
+                  <AlertCircle className="h-3.5 w-3.5 text-rose-500" />
+                )}
+                <span
+                  className={
+                    sigadResult.success
+                      ? "text-emerald-700"
+                      : sigadResult.error === "processo_nao_corresponde"
+                      ? "text-amber-700"
+                      : "text-rose-600"
+                  }
                 >
-                  Ver no Solar <ExternalLink className="h-2.5 w-2.5" />
-                </a>
-              )}
+                  {sigadResult.ja_existia_solar
+                    ? "Já cadastrado no Solar"
+                    : sigadResult.success
+                    ? "Exportado ao Solar"
+                    : sigadResult.error === "cpf_ausente"
+                    ? "Sem CPF no SIGAD"
+                    : sigadResult.error === "nao_encontrado"
+                    ? "Não encontrado no SIGAD"
+                    : sigadResult.error === "processo_nao_corresponde"
+                    ? `Processo SIGAD não corresponde: ${sigadResult.sigad_processo ?? "desconhecido"}`
+                    : "Erro ao exportar"}
+                </span>
+                {sigadResult.solar_url && (
+                  <a
+                    href={sigadResult.solar_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-0.5 text-amber-600 hover:underline ml-1"
+                  >
+                    Ver no Solar <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Badge de campos enriquecidos */}
+          {sigadResult?.success && sigadResult.message?.includes("Campos enriquecidos:") && (
+            <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 dark:bg-emerald-950 rounded px-2 py-1 w-fit">
+              <CheckCircle2 className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+              <span>
+                {sigadResult.message.replace(/^.*?Campos enriquecidos:/, "Dados atualizados do SIGAD:")}
+              </span>
+            </div>
+          )}
+
+          {/* Aviso de processo não correspondente */}
+          {sigadResult?.error === "processo_nao_corresponde" && sigadResult.sigad_processo && (
+            <div className="flex items-start gap-1.5 text-[11px] text-amber-700 bg-amber-50 dark:bg-amber-950 rounded px-2 py-1 w-fit max-w-sm">
+              <AlertCircle className="h-3 w-3 text-amber-500 flex-shrink-0 mt-0.5" />
+              <span>
+                O assistido foi encontrado no SIGAD, mas o processo vinculado ({sigadResult.sigad_processo}) não
+                corresponde a nenhum processo cadastrado no OMBUDS. Verifique se o número de autos está correto.
+              </span>
             </div>
           )}
         </div>

@@ -271,21 +271,36 @@ export const solarRouter = router({
 
   /**
    * Exporta assistido do SIGAD para o Solar.
-   * Fluxo: busca assistido por CPF no SIGAD → clica EXPORTAR PARA O SOLAR.
-   * Requer: assistido com CPF cadastrado no OMBUDS e no SIGAD.
+   * Fluxo:
+   * 1. Busca assistido + seus processos no OMBUDS
+   * 2. Chama SIGAD: busca por CPF + verifica número do processo
+   * 3. Extrai dados extras da página extrato (nomeMae, dataNascimento, naturalidade, telefone)
+   * 4. Exporta ao Solar via botão nativo SIGAD
+   * 5. Enriquece OMBUDS com dados extraídos (apenas campos vazios)
    */
   exportarViaSigad: protectedProcedure
-    .input(
-      z.object({
-        assistidoId: z.number(),
-      }),
-    )
+    .input(z.object({ assistidoId: z.number() }))
     .mutation(async ({ input }): Promise<SigadExportarOutput> => {
       const { assistidos } = await import("@/lib/db/schema");
 
+      // 1. Buscar assistido com seus processos
       const assistido = await db.query.assistidos.findFirst({
         where: eq(assistidos.id, input.assistidoId),
-        columns: { id: true, nome: true, cpf: true },
+        columns: {
+          id: true,
+          nome: true,
+          cpf: true,
+          nomeMae: true,
+          dataNascimento: true,
+          naturalidade: true,
+          telefone: true,
+        },
+        with: {
+          processos: {
+            columns: { numeroAutos: true },
+            where: (p, { isNotNull }) => isNotNull(p.numeroAutos),
+          },
+        },
       });
 
       if (!assistido) {
@@ -297,10 +312,184 @@ export const solarRouter = router({
         );
       }
 
-      return enrichmentClient.sigadExportarAssistido({
+      // 2. Coletar números de processo para verificação cruzada
+      const numerosProcesso = (assistido.processos ?? [])
+        .map((p) => p.numeroAutos)
+        .filter((n): n is string => Boolean(n));
+
+      // 3. Exportar via SIGAD (com verificação de processo + extração de dados)
+      const result = await enrichmentClient.sigadExportarAssistido({
         cpf: assistido.cpf,
         ombudsAssistidoId: assistido.id,
+        numerosProcessoOmbuds: numerosProcesso.length > 0 ? numerosProcesso : undefined,
       });
+
+      // 4. Enriquecer OMBUDS se exportação foi bem-sucedida e há dados novos
+      if (result.success && result.dados_para_enriquecer) {
+        const dados = result.dados_para_enriquecer;
+        const updatePayload: Record<string, unknown> = {};
+
+        // Só preenche campos atualmente vazios — nunca sobrescreve dados existentes
+        if (dados.nomeMae && !assistido.nomeMae) {
+          updatePayload.nomeMae = dados.nomeMae;
+        }
+        if (dados.dataNascimento && !assistido.dataNascimento) {
+          updatePayload.dataNascimento = dados.dataNascimento;
+        }
+        if (dados.naturalidade && !assistido.naturalidade) {
+          updatePayload.naturalidade = dados.naturalidade;
+        }
+        if (dados.telefone && !assistido.telefone) {
+          updatePayload.telefone = dados.telefone;
+        }
+
+        if (Object.keys(updatePayload).length > 0) {
+          await db
+            .update(assistidos)
+            .set({ ...updatePayload, updatedAt: new Date() })
+            .where(eq(assistidos.id, input.assistidoId));
+
+          // Anotar quais campos foram enriquecidos no resultado
+          result.message = `${result.message ?? ""} Campos enriquecidos: ${Object.keys(updatePayload).join(", ")}`.trim();
+        }
+      }
+
+      return result;
+    }),
+
+  /**
+   * Exporta múltiplos assistidos ao Solar via SIGAD em sequência.
+   * Max 20 assistidos, delay de 2s entre cada para evitar flood no SIGAD.
+   */
+  exportarBatch: protectedProcedure
+    .input(z.object({ assistidoIds: z.array(z.number()).min(1).max(20) }))
+    .mutation(async ({ input }) => {
+      const { assistidos } = await import("@/lib/db/schema");
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+      const results: Array<{
+        assistidoId: number;
+        nome?: string;
+        success: boolean;
+        ja_existia_solar?: boolean;
+        verificacao_processo?: boolean | null;
+        sigad_processo?: string | null;
+        campos_enriquecidos?: string[];
+        solar_url?: string | null;
+        error?: string | null;
+        message?: string | null;
+      }> = [];
+
+      for (const assistidoId of input.assistidoIds) {
+        try {
+          // Buscar assistido com processos
+          const assistido = await db.query.assistidos.findFirst({
+            where: eq(assistidos.id, assistidoId),
+            columns: {
+              id: true,
+              nome: true,
+              cpf: true,
+              nomeMae: true,
+              dataNascimento: true,
+              naturalidade: true,
+              telefone: true,
+            },
+            with: {
+              processos: {
+                columns: { numeroAutos: true },
+                where: (p, { isNotNull }) => isNotNull(p.numeroAutos),
+              },
+            },
+          });
+
+          if (!assistido?.cpf) {
+            results.push({
+              assistidoId,
+              nome: assistido?.nome ?? undefined,
+              success: false,
+              error: "sem_cpf",
+              message: "Assistido sem CPF no OMBUDS",
+            });
+            continue;
+          }
+
+          const numerosProcesso = (assistido.processos ?? [])
+            .map((p) => p.numeroAutos)
+            .filter((n): n is string => Boolean(n));
+
+          const result = await enrichmentClient.sigadExportarAssistido({
+            cpf: assistido.cpf,
+            ombudsAssistidoId: assistido.id,
+            numerosProcessoOmbuds: numerosProcesso.length > 0 ? numerosProcesso : undefined,
+          });
+
+          // Enriquecer OMBUDS se bem-sucedido
+          const camposEnriquecidos: string[] = [];
+          if (result.success && result.dados_para_enriquecer) {
+            const dados = result.dados_para_enriquecer;
+            const updatePayload: Record<string, unknown> = {};
+
+            if (dados.nomeMae && !assistido.nomeMae) {
+              updatePayload.nomeMae = dados.nomeMae;
+              camposEnriquecidos.push("nomeMae");
+            }
+            if (dados.dataNascimento && !assistido.dataNascimento) {
+              updatePayload.dataNascimento = dados.dataNascimento;
+              camposEnriquecidos.push("dataNascimento");
+            }
+            if (dados.naturalidade && !assistido.naturalidade) {
+              updatePayload.naturalidade = dados.naturalidade;
+              camposEnriquecidos.push("naturalidade");
+            }
+            if (dados.telefone && !assistido.telefone) {
+              updatePayload.telefone = dados.telefone;
+              camposEnriquecidos.push("telefone");
+            }
+
+            if (Object.keys(updatePayload).length > 0) {
+              await db
+                .update(assistidos)
+                .set({ ...updatePayload, updatedAt: new Date() })
+                .where(eq(assistidos.id, assistidoId));
+            }
+          }
+
+          results.push({
+            assistidoId,
+            nome: assistido.nome ?? undefined,
+            success: result.success,
+            ja_existia_solar: result.ja_existia_solar,
+            verificacao_processo: result.verificacao_processo,
+            sigad_processo: result.sigad_processo,
+            campos_enriquecidos: camposEnriquecidos,
+            solar_url: result.solar_url,
+            error: result.error,
+            message: result.message,
+          });
+        } catch (err) {
+          results.push({
+            assistidoId,
+            success: false,
+            error: "exception",
+            message: err instanceof Error ? err.message : "Erro desconhecido",
+          });
+        }
+
+        // Delay entre requisições para não sobrecarregar o SIGAD
+        if (assistidoId !== input.assistidoIds.at(-1)) {
+          await sleep(2000);
+        }
+      }
+
+      const succeeded = results.filter((r) => r.success).length;
+      const failed = results.filter((r) => !r.success).length;
+
+      return {
+        total: results.length,
+        succeeded,
+        failed,
+        results,
+      };
     }),
 
   /**

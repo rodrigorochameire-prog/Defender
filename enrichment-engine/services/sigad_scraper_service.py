@@ -22,6 +22,11 @@ Fluxo descoberto via Chrome MCP em 2026-02-23:
      * "não possui CPF ou CNPJ" → erro, CPF ausente no SIGAD
 
 Requisito: assistido DEVE ter CPF cadastrado no SIGAD para exportar.
+
+Verificação de processo (2026-02-23):
+  Antes de exportar, cruzar sigad.numero_processo com processos do OMBUDS.
+  Normaliza ambos (remove pontos/traços/barras) para comparação robusta.
+  Se não bater → error: "processo_nao_corresponde" (falso positivo de CPF).
 """
 
 import logging
@@ -44,11 +49,25 @@ def get_sigad_scraper_service() -> "SigadScraperService":
     return _sigad_service
 
 
+def _normalizar_numero_processo(numero: str | None) -> str:
+    """Remove pontos, traços, barras e espaços para comparação normalizada."""
+    if not numero:
+        return ""
+    return re.sub(r"[\s.\-/]", "", numero)
+
+
 class SigadScraperService:
     """
     Scraper do SIGAD — exporta assistidos para o Solar via /exportarDadosBasicosAssistido/.
 
     Usa Playwright em modo headless com sessão persistente.
+
+    Fluxo principal (exportar_assistido_por_cpf):
+    1. Busca assistido por CPF na listagem
+    2. Verifica se o processo do SIGAD corresponde a algum processo do OMBUDS
+    3. Extrai dados detalhados da página extrato (nomeMae, dataNascimento, telefone, etc.)
+    4. Exporta para o Solar via botão nativo
+    5. Retorna resultado + dados para enriquecer o OMBUDS
     """
 
     BASE_URL = "https://sigad.defensoria.ba.def.br"
@@ -128,14 +147,15 @@ class SigadScraperService:
         return self._page  # type: ignore[return-value]
 
     # ------------------------------------------------------------------
-    # Busca de assistido
+    # Busca de assistido (listagem)
     # ------------------------------------------------------------------
 
     async def buscar_assistido_por_cpf(self, cpf: str) -> dict[str, Any] | None:
         """
-        Busca assistido no SIGAD pelo CPF.
+        Busca assistido no SIGAD pelo CPF via listagem /assistidos.
 
-        Retorna dict com {sigad_id, nome, cpf, data_nascimento, triagem} ou None.
+        Retorna dados da linha da tabela: sigad_id, nome, numero_processo,
+        mae, data_nascimento, cidade, triagem. Ou None se não encontrado.
         """
         page = await self._get_page()
 
@@ -152,8 +172,9 @@ class SigadScraperService:
             'input[name="data[Assistido][documento]"], #documento'
         )
         if not cpf_input:
-            # Fallback: campo genérico de documento
-            cpf_input = await page.query_selector('input[placeholder*="documento"], input[placeholder*="CPF"]')
+            cpf_input = await page.query_selector(
+                'input[placeholder*="documento"], input[placeholder*="CPF"]'
+            )
 
         if cpf_input:
             await cpf_input.fill(cpf)
@@ -181,7 +202,7 @@ class SigadScraperService:
             const row = rows[0];
             const cells = Array.from(row.querySelectorAll('td'));
 
-            // Extrair link do extrato para pegar o ID
+            // Extrair sigad_id via links
             const links = Array.from(row.querySelectorAll('a'));
             let sigad_id = null;
             for (const link of links) {
@@ -207,11 +228,80 @@ class SigadScraperService:
             return None
 
         logger.info(
-            "Assistido encontrado: sigad_id=%s nome=%s",
+            "Assistido encontrado: sigad_id=%s nome=%s processo=%s",
             result["sigad_id"],
             result["nome"],
+            result.get("numero_processo"),
         )
         return result
+
+    # ------------------------------------------------------------------
+    # Extração detalhada da página extrato
+    # ------------------------------------------------------------------
+
+    async def extrair_dados_extrato(self, sigad_id: str) -> dict[str, Any]:
+        """
+        Extrai dados detalhados da página /assistidos/extrato/{sigad_id}.
+
+        Campos extraídos:
+          - cpf, data_nascimento, nome_mae, cidade, telefone, triagem
+
+        Usa regex sobre document.body.innerText para robustez.
+        Navegação só ocorre se não estiver já nessa URL.
+        """
+        page = await self._get_page()
+        extrato_url = f"{self.BASE_URL}/assistidos/extrato/{sigad_id}"
+
+        # Navegar para extrato se ainda não estiver lá
+        if extrato_url not in page.url:
+            await page.goto(extrato_url)
+            await page.wait_for_timeout(2000)
+
+        dados = await page.evaluate("""() => {
+            const text = document.body.innerText;
+
+            function extrair(pattern) {
+                const m = text.match(pattern);
+                return m ? m[1].trim() : null;
+            }
+
+            // CPF
+            const cpf = extrair(/CPF:\\s*([\\d.\\-]+)/i);
+
+            // Data de nascimento
+            const dataNasc = extrair(/DATA\\s+DE\\s+NASCIMENTO:\\s*([\\d\\/]+)/i);
+
+            // Nome da mãe
+            const nomeMae = extrair(/NOME\\s+DA\\s+M[ÃA]E:\\s*([A-Z][A-Z\\s]+?)(?:\\n|\\r|\\s{2,}|CPF|RG|DATA|CIDADE|$)/i);
+
+            // Cidade
+            const cidade = extrair(/CIDADE:\\s*([A-Z][A-Z\\s]+?)(?:\\n|\\r|\\s{2,}|CPF|RG|DATA|CONTATO|$)/i);
+
+            // Telefone — busca em bloco de contatos
+            const telefone = extrair(/(?:CEL|TEL|FONE|TELEFONE):\\s*(\\(\\d{2}\\)\\s*[\\d\\s\\-]+)/i);
+
+            // Número de triagem
+            const triagem = extrair(/N[°º\\.]+\\s*TRIAGEM:\\s*([\\d]+)/i);
+
+            return {
+                cpf: cpf && cpf.toUpperCase() !== 'ND' ? cpf : null,
+                data_nascimento: dataNasc,
+                nome_mae: nomeMae,
+                cidade: cidade,
+                telefone: telefone,
+                triagem: triagem,
+            };
+        }""")
+
+        logger.info(
+            "Extrato SIGAD %s: cpf=%s dataNasc=%s nomeMae=%s telefone=%s",
+            sigad_id,
+            dados.get("cpf"),
+            dados.get("data_nascimento"),
+            dados.get("nome_mae"),
+            dados.get("telefone"),
+        )
+        return dados
 
     # ------------------------------------------------------------------
     # Exportação para o Solar
@@ -226,25 +316,20 @@ class SigadScraperService:
         Exporta assistido do SIGAD para o Solar.
 
         Navega para /assistidos/extrato/{sigad_id} e clica em EXPORTAR PARA O SOLAR.
-
-        Retorna:
-          - success: bool
-          - ja_existia: bool (True se já estava no Solar)
-          - solar_url: str | None (link para o Solar, se fornecido)
-          - message: str (mensagem do SIGAD)
-          - error: str | None
+        Retorna: success, ja_existia, solar_url, message, error.
         """
         page = await self._get_page()
 
         extrato_url = f"{self.BASE_URL}/assistidos/extrato/{sigad_id}"
-        logger.info("Navegando para extrato SIGAD: %s", extrato_url)
-        await page.goto(extrato_url)
-        await page.wait_for_timeout(2000)
+        if extrato_url not in page.url:
+            logger.info("Navegando para extrato SIGAD: %s", extrato_url)
+            await page.goto(extrato_url)
+            await page.wait_for_timeout(2000)
 
-        # Verificar se assistido tem CPF no SIGAD (campo obrigatório)
+        # Verificar se assistido tem CPF no SIGAD (campo obrigatório para exportar)
         cpf_displayed = await page.evaluate("""() => {
             const text = document.body.innerText;
-            const m = text.match(/CPF:\\s*([\\d.\\-]+)/);
+            const m = text.match(/CPF:\\s*([\\d.\\-]+)/i);
             return m ? m[1] : null;
         }""")
         if not cpf_displayed or cpf_displayed.upper() in ("ND", "N/D", ""):
@@ -266,13 +351,10 @@ class SigadScraperService:
 
         # Capturar modal/aviso exibido após o clique
         modal_text = await page.evaluate("""() => {
-            // Tenta modal Bootstrap
             const modal = document.querySelector('.modal.in .modal-body, .modal[style*="display: block"] .modal-body');
             if (modal) return modal.innerText.trim();
-            // Tenta bootbox
             const bootbox = document.querySelector('.bootbox .modal-body');
             if (bootbox) return bootbox.innerText.trim();
-            // Tenta qualquer aviso
             const aviso = document.querySelector('.alert, #aviso, .aviso');
             if (aviso) return aviso.innerText.trim();
             return null;
@@ -332,14 +414,35 @@ class SigadScraperService:
             }
 
     # ------------------------------------------------------------------
-    # Método principal: buscar por CPF e exportar
+    # Método principal: buscar, verificar, enriquecer e exportar
     # ------------------------------------------------------------------
 
-    async def exportar_assistido_por_cpf(self, cpf: str) -> dict[str, Any]:
+    async def exportar_assistido_por_cpf(
+        self,
+        cpf: str,
+        numeros_processo_ombuds: list[str] | None = None,
+    ) -> dict[str, Any]:
         """
-        Fluxo completo: buscar assistido no SIGAD pelo CPF e exportar para o Solar.
+        Fluxo completo SIGAD → Solar com verificação de processo e enriquecimento.
 
-        Usado pelo endpoint /sigad/exportar-assistido.
+        Etapas:
+        1. Buscar assistido no SIGAD pelo CPF
+        2. Verificar correspondência de processo (se numeros_processo_ombuds fornecido)
+           - Normaliza ambos (remove pontos/traços) para comparação robusta
+           - Se não bater → retorna error: "processo_nao_corresponde"
+        3. Extrair dados detalhados da página extrato (nomeMae, dataNascimento, telefone, etc.)
+        4. Exportar para o Solar via botão nativo
+        5. Retornar resultado + dados_para_enriquecer (apenas campos não-nulos)
+
+        Args:
+            cpf: CPF do assistido (com ou sem máscara)
+            numeros_processo_ombuds: Lista de numeroAutos dos processos no OMBUDS.
+                Se fornecida, valida que o processo do SIGAD está na lista.
+
+        Returns:
+            Dict com campos: success, encontrado_sigad, ja_existia_solar,
+            verificacao_processo, sigad_processo, dados_para_enriquecer,
+            solar_url, sigad_id, nome_sigad, message, error.
         """
         # 1. Buscar no SIGAD
         assistido = await self.buscar_assistido_por_cpf(cpf)
@@ -348,6 +451,9 @@ class SigadScraperService:
                 "success": False,
                 "encontrado_sigad": False,
                 "ja_existia_solar": False,
+                "verificacao_processo": None,
+                "sigad_processo": None,
+                "dados_para_enriquecer": None,
                 "solar_url": None,
                 "sigad_id": None,
                 "nome_sigad": None,
@@ -357,14 +463,69 @@ class SigadScraperService:
 
         sigad_id = assistido["sigad_id"]
         nome = assistido.get("nome", "")
+        sigad_numero = (assistido.get("numero_processo") or "").strip()
 
-        # 2. Exportar para o Solar
+        # 2. Verificar correspondência de processo
+        verificacao_ok: bool | None = None
+        if numeros_processo_ombuds:
+            sigad_norm = _normalizar_numero_processo(sigad_numero)
+            match = (
+                sigad_norm
+                and any(
+                    _normalizar_numero_processo(n) == sigad_norm
+                    for n in numeros_processo_ombuds
+                )
+            )
+            if not match:
+                logger.warning(
+                    "Processo SIGAD '%s' não corresponde aos processos OMBUDS: %s",
+                    sigad_numero,
+                    numeros_processo_ombuds,
+                )
+                return {
+                    "success": False,
+                    "encontrado_sigad": True,
+                    "ja_existia_solar": False,
+                    "verificacao_processo": False,
+                    "sigad_processo": sigad_numero,
+                    "dados_para_enriquecer": None,
+                    "solar_url": None,
+                    "sigad_id": sigad_id,
+                    "nome_sigad": nome,
+                    "message": (
+                        f"Processo no SIGAD ({sigad_numero}) não corresponde "
+                        f"aos processos do OMBUDS: {', '.join(numeros_processo_ombuds)}"
+                    ),
+                    "error": "processo_nao_corresponde",
+                }
+            verificacao_ok = True
+
+        # 3. Extrair dados detalhados da página extrato
+        # exportar_para_solar() já navega para o extrato, então aproveitamos
+        # a mesma navegação extraindo os dados antes de clicar no botão.
+        dados_extrato = await self.extrair_dados_extrato(sigad_id)
+
+        # Montar dados para enriquecer o OMBUDS (apenas campos não-nulos)
+        dados_para_enriquecer: dict[str, str] = {}
+        if dados_extrato.get("nome_mae"):
+            dados_para_enriquecer["nomeMae"] = dados_extrato["nome_mae"]
+        if dados_extrato.get("data_nascimento"):
+            dados_para_enriquecer["dataNascimento"] = dados_extrato["data_nascimento"]
+        if dados_extrato.get("cidade"):
+            dados_para_enriquecer["naturalidade"] = dados_extrato["cidade"]
+        if dados_extrato.get("telefone"):
+            dados_para_enriquecer["telefone"] = dados_extrato["telefone"]
+
+        # 4. Exportar para o Solar (página extrato já está carregada)
         export_result = await self.exportar_para_solar(sigad_id=sigad_id, cpf=cpf)
 
         return {
             "success": export_result["success"],
             "encontrado_sigad": True,
             "ja_existia_solar": export_result.get("ja_existia", False),
+            "verificacao_processo": verificacao_ok,
+            "sigad_processo": sigad_numero or None,
+            "dados_para_enriquecer": dados_para_enriquecer if dados_para_enriquecer else None,
             "solar_url": export_result.get("solar_url"),
             "sigad_id": sigad_id,
             "nome_sigad": nome,

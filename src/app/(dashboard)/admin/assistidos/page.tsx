@@ -91,6 +91,8 @@ import {
   Link2Off,
   ExternalLink,
   FileStack,
+  Sun,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -1741,6 +1743,44 @@ export default function AssistidosPage() {
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [selectedAssistido, setSelectedAssistido] = useState<typeof realAssistidos[0] | null>(null);
 
+  // Batch Solar export state
+  const [batchSelectMode, setBatchSelectMode] = useState(false);
+  const [batchSelectedIds, setBatchSelectedIds] = useState<Set<number>>(new Set());
+  const [batchResultOpen, setBatchResultOpen] = useState(false);
+  const [batchResults, setBatchResults] = useState<Array<{
+    assistidoId: number;
+    nome?: string;
+    success: boolean;
+    ja_existia_solar?: boolean;
+    verificacao_processo?: boolean | null;
+    sigad_processo?: string | null;
+    campos_enriquecidos?: string[];
+    error?: string | null;
+    message?: string | null;
+  }>>([]);
+
+  const exportarBatch = trpc.solar.exportarBatch.useMutation({
+    onSuccess: (result) => {
+      setBatchResults(result.results);
+      setBatchResultOpen(true);
+      setBatchSelectMode(false);
+      setBatchSelectedIds(new Set());
+    },
+    onError: (err) => {
+      import("sonner").then(({ toast }) => toast.error(err.message));
+    },
+  });
+
+  const toggleBatchSelect = (id: number, hasCpf: boolean) => {
+    if (!hasCpf) return;
+    setBatchSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   // Extrair comarcas únicas dos assistidos
   const comarcasUnicas = useMemo(() => {
     const allComarcas = new Set<string>();
@@ -2056,8 +2096,57 @@ export default function AssistidosPage() {
             >
               <Download className="w-3.5 h-3.5" />
             </Button>
+            {/* Botão batch Solar export */}
+            {!batchSelectMode ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2.5 border-amber-200 text-amber-700 hover:bg-amber-50 text-xs font-medium rounded-md"
+                onClick={() => setBatchSelectMode(true)}
+                title="Exportar múltiplos assistidos ao Solar via SIGAD"
+              >
+                <Sun className="w-3.5 h-3.5 mr-1" />
+                Solar
+              </Button>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-zinc-500">
+                  {batchSelectedIds.size} selecionados
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs border-zinc-200 text-zinc-500"
+                  onClick={() => {
+                    setBatchSelectMode(false);
+                    setBatchSelectedIds(new Set());
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded-md"
+                  disabled={batchSelectedIds.size === 0 || exportarBatch.isPending}
+                  onClick={() =>
+                    exportarBatch.mutate({
+                      assistidoIds: Array.from(batchSelectedIds),
+                    })
+                  }
+                >
+                  {exportarBatch.isPending ? (
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <Sun className="w-3 h-3 mr-1" />
+                  )}
+                  {exportarBatch.isPending
+                    ? `Exportando ${batchSelectedIds.size}...`
+                    : `Exportar ${batchSelectedIds.size} ao Solar`}
+                </Button>
+              </div>
+            )}
             <Link href="/admin/assistidos/novo">
-              <Button 
+              <Button
                 size="sm"
                 className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
               >
@@ -2369,15 +2458,34 @@ export default function AssistidosPage() {
                 {/* Cards do Grupo */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
                   {items.map((a) => (
-                    <AssistidoCard 
-                      key={a.id}
-                      assistido={a} 
-                      onPhotoClick={() => handlePhotoClick(a)}
-                      isPinned={pinnedIds.has(a.id)}
-                      onTogglePin={() => togglePin(a.id)}
-                      hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
-                      duplicateCount={potentialDuplicates[a.id]?.length || 0}
-                    />
+                    <div key={a.id} className="relative">
+                      {batchSelectMode && (
+                        <button
+                          onClick={() => toggleBatchSelect(a.id, !!a.cpf)}
+                          className={cn(
+                            "absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                            !a.cpf
+                              ? "border-zinc-300 bg-zinc-100 cursor-not-allowed opacity-40"
+                              : batchSelectedIds.has(a.id)
+                              ? "border-amber-500 bg-amber-500"
+                              : "border-zinc-300 bg-white hover:border-amber-400"
+                          )}
+                          title={!a.cpf ? "Assistido sem CPF — não pode ser exportado" : undefined}
+                        >
+                          {batchSelectedIds.has(a.id) && (
+                            <CheckCircle2 className="w-3 h-3 text-white" />
+                          )}
+                        </button>
+                      )}
+                      <AssistidoCard
+                        assistido={a}
+                        onPhotoClick={() => handlePhotoClick(a)}
+                        isPinned={pinnedIds.has(a.id)}
+                        onTogglePin={() => togglePin(a.id)}
+                        hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
+                        duplicateCount={potentialDuplicates[a.id]?.length || 0}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -2387,15 +2495,34 @@ export default function AssistidosPage() {
           // Exibição normal (sem agrupamento)
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
             {filteredAssistidos.map((a) => (
-              <AssistidoCard 
-                key={a.id}
-                assistido={a} 
-                onPhotoClick={() => handlePhotoClick(a)}
-                isPinned={pinnedIds.has(a.id)}
-                onTogglePin={() => togglePin(a.id)}
-                hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
-                duplicateCount={potentialDuplicates[a.id]?.length || 0}
-              />
+              <div key={a.id} className="relative">
+                {batchSelectMode && (
+                  <button
+                    onClick={() => toggleBatchSelect(a.id, !!a.cpf)}
+                    className={cn(
+                      "absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                      !a.cpf
+                        ? "border-zinc-300 bg-zinc-100 cursor-not-allowed opacity-40"
+                        : batchSelectedIds.has(a.id)
+                        ? "border-amber-500 bg-amber-500"
+                        : "border-zinc-300 bg-white hover:border-amber-400"
+                    )}
+                    title={!a.cpf ? "Assistido sem CPF — não pode ser exportado" : undefined}
+                  >
+                    {batchSelectedIds.has(a.id) && (
+                      <CheckCircle2 className="w-3 h-3 text-white" />
+                    )}
+                  </button>
+                )}
+                <AssistidoCard
+                  assistido={a}
+                  onPhotoClick={() => handlePhotoClick(a)}
+                  isPinned={pinnedIds.has(a.id)}
+                  onTogglePin={() => togglePin(a.id)}
+                  hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
+                  duplicateCount={potentialDuplicates[a.id]?.length || 0}
+                />
+              </div>
             ))}
           </div>
         )
@@ -2440,6 +2567,71 @@ export default function AssistidosPage() {
           onUpload={(file) => console.log("Upload:", file)}
         />
       )}
+
+      {/* Batch Solar Export Results Dialog */}
+      <Dialog open={batchResultOpen} onOpenChange={setBatchResultOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm">
+              <Sun className="h-4 w-4 text-amber-600" />
+              Resultado da Exportação ao Solar
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {batchResults.filter((r) => r.success).length} exportados com sucesso /{" "}
+              {batchResults.filter((r) => !r.success).length} com falha
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 mt-2">
+            {batchResults.map((r) => (
+              <div
+                key={r.assistidoId}
+                className={cn(
+                  "flex items-start gap-2 p-2.5 rounded-lg border text-xs",
+                  r.success
+                    ? "border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20"
+                    : r.error === "processo_nao_corresponde"
+                    ? "border-amber-200 bg-amber-50 dark:bg-amber-950/20"
+                    : "border-rose-200 bg-rose-50 dark:bg-rose-950/20"
+                )}
+              >
+                {r.success ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                ) : r.error === "processo_nao_corresponde" ? (
+                  <AlertCircle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="h-3.5 w-3.5 text-rose-500 flex-shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                    {r.nome ?? `Assistido #${r.assistidoId}`}
+                  </span>
+                  <p
+                    className={cn(
+                      "mt-0.5",
+                      r.success ? "text-emerald-700" : r.error === "processo_nao_corresponde" ? "text-amber-700" : "text-rose-600"
+                    )}
+                  >
+                    {r.success
+                      ? r.ja_existia_solar
+                        ? "Já cadastrado no Solar"
+                        : r.campos_enriquecidos && r.campos_enriquecidos.length > 0
+                        ? `Exportado ✓ · Dados atualizados: ${r.campos_enriquecidos.join(", ")}`
+                        : "Exportado ao Solar com sucesso"
+                      : r.error === "sem_cpf"
+                      ? "Sem CPF cadastrado no OMBUDS"
+                      : r.error === "nao_encontrado"
+                      ? "Não encontrado no SIGAD"
+                      : r.error === "processo_nao_corresponde"
+                      ? `Processo SIGAD não corresponde: ${r.sigad_processo ?? "?"}`
+                      : r.message ?? r.error ?? "Erro desconhecido"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       </div>
     </div>
   );

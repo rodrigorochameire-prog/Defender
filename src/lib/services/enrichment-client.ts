@@ -214,10 +214,23 @@ export interface SolarCadastrarOutput {
 
 // === SIGAD Types ===
 
+export interface SigadEnriquecerDados {
+  nomeMae?: string | null;
+  dataNascimento?: string | null;
+  naturalidade?: string | null;
+  telefone?: string | null;
+}
+
 export interface SigadExportarOutput {
   success: boolean;
   encontrado_sigad: boolean;
   ja_existia_solar: boolean;
+  // Verificação processo
+  verificacao_processo?: boolean | null;
+  sigad_processo?: string | null;
+  // Enriquecimento reverso
+  dados_para_enriquecer?: SigadEnriquecerDados | null;
+  // Links e identificadores
   solar_url?: string | null;
   sigad_id?: string | null;
   nome_sigad?: string | null;
@@ -477,15 +490,18 @@ class EnrichmentClient {
 
   /**
    * Exportar assistido do SIGAD para o Solar pelo CPF.
+   * Inclui verificação cruzada de número de processo e enriquecimento de dados.
    * Chamado pelo: tRPC solar.exportarViaSigad
    */
   async sigadExportarAssistido(input: {
     cpf: string;
     ombudsAssistidoId?: number | null;
+    numerosProcessoOmbuds?: string[];
   }): Promise<SigadExportarOutput> {
     return this.request<SigadExportarOutput>("/sigad/exportar-assistido", {
       cpf: input.cpf,
       ombuds_assistido_id: input.ombudsAssistidoId ?? null,
+      numeros_processo_ombuds: input.numerosProcessoOmbuds ?? null,
     });
   }
 

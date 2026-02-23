@@ -290,10 +290,22 @@ class SolarCadastrarOutput(BaseModel):
 
 # === SIGAD ===
 
+class SigadEnriquecerDados(BaseModel):
+    """Dados extraídos do SIGAD para enriquecer o OMBUDS."""
+    nomeMae: str | None = None
+    dataNascimento: str | None = None
+    naturalidade: str | None = None  # cidade de nascimento
+    telefone: str | None = None
+
+
 class SigadExportarInput(BaseModel):
     """Input para /sigad/exportar-assistido."""
     cpf: str = Field(..., min_length=11, description="CPF do assistido (com ou sem máscara)")
     ombuds_assistido_id: int | None = Field(None, description="ID do assistido no OMBUDS (para logging)")
+    numeros_processo_ombuds: list[str] | None = Field(
+        None,
+        description="Números de processo do OMBUDS para verificação cruzada com SIGAD"
+    )
 
 
 class SigadExportarOutput(BaseModel):
@@ -301,6 +313,12 @@ class SigadExportarOutput(BaseModel):
     success: bool
     encontrado_sigad: bool
     ja_existia_solar: bool
+    # Verificação processo
+    verificacao_processo: bool | None = None  # None = não verificado (sem processos)
+    sigad_processo: str | None = None  # número do processo no SIGAD
+    # Enriquecimento reverso
+    dados_para_enriquecer: SigadEnriquecerDados | None = None
+    # Links e identificadores
     solar_url: str | None = None
     sigad_id: str | None = None
     nome_sigad: str | None = None
