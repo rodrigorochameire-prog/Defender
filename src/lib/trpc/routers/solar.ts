@@ -12,10 +12,11 @@
  * - solar.avisos: Lista avisos pendentes (PJe/SEEU)
  */
 
+import { createHash } from "crypto";
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { processos, documentos, anotacoes } from "@/lib/db/schema";
+import { processos, documentos, anotacoes, assistidos } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import {
   enrichmentClient,
@@ -281,8 +282,6 @@ export const solarRouter = router({
   exportarViaSigad: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
     .mutation(async ({ input, ctx }): Promise<SigadExportarOutput> => {
-      const { assistidos } = await import("@/lib/db/schema");
-
       // 1. Buscar assistido com seus processos
       const assistido = await db.query.assistidos.findFirst({
         where: eq(assistidos.id, input.assistidoId),
@@ -329,45 +328,32 @@ export const solarRouter = router({
 
       if (result.success && result.dados_para_enriquecer) {
         const dados = result.dados_para_enriquecer;
-        const updatePayload: Record<string, unknown> = {};
 
         // Só preenche campos atualmente vazios — nunca sobrescreve dados existentes
         if (dados.nomeMae && !assistido.nomeMae) {
-          updatePayload.nomeMae = dados.nomeMae;
           camposEnriquecidos.push("nomeMae");
         }
         if (dados.dataNascimento && !assistido.dataNascimento) {
-          updatePayload.dataNascimento = dados.dataNascimento;
           camposEnriquecidos.push("dataNascimento");
         }
         if (dados.naturalidade && !assistido.naturalidade) {
-          updatePayload.naturalidade = dados.naturalidade;
           camposEnriquecidos.push("naturalidade");
         }
         if (dados.telefone && !assistido.telefone) {
-          updatePayload.telefone = dados.telefone;
           camposEnriquecidos.push("telefone");
-        }
-
-        if (Object.keys(updatePayload).length > 0) {
-          await db
-            .update(assistidos)
-            .set({ ...updatePayload, updatedAt: new Date() })
-            .where(eq(assistidos.id, input.assistidoId));
         }
       }
 
       // 5. Persistir observações do SIGAD como anotações no OMBUDS
-      // Cada observação vira uma anotação do tipo "atendimento" vinculada ao assistido
+      // Cada observação vira uma anotação com hash SHA-256 para deduplicação idempotente
+      let novasAnotacoes = 0;
       if (result.success && result.observacoes && result.observacoes.length > 0) {
         const processoCorrespondente = (assistido.processos ?? []).find((p) => {
           if (!result.sigad_processo || !p.numeroAutos) return false;
           const norm = (s: string) => s.replace(/[\s.\-/]/g, "");
           return norm(p.numeroAutos) === norm(result.sigad_processo);
         });
-        const processoIdVinculo = processoCorrespondente
-          ? (processoCorrespondente as { id?: number }).id ?? null
-          : null;
+        const processoIdVinculo = processoCorrespondente?.id ?? null;
 
         for (const obs of result.observacoes) {
           if (!obs.texto) continue;
@@ -379,17 +365,64 @@ export const solarRouter = router({
             .filter(Boolean)
             .join("\n");
 
-          await db.insert(anotacoes).values({
-            assistidoId: input.assistidoId,
-            processoId: processoIdVinculo,
-            conteudo,
-            tipo: "atendimento",
-            importante: false,
-            createdById: ctx.user.id,
-          });
+          // Hash SHA-256 truncado (16 hex) para deduplicação idempotente
+          const conteudoHash = createHash("sha256")
+            .update(conteudo)
+            .digest("hex")
+            .slice(0, 16);
+
+          const inserted = await db
+            .insert(anotacoes)
+            .values({
+              assistidoId: input.assistidoId,
+              processoId: processoIdVinculo,
+              conteudo,
+              conteudoHash,
+              tipo: "atendimento",
+              importante: false,
+              createdById: ctx.user.id,
+            })
+            .onConflictDoNothing()  // unique index em (assistidoId, conteudoHash)
+            .returning({ id: anotacoes.id });
+
+          // Só conta como "nova" se de fato inseriu
+          if (inserted.length > 0) {
+            novasAnotacoes++;
+          }
         }
-        camposEnriquecidos.push(`${result.observacoes.length} observações`);
+
+        if (novasAnotacoes > 0) {
+          camposEnriquecidos.push(`${novasAnotacoes} observações novas`);
+        } else if (result.observacoes.length > 0) {
+          camposEnriquecidos.push(`${result.observacoes.length} observações já existiam (sem duplicatas)`);
+        }
       }
+
+      // 6. UPDATE único: enriquecimento + rastreabilidade SIGAD/Solar
+      const now = new Date();
+      const assistidoUpdate: Record<string, unknown> = {
+        sigadExportadoEm: now,
+        updatedAt: now,
+      };
+      // Gravar sigad_id se disponível
+      if (result.sigad_id) {
+        assistidoUpdate.sigadId = result.sigad_id;
+      }
+      // Solar: só marcar se exportação foi bem-sucedida (inclui "já existia")
+      if (result.success) {
+        assistidoUpdate.solarExportadoEm = now;
+        // Enriquecer campos vazios com dados do SIGAD
+        const dados = result.dados_para_enriquecer;
+        if (dados?.nomeMae && !assistido.nomeMae) assistidoUpdate.nomeMae = dados.nomeMae;
+        if (dados?.dataNascimento && !assistido.dataNascimento) assistidoUpdate.dataNascimento = dados.dataNascimento;
+        if (dados?.naturalidade && !assistido.naturalidade) assistidoUpdate.naturalidade = dados.naturalidade;
+        if (dados?.telefone && !assistido.telefone) assistidoUpdate.telefone = dados.telefone;
+      }
+
+      await db
+        .update(assistidos)
+        .set(assistidoUpdate)
+        .where(eq(assistidos.id, input.assistidoId));
 
       // Anotar campos enriquecidos no resultado
       if (camposEnriquecidos.length > 0) {
@@ -405,8 +438,7 @@ export const solarRouter = router({
    */
   exportarBatch: protectedProcedure
     .input(z.object({ assistidoIds: z.array(z.number()).min(1).max(20) }))
-    .mutation(async ({ input }) => {
-      const { assistidos } = await import("@/lib/db/schema");
+    .mutation(async ({ input, ctx }) => {
       const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
       const results: Array<{
@@ -417,6 +449,7 @@ export const solarRouter = router({
         verificacao_processo?: boolean | null;
         sigad_processo?: string | null;
         campos_enriquecidos?: string[];
+        novas_anotacoes?: number;
         solar_url?: string | null;
         error?: string | null;
         message?: string | null;
@@ -438,7 +471,7 @@ export const solarRouter = router({
             },
             with: {
               processos: {
-                columns: { numeroAutos: true },
+                columns: { id: true, numeroAutos: true },
                 where: (p, { isNotNull }) => isNotNull(p.numeroAutos),
               },
             },
@@ -469,32 +502,84 @@ export const solarRouter = router({
           const camposEnriquecidos: string[] = [];
           if (result.success && result.dados_para_enriquecer) {
             const dados = result.dados_para_enriquecer;
-            const updatePayload: Record<string, unknown> = {};
+            if (dados.nomeMae && !assistido.nomeMae) camposEnriquecidos.push("nomeMae");
+            if (dados.dataNascimento && !assistido.dataNascimento) camposEnriquecidos.push("dataNascimento");
+            if (dados.naturalidade && !assistido.naturalidade) camposEnriquecidos.push("naturalidade");
+            if (dados.telefone && !assistido.telefone) camposEnriquecidos.push("telefone");
+          }
 
-            if (dados.nomeMae && !assistido.nomeMae) {
-              updatePayload.nomeMae = dados.nomeMae;
-              camposEnriquecidos.push("nomeMae");
-            }
-            if (dados.dataNascimento && !assistido.dataNascimento) {
-              updatePayload.dataNascimento = dados.dataNascimento;
-              camposEnriquecidos.push("dataNascimento");
-            }
-            if (dados.naturalidade && !assistido.naturalidade) {
-              updatePayload.naturalidade = dados.naturalidade;
-              camposEnriquecidos.push("naturalidade");
-            }
-            if (dados.telefone && !assistido.telefone) {
-              updatePayload.telefone = dados.telefone;
-              camposEnriquecidos.push("telefone");
+          // Persistir observações com deduplicação por hash
+          let novasAnotacoes = 0;
+          if (result.success && result.observacoes && result.observacoes.length > 0) {
+            const processoCorrespondente = (assistido.processos ?? []).find((p) => {
+              if (!result.sigad_processo || !p.numeroAutos) return false;
+              const norm = (s: string) => s.replace(/[\s.\-/]/g, "");
+              return norm(p.numeroAutos) === norm(result.sigad_processo);
+            });
+            const processoIdVinculo = processoCorrespondente?.id ?? null;
+
+            for (const obs of result.observacoes) {
+              if (!obs.texto) continue;
+              const conteudo = [
+                `[SIGAD] ${obs.tipo ?? "Observação"} — ${obs.data ?? ""}`,
+                obs.defensor ? `Defensor/Servidor: ${obs.defensor}` : null,
+                obs.texto,
+              ]
+                .filter(Boolean)
+                .join("\n");
+
+              const conteudoHash = createHash("sha256")
+                .update(conteudo)
+                .digest("hex")
+                .slice(0, 16);
+
+              const inserted = await db
+                .insert(anotacoes)
+                .values({
+                  assistidoId,
+                  processoId: processoIdVinculo,
+                  conteudo,
+                  conteudoHash,
+                  tipo: "atendimento",
+                  importante: false,
+                  createdById: ctx.user.id,
+                })
+                .onConflictDoNothing()
+                .returning({ id: anotacoes.id });
+
+              if (inserted.length > 0) {
+                novasAnotacoes++;
+              }
             }
 
-            if (Object.keys(updatePayload).length > 0) {
-              await db
-                .update(assistidos)
-                .set({ ...updatePayload, updatedAt: new Date() })
-                .where(eq(assistidos.id, assistidoId));
+            if (novasAnotacoes > 0) {
+              camposEnriquecidos.push(`${novasAnotacoes} observações novas`);
+            } else {
+              camposEnriquecidos.push(`${result.observacoes.length} observações já existiam (sem duplicatas)`);
             }
           }
+
+          // UPDATE único: enriquecimento + rastreabilidade SIGAD/Solar
+          const now = new Date();
+          const assistidoUpdate: Record<string, unknown> = {
+            sigadExportadoEm: now,
+            updatedAt: now,
+          };
+          if (result.sigad_id) {
+            assistidoUpdate.sigadId = result.sigad_id;
+          }
+          if (result.success) {
+            assistidoUpdate.solarExportadoEm = now;
+            const dados = result.dados_para_enriquecer;
+            if (dados?.nomeMae && !assistido.nomeMae) assistidoUpdate.nomeMae = dados.nomeMae;
+            if (dados?.dataNascimento && !assistido.dataNascimento) assistidoUpdate.dataNascimento = dados.dataNascimento;
+            if (dados?.naturalidade && !assistido.naturalidade) assistidoUpdate.naturalidade = dados.naturalidade;
+            if (dados?.telefone && !assistido.telefone) assistidoUpdate.telefone = dados.telefone;
+          }
+          await db
+            .update(assistidos)
+            .set(assistidoUpdate)
+            .where(eq(assistidos.id, assistidoId));
 
           results.push({
             assistidoId,
@@ -504,6 +589,7 @@ export const solarRouter = router({
             verificacao_processo: result.verificacao_processo,
             sigad_processo: result.sigad_processo,
             campos_enriquecidos: camposEnriquecidos,
+            novas_anotacoes: novasAnotacoes,
             solar_url: result.solar_url,
             error: result.error,
             message: result.message,
@@ -540,8 +626,6 @@ export const solarRouter = router({
   buscarNoSigad: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
     .query(async ({ input }): Promise<SigadBuscarOutput> => {
-      const { assistidos } = await import("@/lib/db/schema");
-
       const assistido = await db.query.assistidos.findFirst({
         where: eq(assistidos.id, input.assistidoId),
         columns: { id: true, nome: true, cpf: true },
