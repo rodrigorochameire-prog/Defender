@@ -2,31 +2,55 @@
 SIGAD Scraper Service — Integração com o SIGAD (Sistema Integrado de Gestão
 de Atendimento da Defensoria, v3.8.2, CakePHP).
 
-Fluxo descoberto via Chrome MCP em 2026-02-23:
+Fluxo mapeado via Chrome MCP (2026-02-23, investigação aprofundada):
 
 1. Login: POST /usuarios/login
    - data[Usuario][login], data[Usuario][senha]
    - Session cookie gerenciada pelo Playwright
 
-2. Buscar assistido por CPF: GET /assistidos + form submit
-   - Tipo de Documento = CPF, Documento de identificação = CPF
+2. Buscar assistido por CPF: POST /assistidos?md=
+   - Formulário: #formAssitido (CakePHP POST)
+   - Campo tipo: data[Filtro][tipoDoc] = "102" (CPF)
+   - Campo CPF:  data[Filtro][documento] = CPF sem máscara
+   - Tabela resultado: #lst_assistido (preenchida via AJAX após POST)
+   - "Nenhum Assistido Presente" → CPF não encontrado
+   - Link extrato: /assistidos/extrato/{sigad_id}
 
 3. Extrato: GET /assistidos/extrato/{sigad_id}
-   - Exibe dados completos + botão EXPORTAR PARA O SOLAR
+   - Header: CPF, Data Nascimento, Nome Mãe, Cidade, Celular, Nº Triagem
+   - Tabela "AÇÕES GERADAS POR AGENDAMENTOS" (7 colunas):
+       Data | Número da Ação | Especializada | Tipo de Ação | Nº do Processo | Situação | Opções
+   - Painel expandido (inline, Detalhar Todos ativo por padrão):
+       "Nº do processo: XXXX - Atuação: 1ª Vara Criminal"
+   - Tabela observações (4 colunas): Data | Defensor/Servidor | Tipo | Observações
+   - Aba AGENDAMENTOS: #tableAgendamento (8 colunas)
+   - Aba ANEXOS: #table_anexos_extrato (6 colunas)
+   - Botão exportar: #exportar_solar (.BtnExport)
 
 4. Exportar: POST /assistidos/exportarDadosBasicosAssistido/{sigad_id}?trs=1
-   - Payload: data[Assistido][id]={sigad_id}
-   - Resposta:
-     * "já está cadastrado no SOLAR" → assistido já existe no Solar
-     * "Exportado com sucesso" → exportação realizada
-     * "não possui CPF ou CNPJ" → erro, CPF ausente no SIGAD
+   - Trigger: $.ajax() acionado pelo click em #exportar_solar
+   - dataType: json — retorna objeto JSON
+   - Resposta (verificada no handler JS):
+     * "CPF/CNPJ já cadastrado" → já existe no Solar
+       → link: https://solar.defensoria.ba.def.br/assistido/buscar/
+     * "Dados exportados com sucesso!" → exportação realizada (novo)
+     * "Este campo não pode ser nulo." → CPF é "ND" no SIGAD
+   - Solar URL pós-exportação: /assistido/buscar/?cpf={CPF_FORMATADO}&page=1&
 
-Requisito: assistido DEVE ter CPF cadastrado no SIGAD para exportar.
+Requisito: assistido DEVE ter CPF cadastrado no SIGAD (não "ND") para exportar.
 
 Verificação de processo (2026-02-23):
   Antes de exportar, cruzar sigad.numero_processo com processos do OMBUDS.
   Normaliza ambos (remove pontos/traços/barras) para comparação robusta.
+  Fonte primária do número: extrato (mais completo que listagem).
   Se não bater → error: "processo_nao_corresponde" (falso positivo de CPF).
+
+Seletores corretos confirmados (2026-02-23):
+  - tipoDoc: select[name="data[Filtro][tipoDoc]"] — value "102" = CPF
+  - documento: input[name="data[Filtro][documento]"] — CPF sem máscara
+  - submit: input[type="submit"]#submit-XXXX (id dinâmico — não usar id)
+  - resultado: table#lst_assistido tbody tr
+  - "nenhum resultado": td[colspan="2"] com texto "Nenhum Assistido Presente."
 """
 
 import logging
@@ -126,6 +150,20 @@ class SigadScraperService:
         self._authenticated = True
         logger.info("SIGAD login bem-sucedido. URL: %s", current_url)
 
+    async def _is_authenticated(self, page: Page) -> bool:
+        """
+        Verifica se a sessão atual ainda está ativa.
+        Faz uma requisição leve para /assistidos e checa redirect para login.
+        """
+        try:
+            current_url = page.url
+            # Indicadores de sessão expirada
+            if any(p in current_url for p in ("/login", "/usuarios/login")):
+                return False
+            return True
+        except Exception:
+            return False
+
     async def _get_page(self) -> Page:
         """Retorna página autenticada, fazendo login se necessário."""
         page = await self._ensure_browser()
@@ -135,14 +173,14 @@ class SigadScraperService:
             return self._page  # type: ignore[return-value]
 
         # Verificar se sessão ainda está ativa
-        try:
-            current_url = page.url
-            if "/login" in current_url:
-                logger.info("Sessão SIGAD expirada, re-autenticando")
-                self._authenticated = False
+        if not await self._is_authenticated(page):
+            logger.info("Sessão SIGAD expirada, re-autenticando")
+            self._authenticated = False
+            try:
                 await self._login()
-        except Exception:
-            await self._login()
+            except Exception as e:
+                logger.error("Falha ao re-autenticar no SIGAD: %s", e)
+                raise
 
         return self._page  # type: ignore[return-value]
 
@@ -154,81 +192,140 @@ class SigadScraperService:
         """
         Busca assistido no SIGAD pelo CPF via listagem /assistidos.
 
-        Retorna dados da linha da tabela: sigad_id, nome, numero_processo,
-        mae, data_nascimento, cidade, triagem. Ou None se não encontrado.
+        Seletores confirmados (2026-02-23):
+          - data[Filtro][tipoDoc] = "102" (CPF)
+          - data[Filtro][documento] = CPF sem máscara (ex: "06072263585")
+          - Tabela resultado: #lst_assistido
+          - "Nenhum Assistido Presente." → CPF não cadastrado
+
+        A tabela é populada via AJAX após o POST — aguarda até 8s.
+        Se houver múltiplos resultados, usa o primeiro e loga warning.
+
+        Retorna dict com: sigad_id, nome, numero_processo, triagem, cidade.
+        Retorna None se não encontrado.
         """
         page = await self._get_page()
 
+        # Normalizar CPF: remover máscara para o campo do formulário
+        cpf_sem_mascara = re.sub(r"[\s.\-/]", "", cpf)
+
         # Navegar para página de busca
         await page.goto(f"{self.BASE_URL}/assistidos")
-        await page.wait_for_timeout(2000)
+        await page.wait_for_load_state("domcontentloaded")
+        await page.wait_for_timeout(1500)
 
-        # Selecionar tipo de documento CPF
-        await page.select_option('select[name="data[Assistido][tipo_doc_id]"], #tipo_doc', "CPF")
-        await page.wait_for_timeout(500)
+        # Verificar se página carregou corretamente (não caiu no login)
+        if "/login" in page.url or "/usuarios/login" in page.url:
+            logger.warning("Sessão SIGAD expirada ao navegar para /assistidos — re-autenticando")
+            self._authenticated = False
+            await self._login()
+            await page.goto(f"{self.BASE_URL}/assistidos")
+            await page.wait_for_timeout(1500)
 
-        # Preencher CPF (aceita com ou sem máscara)
-        cpf_input = await page.query_selector(
-            'input[name="data[Assistido][documento]"], #documento'
-        )
-        if not cpf_input:
-            cpf_input = await page.query_selector(
-                'input[placeholder*="documento"], input[placeholder*="CPF"]'
-            )
+        # Setar tipo de documento = CPF (value "102") via JS com events
+        # (evita problema de máscara dinâmica que limpa o campo documento)
+        await page.evaluate("""() => {
+            const sel = document.querySelector('select[name="data[Filtro][tipoDoc]"]');
+            if (sel) {
+                sel.value = '102';
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }""")
+        await page.wait_for_timeout(300)
 
-        if cpf_input:
-            await cpf_input.fill(cpf)
+        # Preencher CPF sem máscara
+        cpf_field = await page.query_selector('input[name="data[Filtro][documento]"]')
+        if cpf_field:
+            await cpf_field.fill(cpf_sem_mascara)
+            await cpf_field.dispatch_event("input")
+            await cpf_field.dispatch_event("change")
         else:
-            logger.warning("Campo CPF não encontrado, tentando via JS")
+            logger.warning("Campo data[Filtro][documento] não encontrado — tentando fallback")
             await page.evaluate(f"""() => {{
-                const inputs = document.querySelectorAll('input[type=text]');
-                for (const inp of inputs) {{
-                    if (inp.name && inp.name.toLowerCase().includes('documento')) {{
-                        inp.value = '{cpf}';
-                        break;
-                    }}
+                const inp = document.querySelector('input[name="data[Filtro][documento]"]')
+                    || document.querySelector('#documentoIdentificacao');
+                if (inp) {{
+                    inp.value = '{cpf_sem_mascara}';
+                    inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    inp.dispatchEvent(new Event('change', {{ bubbles: true }}));
                 }}
             }}""")
 
-        # Submeter formulário
-        await page.click('button[type="submit"], input[type="submit"]')
-        await page.wait_for_timeout(3000)
+        # Submeter formulário diretamente (evita problemas com botão de submit)
+        await page.evaluate("() => document.querySelector('#formAssitido')?.submit()")
+        await page.wait_for_load_state("domcontentloaded")
 
-        # Extrair primeiro resultado da tabela
-        result = await page.evaluate("""() => {
-            const rows = document.querySelectorAll('table tbody tr');
-            if (!rows.length) return null;
+        # Aguardar tabela de resultados com polling (AJAX pode demorar)
+        resultado_pronto = False
+        for _ in range(8):  # até 8s
+            await page.wait_for_timeout(1000)
+            tabela_html = await page.evaluate("""() => {
+                const t = document.querySelector('#lst_assistido tbody');
+                return t ? t.innerHTML : null;
+            }""")
+            if tabela_html and "Nenhum Assistido Presente" not in tabela_html:
+                resultado_pronto = True
+                break
+            if tabela_html and "Nenhum Assistido Presente" in tabela_html:
+                break  # definitivamente não encontrado
 
-            const row = rows[0];
-            const cells = Array.from(row.querySelectorAll('td'));
-
-            // Extrair sigad_id via links
-            const links = Array.from(row.querySelectorAll('a'));
-            let sigad_id = null;
-            for (const link of links) {
-                const m = link.href && link.href.match(/\\/extrato\\/(\\d+)/);
-                if (m) { sigad_id = m[1]; break; }
-                const m2 = link.href && link.href.match(/\\/view\\/(\\d+)/);
-                if (m2) { sigad_id = m2[1]; break; }
-            }
-
-            return {
-                sigad_id: sigad_id,
-                triagem: cells[0] ? cells[0].textContent.trim() : null,
-                nome: cells[1] ? cells[1].textContent.trim() : null,
-                numero_processo: cells[2] ? cells[2].textContent.trim() : null,
-                mae: cells[3] ? cells[3].textContent.trim() : null,
-                data_nascimento: cells[4] ? cells[4].textContent.trim() : null,
-                cidade: cells[5] ? cells[5].textContent.trim() : null,
-            };
-        }""")
-
-        if not result or not result.get("sigad_id"):
+        if not resultado_pronto:
             logger.info("Assistido com CPF %s não encontrado no SIGAD", cpf)
             return None
 
+        # Extrair TODOS os resultados para detectar múltiplos (ambiguidade)
+        resultados = await page.evaluate("""() => {
+            const table = document.querySelector('#lst_assistido');
+            if (!table) return [];
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+
+            return rows
+                .filter(row => {
+                    // Filtrar linha de "nenhum resultado"
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length === 1) return false;
+                    return true;
+                })
+                .map(row => {
+                    const cells = Array.from(row.querySelectorAll('td'));
+
+                    // Extrair sigad_id via link /extrato/{id}
+                    let sigad_id = null;
+                    for (const a of row.querySelectorAll('a')) {
+                        const m = (a.href || '').match(/\\/extrato\\/(\\d+)/);
+                        if (m) { sigad_id = m[1]; break; }
+                        const m2 = (a.href || '').match(/\\/view\\/(\\d+)/);
+                        if (m2) { sigad_id = m2[1]; break; }
+                    }
+
+                    return {
+                        sigad_id,
+                        triagem:         cells[0] ? cells[0].textContent.trim() : null,
+                        nome:            cells[1] ? cells[1].textContent.trim() : null,
+                        numero_processo: cells[2] ? cells[2].textContent.trim() : null,
+                        mae:             cells[3] ? cells[3].textContent.trim() : null,
+                        data_nascimento: cells[4] ? cells[4].textContent.trim() : null,
+                        cidade:          cells[5] ? cells[5].textContent.trim() : null,
+                    };
+                })
+                .filter(r => r.sigad_id);
+        }""")
+
+        if not resultados:
+            logger.info("Assistido com CPF %s não encontrado no SIGAD", cpf)
+            return None
+
+        if len(resultados) > 1:
+            logger.warning(
+                "CPF %s retornou %d assistidos no SIGAD — usando o primeiro: sigad_id=%s",
+                cpf,
+                len(resultados),
+                resultados[0]["sigad_id"],
+            )
+
+        result = resultados[0]
         logger.info(
-            "Assistido encontrado: sigad_id=%s nome=%s processo=%s",
+            "Assistido encontrado no SIGAD: sigad_id=%s nome=%s processo=%s",
             result["sigad_id"],
             result["nome"],
             result.get("numero_processo"),
@@ -356,15 +453,38 @@ class SigadScraperService:
     # Exportação para o Solar
     # ------------------------------------------------------------------
 
+    def _solar_url_para_cpf(self, cpf: str | None) -> str | None:
+        """
+        Gera URL do Solar para busca por CPF.
+        Formato confirmado: /assistido/buscar/?cpf=060.722.635-85&page=1&
+        """
+        if not cpf:
+            return None
+        # Normalizar para formato com máscara: xxx.xxx.xxx-xx
+        digits = re.sub(r"\D", "", cpf)
+        if len(digits) == 11:
+            formatted = f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
+        else:
+            formatted = cpf
+        return f"https://solar.defensoria.ba.def.br/assistido/buscar/?cpf={formatted}&page=1&"
+
     async def exportar_para_solar(
         self,
         sigad_id: str,
         cpf: str | None = None,
     ) -> dict[str, Any]:
         """
-        Exporta assistido do SIGAD para o Solar.
+        Exporta assistido do SIGAD para o Solar via botão nativo.
 
-        Navega para /assistidos/extrato/{sigad_id} e clica em EXPORTAR PARA O SOLAR.
+        Navega para /assistidos/extrato/{sigad_id} (se não estiver lá),
+        clica em #exportar_solar, aguarda modal de resposta e interpreta.
+
+        Respostas possíveis (confirmadas via inspeção do JS handler):
+          - "CPF/CNPJ já cadastrado"      → ja_existia=True, success=True
+          - "Dados exportados com sucesso!" → ja_existia=False, success=True
+          - "Este campo não pode ser nulo." → CPF "ND", success=False
+          - Ausência de modal              → error="sem_resposta"
+
         Retorna: success, ja_existia, solar_url, message, error.
         """
         page = await self._get_page()
@@ -373,94 +493,159 @@ class SigadScraperService:
         if extrato_url not in page.url:
             logger.info("Navegando para extrato SIGAD: %s", extrato_url)
             await page.goto(extrato_url)
+            await page.wait_for_load_state("domcontentloaded")
             await page.wait_for_timeout(2000)
 
-        # Verificar se assistido tem CPF no SIGAD (campo obrigatório para exportar)
+        # Verificar CPF exibido na página (obrigatório para exportar)
         cpf_displayed = await page.evaluate("""() => {
-            const text = document.body.innerText;
-            const m = text.match(/CPF:\\s*([\\d.\\-]+)/i);
+            const m = document.body.innerText.match(/CPF:\\s*([\\d.\\-]+)/i);
             return m ? m[1] : null;
         }""")
+
+        # CPF "ND" = não disponível → exportação vai falhar
         if not cpf_displayed or cpf_displayed.upper() in ("ND", "N/D", ""):
             logger.warning("Assistido %s sem CPF no SIGAD — exportação irá falhar", sigad_id)
+            return {
+                "success": False,
+                "ja_existia": False,
+                "solar_url": None,
+                "message": "Assistido não possui CPF/CNPJ cadastrado no SIGAD",
+                "error": "cpf_ausente",
+            }
+
+        # CPF efetivo: usar o exibido na página (já tem máscara correta)
+        cpf_efetivo = cpf or cpf_displayed
 
         # Clicar no botão EXPORTAR PARA O SOLAR
         btn = await page.query_selector("#exportar_solar, .BtnExport")
         if not btn:
+            logger.error("Botão #exportar_solar não encontrado na página %s", extrato_url)
             return {
                 "success": False,
                 "ja_existia": False,
                 "solar_url": None,
-                "message": "Botão EXPORTAR PARA O SOLAR não encontrado",
+                "message": "Botão EXPORTAR PARA O SOLAR não encontrado na página",
                 "error": "button_not_found",
             }
 
         await btn.click()
-        await page.wait_for_timeout(4000)
 
-        # Capturar modal/aviso exibido após o clique
-        modal_text = await page.evaluate("""() => {
-            const modal = document.querySelector('.modal.in .modal-body, .modal[style*="display: block"] .modal-body');
-            if (modal) return modal.innerText.trim();
-            const bootbox = document.querySelector('.bootbox .modal-body');
-            if (bootbox) return bootbox.innerText.trim();
-            const aviso = document.querySelector('.alert, #aviso, .aviso');
-            if (aviso) return aviso.innerText.trim();
-            return null;
-        }""")
+        # Aguardar modal com polling (AJAX assíncrono — pode demorar até 6s)
+        modal_text: str | None = None
+        for _ in range(6):
+            await page.wait_for_timeout(1000)
+            modal_text = await page.evaluate("""() => {
+                // SweetAlert / bootbox / modal Bootstrap
+                for (const sel of [
+                    '.swal2-content', '.swal2-html-container',
+                    '.bootbox .modal-body',
+                    '.modal.in .modal-body',
+                    '.modal[style*="display: block"] .modal-body',
+                    '.modal[style*="display:block"] .modal-body',
+                ]) {
+                    const el = document.querySelector(sel);
+                    if (el && el.innerText.trim()) return el.innerText.trim();
+                }
+                return null;
+            }""")
+            if modal_text:
+                break
 
-        # Capturar link para o Solar se houver
-        solar_link = await page.evaluate("""() => {
-            const links = document.querySelectorAll('a');
-            for (const a of links) {
-                if (a.href && a.href.includes('solar.defensoria')) return a.href;
+        # Capturar link Solar no modal (caso "já cadastrado" inclua link)
+        solar_link_modal = await page.evaluate("""() => {
+            const modals = [
+                '.swal2-content a', '.bootbox a', '.modal.in a',
+                '.modal[style*="display: block"] a',
+            ];
+            for (const sel of modals) {
+                for (const a of document.querySelectorAll(sel)) {
+                    if (a.href && a.href.includes('solar.defensoria')) return a.href;
+                }
             }
             return null;
         }""")
 
-        # Fechar modal se aberto
+        # Fechar modal
         await page.evaluate("""() => {
-            const closeBtn = document.querySelector('.modal.in .btn, .modal.in [data-dismiss], .bootbox .btn');
-            if (closeBtn) closeBtn.click();
+            for (const sel of [
+                '.swal2-confirm', '.bootbox .btn-primary', '.bootbox .btn',
+                '.modal.in [data-dismiss="modal"]', '.modal.in .btn-primary',
+            ]) {
+                const btn = document.querySelector(sel);
+                if (btn) { btn.click(); return; }
+            }
         }""")
 
-        # Interpretar resultado
+        # URL do Solar: preferir link do modal, fallback para URL construída pelo CPF
+        solar_url = solar_link_modal or self._solar_url_para_cpf(cpf_efetivo)
+
+        # Interpretar resultado baseado nas strings confirmadas no JS handler
         text_lower = (modal_text or "").lower()
-        if "já está cadastrado" in text_lower or "ja esta cadastrado" in text_lower:
-            logger.info("Assistido %s já está no Solar", sigad_id)
+
+        if "cpf/cnpj já cadastrado" in text_lower or "já está cadastrado" in text_lower:
+            logger.info("Assistido sigad_id=%s já está cadastrado no Solar", sigad_id)
             return {
                 "success": True,
                 "ja_existia": True,
-                "solar_url": solar_link,
+                "solar_url": solar_url,
                 "message": modal_text,
                 "error": None,
             }
-        elif "exportado" in text_lower or "sucesso" in text_lower or "cadastrado" in text_lower:
-            logger.info("Assistido %s exportado com sucesso para o Solar", sigad_id)
+
+        if "dados exportados com sucesso" in text_lower or "exportado com sucesso" in text_lower:
+            logger.info("Assistido sigad_id=%s exportado com sucesso para o Solar", sigad_id)
             return {
                 "success": True,
                 "ja_existia": False,
-                "solar_url": solar_link,
+                "solar_url": solar_url,
                 "message": modal_text,
                 "error": None,
             }
-        elif "cpf" in text_lower or "cnpj" in text_lower:
+
+        # "Este campo não pode ser nulo." → CPF ND detectado tarde
+        if "campo não pode ser nulo" in text_lower or "nulo" in text_lower:
             return {
                 "success": False,
                 "ja_existia": False,
                 "solar_url": None,
-                "message": modal_text or "Assistido sem CPF/CNPJ no SIGAD",
+                "message": modal_text or "Campo CPF/CNPJ nulo no SIGAD",
                 "error": "cpf_ausente",
             }
-        else:
-            logger.warning("Resposta inesperada do SIGAD: %s", modal_text)
+
+        # Fallback: qualquer outra string com "cpf" ou "cnpj" = erro de CPF
+        if "cpf" in text_lower or "cnpj" in text_lower:
             return {
-                "success": bool(modal_text),
+                "success": False,
                 "ja_existia": False,
-                "solar_url": solar_link,
-                "message": modal_text or "Sem resposta do SIGAD",
-                "error": None if modal_text else "sem_resposta",
+                "solar_url": None,
+                "message": modal_text or "Erro relacionado a CPF/CNPJ no SIGAD",
+                "error": "cpf_ausente",
             }
+
+        # Sem modal = sem resposta AJAX (timeout ou erro de rede)
+        if not modal_text:
+            logger.error(
+                "Sem resposta do SIGAD após clicar em exportar (sigad_id=%s)", sigad_id
+            )
+            return {
+                "success": False,
+                "ja_existia": False,
+                "solar_url": None,
+                "message": "Sem resposta do SIGAD após tentativa de exportação",
+                "error": "sem_resposta",
+            }
+
+        # Resposta desconhecida — logar para investigação futura
+        logger.warning(
+            "Resposta inesperada do SIGAD ao exportar sigad_id=%s: %r", sigad_id, modal_text
+        )
+        return {
+            "success": False,
+            "ja_existia": False,
+            "solar_url": solar_link_modal,
+            "message": modal_text,
+            "error": "resposta_inesperada",
+        }
 
     # ------------------------------------------------------------------
     # Método principal: buscar, verificar, enriquecer e exportar
