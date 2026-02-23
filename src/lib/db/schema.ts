@@ -13,7 +13,7 @@ import {
   pgEnum,
   real,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // ==========================================
 // ENUMS JURÍDICOS
@@ -205,6 +205,11 @@ export const assistidos = pgTable("assistidos", {
 
   // Integração Google Drive - Pasta do Assistido
   driveFolderId: text("drive_folder_id"), // ID da pasta no Drive (Atribuição/NomeAssistido)
+
+  // Integração SIGAD / Solar
+  sigadId: varchar("sigad_id", { length: 20 }),         // ID no SIGAD (ex: "299298")
+  sigadExportadoEm: timestamp("sigad_exportado_em"),    // Última busca/sync com o SIGAD
+  solarExportadoEm: timestamp("solar_exportado_em"),    // Última exportação ao Solar com sucesso
 
   // Metadados
   deletedAt: timestamp("deleted_at"),
@@ -733,7 +738,11 @@ export const anotacoes = pgTable("anotacoes", {
   
   // Prioridade
   importante: boolean("importante").default(false),
-  
+
+  // Deduplicação de anotações importadas de sistemas externos (ex: SIGAD)
+  // SHA-256 truncado (16 hex chars) do conteúdo — previne inserção duplicada
+  conteudoHash: varchar("conteudo_hash", { length: 16 }),
+
   // Metadados
   createdById: integer("created_by_id")
     .notNull()
@@ -747,6 +756,11 @@ export const anotacoes = pgTable("anotacoes", {
   index("anotacoes_caso_id_idx").on(table.casoId),
   index("anotacoes_tipo_idx").on(table.tipo),
   index("anotacoes_importante_idx").on(table.importante),
+  // Unique parcial: só aplica quando conteudo_hash está preenchido
+  // Previne duplicatas de anotações importadas sem afetar notas manuais
+  uniqueIndex("anotacoes_dedup_hash_idx")
+    .on(table.assistidoId, table.conteudoHash)
+    .where(sql`conteudo_hash IS NOT NULL`),
 ]);
 
 export type Anotacao = typeof anotacoes.$inferSelect;
