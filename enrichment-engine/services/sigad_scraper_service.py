@@ -241,13 +241,21 @@ class SigadScraperService:
 
     async def extrair_dados_extrato(self, sigad_id: str) -> dict[str, Any]:
         """
-        Extrai dados detalhados da página /assistidos/extrato/{sigad_id}.
+        Extrai dados completos da página /assistidos/extrato/{sigad_id}.
 
-        Campos extraídos:
-          - cpf, data_nascimento, nome_mae, cidade, telefone, triagem
+        Campos extraídos do header do assistido:
+          - cpf, data_nascimento, nome_mae, cidade, celular, triagem
 
-        Usa regex sobre document.body.innerText para robustez.
+        Campos extraídos da tabela "AÇÕES GERADAS POR AGENDAMENTOS":
+          - acoes: lista com {data, numero_acao, tipo_acao, numero_processo, situacao, viz_url}
+          - numero_processo: primeiro número de processo encontrado nas ações
+          - vara: vara extraída do painel de detalhe expandido (ex: "1ª Vara Criminal")
+
+        Campos extraídos das observações de atendimento (inline com Detalhar Todos):
+          - observacoes: lista com {data, defensor, tipo, texto}
+
         Navegação só ocorre se não estiver já nessa URL.
+        Nota: "Detalhar Todos" já vem ativo por padrão — observações ficam no DOM.
         """
         page = await self._get_page()
         extrato_url = f"{self.BASE_URL}/assistidos/extrato/{sigad_id}"
@@ -265,41 +273,82 @@ class SigadScraperService:
                 return m ? m[1].trim() : null;
             }
 
-            // CPF
+            // --- Dados pessoais do header ---
             const cpf = extrair(/CPF:\\s*([\\d.\\-]+)/i);
-
-            // Data de nascimento
             const dataNasc = extrair(/DATA\\s+DE\\s+NASCIMENTO:\\s*([\\d\\/]+)/i);
-
-            // Nome da mãe
-            const nomeMae = extrair(/NOME\\s+DA\\s+M[ÃA]E:\\s*([A-Z][A-Z\\s]+?)(?:\\n|\\r|\\s{2,}|CPF|RG|DATA|CIDADE|$)/i);
-
-            // Cidade
-            const cidade = extrair(/CIDADE:\\s*([A-Z][A-Z\\s]+?)(?:\\n|\\r|\\s{2,}|CPF|RG|DATA|CONTATO|$)/i);
-
-            // Telefone — busca em bloco de contatos
-            const telefone = extrair(/(?:CEL|TEL|FONE|TELEFONE):\\s*(\\(\\d{2}\\)\\s*[\\d\\s\\-]+)/i);
-
-            // Número de triagem
+            const nomeMae = extrair(/NOME\\s+DA\\s+M[ÃA]E:\\s*([^\\n\\r]+)/i);
             const triagem = extrair(/N[°º\\.]+\\s*TRIAGEM:\\s*([\\d]+)/i);
+            const cidade = extrair(/CIDADE:\\s*([^\\n\\r]+)/i);
+            const celular = extrair(/CEL:\\s*([\\(\\d\\)\\s\\-]+)/i);
+
+            // --- Tabela de ações (7 colunas) ---
+            const allRows = Array.from(document.querySelectorAll('table tbody tr'));
+            const acaoRows = allRows.filter(r => r.querySelectorAll('td').length === 7);
+            const acoes = acaoRows.map(row => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                const vizLink = row.querySelector('a[href*="detalhes/acoes"]');
+                const numProcesso = cells[4] ? cells[4].innerText.trim() : null;
+                return {
+                    data_cadastro: cells[0] ? cells[0].innerText.trim() : null,
+                    numero_acao: cells[1] ? cells[1].innerText.replace('visualização rápida','').trim() : null,
+                    especializada: cells[2] ? cells[2].innerText.trim() : null,
+                    tipo_acao: cells[3] ? cells[3].innerText.trim() : null,
+                    numero_processo: numProcesso,
+                    situacao: cells[5] ? cells[5].innerText.trim() : null,
+                    viz_url: vizLink ? vizLink.href : null,
+                };
+            });
+
+            // Primeiro número de processo das ações
+            const primeiroProcesso = acoes.length > 0 ? acoes[0].numero_processo : null;
+
+            // Vara do painel expandido (ex: "0301743-15.2015.8.05.0039 - Atuação: 1ª Vara Criminal")
+            let vara = null;
+            const panelProcM = text.match(/N[°º\\.]+\\s*do\\s*processo:\\s*([^\\n\\r]+)/i);
+            if (panelProcM) {
+                const varaM = panelProcM[1].match(/Atua[çc][ãa]o:\\s*(.+)$/i);
+                vara = varaM ? varaM[1].trim() : null;
+            }
+
+            // --- Observações de atendimento (4 colunas: data, defensor, tipo, texto) ---
+            const obsRows = allRows.filter(r => r.querySelectorAll('td').length === 4);
+            const observacoes = obsRows.map(row => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                return {
+                    data: cells[0] ? cells[0].innerText.trim() : null,
+                    defensor: cells[1] ? cells[1].innerText.trim() : null,
+                    tipo: cells[2] ? cells[2].innerText.trim() : null,
+                    texto: cells[3] ? cells[3].innerText.trim() : null,
+                };
+            }).filter(o => o.data && o.texto);
 
             return {
                 cpf: cpf && cpf.toUpperCase() !== 'ND' ? cpf : null,
                 data_nascimento: dataNasc,
-                nome_mae: nomeMae,
-                cidade: cidade,
-                telefone: telefone,
+                nome_mae: nomeMae ? nomeMae.trim() : null,
+                cidade: cidade ? cidade.trim() : null,
+                celular: celular ? celular.trim() : null,
                 triagem: triagem,
+                // Dados processuais
+                acoes: acoes,
+                numero_processo: primeiroProcesso,
+                vara: vara,
+                // Histórico de atendimentos
+                observacoes: observacoes,
             };
         }""")
 
         logger.info(
-            "Extrato SIGAD %s: cpf=%s dataNasc=%s nomeMae=%s telefone=%s",
+            "Extrato SIGAD %s: cpf=%s dataNasc=%s nomeMae=%s celular=%s processo=%s vara=%s acoes=%d obs=%d",
             sigad_id,
             dados.get("cpf"),
             dados.get("data_nascimento"),
             dados.get("nome_mae"),
-            dados.get("telefone"),
+            dados.get("celular"),
+            dados.get("numero_processo"),
+            dados.get("vara"),
+            len(dados.get("acoes") or []),
+            len(dados.get("observacoes") or []),
         )
         return dados
 
@@ -465,10 +514,20 @@ class SigadScraperService:
         nome = assistido.get("nome", "")
         sigad_numero = (assistido.get("numero_processo") or "").strip()
 
-        # 2. Verificar correspondência de processo
+        # 2. Extrair dados completos da página extrato ANTES da verificação.
+        # Isso permite usar o número de processo diretamente do SIGAD
+        # (mais confiável que o da listagem, que pode estar truncado).
+        dados_extrato = await self.extrair_dados_extrato(sigad_id)
+
+        # Número do processo: preferir o extraído do extrato (mais completo)
+        numero_extrato = dados_extrato.get("numero_processo") or ""
+        sigad_numero_final = numero_extrato or sigad_numero  # fallback para o da listagem
+
+        # 3. Verificar correspondência de processo
+        # Usa o número extraído do extrato como fonte primária.
         verificacao_ok: bool | None = None
         if numeros_processo_ombuds:
-            sigad_norm = _normalizar_numero_processo(sigad_numero)
+            sigad_norm = _normalizar_numero_processo(sigad_numero_final)
             match = (
                 sigad_norm
                 and any(
@@ -479,7 +538,7 @@ class SigadScraperService:
             if not match:
                 logger.warning(
                     "Processo SIGAD '%s' não corresponde aos processos OMBUDS: %s",
-                    sigad_numero,
+                    sigad_numero_final,
                     numeros_processo_ombuds,
                 )
                 return {
@@ -487,36 +546,33 @@ class SigadScraperService:
                     "encontrado_sigad": True,
                     "ja_existia_solar": False,
                     "verificacao_processo": False,
-                    "sigad_processo": sigad_numero,
+                    "sigad_processo": sigad_numero_final,
                     "dados_para_enriquecer": None,
                     "solar_url": None,
                     "sigad_id": sigad_id,
                     "nome_sigad": nome,
+                    "vara": dados_extrato.get("vara"),
+                    "observacoes": dados_extrato.get("observacoes", []),
                     "message": (
-                        f"Processo no SIGAD ({sigad_numero}) não corresponde "
+                        f"Processo no SIGAD ({sigad_numero_final}) não corresponde "
                         f"aos processos do OMBUDS: {', '.join(numeros_processo_ombuds)}"
                     ),
                     "error": "processo_nao_corresponde",
                 }
             verificacao_ok = True
 
-        # 3. Extrair dados detalhados da página extrato
-        # exportar_para_solar() já navega para o extrato, então aproveitamos
-        # a mesma navegação extraindo os dados antes de clicar no botão.
-        dados_extrato = await self.extrair_dados_extrato(sigad_id)
-
-        # Montar dados para enriquecer o OMBUDS (apenas campos não-nulos)
-        dados_para_enriquecer: dict[str, str] = {}
+        # 4. Montar dados para enriquecer o OMBUDS (apenas campos não-nulos)
+        dados_para_enriquecer: dict[str, Any] = {}
         if dados_extrato.get("nome_mae"):
             dados_para_enriquecer["nomeMae"] = dados_extrato["nome_mae"]
         if dados_extrato.get("data_nascimento"):
             dados_para_enriquecer["dataNascimento"] = dados_extrato["data_nascimento"]
         if dados_extrato.get("cidade"):
             dados_para_enriquecer["naturalidade"] = dados_extrato["cidade"]
-        if dados_extrato.get("telefone"):
-            dados_para_enriquecer["telefone"] = dados_extrato["telefone"]
+        if dados_extrato.get("celular"):
+            dados_para_enriquecer["telefone"] = dados_extrato["celular"]
 
-        # 4. Exportar para o Solar (página extrato já está carregada)
+        # 5. Exportar para o Solar (página extrato já está carregada)
         export_result = await self.exportar_para_solar(sigad_id=sigad_id, cpf=cpf)
 
         return {
@@ -524,7 +580,9 @@ class SigadScraperService:
             "encontrado_sigad": True,
             "ja_existia_solar": export_result.get("ja_existia", False),
             "verificacao_processo": verificacao_ok,
-            "sigad_processo": sigad_numero or None,
+            "sigad_processo": sigad_numero_final or None,
+            "vara": dados_extrato.get("vara"),
+            "observacoes": dados_extrato.get("observacoes", []),
             "dados_para_enriquecer": dados_para_enriquecer if dados_para_enriquecer else None,
             "solar_url": export_result.get("solar_url"),
             "sigad_id": sigad_id,

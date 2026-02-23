@@ -15,8 +15,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { processos, documentos } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { processos, documentos, anotacoes } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import {
   enrichmentClient,
   type SolarSyncOutput,
@@ -280,7 +280,7 @@ export const solarRouter = router({
    */
   exportarViaSigad: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
-    .mutation(async ({ input }): Promise<SigadExportarOutput> => {
+    .mutation(async ({ input, ctx }): Promise<SigadExportarOutput> => {
       const { assistidos } = await import("@/lib/db/schema");
 
       // 1. Buscar assistido com seus processos
@@ -297,7 +297,7 @@ export const solarRouter = router({
         },
         with: {
           processos: {
-            columns: { numeroAutos: true },
+            columns: { id: true, numeroAutos: true },
             where: (p, { isNotNull }) => isNotNull(p.numeroAutos),
           },
         },
@@ -325,6 +325,8 @@ export const solarRouter = router({
       });
 
       // 4. Enriquecer OMBUDS se exportação foi bem-sucedida e há dados novos
+      const camposEnriquecidos: string[] = [];
+
       if (result.success && result.dados_para_enriquecer) {
         const dados = result.dados_para_enriquecer;
         const updatePayload: Record<string, unknown> = {};
@@ -332,15 +334,19 @@ export const solarRouter = router({
         // Só preenche campos atualmente vazios — nunca sobrescreve dados existentes
         if (dados.nomeMae && !assistido.nomeMae) {
           updatePayload.nomeMae = dados.nomeMae;
+          camposEnriquecidos.push("nomeMae");
         }
         if (dados.dataNascimento && !assistido.dataNascimento) {
           updatePayload.dataNascimento = dados.dataNascimento;
+          camposEnriquecidos.push("dataNascimento");
         }
         if (dados.naturalidade && !assistido.naturalidade) {
           updatePayload.naturalidade = dados.naturalidade;
+          camposEnriquecidos.push("naturalidade");
         }
         if (dados.telefone && !assistido.telefone) {
           updatePayload.telefone = dados.telefone;
+          camposEnriquecidos.push("telefone");
         }
 
         if (Object.keys(updatePayload).length > 0) {
@@ -348,10 +354,46 @@ export const solarRouter = router({
             .update(assistidos)
             .set({ ...updatePayload, updatedAt: new Date() })
             .where(eq(assistidos.id, input.assistidoId));
-
-          // Anotar quais campos foram enriquecidos no resultado
-          result.message = `${result.message ?? ""} Campos enriquecidos: ${Object.keys(updatePayload).join(", ")}`.trim();
         }
+      }
+
+      // 5. Persistir observações do SIGAD como anotações no OMBUDS
+      // Cada observação vira uma anotação do tipo "atendimento" vinculada ao assistido
+      if (result.success && result.observacoes && result.observacoes.length > 0) {
+        const processoCorrespondente = (assistido.processos ?? []).find((p) => {
+          if (!result.sigad_processo || !p.numeroAutos) return false;
+          const norm = (s: string) => s.replace(/[\s.\-/]/g, "");
+          return norm(p.numeroAutos) === norm(result.sigad_processo);
+        });
+        const processoIdVinculo = processoCorrespondente
+          ? (processoCorrespondente as { id?: number }).id ?? null
+          : null;
+
+        for (const obs of result.observacoes) {
+          if (!obs.texto) continue;
+          const conteudo = [
+            `[SIGAD] ${obs.tipo ?? "Observação"} — ${obs.data ?? ""}`,
+            obs.defensor ? `Defensor/Servidor: ${obs.defensor}` : null,
+            obs.texto,
+          ]
+            .filter(Boolean)
+            .join("\n");
+
+          await db.insert(anotacoes).values({
+            assistidoId: input.assistidoId,
+            processoId: processoIdVinculo,
+            conteudo,
+            tipo: "atendimento",
+            importante: false,
+            createdById: ctx.user.id,
+          });
+        }
+        camposEnriquecidos.push(`${result.observacoes.length} observações`);
+      }
+
+      // Anotar campos enriquecidos no resultado
+      if (camposEnriquecidos.length > 0) {
+        result.message = `${result.message ?? ""} Campos enriquecidos: ${camposEnriquecidos.join(", ")}`.trim();
       }
 
       return result;

@@ -290,6 +290,25 @@ class SolarCadastrarOutput(BaseModel):
 
 # === SIGAD ===
 
+class SigadAcao(BaseModel):
+    """Uma ação registrada no SIGAD para o assistido."""
+    data_cadastro: str | None = None
+    numero_acao: str | None = None
+    especializada: str | None = None
+    tipo_acao: str | None = None
+    numero_processo: str | None = None
+    situacao: str | None = None
+    viz_url: str | None = None
+
+
+class SigadObservacao(BaseModel):
+    """Uma observação de atendimento registrada no SIGAD."""
+    data: str | None = None
+    defensor: str | None = None
+    tipo: str | None = None
+    texto: str | None = None
+
+
 class SigadEnriquecerDados(BaseModel):
     """Dados extraídos do SIGAD para enriquecer o OMBUDS."""
     nomeMae: str | None = None
@@ -315,7 +334,10 @@ class SigadExportarOutput(BaseModel):
     ja_existia_solar: bool
     # Verificação processo
     verificacao_processo: bool | None = None  # None = não verificado (sem processos)
-    sigad_processo: str | None = None  # número do processo no SIGAD
+    sigad_processo: str | None = None         # número do processo extraído do SIGAD
+    vara: str | None = None                   # vara extraída do painel de detalhe
+    # Histórico de atendimentos extraído do SIGAD
+    observacoes: list[SigadObservacao] = Field(default_factory=list)
     # Enriquecimento reverso
     dados_para_enriquecer: SigadEnriquecerDados | None = None
     # Links e identificadores

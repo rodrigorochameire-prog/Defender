@@ -214,6 +214,13 @@ export interface SolarCadastrarOutput {
 
 // === SIGAD Types ===
 
+export interface SigadObservacao {
+  data?: string | null;
+  defensor?: string | null;
+  tipo?: string | null;
+  texto?: string | null;
+}
+
 export interface SigadEnriquecerDados {
   nomeMae?: string | null;
   dataNascimento?: string | null;
@@ -227,7 +234,10 @@ export interface SigadExportarOutput {
   ja_existia_solar: boolean;
   // Verificação processo
   verificacao_processo?: boolean | null;
-  sigad_processo?: string | null;
+  sigad_processo?: string | null;    // número do processo no SIGAD
+  vara?: string | null;              // vara extraída do painel de detalhe
+  // Histórico de atendimentos
+  observacoes?: SigadObservacao[];
   // Enriquecimento reverso
   dados_para_enriquecer?: SigadEnriquecerDados | null;
   // Links e identificadores
