@@ -18,6 +18,10 @@ from models.schemas import (
     SolarBatchOutput,
     SolarAvisosOutput,
     SolarStatusOutput,
+    SolarNomeSyncInput,
+    SolarNomeSyncOutput,
+    SolarCadastrarInput,
+    SolarCadastrarOutput,
 )
 from services.solar_orchestrator import get_solar_orchestrator
 from services.solar_auth_service import get_solar_auth_service, SolarAuthService
@@ -142,3 +146,52 @@ async def solar_status() -> SolarStatusOutput:
             pass
 
     return result
+
+
+@router.post("/solar/sync-por-nome", response_model=SolarNomeSyncOutput)
+async def sync_por_nome(input_data: SolarNomeSyncInput) -> SolarNomeSyncOutput:
+    """
+    Busca todos os processos de um defensor no Solar pelo nome.
+
+    O campo de busca do Solar aceita nome, CPF ou número de processo.
+    Use "rodrigo rocha meire" ou "juliane andrade pereira" para listar
+    todos os processos vinculados a esses defensores.
+    """
+    logger.info("Solar sync-por-nome: '%s'", input_data.nome)
+    try:
+        orchestrator = get_solar_orchestrator()
+        result = await orchestrator.sync_por_nome(nome=input_data.nome)
+        return SolarNomeSyncOutput(**result)
+    except Exception as e:
+        logger.error("sync-por-nome falhou: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Solar sync-por-nome failed: {str(e)}",
+        )
+
+
+@router.post("/solar/cadastrar-processo", response_model=SolarCadastrarOutput)
+async def cadastrar_processo(input_data: SolarCadastrarInput) -> SolarCadastrarOutput:
+    """
+    Cadastra um processo no Solar se ainda não existir.
+
+    Fluxo: busca pelo número → se não encontrado → clica 'Novo Processo Judicial'
+    → captura o atendimento_id criado.
+    """
+    logger.info("Solar cadastrar-processo: %s grau=%d", input_data.numero_processo, input_data.grau)
+    try:
+        scraper = get_solar_scraper_service()
+        result = await scraper.cadastrar_processo_solar(
+            numero_processo=input_data.numero_processo,
+            grau=input_data.grau,
+        )
+        return SolarCadastrarOutput(**result)
+    except Exception as e:
+        logger.error("cadastrar-processo falhou: %s", e)
+        return SolarCadastrarOutput(
+            success=False,
+            cadastrado=False,
+            ja_existia=False,
+            numero=input_data.numero_processo,
+            error=str(e),
+        )

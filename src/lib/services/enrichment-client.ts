@@ -186,6 +186,57 @@ export interface SolarStatusOutput {
   unmapped_selectors: string[];
 }
 
+export interface SolarNomeSyncOutput {
+  success: boolean;
+  nome: string;
+  processos_encontrados: number;
+  processos: {
+    numero?: string;
+    grau?: number;
+    classe?: string;
+    vara?: string;
+    comarca?: string;
+    area?: string;
+    atendimento_id?: string | null;
+  }[];
+  errors: string[];
+}
+
+export interface SolarCadastrarOutput {
+  success: boolean;
+  cadastrado: boolean;
+  ja_existia: boolean;
+  numero: string;
+  atendimento_id?: string | null;
+  url_pos_cadastro?: string | null;
+  error?: string | null;
+}
+
+// === SIGAD Types ===
+
+export interface SigadExportarOutput {
+  success: boolean;
+  encontrado_sigad: boolean;
+  ja_existia_solar: boolean;
+  solar_url?: string | null;
+  sigad_id?: string | null;
+  nome_sigad?: string | null;
+  message?: string | null;
+  error?: string | null;
+}
+
+export interface SigadBuscarOutput {
+  success: boolean;
+  encontrado: boolean;
+  sigad_id?: string | null;
+  nome?: string | null;
+  cpf?: string | null;
+  data_nascimento?: string | null;
+  triagem?: string | null;
+  cidade?: string | null;
+  error?: string | null;
+}
+
 // === Client ===
 
 class EnrichmentClient {
@@ -392,6 +443,60 @@ class EnrichmentClient {
     }
 
     return (await response.json()) as SolarStatusOutput;
+  }
+
+  /**
+   * Buscar todos os processos de um defensor pelo nome no Solar.
+   * Chamado pelo: tRPC solar.syncPorNome
+   */
+  async solarSyncPorNome(input: {
+    nome: string;
+    syncMovimentacoes?: boolean;
+  }): Promise<SolarNomeSyncOutput> {
+    return this.request<SolarNomeSyncOutput>("/solar/sync-por-nome", {
+      nome: input.nome,
+      sync_movimentacoes: input.syncMovimentacoes ?? false,
+    });
+  }
+
+  /**
+   * Cadastrar um processo no Solar (se ainda não existir).
+   * Chamado pelo: tRPC solar.cadastrarNoSolar
+   */
+  async solarCadastrarProcesso(input: {
+    numeroProcesso: string;
+    grau?: number;
+  }): Promise<SolarCadastrarOutput> {
+    return this.request<SolarCadastrarOutput>("/solar/cadastrar-processo", {
+      numero_processo: input.numeroProcesso,
+      grau: input.grau ?? 1,
+    });
+  }
+
+  // === SIGAD Methods ===
+
+  /**
+   * Exportar assistido do SIGAD para o Solar pelo CPF.
+   * Chamado pelo: tRPC solar.exportarViaSigad
+   */
+  async sigadExportarAssistido(input: {
+    cpf: string;
+    ombudsAssistidoId?: number | null;
+  }): Promise<SigadExportarOutput> {
+    return this.request<SigadExportarOutput>("/sigad/exportar-assistido", {
+      cpf: input.cpf,
+      ombuds_assistido_id: input.ombudsAssistidoId ?? null,
+    });
+  }
+
+  /**
+   * Buscar assistido no SIGAD pelo CPF (sem exportar).
+   * Chamado pelo: tRPC solar.buscarNoSigad
+   */
+  async sigadBuscarAssistido(input: { cpf: string }): Promise<SigadBuscarOutput> {
+    return this.request<SigadBuscarOutput>("/sigad/buscar-assistido", {
+      cpf: input.cpf,
+    });
   }
 
   /**

@@ -392,6 +392,39 @@ class SolarOrchestrator:
                 "error": str(e),
             }
 
+    async def sync_por_nome(self, nome: str) -> dict[str, Any]:
+        """
+        Lista todos os processos de um defensor pelo nome no Solar.
+
+        Usa buscar_processos_por_nome() do scraper que faz busca textual
+        no campo filtro.filtro (aceita nome, CPF ou número).
+
+        Args:
+            nome: Nome do defensor ex: "rodrigo rocha meire"
+
+        Returns:
+            Dict com: success, nome, processos_encontrados, processos[], errors[]
+        """
+        logger.info("sync_por_nome: buscando processos de '%s'", nome)
+        try:
+            processos = await self.scraper.buscar_processos_por_nome(nome)
+            return {
+                "success": True,
+                "nome": nome,
+                "processos_encontrados": len(processos),
+                "processos": processos,
+                "errors": [],
+            }
+        except Exception as e:
+            logger.error("sync_por_nome '%s' falhou: %s", nome, e)
+            return {
+                "success": False,
+                "nome": nome,
+                "processos_encontrados": 0,
+                "processos": [],
+                "errors": [str(e)],
+            }
+
 
 # Singleton
 _solar_orchestrator: SolarOrchestrator | None = None

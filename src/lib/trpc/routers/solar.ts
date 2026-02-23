@@ -20,6 +20,10 @@ import { eq } from "drizzle-orm";
 import {
   enrichmentClient,
   type SolarSyncOutput,
+  type SolarNomeSyncOutput,
+  type SolarCadastrarOutput,
+  type SigadExportarOutput,
+  type SigadBuscarOutput,
 } from "@/lib/services/enrichment-client";
 import { uploadFileBuffer } from "@/lib/services/google-drive";
 
@@ -224,4 +228,102 @@ export const solarRouter = router({
       };
     }
   }),
+
+  /**
+   * Busca todos os processos de um defensor pelo nome no Solar.
+   * Útil para: "rodrigo rocha meire", "juliane andrade pereira"
+   */
+  syncPorNome: protectedProcedure
+    .input(z.object({ nome: z.string().min(3) }))
+    .mutation(async ({ input }): Promise<SolarNomeSyncOutput> => {
+      return enrichmentClient.solarSyncPorNome({ nome: input.nome });
+    }),
+
+  /**
+   * Cadastra um processo no Solar se ainda não existir.
+   * Busca pelo número → se não encontrado → clica 'Novo Processo Judicial'.
+   */
+  cadastrarNoSolar: protectedProcedure
+    .input(
+      z.object({
+        processoId: z.number(),
+        grau: z.number().default(1),
+      }),
+    )
+    .mutation(async ({ input }): Promise<SolarCadastrarOutput> => {
+      const processo = await db.query.processos.findFirst({
+        where: eq(processos.id, input.processoId),
+        columns: { id: true, numeroAutos: true },
+      });
+
+      if (!processo) {
+        throw new Error(`Processo ${input.processoId} não encontrado`);
+      }
+      if (!processo.numeroAutos) {
+        throw new Error("Processo sem número de autos cadastrado");
+      }
+
+      return enrichmentClient.solarCadastrarProcesso({
+        numeroProcesso: processo.numeroAutos,
+        grau: input.grau,
+      });
+    }),
+
+  /**
+   * Exporta assistido do SIGAD para o Solar.
+   * Fluxo: busca assistido por CPF no SIGAD → clica EXPORTAR PARA O SOLAR.
+   * Requer: assistido com CPF cadastrado no OMBUDS e no SIGAD.
+   */
+  exportarViaSigad: protectedProcedure
+    .input(
+      z.object({
+        assistidoId: z.number(),
+      }),
+    )
+    .mutation(async ({ input }): Promise<SigadExportarOutput> => {
+      const { assistidos } = await import("@/lib/db/schema");
+
+      const assistido = await db.query.assistidos.findFirst({
+        where: eq(assistidos.id, input.assistidoId),
+        columns: { id: true, nome: true, cpf: true },
+      });
+
+      if (!assistido) {
+        throw new Error(`Assistido ${input.assistidoId} não encontrado`);
+      }
+      if (!assistido.cpf) {
+        throw new Error(
+          `Assistido ${assistido.nome} não tem CPF cadastrado no OMBUDS`,
+        );
+      }
+
+      return enrichmentClient.sigadExportarAssistido({
+        cpf: assistido.cpf,
+        ombudsAssistidoId: assistido.id,
+      });
+    }),
+
+  /**
+   * Verifica se assistido existe no SIGAD pelo CPF (sem exportar).
+   */
+  buscarNoSigad: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }): Promise<SigadBuscarOutput> => {
+      const { assistidos } = await import("@/lib/db/schema");
+
+      const assistido = await db.query.assistidos.findFirst({
+        where: eq(assistidos.id, input.assistidoId),
+        columns: { id: true, nome: true, cpf: true },
+      });
+
+      if (!assistido?.cpf) {
+        return {
+          success: false,
+          encontrado: false,
+          error: "Assistido sem CPF no OMBUDS",
+        };
+      }
+
+      return enrichmentClient.sigadBuscarAssistido({ cpf: assistido.cpf });
+    }),
 });

@@ -256,6 +256,76 @@ class SolarStatusOutput(BaseModel):
     unmapped_selectors: list[str] = Field(default_factory=list)
 
 
+class SolarNomeSyncInput(BaseModel):
+    """Input para /solar/sync-por-nome — busca processos por nome de defensor."""
+    nome: str = Field(..., min_length=3, description="Nome do defensor ex: 'rodrigo rocha meire'")
+    sync_movimentacoes: bool = Field(False, description="Se true, extrai movimentações de cada processo")
+
+
+class SolarNomeSyncOutput(BaseModel):
+    """Output de /solar/sync-por-nome."""
+    success: bool
+    nome: str
+    processos_encontrados: int = 0
+    processos: list[dict] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+
+
+class SolarCadastrarInput(BaseModel):
+    """Input para /solar/cadastrar-processo."""
+    numero_processo: str = Field(..., min_length=5, description="Número do processo (formato CNJ)")
+    grau: int = Field(1, ge=1, le=2, description="Grau do processo (1 ou 2)")
+
+
+class SolarCadastrarOutput(BaseModel):
+    """Output de /solar/cadastrar-processo."""
+    success: bool
+    cadastrado: bool  # True = criado agora
+    ja_existia: bool  # True = já estava cadastrado
+    numero: str
+    atendimento_id: str | None = None
+    url_pos_cadastro: str | None = None
+    error: str | None = None
+
+
+# === SIGAD ===
+
+class SigadExportarInput(BaseModel):
+    """Input para /sigad/exportar-assistido."""
+    cpf: str = Field(..., min_length=11, description="CPF do assistido (com ou sem máscara)")
+    ombuds_assistido_id: int | None = Field(None, description="ID do assistido no OMBUDS (para logging)")
+
+
+class SigadExportarOutput(BaseModel):
+    """Output de /sigad/exportar-assistido."""
+    success: bool
+    encontrado_sigad: bool
+    ja_existia_solar: bool
+    solar_url: str | None = None
+    sigad_id: str | None = None
+    nome_sigad: str | None = None
+    message: str | None = None
+    error: str | None = None
+
+
+class SigadBuscarInput(BaseModel):
+    """Input para /sigad/buscar-assistido."""
+    cpf: str = Field(..., min_length=11, description="CPF do assistido")
+
+
+class SigadBuscarOutput(BaseModel):
+    """Output de /sigad/buscar-assistido."""
+    success: bool
+    encontrado: bool
+    sigad_id: str | None = None
+    nome: str | None = None
+    cpf: str | None = None
+    data_nascimento: str | None = None
+    triagem: str | None = None
+    cidade: str | None = None
+    error: str | None = None
+
+
 # === Health ===
 
 class HealthResponse(BaseModel):
