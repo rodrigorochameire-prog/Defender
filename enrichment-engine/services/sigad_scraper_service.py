@@ -184,6 +184,40 @@ class SigadScraperService:
 
         return self._page  # type: ignore[return-value]
 
+    async def _reset_browser(self) -> None:
+        """
+        Destrói o browser Playwright e limpa todo o estado interno.
+        Chamado quando um crash é detectado (TimeoutError, TargetClosedError, etc.)
+        — a próxima chamada a _ensure_browser() recriará tudo do zero.
+        """
+        logger.warning("Resetando browser Playwright (crash ou timeout detectado)")
+        self._authenticated = False
+        try:
+            if self._page and not self._page.is_closed():
+                await self._page.close()
+        except Exception:
+            pass
+        try:
+            if self._context:
+                await self._context.close()
+        except Exception:
+            pass
+        try:
+            if self._browser:
+                await self._browser.close()
+        except Exception:
+            pass
+        try:
+            if self._playwright:
+                await self._playwright.stop()
+        except Exception:
+            pass
+        finally:
+            self._page = None
+            self._context = None
+            self._browser = None
+            self._playwright = None
+
     # ------------------------------------------------------------------
     # Busca de assistido (listagem)
     # ------------------------------------------------------------------
@@ -651,6 +685,22 @@ class SigadScraperService:
     # Método principal: buscar, verificar, enriquecer e exportar
     # ------------------------------------------------------------------
 
+    _ERRO_VAZIO: dict[str, Any] = {
+        "success": False,
+        "encontrado_sigad": False,
+        "ja_existia_solar": False,
+        "verificacao_processo": None,
+        "sigad_processo": None,
+        "dados_para_enriquecer": None,
+        "solar_url": None,
+        "sigad_id": None,
+        "nome_sigad": None,
+        "vara": None,
+        "observacoes": [],
+        "message": "",
+        "error": "",
+    }
+
     async def exportar_assistido_por_cpf(
         self,
         cpf: str,
@@ -659,25 +709,69 @@ class SigadScraperService:
         """
         Fluxo completo SIGAD → Solar com verificação de processo e enriquecimento.
 
-        Etapas:
-        1. Buscar assistido no SIGAD pelo CPF
-        2. Verificar correspondência de processo (se numeros_processo_ombuds fornecido)
-           - Normaliza ambos (remove pontos/traços) para comparação robusta
-           - Se não bater → retorna error: "processo_nao_corresponde"
-        3. Extrair dados detalhados da página extrato (nomeMae, dataNascimento, telefone, etc.)
-        4. Exportar para o Solar via botão nativo
-        5. Retornar resultado + dados_para_enriquecer (apenas campos não-nulos)
+        Wrapper com resiliência: se o browser Playwright crashar (TimeoutError,
+        TargetClosedError, etc.), destrói o browser, recria, e tenta 1x mais.
 
-        Args:
-            cpf: CPF do assistido (com ou sem máscara)
-            numeros_processo_ombuds: Lista de numeroAutos dos processos no OMBUDS.
-                Se fornecida, valida que o processo do SIGAD está na lista.
+        Etapas internas (em _exportar_assistido_interno):
+        1. Buscar assistido no SIGAD pelo CPF
+        2. Verificar correspondência de processo
+        3. Extrair dados detalhados da página extrato
+        4. Exportar para o Solar via botão nativo
+        5. Retornar resultado + dados_para_enriquecer
 
         Returns:
             Dict com campos: success, encontrado_sigad, ja_existia_solar,
             verificacao_processo, sigad_processo, dados_para_enriquecer,
             solar_url, sigad_id, nome_sigad, message, error.
         """
+        try:
+            return await self._exportar_assistido_interno(cpf, numeros_processo_ombuds)
+        except Exception as e:
+            error_type = type(e).__name__
+            # Erros Playwright que indicam browser morto ou instável
+            playwright_crashes = (
+                "Timeout", "TargetClosed", "Connection",
+                "BrowserType", "NavigationAborted", "Closed",
+            )
+            is_playwright_crash = any(t in error_type for t in playwright_crashes)
+
+            if is_playwright_crash:
+                logger.warning(
+                    "Playwright crash (%s: %s) — resetando browser e tentando 1x mais",
+                    error_type, e,
+                )
+                await self._reset_browser()
+                try:
+                    return await self._exportar_assistido_interno(
+                        cpf, numeros_processo_ombuds,
+                    )
+                except Exception as e2:
+                    logger.error(
+                        "Segunda tentativa falhou: %s: %s", type(e2).__name__, e2,
+                    )
+                    return {
+                        **self._ERRO_VAZIO,
+                        "message": f"Falha persistente no browser: {e2}",
+                        "error": f"playwright_{type(e2).__name__.lower()}",
+                    }
+
+            # Erro não-Playwright (ex: bug de lógica) — retornar com tipo explícito
+            logger.error(
+                "Erro inesperado em exportar_assistido_por_cpf: %s: %s",
+                error_type, e,
+            )
+            return {
+                **self._ERRO_VAZIO,
+                "message": f"Erro interno: {e}",
+                "error": f"internal_{error_type.lower()}",
+            }
+
+    async def _exportar_assistido_interno(
+        self,
+        cpf: str,
+        numeros_processo_ombuds: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Corpo real do fluxo SIGAD → Solar. Chamado pelo wrapper com retry."""
         # 1. Buscar no SIGAD
         assistido = await self.buscar_assistido_por_cpf(cpf)
         if not assistido:
