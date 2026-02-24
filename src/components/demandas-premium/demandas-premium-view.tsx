@@ -545,7 +545,7 @@ export default function Demandas() {
   // Ordenação multi-coluna empilhada (click-to-stack)
   type SortCriterion = { column: string; direction: "asc" | "desc" };
   const [sortStack, setSortStack] = useState<SortCriterion[]>([
-    { column: "status", direction: "asc" }
+    { column: "recentes", direction: "asc" }
   ]);
   const [demandas, setDemandas] = useState<any[]>([]);
   const [selectedPrazoFilter, setSelectedPrazoFilter] = useState<string | null>(null);
@@ -684,6 +684,9 @@ export default function Demandas() {
       arquivado: d.status === "ARQUIVADO",
       reuPreso: d.reuPreso || false,
       substatus: d.substatus || null,
+      // Rastreamento de importação
+      importBatchId: d.importBatchId || null,
+      ordemOriginal: d.ordemOriginal ?? null,
     }));
   }, [demandasDB]);
 
@@ -1095,8 +1098,11 @@ export default function Demandas() {
   });
 
   const handleImportDemandas = async (importedData: any[], atualizarExistentes?: boolean) => {
+    // Gerar UUID do lote de importação para agrupar demandas importadas juntas
+    const importBatchId = crypto.randomUUID();
+
     // Mapear dados do modal para o formato esperado pela mutation
-    const rows = importedData.map((data) => ({
+    const rows = importedData.map((data, index) => ({
       assistido: data.assistido || "Não informado",
       processoNumero: data.processos?.[0]?.numero || "",
       ato: data.ato || "Outros",
@@ -1111,6 +1117,9 @@ export default function Demandas() {
       estadoPrisional: data.estadoPrisional || "solto",
       providencias: data.providencias || undefined,
       atribuicao: data.atribuicao || "Substituição Criminal",
+      // Rastreamento de importação
+      importBatchId,
+      ordemOriginal: data.pjeData?.ordemOriginal ?? index, // Posição original no texto colado
     }));
 
     // Por padrão, sempre atualizar existentes para evitar duplicatas
@@ -1348,10 +1357,18 @@ export default function Demandas() {
       case "atribuicao":
         return (a.atribuicao || "").localeCompare(b.atribuicao || "");
       case "recentes": {
+        // 1. Ordenar por data de inclusão (mais novo primeiro)
         const dateA = a.dataInclusao || a.data || "";
         const dateB = b.dataInclusao || b.data || "";
         const dateCompare = dateB.localeCompare(dateA);
         if (dateCompare !== 0) return dateCompare;
+        // 2. Dentro do mesmo lote, manter ordem original do PJe
+        if (a.importBatchId && a.importBatchId === b.importBatchId) {
+          const orderA = a.ordemOriginal ?? 999;
+          const orderB = b.ordemOriginal ?? 999;
+          return orderA - orderB;
+        }
+        // 3. Fallback: ID mais alto = mais recente
         const idA = parseInt(a.id) || 0;
         const idB = parseInt(b.id) || 0;
         return idB - idA;

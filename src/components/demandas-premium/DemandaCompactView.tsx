@@ -64,6 +64,7 @@ interface Demanda {
   substatus?: string;
   prazo: string;
   data: string;
+  dataInclusao?: string;
   processos: Processo[];
   ato: string;
   providencias: string;
@@ -71,6 +72,9 @@ interface Demanda {
   estadoPrisional?: string;
   prioridade?: string;
   arquivado?: boolean;
+  // Rastreamento de importação
+  importBatchId?: string | null;
+  ordemOriginal?: number | null;
 }
 
 interface DemandaCompactViewProps {
@@ -1010,9 +1014,34 @@ export function DemandaCompactView({
                 </tr>
               </thead>
               <tbody>
-                {demandas.map((demanda, index) => (
+                {demandas.map((demanda, index) => {
+                  // Import batch separator for desktop
+                  const prevDemandaDesktop = index > 0 ? demandas[index - 1] : null;
+                  const showDesktopBatchSep = demanda.importBatchId && demanda.importBatchId !== prevDemandaDesktop?.importBatchId;
+                  const desktopImportDate = demanda.dataInclusao
+                    ? new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })
+                    : "";
+                  const desktopBatchCount = demanda.importBatchId ? demandas.filter(d => d.importBatchId === demanda.importBatchId).length : 0;
+                  const totalCols = COLUMN_ORDER.length + (onReorder ? 1 : 0) + (isSelectMode ? 1 : 0);
+
+                  return (
+                  <React.Fragment key={demanda.id}>
+                  {showDesktopBatchSep && (
+                    <tr className="bg-zinc-100/60 dark:bg-zinc-800/30">
+                      <td colSpan={totalCols} className="px-3 py-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                            Importado {desktopImportDate}
+                          </span>
+                          <span className="text-[9px] text-zinc-400 dark:text-zinc-500">
+                            ({desktopBatchCount} {desktopBatchCount === 1 ? "item" : "itens"})
+                          </span>
+                          <div className="flex-1 h-px bg-zinc-200/40 dark:bg-zinc-700/40" />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                   <CompactRow
-                    key={demanda.id}
                     demanda={demanda}
                     index={index}
                     atribuicaoIcons={atribuicaoIcons}
@@ -1044,7 +1073,9 @@ export function DemandaCompactView({
                     cellRefs={cellRefs}
                     onReorder={onReorder}
                   />
-                ))}
+                  </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
             </SortableContext>
@@ -1074,7 +1105,32 @@ export function DemandaCompactView({
                 const statusOptions = Object.entries(DEMANDA_STATUS).map(([k, v]) => ({
                   value: k, label: v.label, color: STATUS_GROUPS[v.group].color, group: v.group,
                 }));
+
+                // Import batch separator: show header when batch changes
+                const prevDemanda = idx > 0 ? demandas[idx - 1] : null;
+                const currentBatch = demanda.importBatchId;
+                const prevBatch = prevDemanda?.importBatchId;
+                const showBatchSeparator = currentBatch && currentBatch !== prevBatch;
+                // Format import date from dataInclusao (createdAt)
+                const importDateStr = demanda.dataInclusao
+                  ? new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })
+                  : "";
+                // Count items in this batch
+                const batchCount = currentBatch ? demandas.filter(d => d.importBatchId === currentBatch).length : 0;
+
                 return (
+                  <React.Fragment key={demanda.id}>
+                  {showBatchSeparator && (
+                    <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100/80 dark:bg-zinc-800/40 border-b border-zinc-200/50 dark:border-zinc-700/50">
+                      <span className="text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                        Importado {importDateStr}
+                      </span>
+                      <span className="text-[9px] text-zinc-400 dark:text-zinc-500">
+                        ({batchCount} {batchCount === 1 ? "item" : "itens"})
+                      </span>
+                      <div className="flex-1 h-px bg-zinc-200/50 dark:bg-zinc-700/50" />
+                    </div>
+                  )}
                   <div
                     key={demanda.id}
                     className={`relative transition-colors ${
@@ -1109,8 +1165,10 @@ export function DemandaCompactView({
                             {selectedIds?.has(demanda.id) && <Check className="w-2.5 h-2.5 text-white" />}
                           </button>
                         )}
-                        {/* Index */}
-                        <span className="text-[10px] text-zinc-400 font-mono w-4 flex-shrink-0 text-right">{idx + 1}</span>
+                        {/* Index (shows original PJe order if available) */}
+                        <span className="text-[10px] text-zinc-400 font-mono w-4 flex-shrink-0 text-right" title={demanda.ordemOriginal != null ? `Ordem PJe: ${demanda.ordemOriginal + 1}` : undefined}>
+                          {idx + 1}
+                        </span>
                         {/* Preso / Urgente icons */}
                         {isPreso && <Lock className="w-3 h-3 text-rose-500 flex-shrink-0" />}
                         {isUrgente && !isPreso && <Flame className="w-3 h-3 text-orange-500 flex-shrink-0" />}
@@ -1295,6 +1353,7 @@ export function DemandaCompactView({
                       </div>
                     </div>
                   </div>
+                  </React.Fragment>
                 );
               })}
             </div>

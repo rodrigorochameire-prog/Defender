@@ -85,6 +85,8 @@ export const demandasRouter = router({
           assistidoId: demandas.assistidoId,
           defensorId: demandas.defensorId,
           ordemManual: demandas.ordemManual,
+          importBatchId: demandas.importBatchId,
+          ordemOriginal: demandas.ordemOriginal,
           createdAt: demandas.createdAt,
           processo: {
             id: processos.id,
@@ -102,7 +104,7 @@ export const demandasRouter = router({
         .leftJoin(processos, eq(demandas.processoId, processos.id))
         .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(sql`${demandas.ordemManual} ASC NULLS LAST, ${demandas.prazo} ASC NULLS LAST`)
+        .orderBy(sql`${demandas.createdAt} DESC, ${demandas.ordemManual} ASC NULLS LAST, ${demandas.prazo} ASC NULLS LAST`)
         .limit(limit)
         .offset(offset);
 
@@ -493,6 +495,9 @@ export const demandasRouter = router({
             estadoPrisional: z.string().optional(),
             providencias: z.string().optional(),
             atribuicao: z.string().optional(),
+            // Rastreamento de importação
+            importBatchId: z.string().optional(), // UUID do lote de importação
+            ordemOriginal: z.number().optional(), // Posição original no texto colado
           })
         ),
         atualizarExistentes: z.boolean().optional().default(false),
@@ -732,9 +737,9 @@ export const demandasRouter = router({
           }
 
           // 6. Criar demanda
-          // Se dataInclusao foi fornecida (para ordenação precisa do SEEU/PJe), usá-la como createdAt
-          const createdAtValue = row.dataInclusao ? new Date(row.dataInclusao) : new Date();
-
+          // createdAt = momento real da importação (para ordenar "mais novo primeiro")
+          // ordemOriginal = posição no texto colado (para saber a ordem original do PJe)
+          // importBatchId = UUID do lote (para agrupar demandas importadas juntas)
           await db.insert(demandas).values({
             processoId: processo.id,
             assistidoId: assistido.id,
@@ -748,7 +753,9 @@ export const demandasRouter = router({
             providencias: row.providencias || null,
             defensorId: defensorId || ctx.user.id,
             workspaceId: workspaceId,
-            createdAt: createdAtValue, // Usa dataInclusao se fornecida para ordenação precisa
+            importBatchId: row.importBatchId || null,
+            ordemOriginal: row.ordemOriginal ?? null,
+            // createdAt usa defaultNow() — momento real da importação
           }).returning();
 
           results.imported++;

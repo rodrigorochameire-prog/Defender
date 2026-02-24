@@ -369,6 +369,10 @@ export const demandas = pgTable("demandas", {
   // Ordenação manual (drag-and-drop persist)
   ordemManual: integer("ordem_manual"),
 
+  // Importação — rastreamento de lote e ordem original
+  importBatchId: text("import_batch_id"), // UUID do lote de importação (agrupa demandas importadas juntas)
+  ordemOriginal: integer("ordem_original"), // Posição original no texto colado (0-based)
+
   // Enrichment Engine (Sistema Nervoso Defensivo)
   enrichmentData: jsonb("enrichment_data").$type<{
     crime?: string;
@@ -400,6 +404,7 @@ export const demandas = pgTable("demandas", {
   index("demandas_deleted_at_idx").on(table.deletedAt),
   index("demandas_caso_id_idx").on(table.casoId),
   index("demandas_workspace_id_idx").on(table.workspaceId),
+  index("demandas_import_batch_id_idx").on(table.importBatchId),
 ]);
 
 export type Demanda = typeof demandas.$inferSelect;
