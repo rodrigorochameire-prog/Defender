@@ -84,6 +84,11 @@ import {
   Bell,
   BellOff,
   UserCheck,
+  ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal,
+  Filter,
   type LucideIcon,
 } from "lucide-react";
 
@@ -694,6 +699,18 @@ export default function Demandas() {
   useEffect(() => {
     setDemandas(mappedDemandas);
   }, [mappedDemandas]);
+
+  // Close sort dropdown on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const el = document.getElementById('sort-dropdown');
+      if (el && !el.classList.contains('hidden') && !(e.target as HTMLElement).closest('#sort-dropdown')?.parentElement) {
+        el.classList.add('hidden');
+      }
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, []);
 
   // Gerar lista de atos dinamicamente baseado na atribuição selecionada
   const atoOptionsFiltered = useMemo(() => {
@@ -1507,159 +1524,195 @@ export default function Demandas() {
       />
 
       {/* Conteúdo Principal */}
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Cards - KPICardPremium (mesmo componente do Dashboard) */}
-        <KPIGrid columns={4}>
-          {statsData.map((stat, index) => (
-            <KPICardPremium
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              subtitle={stat.subtitle}
-              icon={stat.icon}
-              gradient={stat.gradient}
-              size="sm"
-            />
-          ))}
-        </KPIGrid>
+      <div className="p-2 md:p-4 space-y-2 md:space-y-3">
+        {/* Stats Ribbon — compact KPIs */}
+        <div className="flex items-center gap-3 px-4 py-1.5 bg-zinc-50/80 dark:bg-zinc-800/40 rounded-lg text-[11px] overflow-x-auto scrollbar-none">
+          {statsData.map((stat, index) => {
+            const Icon = stat.icon;
+            const isAlert = stat.gradient === "rose" || stat.gradient === "amber";
+            return (
+              <div key={index} className={`flex items-center gap-1.5 whitespace-nowrap ${isAlert && Number(String(stat.value).replace('%','')) > 0 ? 'text-rose-600 dark:text-rose-400 font-semibold' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="font-bold">{stat.value}</span>
+                <span className="text-zinc-400 dark:text-zinc-500">{stat.title.toLowerCase()}</span>
+              </div>
+            );
+          })}
+          <div className="flex-1" />
+          <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px]">{demandas.filter(d => !d.arquivado).length} total</span>
+        </div>
 
-        {/* Filtros e Infográficos */}
-        <div className="space-y-4">
-          {/* Filtros Rápidos */}
-          <Card className="group/card relative border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl p-5 hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/[0.02]">
-            <FilterSectionsCompact
-              selectedPrazoFilter={selectedPrazoFilter}
-              setSelectedPrazoFilter={setSelectedPrazoFilter}
-              selectedAtribuicao={selectedAtribuicao}
-              setSelectedAtribuicao={setSelectedAtribuicao}
-              selectedEstadoPrisional={selectedEstadoPrisional}
-              setSelectedEstadoPrisional={setSelectedEstadoPrisional}
-              selectedTipoAto={selectedTipoAto}
-              setSelectedTipoAto={setSelectedTipoAto}
-              selectedStatusGroup={selectedStatusGroup}
-              setSelectedStatusGroup={setSelectedStatusGroup}
-              atribuicaoOptions={atribuicaoOptions}
-              atribuicaoIcons={atribuicaoIcons}
-              atribuicaoColors={atribuicaoColors}
-              atoOptions={atoOptionsFiltered}
-              isExpanded={isFiltersExpanded}
-              onToggleExpand={() => setIsFiltersExpanded(!isFiltersExpanded)}
-            />
-          </Card>
-
-          {/* Lista de Demandas */}
-          <Card className="group/card relative border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/[0.02]">
-            <div className="px-3 md:px-5 py-3 bg-gradient-to-r from-emerald-500/5 via-transparent to-transparent dark:from-emerald-500/10 border-b border-zinc-200 dark:border-zinc-800">
-              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3">
+        {/* Lista de Demandas */}
+        <Card className="group/card relative border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/[0.02]">
+            <div className="px-3 md:px-5 py-2.5 border-b border-zinc-200 dark:border-zinc-800">
+              {/* Toolbar Row */}
+              <div className="flex items-center gap-2">
+                {/* Search */}
                 <div className="flex-1 min-w-0 relative">
-                  <Search className="absolute left-3 md:left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
                   <Input
                     placeholder="Buscar assistido, processo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 md:pl-10 h-9 md:h-10 text-xs md:text-sm bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+                    className="pl-9 h-8 text-xs bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 focus:border-emerald-400 dark:focus:border-emerald-600 focus:ring-1 focus:ring-emerald-400/30 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 rounded-lg"
                   />
                   {searchTerm && (
                     <button
                       onClick={() => setSearchTerm("")}
-                      className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded p-1 transition-colors"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded p-0.5 transition-colors"
                     >
-                      <XCircle className="w-3.5 md:w-4 h-3.5 md:h-4 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300" />
+                      <XCircle className="w-3.5 h-3.5 text-zinc-400 hover:text-zinc-600" />
                     </button>
                   )}
                 </div>
-                {viewMode !== "compact" && (
-                  <div className="flex gap-1 overflow-x-auto scrollbar-none">
-                    {["status", "prazo", "assistido", "ato", "recentes"].map((sort) => {
-                      const isActive = sortStack.length === 1 && sortStack[0].column === sort;
-                      return (
-                        <button
-                          key={sort}
-                          onClick={() => setSortStack([{ column: sort, direction: "asc" }])}
-                          className={`px-2 md:px-2.5 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-semibold transition-all whitespace-nowrap ${
-                            isActive
-                              ? "bg-emerald-600 text-white shadow-sm"
-                              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                          }`}
-                        >
-                          {sort === "recentes" && <Sparkles className="w-2.5 md:w-3 h-2.5 md:h-3 inline mr-0.5 md:mr-1" />}
-                          {sort.charAt(0).toUpperCase() + sort.slice(1)}
-                        </button>
-                      );
-                    })}
+
+                {/* Sort Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById('sort-dropdown');
+                      if (el) el.classList.toggle('hidden');
+                    }}
+                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors whitespace-nowrap"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>{sortStack[0]?.column === "recentes" ? "Importação ↓" : sortStack[0]?.column === "status" ? "Status" : sortStack[0]?.column === "prazo" ? "Prazo" : sortStack[0]?.column === "assistido" ? "Assistido" : sortStack[0]?.column === "ato" ? "Ato" : "Ordenar"}</span>
+                  </button>
+                  <div id="sort-dropdown" className="hidden absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-[160px]">
+                    {[
+                      { key: "recentes", label: "Importação ↓", sublabel: "mais recente" },
+                      { key: "status", label: "Status" },
+                      { key: "prazo", label: "Prazo" },
+                      { key: "assistido", label: "Assistido (A-Z)" },
+                      { key: "ato", label: "Ato" },
+                    ].map(opt => (
+                      <button
+                        key={opt.key}
+                        onClick={() => {
+                          setSortStack([{ column: opt.key, direction: "asc" }]);
+                          document.getElementById('sort-dropdown')?.classList.add('hidden');
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
+                          sortStack[0]?.column === opt.key
+                            ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold"
+                            : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                        }`}
+                      >
+                        {sortStack[0]?.column === opt.key && <span className="text-emerald-500">✓</span>}
+                        <span>{opt.label}</span>
+                        {opt.sublabel && <span className="text-[10px] text-zinc-400">({opt.sublabel})</span>}
+                      </button>
+                    ))}
                   </div>
-                )}
-                {/* Toggle de Visualização: Grid / Lista / Cards - Mobile e Desktop */}
-                <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 gap-0.5">
-                  <button
-                    onClick={() => {
-                      setViewMode("compact");
-                      localStorage.setItem("defender_demandas_view_mode", "compact");
-                    }}
-                    className={`p-1.5 rounded-md transition-all ${
-                      viewMode === "compact"
-                        ? "bg-emerald-600 text-white shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                    }`}
-                    title="Planilha Editável"
-                  >
-                    <Rows3 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewMode("grid");
-                      localStorage.setItem("defender_demandas_view_mode", "grid");
-                    }}
-                    className={`p-1.5 rounded-md transition-all ${
-                      viewMode === "grid"
-                        ? "bg-emerald-600 text-white shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                    }`}
-                    title="Grid Premium"
-                  >
-                    <LayoutGrid className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewMode("table");
-                      localStorage.setItem("defender_demandas_view_mode", "table");
-                    }}
-                    className={`p-1.5 rounded-md transition-all ${
-                      viewMode === "table"
-                        ? "bg-emerald-600 text-white shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                    }`}
-                    title="Lista"
-                  >
-                    <Table2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewMode("cards");
-                      localStorage.setItem("defender_demandas_view_mode", "cards");
-                    }}
-                    className={`p-1.5 rounded-md transition-all ${
-                      viewMode === "cards"
-                        ? "bg-emerald-600 text-white shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                    }`}
-                    title="Cards Horizontais"
-                  >
-                    <LayoutList className="w-3.5 h-3.5" />
-                  </button>
                 </div>
+
+                {/* View Mode Toggle — Defender style */}
+                <div className="flex items-center bg-zinc-100 dark:bg-zinc-800/80 rounded-xl p-0.5 gap-0.5">
+                  {[
+                    { mode: "compact" as const, icon: Rows3, title: "Planilha" },
+                    { mode: "grid" as const, icon: LayoutGrid, title: "Grid" },
+                    { mode: "table" as const, icon: Table2, title: "Lista" },
+                    { mode: "cards" as const, icon: LayoutList, title: "Cards" },
+                  ].map(({ mode, icon: Icon, title }) => (
+                    <button
+                      key={mode}
+                      onClick={() => { setViewMode(mode); localStorage.setItem("defender_demandas_view_mode", mode); }}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                        viewMode === mode
+                          ? "bg-white dark:bg-zinc-700 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-600/50"
+                          : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
+                      }`}
+                      title={title}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Secondary Filters Button */}
                 <button
-                  onClick={() => setShowArchived(!showArchived)}
-                  className={`px-2 md:px-2.5 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-medium transition-all whitespace-nowrap ${
-                    showArchived
-                      ? "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300"
-                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                  onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+                  className={`flex items-center gap-1 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors ${
+                    isFiltersExpanded || selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto
+                      ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400"
+                      : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300"
                   }`}
                 >
-                  <Archive className="w-2.5 md:w-3 h-2.5 md:h-3 inline mr-0.5 md:mr-1" />
-                  {showArchived ? "Ativos" : "Arquivados"}
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Filtros</span>
+                  {(selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto) && (
+                    <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center">
+                      {[selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+
+                {/* Archive Toggle */}
+                <button
+                  onClick={() => setShowArchived(!showArchived)}
+                  className={`h-8 px-2.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                    showArchived
+                      ? "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+                      : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300"
+                  }`}
+                >
+                  <Archive className="w-3.5 h-3.5 inline" />
                 </button>
               </div>
+
+              {/* Atribuicao Tabs */}
+              <div className="flex items-center gap-0.5 mt-2 overflow-x-auto scrollbar-none -mx-1 px-1">
+                {[{ value: null, label: "Todas" }, ...atribuicaoOptions.filter(o => o.value !== "Todas")].map((opt) => {
+                  const isActive = selectedAtribuicao === opt.value || (opt.value === null && !selectedAtribuicao);
+                  const color = opt.value ? (ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a") : "#71717a";
+                  const TabIcon = opt.value ? atribuicaoIcons[opt.label] : null;
+                  // Count demandas per atribuicao
+                  const count = opt.value === null
+                    ? demandas.filter(d => !d.arquivado).length
+                    : demandas.filter(d => !d.arquivado && d.atribuicao === opt.label).length;
+                  return (
+                    <button
+                      key={opt.value || "todas"}
+                      onClick={() => setSelectedAtribuicao(opt.value)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all border-b-2 ${
+                        isActive
+                          ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-800 dark:text-zinc-200"
+                          : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border-transparent"
+                      }`}
+                      style={isActive ? { borderBottomColor: color } : { borderBottomColor: 'transparent' }}
+                    >
+                      {TabIcon && <TabIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />}
+                      {!TabIcon && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />}
+                      <span>{opt.label?.replace("Violencia Domestica", "VVD").replace("Tribunal do Juri", "Juri").replace("Grupo Especial do Juri", "Gr.Juri").replace("Execucao Penal", "Exec.Penal").replace("Substituicao Criminal", "Subst.Crim").replace("Curadoria Especial", "Curadoria")}</span>
+                      <span className="text-[9px] text-zinc-400 dark:text-zinc-500 font-mono">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Secondary Filters Popover (collapsible) */}
+              {isFiltersExpanded && (
+                <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap gap-2">
+                  <FilterSectionsCompact
+                    selectedPrazoFilter={selectedPrazoFilter}
+                    setSelectedPrazoFilter={setSelectedPrazoFilter}
+                    selectedAtribuicao={selectedAtribuicao}
+                    setSelectedAtribuicao={setSelectedAtribuicao}
+                    selectedEstadoPrisional={selectedEstadoPrisional}
+                    setSelectedEstadoPrisional={setSelectedEstadoPrisional}
+                    selectedTipoAto={selectedTipoAto}
+                    setSelectedTipoAto={setSelectedTipoAto}
+                    selectedStatusGroup={selectedStatusGroup}
+                    setSelectedStatusGroup={setSelectedStatusGroup}
+                    atribuicaoOptions={atribuicaoOptions}
+                    atribuicaoIcons={atribuicaoIcons}
+                    atribuicaoColors={atribuicaoColors}
+                    atoOptions={atoOptionsFiltered}
+                    isExpanded={true}
+                    onToggleExpand={() => setIsFiltersExpanded(false)}
+                  />
+                </div>
+              )}
             </div>
 
             {showArchived && (
@@ -1979,9 +2032,8 @@ export default function Demandas() {
             </div>
           )}
 
-          {/* Timeline */}
-          <HistoricoChart demandas={demandasFiltradas} />
-        </div>
+        {/* Timeline */}
+        <HistoricoChart demandas={demandasFiltradas} />
       </div>
 
       {/* Modals */}

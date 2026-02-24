@@ -213,13 +213,14 @@ export function DemandaCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Linha indicadora lateral de status */}
-      <div 
-        className="absolute left-0 top-0 bottom-0 w-1 transition-all duration-300"
-        style={{ 
+      {/* Linha indicadora lateral de atribuição — w-2.5, wider for visual impact */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-2.5 rounded-l-lg transition-all duration-300 hover:w-3 cursor-pointer"
+        style={{
           backgroundColor: borderColor,
-          opacity: isHovered ? 1 : 0.6
+          opacity: isHovered ? 1 : 0.7
         }}
+        title={`Atribuição: ${demanda.atribuicao}`}
       />
 
       {/* Checkbox de seleção */}
@@ -238,7 +239,7 @@ export function DemandaCard({
 
       {/* Conteúdo do Card */}
       <div
-        className={`relative bg-white dark:bg-zinc-900 p-4 md:p-5 lg:p-6 rounded-r-xl border border-l-0 border-zinc-200/60 dark:border-zinc-800/60 transition-all duration-300 ${isSelectMode ? "ml-8" : "ml-1"}`}
+        className={`relative bg-white dark:bg-zinc-900 p-4 md:p-5 lg:p-6 rounded-r-xl border border-l-0 border-zinc-200/60 dark:border-zinc-800/60 transition-all duration-300 ${isSelectMode ? "ml-8" : "ml-3"}`}
         style={{
           boxShadow: isHovered 
             ? '0 4px 12px rgba(0, 0, 0, 0.08)' 

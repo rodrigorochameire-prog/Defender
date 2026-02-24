@@ -926,38 +926,8 @@ export function DemandaCompactView({
   return (
     <TooltipProvider delayDuration={300}>
       <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        {/* Header: filter chips + hint */}
-        <div className="px-4 py-2 bg-zinc-50/50 dark:bg-zinc-800/40 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0 overflow-x-auto scrollbar-none flex-nowrap">
-            {/* Quick atribuição filter chips */}
-            {onAtribuicaoFilter && (
-              <>
-                {ATRIBUICAO_OPTIONS.map((opt) => {
-                  const isActive = selectedAtribuicao === opt.value;
-                  const color = ATRIBUICAO_BORDER_COLORS[opt.value] || "#71717a";
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => onAtribuicaoFilter(isActive ? null : opt.value)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium transition-all whitespace-nowrap ${
-                        isActive
-                          ? "text-white shadow-sm ring-1 ring-black/10"
-                          : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                      }`}
-                      style={isActive ? { backgroundColor: color } : undefined}
-                      title={opt.value}
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full flex-shrink-0 ${!isActive ? "ring-1 ring-inset ring-black/10" : ""}`}
-                        style={{ backgroundColor: isActive ? "rgba(255,255,255,0.9)" : color }}
-                      />
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </>
-            )}
-          </div>
+        {/* Header: keyboard hint (atribuição tabs moved to parent toolbar) */}
+        <div className="px-4 py-1.5 bg-zinc-50/50 dark:bg-zinc-800/40 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-end">
           <span className="text-[9px] text-zinc-400 dark:text-zinc-600 whitespace-nowrap flex-shrink-0 hidden lg:inline tracking-wide">
             Click = seleciona &middot; Enter/2x = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; Ctrl+C = copia
           </span>
