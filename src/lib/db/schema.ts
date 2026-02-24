@@ -701,6 +701,9 @@ export const documentos = pgTable("documentos", {
   }>(),
   enrichedAt: timestamp("enriched_at"),
 
+  // Full Docling markdown content for semantic search (Task 1 - Pesquisa Semantica)
+  conteudoCompleto: text("conteudo_completo"),
+
   // Metadados
   uploadedById: integer("uploaded_by_id")
     .notNull()
@@ -720,6 +723,26 @@ export const documentos = pgTable("documentos", {
 
 export type Documento = typeof documentos.$inferSelect;
 export type InsertDocumento = typeof documentos.$inferInsert;
+
+// ==========================================
+// EMBEDDINGS (pgvector semantic search)
+// ==========================================
+
+export const embeddings = pgTable("embeddings", {
+  id: serial("id").primaryKey(),
+  entityType: text("entity_type").notNull(),
+  entityId: integer("entity_id").notNull(),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
+  chunkIndex: integer("chunk_index").default(0),
+  contentText: text("content_text").notNull(),
+  // Note: embedding column is vector(768) managed by pgvector, not by Drizzle
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Embedding = typeof embeddings.$inferSelect;
+export type InsertEmbedding = typeof embeddings.$inferInsert;
 
 // ==========================================
 // ANOTAÇÕES (Log de Providências)
