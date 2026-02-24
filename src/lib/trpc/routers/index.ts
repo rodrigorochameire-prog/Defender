@@ -45,6 +45,7 @@ import { parecerRouter } from "./parecer";
 import { muralRouter } from "./mural";
 import { enrichmentRouter } from "./enrichment";
 import { solarRouter } from "./solar";
+import { searchRouter } from "./search";
 
 
 export const appRouter = router({
@@ -180,6 +181,11 @@ export const appRouter = router({
   // SOLAR (INTEGRAÇÃO DPEBA - PROCESSOS)
   // ==========================================
   solar: solarRouter,
+
+  // ==========================================
+  // PESQUISA SEMÂNTICA (PGVECTOR)
+  // ==========================================
+  search: searchRouter,
 });
 
 export type AppRouter = typeof appRouter;

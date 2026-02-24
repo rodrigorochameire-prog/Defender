@@ -1,108 +1,283 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { trpc } from "@/lib/trpc/client";
 import { SwissCard, SwissCardContent, SwissCardHeader, SwissCardTitle, SwissCardDescription } from "@/components/ui/swiss-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   Search,
   FileSearch,
   ExternalLink,
   Scale,
   Users,
   FileText,
+  StickyNote,
+  ArrowRight,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
+import Link from "next/link";
+
+const ENTITY_LABELS: Record<string, { label: string; icon: React.ReactNode; color: string; href: (id: number) => string }> = {
+  documento: {
+    label: "Documento",
+    icon: <FileText className="h-3.5 w-3.5" />,
+    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    href: (id) => `/admin/documentos/${id}`,
+  },
+  anotacao: {
+    label: "Anotacao",
+    icon: <StickyNote className="h-3.5 w-3.5" />,
+    color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+    href: (id) => `/admin/anotacoes/${id}`,
+  },
+  movimentacao: {
+    label: "Movimentacao",
+    icon: <ArrowRight className="h-3.5 w-3.5" />,
+    color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+    href: (id) => `/admin/movimentacoes/${id}`,
+  },
+  case_fact: {
+    label: "Fato do Caso",
+    icon: <Scale className="h-3.5 w-3.5" />,
+    color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+    href: (id) => `/admin/casos/fatos/${id}`,
+  },
+};
 
 export default function BuscaPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const [activeQuery, setActiveQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("semantic");
 
-  const handleSearch = () => {
-    if (!searchTerm) return;
-    setIsSearching(true);
-    setTimeout(() => setIsSearching(false), 1000);
-  };
+  // Semantic search (pgvector)
+  const semanticSearch = trpc.search.semantic.useQuery(
+    { query: activeQuery, limit: 20 },
+    { enabled: !!activeQuery && activeTab === "semantic" }
+  );
+
+  // Local database search
+  const localSearch = trpc.search.local.useQuery(
+    { query: activeQuery, limit: 20 },
+    { enabled: !!activeQuery && activeTab === "local" }
+  );
+
+  const handleSearch = useCallback(() => {
+    if (searchTerm.trim().length >= 2) {
+      setActiveQuery(searchTerm.trim());
+    }
+  }, [searchTerm]);
+
+  const isLoading = (activeTab === "semantic" && semanticSearch.isLoading) ||
+                    (activeTab === "local" && localSearch.isLoading);
 
   return (
     <div className="p-3 sm:p-4 lg:p-6 space-y-6">
-      {/* Header - Padrão Swiss */}
+      {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
           <FileSearch className="w-5 h-5 text-blue-600" />
         </div>
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Buscar Processos</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Busca Global</h1>
           <p className="text-muted-foreground text-xs sm:text-sm">
-            Pesquise processos no sistema e nos tribunais
+            Pesquisa semantica em documentos, anotacoes, movimentacoes e fatos
           </p>
         </div>
       </div>
 
+      {/* Search Bar */}
       <SwissCard>
-        <SwissCardHeader className="pb-3">
-          <SwissCardTitle className="text-sm sm:text-base flex items-center gap-2">
-            <Search className="h-4 w-4 text-primary" />
-            Busca Avançada
-          </SwissCardTitle>
-          <SwissCardDescription>
-            Busque por número do processo, nome do assistido ou CPF
-          </SwissCardDescription>
-        </SwissCardHeader>
-        <SwissCardContent className="p-3 sm:p-4 pt-0 sm:pt-0 space-y-4">
+        <SwissCardContent className="p-3 sm:p-4 space-y-3">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Digite o número do processo, nome ou CPF..."
+                placeholder="Busque por qualquer termo: ex. 'sentenca condenatoria', 'audiencia do Joao', 'laudo pericial'..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-9"
+                className="pl-10 h-10"
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </div>
-            <Button onClick={handleSearch} disabled={isSearching} className="h-9">
-              {isSearching ? "Buscando..." : "Buscar"}
+            <Button onClick={handleSearch} disabled={isLoading || searchTerm.trim().length < 2} className="h-10 gap-2">
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              Buscar
             </Button>
           </div>
 
-          <div className="grid gap-3 sm:gap-4 sm:grid-cols-3">
-            <SwissCard className="cursor-pointer hover:shadow-md transition-shadow border-l-[3px] border-l-blue-500">
-              <SwissCardContent className="p-3 sm:p-4 flex items-center gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <Scale className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Processos</p>
-                  <p className="text-xs text-muted-foreground">Buscar no sistema</p>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
-            <SwissCard className="cursor-pointer hover:shadow-md transition-shadow border-l-[3px] border-l-emerald-500">
-              <SwissCardContent className="p-3 sm:p-4 flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Assistidos</p>
-                  <p className="text-xs text-muted-foreground">Buscar por nome/CPF</p>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
-            <SwissCard className="cursor-pointer hover:shadow-md transition-shadow border-l-[3px] border-l-purple-500">
-              <SwissCardContent className="p-3 sm:p-4 flex items-center gap-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Demandas</p>
-                  <p className="text-xs text-muted-foreground">Buscar atos pendentes</p>
-                </div>
-              </SwissCardContent>
-            </SwissCard>
-          </div>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2 max-w-xs">
+              <TabsTrigger value="semantic" className="text-xs gap-1.5">
+                <Sparkles className="h-3 w-3" />
+                Semantica (IA)
+              </TabsTrigger>
+              <TabsTrigger value="local" className="text-xs gap-1.5">
+                <Search className="h-3 w-3" />
+                Local (DB)
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </SwissCardContent>
       </SwissCard>
 
+      {/* Results */}
+      {activeQuery && (
+        <div className="space-y-4">
+          {activeTab === "semantic" && (
+            <>
+              {semanticSearch.isLoading && (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Buscando com IA...</span>
+                </div>
+              )}
+
+              {semanticSearch.data && semanticSearch.data.results.length === 0 && (
+                <SwissCard>
+                  <SwissCardContent className="p-6 text-center text-muted-foreground">
+                    <FileSearch className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>Nenhum resultado encontrado para &ldquo;{activeQuery}&rdquo;</p>
+                    <p className="text-xs mt-1">Tente outros termos ou verifique se os documentos foram indexados</p>
+                  </SwissCardContent>
+                </SwissCard>
+              )}
+
+              {semanticSearch.data && semanticSearch.data.results.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    {semanticSearch.data.total} resultado(s) para &ldquo;{activeQuery}&rdquo;
+                  </p>
+                  {semanticSearch.data.results.map((result, idx) => {
+                    const entity = ENTITY_LABELS[result.entity_type] || {
+                      label: result.entity_type,
+                      icon: <FileText className="h-3.5 w-3.5" />,
+                      color: "bg-zinc-100 text-zinc-700",
+                      href: () => "#",
+                    };
+                    const scorePercent = Math.round(result.score * 100);
+
+                    return (
+                      <SwissCard key={`${result.entity_type}-${result.entity_id}-${idx}`} className="hover:shadow-md transition-shadow">
+                        <SwissCardContent className="p-3 sm:p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <Badge variant="secondary" className={`text-xs gap-1 ${entity.color}`}>
+                                  {entity.icon}
+                                  {entity.label}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {scorePercent}% relevancia
+                                </Badge>
+                                {result.chunk_index > 0 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Trecho {result.chunk_index + 1}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-foreground line-clamp-3 whitespace-pre-line">
+                                {result.content_text}
+                              </p>
+                            </div>
+                            <Link href={entity.href(result.entity_id)}>
+                              <Button variant="ghost" size="sm" className="shrink-0">
+                                <ArrowRight className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          </div>
+                        </SwissCardContent>
+                      </SwissCard>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === "local" && (
+            <>
+              {localSearch.isLoading && (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Buscando no banco...</span>
+                </div>
+              )}
+
+              {localSearch.data && (
+                <div className="space-y-4">
+                  {/* Assistidos */}
+                  {localSearch.data.assistidos.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold flex items-center gap-2">
+                        <Users className="h-4 w-4 text-emerald-600" />
+                        Assistidos ({localSearch.data.assistidos.length})
+                      </h3>
+                      {localSearch.data.assistidos.map((a) => (
+                        <Link key={a.id} href={`/admin/assistidos/${a.id}`}>
+                          <SwissCard className="hover:shadow-md transition-shadow cursor-pointer">
+                            <SwissCardContent className="p-3 flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-medium">{a.nome}</p>
+                                {a.cpf && <p className="text-xs text-muted-foreground font-mono">{a.cpf}</p>}
+                              </div>
+                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            </SwissCardContent>
+                          </SwissCard>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Processos */}
+                  {localSearch.data.processos.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold flex items-center gap-2">
+                        <Scale className="h-4 w-4 text-blue-600" />
+                        Processos ({localSearch.data.processos.length})
+                      </h3>
+                      {localSearch.data.processos.map((p) => (
+                        <Link key={p.id} href={`/admin/processos/${p.id}`}>
+                          <SwissCard className="hover:shadow-md transition-shadow cursor-pointer">
+                            <SwissCardContent className="p-3 flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-medium font-mono">{p.numeroAutos}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {p.classeProcessual} {p.vara ? `\u2022 ${p.vara}` : ""}
+                                </p>
+                              </div>
+                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            </SwissCardContent>
+                          </SwissCard>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {localSearch.data.assistidos.length === 0 && localSearch.data.processos.length === 0 && (
+                    <SwissCard>
+                      <SwissCardContent className="p-6 text-center text-muted-foreground">
+                        <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>Nenhum resultado encontrado para &ldquo;{activeQuery}&rdquo;</p>
+                      </SwissCardContent>
+                    </SwissCard>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* External Links */}
       <SwissCard>
         <SwissCardHeader className="pb-3">
           <SwissCardTitle className="text-sm sm:text-base">Consultas Externas</SwissCardTitle>
@@ -112,11 +287,7 @@ export default function BuscaPage() {
         </SwissCardHeader>
         <SwissCardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
           <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-            <a
-              href="https://esaj.tjba.jus.br/esaj/portal.do?servico=740000"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href="https://esaj.tjba.jus.br/esaj/portal.do?servico=740000" target="_blank" rel="noopener noreferrer">
               <SwissCard className="cursor-pointer hover:shadow-md transition-shadow group">
                 <SwissCardContent className="p-3 sm:p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -125,18 +296,14 @@ export default function BuscaPage() {
                     </div>
                     <div>
                       <p className="font-medium text-sm">E-SAJ TJBA</p>
-                      <p className="text-xs text-muted-foreground">Tribunal de Justiça da Bahia</p>
+                      <p className="text-xs text-muted-foreground">Tribunal de Justica da Bahia</p>
                     </div>
                   </div>
                   <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                 </SwissCardContent>
               </SwissCard>
             </a>
-            <a
-              href="https://pje.tjba.jus.br/pje/login.seam"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href="https://pje.tjba.jus.br/pje/login.seam" target="_blank" rel="noopener noreferrer">
               <SwissCard className="cursor-pointer hover:shadow-md transition-shadow group">
                 <SwissCardContent className="p-3 sm:p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -145,7 +312,7 @@ export default function BuscaPage() {
                     </div>
                     <div>
                       <p className="font-medium text-sm">PJe TJBA</p>
-                      <p className="text-xs text-muted-foreground">Processo Judicial Eletrônico</p>
+                      <p className="text-xs text-muted-foreground">Processo Judicial Eletronico</p>
                     </div>
                   </div>
                   <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />

@@ -317,6 +317,35 @@ export interface SigadBuscarOutput {
   error?: string | null;
 }
 
+// === Semantic Search Types ===
+
+export interface SemanticSearchInput {
+  query: string;
+  filters?: {
+    assistido_id?: number;
+    processo_id?: number;
+    entity_types?: string[];
+  };
+  limit?: number;
+}
+
+export interface SearchResultItem {
+  entity_type: string;
+  entity_id: number;
+  assistido_id: number | null;
+  processo_id: number | null;
+  chunk_index: number;
+  content_text: string;
+  score: number;
+  metadata: Record<string, unknown>;
+}
+
+export interface SemanticSearchOutput {
+  results: SearchResultItem[];
+  total: number;
+  query: string;
+}
+
 // === Client ===
 
 class EnrichmentClient {
@@ -614,6 +643,20 @@ class EnrichmentClient {
   async sigadBuscarAssistido(input: { cpf: string }): Promise<SigadBuscarOutput> {
     return this.request<SigadBuscarOutput>("/sigad/buscar-assistido", {
       cpf: input.cpf,
+    });
+  }
+
+  // === Semantic Search Methods ===
+
+  /**
+   * Busca semântica via pgvector (embeddings).
+   * Chamado pelo: tRPC search.semantic
+   */
+  async semanticSearch(input: SemanticSearchInput): Promise<SemanticSearchOutput> {
+    return this.request<SemanticSearchOutput>("/search/semantic", {
+      query: input.query,
+      filters: input.filters || {},
+      limit: input.limit || 20,
     });
   }
 
