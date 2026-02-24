@@ -1,10 +1,12 @@
 """
 Routers do Solar — Endpoints de sincronização com o Sistema Solar (DPEBA).
 
-POST /solar/sync-processo — Sincroniza um processo
-POST /solar/sync-batch   — Sincroniza múltiplos processos
-POST /solar/avisos       — Lista avisos pendentes (PJe/SEEU)
-GET  /solar/status       — Status da sessão Solar
+POST /solar/sync-processo    — Sincroniza um processo (leitura)
+POST /solar/sync-batch       — Sincroniza múltiplos processos (leitura)
+POST /solar/avisos           — Lista avisos pendentes (PJe/SEEU)
+GET  /solar/status           — Status da sessão Solar
+POST /solar/sync-to-solar    — Escreve anotações como fases/anotações no Solar
+POST /solar/criar-anotacao   — Cria anotação no Histórico do atendimento
 """
 
 import logging
@@ -22,10 +24,15 @@ from models.schemas import (
     SolarNomeSyncOutput,
     SolarCadastrarInput,
     SolarCadastrarOutput,
+    SolarSyncToInput,
+    SolarSyncToOutput,
+    SolarCriarAnotacaoInput,
+    SolarCriarAnotacaoOutput,
 )
 from services.solar_orchestrator import get_solar_orchestrator
 from services.solar_auth_service import get_solar_auth_service, SolarAuthService
-from services.solar_scraper_service import SolarScraperService
+from services.solar_scraper_service import SolarScraperService, get_solar_scraper_service
+from services.solar_write_service import get_solar_write_service
 from services.solar_selectors import get_unmapped_selectors
 
 logger = logging.getLogger("enrichment-engine.solar-router")
@@ -194,4 +201,103 @@ async def cadastrar_processo(input_data: SolarCadastrarInput) -> SolarCadastrarO
             ja_existia=False,
             numero=input_data.numero_processo,
             error=str(e),
+        )
+
+
+@router.post("/solar/sync-to-solar", response_model=SolarSyncToOutput)
+async def sync_to_solar(input_data: SolarSyncToInput) -> SolarSyncToOutput:
+    """
+    Escreve dados do OMBUDS no Solar como Fases Processuais.
+
+    Recebe anotacoes do OMBUDS e as registra como fases processuais
+    nos respectivos processos no Solar. Se o processo nao existir no Solar,
+    cria automaticamente via cadastrar_processo_solar().
+
+    Safety:
+    - dry_run=True: preenche mas nao salva (para testes)
+    - Rate limit: 5s entre escritas
+    - Concurrency lock: 1 escrita por vez
+    - Screenshot antes/depois de cada operacao
+    """
+    logger.info(
+        "Sync OMBUDS -> Solar: assistido=%d anotacoes=%d dry_run=%s",
+        input_data.assistido_id,
+        len(input_data.anotacoes),
+        input_data.dry_run,
+    )
+
+    try:
+        write_service = get_solar_write_service()
+
+        # Converter Pydantic models para dicts
+        anotacoes_dicts = [
+            {
+                "id": a.id,
+                "processoId": a.processo_id,
+                "numeroAutos": a.numero_autos,
+                "conteudo": a.conteudo,
+                "tipo": a.tipo,
+                "createdAt": a.created_at,
+            }
+            for a in input_data.anotacoes
+        ]
+
+        result = await write_service.sync_anotacoes_to_solar(
+            assistido_id=input_data.assistido_id,
+            anotacoes=anotacoes_dicts,
+            modo=input_data.modo,
+            dry_run=input_data.dry_run,
+        )
+
+        return SolarSyncToOutput(**result)
+
+    except Exception as e:
+        logger.error("sync-to-solar falhou: %s", e)
+        return SolarSyncToOutput(
+            success=False,
+            erros=[str(e)],
+        )
+
+
+@router.post("/solar/criar-anotacao", response_model=SolarCriarAnotacaoOutput)
+async def criar_anotacao(input_data: SolarCriarAnotacaoInput) -> SolarCriarAnotacaoOutput:
+    """
+    Cria uma anotação no Histórico de um atendimento no Solar.
+
+    Alternativa mais leve que sync-to-solar — cria uma única anotação
+    diretamente no Histórico do atendimento via formulário Django.
+
+    Qualificações disponíveis:
+    - 302: ANOTAÇÕES (default)
+    - 304: ANDAMENTO DE PROCESSO VINCULADO
+    - 305: DESPACHO DO(A) DEFENSOR(A)
+    - 306: DILIGÊNCIAS
+    - 307: LEMBRETE
+    - 310: REGISTRO DE TENTATIVA DE CONTATO COM ASSISTIDO
+    """
+    logger.info(
+        "Criar anotacao Solar: atendimento=%s qualif=%d dry_run=%s",
+        input_data.atendimento_id,
+        input_data.qualificacao_id,
+        input_data.dry_run,
+    )
+
+    try:
+        write_service = get_solar_write_service()
+
+        result = await write_service.criar_anotacao(
+            atendimento_id=input_data.atendimento_id,
+            texto=input_data.texto,
+            qualificacao_id=input_data.qualificacao_id,
+            atuacao_value=input_data.atuacao_value,
+            dry_run=input_data.dry_run,
+        )
+
+        return SolarCriarAnotacaoOutput(**result)
+
+    except Exception as e:
+        logger.error("criar-anotacao falhou: %s", e)
+        return SolarCriarAnotacaoOutput(
+            success=False,
+            message=str(e),
         )

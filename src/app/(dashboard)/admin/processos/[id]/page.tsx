@@ -4,12 +4,13 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
-import { ArrowLeft, Lock, Scale, User } from "lucide-react";
+import { ArrowLeft, ExternalLink, Lock, Scale, Sun, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SubpastaExplorer } from "@/components/hub/SubpastaExplorer";
 import { TimelineDocumental } from "@/components/hub/TimelineDocumental";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 type Tab = "partes" | "demandas" | "drive" | "audiencias" | "vinculados";
 
@@ -26,6 +27,27 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
   const { id } = use(params);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("partes");
+  const [solarResult, setSolarResult] = useState<{
+    cadastrado: boolean;
+    ja_existia: boolean;
+    atendimento_id?: string | null;
+  } | null>(null);
+
+  const cadastrarMutation = trpc.solar.cadastrarNoSolar.useMutation({
+    onSuccess: (data) => {
+      setSolarResult(data);
+      if (data.ja_existia) {
+        toast.info("Processo já está cadastrado no Solar");
+      } else if (data.cadastrado) {
+        toast.success("Processo cadastrado no Solar!");
+      } else {
+        toast.error("Não foi possível cadastrar no Solar");
+      }
+    },
+    onError: (err) => {
+      toast.error(`Erro Solar: ${err.message}`);
+    },
+  });
 
   const { data, isLoading, error } = trpc.processos.getById.useQuery(
     { id: Number(id) },
@@ -98,6 +120,50 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Solar Action */}
+      <div className="px-6 py-2 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-3">
+        <Sun className="h-4 w-4 text-amber-500 shrink-0" />
+        <span className="text-[11px] text-zinc-500">Solar DPEBA:</span>
+        {solarResult?.ja_existia ? (
+          <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+            Cadastrado
+            {solarResult.atendimento_id && (
+              <a
+                href={`https://solar.defensoria.ba.def.br/atendimento/${solarResult.atendimento_id}/`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-0.5 text-emerald-600 hover:text-emerald-700"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </span>
+        ) : solarResult?.cadastrado ? (
+          <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+            Cadastrado agora!
+            {solarResult.atendimento_id && (
+              <a
+                href={`https://solar.defensoria.ba.def.br/atendimento/${solarResult.atendimento_id}/`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-0.5 text-emerald-600 hover:text-emerald-700"
+              >
+                #{solarResult.atendimento_id}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </span>
+        ) : (
+          <button
+            onClick={() => cadastrarMutation.mutate({ processoId: Number(id) })}
+            disabled={cadastrarMutation.isPending}
+            className="text-[11px] px-2 py-1 rounded border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50"
+          >
+            {cadastrarMutation.isPending ? "Verificando..." : "Cadastrar no Solar"}
+          </button>
+        )}
       </div>
 
       {/* Tabs */}

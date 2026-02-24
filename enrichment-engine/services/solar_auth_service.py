@@ -89,7 +89,9 @@ class SolarAuthService:
 
             # 1. Navegar para Solar (redireciona para Keycloak)
             logger.info("Navigating to Solar: %s", self.settings.solar_base_url)
-            await page.goto(self.settings.solar_base_url, wait_until="networkidle", timeout=30000)
+            await page.goto(self.settings.solar_base_url, wait_until="commit", timeout=120000)
+            # Aguardar redirect para Keycloak completar
+            await page.wait_for_load_state("domcontentloaded", timeout=120000)
 
             # 2. Verificar se estamos na página de login Keycloak
             current_url = page.url

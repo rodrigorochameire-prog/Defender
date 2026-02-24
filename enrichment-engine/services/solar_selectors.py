@@ -2,7 +2,7 @@
 Seletores CSS do Solar (DPEBA) — mapeamento centralizado.
 Atualizar conforme a interface do Solar mudar.
 
-Mapeado via Chrome MCP Discovery em 2026-02-22.
+Mapeado via Chrome MCP Discovery em 2026-02-22 e 2026-02-24.
 Solar v25.010.1 — AngularJS + Bootstrap + Select2 + Font Awesome
 
 ARQUITETURA DO SOLAR:
@@ -11,6 +11,8 @@ ARQUITETURA DO SOLAR:
 - Controllers: BuscarProcessoCtrl, AtendimentoCtrl, BuscarCtrl, etc.
 - Data binding: eproc.processo.eventos (movimentações PJe)
 - API interna: /procapi/ (REST para documentos PJe)
+- Formulários: Django forms + AngularJS ng-model (prefix 'audiencia.*')
+- Dropdowns: Select2 (todos os selects dentro de modais)
 """
 
 # === Keycloak Login (confirmados via discovery) ===
@@ -58,8 +60,14 @@ URLS = {
     "atendimento_acompanhamento": "/atendimento/acompanhamento/",
     "ged_painel": "/ged/painel/",
     # Padrão de URL de atendimento individual
-    # /atendimento/{atendimento_id}/#/eproc/{numero_sem_pontos}/grau/{grau}
-    "atendimento_detail_pattern": "/atendimento/{atendimento_id}/",
+    # /atendimento/{atendimento_numero}/#/processo/{numero_puro}/grau/{grau}
+    "atendimento_detail_pattern": "/atendimento/{atendimento_numero}/",
+    "atendimento_processo_pattern": "/atendimento/{atendimento_numero}/#/processo/{numero_puro}/grau/{grau}",
+    "atendimento_eproc_pattern": "/atendimento/{atendimento_numero}/#/eproc/{numero_puro}/grau/{grau}",
+    "atendimento_historico_pattern": "/atendimento/{atendimento_numero}/#/historico",
+    # API REST — Fases Processuais (descoberto via Chrome MCP 2026-02-24)
+    "fase_salvar": "/processo/fase/salvar/",
+    "fase_documento_salvar": "/processo/fase/documento/salvar/",
     # API REST de documentos PJe (CRUCIAL!)
     # /procapi/processo/{numero_sem_pontos}{grau}/documento/{documento_id}/
     "procapi_documento_pattern": "/procapi/processo/{numero_processo_grau}/documento/{documento_id}/",
@@ -195,6 +203,217 @@ PROCAPI = {
     # Retorna o PDF diretamente (binary)
     "numero_format": "remove_pontos(numero) + str(grau)",
 }
+
+# === Fase Processual (formulário "Nova Fase") ===
+# Descoberto via Chrome MCP Discovery em 2026-02-24
+# Controller: AtendimentoCtrl (mesmo controller do atendimento)
+# Form: CadastroFaseForm → POST /processo/fase/salvar/
+# IMPORTANTE: Todos os ng-model usam prefix "audiencia.*" (não "fase")
+FASE_PROCESSUAL = {
+    # Form info
+    "form_name": "CadastroFaseForm",
+    "form_action": "/processo/fase/salvar/",
+    "doc_form_name": "CadastroDocumentoFaseForm",
+    "doc_form_action": "/processo/fase/documento/salvar/",
+    # Modal container
+    "modal": ".modal.in",
+    "modal_backdrop": ".modal-backdrop.in",
+    # ng-model fields (dentro do modal)
+    "ng_model": {
+        "id": "audiencia.id",
+        "defensor_id": "audiencia.defensor.id",
+        "defensor": "audiencia.defensor",
+        "defensoria_id": "audiencia.defensoria.id",
+        "defensoria": "audiencia.defensoria",
+        "tipo_id": "audiencia.tipo.id",
+        "tipo": "audiencia.tipo",
+        "data": "audiencia.data",
+        "hora": "audiencia.hora",
+        "status": "audiencia.audiencia_status",
+        "itinerante_id": "audiencia.itinerante.id",
+        "itinerante": "audiencia.itinerante",
+        "descricao": "audiencia.descricao",
+        "custodia": "audiencia.custodia",
+        "conciliacao": "audiencia.conciliacao",
+        "data_protocolo": "audiencia.data_hora_protocolo",
+        "data_termino": "audiencia.data_termino_protocolo",
+        "substituto_id": "audiencia.substituto.id",
+        # Honorários (sub-objeto)
+        "honorario_possivel": "audiencia.honorario.possivel",
+        "honorario_valor": "audiencia.honorario.valor_estimado",
+        "honorario_defensor": "audiencia.honorario.defensor",
+        "honorario_defensoria": "audiencia.honorario.defensoria",
+    },
+    # Select2 containers (ordem no modal: Defensor, Defensoria, Tipo, Status, Itinerante)
+    "select2": {
+        # Seletor genérico para abrir qualquer Select2 dentro do modal
+        "container_click": ".modal.in .select2-container a.select2-choice",
+        "search_input": ".select2-search input",
+        "results_list": ".select2-results li",
+        "first_result": ".select2-results li:first-child",
+        "highlighted": ".select2-results .select2-highlighted",
+        "no_results": ".select2-no-results",
+    },
+    # Campos input (não-Select2)
+    "input": {
+        "data": '.modal.in input[ng-model="audiencia.data"]',
+        "hora": '.modal.in input[ng-model="audiencia.hora"]',
+        "descricao": '.modal.in textarea[ng-model="audiencia.descricao"]',
+    },
+    # Botões do modal
+    "btn_salvar": '.modal.in .btn-primary[type="submit"]',
+    "btn_salvar_ng_click": "salvando=true;",
+    "btn_cancelar": '.modal.in a:has-text("Cancelar")',
+    "btn_fechar": ".modal.in .close",
+    "btn_nova_fase": 'a:has-text("Nova Fase"), button:has-text("Nova Fase")',
+    # Scope data pré-carregada
+    "scope_data": {
+        "tipos": "tipos",           # Array de 263 objetos {id, nome, judicial, ...}
+        "defensorias": "defensorias",
+        "defensores": "defensores",
+        "itinerantes": "itinerantes",
+    },
+}
+
+# === Anotação (Histórico do Atendimento) ===
+# Descoberto via Chrome MCP Discovery em 2026-02-24
+# Formulário Django puro (NÃO AngularJS — sem ng-model)
+# POST /atendimento/{atendimento_numero}/anotacao/nova/
+ANOTACAO = {
+    # Form info
+    "form_action_pattern": "/atendimento/{atendimento_numero}/anotacao/nova/",
+    "form_method": "POST",
+    # Campos do formulário
+    "csrf_token": 'input[name="csrfmiddlewaretoken"]',
+    "next_field": 'input[name="next"]',
+    "atuacao_select": "#id_atuacao",       # Defensoria + Defensor (valor numérico)
+    "qualificacao_select": "#id_qualificacao",  # Tipo da anotação
+    "historico_textarea": 'textarea[name="historico"]',  # Texto da anotação
+    # Placeholder do textarea
+    "historico_placeholder": "Digite a anotação...",
+    # Botões
+    "btn_nova_anotacao": 'a:has-text("Anotação")',  # Botão laranja no rodapé do Histórico
+    "btn_salvar": 'button:has-text("Salvar")',
+    "btn_cancelar": 'button:has-text("Cancelar")',
+    # Qualificações disponíveis (id → nome)
+    "qualificacoes": {
+        304: "ANDAMENTO DE PROCESSO VINCULADO",
+        302: "ANOTAÇÕES",
+        303: "ARQUIVAMENTO",
+        305: "DESPACHO DO(A) DEFENSOR(A)",
+        306: "DILIGÊNCIAS",
+        312: "ENTREGA/RECEBIMENTO DE DOCUMENTOS",
+        307: "LEMBRETE",
+        308: "NÃO COMPARECIMENTO DO ASSISTIDO",
+        309: "RECEBIMENTO DE EXPEDIENTES (CARTAS, OFÍCIOS, ETC.)",
+        310: "REGISTRO DE TENTATIVA DE CONTATO COM ASSISTIDO",
+        311: "VISTA DE PROCESSO",
+    },
+}
+
+# Mapeamento OMBUDS tipo_anotacao → Solar qualificacao_id (para Anotações)
+QUALIFICACAO_MAP = {
+    "nota": 302,              # ANOTAÇÕES
+    "atendimento": 302,       # ANOTAÇÕES
+    "observacao": 302,        # ANOTAÇÕES
+    "lembrete": 307,          # LEMBRETE
+    "solar:movimentacao": 304, # ANDAMENTO DE PROCESSO VINCULADO
+    "providencia": 306,       # DILIGÊNCIAS
+    "sigad": 302,             # ANOTAÇÕES
+    "audiencia": 304,         # ANDAMENTO DE PROCESSO VINCULADO
+    "peticao": 304,           # ANDAMENTO DE PROCESSO VINCULADO
+    "sentenca": 304,          # ANDAMENTO DE PROCESSO VINCULADO
+    "decisao": 304,           # ANDAMENTO DE PROCESSO VINCULADO
+}
+
+
+# === Mapeamento OMBUDS tipo → Solar tipo_id ===
+# IDs confirmados via Chrome MCP Discovery em 2026-02-24
+# Estrutura de cada tipo: {id, nome, judicial, extrajudicial, audiencia, juri, sentenca, recurso}
+TIPO_MAP = {
+    # OMBUDS tipo_anotacao → Solar tipo_id
+    "nota": 52,                    # Consulta/Orientação
+    "atendimento": 52,             # Consulta/Orientação
+    "audiencia": 3,                # Audiência de Instrução e Julgamento
+    "peticao": 1,                  # Petição
+    "recurso": 53,                 # Apelação
+    "sentenca": 5,                 # Sentença
+    "decisao": 6,                  # Decisão Interlocutória
+    "habeas_corpus": 9,            # Habeas Corpus
+    "contestacao": 170,            # CONTESTAÇÃO
+    "alegacoes_finais": 221,       # Alegações finais
+    "resposta_acusacao": 267,      # Resposta à acusação
+    "solar:movimentacao": 52,      # Consulta/Orientação (análise de movimentação)
+    "sigad": 52,                   # Consulta/Orientação (dados do SIGAD)
+    "observacao": 52,              # Consulta/Orientação
+    "providencia": 1,              # Petição (providência jurídica)
+    "lembrete": 52,                # Consulta/Orientação
+}
+
+# Mapeamento reverso: Solar tipo_id → nome (para logging/display)
+TIPO_NOME: dict[int, str] = {
+    1: "Petição",
+    2: "Audiência de Conciliação",
+    3: "Audiência de Instrução e Julgamento",
+    4: "Sessão do Tribunal do Júri",
+    5: "Sentença",
+    6: "Decisão Interlocutória",
+    7: "Recurso de Apelação",
+    8: "Recurso de Agravo",
+    9: "Habeas Corpus",
+    10: "Cumprimento de Sentença",
+    21: "Audiência judicial",
+    22: "Audiência ANPP",
+    25: "Audiência Custódia",
+    27: "Apelação Cível",
+    28: "Agravo de Instrumento",
+    29: "Assistência",
+    48: "Audiência De Justificação",
+    50: "Audiência De Conciliação / Mediação",
+    51: "Alegações Finais/memoriais",
+    52: "Consulta/Orientação",
+    53: "Apelação",
+    65: "Apelação Criminal",
+    87: "Pedido de Liberdade Provisória",
+    88: "Pedido de Revogação de Prisão Preventiva",
+    90: "Resposta Acusação",
+    93: "Progressão de Regime",
+    94: "Livramento Condicional",
+    95: "Indulto",
+    96: "Comutação de Pena",
+    97: "Detração",
+    98: "Remição",
+    99: "Unificação",
+    100: "Visitas em Estabelecimentos Prisionais",
+    101: "Audiência de Custódia",
+    103: "Ação Rescisória",
+    104: "Agravo em Execução",
+    106: "Agravo em Execução Penal",
+    107: "Atendimento ao Sistema Criminal",
+    108: "Habeas Corpus Cível",
+    109: "Audiência Admonitória",
+    128: "Pedido de Revogação de Medida Protetiva",
+    163: "Pedido de Extinção de Punibilidade em Razão da Prescrição",
+    165: "Pedido de Flexibilização de Medida Protetiva de Urgência",
+    167: "Razões/contrarrazões",
+    169: "Transação Penal",
+    170: "CONTESTAÇÃO",
+    210: "Petição Intermediaria",
+    211: "Arquivamento",
+    221: "Alegações finais",
+    225: "Audiência - Escuta especializada",
+    226: "Audiência condicional do processo",
+    227: "Audiência de Acordo de não Persecução Penal (ANPP)",
+    236: "Certidão",
+    253: "Execuções penais e medidas alternativas",
+    254: "Expedição de ofício",
+    256: "Juntada de documento",
+    259: "Justificativa",
+    261: "Medidas protetivas de urgência (Lei Maria da penha) criminal",
+    267: "Resposta à acusação",
+    268: "Sessão Plenária do Júri",
+}
+
 
 # === Avisos Pendentes (/processo/intimacao/painel/) ===
 # Accordion com categorias Bootstrap collapse

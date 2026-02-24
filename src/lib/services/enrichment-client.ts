@@ -212,6 +212,63 @@ export interface SolarCadastrarOutput {
   error?: string | null;
 }
 
+// === Solar Write Types (OMBUDS -> Solar) ===
+
+export interface SolarAnotacaoToSync {
+  id: number;
+  processoId?: number | null;
+  numeroAutos?: string | null;
+  conteudo: string;
+  tipo: string;
+  createdAt: string;
+}
+
+export interface SolarSyncToInput {
+  assistidoId: number;
+  anotacoes: SolarAnotacaoToSync[];
+  modo?: "fase" | "anotacao" | "auto";
+  dryRun?: boolean;
+}
+
+export interface SolarSyncToDetalhe {
+  anotacao_id: number;
+  status: "created" | "skipped" | "failed" | "dry_run";
+  solar_fase_id?: string | null;
+  error?: string | null;
+  reason?: string | null;
+  requires_discovery?: boolean;
+}
+
+export interface SolarSyncToOutput {
+  success: boolean;
+  fases_criadas: number;
+  fases_skipped: number;
+  fases_falhadas: number;
+  total: number;
+  dry_run: boolean;
+  erros: string[];
+  detalhes: SolarSyncToDetalhe[];
+}
+
+// === Solar Anotação Types ===
+
+export interface SolarCriarAnotacaoInput {
+  atendimentoId: string;
+  texto: string;
+  qualificacaoId?: number;
+  dryRun?: boolean;
+}
+
+export interface SolarCriarAnotacaoOutput {
+  success: boolean;
+  message: string;
+  hash?: string | null;
+  dry_run: boolean;
+  verified: boolean;
+  verificacao_msg?: string | null;
+  screenshots: string[];
+}
+
 // === SIGAD Types ===
 
 export interface SigadObservacao {
@@ -493,6 +550,41 @@ class EnrichmentClient {
     return this.request<SolarCadastrarOutput>("/solar/cadastrar-processo", {
       numero_processo: input.numeroProcesso,
       grau: input.grau ?? 1,
+    });
+  }
+
+  /**
+   * Sincronizar anotacoes do OMBUDS como Fases Processuais no Solar.
+   * Chamado pelo: tRPC solar.sincronizarComSolar
+   */
+  async solarSyncTo(input: SolarSyncToInput): Promise<SolarSyncToOutput> {
+    return this.request<SolarSyncToOutput>("/solar/sync-to-solar", {
+      assistido_id: input.assistidoId,
+      anotacoes: input.anotacoes.map((a) => ({
+        id: a.id,
+        processo_id: a.processoId ?? null,
+        numero_autos: a.numeroAutos ?? null,
+        conteudo: a.conteudo,
+        tipo: a.tipo,
+        created_at: a.createdAt,
+      })),
+      modo: input.modo ?? "auto",
+      dry_run: input.dryRun ?? false,
+    });
+  }
+
+  /**
+   * Criar anotação simples no Histórico de um atendimento Solar.
+   * Alternativa mais leve que solarSyncTo para notas rápidas.
+   */
+  async solarCriarAnotacao(
+    input: SolarCriarAnotacaoInput,
+  ): Promise<SolarCriarAnotacaoOutput> {
+    return this.request<SolarCriarAnotacaoOutput>("/solar/criar-anotacao", {
+      atendimento_id: input.atendimentoId,
+      texto: input.texto,
+      qualificacao_id: input.qualificacaoId ?? 302,
+      dry_run: input.dryRun ?? false,
     });
   }
 

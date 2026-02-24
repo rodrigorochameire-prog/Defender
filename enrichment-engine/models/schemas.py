@@ -288,6 +288,80 @@ class SolarCadastrarOutput(BaseModel):
     error: str | None = None
 
 
+# === Solar Write (OMBUDS -> Solar) ===
+
+class SolarAnotacaoToSync(BaseModel):
+    """Uma anotacao do OMBUDS para sincronizar como fase processual no Solar."""
+    id: int = Field(..., description="ID da anotacao no OMBUDS")
+    processo_id: int | None = Field(None, description="ID do processo no OMBUDS")
+    numero_autos: str | None = Field(None, description="Numero do processo (formato CNJ)")
+    conteudo: str = Field(..., description="Texto da anotacao")
+    tipo: str = Field("nota", description="Tipo da anotacao (nota, atendimento, audiencia, etc)")
+    created_at: str = Field(..., description="Data de criacao ISO 8601")
+
+
+class SolarSyncToInput(BaseModel):
+    """Input para /solar/sync-to-solar — escreve dados do OMBUDS no Solar."""
+    assistido_id: int = Field(..., description="ID do assistido no OMBUDS")
+    anotacoes: list[SolarAnotacaoToSync] = Field(
+        ..., max_length=50, description="Anotacoes a sincronizar (max 50)"
+    )
+    modo: str = Field(
+        "auto",
+        description="Modo de escrita: 'fase' (Fase Processual), 'anotacao' (Historico), 'auto' (decide por tipo)",
+    )
+    dry_run: bool = Field(False, description="Se True, preenche mas nao salva")
+
+
+class SolarSyncToDetalhe(BaseModel):
+    """Detalhe de uma anotacao sincronizada."""
+    anotacao_id: int
+    status: str  # "created", "skipped", "failed", "dry_run"
+    solar_fase_id: str | None = None
+    error: str | None = None
+    reason: str | None = None
+    requires_discovery: bool = False
+
+
+class SolarSyncToOutput(BaseModel):
+    """Output de /solar/sync-to-solar."""
+    success: bool
+    fases_criadas: int = 0
+    fases_skipped: int = 0
+    fases_falhadas: int = 0
+    total: int = 0
+    dry_run: bool = False
+    erros: list[str] = Field(default_factory=list)
+    detalhes: list[SolarSyncToDetalhe] = Field(default_factory=list)
+
+
+# === Solar Anotacao (OMBUDS -> Solar Historico) ===
+
+class SolarCriarAnotacaoInput(BaseModel):
+    """Input para /solar/criar-anotacao — cria anotação no Histórico do atendimento."""
+    atendimento_id: str = Field(..., description="Numero do atendimento Solar (ex: 260120000756)")
+    texto: str = Field(..., max_length=5000, description="Texto da anotacao")
+    qualificacao_id: int = Field(
+        302,
+        description="ID da qualificacao (302=ANOTAÇÕES, 304=ANDAMENTO, 307=LEMBRETE, etc)",
+    )
+    atuacao_value: str | None = Field(
+        None, description="Valor do select atuacao (defensoria+defensor)"
+    )
+    dry_run: bool = Field(False, description="Se True, preenche mas nao salva")
+
+
+class SolarCriarAnotacaoOutput(BaseModel):
+    """Output de /solar/criar-anotacao."""
+    success: bool
+    message: str = ""
+    hash: str | None = None
+    dry_run: bool = False
+    verified: bool = False
+    verificacao_msg: str | None = None
+    screenshots: list[str] = Field(default_factory=list)
+
+
 # === SIGAD ===
 
 class SigadAcao(BaseModel):

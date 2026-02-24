@@ -743,6 +743,10 @@ export const anotacoes = pgTable("anotacoes", {
   // SHA-256 truncado (16 hex chars) do conteúdo — previne inserção duplicada
   conteudoHash: varchar("conteudo_hash", { length: 16 }),
 
+  // Sync Solar — rastreia quais anotações foram sincronizadas como "Fases Processuais" no Solar
+  solarSyncedAt: timestamp("solar_synced_at"),      // quando foi enviada ao Solar
+  solarFaseId: varchar("solar_fase_id", { length: 50 }), // ID da fase no Solar (se disponível)
+
   // Metadados
   createdById: integer("created_by_id")
     .notNull()

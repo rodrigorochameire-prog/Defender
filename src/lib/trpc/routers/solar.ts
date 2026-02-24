@@ -17,12 +17,14 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { processos, documentos, anotacoes, assistidos } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import {
   enrichmentClient,
   type SolarSyncOutput,
   type SolarNomeSyncOutput,
   type SolarCadastrarOutput,
+  type SolarSyncToOutput,
+  type SolarCriarAnotacaoOutput,
   type SigadExportarOutput,
   type SigadBuscarOutput,
 } from "@/lib/services/enrichment-client";
@@ -640,5 +642,141 @@ export const solarRouter = router({
       }
 
       return enrichmentClient.sigadBuscarAssistido({ cpf: assistido.cpf });
+    }),
+
+  /**
+   * Sincroniza anotações do OMBUDS como Fases Processuais no Solar.
+   *
+   * Fluxo:
+   * 1. Busca anotações do assistido que não foram sincronizadas (solar_synced_at IS NULL)
+   * 2. Para cada processo: verifica/cria no Solar
+   * 3. Cria fase processual para cada anotação
+   * 4. Marca anotações como sincronizadas (solar_synced_at + solar_fase_id)
+   *
+   * Safety: dry_run=true preenche mas não salva.
+   */
+  sincronizarComSolar: protectedProcedure
+    .input(
+      z.object({
+        assistidoId: z.number(),
+        modo: z.enum(["fase", "anotacao", "auto"]).default("auto"),
+        dryRun: z.boolean().default(false),
+        anotacaoIds: z.array(z.number()).max(50).optional(), // sync específicas
+      }),
+    )
+    .mutation(async ({ input, ctx }): Promise<SolarSyncToOutput> => {
+      // 1. Buscar anotações pendentes de sync
+      const assistido = await db.query.assistidos.findFirst({
+        where: eq(assistidos.id, input.assistidoId),
+        columns: { id: true, nome: true },
+      });
+
+      if (!assistido) {
+        throw new Error(`Assistido ${input.assistidoId} não encontrado`);
+      }
+
+      // Buscar anotações não sincronizadas com Solar
+      let anotacoesQuery = db.query.anotacoes.findMany({
+        where: and(
+          eq(anotacoes.assistidoId, input.assistidoId),
+          isNull(anotacoes.solarSyncedAt),
+        ),
+        columns: {
+          id: true,
+          processoId: true,
+          conteudo: true,
+          tipo: true,
+          createdAt: true,
+        },
+        with: {
+          processo: {
+            columns: { id: true, numeroAutos: true },
+          },
+        },
+        orderBy: (a, { asc }) => [asc(a.createdAt)],
+        limit: 50,
+      });
+
+      let anotacoesDb = await anotacoesQuery;
+
+      // Se anotacaoIds foi especificado, filtrar
+      if (input.anotacaoIds && input.anotacaoIds.length > 0) {
+        const ids = new Set(input.anotacaoIds);
+        anotacoesDb = anotacoesDb.filter((a) => ids.has(a.id));
+      }
+
+      if (anotacoesDb.length === 0) {
+        return {
+          success: true,
+          fases_criadas: 0,
+          fases_skipped: 0,
+          fases_falhadas: 0,
+          total: 0,
+          dry_run: input.dryRun,
+          erros: [],
+          detalhes: [],
+        };
+      }
+
+      // 2. Preparar dados para o enrichment engine
+      const anotacoesToSync = anotacoesDb.map((a) => ({
+        id: a.id,
+        processoId: a.processoId,
+        numeroAutos: a.processo?.numeroAutos ?? null,
+        conteudo: a.conteudo,
+        tipo: a.tipo ?? "nota",
+        createdAt: a.createdAt.toISOString(),
+      }));
+
+      // 3. Chamar enrichment engine
+      const result = await enrichmentClient.solarSyncTo({
+        assistidoId: input.assistidoId,
+        anotacoes: anotacoesToSync,
+        modo: input.modo,
+        dryRun: input.dryRun,
+      });
+
+      // 4. Marcar anotações como sincronizadas (se não dry_run)
+      if (!input.dryRun && result.detalhes) {
+        const now = new Date();
+        for (const detalhe of result.detalhes) {
+          if (detalhe.status === "created") {
+            await db
+              .update(anotacoes)
+              .set({
+                solarSyncedAt: now,
+                solarFaseId: detalhe.solar_fase_id ?? null,
+                updatedAt: now,
+              })
+              .where(eq(anotacoes.id, detalhe.anotacao_id));
+          }
+        }
+      }
+
+      return result;
+    }),
+
+  /**
+   * Cria uma anotação simples no Histórico de um atendimento Solar.
+   * Alternativa mais leve que sincronizarComSolar para notas rápidas.
+   */
+  criarAnotacao: protectedProcedure
+    .input(
+      z.object({
+        atendimentoId: z.string(),
+        texto: z.string().max(5000),
+        qualificacaoId: z.number().default(302), // ANOTAÇÕES
+        dryRun: z.boolean().default(false),
+      }),
+    )
+    .mutation(async ({ input }): Promise<SolarCriarAnotacaoOutput> => {
+      const result = await enrichmentClient.solarCriarAnotacao({
+        atendimentoId: input.atendimentoId,
+        texto: input.texto,
+        qualificacaoId: input.qualificacaoId,
+        dryRun: input.dryRun,
+      });
+
+      return result;
     }),
 });

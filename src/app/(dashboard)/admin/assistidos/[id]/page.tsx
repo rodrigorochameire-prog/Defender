@@ -75,6 +75,38 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     },
   });
 
+  // Sync OMBUDS -> Solar (escreve fases processuais)
+  const [syncSolarResult, setSyncSolarResult] = useState<{
+    success: boolean;
+    fases_criadas: number;
+    fases_skipped: number;
+    fases_falhadas: number;
+    total: number;
+    erros: string[];
+  } | null>(null);
+  const sincronizarComSolar = trpc.solar.sincronizarComSolar.useMutation({
+    onSuccess: (result) => {
+      setSyncSolarResult(result);
+      if (result.fases_criadas > 0) {
+        toast.success(
+          `${result.fases_criadas} fase(s) processual(is) criada(s) no Solar`,
+        );
+      } else if (result.total === 0) {
+        toast.info("Nenhuma anotação pendente para sincronizar");
+      } else if (result.fases_falhadas > 0) {
+        const discoveryNeeded = result.erros?.some((e) => e.includes("Discovery"));
+        toast.warning(
+          discoveryNeeded
+            ? "Discovery dos formulários do Solar necessária (conecte Chrome MCP)"
+            : `${result.fases_falhadas} fase(s) falharam. Verifique os erros.`,
+        );
+      }
+    },
+    onError: (err) => {
+      toast.error(`Erro ao sincronizar: ${err.message}`);
+    },
+  });
+
   const { data, isLoading, error } = trpc.assistidos.getById.useQuery(
     { id: Number(id) },
     { staleTime: 60_000 }
@@ -259,6 +291,21 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               {exportarViaSigad.isPending ? "Exportando ao Solar..." : "Exportar ao Solar via SIGAD"}
             </Button>
 
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-[11px] gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50"
+              disabled={sincronizarComSolar.isPending}
+              onClick={() => sincronizarComSolar.mutate({ assistidoId: Number(id) })}
+            >
+              {sincronizarComSolar.isPending ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Sun className="h-3 w-3" />
+              )}
+              {sincronizarComSolar.isPending ? "Sincronizando..." : "Sync Fases ao Solar"}
+            </Button>
+
             {sigadResult && (
               <div className="flex items-center gap-1.5 text-[11px]">
                 {sigadResult.success ? (
@@ -302,6 +349,31 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               </div>
             )}
           </div>
+
+          {/* Resultado do Sync Solar */}
+          {syncSolarResult && (
+            <div className={cn(
+              "flex items-center gap-1.5 text-[11px] rounded px-2 py-1 w-fit",
+              syncSolarResult.fases_criadas > 0
+                ? "text-blue-700 bg-blue-50 dark:bg-blue-950"
+                : syncSolarResult.fases_falhadas > 0
+                ? "text-amber-700 bg-amber-50 dark:bg-amber-950"
+                : "text-zinc-600 bg-zinc-50 dark:bg-zinc-800",
+            )}>
+              {syncSolarResult.fases_criadas > 0 ? (
+                <CheckCircle2 className="h-3 w-3 text-blue-500 flex-shrink-0" />
+              ) : syncSolarResult.fases_falhadas > 0 ? (
+                <AlertCircle className="h-3 w-3 text-amber-500 flex-shrink-0" />
+              ) : (
+                <CheckCircle2 className="h-3 w-3 text-zinc-400 flex-shrink-0" />
+              )}
+              <span>
+                {syncSolarResult.total === 0
+                  ? "Nenhuma anotação pendente de sync"
+                  : `Solar: ${syncSolarResult.fases_criadas} criadas, ${syncSolarResult.fases_skipped} já existiam, ${syncSolarResult.fases_falhadas} falharam`}
+              </span>
+            </div>
+          )}
 
           {/* Badge de campos enriquecidos */}
           {sigadResult?.success && sigadResult.message?.includes("Campos enriquecidos:") && (
