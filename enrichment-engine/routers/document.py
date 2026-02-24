@@ -40,6 +40,7 @@ async def enrich_document(input_data: DocumentInput) -> DocumentOutput:
             processo_id=input_data.processo_id,
             caso_id=input_data.caso_id,
             defensor_id=input_data.defensor_id,
+            document_id=input_data.document_id,
         )
 
         return DocumentOutput(

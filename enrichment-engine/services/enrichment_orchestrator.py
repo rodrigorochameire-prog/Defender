@@ -51,6 +51,7 @@ class EnrichmentOrchestrator:
         processo_id: int | None = None,
         caso_id: int | None = None,
         defensor_id: str = "",
+        document_id: int | None = None,
     ) -> dict[str, Any]:
         """
         Fluxo completo: Download → Docling → Classificar → Extrair → Gravar.
@@ -129,6 +130,33 @@ class EnrichmentOrchestrator:
                         entities_created.append({"type": "anotacao", "id": anotacao.get("id")})
                 except Exception as e:
                     logger.warning("Failed to save document anotacao to Supabase: %s", e)
+
+            # 5d. Save full markdown + index for semantic search
+            if document_id and markdown:
+                # Save full markdown to conteudo_completo
+                try:
+                    self.supabase._get_client().table("documentos").update({
+                        "conteudo_completo": markdown
+                    }).eq("id", document_id).execute()
+                except Exception as e:
+                    logger.warning("Failed to save conteudo_completo for doc %d: %s", document_id, e)
+
+                # Index document for semantic search
+                try:
+                    from services.embedding_service import EmbeddingService
+                    embedding_svc = EmbeddingService(self.supabase._get_client())
+                    await embedding_svc.index_document(
+                        doc_id=document_id,
+                        markdown=markdown,
+                        assistido_id=assistido_id,
+                        processo_id=processo_id,
+                        metadata={
+                            "document_type": doc_type,
+                            "area": area,
+                        },
+                    )
+                except Exception as e:
+                    logger.warning("Embedding indexing failed for doc %d: %s", document_id, e)
 
             elapsed = time.time() - start
             logger.info(

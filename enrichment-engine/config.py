@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     solar_max_pdfs_per_sync: int = 10  # max PDFs to download per processo
     solar_headless: bool = True  # False for local debugging
 
+    # --- Embedding ---
+    embedding_model: str = "text-embedding-004"
+    embedding_dimensions: int = 768
+    chunk_max_tokens: int = 500
+    chunk_overlap_tokens: int = 50
+    search_default_limit: int = 20
+
     # --- Limites ---
     max_text_length: int = 100_000  # chars
     rate_limit_per_minute: int = 100

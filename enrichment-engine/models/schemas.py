@@ -47,6 +47,7 @@ class DocumentInput(BaseModel):
     assistido_id: int | None = Field(None, description="ID do assistido vinculado")
     processo_id: int | None = Field(None, description="ID do processo vinculado")
     caso_id: int | None = Field(None, description="ID do caso vinculado")
+    document_id: int | None = Field(None, description="ID do documento no OMBUDS (para indexação semântica)")
     defensor_id: str = Field(..., description="ID do defensor")
 
 
