@@ -749,6 +749,36 @@ export function DemandaCompactView({
   const cellRefs = useRef<Map<string, HTMLTableCellElement>>(new Map());
   const tableRef = useRef<HTMLTableElement>(null);
 
+  // Mobile: atribuicao picker state
+  const [atribuicaoPickerOpenId, setAtribuicaoPickerOpenId] = useState<string | null>(null);
+  const [mobileMenuOpenId, setMobileMenuOpenId] = useState<string | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const atribuicaoPickerRef = useRef<HTMLDivElement>(null);
+
+  // Click-outside handler for mobile atribuicao picker
+  useEffect(() => {
+    if (!atribuicaoPickerOpenId) return;
+    const handler = (e: MouseEvent) => {
+      if (atribuicaoPickerRef.current && !atribuicaoPickerRef.current.contains(e.target as Node)) {
+        setAtribuicaoPickerOpenId(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [atribuicaoPickerOpenId]);
+
+  // Click-outside handler for mobile menu
+  useEffect(() => {
+    if (!mobileMenuOpenId) return;
+    const handler = (e: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setMobileMenuOpenId(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [mobileMenuOpenId]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
@@ -1022,7 +1052,7 @@ export function DemandaCompactView({
           )}
         </div>
 
-        {/* Mobile: Cards */}
+        {/* Mobile: Ultra-compact rows (2 lines per demanda) */}
         <div className="md:hidden">
           {demandas.length === 0 ? (
             <div className="text-center py-16">
@@ -1035,7 +1065,6 @@ export function DemandaCompactView({
                 const statusConfig = getStatusConfig(demanda.status);
                 const statusColor = STATUS_GROUPS[statusConfig.group]?.color || "#A1A1AA";
                 const atribuicaoColor = ATRIBUICAO_BORDER_COLORS[demanda.atribuicao] || "#71717a";
-                const AtribuicaoIcon = atribuicaoIcons[demanda.atribuicao] || Scale;
                 const prazoInfo = calcularPrazo(demanda.prazo);
                 const isPreso = demanda.estadoPrisional === "preso";
                 const isUrgente = demanda.prioridade === "URGENTE" || demanda.prioridade === "REU_PRESO";
@@ -1045,211 +1074,279 @@ export function DemandaCompactView({
                 const statusOptions = Object.entries(DEMANDA_STATUS).map(([k, v]) => ({
                   value: k, label: v.label, color: STATUS_GROUPS[v.group].color, group: v.group,
                 }));
-
                 return (
                   <div
                     key={demanda.id}
                     className={`relative transition-colors ${
-                      isUrgente || isPreso
-                        ? "bg-rose-50/40 dark:bg-rose-950/10"
-                        : idx % 2 === 1 ? "bg-zinc-50/30 dark:bg-zinc-800/10" : ""
+                      selectedIds?.has(demanda.id)
+                        ? "bg-emerald-50/30 dark:bg-emerald-950/10"
+                        : isUrgente || isPreso
+                          ? "bg-rose-50/40 dark:bg-rose-950/10"
+                          : idx % 2 === 1 ? "bg-zinc-50/30 dark:bg-zinc-800/10" : ""
                     }`}
                   >
-                    {/* Color bar left */}
-                    <div className="absolute left-0 inset-y-0 w-1" style={{ backgroundColor: atribuicaoColor }} />
+                    {/* Clickable color bar left (opens atribuicao picker) */}
+                    <button
+                      className="absolute left-0 inset-y-0 w-2 cursor-pointer hover:w-3 transition-all z-10 active:opacity-70"
+                      style={{ backgroundColor: atribuicaoColor }}
+                      onClick={() => setAtribuicaoPickerOpenId(atribuicaoPickerOpenId === demanda.id ? null : demanda.id)}
+                      title={`Atribuicao: ${demanda.atribuicao}`}
+                    />
 
-                    <div className="pl-4 pr-3 py-3 space-y-2.5">
-                      {/* Header: Assistido + Processo */}
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-[10px] text-zinc-400 font-mono w-5 flex-shrink-0 text-right">{idx + 1}</span>
-                          {isPreso && <Lock className="w-3 h-3 text-rose-500 flex-shrink-0" />}
-                          {isUrgente && <Flame className="w-3 h-3 text-orange-500 flex-shrink-0" />}
+                    <div className="pl-4 pr-2 py-1.5">
+                      {/* Line 1: #, icons, assistido, status pill, prazo, menu */}
+                      <div className="flex items-center gap-1 min-w-0">
+                        {/* Select checkbox */}
+                        {isSelectMode && (
+                          <button
+                            onClick={() => onToggleSelect?.(demanda.id)}
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                              selectedIds?.has(demanda.id)
+                                ? "border-emerald-500 bg-emerald-500"
+                                : "border-zinc-300 dark:border-zinc-600"
+                            }`}
+                          >
+                            {selectedIds?.has(demanda.id) && <Check className="w-2.5 h-2.5 text-white" />}
+                          </button>
+                        )}
+                        {/* Index */}
+                        <span className="text-[10px] text-zinc-400 font-mono w-4 flex-shrink-0 text-right">{idx + 1}</span>
+                        {/* Preso / Urgente icons */}
+                        {isPreso && <Lock className="w-3 h-3 text-rose-500 flex-shrink-0" />}
+                        {isUrgente && !isPreso && <Flame className="w-3 h-3 text-orange-500 flex-shrink-0" />}
+                        {/* Assistido name */}
+                        <div className="flex-1 min-w-0 truncate">
                           {searchAssistidosFn && onAssistidoLink ? (
                             <InlineAutocomplete
                               value={demanda.assistido}
                               valueId={demanda.assistidoId}
                               onSelect={(id, label) => onAssistidoLink(demanda.id, id, label)}
                               onTextChange={(text) => onAssistidoChange(demanda.id, text)}
-                              placeholder="Buscar assistido..."
+                              placeholder="Assistido..."
                               searchFn={searchAssistidosFn}
                               onQueryChange={onAssistidoQueryChange}
                               isLoading={isLoadingAssistidoSearch}
                               icon="user"
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors truncate flex items-center gap-1 group/edit flex-1 min-w-0 text-[12px] font-semibold text-zinc-800 dark:text-zinc-200"
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[12px] font-semibold text-zinc-800 dark:text-zinc-200"
                             />
                           ) : (
                             <EditableTextInline
                               value={demanda.assistido}
                               onSave={(v) => onAssistidoChange(demanda.id, v)}
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors truncate flex items-center gap-1 group/edit flex-1 min-w-0 text-[12px] font-semibold text-zinc-800 dark:text-zinc-200"
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[12px] font-semibold text-zinc-800 dark:text-zinc-200"
                             />
                           )}
+                        </div>
+                        {/* Status pill (compact) */}
+                        <div className="flex-shrink-0">
+                          <InlineDropdown
+                            value={demanda.status}
+                            compact
+                            displayValue={
+                              <div
+                                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-semibold leading-none"
+                                style={{ backgroundColor: `${statusColor}15`, color: statusColor }}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
+                                <span className="truncate max-w-[60px]">{statusConfig.label}</span>
+                              </div>
+                            }
+                            options={statusOptions}
+                            onChange={(v) => onStatusChange(demanda.id, v)}
+                          />
+                        </div>
+                        {/* Prazo (compact text) */}
+                        <div className="flex-shrink-0">
+                          <InlineDatePicker
+                            value={demanda.prazo}
+                            onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
+                          />
+                        </div>
+                        {prazoInfo.cor === "red" && <AlertCircle className="w-3 h-3 text-rose-500 flex-shrink-0" />}
+                        {/* Actions menu (three dots) */}
+                        <div className="relative flex-shrink-0">
                           <button
-                            onClick={() => copyToClipboard(demanda.assistido, "Nome copiado!")}
-                            className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex-shrink-0"
+                            onClick={() => setMobileMenuOpenId(mobileMenuOpenId === demanda.id ? null : demanda.id)}
+                            className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400"
                           >
-                            <Copy className="w-3 h-3 text-zinc-300 dark:text-zinc-600" />
+                            <MoreHorizontal className="w-3.5 h-3.5" />
                           </button>
-                          {demanda.assistidoId && (
-                            <Link href={`/admin/assistidos/${demanda.assistidoId}`} className="flex-shrink-0">
-                              <ExternalLink className="w-3 h-3 text-zinc-300 dark:text-zinc-600 hover:text-emerald-500" />
-                            </Link>
+                          {mobileMenuOpenId === demanda.id && (
+                            <div
+                              ref={mobileMenuRef}
+                              className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-[140px]"
+                            >
+                              <button
+                                onClick={() => { copyToClipboard(getRowTSV(demanda), "Linha copiada!"); setMobileMenuOpenId(null); }}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                              >
+                                <Copy className="w-3 h-3" /> Copiar linha
+                              </button>
+                              {demanda.assistidoId && (
+                                <Link
+                                  href={`/admin/assistidos/${demanda.assistidoId}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                  onClick={() => setMobileMenuOpenId(null)}
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  <span>Abrir ficha</span>
+                                </Link>
+                              )}
+                              {demanda.processoId && (
+                                <Link
+                                  href={`/admin/processos/${demanda.processoId}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                  onClick={() => setMobileMenuOpenId(null)}
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  <span>Abrir processo</span>
+                                </Link>
+                              )}
+                              <button
+                                onClick={() => { onEdit(demanda); setMobileMenuOpenId(null); }}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                              >
+                                <Edit className="w-3 h-3" /> Editar completo
+                              </button>
+                              <button
+                                onClick={() => { demanda.arquivado ? onUnarchive(demanda.id) : onArchive(demanda.id); setMobileMenuOpenId(null); }}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                              >
+                                {demanda.arquivado ? <ArchiveRestore className="w-3 h-3" /> : <Archive className="w-3 h-3" />}
+                                {demanda.arquivado ? "Restaurar" : "Arquivar"}
+                              </button>
+                              <button
+                                onClick={() => { onDelete(demanda.id); setMobileMenuOpenId(null); }}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                              >
+                                <Trash2 className="w-3 h-3" /> Excluir
+                              </button>
+                            </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5 min-w-0 pl-[26px]">
+                      </div>
+
+                      {/* Line 2: processo, ato, providencias */}
+                      <div className="flex items-center gap-1 min-w-0 pl-5 mt-0.5">
+                        {/* Processo (mono) */}
+                        <div className="min-w-0 max-w-[45%]">
                           {searchProcessosFn && onProcessoLink ? (
                             <InlineAutocomplete
                               value={demanda.processos?.[0]?.numero || ""}
                               valueId={demanda.processoId}
                               onSelect={(id, label) => onProcessoLink(demanda.id, id, label)}
                               onTextChange={(text) => onProcessoChange(demanda.id, text)}
-                              placeholder="Buscar processo..."
+                              placeholder="Processo..."
                               searchFn={searchProcessosFn}
                               onQueryChange={onProcessoQueryChange}
                               isLoading={isLoadingProcessoSearch}
                               icon="briefcase"
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors truncate flex items-center gap-1 group/edit flex-1 min-w-0 font-mono text-[10px] text-zinc-500 dark:text-zinc-400"
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 font-mono text-[10px] text-zinc-500 dark:text-zinc-400"
                             />
                           ) : (
                             <EditableTextInline
                               value={demanda.processos?.[0]?.numero || ""}
                               onSave={(v) => onProcessoChange(demanda.id, v)}
                               placeholder="Sem processo"
-                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors truncate flex items-center gap-1 group/edit flex-1 min-w-0 font-mono text-[10px] text-zinc-500 dark:text-zinc-400"
-                              inputClassName="w-full text-[10px] font-mono px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 font-mono text-[10px] text-zinc-500 dark:text-zinc-400"
+                              inputClassName="w-full text-[10px] font-mono px-1 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
                             />
                           )}
-                          {demanda.processos?.[0]?.numero && (
-                            <button
-                              onClick={() => copyToClipboard(demanda.processos[0].numero, "Processo copiado!")}
-                              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex-shrink-0"
-                            >
-                              <Copy className="w-3 h-3 text-zinc-300 dark:text-zinc-600" />
-                            </button>
-                          )}
-                          {demanda.processoId && (
-                            <Link href={`/admin/processos/${demanda.processoId}`} className="flex-shrink-0">
-                              <ExternalLink className="w-3 h-3 text-zinc-300 dark:text-zinc-600 hover:text-emerald-500" />
-                            </Link>
-                          )}
                         </div>
-                      </div>
-
-                      {/* Fields in 2-column grid */}
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pl-[26px]">
-                        {/* Ato */}
-                        <div className="flex items-center gap-2 col-span-2">
-                          <span className="text-[8px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase w-10 flex-shrink-0">Ato</span>
-                          <div className="flex-1 min-w-0">
-                            <InlineDropdown
-                              value={demanda.ato}
-                              compact
-                              displayValue={
-                                <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate block">
-                                  {demanda.ato || "Selecionar"}
-                                </span>
-                              }
-                              options={atoOptions}
-                              onChange={(v) => onAtoChange(demanda.id, v)}
-                            />
-                          </div>
+                        {/* Separator */}
+                        <span className="text-[10px] text-zinc-300 dark:text-zinc-600 flex-shrink-0">&middot;</span>
+                        {/* Ato (dropdown) */}
+                        <div className="min-w-0 flex-shrink truncate">
+                          <InlineDropdown
+                            value={demanda.ato}
+                            compact
+                            displayValue={
+                              <span className="text-[10px] text-zinc-600 dark:text-zinc-400 truncate block">
+                                {demanda.ato || "Ato..."}
+                              </span>
+                            }
+                            options={atoOptions}
+                            onChange={(v) => onAtoChange(demanda.id, v)}
+                          />
                         </div>
-
-                        {/* Prazo */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-[8px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase w-10 flex-shrink-0">Prazo</span>
-                          <div className="flex-1 min-w-0 flex items-center">
-                            <InlineDatePicker
-                              value={demanda.prazo}
-                              onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
-                            />
-                            {prazoInfo.cor === "red" && <AlertCircle className="w-3 h-3 text-rose-500 ml-1" />}
-                          </div>
-                        </div>
-
-                        {/* Status */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-[8px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase w-10 flex-shrink-0">Status</span>
-                          <div className="flex-1 min-w-0">
-                            <InlineDropdown
-                              value={demanda.status}
-                              compact
-                              displayValue={
-                                <div
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                                  style={{ backgroundColor: `${statusColor}15`, color: statusColor }}
-                                >
-                                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                                  <span className="truncate">{statusConfig.label}</span>
-                                </div>
-                              }
-                              options={statusOptions}
-                              onChange={(v) => onStatusChange(demanda.id, v)}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Atribuição */}
-                        <div className="flex items-center gap-2 col-span-2">
-                          <span className="text-[8px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase w-10 flex-shrink-0">Atrib.</span>
-                          <div className="flex-1 min-w-0">
-                            <InlineDropdown
-                              value={demanda.atribuicao}
-                              compact
-                              displayValue={
-                                <div className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: atribuicaoColor }}>
-                                  <AtribuicaoIcon className="w-3 h-3" />
-                                  <span className="truncate">{demanda.atribuicao}</span>
-                                </div>
-                              }
-                              options={ATRIBUICAO_OPTIONS}
-                              onChange={(v) => onAtribuicaoChange(demanda.id, v)}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Providências */}
-                        <div className="flex items-center gap-2 col-span-2">
-                          <span className="text-[8px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase w-10 flex-shrink-0">Prov.</span>
-                          <div className="flex-1 min-w-0">
+                        {/* Providencias (if exists) */}
+                        {demanda.providencias ? (
+                          <>
+                            <span className="text-[10px] text-zinc-300 dark:text-zinc-600 flex-shrink-0">&middot;</span>
+                            <div className="min-w-0 flex-1 truncate">
+                              <EditableTextInline
+                                value={demanda.providencias}
+                                onSave={(v) => onProvidenciasChange(demanda.id, v)}
+                                placeholder=""
+                                className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[10px] italic text-zinc-400 dark:text-zinc-500"
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <div className="min-w-0 flex-1">
                             <EditableTextInline
-                              value={demanda.providencias || ""}
+                              value=""
                               onSave={(v) => onProvidenciasChange(demanda.id, v)}
-                              placeholder="+ providências"
+                              placeholder="+ prov."
+                              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-0.5 transition-colors truncate flex items-center gap-1 group/edit min-w-0 text-[10px] italic text-zinc-300 dark:text-zinc-600"
                             />
                           </div>
-                        </div>
-                      </div>
-
-                      {/* Footer actions */}
-                      <div className="flex items-center justify-end gap-0.5 pt-1.5 pl-[26px]">
-                        <button
-                          onClick={() => copyToClipboard(getRowTSV(demanda), "Linha copiada!")}
-                          className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-300 dark:text-zinc-600 hover:text-zinc-500"
-                          title="Copiar linha"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => onEdit(demanda)}
-                          className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-300 dark:text-zinc-600 hover:text-zinc-500"
-                          title="Editar completo"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => demanda.arquivado ? onUnarchive(demanda.id) : onArchive(demanda.id)}
-                          className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-300 dark:text-zinc-600 hover:text-zinc-500"
-                          title={demanda.arquivado ? "Restaurar" : "Arquivar"}
-                        >
-                          {demanda.arquivado ? <ArchiveRestore className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}
-                        </button>
+                        )}
                       </div>
                     </div>
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Atribuicao picker popover (fixed bottom) */}
+          {atribuicaoPickerOpenId && (
+            <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setAtribuicaoPickerOpenId(null)}>
+              {/* Backdrop */}
+              <div className="absolute inset-0 bg-black/20" />
+              {/* Picker */}
+              <div
+                ref={atribuicaoPickerRef}
+                className="relative w-full max-w-md bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 rounded-t-xl shadow-2xl pb-safe"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                  <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Atribuicao</span>
+                  <button
+                    onClick={() => setAtribuicaoPickerOpenId(null)}
+                    className="text-[11px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 px-2 py-0.5"
+                  >
+                    Fechar
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 p-3">
+                  {ATRIBUICAO_OPTIONS.map((opt) => {
+                    const color = ATRIBUICAO_BORDER_COLORS[opt.value] || "#71717a";
+                    const isActive = demandas.find((d) => d.id === atribuicaoPickerOpenId)?.atribuicao === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          onAtribuicaoChange(atribuicaoPickerOpenId, opt.value);
+                          setAtribuicaoPickerOpenId(null);
+                        }}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-all ${
+                          isActive
+                            ? "ring-2 ring-offset-1 dark:ring-offset-zinc-900"
+                            : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                        }`}
+                        style={isActive ? { ["--tw-ring-color" as string]: color, backgroundColor: `${color}10` } : {}}
+                      >
+                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                        <span className={`text-[11px] truncate ${isActive ? "font-semibold" : "font-medium text-zinc-600 dark:text-zinc-300"}`}>
+                          {opt.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -26,6 +26,82 @@ export interface ResultadoParserVVD extends ResultadoParser {
   intimacoesGerais: IntimacaoPJeSimples[]; // Vão para demandas gerais com atribuição VVD
 }
 
+// ============================================================================
+// NOISE DETECTION — Filtragem de linhas de ruído do PJe (UI, navegação, etc.)
+// ============================================================================
+
+/** Frases exatas (lowercase) que, se a linha começar com elas, indicam ruído */
+const NOISE_PREFIXES: string[] = [
+  'último movimento:',
+  'data limite prevista',
+  'você tomou ciência',
+  'o sistema registrou',
+  'selecione',
+  'pendentes de ciência',
+  'ciência dada',
+  'apenas pendentes',
+  'cujo prazo',
+  'sem prazo',
+  'respondidos',
+  'ícone de',
+  // UI buttons & menu items
+  'peticionar',
+  'novo processo',
+  'consulta',
+  'configuração',
+  'download',
+  'painel do defensor',
+  'caixa de entrada',
+  'expedientes',
+  'filtrar',
+  'limpar',
+  'buscar',
+  'atualizar',
+  'anterior',
+  'próximo',
+  'próxima',
+  'expedição',
+  'medidas protetivas',
+  // Days of the week
+  'segunda-feira',
+  'terça-feira',
+  'quarta-feira',
+  'quinta-feira',
+  'sexta-feira',
+  'sábado',
+  'domingo',
+  // VVD-specific checkbox/tag labels
+  'doença terminal',
+  'réu preso',
+  'criança e adolescente',
+  'pessoa em situação de rua',
+  'pessoa com deficiência',
+  'apenas pendentes de ciência',
+  // Location / vara labels that appear as standalone lines
+  'violência doméstica',
+];
+
+/** Regex patterns that cannot be expressed as simple startsWith checks */
+const regexRuidoExtra = /^(\d+ resultados|«|»|‹|›|\d+ª?\s*(Vara|V\s)|Idoso$)/i;
+
+/**
+ * Determines if a line is UI noise that should be skipped.
+ * Uses startsWith semantics for the Set (not includes) to avoid
+ * false-positives on names like "Pessoa da Silva".
+ */
+function isNoiseLine(linha: string): boolean {
+  const lower = linha.toLowerCase();
+  for (let k = 0; k < NOISE_PREFIXES.length; k++) {
+    if (lower.startsWith(NOISE_PREFIXES[k])) return true;
+  }
+  if (regexRuidoExtra.test(linha)) return true;
+  // Pure pagination number (1, 2, 3 ... 999) — but NOT process-related
+  if (/^\d{1,3}$/.test(linha)) return true;
+  // Pagination block like "« 1 2 3 4 5 6 7 8 9 10 11 »"
+  if (/^[«»‹›\d\s]+$/.test(linha) && linha.length < 40) return true;
+  return false;
+}
+
 // Função para converter nomes para Title Case mantendo preposições em minúsculo
 function toTitleCase(nome: string): string {
   const preposicoes = ['de', 'da', 'do', 'dos', 'das', 'e', 'a', 'o', 'as', 'os'];
@@ -123,8 +199,9 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   // Detectar atribuição automaticamente
   const { atribuicao: atribuicaoDetectada, vara: varaDetectada } = detectarAtribuicao(texto);
 
-  // Dividir texto em linhas
-  const linhas = texto.split('\n').map(l => l.trim()).filter(l => l);
+  // Dividir texto em linhas e pré-filtrar ruído grosso (paginação, navegação)
+  const linhasRaw = texto.split('\n').map(l => l.trim()).filter(l => l);
+  const linhas = linhasRaw.filter(l => !isNoiseLine(l));
 
   // Regex para número de processo CNJ
   const regexProcesso = /(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/;
@@ -149,9 +226,6 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   // Captura o nome após o "X" que é o RÉU (nosso assistido)
   const regexPartes = /^(.+?)\s+X\s+(.+)$/i;
 
-  // Regex para linhas de ruído que devem ser ignoradas
-  const regexRuido = /^(Último movimento:|Data limite prevista|Você tomou ciência|O sistema registrou|Selecione|Pendentes de ciência|Ciência dada|Apenas pendentes|Cujo prazo|Sem prazo|Respondidos|\d+ resultados|«|»|\d+ª?\s*(Vara|V\s)|Ícone de)/i;
-
   // Regex para detectar nome do intimado que aparece ANTES do tipo de documento
   // No PJe, o formato é: "NOME_ASSISTIDO\nTipo Documento (ID)\nExpedição..."
   const regexNomeAssistidoSolo = /^([A-ZÀÁÂÃÉÊÍÓÔÕÚÇ][A-ZÀÁÂÃÉÊÍÓÔÕÚÇa-zàáâãéêíóôõúç\s]+)$/;
@@ -164,11 +238,6 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   for (let i = 0; i < linhas.length; i++) {
     const linha = linhas[i];
 
-    // Pular linhas de ruído
-    if (regexRuido.test(linha)) {
-      continue;
-    }
-
     // Detectar nome do intimado que aparece antes do tipo de documento
     // No PJe Júri, o formato é:
     // JOAO VICTOR MOURA RAMOS          ← nome do intimado
@@ -178,7 +247,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
     // Verificar se a próxima linha é um tipo de documento
     if (i + 1 < linhas.length) {
       const proximaLinha = linhas[i + 1];
-      if (regexDocumento.test(proximaLinha) && !regexRuido.test(linha)) {
+      if (regexDocumento.test(proximaLinha)) {
         // Esta linha pode ser o nome do intimado
         const nomeCandidato = linha.trim();
         // Validar que parece um nome de pessoa
@@ -271,7 +340,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
             !regexDocumento.test(proximaLinha) &&
             !regexPartes.test(proximaLinha) &&
             !proximaLinha.startsWith('/') &&
-            !regexRuido.test(proximaLinha) &&
+            !isNoiseLine(proximaLinha) &&
             !proximaLinha.match(/^(MPUMPCrim|APOrd|APSum|APri|PetCrim|AuPrFl|Juri|InsanAc|LibProv|EP|VD|APFD)\s/i) &&
             proximaLinha.length > 3 &&
             proximaLinha.length < 60) {
@@ -480,8 +549,30 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
     }
   }
 
+  // ── Post-processing: dedup expanded/collapsed copies ──
+  // PJe shows each expediente twice (collapsed summary + expanded detail).
+  // Keep the copy with more filled fields.
+  const dedupSeen = new Map<string, IntimacaoPJeSimples>();
+  for (const int of intimacoes) {
+    const key = `${int.numeroProcesso}-${int.dataExpedicao}`;
+    const existing = dedupSeen.get(key);
+    if (!existing) {
+      dedupSeen.set(key, int);
+    } else {
+      const countFields = (i: IntimacaoPJeSimples) =>
+        [i.crime, i.tipoProcesso, i.prazo, i.tipoDocumento, i.idDocumento, i.vara]
+          .filter(Boolean).length;
+      if (countFields(int) > countFields(existing)) {
+        dedupSeen.set(key, int);
+      }
+    }
+  }
+  const dedupedIntimacoes = Array.from(dedupSeen.values());
+  // Preserve original order from PJe
+  dedupedIntimacoes.sort((a, b) => (a.ordemOriginal ?? 0) - (b.ordemOriginal ?? 0));
+
   // Se não encontrou nenhuma intimação com o parser de partes, tentar parser antigo para Júri
-  if (intimacoes.length === 0) {
+  if (dedupedIntimacoes.length === 0) {
     return {
       intimacoes: parsePJeIntimacoesLegado(texto),
       atribuicaoDetectada,
@@ -490,7 +581,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   }
 
   return {
-    intimacoes,
+    intimacoes: dedupedIntimacoes,
     atribuicaoDetectada,
     varaDetectada,
   };
@@ -502,7 +593,9 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
  */
 function parsePJeIntimacoesLegado(texto: string): IntimacaoPJeSimples[] {
   const intimacoes: IntimacaoPJeSimples[] = [];
-  const linhas = texto.split('\n').map(l => l.trim()).filter(l => l);
+  const linhasRaw = texto.split('\n').map(l => l.trim()).filter(l => l);
+  // Pre-filter noise lines using the same isNoiseLine() used by the main parser
+  const linhas = linhasRaw.filter(l => !isNoiseLine(l));
 
   let assistidoAtual = '';
   let dataExpedicaoAtual = '';
