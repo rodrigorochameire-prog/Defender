@@ -8,13 +8,29 @@
 ## 1. Visão Geral do Sistema
 
 ### 1.1 O que é o OMBUDS?
-Sistema de gestão jurídica para a **Defensoria Pública da Bahia**, focado em:
+
+**Visão**: O OMBUDS é o **sistema nervoso defensivo** — uma camada de inteligência que captura, processa, organiza, alerta e automatiza tudo que envolve o trabalho do defensor público.
+
+**Não é apenas um gestor de casos.** É uma plataforma integrada que:
+- **Captura** dados de múltiplas fontes (PJe, Solar, Drive, WhatsApp)
+- **Processa** com IA (Gemini) extraindo fatos, prazos, decisões automaticamente
+- **Organiza** em estrutura navegável e acionável
+- **Alerta** sobre o que precisa de atenção imediata
+- **Automatiza** trabalho manual repetitivo (sync Solar, extração PJe, análise docs)
+- **Aprende** com o uso — fica mais preciso com o tempo
+
+**Funcionalidades atuais**:
 - Gestão de casos criminais e cíveis
 - Controle de prazos processuais
 - Tribunal do Júri (sessões, jurados, quesitos)
 - Violência Doméstica (VVD/MPU)
 - Execução Penal
 - Atendimentos e audiências
+- **Sync Solar** (DPE-BA) — movimentações, intimações, documentos
+- **Enrichment Engine** — análise IA de documentos, intimações PJe, transcrições
+
+**Status do projeto** (fev/2026): Em desenvolvimento ativo, fase de uso próprio e testes.
+Roadmap completo em: `docs/plans/2026-02-22-estrategia-parcerias-roadmap.md`
 
 ### 1.2 Stack Tecnológico
 | Camada | Tecnologia |
@@ -315,6 +331,41 @@ font-mono   text-sm                  // Dados técnicos
 - Extração automática de prazos
 - Detecção de duplicatas
 
+### 5.4 Solar (DPE-BA e outros estados) ⭐ NOVO
+
+Sistema de gestão da Defensoria Pública. Integração via **Playwright headless** no Enrichment Engine.
+
+| Detalhe | Valor |
+|---------|-------|
+| **URL** | `solar.defensoria.ba.def.br` |
+| **Auth** | Keycloak OIDC (login/senha simples) |
+| **Frontend** | AngularJS 1.x + Bootstrap 2.x (legacy) |
+| **Backend inferido** | Django + REST `/procapi/` (proxy PJe) |
+| **Estados que usam** | CE (originador), BA, TO, PI, MA, PA, RN, AC, DF (avaliação) |
+
+**Endpoints do Enrichment Engine**:
+- `POST /solar/sync-processo` — sync movimentações de 1 processo
+- `POST /solar/sync-batch` — sync múltiplos processos
+- `POST /solar/avisos` — verificar intimações/avisos pendentes PJe
+- `GET /solar/status` — status da sessão Solar (auth, selectors)
+
+**Arquivos do Solar** (`enrichment-engine/services/`):
+- `solar_auth_service.py` — autenticação Keycloak + cache de sessão
+- `solar_scraper_service.py` — navegação e extração de dados
+- `solar_selectors.py` — seletores CSS (atualizar se interface mudar)
+- `solar_orchestrator.py` — orquestração: scrape → IA → Supabase
+
+**Env vars necessárias** (Railway):
+```
+SOLAR_USERNAME=seu_login
+SOLAR_PASSWORD=sua_senha
+SOLAR_BASE_URL=https://solar.defensoria.ba.def.br
+SOLAR_HEADLESS=true
+```
+
+**⚠️ Fragilidade**: Solar está em piloto (desde Out/2025), interface pode mudar.
+Se seletores quebrarem, atualizar `solar_selectors.py`.
+
 ---
 
 ## 6. Arquivos-Chave para Referência
@@ -392,6 +443,32 @@ const mutation = trpc.entidade.update.useMutation({
 
 ---
 
-**Sistema**: OMBUDS - Gabinete Digital para Defensoria Pública
-**Versão**: 2.0
-**Atualizado**: Fevereiro 2026
+---
+
+## 9. Contexto de Negócio e Mercado
+
+### 9.1 Posicionamento
+- **Mercado**: 7.520 defensores públicos no Brasil (Pesquisa Nacional 2025)
+- **Nicho alvo**: Defensores ativos no PJe, tech-savvy, <50 anos (~4.000-5.000)
+- **Diferencial**: Único SaaS específico para defensores públicos (oceano azul)
+- **Pricing**: Grátis → R$49/mês → R$97/mês → R$249/assento/mês
+
+### 9.2 Parcerias Planejadas
+| Parceiro | Tipo | Status | Timing |
+|----------|------|--------|--------|
+| **Eduardo Lucca** (DPE-BA, CC + Solar insider) | Técnico/Advisor | Planejado | Março 2026 |
+| **Victor Linhares** (RDP — maior ecossistema DP) | Marketing/Distribuição | Planejado | Mês 3-4 |
+| **ANADEP/CONDEGE** | Institucional | Futuro | Mês 6-12 |
+
+### 9.3 Documentação de Negócio
+| Arquivo | Conteúdo |
+|---------|----------|
+| `docs/plans/2026-02-22-analise-critica-solar-ombuds.md` | Análise técnica Solar + oportunidade mercado |
+| `docs/plans/2026-02-22-pricing-revenue-projection.md` | Pricing + projeção receita 12 meses |
+| `docs/plans/2026-02-22-estrategia-parcerias-roadmap.md` | Parcerias, roadmap, princípios |
+
+---
+
+**Sistema**: OMBUDS — Sistema Nervoso Defensivo Inteligente e Integrado
+**Versão**: 2.1
+**Atualizado**: 22/02/2026

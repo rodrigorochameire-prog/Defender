@@ -9,6 +9,7 @@ import { useMemo } from "react";
 // Mapeamento de rotas para labels amigáveis
 const ROUTE_LABELS: Record<string, string> = {
   admin: "Dashboard",
+  intimacoes: "Intimações",
   demandas: "Demandas",
   agenda: "Agenda",
   casos: "Casos",

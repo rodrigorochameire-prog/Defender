@@ -10,7 +10,7 @@ import {
   Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
-  MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput
+  MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -50,6 +50,7 @@ interface AdminSidebarProps {
 // 1. Menu principal - itens do dia a dia (sem Delegações)
 const MAIN_NAV: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
+  { label: "Intimações", path: "/admin/intimacoes", icon: "Sun" },
   { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
   { label: "Agenda", path: "/admin/agenda", icon: "Calendar" },
 ];
@@ -121,7 +122,7 @@ const iconMap: Record<string, React.ElementType> = {
   Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
-  BookUser, Users2, Home, FolderInput
+  BookUser, Users2, Home, FolderInput, Sun
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";

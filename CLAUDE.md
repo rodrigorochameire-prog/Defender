@@ -71,6 +71,7 @@ Detalhes: `/tool-selection`
 | Você diz | Skill acionada |
 |----------|----------------|
 | "testa no browser", "abre a página" | `/browser-test` |
+| "internal server error", "servidor travou", "não abre em local", "localhost não responde" | `dev-server` |
 | "valida isso", "tá funcionando?" | `/validate` |
 | "debug", "não funciona", "dá erro" | `/debug` |
 | "revisa esse código", "tá bom assim?" | `/code-review` |
