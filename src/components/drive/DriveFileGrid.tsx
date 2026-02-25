@@ -39,14 +39,14 @@ interface DriveFileGridProps {
 
 function SkeletonCard() {
   return (
-    <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 animate-pulse">
+    <div className="bg-zinc-200/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 rounded-lg p-3 animate-pulse">
       <div className="flex items-center justify-center h-20 mb-3">
-        <div className="w-10 h-10 rounded-lg bg-zinc-700/50" />
+        <div className="w-10 h-10 rounded-lg bg-zinc-200/50 dark:bg-zinc-700/50" />
       </div>
-      <div className="h-4 bg-zinc-700/50 rounded w-3/4 mb-2" />
+      <div className="h-4 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-3/4 mb-2" />
       <div className="flex items-center justify-between">
-        <div className="h-3 bg-zinc-700/50 rounded w-1/3" />
-        <div className="h-4 bg-zinc-700/50 rounded w-1/4" />
+        <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
+        <div className="h-4 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/4" />
       </div>
     </div>
   );
@@ -78,10 +78,10 @@ function FileGridCard({ file }: { file: DriveFile }) {
     <div
       onClick={handleClick}
       className={cn(
-        "group relative bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 cursor-pointer",
-        "hover:border-emerald-500/30 hover:bg-emerald-500/5",
+        "group relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg p-3 cursor-pointer",
+        "hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 hover:shadow-lg hover:shadow-zinc-200/50 dark:hover:shadow-black/20",
         "transition-all duration-200",
-        isSelected && "border-emerald-500/50 bg-emerald-500/10"
+        isSelected && "border-emerald-300 dark:border-emerald-500/50 bg-emerald-50 dark:bg-emerald-500/10"
       )}
     >
       {/* Checkbox */}
@@ -95,7 +95,7 @@ function FileGridCard({ file }: { file: DriveFile }) {
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => ctx.toggleFileSelection(file.id)}
-          className="h-4 w-4 border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+          className="h-4 w-4 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
         />
       </div>
 
@@ -111,23 +111,23 @@ function FileGridCard({ file }: { file: DriveFile }) {
           <Icon
             className={cn(
               "w-10 h-10",
-              file.isFolder ? "text-emerald-500" : "text-zinc-400"
+              file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-400"
             )}
           />
         )}
       </div>
 
       {/* Name */}
-      <p className="text-sm font-medium text-zinc-200 truncate" title={file.name}>
+      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200 truncate" title={file.name}>
         {file.name}
       </p>
 
       {/* Bottom row */}
       <div className="flex items-center justify-between mt-1.5 gap-2">
         {file.isFolder ? (
-          <span className="text-xs text-zinc-500">Pasta</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-500">Pasta</span>
         ) : (
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-zinc-500 dark:text-zinc-500">
             {formatFileSize(file.size)}
           </span>
         )}
@@ -174,11 +174,11 @@ export function DriveFileGrid({ files, isLoading }: DriveFileGridProps) {
   if (sortedFiles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FolderOpen className="w-12 h-12 text-zinc-600 mb-3" />
-        <p className="text-sm text-zinc-400 font-medium">
+        <FolderOpen className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mb-3" />
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
           Nenhum arquivo nesta pasta
         </p>
-        <p className="text-xs text-zinc-500 mt-1">
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
           Sincronize ou faca upload de arquivos para visualizar
         </p>
       </div>

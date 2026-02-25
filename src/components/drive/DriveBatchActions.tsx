@@ -66,18 +66,18 @@ export function DriveBatchActions() {
       <div
         className={cn(
           "fixed bottom-4 left-1/2 -translate-x-1/2 z-40",
-          "bg-zinc-900 border border-zinc-700 rounded-full shadow-2xl",
+          "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-full shadow-lg shadow-zinc-300/50 dark:shadow-black/30",
           "px-4 py-2 flex items-center gap-3",
           "animate-in slide-in-from-bottom-4 fade-in duration-200"
         )}
       >
         {/* Selection count */}
-        <span className="text-sm font-medium text-zinc-200 whitespace-nowrap">
+        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 whitespace-nowrap">
           {selectedCount} selecionado{selectedCount !== 1 ? "s" : ""}
         </span>
 
         {/* Separator */}
-        <div className="h-5 w-px bg-zinc-700" />
+        <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
 
         {/* Extract with AI */}
         <Button
@@ -119,14 +119,14 @@ export function DriveBatchActions() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-zinc-900 border-zinc-700">
+        <AlertDialogContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-zinc-100">
+            <AlertDialogTitle className="text-zinc-900 dark:text-zinc-100">
               Confirmar exclusao
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-zinc-400">
+            <AlertDialogDescription className="text-zinc-500 dark:text-zinc-400">
               Tem certeza que deseja excluir{" "}
-              <span className="font-medium text-zinc-200">
+              <span className="font-medium text-zinc-900 dark:text-zinc-200">
                 {selectedCount} arquivo{selectedCount !== 1 ? "s" : ""}
               </span>
               ? Esta acao nao pode ser desfeita e os arquivos serao removidos
@@ -134,7 +134,7 @@ export function DriveBatchActions() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+            <AlertDialogCancel className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction

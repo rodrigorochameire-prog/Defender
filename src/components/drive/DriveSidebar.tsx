@@ -98,7 +98,7 @@ function AtribuicaoSubfolders({
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 py-2 px-3 text-zinc-500">
+      <div className="flex items-center gap-2 py-2 px-3 text-zinc-400 dark:text-zinc-500">
         <Loader2 className="h-3 w-3 animate-spin" />
         <span className="text-xs">Carregando...</span>
       </div>
@@ -109,7 +109,7 @@ function AtribuicaoSubfolders({
 
   if (subfolders.length === 0) {
     return (
-      <div className="py-2 px-3 text-zinc-500 text-xs">
+      <div className="py-2 px-3 text-zinc-400 dark:text-zinc-500 text-xs">
         Nenhuma subpasta encontrada
       </div>
     );
@@ -120,7 +120,7 @@ function AtribuicaoSubfolders({
   const recentIds = new Set(recents.map((r) => r.id));
 
   return (
-    <div className="ml-2 border-l border-zinc-800">
+    <div className="ml-2 border-l border-zinc-200 dark:border-zinc-800">
       {subfolders.map((folder) => {
         const isActive =
           ctx.selectedFolderId === folder.driveFileId;
@@ -145,10 +145,10 @@ function AtribuicaoSubfolders({
             }}
             className={cn(
               "flex items-center gap-2 w-full text-left px-3 py-1.5 text-sm transition-colors duration-150",
-              "hover:bg-zinc-800/50 hover:text-zinc-200",
+              "hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200",
               isActive
-                ? cn("bg-zinc-800 text-zinc-100 -ml-px", activeBorderClass)
-                : "text-zinc-400 ml-px"
+                ? cn("bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 -ml-px", activeBorderClass)
+                : "text-zinc-600 dark:text-zinc-400 ml-px"
             )}
           >
             <FolderOpen className="h-3.5 w-3.5 shrink-0" />
@@ -219,7 +219,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
       <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden py-2">
         {/* ─── ATRIBUICOES ─── */}
         <div className="px-3 mb-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Atribuicoes
           </span>
         </div>
@@ -239,10 +239,10 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     }}
                     className={cn(
                       "flex items-center gap-2.5 flex-1 text-left px-3 py-2 text-sm transition-all duration-200",
-                      "hover:bg-zinc-800/50",
+                      "hover:bg-zinc-100 dark:hover:bg-zinc-800/50",
                       isActive
-                        ? cn("bg-zinc-800 text-zinc-100 pl-[10px]", attr.activeBorderClass)
-                        : "text-zinc-400 hover:text-zinc-200"
+                        ? cn("bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 pl-[10px]", attr.activeBorderClass)
+                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
                     )}
                   >
                     <span className={cn("h-2 w-2 rounded-full shrink-0", attr.dotClass)} />
@@ -251,7 +251,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     {!synced && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 shrink-0" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600 shrink-0" />
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           Pasta nao sincronizada
@@ -264,7 +264,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     onClick={() => toggleExpand(attr.key)}
                     className={cn(
                       "p-1.5 mr-1 rounded transition-colors duration-150",
-                      "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                      "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     )}
                   >
                     <ChevronDown
@@ -291,11 +291,11 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         </div>
 
         {/* ─── Divider ─── */}
-        <div className="mx-3 my-3 border-t border-zinc-800/50" />
+        <div className="mx-3 my-3 border-t border-zinc-200/50 dark:border-zinc-800/50" />
 
         {/* ─── ESPECIAIS ─── */}
         <div className="px-3 mb-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Especiais
           </span>
         </div>
@@ -313,10 +313,10 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                 }}
                 className={cn(
                   "flex items-center gap-2.5 w-full text-left px-3 py-2 text-sm transition-all duration-200",
-                  "hover:bg-zinc-800/50",
+                  "hover:bg-zinc-100 dark:hover:bg-zinc-800/50",
                   isActive
-                    ? "bg-zinc-800 text-zinc-100 border-l-2 border-zinc-400"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-l-2 border-zinc-400 dark:border-zinc-400"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -335,27 +335,27 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         </div>
 
         {/* ─── Divider ─── */}
-        <div className="mx-3 my-3 border-t border-zinc-800/50" />
+        <div className="mx-3 my-3 border-t border-zinc-200/50 dark:border-zinc-800/50" />
 
         {/* ─── ACESSO RAPIDO ─── */}
         <div className="px-3 mb-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Acesso Rapido
           </span>
         </div>
         <div className="space-y-0.5">
           {/* Recentes */}
           <div>
-            <div className="flex items-center gap-2 px-3 py-1.5 text-zinc-500">
+            <div className="flex items-center gap-2 px-3 py-1.5 text-zinc-400 dark:text-zinc-500">
               <Clock className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">Recentes</span>
             </div>
             {recents.length === 0 ? (
-              <div className="px-3 py-1 text-zinc-600 text-xs">
+              <div className="px-3 py-1 text-zinc-400 dark:text-zinc-600 text-xs">
                 Nenhum acesso recente
               </div>
             ) : (
-              <div className="ml-2 border-l border-zinc-800/50">
+              <div className="ml-2 border-l border-zinc-200/50 dark:border-zinc-800/50">
                 {recents.slice(0, 5).map((item) => (
                   <button
                     key={item.id}
@@ -364,7 +364,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     }}
                     className={cn(
                       "flex items-center gap-2 w-full text-left px-3 py-1 text-xs transition-colors duration-150",
-                      "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
+                      "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
                     )}
                   >
                     <FolderOpen className="h-3 w-3 shrink-0" />
@@ -377,16 +377,16 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
           {/* Favoritos */}
           <div>
-            <div className="flex items-center gap-2 px-3 py-1.5 text-zinc-500">
+            <div className="flex items-center gap-2 px-3 py-1.5 text-zinc-400 dark:text-zinc-500">
               <Star className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">Favoritos</span>
             </div>
             {favorites.length === 0 ? (
-              <div className="px-3 py-1 text-zinc-600 text-xs">
+              <div className="px-3 py-1 text-zinc-400 dark:text-zinc-600 text-xs">
                 Nenhum favorito salvo
               </div>
             ) : (
-              <div className="ml-2 border-l border-zinc-800/50">
+              <div className="ml-2 border-l border-zinc-200/50 dark:border-zinc-800/50">
                 {favorites.slice(0, 5).map((item) => (
                   <button
                     key={item.id}
@@ -395,7 +395,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     }}
                     className={cn(
                       "flex items-center gap-2 w-full text-left px-3 py-1 text-xs transition-colors duration-150",
-                      "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
+                      "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
                     )}
                   >
                     <Star className="h-3 w-3 shrink-0 text-amber-500" />
@@ -409,8 +409,8 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
         {/* ─── Footer stats ─── */}
         {stats && (
-          <div className="mt-auto px-3 py-2 border-t border-zinc-800/50">
-            <div className="flex items-center justify-between text-[10px] text-zinc-600">
+          <div className="mt-auto px-3 py-2 border-t border-zinc-200/50 dark:border-zinc-800/50">
+            <div className="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-600">
               <span>{stats.totalFiles} arquivos</span>
               <span>{stats.syncedFolders} pastas sincronizadas</span>
             </div>
@@ -432,21 +432,21 @@ export function DriveSidebar() {
       {/* ─── Desktop Sidebar ─── */}
       <aside
         className={cn(
-          "hidden md:flex flex-col border-r border-zinc-800 bg-zinc-950 transition-all duration-300 shrink-0",
+          "hidden md:flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 transition-all duration-300 shrink-0",
           collapsed ? "w-0 overflow-hidden" : "w-60"
         )}
       >
         {/* Collapse toggle */}
-        <div className="flex items-center justify-between h-10 px-2 border-b border-zinc-800/50">
+        <div className="flex items-center justify-between h-10 px-2 border-b border-zinc-200/50 dark:border-zinc-800/50">
           {!collapsed && (
-            <span className="text-xs font-semibold text-zinc-400 px-1">
+            <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1">
               Drive
             </span>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-zinc-500 hover:text-zinc-300"
+            className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? (
@@ -465,7 +465,7 @@ export function DriveSidebar() {
         <Button
           variant="ghost"
           size="icon"
-          className="hidden md:flex h-8 w-8 absolute left-1 top-16 z-10 text-zinc-500 hover:text-zinc-300 bg-zinc-900 border border-zinc-800 rounded-md"
+          className="hidden md:flex h-8 w-8 absolute left-1 top-16 z-10 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md"
           onClick={() => setCollapsed(false)}
         >
           <ChevronRight className="h-4 w-4" />
@@ -479,18 +479,18 @@ export function DriveSidebar() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 text-zinc-400 hover:text-zinc-200"
+              className="h-9 w-9 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
             >
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
           <SheetContent
             side="left"
-            className="w-72 p-0 bg-zinc-950 border-zinc-800"
+            className="w-72 p-0 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
           >
             <SheetTitle className="sr-only">Menu de navegacao do Drive</SheetTitle>
-            <div className="h-10 flex items-center px-3 border-b border-zinc-800/50">
-              <span className="text-xs font-semibold text-zinc-400">
+            <div className="h-10 flex items-center px-3 border-b border-zinc-200/50 dark:border-zinc-800/50">
+              <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
                 Drive
               </span>
             </div>

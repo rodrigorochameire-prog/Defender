@@ -34,7 +34,7 @@ function SyncHealthDot() {
 
   if (isLoading || !health) {
     return (
-      <span className="h-2 w-2 rounded-full bg-zinc-600 animate-pulse" />
+      <span className="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600 animate-pulse" />
     );
   }
 
@@ -97,7 +97,7 @@ function SyncHealthDot() {
       <TooltipTrigger asChild>
         <div className="flex items-center gap-1.5 cursor-default">
           <span className={cn("h-2 w-2 rounded-full shrink-0", config.dotClass)} />
-          <span className="text-[11px] text-zinc-500 hidden sm:inline">
+          <span className="text-[11px] text-zinc-500 dark:text-zinc-400 hidden sm:inline">
             {timeSinceSync}
           </span>
         </div>
@@ -173,10 +173,10 @@ export function DriveTopBar() {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center gap-3 h-14 px-4 border-b border-zinc-800 bg-zinc-950 shrink-0">
+      <div className="flex items-center gap-3 h-14 px-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
         {/* ─── Search ─── */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
           <input
             type="text"
             value={localSearch}
@@ -184,7 +184,8 @@ export function DriveTopBar() {
             placeholder="Buscar na pasta atual..."
             className={cn(
               "w-full h-9 pl-9 pr-8 rounded-lg text-sm",
-              "bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder:text-zinc-500",
+              "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700",
+              "text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
               "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
               "transition-colors duration-200"
             )}
@@ -192,7 +193,7 @@ export function DriveTopBar() {
           {localSearch && (
             <button
               onClick={clearSearch}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -210,7 +211,7 @@ export function DriveTopBar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-zinc-400 hover:text-zinc-200"
+                className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                 onClick={handleSyncAll}
                 disabled={syncAll.isPending}
               >
@@ -235,9 +236,8 @@ export function DriveTopBar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-zinc-400 hover:text-zinc-200"
+                className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                 onClick={() => {
-                  // Placeholder for upload functionality
                   console.log("[Drive] Upload button clicked — not yet implemented");
                 }}
               >
@@ -248,10 +248,10 @@ export function DriveTopBar() {
           </Tooltip>
 
           {/* ─── Separator ─── */}
-          <div className="h-5 w-px bg-zinc-800 mx-0.5" />
+          <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
 
           {/* ─── View Mode Toggle ─── */}
-          <div className="flex items-center rounded-lg border border-zinc-800 bg-zinc-900">
+          <div className="flex items-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -259,8 +259,8 @@ export function DriveTopBar() {
                   className={cn(
                     "p-1.5 rounded-l-lg transition-colors duration-150",
                     ctx.viewMode === "grid"
-                      ? "bg-zinc-800 text-zinc-200"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-200 shadow-sm"
+                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
                   )}
                 >
                   <LayoutGrid className="h-4 w-4" />
@@ -275,8 +275,8 @@ export function DriveTopBar() {
                   className={cn(
                     "p-1.5 rounded-r-lg transition-colors duration-150",
                     ctx.viewMode === "list"
-                      ? "bg-zinc-800 text-zinc-200"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-200 shadow-sm"
+                      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
                   )}
                 >
                   <List className="h-4 w-4" />

@@ -45,12 +45,12 @@ type SortDir = "asc" | "desc";
 function SkeletonRow() {
   return (
     <div className="flex items-center gap-3 px-4 py-3 animate-pulse">
-      <div className="w-4 h-4 rounded bg-zinc-700/50" />
-      <div className="w-8 h-8 rounded bg-zinc-700/50" />
-      <div className="flex-1 h-4 bg-zinc-700/50 rounded w-1/3" />
-      <div className="h-3 bg-zinc-700/50 rounded w-16" />
-      <div className="h-3 bg-zinc-700/50 rounded w-24" />
-      <div className="h-4 bg-zinc-700/50 rounded w-16" />
+      <div className="w-4 h-4 rounded bg-zinc-200/50 dark:bg-zinc-700/50" />
+      <div className="w-8 h-8 rounded bg-zinc-200/50 dark:bg-zinc-700/50" />
+      <div className="flex-1 h-4 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-1/3" />
+      <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-16" />
+      <div className="h-3 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-24" />
+      <div className="h-4 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-16" />
     </div>
   );
 }
@@ -79,7 +79,7 @@ function SortHeader({
       onClick={() => onSort(sortKey)}
       className={cn(
         "flex items-center gap-1 text-xs font-medium uppercase tracking-wider transition-colors duration-150",
-        isActive ? "text-zinc-200" : "text-zinc-500 hover:text-zinc-300",
+        isActive ? "text-zinc-900 dark:text-zinc-200" : "text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300",
         className
       )}
     >
@@ -133,8 +133,8 @@ function FileRow({ file }: { file: DriveFile }) {
       onClick={handleClick}
       className={cn(
         "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors duration-150",
-        "hover:bg-zinc-800/80",
-        isSelected && "bg-emerald-500/10"
+        "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
+        isSelected && "bg-emerald-50 dark:bg-emerald-500/10"
       )}
     >
       {/* Checkbox */}
@@ -142,7 +142,7 @@ function FileRow({ file }: { file: DriveFile }) {
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => ctx.toggleFileSelection(file.id)}
-          className="h-4 w-4 border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+          className="h-4 w-4 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
         />
       </div>
 
@@ -151,14 +151,14 @@ function FileRow({ file }: { file: DriveFile }) {
         <Icon
           className={cn(
             "w-5 h-5",
-            file.isFolder ? "text-emerald-500" : "text-zinc-400"
+            file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-400"
           )}
         />
       </div>
 
       {/* Name */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-zinc-200 truncate" title={file.name}>
+        <p className="text-sm text-zinc-900 dark:text-zinc-200 truncate" title={file.name}>
           {file.name}
         </p>
       </div>
@@ -187,7 +187,7 @@ function FileRow({ file }: { file: DriveFile }) {
             {enrichment.label}
           </span>
         ) : (
-          <span className="text-xs text-zinc-600">-</span>
+          <span className="text-xs text-zinc-400 dark:text-zinc-600">-</span>
         )}
       </div>
     </div>
@@ -256,10 +256,10 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
   if (isLoading) {
     return (
       <div>
-        <div className="flex items-center gap-3 px-4 py-2 border-b border-zinc-800">
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-zinc-200 dark:border-zinc-800">
           <div className="w-4" />
           <div className="w-5" />
-          <div className="flex-1 h-3 bg-zinc-800 rounded w-16" />
+          <div className="flex-1 h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-16" />
         </div>
         {Array.from({ length: 6 }).map((_, i) => (
           <SkeletonRow key={i} />
@@ -272,11 +272,11 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
   if (sortedFiles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FolderOpen className="w-12 h-12 text-zinc-600 mb-3" />
-        <p className="text-sm text-zinc-400 font-medium">
+        <FolderOpen className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mb-3" />
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
           Nenhum arquivo nesta pasta
         </p>
-        <p className="text-xs text-zinc-500 mt-1">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
           Sincronize ou faca upload de arquivos para visualizar
         </p>
       </div>
@@ -286,12 +286,12 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
   return (
     <div>
       {/* Table Header */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-zinc-800 bg-zinc-900/50 sticky top-0 z-10">
+      <div className="flex items-center gap-3 px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/50 sticky top-0 z-10">
         <div onClick={(e) => e.stopPropagation()}>
           <Checkbox
             checked={allSelected}
             onCheckedChange={handleSelectAll}
-            className="h-4 w-4 border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+            className="h-4 w-4 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
           />
         </div>
         <div className="w-5" /> {/* icon spacer */}
@@ -332,7 +332,7 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
       </div>
 
       {/* Rows */}
-      <div className="divide-y divide-zinc-800/50">
+      <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
         {sortedFiles.map((file) => (
           <FileRow key={file.id} file={file} />
         ))}
