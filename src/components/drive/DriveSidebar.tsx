@@ -1,0 +1,509 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc/client";
+import { useDriveContext } from "./DriveContext";
+import {
+  DRIVE_ATRIBUICOES,
+  SPECIAL_FOLDERS,
+} from "./drive-constants";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Clock,
+  Star,
+  Menu,
+  FolderOpen,
+  Loader2,
+} from "lucide-react";
+
+// ─── Types ──────────────────────────────────────────────────────────
+
+interface RecentItem {
+  id: string;
+  name: string;
+  atribuicao: string;
+  visitedAt: number;
+}
+
+interface FavoriteItem {
+  id: string;
+  name: string;
+  atribuicao: string;
+}
+
+// ─── Local Storage Helpers ──────────────────────────────────────────
+
+const RECENTS_KEY = "drive-recent-folders";
+const FAVORITES_KEY = "drive-favorite-folders";
+
+function getRecents(): RecentItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(RECENTS_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function getFavorites(): FavoriteItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+// ─── Subfolder List (lazy loaded per atribuicao) ────────────────────
+
+function AtribuicaoSubfolders({
+  folderId,
+  atribuicaoKey,
+  color,
+}: {
+  folderId: string;
+  atribuicaoKey: string;
+  color: string;
+}) {
+  const ctx = useDriveContext();
+
+  const { data, isLoading } = trpc.drive.files.useQuery(
+    {
+      folderId,
+      parentFileId: null,
+      mimeType: "application/vnd.google-apps.folder",
+      limit: 100,
+    },
+    { staleTime: 60_000 }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 py-2 px-3 text-zinc-500">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        <span className="text-xs">Carregando...</span>
+      </div>
+    );
+  }
+
+  const subfolders = data?.files ?? [];
+
+  if (subfolders.length === 0) {
+    return (
+      <div className="py-2 px-3 text-zinc-500 text-xs">
+        Nenhuma subpasta encontrada
+      </div>
+    );
+  }
+
+  // Check recents for "recent change" dot
+  const recents = getRecents();
+  const recentIds = new Set(recents.map((r) => r.id));
+
+  return (
+    <div className="ml-2 border-l border-zinc-800">
+      {subfolders.map((folder) => {
+        const isActive =
+          ctx.selectedFolderId === folder.driveFileId;
+        const isRecent = recentIds.has(folder.driveFileId);
+
+        return (
+          <button
+            key={folder.id}
+            onClick={() => {
+              ctx.navigateToFolder(folder.driveFileId, folder.name);
+              // Save to recents
+              const updated = [
+                {
+                  id: folder.driveFileId,
+                  name: folder.name,
+                  atribuicao: atribuicaoKey,
+                  visitedAt: Date.now(),
+                },
+                ...getRecents().filter((r) => r.id !== folder.driveFileId),
+              ].slice(0, 10);
+              localStorage.setItem(RECENTS_KEY, JSON.stringify(updated));
+            }}
+            className={cn(
+              "flex items-center gap-2 w-full text-left px-3 py-1.5 text-sm transition-colors duration-150",
+              "hover:bg-zinc-800/50 hover:text-zinc-200",
+              isActive
+                ? `bg-zinc-800 text-zinc-100 border-l-2 border-${color}-500 -ml-px`
+                : "text-zinc-400 ml-px"
+            )}
+          >
+            <FolderOpen className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate text-xs">{folder.name}</span>
+            {isRecent && (
+              <span
+                className={`h-1.5 w-1.5 rounded-full bg-${color}-500 shrink-0 ml-auto`}
+              />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Sidebar Content ────────────────────────────────────────────────
+
+function SidebarContent({ collapsed }: { collapsed: boolean }) {
+  const ctx = useDriveContext();
+  const [expandedAtribuicoes, setExpandedAtribuicoes] = useState<Set<string>>(
+    new Set()
+  );
+  const [recents, setRecents] = useState<RecentItem[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+
+  // Load syncFolders to get doc counts
+  const { data: syncFolders } = trpc.drive.syncFolders.useQuery(undefined, {
+    staleTime: 30_000,
+  });
+
+  // Load stats to get file counts per folder
+  const { data: stats } = trpc.drive.stats.useQuery(undefined, {
+    staleTime: 30_000,
+  });
+
+  // Load recents + favorites from localStorage
+  useEffect(() => {
+    setRecents(getRecents());
+    setFavorites(getFavorites());
+  }, []);
+
+  const toggleExpand = useCallback((key: string) => {
+    setExpandedAtribuicoes((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  // Check if a folder is synced (registered)
+  const isSynced = useCallback(
+    (folderId: string): boolean => {
+      if (!syncFolders) return false;
+      return syncFolders.some(
+        (sf: { driveFolderId: string; isActive: boolean }) =>
+          sf.driveFolderId === folderId && sf.isActive
+      );
+    },
+    [syncFolders]
+  );
+
+  if (collapsed) return null;
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden py-2">
+        {/* ─── ATRIBUICOES ─── */}
+        <div className="px-3 mb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            Atribuicoes
+          </span>
+        </div>
+        <div className="space-y-0.5">
+          {DRIVE_ATRIBUICOES.map((attr) => {
+            const isActive = ctx.selectedAtribuicao === attr.key;
+            const isExpanded = expandedAtribuicoes.has(attr.key);
+            const Icon = attr.icon;
+            const synced = isSynced(attr.folderId);
+
+            return (
+              <div key={attr.key}>
+                <div className="flex items-center">
+                  <button
+                    onClick={() => {
+                      ctx.setSelectedAtribuicao(attr.key);
+                    }}
+                    className={cn(
+                      "flex items-center gap-2.5 flex-1 text-left px-3 py-2 text-sm transition-all duration-200",
+                      "hover:bg-zinc-800/50",
+                      isActive
+                        ? "bg-zinc-800 text-zinc-100"
+                        : "text-zinc-400 hover:text-zinc-200"
+                    )}
+                    style={
+                      isActive
+                        ? {
+                            borderLeft: `2px solid`,
+                            borderColor: `var(--color-${attr.color}-500, currentColor)`,
+                            paddingLeft: "10px",
+                          }
+                        : undefined
+                    }
+                  >
+                    <span className={cn("h-2 w-2 rounded-full shrink-0", attr.dotClass)} />
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="truncate font-medium">{attr.label}</span>
+                    {!synced && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 shrink-0" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          Pasta nao sincronizada
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </button>
+                  {/* Expand toggle */}
+                  <button
+                    onClick={() => toggleExpand(attr.key)}
+                    className={cn(
+                      "p-1.5 mr-1 rounded transition-colors duration-150",
+                      "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                    )}
+                  >
+                    <ChevronDown
+                      className={cn(
+                        "h-3.5 w-3.5 transition-transform duration-200",
+                        isExpanded && "rotate-180"
+                      )}
+                    />
+                  </button>
+                </div>
+
+                {/* Subfolders (lazy) */}
+                {isExpanded && (
+                  <AtribuicaoSubfolders
+                    folderId={attr.folderId}
+                    atribuicaoKey={attr.key}
+                    color={attr.color}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ─── Divider ─── */}
+        <div className="mx-3 my-3 border-t border-zinc-800/50" />
+
+        {/* ─── ESPECIAIS ─── */}
+        <div className="px-3 mb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            Especiais
+          </span>
+        </div>
+        <div className="space-y-0.5">
+          {SPECIAL_FOLDERS.map((sf) => {
+            const Icon = sf.icon;
+            const isActive = ctx.selectedFolderId === sf.folderId;
+
+            return (
+              <button
+                key={sf.key}
+                onClick={() => {
+                  ctx.setSelectedAtribuicao(null);
+                  ctx.navigateToFolder(sf.folderId, sf.label);
+                }}
+                className={cn(
+                  "flex items-center gap-2.5 w-full text-left px-3 py-2 text-sm transition-all duration-200",
+                  "hover:bg-zinc-800/50",
+                  isActive
+                    ? "bg-zinc-800 text-zinc-100 border-l-2 border-zinc-400"
+                    : "text-zinc-400 hover:text-zinc-200"
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{sf.label}</span>
+                {sf.key === "DISTRIBUICAO" && (
+                  <Badge
+                    variant="outline"
+                    className="ml-auto text-[10px] px-1.5 py-0 h-4 bg-violet-500/10 border-violet-500/30 text-violet-400"
+                  >
+                    Novo
+                  </Badge>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ─── Divider ─── */}
+        <div className="mx-3 my-3 border-t border-zinc-800/50" />
+
+        {/* ─── ACESSO RAPIDO ─── */}
+        <div className="px-3 mb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            Acesso Rapido
+          </span>
+        </div>
+        <div className="space-y-0.5">
+          {/* Recentes */}
+          <div>
+            <div className="flex items-center gap-2 px-3 py-1.5 text-zinc-500">
+              <Clock className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">Recentes</span>
+            </div>
+            {recents.length === 0 ? (
+              <div className="px-3 py-1 text-zinc-600 text-xs">
+                Nenhum acesso recente
+              </div>
+            ) : (
+              <div className="ml-2 border-l border-zinc-800/50">
+                {recents.slice(0, 5).map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      ctx.navigateToFolder(item.id, item.name);
+                    }}
+                    className={cn(
+                      "flex items-center gap-2 w-full text-left px-3 py-1 text-xs transition-colors duration-150",
+                      "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
+                    )}
+                  >
+                    <FolderOpen className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{item.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Favoritos */}
+          <div>
+            <div className="flex items-center gap-2 px-3 py-1.5 text-zinc-500">
+              <Star className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">Favoritos</span>
+            </div>
+            {favorites.length === 0 ? (
+              <div className="px-3 py-1 text-zinc-600 text-xs">
+                Nenhum favorito salvo
+              </div>
+            ) : (
+              <div className="ml-2 border-l border-zinc-800/50">
+                {favorites.slice(0, 5).map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      ctx.navigateToFolder(item.id, item.name);
+                    }}
+                    className={cn(
+                      "flex items-center gap-2 w-full text-left px-3 py-1 text-xs transition-colors duration-150",
+                      "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
+                    )}
+                  >
+                    <Star className="h-3 w-3 shrink-0 text-amber-500" />
+                    <span className="truncate">{item.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ─── Footer stats ─── */}
+        {stats && (
+          <div className="mt-auto px-3 py-2 border-t border-zinc-800/50">
+            <div className="flex items-center justify-between text-[10px] text-zinc-600">
+              <span>{stats.totalFiles} arquivos</span>
+              <span>{stats.syncedFolders} pastas sincronizadas</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
+  );
+}
+
+// ─── Main Sidebar Export ────────────────────────────────────────────
+
+export function DriveSidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <>
+      {/* ─── Desktop Sidebar ─── */}
+      <aside
+        className={cn(
+          "hidden md:flex flex-col border-r border-zinc-800 bg-zinc-950 transition-all duration-300 shrink-0",
+          collapsed ? "w-0 overflow-hidden" : "w-60"
+        )}
+      >
+        {/* Collapse toggle */}
+        <div className="flex items-center justify-between h-10 px-2 border-b border-zinc-800/50">
+          {!collapsed && (
+            <span className="text-xs font-semibold text-zinc-400 px-1">
+              Drive
+            </span>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-zinc-500 hover:text-zinc-300"
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        <SidebarContent collapsed={collapsed} />
+      </aside>
+
+      {/* Collapsed expand button (desktop) */}
+      {collapsed && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hidden md:flex h-8 w-8 absolute left-1 top-16 z-10 text-zinc-500 hover:text-zinc-300 bg-zinc-900 border border-zinc-800 rounded-md"
+          onClick={() => setCollapsed(false)}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      )}
+
+      {/* ─── Mobile Sheet ─── */}
+      <div className="md:hidden">
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-zinc-400 hover:text-zinc-200"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            side="left"
+            className="w-72 p-0 bg-zinc-950 border-zinc-800"
+          >
+            <SheetTitle className="sr-only">Menu de navegacao do Drive</SheetTitle>
+            <div className="h-10 flex items-center px-3 border-b border-zinc-800/50">
+              <span className="text-xs font-semibold text-zinc-400">
+                Drive
+              </span>
+            </div>
+            <SidebarContent collapsed={false} />
+          </SheetContent>
+        </Sheet>
+      </div>
+    </>
+  );
+}
