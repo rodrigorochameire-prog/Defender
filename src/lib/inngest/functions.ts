@@ -738,6 +738,200 @@ export const processDistributionFileFn = inngest.createFunction(
 );
 
 // Exportar todas as funções para o handler
+// ============================================
+// INTELLIGENCE — SISTEMA NERVOSO DEFENSIVO
+// ============================================
+
+/**
+ * Auto-enrich a document when triggered by Drive webhook or manual upload.
+ * This enriches individual documents — consolidation is triggered separately.
+ */
+export const intelligenceEnrichDocumentFn = inngest.createFunction(
+  {
+    id: "intelligence-enrich-document",
+    name: "Intelligence: Enrich Document",
+    retries: 3,
+    concurrency: [{ limit: 2 }], // Max 2 concurrent enrichments
+  },
+  { event: "intelligence/enrich.document" },
+  async ({ event, step }) => {
+    const { documentoId, assistidoId, processoId } = event.data;
+
+    const result = await step.run("enrich-document", async () => {
+      // Import dynamically to avoid circular dependencies
+      const { db } = await import("@/lib/db");
+      const { documentos } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+      const { enrichmentClient } = await import("@/lib/services/enrichment-client");
+
+      // Get document details
+      const [doc] = await db
+        .select({
+          id: documentos.id,
+          nome: documentos.nome,
+          mimeType: documentos.mimeType,
+          url: documentos.url,
+          enrichmentStatus: documentos.enrichmentStatus,
+        })
+        .from(documentos)
+        .where(eq(documentos.id, documentoId))
+        .limit(1);
+
+      if (!doc) {
+        return { success: false, error: "Document not found" };
+      }
+
+      // Skip if already enriched
+      if (doc.enrichmentStatus === "enriched") {
+        return { success: true, skipped: true, message: "Already enriched" };
+      }
+
+      // Mark as processing
+      await db
+        .update(documentos)
+        .set({ enrichmentStatus: "processing" })
+        .where(eq(documentos.id, documentoId));
+
+      try {
+        const enrichResult = await enrichmentClient.enrichDocument({
+          fileUrl: doc.url || "",
+          mimeType: doc.mimeType || "application/pdf",
+          assistidoId: assistidoId || null,
+          processoId: processoId || null,
+          defensorId: "system",
+        });
+
+        // Save enrichment data
+        await db
+          .update(documentos)
+          .set({
+            enrichmentStatus: "enriched",
+            enrichmentData: {
+              document_type: enrichResult.document_type,
+              extracted_data: enrichResult.extracted_data,
+              confidence: enrichResult.confidence,
+              markdown_preview: enrichResult.markdown_preview?.slice(0, 5000),
+            },
+            enrichedAt: new Date(),
+            conteudoCompleto: enrichResult.markdown_preview || null,
+          })
+          .where(eq(documentos.id, documentoId));
+
+        return {
+          success: true,
+          documentType: enrichResult.document_type,
+          confidence: enrichResult.confidence,
+        };
+      } catch (error) {
+        await db
+          .update(documentos)
+          .set({ enrichmentStatus: "failed" })
+          .where(eq(documentos.id, documentoId));
+        throw error; // Let Inngest retry
+      }
+    });
+
+    return result;
+  }
+);
+
+// ============================================
+// DRIVE AUTO-LINK & ENRICH PIPELINE
+// ============================================
+
+/**
+ * Após sync do Drive: auto-link por hierarquia + enrich novos arquivos
+ */
+export const driveAutoLinkAndEnrichFn = inngest.createFunction(
+  {
+    id: "drive-auto-link-and-enrich",
+    name: "Drive Auto-Link & Enrich Pipeline",
+    retries: 2,
+    concurrency: { limit: 2 },
+  },
+  { event: "drive/auto-link-and-enrich" },
+  async ({ event, step }) => {
+    const { newFileIds } = event.data;
+
+    if (!newFileIds || newFileIds.length === 0) {
+      return { linked: 0, enrichQueued: 0 };
+    }
+
+    // Step 1: Auto-link by hierarchy
+    const linkResult = await step.run("auto-link-by-hierarchy", async () => {
+      const { autoLinkByHierarchy } = await import("@/lib/services/google-drive");
+      return autoLinkByHierarchy(newFileIds);
+    });
+
+    // Step 2: Enqueue enrichment for non-folder files
+    const enrichResult = await step.run("enqueue-enrichment", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveFiles } = await import("@/lib/db/schema");
+      const { eq, and, inArray } = await import("drizzle-orm");
+
+      // Get files that are enrichable (not folders, supported types)
+      const ENRICHABLE_TYPES = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.google-apps.document",
+        "image/jpeg",
+        "image/png",
+        "image/tiff",
+      ];
+
+      const files = await db
+        .select({
+          id: driveFiles.id,
+          mimeType: driveFiles.mimeType,
+          webViewLink: driveFiles.webViewLink,
+          assistidoId: driveFiles.assistidoId,
+          processoId: driveFiles.processoId,
+          fileSize: driveFiles.fileSize,
+        })
+        .from(driveFiles)
+        .where(
+          and(
+            inArray(driveFiles.id, newFileIds),
+            eq(driveFiles.isFolder, false),
+          )
+        );
+
+      let queued = 0;
+      for (const file of files) {
+        const isEnrichable =
+          file.mimeType && ENRICHABLE_TYPES.some((t) => file.mimeType!.includes(t));
+        const isTooLarge = file.fileSize && file.fileSize > 50 * 1024 * 1024; // 50MB
+
+        if (isEnrichable && !isTooLarge) {
+          await db
+            .update(driveFiles)
+            .set({ enrichmentStatus: "pending", updatedAt: new Date() })
+            .where(eq(driveFiles.id, file.id));
+          queued++;
+        } else {
+          await db
+            .update(driveFiles)
+            .set({
+              enrichmentStatus: isTooLarge ? "skipped" : "unsupported",
+              enrichmentError: isTooLarge ? "Arquivo muito grande (>50MB)" : null,
+              updatedAt: new Date(),
+            })
+            .where(eq(driveFiles.id, file.id));
+        }
+      }
+
+      return { queued, total: files.length };
+    });
+
+    return {
+      linked: linkResult.linked,
+      enrichQueued: enrichResult.queued,
+      totalFiles: enrichResult.total,
+    };
+  }
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -752,4 +946,6 @@ export const functions = [
   checkPrazosManualFn,
   checkDistributionFolderFn,
   processDistributionFileFn,
+  intelligenceEnrichDocumentFn,
+  driveAutoLinkAndEnrichFn,
 ];

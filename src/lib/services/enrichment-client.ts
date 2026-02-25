@@ -317,6 +317,74 @@ export interface SigadBuscarOutput {
   error?: string | null;
 }
 
+// === Intelligence / Consolidation Types ===
+
+export interface ConsolidationInput {
+  assistidoId?: number | null;
+  processoId?: number | null;
+  documents: Record<string, unknown>[];
+  transcripts: Record<string, unknown>[];
+  demandas: Record<string, unknown>[];
+  context?: Record<string, unknown> | null;
+}
+
+export interface ConsolidationTese {
+  titulo: string;
+  fundamentacao: string;
+  confidence: number;
+}
+
+export interface ConsolidationNulidade {
+  tipo: string;
+  descricao: string;
+  severidade: "alta" | "media" | "baixa";
+  fundamentacao: string;
+  documento_ref?: string | null;
+}
+
+export interface ConsolidationPessoa {
+  nome: string;
+  tipo: string;
+  descricao?: string | null;
+  documentos_ref: string[];
+  relevancia_defesa?: string | null;
+  confidence: number;
+}
+
+export interface ConsolidationEvento {
+  data?: string | null;
+  descricao: string;
+  tipo: string;
+  documento_ref?: string | null;
+  relevancia: string;
+}
+
+export interface ConsolidationAcusacao {
+  crime: string;
+  artigos: string[];
+  qualificadoras: string[];
+  reu?: string | null;
+  status?: string | null;
+}
+
+export interface ConsolidationOutput {
+  resumo: string;
+  achados_chave: string[];
+  recomendacoes: string[];
+  inconsistencias: string[];
+  teses: ConsolidationTese[];
+  nulidades: ConsolidationNulidade[];
+  pessoas: ConsolidationPessoa[];
+  cronologia: ConsolidationEvento[];
+  acusacoes: ConsolidationAcusacao[];
+  lacunas: string[];
+  urgencias: string[];
+  confidence: number;
+  total_documentos: number;
+  total_transcricoes: number;
+  total_demandas: number;
+}
+
 // === Semantic Search Types ===
 
 export interface SemanticSearchInput {
@@ -643,6 +711,23 @@ class EnrichmentClient {
   async sigadBuscarAssistido(input: { cpf: string }): Promise<SigadBuscarOutput> {
     return this.request<SigadBuscarOutput>("/sigad/buscar-assistido", {
       cpf: input.cpf,
+    });
+  }
+
+  // === Intelligence / Consolidation Methods ===
+
+  /**
+   * Consolidar enrichments de multiplos documentos em analise sintetica.
+   * Chamado pelo: tRPC intelligence.generate
+   */
+  async consolidateCase(input: ConsolidationInput): Promise<ConsolidationOutput> {
+    return this.request<ConsolidationOutput>("/enrich/consolidate", {
+      assistido_id: input.assistidoId,
+      processo_id: input.processoId,
+      documents: input.documents,
+      transcripts: input.transcripts,
+      demandas: input.demandas,
+      context: input.context,
     });
   }
 

@@ -441,6 +441,81 @@ class SigadBuscarOutput(BaseModel):
     error: str | None = None
 
 
+# === Consolidation (Sistema Nervoso Defensivo) ===
+
+class ConsolidationInput(BaseModel):
+    """Input para /enrich/consolidate — consolida enrichments de multiplos documentos."""
+    assistido_id: int | None = Field(None, description="ID do assistido no OMBUDS")
+    processo_id: int | None = Field(None, description="ID do processo no OMBUDS")
+    documents: list[dict] = Field(default_factory=list, description="Lista de enrichmentData de documentos")
+    transcripts: list[dict] = Field(default_factory=list, description="Lista de enrichmentData de atendimentos")
+    demandas: list[dict] = Field(default_factory=list, description="Lista de enrichmentData de demandas")
+    context: dict | None = Field(None, description="Contexto adicional (nome assistido, processo, etc)")
+
+
+class ConsolidationTese(BaseModel):
+    """Uma tese defensiva identificada."""
+    titulo: str
+    fundamentacao: str = ""
+    confidence: float = 0.0
+
+
+class ConsolidationNulidade(BaseModel):
+    """Uma nulidade processual identificada."""
+    tipo: str
+    descricao: str = ""
+    severidade: str = "media"  # alta | media | baixa
+    fundamentacao: str = ""
+    documento_ref: str | None = None
+
+
+class ConsolidationPessoa(BaseModel):
+    """Uma pessoa extraida do caso."""
+    nome: str
+    tipo: str = "outro"  # reu | testemunha | vitima | perito | policial | delegado | juiz | familiar | outro
+    descricao: str | None = None
+    documentos_ref: list[str] = Field(default_factory=list)
+    relevancia_defesa: str | None = None
+    confidence: float = 0.0
+
+
+class ConsolidationEvento(BaseModel):
+    """Um evento na cronologia."""
+    data: str | None = None  # YYYY-MM-DD
+    descricao: str
+    tipo: str = "fato"  # fato | processual | probatorio
+    documento_ref: str | None = None
+    relevancia: str = "media"  # alta | media | baixa
+
+
+class ConsolidationAcusacao(BaseModel):
+    """Uma acusacao criminal."""
+    crime: str
+    artigos: list[str] = Field(default_factory=list)
+    qualificadoras: list[str] = Field(default_factory=list)
+    reu: str | None = None
+    status: str | None = None
+
+
+class ConsolidationOutput(BaseModel):
+    """Output de /enrich/consolidate — visao sintetica do caso."""
+    resumo: str = ""
+    achados_chave: list[str] = Field(default_factory=list)
+    recomendacoes: list[str] = Field(default_factory=list)
+    inconsistencias: list[str] = Field(default_factory=list)
+    teses: list[ConsolidationTese] = Field(default_factory=list)
+    nulidades: list[ConsolidationNulidade] = Field(default_factory=list)
+    pessoas: list[ConsolidationPessoa] = Field(default_factory=list)
+    cronologia: list[ConsolidationEvento] = Field(default_factory=list)
+    acusacoes: list[ConsolidationAcusacao] = Field(default_factory=list)
+    lacunas: list[str] = Field(default_factory=list)
+    urgencias: list[str] = Field(default_factory=list)
+    confidence: float = 0.0
+    total_documentos: int = 0
+    total_transcricoes: int = 0
+    total_demandas: int = 0
+
+
 # === Health ===
 
 class HealthResponse(BaseModel):

@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nextjs-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "enrichment-engine",
+      "runtimeExecutable": "enrichment-engine/.venv/bin/uvicorn",
+      "runtimeArgs": ["main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--app-dir", "enrichment-engine"],
+      "port": 8000
+    },
+    {
+      "name": "drizzle-studio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "db:studio"],
+      "port": 4983
+    }
+  ]
+}

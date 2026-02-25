@@ -20,6 +20,7 @@ from routers.whatsapp import router as whatsapp_router
 from routers.solar import router as solar_router
 from routers.sigad import router as sigad_router
 from routers.search import router as search_router
+from routers.consolidation import router as consolidation_router
 
 # Logging estruturado (sem PII)
 logging.basicConfig(
@@ -85,6 +86,7 @@ def create_app() -> FastAPI:
     app.include_router(solar_router, tags=["Solar"])
     app.include_router(sigad_router, tags=["SIGAD"])
     app.include_router(search_router, tags=["Search"])
+    app.include_router(consolidation_router, prefix="/enrich", tags=["Intelligence"])
 
     return app
 

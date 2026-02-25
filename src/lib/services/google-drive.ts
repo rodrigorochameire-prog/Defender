@@ -2278,10 +2278,27 @@ export async function listSubfolders(folderId: string): Promise<DriveFolder[]> {
 }
 
 /**
+ * Mapeia atribuicaoEnum do banco para chave do ATRIBUICAO_FOLDER_IDS
+ */
+export function mapAtribuicaoToFolderKey(
+  atribuicao: string
+): "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | null {
+  const mapping: Record<string, "JURI" | "VVD" | "EP" | "SUBSTITUICAO"> = {
+    JURI_CAMACARI: "JURI",
+    GRUPO_JURI: "JURI",
+    VVD_CAMACARI: "VVD",
+    EXECUCAO_PENAL: "EP",
+    SUBSTITUICAO: "SUBSTITUICAO",
+    SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
+  };
+  return mapping[atribuicao] || null;
+}
+
+/**
  * Cria pasta do assistido na estrutura hierárquica
  * Hierarquia: Atribuição → Assistido (Title Case) → Processo → Documentos
  *
- * @param atribuicao - JURI, VVD, EP ou SUBSTITUICAO
+ * @param atribuicao - JURI, VVD, EP ou SUBSTITUICAO (ou valor do enum do banco)
  * @param nomeAssistido - Nome do assistido (será convertido para Title Case)
  * @returns Pasta criada ou existente
  */
@@ -2300,6 +2317,194 @@ export async function createOrFindAssistidoFolder(
 
   // Se não existe, criar
   return await createFolder(nomePasta, parentFolderId);
+}
+
+/**
+ * Move pasta de assistido para outra atribuição no Drive
+ * Usado quando atribuicaoPrimaria muda
+ *
+ * @param folderId - Google Drive folder ID da pasta do assistido
+ * @param oldAtribuicao - Atribuição antiga (JURI, VVD, EP, SUBSTITUICAO)
+ * @param newAtribuicao - Nova atribuição
+ * @returns Resultado da operação
+ */
+export async function moveAssistidoFolder(
+  folderId: string,
+  oldAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO",
+  newAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO"
+): Promise<{ success: boolean; error?: string }> {
+  if (oldAtribuicao === newAtribuicao) {
+    return { success: true };
+  }
+
+  const oldParentId = ATRIBUICAO_FOLDER_IDS[oldAtribuicao];
+  const newParentId = ATRIBUICAO_FOLDER_IDS[newAtribuicao];
+
+  if (!oldParentId || !newParentId) {
+    return { success: false, error: "Pasta raiz da atribuição não configurada" };
+  }
+
+  const result = await moveFileInDrive(folderId, newParentId, oldParentId);
+  if (!result) {
+    return { success: false, error: "Erro ao mover pasta no Drive" };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Resolve a hierarquia de um arquivo no Drive para auto-link
+ * Sobe na árvore de parentFileId até encontrar match com assistido ou processo
+ *
+ * @param dbFileId - ID do arquivo no banco (driveFiles.id)
+ * @returns { assistidoId, processoId, categoria, confidence }
+ */
+export async function resolveFileHierarchy(
+  dbFileId: number
+): Promise<{
+  assistidoId: number | null;
+  processoId: number | null;
+  categoria: string | null;
+  confidence: "high" | "medium" | "low" | "none";
+}> {
+  const noResult = { assistidoId: null, processoId: null, categoria: null, confidence: "none" as const };
+
+  try {
+    // Buscar arquivo e seus ancestrais
+    const [file] = await db
+      .select()
+      .from(driveFiles)
+      .where(eq(driveFiles.id, dbFileId))
+      .limit(1);
+
+    if (!file) return noResult;
+
+    // Se já tem links, retornar
+    if (file.assistidoId || file.processoId) {
+      return {
+        assistidoId: file.assistidoId,
+        processoId: file.processoId,
+        categoria: file.categoria,
+        confidence: "high",
+      };
+    }
+
+    // Detectar categoria pela subpasta padrão (01-05)
+    let categoria: string | null = null;
+    let currentParentId = file.parentFileId;
+    const CATEGORIA_MAP: Record<string, string> = {
+      "01": "documentos_pessoais",
+      "02": "pecas_protocoladas",
+      "03": "decisoes_sentencas",
+      "04": "audiencias",
+      "05": "outros",
+    };
+
+    // Subir na hierarquia (max 5 níveis)
+    for (let depth = 0; depth < 5 && currentParentId; depth++) {
+      const [parent] = await db
+        .select()
+        .from(driveFiles)
+        .where(eq(driveFiles.id, currentParentId))
+        .limit(1);
+
+      if (!parent) break;
+
+      // Detectar categoria pelo nome da pasta (01 - xxx, 02 - xxx)
+      if (parent.isFolder && parent.name) {
+        const prefix = parent.name.substring(0, 2);
+        if (CATEGORIA_MAP[prefix] && !categoria) {
+          categoria = CATEGORIA_MAP[prefix];
+        }
+      }
+
+      // Tentar match com processo (por driveFolderId)
+      if (parent.isFolder && parent.driveFileId) {
+        const [matchedProcesso] = await db
+          .select({ id: processos.id, assistidoId: processos.assistidoId })
+          .from(processos)
+          .where(eq(processos.driveFolderId, parent.driveFileId))
+          .limit(1);
+
+        if (matchedProcesso) {
+          return {
+            assistidoId: matchedProcesso.assistidoId,
+            processoId: matchedProcesso.id,
+            categoria,
+            confidence: "high",
+          };
+        }
+      }
+
+      // Tentar match com assistido (por driveFolderId)
+      if (parent.isFolder && parent.driveFileId) {
+        const [matchedAssistido] = await db
+          .select({ id: assistidos.id })
+          .from(assistidos)
+          .where(eq(assistidos.driveFolderId, parent.driveFileId))
+          .limit(1);
+
+        if (matchedAssistido) {
+          return {
+            assistidoId: matchedAssistido.id,
+            processoId: null,
+            categoria,
+            confidence: "high",
+          };
+        }
+      }
+
+      currentParentId = parent.parentFileId;
+    }
+
+    // Fallback: tentar detecção por nome (método antigo)
+    const fallback = await autoLinkFileToProcesso(file.driveFileId, dbFileId);
+    if (fallback.linked) {
+      return {
+        assistidoId: fallback.assistidoId,
+        processoId: fallback.processoId,
+        categoria,
+        confidence: "medium",
+      };
+    }
+
+    return { ...noResult, categoria };
+  } catch (error) {
+    console.error("Erro ao resolver hierarquia:", error);
+    return noResult;
+  }
+}
+
+/**
+ * Auto-link batch: resolve hierarquia para múltiplos arquivos
+ */
+export async function autoLinkByHierarchy(
+  fileIds: number[]
+): Promise<{ linked: number; errors: number }> {
+  let linked = 0;
+  let errors = 0;
+
+  for (const fileId of fileIds) {
+    try {
+      const result = await resolveFileHierarchy(fileId);
+      if (result.assistidoId || result.processoId) {
+        await db
+          .update(driveFiles)
+          .set({
+            assistidoId: result.assistidoId,
+            processoId: result.processoId,
+            categoria: result.categoria,
+            updatedAt: new Date(),
+          })
+          .where(eq(driveFiles.id, fileId));
+        linked++;
+      }
+    } catch {
+      errors++;
+    }
+  }
+
+  return { linked, errors };
 }
 
 /**

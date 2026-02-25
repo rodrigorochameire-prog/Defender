@@ -85,6 +85,7 @@ export type InngestEvents = {
     data: {
       folderId: string;
       userId?: number;
+      triggerSource?: "webhook" | "manual" | "lifecycle";
     };
   };
 
@@ -94,10 +95,51 @@ export type InngestEvents = {
     };
   };
 
+  "drive/create.folder": {
+    data: {
+      assistidoId: number;
+      nome: string;
+      atribuicao: string;
+    };
+  };
+
+  "drive/move.folder": {
+    data: {
+      assistidoId: number;
+      folderId: string;
+      oldAtribuicao: string;
+      newAtribuicao: string;
+    };
+  };
+
+  "drive/auto-link-and-enrich": {
+    data: {
+      folderId: string;
+      newFileIds: number[];
+    };
+  };
+
   // Prazos
   "prazos/check": {
     data: {
       userId?: number;
+    };
+  };
+
+  // Intelligence — Sistema Nervoso Defensivo
+  "intelligence/enrich.document": {
+    data: {
+      documentoId: number;
+      assistidoId?: number;
+      processoId?: number;
+    };
+  };
+
+  "intelligence/consolidate": {
+    data: {
+      assistidoId?: number;
+      processoId?: number;
+      userId: string;
     };
   };
 };

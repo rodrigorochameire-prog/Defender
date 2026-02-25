@@ -211,6 +211,29 @@ export const assistidos = pgTable("assistidos", {
   sigadExportadoEm: timestamp("sigad_exportado_em"),    // Última busca/sync com o SIGAD
   solarExportadoEm: timestamp("solar_exportado_em"),    // Última exportação ao Solar com sucesso
 
+  // Sistema Nervoso Defensivo — Análise Consolidada
+  analysisStatus: varchar("analysis_status", { length: 20 }), // NULL | 'pending' | 'processing' | 'completed' | 'failed'
+  analysisData: jsonb("analysis_data").$type<{
+    resumo?: string;
+    achadosChave?: string[];
+    recomendacoes?: string[];
+    inconsistencias?: string[];
+    kpis?: {
+      totalPessoas: number;
+      totalAcusacoes: number;
+      totalDocumentosAnalisados: number;
+      totalEventos: number;
+      totalNulidades: number;
+      totalRelacoes: number;
+    };
+    documentosProcessados?: number;
+    documentosTotal?: number;
+    ultimoDocumentoProcessado?: string;
+    versaoModelo?: string;
+  }>(),
+  analyzedAt: timestamp("analyzed_at"),
+  analysisVersion: integer("analysis_version").default(0),
+
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -224,6 +247,7 @@ export const assistidos = pgTable("assistidos", {
   index("assistidos_caso_id_idx").on(table.casoId),
   index("assistidos_workspace_id_idx").on(table.workspaceId),
   index("assistidos_atribuicao_primaria_idx").on(table.atribuicaoPrimaria),
+  index("assistidos_analysis_status_idx").on(table.analysisStatus),
 ]);
 
 export type Assistido = typeof assistidos.$inferSelect;
@@ -284,7 +308,37 @@ export const processos = pgTable("processos", {
   
   // Caso (Case-Centric)
   casoId: integer("caso_id"),
-  
+
+  // Sistema Nervoso Defensivo — Análise Consolidada
+  analysisStatus: varchar("analysis_status", { length: 20 }), // NULL | 'pending' | 'processing' | 'completed' | 'failed'
+  analysisData: jsonb("analysis_data").$type<{
+    resumo?: string;
+    achadosChave?: string[];
+    recomendacoes?: string[];
+    inconsistencias?: string[];
+    teses?: string[];
+    nulidades?: Array<{
+      tipo: string;
+      descricao: string;
+      severidade: "alta" | "media" | "baixa";
+      fundamentacao: string;
+      documentoRef?: string;
+    }>;
+    kpis?: {
+      totalPessoas: number;
+      totalAcusacoes: number;
+      totalDocumentosAnalisados: number;
+      totalEventos: number;
+      totalNulidades: number;
+      totalRelacoes: number;
+    };
+    documentosProcessados?: number;
+    documentosTotal?: number;
+    versaoModelo?: string;
+  }>(),
+  analyzedAt: timestamp("analyzed_at"),
+  analysisVersion: integer("analysis_version").default(0),
+
   // Metadados
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -300,6 +354,7 @@ export const processos = pgTable("processos", {
   index("processos_deleted_at_idx").on(table.deletedAt),
   index("processos_caso_id_idx").on(table.casoId),
   index("processos_workspace_id_idx").on(table.workspaceId),
+  index("processos_analysis_status_idx").on(table.analysisStatus),
 ]);
 
 export type Processo = typeof processos.$inferSelect;
@@ -2116,12 +2171,17 @@ export const casePersonas = pgTable("case_personas", {
   casoId: integer("caso_id").notNull().references(() => casos.id, { onDelete: "cascade" }),
   assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
   juradoId: integer("jurado_id").references(() => jurados.id, { onDelete: "set null" }),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
   nome: text("nome").notNull(),
-  tipo: varchar("tipo", { length: 30 }).notNull(), // 'reu' | 'testemunha' | 'vitima' | 'perito' | 'jurado' | 'familiar'
+  tipo: varchar("tipo", { length: 30 }).notNull(), // 'reu' | 'testemunha' | 'vitima' | 'perito' | 'jurado' | 'familiar' | 'policial' | 'delegado'
   status: varchar("status", { length: 30 }), // 'pendente' | 'localizada' | 'intimada' | 'ouvida'
   perfil: jsonb("perfil").$type<Record<string, unknown>>(),
   contatos: jsonb("contatos").$type<Record<string, unknown>>(),
   observacoes: text("observacoes"),
+  // Sistema Nervoso Defensivo — rastreabilidade
+  fonte: varchar("fonte", { length: 50 }), // 'documento' | 'transcricao' | 'solar' | 'pje' | 'manual'
+  fonteId: integer("fonte_id"),             // ID do documento/atendimento de origem
+  confidence: real("confidence"),            // 0.0 - 1.0
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
@@ -2130,6 +2190,7 @@ export const casePersonas = pgTable("case_personas", {
   index("case_personas_status_idx").on(table.status),
   index("case_personas_assistido_id_idx").on(table.assistidoId),
   index("case_personas_jurado_id_idx").on(table.juradoId),
+  index("case_personas_processo_id_idx").on(table.processoId),
 ]);
 
 export type CasePersona = typeof casePersonas.$inferSelect;
@@ -2142,17 +2203,28 @@ export type InsertCasePersona = typeof casePersonas.$inferInsert;
 export const caseFacts = pgTable("case_facts", {
   id: serial("id").primaryKey(),
   casoId: integer("caso_id").notNull().references(() => casos.id, { onDelete: "cascade" }),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
   titulo: text("titulo").notNull(),
   descricao: text("descricao"),
-  tipo: varchar("tipo", { length: 30 }), // 'controverso' | 'incontroverso' | 'tese'
+  tipo: varchar("tipo", { length: 30 }), // 'controverso' | 'incontroverso' | 'tese' | 'evento' | 'nulidade' | 'prova' | 'acusacao'
   tags: jsonb("tags").$type<string[]>(),
   status: varchar("status", { length: 20 }).default("ativo"),
+  // Sistema Nervoso Defensivo — rastreabilidade e cronologia
+  dataFato: date("data_fato"),
+  fonte: varchar("fonte", { length: 50 }), // 'documento' | 'transcricao' | 'solar' | 'pje' | 'manual'
+  fonteId: integer("fonte_id"),             // ID do documento/atendimento/demanda de origem
+  severidade: varchar("severidade", { length: 10 }), // 'alta' | 'media' | 'baixa'
+  confidence: real("confidence"),            // 0.0 - 1.0
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("case_facts_caso_id_idx").on(table.casoId),
   index("case_facts_tipo_idx").on(table.tipo),
   index("case_facts_status_idx").on(table.status),
+  index("case_facts_processo_id_idx").on(table.processoId),
+  index("case_facts_assistido_id_idx").on(table.assistidoId),
+  index("case_facts_data_fato_idx").on(table.dataFato),
 ]);
 
 export type CaseFact = typeof caseFacts.$inferSelect;
@@ -2606,11 +2678,14 @@ export const casePersonasRelations = relations(casePersonas, ({ one, many }) => 
   caso: one(casos, { fields: [casePersonas.casoId], references: [casos.id] }),
   assistido: one(assistidos, { fields: [casePersonas.assistidoId], references: [assistidos.id] }),
   jurado: one(jurados, { fields: [casePersonas.juradoId], references: [jurados.id] }),
+  processo: one(processos, { fields: [casePersonas.processoId], references: [processos.id] }),
   scriptItems: many(juriScriptItems),
 }));
 
 export const caseFactsRelations = relations(caseFacts, ({ one, many }) => ({
   caso: one(casos, { fields: [caseFacts.casoId], references: [casos.id] }),
+  processo: one(processos, { fields: [caseFacts.processoId], references: [processos.id] }),
+  assistido: one(assistidos, { fields: [caseFacts.assistidoId], references: [assistidos.id] }),
   evidences: many(factEvidence),
   scriptItems: many(juriScriptItems),
 }));
@@ -2719,6 +2794,13 @@ export const driveFiles = pgTable("drive_files", {
   isFolder: boolean("is_folder").default(false),
   parentFileId: integer("parent_file_id"),
   
+  // Enrichment Intelligence
+  enrichmentStatus: varchar("enrichment_status", { length: 20 }).default("pending"),
+  enrichmentError: text("enrichment_error"),
+  enrichedAt: timestamp("enriched_at"),
+  categoria: varchar("categoria", { length: 50 }),
+  documentType: varchar("document_type", { length: 100 }),
+
   // Metadados
   createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -2731,6 +2813,8 @@ export const driveFiles = pgTable("drive_files", {
   index("drive_files_sync_status_idx").on(table.syncStatus),
   index("drive_files_is_folder_idx").on(table.isFolder),
   index("drive_files_parent_file_id_idx").on(table.parentFileId),
+  index("drive_files_enrichment_status_idx").on(table.enrichmentStatus),
+  index("drive_files_enriched_at_idx").on(table.enrichedAt),
 ]);
 
 export type DriveFile = typeof driveFiles.$inferSelect;

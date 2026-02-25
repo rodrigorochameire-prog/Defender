@@ -6,6 +6,55 @@ import { eq, ilike, or, desc, sql, and, isNull, inArray, asc } from "drizzle-orm
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
 
+// Drive lifecycle: cria ou move pasta em background (fire-and-forget)
+async function ensureDriveFolderForAssistido(
+  assistidoId: number,
+  nome: string,
+  atribuicao: string,
+  oldAtribuicao?: string | null,
+  existingFolderId?: string | null,
+) {
+  try {
+    const {
+      createOrFindAssistidoFolder,
+      moveAssistidoFolder,
+      mapAtribuicaoToFolderKey,
+      isGoogleDriveConfigured,
+    } = await import("@/lib/services/google-drive");
+
+    if (!isGoogleDriveConfigured()) return;
+
+    const folderKey = mapAtribuicaoToFolderKey(atribuicao);
+    if (!folderKey) return;
+
+    // Se mudando de atribuição e já tem pasta → mover
+    if (oldAtribuicao && existingFolderId && oldAtribuicao !== atribuicao) {
+      const oldKey = mapAtribuicaoToFolderKey(oldAtribuicao);
+      if (oldKey && oldKey !== folderKey) {
+        const moveResult = await moveAssistidoFolder(existingFolderId, oldKey, folderKey);
+        if (!moveResult.success) {
+          console.error(`[Drive] Erro ao mover pasta do assistido ${assistidoId}:`, moveResult.error);
+        }
+      }
+      return;
+    }
+
+    // Se já tem pasta, não precisa criar
+    if (existingFolderId) return;
+
+    // Criar pasta no Drive
+    const folder = await createOrFindAssistidoFolder(folderKey, nome);
+    if (folder) {
+      await db
+        .update(assistidos)
+        .set({ driveFolderId: folder.id, updatedAt: new Date() })
+        .where(eq(assistidos.id, assistidoId));
+    }
+  } catch (error) {
+    console.error(`[Drive] Erro ao gerenciar pasta para assistido ${assistidoId}:`, error);
+  }
+}
+
 export const assistidosRouter = router({
   // Listar todos os assistidos
   // Assistidos são COMPARTILHADOS - todos os defensores têm acesso
@@ -292,6 +341,9 @@ export const assistidosRouter = router({
               isFolder: driveFiles.isFolder,
               parentFileId: driveFiles.parentFileId,
               driveFolderId: driveFiles.driveFolderId,
+              enrichmentStatus: driveFiles.enrichmentStatus,
+              documentType: driveFiles.documentType,
+              categoria: driveFiles.categoria,
             })
             .from(driveFiles)
             .where(eq(driveFiles.assistidoId, input.id))
@@ -428,6 +480,15 @@ export const assistidosRouter = router({
           driveFolderId: input.driveFolderId || null,
         })
         .returning();
+
+      // Drive lifecycle: auto-criar pasta (fire-and-forget)
+      if (!input.driveFolderId) {
+        ensureDriveFolderForAssistido(
+          novoAssistido.id,
+          novoAssistido.nome,
+          input.atribuicaoPrimaria || "SUBSTITUICAO",
+        ).catch(() => {}); // silencioso
+      }
 
       return novoAssistido;
     }),
@@ -567,16 +628,31 @@ export const assistidosRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
       const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
-      
+
+      // Buscar estado anterior para detectar mudança de atribuição
+      let oldAssistido: { atribuicaoPrimaria: string | null; driveFolderId: string | null; nome: string } | null = null;
+      if (input.atribuicaoPrimaria) {
+        const [existing] = await db
+          .select({
+            atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+            driveFolderId: assistidos.driveFolderId,
+            nome: assistidos.nome,
+          })
+          .from(assistidos)
+          .where(eq(assistidos.id, id))
+          .limit(1);
+        oldAssistido = existing || null;
+      }
+
       const updateData: Record<string, unknown> = { updatedAt: new Date() };
-      
+
       // Só incluir campos que foram enviados
       Object.entries(data).forEach(([key, value]) => {
         if (value !== undefined) {
           updateData[key] = value;
         }
       });
-      
+
       const [atualizado] = await db
         .update(assistidos)
         .set(updateData)
@@ -586,7 +662,18 @@ export const assistidosRouter = router({
             : and(eq(assistidos.id, id), workspaceId ? eq(assistidos.workspaceId, workspaceId as number) : undefined)
         )
         .returning();
-      
+
+      // Drive lifecycle: mover pasta se atribuição mudou, ou criar se necessário
+      if (input.atribuicaoPrimaria && oldAssistido) {
+        ensureDriveFolderForAssistido(
+          id,
+          atualizado.nome,
+          input.atribuicaoPrimaria,
+          oldAssistido.atribuicaoPrimaria,
+          oldAssistido.driveFolderId,
+        ).catch(() => {}); // fire-and-forget
+      }
+
       return atualizado;
     }),
 

@@ -124,7 +124,6 @@ interface ColumnDef {
   id: string;
   header: string;
   width?: string;
-  minWidth?: string;
   align?: "left" | "right";
   editable: boolean;
   colIndex: number;
@@ -137,13 +136,13 @@ interface SortCriterion {
 
 const COLUMN_ORDER: ColumnDef[] = [
   { id: "index",        header: "#",            width: "w-8",              editable: false, colIndex: 0 },
-  { id: "assistido",    header: "Assistido",    minWidth: "min-w-[140px]", editable: true,  colIndex: 1 },
-  { id: "processo",     header: "Processo",     minWidth: "min-w-[160px]", editable: true,  colIndex: 2 },
-  { id: "ato",          header: "Ato",          minWidth: "min-w-[120px]", editable: true,  colIndex: 4 },
-  { id: "prazo",        header: "Prazo",        width: "w-[100px]",        editable: true,  colIndex: 5 },
-  { id: "status",       header: "Status",       width: "w-[100px]",        editable: true,  colIndex: 6 },
-  { id: "providencias", header: "Providências", minWidth: "min-w-[140px]", editable: true,  colIndex: 8 },
-  { id: "acoes",        header: "Ações",        width: "w-[60px]",         align: "right",  editable: false, colIndex: 9 },
+  { id: "assistido",    header: "Assistido",    width: "w-[26%]",         editable: true,  colIndex: 1 },
+  { id: "processo",     header: "Processo",     width: "w-[24%]",         editable: true,  colIndex: 2 },
+  { id: "ato",          header: "Ato",          width: "w-[14%]",         editable: true,  colIndex: 4 },
+  { id: "prazo",        header: "Prazo",        width: "w-[8%]",          editable: true,  colIndex: 5 },
+  { id: "status",       header: "Status",       width: "w-[10%]",         editable: true,  colIndex: 6 },
+  { id: "providencias", header: "Prov.",        width: "w-[10%]",         editable: true,  colIndex: 8 },
+  { id: "acoes",        header: "",             width: "w-10",             align: "right",  editable: false, colIndex: 9 },
 ];
 
 // Derivar colunas editáveis automaticamente da ordem do array
@@ -350,15 +349,24 @@ const CompactRow = React.memo(function CompactRow({
   // ---- Cell Renderers (keyed by column id) ----
 
   const cellRenderers: Record<string, () => React.ReactNode> = {
-    // # com barra de cor
+    // # (número) + barra de cor de atribuição à direita
     index: () => (
-      <>
-        <span
-          className="absolute left-0 inset-y-0 w-0.5"
-          style={{ backgroundColor: atribuicaoColor }}
+      <div className="flex items-center gap-0">
+        <span className="mr-1">{index + 1}</span>
+        <InlineDropdown
+          value={demanda.atribuicao}
+          compact
+          displayValue={
+            <span
+              className="absolute right-0 inset-y-0 w-1.5 cursor-pointer hover:w-2.5 transition-all rounded-r"
+              style={{ backgroundColor: atribuicaoColor }}
+              title={`Atribuição: ${demanda.atribuicao}\nClique para alterar`}
+            />
+          }
+          options={ATRIBUICAO_OPTIONS}
+          onChange={(v) => onAtribuicaoChange(demanda.id, v)}
         />
-        {index + 1}
-      </>
+      </div>
     ),
 
     // Assistido - autocomplete de vinculacao + editavel inline + Copy + Link
@@ -366,38 +374,30 @@ const CompactRow = React.memo(function CompactRow({
       <div className="flex items-center gap-1 min-w-0">
         {isUrgente && <Flame className="w-3 h-3 text-orange-500 flex-shrink-0" />}
         {isPreso && <Lock className="w-3 h-3 text-rose-500 flex-shrink-0" />}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="truncate flex-1 min-w-0">
-              {searchAssistidosFn && onAssistidoLink ? (
-                <InlineAutocomplete
-                  value={demanda.assistido}
-                  valueId={demanda.assistidoId}
-                  onSelect={(id, label) => onAssistidoLink(demanda.id, id, label)}
-                  onTextChange={(text) => onAssistidoChange(demanda.id, text)}
-                  placeholder="Buscar assistido..."
-                  searchFn={searchAssistidosFn}
-                  onQueryChange={onAssistidoQueryChange}
-                  isLoading={isLoadingAssistidoSearch}
-                  icon="user"
-                  activateOnDoubleClick
-                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors truncate flex items-center gap-1 group/edit"
-                />
-              ) : (
-                <EditableTextInline
-                  value={demanda.assistido}
-                  onSave={(v) => onAssistidoChange(demanda.id, v)}
-                  activateOnDoubleClick
-                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors truncate flex items-center gap-1 group/edit"
-                />
-              )}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-[300px]">
-            <p className="text-xs font-medium">{demanda.assistido}</p>
-            <p className="text-[10px] text-zinc-400 mt-0.5">Clique para selecionar, duplo-clique para vincular assistido</p>
-          </TooltipContent>
-        </Tooltip>
+        <div className="truncate group-hover/row:whitespace-normal group-hover/row:break-words flex-1 min-w-0 transition-all">
+          {searchAssistidosFn && onAssistidoLink ? (
+            <InlineAutocomplete
+              value={demanda.assistido}
+              valueId={demanda.assistidoId}
+              onSelect={(id, label) => onAssistidoLink(demanda.id, id, label)}
+              onTextChange={(text) => onAssistidoChange(demanda.id, text)}
+              placeholder="Buscar assistido..."
+              searchFn={searchAssistidosFn}
+              onQueryChange={onAssistidoQueryChange}
+              isLoading={isLoadingAssistidoSearch}
+              icon="user"
+              activateOnDoubleClick
+              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit"
+            />
+          ) : (
+            <EditableTextInline
+              value={demanda.assistido}
+              onSave={(v) => onAssistidoChange(demanda.id, v)}
+              activateOnDoubleClick
+              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit"
+            />
+          )}
+        </div>
         <button
           onClick={(e) => { e.stopPropagation(); copyCell(demanda.assistido, "Nome"); }}
           className="opacity-0 group-hover/cell:opacity-100 transition-opacity flex-shrink-0 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700"
@@ -424,43 +424,32 @@ const CompactRow = React.memo(function CompactRow({
     // Processo - autocomplete de vinculacao + editavel inline + Copy + Link
     processo: () => (
       <div className="flex items-center gap-1 min-w-0">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="truncate flex-1 min-w-0">
-              {searchProcessosFn && onProcessoLink ? (
-                <InlineAutocomplete
-                  value={demanda.processos?.[0]?.numero || ""}
-                  valueId={demanda.processoId}
-                  onSelect={(id, label) => onProcessoLink(demanda.id, id, label)}
-                  onTextChange={(text) => onProcessoChange(demanda.id, text)}
-                  placeholder="Buscar processo..."
-                  searchFn={searchProcessosFn}
-                  onQueryChange={onProcessoQueryChange}
-                  isLoading={isLoadingProcessoSearch}
-                  icon="briefcase"
-                  activateOnDoubleClick
-                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors truncate flex items-center gap-1 group/edit font-mono text-[10px]"
-                />
-              ) : (
-                <EditableTextInline
-                  value={demanda.processos?.[0]?.numero || ""}
-                  onSave={(v) => onProcessoChange(demanda.id, v)}
-                  placeholder="Sem processo"
-                  activateOnDoubleClick
-                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors truncate flex items-center gap-1 group/edit"
-                  inputClassName="w-full text-[10px] font-mono px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
-                />
-              )}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-[350px]">
-            <p className="text-xs font-mono">{demanda.processos?.[0]?.numero || "-"}</p>
-            {demanda.processos?.[0]?.tipo && (
-              <p className="text-[10px] text-zinc-400 mt-0.5">{demanda.processos[0].tipo}</p>
-            )}
-            <p className="text-[10px] text-zinc-400">Clique para selecionar, duplo-clique para vincular processo</p>
-          </TooltipContent>
-        </Tooltip>
+        <div className="truncate group-hover/row:whitespace-normal group-hover/row:break-words flex-1 min-w-0 transition-all">
+          {searchProcessosFn && onProcessoLink ? (
+            <InlineAutocomplete
+              value={demanda.processos?.[0]?.numero || ""}
+              valueId={demanda.processoId}
+              onSelect={(id, label) => onProcessoLink(demanda.id, id, label)}
+              onTextChange={(text) => onProcessoChange(demanda.id, text)}
+              placeholder="Buscar processo..."
+              searchFn={searchProcessosFn}
+              onQueryChange={onProcessoQueryChange}
+              isLoading={isLoadingProcessoSearch}
+              icon="briefcase"
+              activateOnDoubleClick
+              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit font-mono text-[10px]"
+            />
+          ) : (
+            <EditableTextInline
+              value={demanda.processos?.[0]?.numero || ""}
+              onSave={(v) => onProcessoChange(demanda.id, v)}
+              placeholder="Sem processo"
+              activateOnDoubleClick
+              className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit"
+              inputClassName="w-full text-[10px] font-mono px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+            />
+          )}
+        </div>
         {demanda.processos?.[0]?.numero && (
           <button
             onClick={(e) => { e.stopPropagation(); copyCell(demanda.processos[0].numero, "Processo"); }}
@@ -557,15 +546,43 @@ const CompactRow = React.memo(function CompactRow({
       />
     ),
 
-    // Providências
-    providencias: () => (
-      <EditableTextInline
-        value={demanda.providencias || ""}
-        onSave={(v) => onProvidenciasChange(demanda.id, v)}
-        placeholder="+ providências"
-        activateOnDoubleClick
-      />
-    ),
+    // Providências — colapsado, mostra ícone + preview curto, expande ao dbl-click para editar
+    providencias: () => {
+      const text = demanda.providencias || "";
+      const hasText = text.trim().length > 0;
+      return (
+        <div className="group/prov flex items-center gap-1 min-w-0">
+          {hasText ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="flex items-center gap-1 min-w-0 text-left hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const td = e.currentTarget.closest('td');
+                    if (td) td.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+                  }}
+                >
+                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">{text.length > 20 ? text.substring(0, 20) + "…" : text}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="max-w-[300px]">
+                <p className="text-xs whitespace-pre-wrap">{text}</p>
+                <p className="text-[10px] text-zinc-400 mt-1">Duplo-clique para editar</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <EditableTextInline
+              value=""
+              onSave={(v) => onProvidenciasChange(demanda.id, v)}
+              placeholder="—"
+              activateOnDoubleClick
+              className="text-[10px] text-zinc-400"
+            />
+          )}
+        </div>
+      );
+    },
 
     // Ações
     acoes: () => (
@@ -688,7 +705,7 @@ const CompactRow = React.memo(function CompactRow({
               key={col.id}
               ref={registerRef(col.colIndex)}
               tabIndex={0}
-              className={`px-3 py-2 group/cell ${col.width || ""} ${col.minWidth || ""} ${
+              className={`px-3 py-2 group/cell ${col.width || ""} ${
                 isFocused(col.colIndex)
                   ? "ring-1 ring-inset ring-emerald-400/40 bg-emerald-50/20 dark:bg-emerald-950/15"
                   : ""
@@ -703,7 +720,7 @@ const CompactRow = React.memo(function CompactRow({
 
         // Fallback
         return (
-          <td key={col.id} className={`px-3 py-2 ${col.width || ""} ${col.minWidth || ""}`}>
+          <td key={col.id} className={`px-3 py-2 ${col.width || ""}`}>
             {renderer()}
           </td>
         );
@@ -945,7 +962,7 @@ export function DemandaCompactView({
             <SortableContext items={demandas.map(d => d.id)} strategy={verticalListSortingStrategy}>
             <table
               ref={tableRef}
-              className="w-full text-[11px] border-collapse min-w-[800px]"
+              className="w-full text-[11px] border-collapse table-fixed"
               onKeyDown={handleTableKeyDown}
             >
               <thead className="sticky top-0 z-10">
@@ -961,7 +978,7 @@ export function DemandaCompactView({
                       <th
                         key={col.id}
                         onClick={sortable && onColumnSort ? () => onColumnSort(col.id) : undefined}
-                        className={`px-3 py-2.5 text-${col.align || "left"} text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ${col.width || ""} ${col.minWidth || ""} ${
+                        className={`px-3 py-2.5 text-${col.align || "left"} text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ${col.width || ""} ${
                           sortable && onColumnSort ? "cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-700/40 select-none transition-all" : ""
                         } ${sortInfo ? "text-emerald-600 dark:text-emerald-400" : ""}`}
                       >

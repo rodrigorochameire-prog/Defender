@@ -166,6 +166,9 @@ export const processosRouter = router({
               isFolder: driveFiles.isFolder,
               parentFileId: driveFiles.parentFileId,
               driveFolderId: driveFiles.driveFolderId,
+              enrichmentStatus: driveFiles.enrichmentStatus,
+              documentType: driveFiles.documentType,
+              categoria: driveFiles.categoria,
             })
             .from(driveFiles)
             .where(eq(driveFiles.processoId, input.id))
@@ -256,7 +259,35 @@ export const processosRouter = router({
           workspaceId: assistido.workspaceId,
         })
         .returning();
-      
+
+      // Drive lifecycle: auto-criar subpasta do processo (fire-and-forget)
+      if (assistido.driveFolderId) {
+        (async () => {
+          try {
+            const { createOrFindProcessoFolder, isGoogleDriveConfigured } =
+              await import("@/lib/services/google-drive");
+            if (!isGoogleDriveConfigured()) return;
+
+            const folder = await createOrFindProcessoFolder(
+              assistido.driveFolderId!,
+              novoProcesso.numeroAutos,
+            );
+            if (folder) {
+              await db
+                .update(processos)
+                .set({
+                  driveFolderId: folder.id,
+                  linkDrive: folder.webViewLink,
+                  updatedAt: new Date(),
+                })
+                .where(eq(processos.id, novoProcesso.id));
+            }
+          } catch (error) {
+            console.error(`[Drive] Erro ao criar pasta para processo ${novoProcesso.id}:`, error);
+          }
+        })();
+      }
+
       return novoProcesso;
     }),
 

@@ -6,13 +6,14 @@ import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
 import { ArrowLeft, ExternalLink, Lock, Scale, Sun, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SubpastaExplorer } from "@/components/hub/SubpastaExplorer";
-import { TimelineDocumental } from "@/components/hub/TimelineDocumental";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { IntelligenceTab } from "@/components/intelligence/IntelligenceTab";
+import { DriveStatusBar } from "@/components/drive/DriveStatusBar";
+import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 
-type Tab = "partes" | "demandas" | "drive" | "audiencias" | "vinculados";
+type Tab = "partes" | "demandas" | "drive" | "audiencias" | "vinculados" | "inteligencia";
 
 const PRESOS = [
   "CADEIA_PUBLICA",
@@ -85,6 +86,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
     ...(showVinculados
       ? [{ key: "vinculados" as Tab, label: "Vinculados", count: data.processosVinculados.length }]
       : []),
+    { key: "inteligencia", label: "Inteligência" },
   ];
 
   return (
@@ -165,6 +167,9 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
           </button>
         )}
       </div>
+
+      {/* Drive Status Bar */}
+      <DriveStatusBar processoId={Number(id)} />
 
       {/* Tabs */}
       <div className="flex gap-0 border-b border-zinc-100 dark:border-zinc-800 px-6">
@@ -277,20 +282,10 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
         )}
 
         {tab === "drive" && (
-          <div className="space-y-6">
-            <div>
-              <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-                Arquivos
-              </p>
-              <SubpastaExplorer files={data.driveFiles} />
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-                Timeline documental
-              </p>
-              <TimelineDocumental files={data.driveFiles} />
-            </div>
-          </div>
+          <DriveTabEnhanced
+            files={data.driveFiles}
+            processoId={Number(id)}
+          />
         )}
 
         {tab === "audiencias" && (
@@ -352,6 +347,15 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {tab === "inteligencia" && (
+          <div className="space-y-4">
+            <IntelligenceTab
+              processoId={Number(id)}
+              casoId={data.casoId}
+            />
           </div>
         )}
       </div>

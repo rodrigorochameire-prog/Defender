@@ -17,7 +17,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { processos, documentos, anotacoes, assistidos } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, ilike, desc, asc, or, sql } from "drizzle-orm";
 import {
   enrichmentClient,
   type SolarSyncOutput,
@@ -779,4 +779,282 @@ export const solarRouter = router({
 
       return result;
     }),
+
+  // ==========================================
+  // SOLAR HUB — LISTING QUERIES
+  // ==========================================
+
+  /**
+   * Lista processos com status de integração Solar.
+   * Usado na Solar Hub para visualizar quais processos precisam de sync.
+   */
+  processosParaSolar: protectedProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+        limit: z.number().min(1).max(200).default(100),
+      }).optional(),
+    )
+    .query(async ({ input }) => {
+      const search = input?.search;
+      const limit = input?.limit ?? 100;
+
+      // Build where conditions
+      const conditions = [
+        isNull(processos.deletedAt),
+        isNotNull(processos.numeroAutos),
+      ];
+
+      if (search) {
+        conditions.push(
+          or(
+            ilike(processos.numeroAutos, `%${search}%`),
+            ilike(assistidos.nome, `%${search}%`),
+          )!,
+        );
+      }
+
+      const rows = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          comarca: processos.comarca,
+          vara: processos.vara,
+          assistidoNome: assistidos.nome,
+          assistidoId: assistidos.id,
+          driveFolderId: processos.driveFolderId,
+          updatedAt: processos.updatedAt,
+          solarExportadoEm: assistidos.solarExportadoEm,
+        })
+        .from(processos)
+        .leftJoin(assistidos, eq(processos.assistidoId, assistidos.id))
+        .where(and(...conditions))
+        .orderBy(desc(processos.updatedAt))
+        .limit(limit);
+
+      // Compute solarStatus in JS
+      const now = Date.now();
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+
+      return rows.map((row) => {
+        let solarStatus: "synced" | "stale" | "not_registered";
+
+        if (row.solarExportadoEm) {
+          const exportedAt = new Date(row.solarExportadoEm).getTime();
+          solarStatus = now - exportedAt < twentyFourHours ? "synced" : "stale";
+        } else {
+          solarStatus = "not_registered";
+        }
+
+        return {
+          id: row.id,
+          numeroAutos: row.numeroAutos,
+          comarca: row.comarca,
+          vara: row.vara,
+          assistidoNome: row.assistidoNome,
+          assistidoId: row.assistidoId,
+          driveFolderId: row.driveFolderId,
+          updatedAt: row.updatedAt,
+          solarStatus,
+        };
+      });
+    }),
+
+  /**
+   * Lista assistidos com status de integração Solar/SIGAD.
+   * Usado na Solar Hub para visualizar quem pode ser exportado.
+   */
+  assistidosParaSolar: protectedProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+        filter: z.enum(["todos", "exportaveis", "sem_cpf", "exportados"]).default("todos"),
+        limit: z.number().min(1).max(200).default(100),
+      }).optional(),
+    )
+    .query(async ({ input }) => {
+      const search = input?.search;
+      const filter = input?.filter ?? "todos";
+      const limit = input?.limit ?? 100;
+
+      // Build where conditions
+      const conditions = [isNull(assistidos.deletedAt)];
+
+      if (search) {
+        conditions.push(
+          or(
+            ilike(assistidos.nome, `%${search}%`),
+            ilike(assistidos.cpf, `%${search}%`),
+          )!,
+        );
+      }
+
+      // Apply filter
+      switch (filter) {
+        case "exportaveis":
+          conditions.push(isNotNull(assistidos.cpf));
+          conditions.push(isNull(assistidos.solarExportadoEm));
+          break;
+        case "sem_cpf":
+          conditions.push(isNull(assistidos.cpf));
+          break;
+        case "exportados":
+          conditions.push(isNotNull(assistidos.solarExportadoEm));
+          break;
+        // "todos" — no extra conditions
+      }
+
+      const rows = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          cpf: assistidos.cpf,
+          sigadId: assistidos.sigadId,
+          sigadExportadoEm: assistidos.sigadExportadoEm,
+          solarExportadoEm: assistidos.solarExportadoEm,
+        })
+        .from(assistidos)
+        .where(and(...conditions))
+        .orderBy(asc(assistidos.nome))
+        .limit(limit);
+
+      // Compute solarStatus in JS
+      return rows.map((row) => {
+        let solarStatus: "exported" | "sigad_only" | "no_cpf" | "unchecked";
+
+        if (row.solarExportadoEm != null) {
+          solarStatus = "exported";
+        } else if (row.sigadId != null) {
+          solarStatus = "sigad_only";
+        } else if (row.cpf == null) {
+          solarStatus = "no_cpf";
+        } else {
+          solarStatus = "unchecked";
+        }
+
+        return {
+          id: row.id,
+          nome: row.nome,
+          cpf: row.cpf,
+          sigadId: row.sigadId,
+          sigadExportadoEm: row.sigadExportadoEm,
+          solarExportadoEm: row.solarExportadoEm,
+          solarStatus,
+        };
+      });
+    }),
+
+  /**
+   * Lista anotações pendentes de sincronização com Solar, agrupadas por assistido.
+   * Útil para painel de pendências na Solar Hub.
+   */
+  anotacoesPendentes: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(100).default(50) }).optional())
+    .query(async ({ input }) => {
+      const limit = input?.limit ?? 50;
+
+      const rows = await db.query.anotacoes.findMany({
+        where: and(
+          isNull(anotacoes.solarSyncedAt),
+          isNotNull(anotacoes.assistidoId),
+        ),
+        columns: {
+          id: true,
+          conteudo: true,
+          tipo: true,
+          createdAt: true,
+          assistidoId: true,
+          processoId: true,
+        },
+        with: {
+          assistido: {
+            columns: { id: true, nome: true },
+          },
+          processo: {
+            columns: { id: true, numeroAutos: true },
+          },
+        },
+        orderBy: [asc(anotacoes.createdAt)],
+        limit,
+      });
+
+      // Group by assistidoId
+      const grouped = new Map<number, {
+        assistidoId: number;
+        assistidoNome: string;
+        anotacoes: typeof rows;
+      }>();
+
+      for (const row of rows) {
+        if (!row.assistidoId) continue;
+        const key = row.assistidoId;
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            assistidoId: key,
+            assistidoNome: row.assistido?.nome ?? "Sem nome",
+            anotacoes: [],
+          });
+        }
+        grouped.get(key)!.anotacoes.push(row);
+      }
+
+      return [...grouped.values()];
+    }),
+
+  /**
+   * Estatísticas agregadas da Solar Hub.
+   * Conta processos sincronizados, assistidos exportados, fases criadas, pendências e SIGAD.
+   */
+  stats: protectedProcedure.query(async () => {
+    // Count processos that have been synced to Solar (via assistido.solarExportadoEm)
+    const [syncResult] = await db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(processos)
+      .leftJoin(assistidos, eq(processos.assistidoId, assistidos.id))
+      .where(and(
+        isNull(processos.deletedAt),
+        isNotNull(assistidos.solarExportadoEm),
+      ));
+
+    // Count assistidos exported to Solar
+    const [exportResult] = await db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(assistidos)
+      .where(and(
+        isNull(assistidos.deletedAt),
+        isNotNull(assistidos.solarExportadoEm),
+      ));
+
+    // Count annotations synced to Solar
+    const [fasesResult] = await db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(anotacoes)
+      .where(isNotNull(anotacoes.solarSyncedAt));
+
+    // Count annotations pending sync
+    const [pendingResult] = await db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(anotacoes)
+      .where(and(
+        isNull(anotacoes.solarSyncedAt),
+        isNotNull(anotacoes.assistidoId),
+      ));
+
+    // Count assistidos with SIGAD ID
+    const [sigadResult] = await db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(assistidos)
+      .where(and(
+        isNull(assistidos.deletedAt),
+        isNotNull(assistidos.sigadId),
+      ));
+
+    return {
+      processosSincronizados: syncResult?.count ?? 0,
+      assistidosExportados: exportResult?.count ?? 0,
+      fasesCriadas: fasesResult?.count ?? 0,
+      anotacoesPendentes: pendingResult?.count ?? 0,
+      assistidosNoSigad: sigadResult?.count ?? 0,
+    };
+  }),
 });

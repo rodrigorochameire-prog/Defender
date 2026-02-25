@@ -4,7 +4,7 @@ import { driveFiles } from "@/lib/db/schema";
 import { eq, or, inArray } from "drizzle-orm";
 import { syncFolderWithDatabase, listDistributionPendingFiles } from "@/lib/services/google-drive";
 import { SPECIAL_FOLDER_IDS } from "@/lib/utils/text-extraction";
-import { enrichmentClient } from "@/lib/services/enrichment-client";
+import { inngest } from "@/lib/inngest/client";
 
 /**
  * Webhook do Google Drive
@@ -137,51 +137,22 @@ export async function POST(request: NextRequest) {
           `[Drive Webhook] Mudança detectada, sincronizando pasta ${webhook.folderId}`
         );
 
-        // Sincronização assíncrona + enrichment dos novos arquivos
+        // Sincronização assíncrona → auto-link → enrich pipeline via Inngest
         syncFolderWithDatabase(webhook.folderId)
           .then(async (syncResult) => {
-            // Enriquecer novos arquivos automaticamente (fire-and-forget)
             if (syncResult.newFileIds.length > 0) {
-              console.log(`[Drive Webhook] ${syncResult.newFileIds.length} novo(s) arquivo(s) para enrichment`);
+              console.log(
+                `[Drive Webhook] ${syncResult.newFileIds.length} novo(s) arquivo(s) → pipeline auto-link & enrich`
+              );
 
-              // Buscar detalhes dos novos arquivos
-              const newFiles = await db
-                .select({
-                  id: driveFiles.id,
-                  webContentLink: driveFiles.webContentLink,
-                  webViewLink: driveFiles.webViewLink,
-                  mimeType: driveFiles.mimeType,
-                  name: driveFiles.name,
-                  assistidoId: driveFiles.assistidoId,
-                  processoId: driveFiles.processoId,
-                })
-                .from(driveFiles)
-                .where(inArray(driveFiles.id, syncResult.newFileIds));
-
-              for (const file of newFiles) {
-                // Apenas enriquecer PDFs e documentos (não imagens/vídeos do sync)
-                const enrichableMimes = [
-                  "application/pdf",
-                  "application/msword",
-                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                ];
-                if (!file.mimeType || !enrichableMimes.includes(file.mimeType)) continue;
-
-                const fileUrl = file.webContentLink || file.webViewLink;
-                if (!fileUrl) continue;
-
-                enrichmentClient.enrichAsync(
-                  () => enrichmentClient.enrichDocument({
-                    fileUrl,
-                    mimeType: file.mimeType || "application/pdf",
-                    assistidoId: file.assistidoId,
-                    processoId: file.processoId,
-                    casoId: null,
-                    defensorId: "webhook",
-                  }),
-                  `Drive enrichment for file ${file.name} (id: ${file.id})`,
-                ).catch(() => {});
-              }
+              // Disparar pipeline completo via Inngest
+              await inngest.send({
+                name: "drive/auto-link-and-enrich",
+                data: {
+                  folderId: webhook.folderId,
+                  newFileIds: syncResult.newFileIds,
+                },
+              });
             }
           })
           .catch((error) => {

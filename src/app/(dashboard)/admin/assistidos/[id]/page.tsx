@@ -3,19 +3,20 @@
 import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Mic, Music, Video, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Lock, User, Mic, Music, Video, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SubpastaExplorer } from "@/components/hub/SubpastaExplorer";
-import { TimelineDocumental } from "@/components/hub/TimelineDocumental";
 import { TranscriptViewer } from "@/components/shared/transcript-viewer";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { IntelligenceTab } from "@/components/intelligence/IntelligenceTab";
+import { DriveStatusBar } from "@/components/drive/DriveStatusBar";
+import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
-type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias";
+type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "inteligencia";
 
 interface TranscriptionData {
   transcript: string;
@@ -225,6 +226,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { key: "drive", label: "Drive", count: data.driveFiles.length },
     { key: "audiencias", label: "Audiências", count: data.audiencias.length },
     { key: "midias", label: "Mídias", count: mediaFiles.length },
+    { key: "inteligencia", label: "Inteligência" },
   ];
 
   // Get current transcript viewer data
@@ -398,6 +400,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
+      {/* Drive Status Bar */}
+      <DriveStatusBar assistidoId={Number(id)} />
+
       {/* Tabs */}
       <div className="flex gap-0 border-b border-zinc-100 dark:border-zinc-800 px-6">
         {tabs.map((t) => (
@@ -491,20 +496,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         )}
 
         {tab === "drive" && (
-          <div className="space-y-6">
-            <div>
-              <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-                Arquivos
-              </p>
-              <SubpastaExplorer files={data.driveFiles} />
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-                Timeline documental
-              </p>
-              <TimelineDocumental files={data.driveFiles} />
-            </div>
-          </div>
+          <DriveTabEnhanced
+            files={data.driveFiles}
+            assistidoId={Number(id)}
+          />
         )}
 
         {tab === "audiencias" && (
@@ -618,6 +613,14 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 );
               })
             )}
+          </div>
+        )}
+        {tab === "inteligencia" && (
+          <div className="space-y-4">
+            <IntelligenceTab
+              assistidoId={Number(id)}
+              casoId={data.casoId}
+            />
           </div>
         )}
       </div>

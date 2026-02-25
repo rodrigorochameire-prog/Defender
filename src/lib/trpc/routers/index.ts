@@ -46,6 +46,7 @@ import { muralRouter } from "./mural";
 import { enrichmentRouter } from "./enrichment";
 import { solarRouter } from "./solar";
 import { searchRouter } from "./search";
+import { intelligenceRouter } from "./intelligence";
 
 
 export const appRouter = router({
@@ -186,6 +187,11 @@ export const appRouter = router({
   // PESQUISA SEMÂNTICA (PGVECTOR)
   // ==========================================
   search: searchRouter,
+
+  // ==========================================
+  // INTELIGÊNCIA — SISTEMA NERVOSO DEFENSIVO
+  // ==========================================
+  intelligence: intelligenceRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -19,7 +19,7 @@ import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, Fragment } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { Card } from "@/components/ui/card";
@@ -269,10 +269,10 @@ const StatusWithIcon = ({ status, statusConfig }: { status: string; statusConfig
 const atribuicaoOptions = [
   { value: "Todas", label: "Todas Atribuições", icon: Scale },
   { value: "Tribunal do Júri", label: "Tribunal do Júri", icon: Gavel },
-  { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri", icon: Target },
   { value: "Violência Doméstica", label: "Violência Doméstica", icon: Home },
   { value: "Execução Penal", label: "Execução Penal", icon: Lock },
   { value: "Substituição Criminal", label: "Substituição Criminal", icon: RefreshCw },
+  { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri", icon: Target },
   { value: "Curadoria Especial", label: "Curadoria Especial", icon: Shield },
 ];
 
@@ -384,25 +384,27 @@ function DemandaGridCard({
   const isPreso = demanda.estadoPrisional && demanda.estadoPrisional !== "Solto";
 
   return (
-    <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden transition-all duration-300 hover:shadow-lg">
-      {/* BORDA LATERAL ESQUERDA - COR DA ATRIBUIÇÃO (sempre visível) */}
+    <div className="group relative bg-white dark:bg-zinc-900/95 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-black/30 hover:border-zinc-300 dark:hover:border-zinc-700 hover:-translate-y-0.5">
+      {/* TOP BAR INDICATOR - appears on hover (like assistidos/processos) */}
       <div
-        className="absolute inset-y-0 left-0 w-1 rounded-l-xl"
-        style={{ backgroundColor: atribuicaoBorderColor }}
+        className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          background: `linear-gradient(to right, transparent, ${atribuicaoBorderColor}, transparent)`
+        }}
       />
 
-      {/* Gradiente de fundo sutil baseado na atribuição - no hover */}
+      {/* Background gradient on hover */}
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none rounded-xl transition-opacity duration-500"
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none rounded-2xl transition-opacity duration-500"
         style={{
-          background: `linear-gradient(to bottom right, ${atribuicaoBorderColor}10 0%, ${atribuicaoBorderColor}05 30%, transparent 60%)`
+          background: `linear-gradient(to bottom right, ${atribuicaoBorderColor}15 0%, ${atribuicaoBorderColor}08 30%, transparent 60%)`
         }}
       />
 
       {/* Quick Actions Overlay */}
       {showQuickActions && (
         <div
-          className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in duration-200"
+          className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center rounded-2xl animate-in fade-in duration-200"
           onClick={() => setShowQuickActions(false)}
         >
           <button
@@ -411,40 +413,21 @@ function DemandaGridCard({
           >
             <XCircle className="w-4 h-4" />
           </button>
-
           <p className="text-white/60 text-[10px] mb-2">{demanda.assistido}</p>
-
           <div className="grid grid-cols-2 gap-2 p-3" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => { onEdit(demanda); setShowQuickActions(false); }}
-              className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all"
-            >
-              <Eye className="w-4 h-4" />
-              <span className="text-[9px]">Ver/Editar</span>
+            <button onClick={() => { onEdit(demanda); setShowQuickActions(false); }} className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all">
+              <Eye className="w-4 h-4" /><span className="text-[9px]">Ver/Editar</span>
             </button>
-            <button
-              onClick={() => { copyToClipboard(demanda.processos?.[0]?.numero || "", "Processo copiado!"); setShowQuickActions(false); }}
-              className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all"
-            >
-              <FileText className="w-4 h-4" />
-              <span className="text-[9px]">Copiar Nº</span>
+            <button onClick={() => { copyToClipboard(demanda.processos?.[0]?.numero || "", "Processo copiado!"); setShowQuickActions(false); }} className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all">
+              <FileText className="w-4 h-4" /><span className="text-[9px]">Copiar Nº</span>
             </button>
-            <button
-              onClick={() => { onArchive(demanda.id); setShowQuickActions(false); }}
-              className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all"
-            >
-              <Archive className="w-4 h-4" />
-              <span className="text-[9px]">Arquivar</span>
+            <button onClick={() => { onArchive(demanda.id); setShowQuickActions(false); }} className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all">
+              <Archive className="w-4 h-4" /><span className="text-[9px]">Arquivar</span>
             </button>
-            <button
-              onClick={() => { onDelete(demanda.id); setShowQuickActions(false); }}
-              className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-rose-500/30 text-white/80 hover:text-rose-300 transition-all"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span className="text-[9px]">Excluir</span>
+            <button onClick={() => { onDelete(demanda.id); setShowQuickActions(false); }} className="flex flex-col items-center gap-1 p-2.5 rounded-lg bg-white/5 hover:bg-rose-500/30 text-white/80 hover:text-rose-300 transition-all">
+              <Trash2 className="w-4 h-4" /><span className="text-[9px]">Excluir</span>
             </button>
           </div>
-
           <p className="text-white/40 text-[9px] mt-2">Clique fora para fechar</p>
         </div>
       )}
@@ -465,68 +448,63 @@ function DemandaGridCard({
         </div>
       )}
 
-      {/* Conteúdo do Card */}
-      <div className="pl-4 pr-3 py-3 space-y-2.5 relative z-10">
-        {/* Header: Status PROEMINENTE + Prazo + Quick Actions */}
-        <div className="flex items-center justify-between gap-2">
-          {/* STATUS - Maior e mais visível */}
+      {/* Card Content */}
+      <div className="p-4 space-y-3 relative z-10">
+        {/* Header: Nome + Quick Actions */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1">
+              {isPreso && (
+                <div className="w-4 h-4 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
+                  <Lock className="w-2.5 h-2.5 text-white" />
+                </div>
+              )}
+              <p className="font-semibold text-sm text-zinc-800 dark:text-zinc-100 truncate">
+                {demanda.assistido}
+              </p>
+            </div>
+            <AtoWithIcon ato={demanda.ato} />
+          </div>
+          <button
+            onClick={() => setShowQuickActions(true)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all opacity-0 group-hover:opacity-100"
+          >
+            <Zap className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Status + Prazo */}
+        <div className="flex items-center gap-2">
           <div
-            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-semibold"
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold"
             style={{
-              backgroundColor: `${statusColor}20`,
+              backgroundColor: `${statusColor}15`,
               color: statusColor,
             }}
           >
-            <StatusIcon className="w-3.5 h-3.5" />
+            <StatusIcon className="w-3 h-3" />
             <span>{demanda.substatus || statusConfig.label}</span>
           </div>
-
-          <div className="flex items-center gap-1">
-            {prazoInfo && (
-              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                prazoInfo.urgent
-                  ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
-                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-              }`}>
-                {prazoInfo.text}
-              </span>
-            )}
-            {/* Botão Quick Actions */}
-            <button
-              onClick={() => setShowQuickActions(true)}
-              className="w-6 h-6 rounded flex items-center justify-center text-zinc-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all"
-            >
-              <Zap className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Assistido + Indicador de Preso */}
-        <div className="flex items-center gap-2">
-          {isPreso && (
-            <div className="w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
-              <Lock className="w-2.5 h-2.5 text-white" />
-            </div>
+          {prazoInfo && (
+            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+              prazoInfo.urgent
+                ? "bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
+                : "bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+            }`}>
+              {prazoInfo.text}
+            </span>
           )}
-          <p className="font-semibold text-sm text-zinc-800 dark:text-zinc-100 truncate">
-            {demanda.assistido}
-          </p>
         </div>
 
-        {/* Ato - com ícone mas cores neutras */}
-        <AtoWithIcon ato={demanda.ato} />
-
-        {/* Footer: Atribuição colorida + Processo */}
+        {/* Footer: Atribuição + Processo */}
         <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
           <div
-            className="flex items-center gap-1 text-[10px] font-medium"
+            className="flex items-center gap-1.5 text-[10px] font-medium"
             style={{ color: atribuicaoBorderColor }}
           >
             <AtribuicaoIcon className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">{demanda.atribuicao}</span>
+            <span className="truncate max-w-[100px]">{demanda.atribuicao}</span>
           </div>
-
-          {/* Número do Processo */}
           {demanda.processos?.[0] && (
             <button
               onClick={(e) => {
@@ -554,7 +532,7 @@ export default function Demandas() {
   ]);
   const [demandas, setDemandas] = useState<any[]>([]);
   const [selectedPrazoFilter, setSelectedPrazoFilter] = useState<string | null>(null);
-  const [selectedAtribuicao, setSelectedAtribuicao] = useState<string | null>(null);
+  const [selectedAtribuicoes, setSelectedAtribuicoes] = useState<string[]>([]);
   const [selectedEstadoPrisional, setSelectedEstadoPrisional] = useState<string | null>(null);
   const [selectedTipoAto, setSelectedTipoAto] = useState<string | null>(null);
   const [selectedStatusGroup, setSelectedStatusGroup] = useState<StatusGroup | null>(null);
@@ -714,14 +692,23 @@ export default function Demandas() {
 
   // Gerar lista de atos dinamicamente baseado na atribuição selecionada
   const atoOptionsFiltered = useMemo(() => {
-    // Se não houver atribuição selecionada ou for "Todas", retorna todos os atos
-    if (!selectedAtribuicao || selectedAtribuicao === "Todas") {
+    // Se não houver atribuição selecionada, retorna todos os atos
+    if (selectedAtribuicoes.length === 0) {
       return getTodosAtosUnicos();
     }
-    
-    // Retorna atos específicos da atribuição
-    return getAtosPorAtribuicao(selectedAtribuicao);
-  }, [selectedAtribuicao]);
+
+    // Se uma só selecionada, retorna atos específicos
+    if (selectedAtribuicoes.length === 1) {
+      return getAtosPorAtribuicao(selectedAtribuicoes[0]);
+    }
+
+    // Se múltiplas, combina atos de todas
+    const allAtos = new Map<string, { value: string; label: string }>();
+    selectedAtribuicoes.forEach(attr => {
+      getAtosPorAtribuicao(attr).forEach(ato => allAtos.set(ato.value, ato));
+    });
+    return Array.from(allAtos.values());
+  }, [selectedAtribuicoes]);
 
   // Mapeamento de status granular da UI para status coarse do banco
   const UI_STATUS_TO_DB: Record<string, string> = {
@@ -1291,7 +1278,7 @@ export default function Demandas() {
         (selectedPrazoFilter === "prazo" && demanda.prazo) ||
         (selectedPrazoFilter === "sem-prazo" && !demanda.prazo);
       const matchAtribuicao =
-        !selectedAtribuicao || demanda.atribuicao === selectedAtribuicao;
+        selectedAtribuicoes.length === 0 || selectedAtribuicoes.includes(demanda.atribuicao);
       const matchEstadoPrisional =
         !selectedEstadoPrisional || demanda.estadoPrisional === selectedEstadoPrisional;
       const matchTipoAto =
@@ -1310,7 +1297,7 @@ export default function Demandas() {
         matchTipoAto
       );
     });
-  }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicao, selectedEstadoPrisional, selectedTipoAto, selectedStatusGroup, showArchived]);
+  }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedStatusGroup, showArchived]);
 
   // Handler para click no header de coluna (multi-column sort)
   const handleReorder = useCallback((activeId: string, overId: string) => {
@@ -1525,21 +1512,25 @@ export default function Demandas() {
 
       {/* Conteúdo Principal */}
       <div className="p-2 md:p-4 space-y-2 md:space-y-3">
-        {/* Stats Ribbon — compact KPIs */}
-        <div className="flex items-center gap-3 px-4 py-1.5 bg-zinc-50/80 dark:bg-zinc-800/40 rounded-lg text-[11px] overflow-x-auto scrollbar-none">
+        {/* Stats Ribbon — compact inline KPIs */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-900/80 rounded-xl border border-zinc-100 dark:border-zinc-800 text-xs overflow-x-auto scrollbar-none shadow-sm">
           {statsData.map((stat, index) => {
             const Icon = stat.icon;
             const isAlert = stat.gradient === "rose" || stat.gradient === "amber";
+            const hasValue = Number(String(stat.value).replace('%','')) > 0;
             return (
-              <div key={index} className={`flex items-center gap-1.5 whitespace-nowrap ${isAlert && Number(String(stat.value).replace('%','')) > 0 ? 'text-rose-600 dark:text-rose-400 font-semibold' : 'text-zinc-500 dark:text-zinc-400'}`}>
-                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="font-bold">{stat.value}</span>
-                <span className="text-zinc-400 dark:text-zinc-500">{stat.title.toLowerCase()}</span>
-              </div>
+              <Fragment key={index}>
+                {index > 0 && <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 flex-shrink-0" />}
+                <div className={`flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${isAlert && hasValue ? 'bg-rose-50 dark:bg-rose-950/20' : ''}`}>
+                  <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isAlert && hasValue ? 'text-rose-500 dark:text-rose-400' : 'text-zinc-400 dark:text-zinc-500'}`} />
+                  <span className={`font-bold tabular-nums ${isAlert && hasValue ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-700 dark:text-zinc-200'}`}>{stat.value}</span>
+                  <span className="text-zinc-400 dark:text-zinc-500 font-medium">{stat.title.toLowerCase()}</span>
+                </div>
+              </Fragment>
             );
           })}
           <div className="flex-1" />
-          <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px]">{demandas.filter(d => !d.arquivado).length} total</span>
+          <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{demandas.filter(d => !d.arquivado).length} total</span>
         </div>
 
         {/* Lista de Demandas */}
@@ -1611,7 +1602,6 @@ export default function Demandas() {
                   {[
                     { mode: "compact" as const, icon: Rows3, title: "Planilha" },
                     { mode: "grid" as const, icon: LayoutGrid, title: "Grid" },
-                    { mode: "table" as const, icon: Table2, title: "Lista" },
                     { mode: "cards" as const, icon: LayoutList, title: "Cards" },
                   ].map(({ mode, icon: Icon, title }) => (
                     <button
@@ -1660,34 +1650,49 @@ export default function Demandas() {
                 </button>
               </div>
 
-              {/* Atribuicao Tabs */}
-              <div className="flex items-center gap-0.5 mt-2 overflow-x-auto scrollbar-none -mx-1 px-1">
-                {[{ value: null, label: "Todas" }, ...atribuicaoOptions.filter(o => o.value !== "Todas")].map((opt) => {
-                  const isActive = selectedAtribuicao === opt.value || (opt.value === null && !selectedAtribuicao);
-                  const color = opt.value ? (ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a") : "#71717a";
-                  const TabIcon = opt.value ? atribuicaoIcons[opt.label] : null;
-                  // Count demandas per atribuicao
-                  const count = opt.value === null
-                    ? demandas.filter(d => !d.arquivado).length
-                    : demandas.filter(d => !d.arquivado && d.atribuicao === opt.label).length;
+              {/* Atribuicao Tabs — multi-select, clicar toggle individual */}
+              <div className="flex items-center gap-1 mt-2 overflow-x-auto scrollbar-none -mx-1 px-1">
+                {atribuicaoOptions.filter(o => o.value !== "Todas").map((opt) => {
+                  const isActive = selectedAtribuicoes.includes(opt.value);
+                  const color = ATRIBUICAO_BORDER_COLORS[opt.label] || "#71717a";
+                  const TabIcon = atribuicaoIcons[opt.label];
+                  const count = demandas.filter(d => !d.arquivado && d.atribuicao === opt.label).length;
                   return (
                     <button
-                      key={opt.value || "todas"}
-                      onClick={() => setSelectedAtribuicao(opt.value)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all border-b-2 ${
+                      key={opt.value}
+                      onClick={() => setSelectedAtribuicoes(prev =>
+                        prev.includes(opt.value)
+                          ? prev.filter(v => v !== opt.value)
+                          : [...prev, opt.value]
+                      )}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap transition-all ${
                         isActive
-                          ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-800 dark:text-zinc-200"
-                          : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border-transparent"
+                          ? "text-white shadow-sm scale-[1.02]"
+                          : "hover:opacity-80"
                       }`}
-                      style={isActive ? { borderBottomColor: color } : { borderBottomColor: 'transparent' }}
+                      style={isActive ? {
+                        backgroundColor: color,
+                        boxShadow: `0 2px 8px ${color}40`
+                      } : {
+                        backgroundColor: `${color}15`,
+                        color: color,
+                      }}
                     >
-                      {TabIcon && <TabIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />}
-                      {!TabIcon && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />}
-                      <span>{opt.label?.replace("Violencia Domestica", "VVD").replace("Tribunal do Juri", "Juri").replace("Grupo Especial do Juri", "Gr.Juri").replace("Execucao Penal", "Exec.Penal").replace("Substituicao Criminal", "Subst.Crim").replace("Curadoria Especial", "Curadoria")}</span>
-                      <span className="text-[9px] text-zinc-400 dark:text-zinc-500 font-mono">{count}</span>
+                      {TabIcon && <TabIcon className="w-3 h-3 flex-shrink-0" />}
+                      <span>{opt.label}</span>
+                      <span className={`text-[9px] font-mono ${isActive ? 'text-white/70' : 'opacity-50'}`}>{count}</span>
                     </button>
                   );
                 })}
+                {selectedAtribuicoes.length > 0 && (
+                  <button
+                    onClick={() => setSelectedAtribuicoes([])}
+                    className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                  >
+                    <X className="w-3 h-3" />
+                    <span>Limpar</span>
+                  </button>
+                )}
               </div>
 
               {/* Secondary Filters Popover (collapsible) */}
@@ -1696,8 +1701,8 @@ export default function Demandas() {
                   <FilterSectionsCompact
                     selectedPrazoFilter={selectedPrazoFilter}
                     setSelectedPrazoFilter={setSelectedPrazoFilter}
-                    selectedAtribuicao={selectedAtribuicao}
-                    setSelectedAtribuicao={setSelectedAtribuicao}
+                    selectedAtribuicao={selectedAtribuicoes[0] || null}
+                    setSelectedAtribuicao={(v: string | null) => setSelectedAtribuicoes(v ? [v] : [])}
                     selectedEstadoPrisional={selectedEstadoPrisional}
                     setSelectedEstadoPrisional={setSelectedEstadoPrisional}
                     selectedTipoAto={selectedTipoAto}
@@ -1799,6 +1804,7 @@ export default function Demandas() {
                           onDelete={handleDeleteDemanda}
                           copyToClipboard={copyToClipboard}
                           onProvidenciasChange={handleProvidenciasChange}
+                          onAtribuicaoChange={handleAtribuicaoChange}
                           isSelectMode={isSelectMode}
                           isSelected={selectedIds.has(demanda.id)}
                           onToggleSelect={handleToggleSelect}
@@ -1836,8 +1842,8 @@ export default function Demandas() {
                   isSelectMode={isSelectMode}
                   selectedIds={selectedIds}
                   onToggleSelect={handleToggleSelect}
-                  selectedAtribuicao={selectedAtribuicao}
-                  onAtribuicaoFilter={setSelectedAtribuicao}
+                  selectedAtribuicao={selectedAtribuicoes[0] || null}
+                  onAtribuicaoFilter={(v: string | null) => setSelectedAtribuicoes(v ? [v] : [])}
                   sortStack={sortStack}
                   onColumnSort={handleColumnSort}
                   onReorder={handleReorder}

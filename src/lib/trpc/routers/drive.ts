@@ -33,6 +33,12 @@ import {
   linkFileToAssistido,
   unlinkFile,
   detectProcessoByFolderName,
+  // Novas funções de integração profunda
+  createOrFindAssistidoFolder,
+  createOrFindProcessoFolder,
+  moveAssistidoFolder,
+  mapAtribuicaoToFolderKey,
+  autoLinkByHierarchy,
 } from "@/lib/services/google-drive";
 import { processos, assistidos, casos, demandas } from "@/lib/db/schema";
 
@@ -1653,5 +1659,496 @@ export const driveRouter = router({
 
         return { success: true };
       }, "Erro ao vincular arquivo");
+    }),
+
+  // ==========================================
+  // INTEGRAÇÃO PROFUNDA - LIFECYCLE & STATUS
+  // ==========================================
+
+  /**
+   * Criar pasta no Drive para um assistido (baseado na atribuição)
+   * Retorna o folderId criado/encontrado
+   */
+  createFolderForAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .mutation(async ({ input }) => {
+      const [assistido] = await db
+        .select()
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+
+      if (!assistido) {
+        throw new Error("Assistido não encontrado");
+      }
+
+      const folderKey = mapAtribuicaoToFolderKey(
+        assistido.atribuicaoPrimaria || "SUBSTITUICAO"
+      );
+
+      if (!folderKey) {
+        return { success: false, error: "Atribuição sem pasta raiz configurada" };
+      }
+
+      const folder = await createOrFindAssistidoFolder(folderKey, assistido.nome);
+      if (!folder) {
+        return { success: false, error: "Erro ao criar pasta no Drive" };
+      }
+
+      // Atualizar assistido com o folderId
+      await db
+        .update(assistidos)
+        .set({ driveFolderId: folder.id, updatedAt: new Date() })
+        .where(eq(assistidos.id, input.assistidoId));
+
+      return {
+        success: true,
+        folderId: folder.id,
+        folderName: folder.name,
+        webViewLink: folder.webViewLink,
+      };
+    }),
+
+  /**
+   * Criar pasta no Drive para um processo (subpasta do assistido)
+   */
+  createFolderForProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .mutation(async ({ input }) => {
+      const [processo] = await db
+        .select()
+        .from(processos)
+        .where(eq(processos.id, input.processoId))
+        .limit(1);
+
+      if (!processo) {
+        throw new Error("Processo não encontrado");
+      }
+
+      // Buscar assistido principal
+      const [assistido] = processo.assistidoId
+        ? await db
+            .select()
+            .from(assistidos)
+            .where(eq(assistidos.id, processo.assistidoId))
+            .limit(1)
+        : [];
+
+      if (!assistido?.driveFolderId) {
+        return {
+          success: false,
+          error: "Assistido não tem pasta no Drive. Crie a pasta do assistido primeiro.",
+        };
+      }
+
+      const folder = await createOrFindProcessoFolder(
+        assistido.driveFolderId,
+        processo.numeroAutos
+      );
+
+      if (!folder) {
+        return { success: false, error: "Erro ao criar pasta no Drive" };
+      }
+
+      // Atualizar processo
+      await db
+        .update(processos)
+        .set({
+          driveFolderId: folder.id,
+          linkDrive: folder.webViewLink,
+          updatedAt: new Date(),
+        })
+        .where(eq(processos.id, input.processoId));
+
+      return {
+        success: true,
+        folderId: folder.id,
+        folderName: folder.name,
+        webViewLink: folder.webViewLink,
+      };
+    }),
+
+  /**
+   * Obter status completo do Drive para um assistido (header bar)
+   */
+  getDriveStatusForAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const [assistido] = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          driveFolderId: assistidos.driveFolderId,
+          atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+          analyzedAt: assistidos.analyzedAt,
+        })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+
+      if (!assistido) return null;
+
+      if (!assistido.driveFolderId) {
+        return {
+          linked: false,
+          folderId: null,
+          folderUrl: null,
+          atribuicao: assistido.atribuicaoPrimaria,
+          totalDocs: 0,
+          enrichedDocs: 0,
+          processingDocs: 0,
+          failedDocs: 0,
+          pendingDocs: 0,
+          lastSyncAt: null,
+          recentFiles: [],
+          processosWithFolder: [],
+        };
+      }
+
+      // Contar arquivos por status
+      const statusCounts = await db
+        .select({
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.assistidoId, input.assistidoId),
+            eq(driveFiles.isFolder, false)
+          )
+        )
+        .groupBy(driveFiles.enrichmentStatus);
+
+      const counts = {
+        totalDocs: 0,
+        enrichedDocs: 0,
+        processingDocs: 0,
+        failedDocs: 0,
+        pendingDocs: 0,
+      };
+
+      for (const row of statusCounts) {
+        const c = row.count;
+        counts.totalDocs += c;
+        if (row.enrichmentStatus === "completed") counts.enrichedDocs += c;
+        else if (row.enrichmentStatus === "processing") counts.processingDocs += c;
+        else if (row.enrichmentStatus === "failed") counts.failedDocs += c;
+        else if (row.enrichmentStatus === "pending") counts.pendingDocs += c;
+      }
+
+      // Novos docs desde última análise
+      let newSinceAnalysis = 0;
+      if (assistido.analyzedAt) {
+        const [result] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(driveFiles)
+          .where(
+            and(
+              eq(driveFiles.assistidoId, input.assistidoId),
+              eq(driveFiles.isFolder, false),
+              eq(driveFiles.enrichmentStatus, "completed"),
+              sql`${driveFiles.enrichedAt} > ${assistido.analyzedAt}`
+            )
+          );
+        newSinceAnalysis = result?.count || 0;
+      }
+
+      // Últimos 3 arquivos
+      const recentFiles = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          webViewLink: driveFiles.webViewLink,
+          lastModifiedTime: driveFiles.lastModifiedTime,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          documentType: driveFiles.documentType,
+        })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.assistidoId, input.assistidoId),
+            eq(driveFiles.isFolder, false)
+          )
+        )
+        .orderBy(desc(driveFiles.lastModifiedTime))
+        .limit(3);
+
+      // Processos com pasta
+      const processosWithFolder = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          driveFolderId: processos.driveFolderId,
+        })
+        .from(processos)
+        .where(
+          and(
+            eq(processos.assistidoId, input.assistidoId),
+            sql`${processos.driveFolderId} IS NOT NULL`
+          )
+        );
+
+      // Contagem de docs por processo
+      const processosComDocs = await Promise.all(
+        processosWithFolder.map(async (p) => {
+          const [result] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(driveFiles)
+            .where(
+              and(
+                eq(driveFiles.processoId, p.id),
+                eq(driveFiles.isFolder, false)
+              )
+            );
+          return {
+            id: p.id,
+            numeroAutos: p.numeroAutos,
+            driveFolderId: p.driveFolderId,
+            docCount: result?.count || 0,
+          };
+        })
+      );
+
+      // Último sync
+      const [syncFolder] = await db
+        .select({ lastSyncAt: driveSyncFolders.lastSyncAt })
+        .from(driveSyncFolders)
+        .where(eq(driveSyncFolders.driveFolderId, assistido.driveFolderId))
+        .limit(1);
+
+      return {
+        linked: true,
+        folderId: assistido.driveFolderId,
+        folderUrl: `https://drive.google.com/drive/folders/${assistido.driveFolderId}`,
+        atribuicao: assistido.atribuicaoPrimaria,
+        ...counts,
+        newSinceAnalysis,
+        lastSyncAt: syncFolder?.lastSyncAt || null,
+        recentFiles,
+        processosWithFolder: processosComDocs,
+      };
+    }),
+
+  /**
+   * Obter status completo do Drive para um processo (header bar)
+   */
+  getDriveStatusForProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const [processo] = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          driveFolderId: processos.driveFolderId,
+          linkDrive: processos.linkDrive,
+          analyzedAt: processos.analyzedAt,
+        })
+        .from(processos)
+        .where(eq(processos.id, input.processoId))
+        .limit(1);
+
+      if (!processo) return null;
+
+      if (!processo.driveFolderId) {
+        return {
+          linked: false,
+          folderId: null,
+          folderUrl: processo.linkDrive || null,
+          totalDocs: 0,
+          enrichedDocs: 0,
+          processingDocs: 0,
+          failedDocs: 0,
+          pendingDocs: 0,
+          lastSyncAt: null,
+          recentFiles: [],
+          subfolders: [],
+        };
+      }
+
+      // Contar arquivos por status
+      const statusCounts = await db
+        .select({
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.processoId, input.processoId),
+            eq(driveFiles.isFolder, false)
+          )
+        )
+        .groupBy(driveFiles.enrichmentStatus);
+
+      const counts = {
+        totalDocs: 0,
+        enrichedDocs: 0,
+        processingDocs: 0,
+        failedDocs: 0,
+        pendingDocs: 0,
+      };
+
+      for (const row of statusCounts) {
+        const c = row.count;
+        counts.totalDocs += c;
+        if (row.enrichmentStatus === "completed") counts.enrichedDocs += c;
+        else if (row.enrichmentStatus === "processing") counts.processingDocs += c;
+        else if (row.enrichmentStatus === "failed") counts.failedDocs += c;
+        else if (row.enrichmentStatus === "pending") counts.pendingDocs += c;
+      }
+
+      // Novos desde análise
+      let newSinceAnalysis = 0;
+      if (processo.analyzedAt) {
+        const [result] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(driveFiles)
+          .where(
+            and(
+              eq(driveFiles.processoId, input.processoId),
+              eq(driveFiles.isFolder, false),
+              eq(driveFiles.enrichmentStatus, "completed"),
+              sql`${driveFiles.enrichedAt} > ${processo.analyzedAt}`
+            )
+          );
+        newSinceAnalysis = result?.count || 0;
+      }
+
+      // Últimos 3 arquivos
+      const recentFiles = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          webViewLink: driveFiles.webViewLink,
+          lastModifiedTime: driveFiles.lastModifiedTime,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          documentType: driveFiles.documentType,
+        })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.processoId, input.processoId),
+            eq(driveFiles.isFolder, false)
+          )
+        )
+        .orderBy(desc(driveFiles.lastModifiedTime))
+        .limit(3);
+
+      // Subpastas do processo (01-05)
+      const subfolders = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          driveFileId: driveFiles.driveFileId,
+        })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.processoId, input.processoId),
+            eq(driveFiles.isFolder, true)
+          )
+        )
+        .orderBy(driveFiles.name);
+
+      // Contagem por subpasta
+      const subfoldersWithCount = await Promise.all(
+        subfolders.map(async (sf) => {
+          const [result] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(driveFiles)
+            .where(
+              and(
+                eq(driveFiles.parentFileId, sf.id),
+                eq(driveFiles.isFolder, false)
+              )
+            );
+          return { ...sf, docCount: result?.count || 0 };
+        })
+      );
+
+      return {
+        linked: true,
+        folderId: processo.driveFolderId,
+        folderUrl: processo.linkDrive || `https://drive.google.com/drive/folders/${processo.driveFolderId}`,
+        ...counts,
+        newSinceAnalysis,
+        lastSyncAt: null,
+        recentFiles,
+        subfolders: subfoldersWithCount,
+      };
+    }),
+
+  /**
+   * Obter arquivos com status de enrichment para a aba Drive aprimorada
+   */
+  getFilesWithEnrichmentStatus: protectedProcedure
+    .input(z.object({
+      assistidoId: z.number().optional(),
+      processoId: z.number().optional(),
+      enrichmentStatus: z.enum(["pending", "processing", "completed", "failed", "unsupported"]).optional(),
+      search: z.string().optional(),
+      limit: z.number().default(100),
+      offset: z.number().default(0),
+    }))
+    .query(async ({ input }) => {
+      const conditions = [];
+      if (input.assistidoId) conditions.push(eq(driveFiles.assistidoId, input.assistidoId));
+      if (input.processoId) conditions.push(eq(driveFiles.processoId, input.processoId));
+      if (input.enrichmentStatus) conditions.push(eq(driveFiles.enrichmentStatus, input.enrichmentStatus));
+      if (input.search) conditions.push(like(driveFiles.name, `%${input.search}%`));
+
+      const files = await db
+        .select()
+        .from(driveFiles)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(driveFiles.lastModifiedTime))
+        .limit(input.limit)
+        .offset(input.offset);
+
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(driveFiles)
+        .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+      return {
+        files,
+        total: countResult?.count || 0,
+      };
+    }),
+
+  /**
+   * Retry enrichment para arquivos com erro
+   */
+  retryEnrichment: protectedProcedure
+    .input(z.object({
+      fileIds: z.array(z.number()).optional(),
+      assistidoId: z.number().optional(),
+      processoId: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const conditions = [eq(driveFiles.enrichmentStatus, "failed")];
+      if (input.assistidoId) conditions.push(eq(driveFiles.assistidoId, input.assistidoId));
+      if (input.processoId) conditions.push(eq(driveFiles.processoId, input.processoId));
+
+      if (input.fileIds && input.fileIds.length > 0) {
+        // Retry arquivos específicos
+        for (const id of input.fileIds) {
+          await db
+            .update(driveFiles)
+            .set({ enrichmentStatus: "pending", enrichmentError: null, updatedAt: new Date() })
+            .where(eq(driveFiles.id, id));
+        }
+        return { reset: input.fileIds.length };
+      }
+
+      // Retry todos com erro para o assistido/processo
+      const result = await db
+        .update(driveFiles)
+        .set({ enrichmentStatus: "pending", enrichmentError: null, updatedAt: new Date() })
+        .where(and(...conditions))
+        .returning({ id: driveFiles.id });
+
+      return { reset: result.length };
     }),
 });
