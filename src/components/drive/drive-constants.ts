@@ -24,7 +24,7 @@ export const DRIVE_ATRIBUICOES = [
   },
   {
     key: "VVD",
-    label: "VVD",
+    label: "Violencia Domestica",
     icon: Shield,
     folderId: ATRIBUICAO_FOLDER_IDS.VVD,
     color: "rose",
