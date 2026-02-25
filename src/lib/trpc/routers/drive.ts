@@ -39,6 +39,9 @@ import {
   moveAssistidoFolder,
   mapAtribuicaoToFolderKey,
   autoLinkByHierarchy,
+  // Webhook & health
+  registerWebhookForFolder,
+  checkSyncHealth,
 } from "@/lib/services/google-drive";
 import { processos, assistidos, casos, demandas } from "@/lib/db/schema";
 
@@ -150,6 +153,22 @@ export const driveRouter = router({
             throw Errors.validation(result.error + emailInfo);
           }
           throw Errors.validation(result.error || "Falha ao registrar pasta para sincronização");
+        }
+
+        // Auto-register webhook for real-time notifications
+        const webhookBaseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
+        if (webhookBaseUrl) {
+          try {
+            const webhookResult = await registerWebhookForFolder(input.folderId, webhookBaseUrl);
+            if (webhookResult) {
+              console.log(`[Drive] Webhook registered for folder ${input.folderId}, expires ${webhookResult.expiration.toISOString()}`);
+            } else {
+              console.warn(`[Drive] Failed to register webhook for folder ${input.folderId} — will use polling fallback`);
+            }
+          } catch (err) {
+            console.error('[Drive] Error registering webhook:', err);
+            // Non-fatal — folder is still registered for sync via polling
+          }
         }
 
         return { success: true, folderName: result.folderName };
@@ -2151,4 +2170,12 @@ export const driveRouter = router({
 
       return { reset: result.length };
     }),
+
+  /**
+   * Health status do sistema de sincronização Drive
+   * Retorna métricas de saúde: webhooks ativos, folders sincronizados, etc.
+   */
+  healthStatus: adminProcedure.query(async () => {
+    return checkSyncHealth();
+  }),
 });

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, driveWebhooks, driveSyncLogs, notifications, users } from "@/lib/db";
-import { driveFiles } from "@/lib/db/schema";
-import { eq, or, inArray } from "drizzle-orm";
-import { syncFolderWithDatabase, listDistributionPendingFiles } from "@/lib/services/google-drive";
+import { eq, or } from "drizzle-orm";
+import { listDistributionPendingFiles } from "@/lib/services/google-drive";
 import { SPECIAL_FOLDER_IDS } from "@/lib/utils/text-extraction";
 import { inngest } from "@/lib/inngest/client";
 
@@ -94,6 +93,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing channel ID" }, { status: 400 });
     }
 
+    // Verify webhook secret token
+    const channelToken = request.headers.get("x-goog-channel-token") || "";
+    const expectedSecret = process.env.DRIVE_WEBHOOK_SECRET || "";
+    if (expectedSecret && channelToken !== expectedSecret) {
+      console.warn('[Drive Webhook] Invalid token — possible spoofing');
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
     // Verificar se o webhook está registrado
     const [webhook] = await db
       .select()
@@ -132,32 +139,20 @@ export async function POST(request: NextRequest) {
       case "change":
       case "add":
       case "update":
-        // Mudança detectada - sincronizar pasta
+        // Mudança detectada - disparar sync incremental via Inngest
         console.log(
-          `[Drive Webhook] Mudança detectada, sincronizando pasta ${webhook.folderId}`
+          `[Drive Webhook] Mudança detectada na pasta ${webhook.folderId}, disparando sync incremental`
         );
 
-        // Sincronização assíncrona → auto-link → enrich pipeline via Inngest
-        syncFolderWithDatabase(webhook.folderId)
-          .then(async (syncResult) => {
-            if (syncResult.newFileIds.length > 0) {
-              console.log(
-                `[Drive Webhook] ${syncResult.newFileIds.length} novo(s) arquivo(s) → pipeline auto-link & enrich`
-              );
-
-              // Disparar pipeline completo via Inngest
-              await inngest.send({
-                name: "drive/auto-link-and-enrich",
-                data: {
-                  folderId: webhook.folderId,
-                  newFileIds: syncResult.newFileIds,
-                },
-              });
-            }
-          })
-          .catch((error) => {
-            console.error(`[Drive Webhook] Erro na sincronização:`, error);
-          });
+        // Fire incremental sync via Inngest (debounced by concurrency limit per folder)
+        inngest.send({
+          name: "drive/incremental-sync",
+          data: {
+            folderId: webhook.folderId,
+            channelId: channelId,
+            triggerSource: "webhook",
+          },
+        }).catch(err => console.error('[Drive Webhook] Failed to send Inngest event:', err));
 
         // Se for a pasta de distribuição, processar e notificar
         if (isDistributionFolder && (resourceState === "add" || resourceState === "change")) {
@@ -167,9 +162,17 @@ export async function POST(request: NextRequest) {
 
       case "remove":
       case "trash":
-        // Arquivo removido ou movido para lixeira
-        console.log(`[Drive Webhook] Arquivo removido da pasta ${webhook.folderId}`);
-        syncFolderWithDatabase(webhook.folderId).catch(console.error);
+        // Arquivo removido ou movido para lixeira - disparar sync incremental via Inngest
+        console.log(`[Drive Webhook] Arquivo removido da pasta ${webhook.folderId}, disparando sync incremental`);
+
+        inngest.send({
+          name: "drive/incremental-sync",
+          data: {
+            folderId: webhook.folderId,
+            channelId: channelId,
+            triggerSource: "webhook",
+          },
+        }).catch(err => console.error('[Drive Webhook] Failed to send Inngest event:', err));
         break;
 
       default:
