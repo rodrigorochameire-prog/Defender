@@ -308,6 +308,16 @@ export async function syncIncremental(
       existingFiles.map((f) => [f.driveFileId, f])
     );
 
+    // Build a set of ALL known folder IDs in this sync tree (root + subfolders)
+    // so we can detect files in any subfolder, not just direct children
+    const knownFolderDriveIds = new Set<string>();
+    knownFolderDriveIds.add(folderId); // root folder
+    for (const f of existingFiles) {
+      if (f.isFolder && f.driveFileId) {
+        knownFolderDriveIds.add(f.driveFileId);
+      }
+    }
+
     let currentPageToken: string | null = syncToken;
     let newStartPageToken: string | null = null;
     const fieldsParam = "nextPageToken,newStartPageToken,changes(fileId,removed,file(id,name,mimeType,size,modifiedTime,createdTime,webViewLink,webContentLink,thumbnailLink,iconLink,parents,md5Checksum,description,trashed))";
@@ -349,19 +359,24 @@ export async function syncIncremental(
       for (const change of changes) {
         const existing = existingFilesMap.get(change.fileId);
         const file = change.file;
-        const isInFolder = file?.parents?.includes(folderId);
+        // Check if ANY of the file's parents is a known folder in our sync tree
+        const isInFolderTree = file?.parents?.some((p: string) => knownFolderDriveIds.has(p)) ?? false;
 
-        // Skip changes not related to our folder (unless already tracked)
-        if (!existing && !isInFolder) continue;
+        // Skip changes not related to our folder tree (unless already tracked)
+        if (!existing && !isInFolderTree) continue;
 
         if (change.removed || file?.trashed) {
           // File was removed or trashed
           if (existing) {
             await db.delete(driveFiles).where(eq(driveFiles.id, existing.id));
             existingFilesMap.delete(change.fileId);
+            // Also remove from known folders set if it was a folder
+            if (existing.isFolder && existing.driveFileId) {
+              knownFolderDriveIds.delete(existing.driveFileId);
+            }
             result.filesRemoved++;
           }
-        } else if (file && isInFolder) {
+        } else if (file && (isInFolderTree || existing)) {
           if (existing) {
             // Update existing file
             await db
@@ -385,6 +400,7 @@ export async function syncIncremental(
             result.filesUpdated++;
           } else {
             // New file — insert
+            const isFolder = file.mimeType === "application/vnd.google-apps.folder";
             const [inserted] = await db.insert(driveFiles).values({
               driveFileId: file.id,
               driveFolderId: folderId,
@@ -398,7 +414,7 @@ export async function syncIncremental(
               description: file.description,
               lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : null,
               driveChecksum: file.md5Checksum,
-              isFolder: file.mimeType === "application/vnd.google-apps.folder",
+              isFolder,
               syncStatus: "synced",
               lastSyncAt: new Date(),
               createdById: userId,
@@ -407,7 +423,11 @@ export async function syncIncremental(
             if (inserted) {
               result.newFileIds.push(inserted.id);
               // Add to map so subsequent changes in the same batch can find it
-              existingFilesMap.set(file.id, { driveFileId: file.id } as typeof existingFiles[number]);
+              existingFilesMap.set(file.id, { driveFileId: file.id, isFolder } as typeof existingFiles[number]);
+              // If it's a new folder, add to known set so its children are also tracked
+              if (isFolder) {
+                knownFolderDriveIds.add(file.id);
+              }
             }
           }
         }
@@ -472,33 +492,51 @@ export async function smartSync(
     .limit(1);
 
   if (folder?.syncToken) {
-    // Try incremental sync
-    const { result, newSyncToken } = await syncIncremental(folderId, folder.syncToken, userId);
+    // Safety check: if folder has a token but ZERO files in DB, the token was
+    // saved prematurely (e.g., by webhook registration before initial full sync).
+    // Force a full sync to bootstrap the folder properly.
+    const [fileCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(driveFiles)
+      .where(eq(driveFiles.driveFolderId, folderId));
 
-    if (result.errors.includes("SYNC_TOKEN_INVALIDATED")) {
-      // Token expired/invalidated — clear token and fall back to full sync
-      console.warn("[Drive] Sync token invalidated for folder", folderId, "— falling back to full sync");
+    if ((fileCount?.count || 0) === 0) {
+      console.warn("[Drive] Folder", folderId, "has syncToken but 0 files — forcing full sync bootstrap");
+      // Clear the premature token
       await db
         .update(driveSyncFolders)
         .set({ syncToken: null, updatedAt: new Date() })
         .where(eq(driveSyncFolders.driveFolderId, folderId));
+      // Fall through to the full sync path below
+    } else {
+      // Normal incremental sync
+      const { result, newSyncToken } = await syncIncremental(folderId, folder.syncToken, userId);
 
-      // Full sync
-      const fullResult = await syncFolderWithDatabase(folderId, userId);
-
-      // Save new token for next incremental sync
-      const newToken = await getChangesStartPageToken();
-      if (newToken) {
+      if (result.errors.includes("SYNC_TOKEN_INVALIDATED")) {
+        // Token expired/invalidated — clear token and fall back to full sync
+        console.warn("[Drive] Sync token invalidated for folder", folderId, "— falling back to full sync");
         await db
           .update(driveSyncFolders)
-          .set({ syncToken: newToken, updatedAt: new Date() })
+          .set({ syncToken: null, updatedAt: new Date() })
           .where(eq(driveSyncFolders.driveFolderId, folderId));
+
+        // Full sync
+        const fullResult = await syncFolderWithDatabase(folderId, userId);
+
+        // Save new token for next incremental sync
+        const newToken = await getChangesStartPageToken();
+        if (newToken) {
+          await db
+            .update(driveSyncFolders)
+            .set({ syncToken: newToken, updatedAt: new Date() })
+            .where(eq(driveSyncFolders.driveFolderId, folderId));
+        }
+
+        return fullResult;
       }
 
-      return fullResult;
+      return result;
     }
-
-    return result;
   }
 
   // No syncToken — do full sync first
@@ -541,11 +579,9 @@ export async function registerWebhookForFolder(
         console.error("[Drive] Failed to get syncToken for webhook registration");
         return null;
       }
-      // Save token
-      await db
-        .update(driveSyncFolders)
-        .set({ syncToken, updatedAt: new Date() })
-        .where(eq(driveSyncFolders.driveFolderId, folderId));
+      // NOTE: Do NOT save syncToken here — it must only be saved AFTER a full sync
+      // completes successfully (in smartSync). Saving it prematurely causes smartSync
+      // to skip the initial full listing, resulting in an empty folder.
     }
 
     // Register the webhook
@@ -1259,11 +1295,29 @@ export async function syncFolderWithDatabase(
 
     // Listar todos os arquivos do Drive
     const driveFilesList = await listAllFilesRecursively(folderId);
-    
-    if (!driveFilesList) {
-      result.errors.push("Falha ao listar arquivos do Drive");
-      await logSyncAction(null, "sync_completed", "failed", "Falha ao listar arquivos", result.errors.join(", "), userId);
-      return result;
+
+    if (!driveFilesList || driveFilesList.length === 0) {
+      // Safety check: if Drive returns empty but we already have files in DB,
+      // this likely means an auth failure or API error — do NOT delete everything
+      const existingCount = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(driveFiles)
+        .where(eq(driveFiles.driveFolderId, folderId));
+
+      const hasExistingFiles = (existingCount[0]?.count || 0) > 0;
+
+      if (hasExistingFiles && driveFilesList?.length === 0) {
+        console.warn(`[Drive] listAllFilesRecursively returned 0 files for folder ${folderId} but DB has ${existingCount[0]?.count} files — possible auth issue, skipping destructive sync`);
+        result.errors.push("Drive listing returned empty but DB has files — possible auth issue. Skipping to prevent data loss.");
+        await logSyncAction(null, "sync_completed", "failed", "Empty listing with existing files — skipped", result.errors.join(", "), userId);
+        return result;
+      }
+
+      if (!driveFilesList) {
+        result.errors.push("Falha ao listar arquivos do Drive");
+        await logSyncAction(null, "sync_completed", "failed", "Falha ao listar arquivos", result.errors.join(", "), userId);
+        return result;
+      }
     }
 
     // Obter arquivos existentes no banco
