@@ -8,8 +8,8 @@
  */
 
 import { db } from "@/lib/db";
-import { processos, driveFiles, driveSyncFolders, driveSyncLogs, assistidos, casos } from "@/lib/db/schema";
-import { eq, and, desc, ilike, or, sql } from "drizzle-orm";
+import { processos, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks, assistidos, casos } from "@/lib/db/schema";
+import { eq, and, desc, ilike, or, sql, gt, lt } from "drizzle-orm";
 
 // ==========================================
 // TIPOS
@@ -136,6 +136,606 @@ async function getAccessToken(): Promise<string | null> {
     cachedAccessToken = null;
     return null;
   }
+}
+
+// ==========================================
+// CHANGES API — Incremental Sync & Webhooks
+// ==========================================
+
+export type SyncHealthStatus = "healthy" | "degraded" | "critical";
+
+export interface SyncHealthResult {
+  status: SyncHealthStatus;
+  issues: string[];
+  expiredChannels: number;
+  staleFolders: number;
+  recentErrors: number;
+  lastSyncAgo: number | null; // milliseconds since last sync, null if never
+}
+
+/**
+ * Gets the initial page token for the Changes API.
+ * This token represents the current state — future calls to changes.list
+ * will only return changes that happened AFTER this token was obtained.
+ */
+export async function getChangesStartPageToken(): Promise<string | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  const res = await fetch(
+    "https://www.googleapis.com/drive/v3/changes/startPageToken?supportsAllDrives=true",
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+
+  if (!res.ok) {
+    console.error("[Drive] Failed to get startPageToken:", res.status, await res.text());
+    return null;
+  }
+
+  const data = await res.json();
+  return data.startPageToken || null;
+}
+
+/**
+ * Registers a webhook (push notification channel) with the Google Drive Changes API.
+ * Google will POST to webhookUrl whenever changes are detected.
+ * Channels expire after a maximum of 7 days — we set 6 days to allow renewal.
+ */
+export async function watchChanges(
+  pageToken: string,
+  webhookUrl: string,
+  webhookSecret?: string
+): Promise<{ channelId: string; resourceId: string; expiration: Date } | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  const channelId = crypto.randomUUID();
+  // 6 days in ms (renew before 7-day max)
+  const expirationMs = Date.now() + 6 * 24 * 60 * 60 * 1000;
+
+  try {
+    const body: Record<string, unknown> = {
+      id: channelId,
+      type: "web_hook",
+      address: webhookUrl,
+      expiration: expirationMs,
+    };
+    if (webhookSecret) {
+      body.token = webhookSecret;
+    }
+
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/changes/watch?pageToken=${encodeURIComponent(pageToken)}&supportsAllDrives=true`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!res.ok) {
+      console.error("[Drive] Failed to register watch channel:", res.status, await res.text());
+      return null;
+    }
+
+    const data = await res.json();
+    return {
+      channelId: data.id,
+      resourceId: data.resourceId,
+      expiration: new Date(Number(data.expiration)),
+    };
+  } catch (error) {
+    console.error("[Drive] Error registering watch channel:", error);
+    return null;
+  }
+}
+
+/**
+ * Stops (unregisters) a webhook channel.
+ * 404 means the channel already expired — treated as success.
+ */
+export async function stopChannel(channelId: string, resourceId: string): Promise<boolean> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return false;
+
+  try {
+    const res = await fetch("https://www.googleapis.com/drive/v3/channels/stop", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: channelId, resourceId }),
+    });
+
+    // 404 = channel already expired, treat as success
+    if (res.status === 404) return true;
+    if (!res.ok) {
+      console.error("[Drive] Failed to stop channel:", res.status, await res.text());
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("[Drive] Error stopping channel:", error);
+    return false;
+  }
+}
+
+/**
+ * Core incremental sync using the Changes API.
+ * Fetches only changes since the last syncToken, avoiding full re-listing.
+ *
+ * IMPORTANT: The Changes API returns ALL changes across the entire Drive,
+ * not just files in our folder. We must filter by checking file.parents
+ * or whether the file is already tracked in our database.
+ *
+ * Handles 410 Gone (invalidated token) by returning a special error.
+ */
+export async function syncIncremental(
+  folderId: string,
+  syncToken: string,
+  userId?: number
+): Promise<{ result: SyncResult; newSyncToken: string | null }> {
+  const result: SyncResult = {
+    success: false,
+    filesAdded: 0,
+    filesUpdated: 0,
+    filesRemoved: 0,
+    errors: [],
+    newFileIds: [],
+  };
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    result.errors.push("No access token available");
+    return { result, newSyncToken: null };
+  }
+
+  try {
+    await logSyncAction(null, "incremental_sync_started", "pending", `Incremental sync for folder ${folderId}`, undefined, userId);
+
+    // Load existing files for this folder into a Map for O(1) lookup
+    const existingFiles = await db
+      .select()
+      .from(driveFiles)
+      .where(eq(driveFiles.driveFolderId, folderId));
+
+    const existingFilesMap = new Map(
+      existingFiles.map((f) => [f.driveFileId, f])
+    );
+
+    let currentPageToken: string | null = syncToken;
+    let newStartPageToken: string | null = null;
+    const fieldsParam = "nextPageToken,newStartPageToken,changes(fileId,removed,file(id,name,mimeType,size,modifiedTime,createdTime,webViewLink,webContentLink,thumbnailLink,iconLink,parents,md5Checksum,description,trashed))";
+
+    // Paginate through all changes
+    while (currentPageToken) {
+      const url = new URL("https://www.googleapis.com/drive/v3/changes");
+      url.searchParams.set("pageToken", currentPageToken);
+      url.searchParams.set("fields", fieldsParam);
+      url.searchParams.set("supportsAllDrives", "true");
+      url.searchParams.set("includeItemsFromAllDrives", "true");
+      url.searchParams.set("pageSize", "1000");
+
+      const res = await fetch(url.toString(), {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (res.status === 410) {
+        // Token invalidated — caller should do full sync
+        result.errors.push("SYNC_TOKEN_INVALIDATED");
+        await logSyncAction(null, "incremental_sync_completed", "failed", "Sync token invalidated (410 Gone)", undefined, userId);
+        return { result, newSyncToken: null };
+      }
+
+      if (!res.ok) {
+        const errText = await res.text();
+        result.errors.push(`Changes API error: ${res.status} ${errText}`);
+        await logSyncAction(null, "incremental_sync_completed", "failed", `Changes API error: ${res.status}`, errText, userId);
+        return { result, newSyncToken: null };
+      }
+
+      const data = await res.json();
+      const changes: Array<{
+        fileId: string;
+        removed: boolean;
+        file?: DriveFileInfo & { trashed?: boolean };
+      }> = data.changes || [];
+
+      for (const change of changes) {
+        const existing = existingFilesMap.get(change.fileId);
+        const file = change.file;
+        const isInFolder = file?.parents?.includes(folderId);
+
+        // Skip changes not related to our folder (unless already tracked)
+        if (!existing && !isInFolder) continue;
+
+        if (change.removed || file?.trashed) {
+          // File was removed or trashed
+          if (existing) {
+            await db.delete(driveFiles).where(eq(driveFiles.id, existing.id));
+            existingFilesMap.delete(change.fileId);
+            result.filesRemoved++;
+          }
+        } else if (file && isInFolder) {
+          if (existing) {
+            // Update existing file
+            await db
+              .update(driveFiles)
+              .set({
+                name: file.name,
+                mimeType: file.mimeType,
+                fileSize: file.size ? parseInt(file.size) : null,
+                webViewLink: file.webViewLink,
+                webContentLink: file.webContentLink,
+                thumbnailLink: file.thumbnailLink,
+                iconLink: file.iconLink,
+                description: file.description,
+                lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : null,
+                driveChecksum: file.md5Checksum,
+                syncStatus: "synced",
+                lastSyncAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .where(eq(driveFiles.id, existing.id));
+            result.filesUpdated++;
+          } else {
+            // New file — insert
+            const [inserted] = await db.insert(driveFiles).values({
+              driveFileId: file.id,
+              driveFolderId: folderId,
+              name: file.name,
+              mimeType: file.mimeType,
+              fileSize: file.size ? parseInt(file.size) : null,
+              webViewLink: file.webViewLink,
+              webContentLink: file.webContentLink,
+              thumbnailLink: file.thumbnailLink,
+              iconLink: file.iconLink,
+              description: file.description,
+              lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : null,
+              driveChecksum: file.md5Checksum,
+              isFolder: file.mimeType === "application/vnd.google-apps.folder",
+              syncStatus: "synced",
+              lastSyncAt: new Date(),
+              createdById: userId,
+            }).returning({ id: driveFiles.id });
+            result.filesAdded++;
+            if (inserted) {
+              result.newFileIds.push(inserted.id);
+              // Add to map so subsequent changes in the same batch can find it
+              existingFilesMap.set(file.id, { driveFileId: file.id } as typeof existingFiles[number]);
+            }
+          }
+        }
+      }
+
+      // Advance pagination
+      if (data.nextPageToken) {
+        currentPageToken = data.nextPageToken;
+      } else {
+        newStartPageToken = data.newStartPageToken || null;
+        currentPageToken = null;
+      }
+    }
+
+    // Update folder sync metadata
+    if (newStartPageToken) {
+      await db
+        .update(driveSyncFolders)
+        .set({
+          lastSyncAt: new Date(),
+          syncToken: newStartPageToken,
+          updatedAt: new Date(),
+        })
+        .where(eq(driveSyncFolders.driveFolderId, folderId));
+    }
+
+    result.success = true;
+    await logSyncAction(
+      null,
+      "incremental_sync_completed",
+      "success",
+      `Added: ${result.filesAdded}, Updated: ${result.filesUpdated}, Removed: ${result.filesRemoved}`,
+      undefined,
+      userId
+    );
+
+    return { result, newSyncToken: newStartPageToken };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    result.errors.push(errorMsg);
+    await logSyncAction(null, "incremental_sync_completed", "failed", "Error in incremental sync", errorMsg, userId);
+    return { result, newSyncToken: null };
+  }
+}
+
+/**
+ * Top-level smart sync entry point.
+ * - If the folder has a syncToken: tries incremental sync. On 410 → clears token, falls back to full sync + saves new token.
+ * - If no syncToken: does full sync via syncFolderWithDatabase(), then saves a new token via getChangesStartPageToken().
+ *
+ * Returns the same SyncResult interface as syncFolderWithDatabase for compatibility.
+ */
+export async function smartSync(
+  folderId: string,
+  userId?: number
+): Promise<SyncResult> {
+  // Check if folder has an existing syncToken
+  const [folder] = await db
+    .select({ syncToken: driveSyncFolders.syncToken })
+    .from(driveSyncFolders)
+    .where(eq(driveSyncFolders.driveFolderId, folderId))
+    .limit(1);
+
+  if (folder?.syncToken) {
+    // Try incremental sync
+    const { result, newSyncToken } = await syncIncremental(folderId, folder.syncToken, userId);
+
+    if (result.errors.includes("SYNC_TOKEN_INVALIDATED")) {
+      // Token expired/invalidated — clear token and fall back to full sync
+      console.warn("[Drive] Sync token invalidated for folder", folderId, "— falling back to full sync");
+      await db
+        .update(driveSyncFolders)
+        .set({ syncToken: null, updatedAt: new Date() })
+        .where(eq(driveSyncFolders.driveFolderId, folderId));
+
+      // Full sync
+      const fullResult = await syncFolderWithDatabase(folderId, userId);
+
+      // Save new token for next incremental sync
+      const newToken = await getChangesStartPageToken();
+      if (newToken) {
+        await db
+          .update(driveSyncFolders)
+          .set({ syncToken: newToken, updatedAt: new Date() })
+          .where(eq(driveSyncFolders.driveFolderId, folderId));
+      }
+
+      return fullResult;
+    }
+
+    return result;
+  }
+
+  // No syncToken — do full sync first
+  const fullResult = await syncFolderWithDatabase(folderId, userId);
+
+  if (fullResult.success) {
+    // Save token for future incremental syncs
+    const newToken = await getChangesStartPageToken();
+    if (newToken) {
+      await db
+        .update(driveSyncFolders)
+        .set({ syncToken: newToken, updatedAt: new Date() })
+        .where(eq(driveSyncFolders.driveFolderId, folderId));
+    }
+  }
+
+  return fullResult;
+}
+
+/**
+ * Auto-registers a webhook channel for a folder.
+ * Gets or creates a syncToken, calls watchChanges(), and saves to driveWebhooks table.
+ */
+export async function registerWebhookForFolder(
+  folderId: string,
+  webhookBaseUrl: string
+): Promise<{ channelId: string; expiration: Date } | null> {
+  try {
+    // Ensure folder has a syncToken
+    const [folder] = await db
+      .select({ syncToken: driveSyncFolders.syncToken })
+      .from(driveSyncFolders)
+      .where(eq(driveSyncFolders.driveFolderId, folderId))
+      .limit(1);
+
+    let syncToken = folder?.syncToken;
+    if (!syncToken) {
+      syncToken = await getChangesStartPageToken();
+      if (!syncToken) {
+        console.error("[Drive] Failed to get syncToken for webhook registration");
+        return null;
+      }
+      // Save token
+      await db
+        .update(driveSyncFolders)
+        .set({ syncToken, updatedAt: new Date() })
+        .where(eq(driveSyncFolders.driveFolderId, folderId));
+    }
+
+    // Register the webhook
+    const webhookUrl = `${webhookBaseUrl}/api/webhooks/drive`;
+    const watchResult = await watchChanges(syncToken, webhookUrl);
+    if (!watchResult) return null;
+
+    // Save to database with upsert
+    await db
+      .insert(driveWebhooks)
+      .values({
+        channelId: watchResult.channelId,
+        resourceId: watchResult.resourceId,
+        folderId,
+        expiration: watchResult.expiration,
+        isActive: true,
+      })
+      .onConflictDoUpdate({
+        target: driveWebhooks.channelId,
+        set: {
+          resourceId: watchResult.resourceId,
+          folderId,
+          expiration: watchResult.expiration,
+          isActive: true,
+        },
+      });
+
+    return {
+      channelId: watchResult.channelId,
+      expiration: watchResult.expiration,
+    };
+  } catch (error) {
+    console.error("[Drive] Error registering webhook for folder:", error);
+    return null;
+  }
+}
+
+/**
+ * Finds webhook channels expiring within 24 hours and renews them.
+ * For each expiring channel: registers a new one, stops the old one, deactivates old in DB.
+ */
+export async function renewExpiringChannels(
+  webhookBaseUrl: string
+): Promise<{ renewed: number; failed: number; errors: string[] }> {
+  const stats = { renewed: 0, failed: 0, errors: [] as string[] };
+
+  try {
+    const cutoff = new Date(Date.now() + 24 * 60 * 60 * 1000); // now + 24h
+    const expiringChannels = await db
+      .select()
+      .from(driveWebhooks)
+      .where(
+        and(
+          eq(driveWebhooks.isActive, true),
+          lt(driveWebhooks.expiration, cutoff)
+        )
+      );
+
+    for (const channel of expiringChannels) {
+      try {
+        // Register new channel for the folder
+        const newChannel = await registerWebhookForFolder(channel.folderId, webhookBaseUrl);
+        if (!newChannel) {
+          stats.failed++;
+          stats.errors.push(`Failed to renew channel for folder ${channel.folderId}`);
+          continue;
+        }
+
+        // Stop old channel
+        if (channel.resourceId) {
+          await stopChannel(channel.channelId, channel.resourceId);
+        }
+
+        // Deactivate old channel in DB
+        await db
+          .update(driveWebhooks)
+          .set({ isActive: false })
+          .where(eq(driveWebhooks.channelId, channel.channelId));
+
+        stats.renewed++;
+      } catch (error) {
+        stats.failed++;
+        const msg = error instanceof Error ? error.message : "Unknown error";
+        stats.errors.push(`Error renewing channel ${channel.channelId}: ${msg}`);
+      }
+    }
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    stats.errors.push(`Error querying expiring channels: ${msg}`);
+  }
+
+  return stats;
+}
+
+/**
+ * Monitors the health of the sync system.
+ * Checks for: expired active channels, stale folders (no sync in 30+ min),
+ * recent errors (>3 in last hour), and the most recent sync time.
+ */
+export async function checkSyncHealth(): Promise<SyncHealthResult> {
+  const issues: string[] = [];
+  let expiredChannels = 0;
+  let staleFolders = 0;
+  let recentErrors = 0;
+  let lastSyncAgo: number | null = null;
+
+  try {
+    // 1. Expired channels still marked active
+    const now = new Date();
+    const expiredActive = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(driveWebhooks)
+      .where(
+        and(
+          eq(driveWebhooks.isActive, true),
+          lt(driveWebhooks.expiration, now)
+        )
+      );
+    expiredChannels = Number(expiredActive[0]?.count || 0);
+    if (expiredChannels > 0) {
+      issues.push(`${expiredChannels} expired webhook channel(s) still marked active`);
+    }
+
+    // 2. Stale folders — no sync in 30+ minutes
+    const staleThreshold = new Date(Date.now() - 30 * 60 * 1000);
+    const stale = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(driveSyncFolders)
+      .where(
+        and(
+          eq(driveSyncFolders.isActive, true),
+          or(
+            lt(driveSyncFolders.lastSyncAt, staleThreshold),
+            sql`${driveSyncFolders.lastSyncAt} IS NULL`
+          )
+        )
+      );
+    staleFolders = Number(stale[0]?.count || 0);
+    if (staleFolders > 0) {
+      issues.push(`${staleFolders} folder(s) not synced in 30+ minutes`);
+    }
+
+    // 3. Recent errors — more than 3 in last hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const errorLogs = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(driveSyncLogs)
+      .where(
+        and(
+          eq(driveSyncLogs.status, "failed"),
+          gt(driveSyncLogs.createdAt, oneHourAgo)
+        )
+      );
+    recentErrors = Number(errorLogs[0]?.count || 0);
+    if (recentErrors > 3) {
+      issues.push(`${recentErrors} sync errors in the last hour`);
+    }
+
+    // 4. Most recent sync time
+    const [lastSync] = await db
+      .select({ lastSyncAt: driveSyncFolders.lastSyncAt })
+      .from(driveSyncFolders)
+      .where(eq(driveSyncFolders.isActive, true))
+      .orderBy(desc(driveSyncFolders.lastSyncAt))
+      .limit(1);
+
+    if (lastSync?.lastSyncAt) {
+      lastSyncAgo = Date.now() - lastSync.lastSyncAt.getTime();
+    }
+  } catch (error) {
+    issues.push(`Health check error: ${error instanceof Error ? error.message : "Unknown"}`);
+  }
+
+  // Determine status
+  let status: SyncHealthStatus = "healthy";
+  if (expiredChannels > 0 || recentErrors > 3) {
+    status = "degraded";
+  }
+  if (expiredChannels > 3 || recentErrors > 10 || staleFolders > 5) {
+    status = "critical";
+  }
+
+  return {
+    status,
+    issues,
+    expiredChannels,
+    staleFolders,
+    recentErrors,
+    lastSyncAgo,
+  };
 }
 
 /**
