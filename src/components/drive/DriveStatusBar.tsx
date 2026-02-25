@@ -19,6 +19,19 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+function getSyncHealth(lastSyncAt: string | null | undefined): {
+  color: string;
+  label: string;
+  status: 'healthy' | 'warning' | 'offline';
+} {
+  if (!lastSyncAt) return { color: '#ef4444', label: 'Nunca sincronizado', status: 'offline' };
+  const minutesAgo = Math.round((Date.now() - new Date(lastSyncAt).getTime()) / 60000);
+  if (minutesAgo < 10) return { color: '#22c55e', label: `Sync ${minutesAgo}min`, status: 'healthy' };
+  if (minutesAgo < 60) return { color: '#f59e0b', label: `Sync ${minutesAgo}min`, status: 'warning' };
+  const hoursAgo = Math.round(minutesAgo / 60);
+  return { color: '#ef4444', label: `Sync ${hoursAgo}h atrás`, status: 'offline' };
+}
+
 interface DriveStatusBarProps {
   assistidoId?: number;
   processoId?: number;
@@ -148,6 +161,19 @@ export function DriveStatusBar({ assistidoId, processoId }: DriveStatusBarProps)
                 +{(data as { newSinceAnalysis: number }).newSinceAnalysis} novo{(data as { newSinceAnalysis: number }).newSinceAnalysis !== 1 ? "s" : ""}
               </span>
             )}
+
+            {data.lastSyncAt !== undefined && (() => {
+              const health = getSyncHealth(data.lastSyncAt);
+              return (
+                <span className="inline-flex items-center gap-1 ml-2" title={health.label}>
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${health.status === 'healthy' ? 'animate-pulse' : ''}`}
+                    style={{ backgroundColor: health.color }}
+                  />
+                  <span className="text-[9px] text-zinc-400">{health.status === 'healthy' ? '' : health.label}</span>
+                </span>
+              );
+            })()}
           </div>
         </div>
 
