@@ -60,8 +60,20 @@ const NOISE_PREFIXES: string[] = [
   'anterior',
   'próximo',
   'próxima',
-  'expedição',
   'medidas protetivas',
+  'exibir todos',
+  'ocultar',
+  'mostrar mais',
+  'carregando',
+  'nenhum resultado',
+  'ordenar por',
+  'classificar',
+  'todos os expedientes',
+  'meus expedientes',
+  'recebidos',
+  'enviados',
+  'arquivados',
+  'em andamento',
   // Days of the week
   'segunda-feira',
   'terça-feira',
@@ -70,6 +82,14 @@ const NOISE_PREFIXES: string[] = [
   'sexta-feira',
   'sábado',
   'domingo',
+  // Short day names
+  'seg,',
+  'ter,',
+  'qua,',
+  'qui,',
+  'sex,',
+  'sáb,',
+  'dom,',
   // VVD-specific checkbox/tag labels
   'doença terminal',
   'réu preso',
@@ -79,17 +99,35 @@ const NOISE_PREFIXES: string[] = [
   'apenas pendentes de ciência',
   // Location / vara labels that appear as standalone lines
   'violência doméstica',
+  // PJe panel navigation
+  'página ',
+  'ir para',
+  'voltar ao topo',
+  'início',
+  'detalhes do processo',
+  'autos digitais',
+  'movimentações',
 ];
 
 /** Regex patterns that cannot be expressed as simple startsWith checks */
-const regexRuidoExtra = /^(\d+ resultados|«|»|‹|›|\d+ª?\s*(Vara|V\s)|Idoso$)/i;
+const regexRuidoExtra = /^(\d+ resultados?|«|»|‹|›|\d+ª?\s*(Vara|V\s)|Idoso$|total:?\s*\d|mostrando\s+\d|de\s+\d+\s+a\s+\d+)/i;
 
 /**
  * Determines if a line is UI noise that should be skipped.
  * Uses startsWith semantics for the Set (not includes) to avoid
  * false-positives on names like "Pessoa da Silva".
+ *
+ * IMPORTANT: Lines containing valid expedition data (dates in parentheses)
+ * are NEVER filtered, even if they start with a noise prefix like "Expedição".
  */
 function isNoiseLine(linha: string): boolean {
+  // NEVER filter lines containing expedition data (dates in parentheses)
+  // "Expedição eletrônica (06/02/2026 11:00)" is valid data, not noise
+  if (/\(\d{2}\/\d{2}\/\d{4}/.test(linha)) return false;
+
+  // NEVER filter lines containing document IDs like "Intimação (62889857)"
+  if (/(?:Intimação|Sentença|Decisão|Despacho|Certidão|Ato Ordinatório|Termo|Edital)\s*\(\d+\)/i.test(linha)) return false;
+
   const lower = linha.toLowerCase();
   for (let k = 0; k < NOISE_PREFIXES.length; k++) {
     if (lower.startsWith(NOISE_PREFIXES[k])) return true;
@@ -99,6 +137,8 @@ function isNoiseLine(linha: string): boolean {
   if (/^\d{1,3}$/.test(linha)) return true;
   // Pagination block like "« 1 2 3 4 5 6 7 8 9 10 11 »"
   if (/^[«»‹›\d\s]+$/.test(linha) && linha.length < 40) return true;
+  // Standalone "Expedição" or "Expedições" navigation label (without date data)
+  if (/^expedição$|^expedições$/i.test(linha.trim())) return true;
   return false;
 }
 
@@ -199,8 +239,24 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   // Detectar atribuição automaticamente
   const { atribuicao: atribuicaoDetectada, vara: varaDetectada } = detectarAtribuicao(texto);
 
+  // ── Pre-processing: limpar texto do Painel do Defensor ──
+  // 1. Remover blocos de paginação (« 1 2 3 ... 11 »)
+  // 2. Remover linhas duplicadas consecutivas
+  // 3. Normalizar whitespace excessivo
+  let textoLimpo = texto
+    // Remove pagination blocks (« 1 2 ... N ») on single lines
+    .replace(/^[«»‹›\s\d]+$/gm, '')
+    // Remove header patterns like "108 resultados encontrados"
+    .replace(/^\d+\s+resultados?\s+encontrados?.*$/gim, '')
+    // Remove "Mostrando X de Y" patterns
+    .replace(/^mostrando\s+\d+.*$/gim, '')
+    // Remove "De X a Y" pagination info
+    .replace(/^de\s+\d+\s+a\s+\d+.*$/gim, '')
+    // Collapse multiple consecutive blank lines into one
+    .replace(/\n{3,}/g, '\n\n');
+
   // Dividir texto em linhas e pré-filtrar ruído grosso (paginação, navegação)
-  const linhasRaw = texto.split('\n').map(l => l.trim()).filter(l => l);
+  const linhasRaw = textoLimpo.split('\n').map(l => l.trim()).filter(l => l);
   const linhas = linhasRaw.filter(l => !isNoiseLine(l));
 
   // Regex para número de processo CNJ
@@ -250,13 +306,15 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
       if (regexDocumento.test(proximaLinha)) {
         // Esta linha pode ser o nome do intimado
         const nomeCandidato = linha.trim();
-        // Validar que parece um nome de pessoa
+        // Validar que parece um nome de pessoa (mixed-case or ALL CAPS accepted)
         if (nomeCandidato.length > 3 &&
             nomeCandidato.length < 80 &&
             !nomeCandidato.match(/\d{7}-/) &&
             !nomeCandidato.match(/\d{2}\/\d{2}\/\d{4}/) &&
             !nomeCandidato.startsWith('/') &&
             !nomeCandidato.match(/^(Juri|InsanAc|LibProv|PetCrim|EP|VD|MPUMPCrim|APOrd|APSum|APri|AuPrFl|APFD)\s/i) &&
+            !nomeCandidato.match(/^(Expedição|Diário|Prazo|Conclusos|Juntada|Mandado)/i) &&
+            !isNoiseLine(nomeCandidato) &&
             nomeCandidato.split(' ').length >= 2) {
           nomeIntimadoAtual = nomeCandidato;
           continue;
@@ -269,7 +327,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
     if (matchDocumento) {
       // Se já temos um documento pendente com dados completos, salvar antes de resetar
       if (intimacaoAtual.assistido && intimacaoAtual.numeroProcesso && intimacaoAtual.dataExpedicao) {
-        const chaveUnica = `${intimacaoAtual.numeroProcesso}-${intimacaoAtual.dataExpedicao}-${idDocumentoAtual || 'sem-id'}`;
+        const chaveUnica = `${intimacaoAtual.numeroProcesso}-${(intimacaoAtual.dataExpedicao || '').split(' ')[0]}`;
         if (!processados.has(chaveUnica)) {
           processados.add(chaveUnica);
           const camposNaoExtraidos: string[] = [];
@@ -436,7 +494,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
       // Salvar a intimação se tivermos dados mínimos (assistido + processo + data)
       if (intimacaoAtual.assistido && intimacaoAtual.numeroProcesso && intimacaoAtual.dataExpedicao) {
         // Criar chave única para evitar duplicatas (inclui idDocumento para diferenciar)
-        const chaveUnica = `${intimacaoAtual.numeroProcesso}-${intimacaoAtual.dataExpedicao}-${idDocumentoAtual || 'sem-id'}`;
+        const chaveUnica = `${intimacaoAtual.numeroProcesso}-${(intimacaoAtual.dataExpedicao || '').split(' ')[0]}`;
 
         if (!processados.has(chaveUnica)) {
           processados.add(chaveUnica);
@@ -484,7 +542,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
       if (!intimacaoAtual.assistido && nomeIntimadoAtual && intimacaoAtual.numeroProcesso && intimacaoAtual.dataExpedicao) {
         intimacaoAtual.assistido = toTitleCase(nomeIntimadoAtual);
 
-        const chaveUnica = `${intimacaoAtual.numeroProcesso}-${intimacaoAtual.dataExpedicao}-${idDocumentoAtual || 'sem-id'}`;
+        const chaveUnica = `${intimacaoAtual.numeroProcesso}-${(intimacaoAtual.dataExpedicao || '').split(' ')[0]}`;
         if (!processados.has(chaveUnica)) {
           processados.add(chaveUnica);
           const camposNaoExtraidos: string[] = [];
@@ -522,7 +580,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
     intimacaoAtual.assistido = toTitleCase(nomeIntimadoAtual);
   }
   if (intimacaoAtual.assistido && intimacaoAtual.numeroProcesso && intimacaoAtual.dataExpedicao) {
-    const chaveUnica = `${intimacaoAtual.numeroProcesso}-${intimacaoAtual.dataExpedicao}-${idDocumentoAtual || 'sem-id'}`;
+    const chaveUnica = `${intimacaoAtual.numeroProcesso}-${(intimacaoAtual.dataExpedicao || '').split(' ')[0]}`;
 
     if (!processados.has(chaveUnica)) {
       const camposNaoExtraidos: string[] = [];
@@ -552,22 +610,42 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   // ── Post-processing: dedup expanded/collapsed copies ──
   // PJe shows each expediente twice (collapsed summary + expanded detail).
   // Keep the copy with more filled fields.
+  // Normalize date in dedup key (strip time portion) so "06/02/2026" and "06/02/2026 11:00" match.
   const dedupSeen = new Map<string, IntimacaoPJeSimples>();
+  const normalizeDate = (d: string) => d?.split(' ')[0] || d; // "06/02/2026 11:00" → "06/02/2026"
   for (const int of intimacoes) {
-    const key = `${int.numeroProcesso}-${int.dataExpedicao}`;
-    const existing = dedupSeen.get(key);
+    // Primary key: processo + date (without time)
+    const keyByDate = `${int.numeroProcesso}-${normalizeDate(int.dataExpedicao)}`;
+    // Secondary key: processo + assistido (catches same person, same process, different dates from collapsed/expanded)
+    const keyByAssistido = `${int.numeroProcesso}-${int.assistido?.toLowerCase().trim()}`;
+
+    const existing = dedupSeen.get(keyByDate) || dedupSeen.get(keyByAssistido);
+    const existingKey = dedupSeen.has(keyByDate) ? keyByDate : dedupSeen.has(keyByAssistido) ? keyByAssistido : null;
+
     if (!existing) {
-      dedupSeen.set(key, int);
+      dedupSeen.set(keyByDate, int);
+      dedupSeen.set(keyByAssistido, int);
     } else {
       const countFields = (i: IntimacaoPJeSimples) =>
-        [i.crime, i.tipoProcesso, i.prazo, i.tipoDocumento, i.idDocumento, i.vara]
+        [i.crime, i.tipoProcesso, i.prazo, i.tipoDocumento, i.idDocumento, i.vara, i.assistido]
           .filter(Boolean).length;
       if (countFields(int) > countFields(existing)) {
-        dedupSeen.set(key, int);
+        // Replace with richer version
+        dedupSeen.set(keyByDate, int);
+        dedupSeen.set(keyByAssistido, int);
       }
     }
   }
-  const dedupedIntimacoes = Array.from(dedupSeen.values());
+  // Collect unique intimacoes (Map values may have duplicates due to dual-keying)
+  const seenIds = new Set<string>();
+  const dedupedIntimacoes: IntimacaoPJeSimples[] = [];
+  for (const int of dedupSeen.values()) {
+    const uid = `${int.numeroProcesso}-${normalizeDate(int.dataExpedicao)}-${int.assistido}`;
+    if (!seenIds.has(uid)) {
+      seenIds.add(uid);
+      dedupedIntimacoes.push(int);
+    }
+  }
   // Preserve original order from PJe
   dedupedIntimacoes.sort((a, b) => (a.ordemOriginal ?? 0) - (b.ordemOriginal ?? 0));
 
