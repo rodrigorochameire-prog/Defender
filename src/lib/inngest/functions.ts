@@ -9,7 +9,7 @@
 
 import { inngest } from "./client";
 import { sendWhatsAppMessage } from "./whatsapp-helper";
-import { syncFolderWithDatabase, getSyncFolders } from "@/lib/services/google-drive";
+import { syncFolderWithDatabase, getSyncFolders, smartSync, renewExpiringChannels, checkSyncHealth } from "@/lib/services/google-drive";
 
 // ============================================
 // WHATSAPP FUNCTIONS
@@ -232,7 +232,7 @@ export const syncDriveFn = inngest.createFunction(
     name: "Sync Google Drive Folders",
     retries: 3,
   },
-  { cron: "*/15 * * * *" }, // A cada 15 minutos
+  { cron: "*/5 * * * *" }, // A cada 5 minutos
   async ({ step }) => {
     const folders = await step.run("get-sync-folders", async () => {
       return await getSyncFolders();
@@ -247,7 +247,7 @@ export const syncDriveFn = inngest.createFunction(
     for (const folder of folders) {
       const result = await step.run(`sync-folder-${folder.id}`, async () => {
         try {
-          const syncResult = await syncFolderWithDatabase(folder.driveFolderId);
+          const syncResult = await smartSync(folder.driveFolderId);
           return {
             folderId: folder.driveFolderId,
             folderName: folder.name,
@@ -262,14 +262,14 @@ export const syncDriveFn = inngest.createFunction(
           };
         }
       });
-      
+
       results.push(result);
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       foldersProcessed: results.length,
-      results 
+      results
     };
   }
 );
@@ -357,7 +357,7 @@ export const syncAllDriveFn = inngest.createFunction(
 // VERIFICAÇÃO DIÁRIA DE PRAZOS
 // ============================================
 
-import { db, demandas, notifications, users, assistidos, processos } from "@/lib/db";
+import { db, demandas, notifications, users, assistidos, processos, driveSyncLogs } from "@/lib/db";
 import { and, eq, lte, gte, isNull, or, sql } from "drizzle-orm";
 
 /**
@@ -932,6 +932,125 @@ export const driveAutoLinkAndEnrichFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// DRIVE INCREMENTAL SYNC (WEBHOOK / CRON / MANUAL)
+// ============================================
+
+/**
+ * Incremental sync for a specific folder.
+ * Uses smartSync (page-token based) instead of full rescan.
+ * Triggers auto-link & enrich pipeline for any new files discovered.
+ */
+export const incrementalSyncFn = inngest.createFunction(
+  {
+    id: "drive-incremental-sync",
+    name: "Drive Incremental Sync",
+    retries: 3,
+    concurrency: {
+      limit: 1,
+      key: "event.data.folderId",
+    },
+  },
+  { event: "drive/incremental-sync" },
+  async ({ event, step }) => {
+    const { folderId, triggerSource } = event.data;
+
+    const syncResult = await step.run("incremental-sync", async () => {
+      return smartSync(folderId);
+    });
+
+    if (syncResult.newFileIds.length > 0) {
+      await step.run("trigger-auto-link", async () => {
+        await inngest.send({
+          name: "drive/auto-link-and-enrich",
+          data: {
+            folderId,
+            newFileIds: syncResult.newFileIds,
+          },
+        });
+      });
+    }
+
+    return { folderId, triggerSource, ...syncResult };
+  }
+);
+
+// ============================================
+// DRIVE WEBHOOK CHANNEL RENEWAL (DAILY CRON)
+// ============================================
+
+/**
+ * Renews expiring Google Drive webhook channels.
+ * Runs daily at 3 AM to ensure uninterrupted push notifications.
+ */
+export const renewChannelsFn = inngest.createFunction(
+  {
+    id: "drive-renew-channels",
+    name: "Renew Drive Webhook Channels",
+    retries: 2,
+  },
+  { cron: "0 3 * * *" },
+  async ({ step }) => {
+    const result = await step.run("renew-channels", async () => {
+      const webhookBaseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000');
+      return renewExpiringChannels(webhookBaseUrl);
+    });
+    return result;
+  }
+);
+
+// ============================================
+// DRIVE SYNC HEALTH CHECK (EVERY 30 MIN)
+// ============================================
+
+/**
+ * Monitors sync health: checks staleness, channel status, error rates.
+ * Logs results and notifies admins when status is critical.
+ */
+export const healthCheckFn = inngest.createFunction(
+  {
+    id: "drive-health-check",
+    name: "Drive Sync Health Check",
+    retries: 1,
+  },
+  { cron: "*/30 * * * *" },
+  async ({ step }) => {
+    const health = await step.run("check-health", async () => {
+      return checkSyncHealth();
+    });
+
+    await step.run("log-health", async () => {
+      await db.insert(driveSyncLogs).values({
+        action: 'health_check',
+        status: health.status,
+        details: JSON.stringify(health),
+      });
+    });
+
+    if (health.status === 'critical') {
+      await step.run("notify-admins", async () => {
+        const admins = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.role, 'admin'));
+
+        for (const admin of admins) {
+          await db.insert(notifications).values({
+            userId: admin.id,
+            type: 'system',
+            title: 'Drive sync offline',
+            message: `Problemas detectados: ${health.issues.join('; ')}`,
+          });
+        }
+      });
+    }
+
+    return health;
+  }
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -948,4 +1067,7 @@ export const functions = [
   processDistributionFileFn,
   intelligenceEnrichDocumentFn,
   driveAutoLinkAndEnrichFn,
+  incrementalSyncFn,
+  renewChannelsFn,
+  healthCheckFn,
 ];

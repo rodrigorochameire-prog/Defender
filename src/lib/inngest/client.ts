@@ -119,6 +119,24 @@ export type InngestEvents = {
     };
   };
 
+  "drive/incremental-sync": {
+    data: {
+      folderId: string;
+      channelId?: string;
+      triggerSource?: string; // "webhook" | "cron" | "manual"
+    };
+  };
+  "drive/renew-channels": {
+    data: {
+      triggerSource?: string;
+    };
+  };
+  "drive/health-check": {
+    data: {
+      triggerSource?: string;
+    };
+  };
+
   // Prazos
   "prazos/check": {
     data: {
