@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, driveFiles, driveSyncFolders, driveSyncLogs } from "@/lib/db";
-import { eq, and, desc, sql, isNull, or, like, not } from "drizzle-orm";
+import { eq, and, desc, sql, isNull, or, like, not, gt } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
   listFilesInFolder,
@@ -117,7 +117,26 @@ export const driveRouter = router({
   syncFolders: protectedProcedure.query(async () => {
     return safeAsync(async () => {
       const folders = await getSyncFolders();
-      return folders;
+
+      // Enrich with file counts per folder
+      const fileCounts = await db
+        .select({
+          driveFolderId: driveFiles.driveFolderId,
+          fileCount: sql<number>`count(*)::int`,
+        })
+        .from(driveFiles)
+        .where(eq(driveFiles.isFolder, false))
+        .groupBy(driveFiles.driveFolderId);
+
+      const countMap: Record<string, number> = {};
+      for (const row of fileCounts) {
+        countMap[row.driveFolderId] = row.fileCount;
+      }
+
+      return folders.map((f) => ({
+        ...f,
+        fileCount: countMap[f.driveFolderId] ?? 0,
+      }));
     }, "Erro ao listar pastas de sincronização");
   }),
 
@@ -1563,11 +1582,35 @@ export const driveRouter = router({
     .input(z.object({ folderId: z.string().optional() }))
     .query(async ({ input }) => {
       return safeAsync(async () => {
-        // Total de arquivos
+        const folderFilter = input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined;
+
+        // Total de arquivos (excluindo pastas)
         const [totalResult] = await db
           .select({ count: sql<number>`count(*)::int` })
           .from(driveFiles)
-          .where(input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined);
+          .where(and(folderFilter, eq(driveFiles.isFolder, false)));
+
+        // Arquivos vinculados (com assistidoId ou processoId)
+        const [linkedResult] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(driveFiles)
+          .where(
+            and(
+              folderFilter,
+              eq(driveFiles.isFolder, false),
+              sql`(${driveFiles.assistidoId} IS NOT NULL OR ${driveFiles.processoId} IS NOT NULL)`
+            )
+          );
+
+        // Arquivos por enrichmentStatus
+        const byEnrichment = await db
+          .select({
+            enrichmentStatus: driveFiles.enrichmentStatus,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(driveFiles)
+          .where(and(folderFilter, eq(driveFiles.isFolder, false)))
+          .groupBy(driveFiles.enrichmentStatus);
 
         // Arquivos por tipo
         const byType = await db
@@ -1576,12 +1619,7 @@ export const driveRouter = router({
             count: sql<number>`count(*)::int`,
           })
           .from(driveFiles)
-          .where(
-            and(
-              input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined,
-              eq(driveFiles.isFolder, false)
-            )
-          )
+          .where(and(folderFilter, eq(driveFiles.isFolder, false)))
           .groupBy(driveFiles.mimeType);
 
         // Arquivos novos (últimos 7 dias)
@@ -1593,62 +1631,50 @@ export const driveRouter = router({
           .from(driveFiles)
           .where(
             and(
-              input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined,
-              sql`${driveFiles.lastModifiedTime} > ${sevenDaysAgo}`
+              folderFilter,
+              gt(driveFiles.lastModifiedTime, sevenDaysAgo)
             )
           );
-
-        // Arquivos por pasta (top 10)
-        const byFolder = await db
-          .select({
-            parentFileId: driveFiles.parentFileId,
-            count: sql<number>`count(*)::int`,
-          })
-          .from(driveFiles)
-          .where(
-            and(
-              input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined,
-              sql`${driveFiles.parentFileId} IS NOT NULL`
-            )
-          )
-          .groupBy(driveFiles.parentFileId)
-          .orderBy(desc(sql`count(*)`))
-          .limit(10);
 
         // Tamanho total
         const [sizeResult] = await db
           .select({ total: sql<number>`COALESCE(SUM(${driveFiles.fileSize}), 0)::bigint` })
           .from(driveFiles)
-          .where(input.folderId ? eq(driveFiles.driveFolderId, input.folderId) : undefined);
+          .where(folderFilter);
 
         // Categorizar tipos de arquivos
         const categories: Record<string, number> = {
-          pdf: 0,
-          document: 0,
-          image: 0,
-          audio: 0,
-          video: 0,
-          other: 0,
+          pdf: 0, document: 0, image: 0, audio: 0, other: 0,
         };
+        for (const row of byType) {
+          const mt = row.mimeType || "";
+          if (mt.includes("pdf")) categories.pdf += row.count;
+          else if (mt.includes("document") || mt.includes("word") || mt.includes("spreadsheet")) categories.document += row.count;
+          else if (mt.includes("image")) categories.image += row.count;
+          else if (mt.includes("audio")) categories.audio += row.count;
+          else categories.other += row.count;
+        }
 
-        for (const item of byType) {
-          const mime = item.mimeType?.toLowerCase() || '';
-          if (mime.includes('pdf')) categories.pdf += item.count;
-          else if (mime.includes('document') || mime.includes('word') || mime.includes('text')) categories.document += item.count;
-          else if (mime.includes('image')) categories.image += item.count;
-          else if (mime.includes('audio')) categories.audio += item.count;
-          else if (mime.includes('video')) categories.video += item.count;
-          else categories.other += item.count;
+        const total = totalResult?.count ?? 0;
+        const linked = linkedResult?.count ?? 0;
+        const enrichmentMap: Record<string, number> = {};
+        for (const row of byEnrichment) {
+          enrichmentMap[row.enrichmentStatus || "pending"] = row.count;
         }
 
         return {
-          totalFiles: totalResult?.count || 0,
-          newFiles: newFilesResult?.count || 0,
-          totalSize: Number(sizeResult?.total || 0),
+          total,
+          linked,
+          totalFiles: total,
+          newFiles: newFilesResult?.count ?? 0,
+          totalSize: Number(sizeResult?.total ?? 0),
           byCategory: categories,
-          topFolders: byFolder,
+          byEnrichment: byEnrichment.map((r) => ({
+            enrichmentStatus: r.enrichmentStatus,
+            count: r.count,
+          })),
         };
-      }, "Erro ao buscar estatísticas");
+      }, "Erro ao buscar estatísticas detalhadas");
     }),
 
   /**

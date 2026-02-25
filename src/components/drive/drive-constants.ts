@@ -17,6 +17,9 @@ export const DRIVE_ATRIBUICOES = [
     color: "emerald",
     bgClass: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
     dotClass: "bg-emerald-500",
+    hoverClass: "hover:border-emerald-500/30 hover:bg-emerald-500/5",
+    iconClass: "text-emerald-400",
+    activeBorderClass: "border-l-2 border-emerald-500",
   },
   {
     key: "VVD",
@@ -26,6 +29,9 @@ export const DRIVE_ATRIBUICOES = [
     color: "rose",
     bgClass: "bg-rose-500/10 border-rose-500/30 text-rose-400",
     dotClass: "bg-rose-500",
+    hoverClass: "hover:border-rose-500/30 hover:bg-rose-500/5",
+    iconClass: "text-rose-400",
+    activeBorderClass: "border-l-2 border-rose-500",
   },
   {
     key: "EP",
@@ -35,6 +41,9 @@ export const DRIVE_ATRIBUICOES = [
     color: "amber",
     bgClass: "bg-amber-500/10 border-amber-500/30 text-amber-400",
     dotClass: "bg-amber-500",
+    hoverClass: "hover:border-amber-500/30 hover:bg-amber-500/5",
+    iconClass: "text-amber-400",
+    activeBorderClass: "border-l-2 border-amber-500",
   },
   {
     key: "SUBSTITUICAO",
@@ -44,6 +53,9 @@ export const DRIVE_ATRIBUICOES = [
     color: "sky",
     bgClass: "bg-sky-500/10 border-sky-500/30 text-sky-400",
     dotClass: "bg-sky-500",
+    hoverClass: "hover:border-sky-500/30 hover:bg-sky-500/5",
+    iconClass: "text-sky-400",
+    activeBorderClass: "border-l-2 border-sky-500",
   },
 ] as const;
 
@@ -54,6 +66,9 @@ export const SPECIAL_FOLDERS = [
     icon: Inbox,
     folderId: SPECIAL_FOLDER_IDS.DISTRIBUICAO,
     color: "violet",
+    hoverClass: "hover:border-violet-500/30 hover:bg-violet-500/5",
+    iconClass: "text-violet-400",
+    iconBgClass: "bg-violet-500/10",
   },
   {
     key: "JURISPRUDENCIA",
@@ -61,6 +76,9 @@ export const SPECIAL_FOLDERS = [
     icon: BookOpen,
     folderId: SPECIAL_FOLDER_IDS.JURISPRUDENCIA,
     color: "cyan",
+    hoverClass: "hover:border-cyan-500/30 hover:bg-cyan-500/5",
+    iconClass: "text-cyan-400",
+    iconBgClass: "bg-cyan-500/10",
   },
 ] as const;
 

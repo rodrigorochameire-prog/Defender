@@ -13,7 +13,7 @@ function DrivePageInner() {
   useKeyboardShortcuts();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-zinc-950">
       <DriveTopBar />
       <div className="flex flex-1 min-h-0">
         <DriveSidebar />

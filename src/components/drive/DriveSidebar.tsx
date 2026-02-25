@@ -76,11 +76,13 @@ function getFavorites(): FavoriteItem[] {
 function AtribuicaoSubfolders({
   folderId,
   atribuicaoKey,
-  color,
+  activeBorderClass,
+  dotClass,
 }: {
   folderId: string;
   atribuicaoKey: string;
-  color: string;
+  activeBorderClass: string;
+  dotClass: string;
 }) {
   const ctx = useDriveContext();
 
@@ -145,7 +147,7 @@ function AtribuicaoSubfolders({
               "flex items-center gap-2 w-full text-left px-3 py-1.5 text-sm transition-colors duration-150",
               "hover:bg-zinc-800/50 hover:text-zinc-200",
               isActive
-                ? `bg-zinc-800 text-zinc-100 border-l-2 border-${color}-500 -ml-px`
+                ? cn("bg-zinc-800 text-zinc-100 -ml-px", activeBorderClass)
                 : "text-zinc-400 ml-px"
             )}
           >
@@ -153,7 +155,7 @@ function AtribuicaoSubfolders({
             <span className="truncate text-xs">{folder.name}</span>
             {isRecent && (
               <span
-                className={`h-1.5 w-1.5 rounded-full bg-${color}-500 shrink-0 ml-auto`}
+                className={cn("h-1.5 w-1.5 rounded-full shrink-0 ml-auto", dotClass)}
               />
             )}
           </button>
@@ -239,18 +241,9 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                       "flex items-center gap-2.5 flex-1 text-left px-3 py-2 text-sm transition-all duration-200",
                       "hover:bg-zinc-800/50",
                       isActive
-                        ? "bg-zinc-800 text-zinc-100"
+                        ? cn("bg-zinc-800 text-zinc-100 pl-[10px]", attr.activeBorderClass)
                         : "text-zinc-400 hover:text-zinc-200"
                     )}
-                    style={
-                      isActive
-                        ? {
-                            borderLeft: `2px solid`,
-                            borderColor: `var(--color-${attr.color}-500, currentColor)`,
-                            paddingLeft: "10px",
-                          }
-                        : undefined
-                    }
                   >
                     <span className={cn("h-2 w-2 rounded-full shrink-0", attr.dotClass)} />
                     <Icon className="h-4 w-4 shrink-0" />
@@ -288,7 +281,8 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                   <AtribuicaoSubfolders
                     folderId={attr.folderId}
                     atribuicaoKey={attr.key}
-                    color={attr.color}
+                    activeBorderClass={attr.activeBorderClass}
+                    dotClass={attr.dotClass}
                   />
                 )}
               </div>

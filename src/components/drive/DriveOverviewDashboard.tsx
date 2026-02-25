@@ -96,18 +96,14 @@ function AtribuicaoCard({
       className={cn(
         "bg-zinc-800/50 border border-zinc-700/50 rounded-xl p-4 cursor-pointer text-left",
         "transition-all duration-200",
-        `hover:border-${atribuicao.color}-500/30 hover:bg-${atribuicao.color}-500/5`
+        atribuicao.hoverClass
       )}
-      style={{
-        // Use inline style as fallback for dynamic Tailwind classes
-        borderColor: undefined,
-      }}
     >
       <div className="flex items-center gap-3 mb-3">
         <span
           className={cn("h-2.5 w-2.5 rounded-full shrink-0", atribuicao.dotClass)}
         />
-        <Icon className={cn("h-5 w-5", `text-${atribuicao.color}-400`)} />
+        <Icon className={cn("h-5 w-5", atribuicao.iconClass)} />
         <span className="text-sm font-medium text-zinc-200">
           {atribuicao.label}
         </span>
@@ -134,11 +130,9 @@ function AtribuicaoCard({
 function SpecialFolderCard({
   folder,
   fileCount,
-  accentColor,
 }: {
   folder: (typeof SPECIAL_FOLDERS)[number];
   fileCount: number;
-  accentColor: string;
 }) {
   const ctx = useDriveContext();
   const Icon = folder.icon;
@@ -156,17 +150,17 @@ function SpecialFolderCard({
       className={cn(
         "bg-zinc-800/50 border border-zinc-700/50 rounded-xl p-4 cursor-pointer text-left",
         "transition-all duration-200",
-        `hover:border-${accentColor}-500/30 hover:bg-${accentColor}-500/5`
+        folder.hoverClass
       )}
     >
       <div className="flex items-center gap-3">
         <div
           className={cn(
             "h-9 w-9 rounded-lg flex items-center justify-center",
-            `bg-${accentColor}-500/10`
+            folder.iconBgClass
           )}
         >
-          <Icon className={cn("h-5 w-5", `text-${accentColor}-400`)} />
+          <Icon className={cn("h-5 w-5", folder.iconClass)} />
         </div>
         <div>
           <p className="text-sm font-medium text-zinc-200">{folder.label}</p>
@@ -328,7 +322,6 @@ export function DriveOverviewDashboard() {
                 key={sf.key}
                 folder={sf}
                 fileCount={data?.fileCount ?? 0}
-                accentColor={sf.color}
               />
             );
           })}
