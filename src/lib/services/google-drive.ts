@@ -401,6 +401,15 @@ export async function syncIncremental(
           } else {
             // New file — insert
             const isFolder = file.mimeType === "application/vnd.google-apps.folder";
+            // Resolve parentFileId from Drive parents
+            let parentFileIdValue: number | null = null;
+            const parentDriveId = file.parents?.[0];
+            if (parentDriveId && parentDriveId !== folderId) {
+              const parentEntry = existingFilesMap.get(parentDriveId);
+              if (parentEntry) {
+                parentFileIdValue = parentEntry.id;
+              }
+            }
             const [inserted] = await db.insert(driveFiles).values({
               driveFileId: file.id,
               driveFolderId: folderId,
@@ -415,6 +424,7 @@ export async function syncIncremental(
               lastModifiedTime: file.modifiedTime ? new Date(file.modifiedTime) : null,
               driveChecksum: file.md5Checksum,
               isFolder,
+              parentFileId: parentFileIdValue,
               syncStatus: "synced",
               lastSyncAt: new Date(),
               createdById: userId,
@@ -1404,6 +1414,60 @@ export async function syncFolderWithDatabase(
           .where(eq(driveFiles.id, existing.id));
         result.filesRemoved++;
       }
+    }
+
+    // ── Set parentFileId for hierarchy navigation ──
+    // Build driveFileId → dbId map from ALL files in DB
+    const allDbFiles = await db
+      .select({ id: driveFiles.id, driveFileId: driveFiles.driveFileId, parentFileId: driveFiles.parentFileId })
+      .from(driveFiles)
+      .where(eq(driveFiles.driveFolderId, folderId));
+
+    const driveIdToDbId = new Map<string, number>();
+    for (const f of allDbFiles) {
+      driveIdToDbId.set(f.driveFileId, f.id);
+    }
+    // Also add the root folder itself (it's not in the driveFiles table typically)
+    // The root folder's driveFileId IS the folderId
+    // Files whose parent[0] === folderId should have parentFileId = null (root level)
+
+    let parentUpdates = 0;
+    for (const driveFile of driveFilesList) {
+      const parentDriveId = driveFile.parents?.[0];
+      if (!parentDriveId) continue;
+
+      const dbId = driveIdToDbId.get(driveFile.id);
+      if (!dbId) continue;
+
+      // If parent is the root sync folder, set parentFileId to null (root level)
+      if (parentDriveId === folderId) {
+        // Already null by default, but ensure it's set
+        const existing = allDbFiles.find(f => f.driveFileId === driveFile.id);
+        if (existing && existing.parentFileId !== null) {
+          await db
+            .update(driveFiles)
+            .set({ parentFileId: null })
+            .where(eq(driveFiles.id, dbId));
+          parentUpdates++;
+        }
+      } else {
+        // Parent is a subfolder — find its DB ID
+        const parentDbId = driveIdToDbId.get(parentDriveId);
+        if (parentDbId) {
+          const existing = allDbFiles.find(f => f.driveFileId === driveFile.id);
+          if (existing && existing.parentFileId !== parentDbId) {
+            await db
+              .update(driveFiles)
+              .set({ parentFileId: parentDbId })
+              .where(eq(driveFiles.id, dbId));
+            parentUpdates++;
+          }
+        }
+      }
+    }
+
+    if (parentUpdates > 0) {
+      console.log(`[Drive] Updated parentFileId for ${parentUpdates} files in folder ${folderId}`);
     }
 
     // Atualizar timestamp da última sincronização

@@ -20,14 +20,25 @@ export function DriveContentArea() {
   const activeFolderId =
     ctx.selectedFolderId || getAtribuicaoFolderId(ctx.selectedAtribuicao);
 
+  // The root sync folder ID stays constant during subfolder navigation
+  const rootFolderId = ctx.rootSyncFolderId || activeFolderId;
+
+  // Are we inside a subfolder? (breadcrumb > 1 means we navigated deeper)
+  const isInSubfolder =
+    ctx.breadcrumbPath.length > 1 &&
+    activeFolderId !== rootFolderId;
+
   // Query files for active folder (tRPC deduplicates identical queries)
   const { data, isLoading } = trpc.drive.files.useQuery(
     {
-      folderId: activeFolderId!,
-      parentFileId: null,
+      folderId: rootFolderId!,
+      // At root: parentFileId = null; in subfolder: use parentDriveFileId
+      ...(isInSubfolder
+        ? { parentDriveFileId: activeFolderId! }
+        : { parentFileId: null }),
       search: ctx.searchQuery || undefined,
     },
-    { enabled: !!activeFolderId }
+    { enabled: !!rootFolderId }
   );
 
   // Apply local filters (type, date range, enrichment status)

@@ -18,6 +18,7 @@ interface DriveState {
   // Navigation
   selectedAtribuicao: string | null;        // "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | null
   selectedFolderId: string | null;           // current folder driveId
+  rootSyncFolderId: string | null;           // root sync folder driveId (stays constant during subfolder nav)
   breadcrumbPath: BreadcrumbItem[];
 
   // View
@@ -56,6 +57,7 @@ export function useDriveContext() {
 export function DriveProvider({ children }: { children: ReactNode }) {
   const [selectedAtribuicao, setSelectedAtribuicao] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [rootSyncFolderId, setRootSyncFolderId] = useState<string | null>(null);
   const [breadcrumbPath, setBreadcrumbPath] = useState<BreadcrumbItem[]>([]);
   const [viewMode, setViewModeState] = useState<"grid" | "list">(
     () => (typeof window !== "undefined" ? (localStorage.getItem("drive-view-mode") as "grid" | "list") || "grid" : "grid")
@@ -67,6 +69,8 @@ export function DriveProvider({ children }: { children: ReactNode }) {
 
   const navigateToFolder = useCallback((folderId: string, folderName: string) => {
     setSelectedFolderId(folderId);
+    // First navigation sets the root sync folder; subsequent navigations keep it
+    setRootSyncFolderId(prev => prev || folderId);
     setBreadcrumbPath(prev => [...prev, { id: folderId, name: folderName }]);
     setSelectedFileIds(new Set());
     setDetailPanelFileId(null);
@@ -77,6 +81,7 @@ export function DriveProvider({ children }: { children: ReactNode }) {
     setBreadcrumbPath(prev => {
       if (prev.length <= 1) {
         setSelectedFolderId(null);
+        setRootSyncFolderId(null);
         return [];
       }
       const newPath = prev.slice(0, -1);
@@ -99,6 +104,7 @@ export function DriveProvider({ children }: { children: ReactNode }) {
 
   const resetNavigation = useCallback(() => {
     setSelectedFolderId(null);
+    setRootSyncFolderId(null);
     setBreadcrumbPath([]);
     setSelectedFileIds(new Set());
     setDetailPanelFileId(null);
@@ -146,7 +152,7 @@ export function DriveProvider({ children }: { children: ReactNode }) {
 
   return (
     <DriveContext.Provider value={{
-      selectedAtribuicao, selectedFolderId, breadcrumbPath,
+      selectedAtribuicao, selectedFolderId, rootSyncFolderId, breadcrumbPath,
       viewMode, searchQuery, filters,
       selectedFileIds, detailPanelFileId,
       setSelectedAtribuicao: handleSetAtribuicao,
