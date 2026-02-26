@@ -269,6 +269,33 @@ export interface SolarCriarAnotacaoOutput {
   screenshots: string[];
 }
 
+// === Upload Documento (Protocolar) ===
+
+export interface SolarUploadDocumentoInput {
+  atendimentoId: string;
+  numeroProcesso: string;
+  filePath: string;
+  nomeArquivo?: string;
+  criarFase?: boolean;
+  faseTipoId?: number;
+  faseDescricao?: string;
+  grau?: number;
+  dryRun?: boolean;
+}
+
+export interface SolarUploadDocumentoOutput {
+  success: boolean;
+  message: string;
+  hash?: string | null;
+  dry_run: boolean;
+  verified: boolean;
+  verificacao_msg?: string | null;
+  fase_result?: Record<string, unknown> | null;
+  file_size_mb?: number | null;
+  error?: string | null;
+  screenshots: string[];
+}
+
 // === SIGAD Types ===
 
 export interface SigadObservacao {
@@ -681,6 +708,29 @@ class EnrichmentClient {
       atendimento_id: input.atendimentoId,
       texto: input.texto,
       qualificacao_id: input.qualificacaoId ?? 302,
+      dry_run: input.dryRun ?? false,
+    });
+  }
+
+  // === Upload Documento (Protocolar) ===
+
+  /**
+   * Upload de documento (PDF) ao Solar para protocolo.
+   * Solar protocola automaticamente no PJe via integracao nativa.
+   * Opcionalmente cria fase processual (Peticao, Recurso, etc.)
+   */
+  async solarUploadDocument(
+    input: SolarUploadDocumentoInput,
+  ): Promise<SolarUploadDocumentoOutput> {
+    return this.request<SolarUploadDocumentoOutput>("/solar/upload-document", {
+      atendimento_id: input.atendimentoId,
+      numero_processo: input.numeroProcesso,
+      file_path: input.filePath,
+      nome_arquivo: input.nomeArquivo ?? null,
+      criar_fase: input.criarFase ?? true,
+      fase_tipo_id: input.faseTipoId ?? 1,
+      fase_descricao: input.faseDescricao ?? "",
+      grau: input.grau ?? 1,
       dry_run: input.dryRun ?? false,
     });
   }

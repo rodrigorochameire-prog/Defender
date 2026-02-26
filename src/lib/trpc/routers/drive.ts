@@ -39,6 +39,7 @@ import {
   moveAssistidoFolder,
   mapAtribuicaoToFolderKey,
   autoLinkByHierarchy,
+  moveFileInDrive,
   // Webhook & health
   registerWebhookForFolder,
   checkSyncHealth,
@@ -2204,4 +2205,39 @@ export const driveRouter = router({
   healthStatus: adminProcedure.query(async () => {
     return checkSyncHealth();
   }),
+
+  /**
+   * Move um arquivo de uma pasta para outra no Google Drive.
+   * Usado pelo workflow Protocolar para mover DOCX para subpasta correta.
+   */
+  moveFile: protectedProcedure
+    .input(z.object({
+      fileId: z.string(),
+      newParentId: z.string(),
+      oldParentId: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const result = await moveFileInDrive(
+        input.fileId,
+        input.newParentId,
+        input.oldParentId,
+      );
+
+      if (!result) {
+        return {
+          success: false,
+          error: "Falha ao mover arquivo no Drive",
+        };
+      }
+
+      return {
+        success: true,
+        file: {
+          id: result.id,
+          name: result.name,
+          webViewLink: result.webViewLink,
+          parents: result.parents,
+        },
+      };
+    }),
 });

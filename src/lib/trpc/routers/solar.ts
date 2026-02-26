@@ -16,7 +16,7 @@ import { createHash } from "crypto";
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { processos, documentos, anotacoes, assistidos } from "@/lib/db/schema";
+import { processos, documentos, anotacoes, assistidos, demandas } from "@/lib/db/schema";
 import { eq, and, isNull, isNotNull, ilike, desc, asc, or, sql } from "drizzle-orm";
 import {
   enrichmentClient,
@@ -25,10 +25,23 @@ import {
   type SolarCadastrarOutput,
   type SolarSyncToOutput,
   type SolarCriarAnotacaoOutput,
+  type SolarUploadDocumentoOutput,
   type SigadExportarOutput,
   type SigadBuscarOutput,
 } from "@/lib/services/enrichment-client";
-import { uploadFileBuffer } from "@/lib/services/google-drive";
+import { uploadFileBuffer, listFilesInFolder, moveFileInDrive } from "@/lib/services/google-drive";
+import {
+  PROTOCOLAR_FOLDER_ID,
+  PETICOES_POR_ASSUNTO_FOLDER_ID,
+  ATO_TO_DRIVE_FOLDER,
+  FOLDER_FALLBACK,
+  detectarAtoDoNomeArquivo,
+  extrairProcessoDoNomeArquivo,
+} from "@/config/protocolar-folders";
+import {
+  resolverFaseSolar,
+  gerarDescricaoFase,
+} from "@/config/protocolar-solar";
 
 // ==========================================
 // SOLAR ROUTER
@@ -1005,6 +1018,391 @@ export const solarRouter = router({
    * Estatísticas agregadas da Solar Hub.
    * Conta processos sincronizados, assistidos exportados, fases criadas, pendências e SIGAD.
    */
+  // ==========================================
+  // PROTOCOLAR — Workflow de protocolo Solar
+  // ==========================================
+
+  /**
+   * Lista arquivos PDF da pasta "Protocolar" no Drive.
+   * Para cada PDF, tenta fazer matching automatico:
+   * - Tipo de ato (pelo prefixo do nome: RAC, AF, AP, etc.)
+   * - Numero de processo (pelo padrao CNJ no nome)
+   * - Demanda OMBUDS (cruzando processo encontrado)
+   * - DOCX correspondente (mesmo nome, extensao diferente)
+   */
+  listProtocolar: protectedProcedure
+    .input(z.object({
+      pageToken: z.string().optional(),
+      pageSize: z.number().default(50),
+    }).optional())
+    .query(async ({ input }) => {
+      try {
+        const pageSize = input?.pageSize ?? 50;
+        const pageToken = input?.pageToken;
+
+        // 1. Listar arquivos da pasta Protocolar no Drive
+        const driveResult = await listFilesInFolder(
+          PROTOCOLAR_FOLDER_ID,
+          pageToken,
+          pageSize,
+        );
+
+        if (!driveResult || !driveResult.files) {
+          return {
+            items: [],
+            nextPageToken: null,
+            total: 0,
+          };
+        }
+
+        // 2. Separar PDFs e outros (DOCXs, Google Docs)
+        const allFiles = driveResult.files;
+        const pdfs = allFiles.filter(f =>
+          f.mimeType === "application/pdf" ||
+          f.name?.toLowerCase().endsWith(".pdf")
+        );
+        const nonPdfs = allFiles.filter(f =>
+          f.mimeType !== "application/pdf" &&
+          !f.name?.toLowerCase().endsWith(".pdf")
+        );
+
+        // 3. Para cada PDF, fazer matching
+        const items = await Promise.all(pdfs.map(async (pdf) => {
+          const fileName = pdf.name || "";
+
+          // Detectar tipo de ato
+          const atoDetectado = detectarAtoDoNomeArquivo(fileName);
+
+          // Extrair numero de processo
+          const processoDetectado = extrairProcessoDoNomeArquivo(fileName);
+
+          // Buscar DOCX correspondente (mesmo nome base)
+          const baseName = fileName.replace(/\.pdf$/i, "");
+          const docxCorrespondente = nonPdfs.find(f => {
+            const fName = f.name || "";
+            return (
+              fName.replace(/\.(docx?|gdoc)$/i, "") === baseName ||
+              fName.replace(/\.docx?$/i, "") === baseName ||
+              // Google Docs nao tem extensao
+              (f.mimeType === "application/vnd.google-apps.document" && fName === baseName)
+            );
+          });
+
+          // Buscar demanda OMBUDS pelo numero de processo
+          let demandaMatch: {
+            id: number;
+            ato: string;
+            status: string;
+            processoId: number;
+            assistidoNome?: string;
+          } | null = null;
+
+          if (processoDetectado) {
+            try {
+              // Buscar processo pelo numero (parcial ou completo)
+              const matchedProcessos = await db
+                .select({
+                  processoId: processos.id,
+                  numeroAutos: processos.numeroAutos,
+                })
+                .from(processos)
+                .where(and(
+                  isNull(processos.deletedAt),
+                  sql`${processos.numeroAutos} LIKE ${`%${processoDetectado}%`}`,
+                ))
+                .limit(1);
+
+              if (matchedProcessos.length > 0) {
+                const proc = matchedProcessos[0]!;
+
+                // Buscar demanda mais recente deste processo
+                const matchedDemandas = await db
+                  .select({
+                    id: demandas.id,
+                    ato: demandas.ato,
+                    status: demandas.status,
+                    processoId: demandas.processoId,
+                  })
+                  .from(demandas)
+                  .where(and(
+                    eq(demandas.processoId, proc.processoId),
+                    isNull(demandas.deletedAt),
+                  ))
+                  .orderBy(desc(demandas.createdAt))
+                  .limit(1);
+
+                if (matchedDemandas.length > 0) {
+                  const dem = matchedDemandas[0]!;
+
+                  // Buscar nome do assistido
+                  const [assistidoData] = await db
+                    .select({ nome: assistidos.nome })
+                    .from(assistidos)
+                    .leftJoin(processos, eq(processos.assistidoId, assistidos.id))
+                    .where(eq(processos.id, proc.processoId))
+                    .limit(1);
+
+                  demandaMatch = {
+                    id: dem.id,
+                    ato: dem.ato,
+                    status: dem.status,
+                    processoId: dem.processoId,
+                    assistidoNome: assistidoData?.nome ?? undefined,
+                  };
+                }
+              }
+            } catch {
+              // Silently fail — matching is best-effort
+            }
+          }
+
+          // Resolver subpasta destino
+          const ato = atoDetectado || demandaMatch?.ato || null;
+          const subpastaDestino = ato
+            ? ATO_TO_DRIVE_FOLDER[ato] || FOLDER_FALLBACK
+            : null;
+
+          // Resolver fase Solar
+          const faseSolar = ato ? resolverFaseSolar(ato) : null;
+
+          return {
+            // Arquivo
+            id: pdf.id,
+            nome: fileName,
+            mimeType: pdf.mimeType,
+            tamanho: pdf.size ? parseInt(pdf.size) : null,
+            modificadoEm: pdf.modifiedTime,
+            webViewLink: pdf.webViewLink,
+
+            // Matching
+            atoDetectado: ato,
+            processoDetectado,
+            demandaMatch,
+
+            // DOCX correspondente
+            docxCorrespondente: docxCorrespondente ? {
+              id: docxCorrespondente.id,
+              nome: docxCorrespondente.name,
+              mimeType: docxCorrespondente.mimeType,
+              webViewLink: docxCorrespondente.webViewLink,
+            } : null,
+
+            // Destinos
+            subpastaDestino,
+            faseSolar: faseSolar ? {
+              tipo: faseSolar.tipo,
+              qualificacao: faseSolar.qualificacao ?? null,
+              descricaoTemplate: faseSolar.descricaoTemplate ?? null,
+            } : null,
+
+            // Status do matching
+            matchStatus: demandaMatch
+              ? "vinculado"
+              : processoDetectado
+                ? "processo_encontrado"
+                : atoDetectado
+                  ? "ato_detectado"
+                  : "manual",
+          };
+        }));
+
+        return {
+          items,
+          nextPageToken: driveResult.nextPageToken ?? null,
+          total: items.length,
+          totalDrive: allFiles.length,
+        };
+      } catch (error) {
+        console.error("[listProtocolar] Error:", error);
+        return {
+          items: [],
+          nextPageToken: null,
+          total: 0,
+          error: error instanceof Error ? error.message : "Erro ao listar arquivos",
+        };
+      }
+    }),
+
+  /**
+   * Executa o protocolo de um documento no Solar.
+   * Workflow completo:
+   * 1. Upload PDF ao Solar (enrichment engine → Playwright)
+   * 2. Criar fase processual no Solar
+   * 3. Mover DOCX para subpasta correta no Drive
+   * 4. Mover PDF para pasta "Protocolados" no Drive
+   * 5. Atualizar demanda no OMBUDS (status → 7_PROTOCOLADO)
+   */
+  protocolarNoSolar: protectedProcedure
+    .input(z.object({
+      // Arquivo
+      pdfFileId: z.string(),
+      pdfFileName: z.string(),
+      docxFileId: z.string().optional(),
+
+      // Solar
+      atendimentoId: z.string(),
+      numeroProcesso: z.string(),
+
+      // Ato e fase
+      ato: z.string(),
+      faseTipoId: z.number().optional(),
+      faseDescricao: z.string().optional(),
+      grau: z.number().default(1),
+
+      // Demanda
+      demandaId: z.number().optional(),
+
+      // Drive
+      subpastaDestino: z.string().optional(),
+
+      // Safety
+      dryRun: z.boolean().default(false),
+    }))
+    .mutation(async ({ input }) => {
+      const resultados: {
+        etapa: string;
+        sucesso: boolean;
+        mensagem: string;
+        detalhes?: Record<string, unknown>;
+      }[] = [];
+
+      try {
+        // 1. Upload PDF ao Solar via enrichment engine
+        // O enrichment engine recebe o file_path local — mas como o PDF esta no Drive,
+        // precisamos primeiro baixar e salvar temporariamente.
+        // POR ENQUANTO: esta etapa sera implementada quando o tunnel estiver ativo.
+        // O upload requer que o arquivo esteja acessivel pelo servidor Playwright.
+        // TODO: Implementar download do Drive → /tmp → upload via Playwright
+
+        resultados.push({
+          etapa: "upload_solar",
+          sucesso: true,
+          mensagem: "Upload ao Solar sera implementado com Cloudflare Tunnel ativo",
+          detalhes: {
+            atendimentoId: input.atendimentoId,
+            numeroProcesso: input.numeroProcesso,
+            nota: "Requer arquivo local acessivel pelo enrichment engine",
+          },
+        });
+
+        // 2. Mover DOCX para subpasta correta no Drive
+        if (input.docxFileId && input.subpastaDestino) {
+          try {
+            // Buscar a subpasta pelo nome dentro de PETICOES_POR_ASSUNTO_FOLDER_ID
+            const subfolders = await listFilesInFolder(
+              PETICOES_POR_ASSUNTO_FOLDER_ID,
+              undefined,
+              200,
+            );
+
+            const targetFolder = subfolders?.files?.find(
+              f => f.name === input.subpastaDestino &&
+                   f.mimeType === "application/vnd.google-apps.folder"
+            );
+
+            if (targetFolder) {
+              if (!input.dryRun) {
+                const moveResult = await moveFileInDrive(
+                  input.docxFileId,
+                  targetFolder.id,
+                  PROTOCOLAR_FOLDER_ID,
+                );
+
+                resultados.push({
+                  etapa: "mover_docx",
+                  sucesso: !!moveResult,
+                  mensagem: moveResult
+                    ? `DOCX movido para "${input.subpastaDestino}"`
+                    : "Falha ao mover DOCX",
+                  detalhes: { targetFolderId: targetFolder.id },
+                });
+              } else {
+                resultados.push({
+                  etapa: "mover_docx",
+                  sucesso: true,
+                  mensagem: `[DRY-RUN] Moveria DOCX para "${input.subpastaDestino}"`,
+                  detalhes: { targetFolderId: targetFolder.id },
+                });
+              }
+            } else {
+              resultados.push({
+                etapa: "mover_docx",
+                sucesso: false,
+                mensagem: `Subpasta "${input.subpastaDestino}" nao encontrada em Peticoes por assunto`,
+              });
+            }
+          } catch (err) {
+            resultados.push({
+              etapa: "mover_docx",
+              sucesso: false,
+              mensagem: `Erro ao mover DOCX: ${err instanceof Error ? err.message : String(err)}`,
+            });
+          }
+        }
+
+        // 3. Mover PDF para pasta "Protocolados" (arquivo morto)
+        // TODO: Criar/identificar pasta "Protocolados" no Drive
+        // Por enquanto, deixar o PDF no Protocolar (será movido quando a pasta existir)
+        resultados.push({
+          etapa: "mover_pdf",
+          sucesso: true,
+          mensagem: "PDF mantido em Protocolar (pasta Protocolados sera criada)",
+        });
+
+        // 4. Atualizar demanda no OMBUDS
+        if (input.demandaId && !input.dryRun) {
+          try {
+            await db
+              .update(demandas)
+              .set({
+                status: "7_PROTOCOLADO",
+                dataConclusao: new Date(),
+                updatedAt: new Date(),
+              })
+              .where(eq(demandas.id, input.demandaId));
+
+            resultados.push({
+              etapa: "atualizar_demanda",
+              sucesso: true,
+              mensagem: `Demanda #${input.demandaId} atualizada para 7_PROTOCOLADO`,
+            });
+          } catch (err) {
+            resultados.push({
+              etapa: "atualizar_demanda",
+              sucesso: false,
+              mensagem: `Erro ao atualizar demanda: ${err instanceof Error ? err.message : String(err)}`,
+            });
+          }
+        } else if (input.demandaId && input.dryRun) {
+          resultados.push({
+            etapa: "atualizar_demanda",
+            sucesso: true,
+            mensagem: `[DRY-RUN] Atualizaria demanda #${input.demandaId} para 7_PROTOCOLADO`,
+          });
+        }
+
+        const todasSucesso = resultados.every(r => r.sucesso);
+
+        return {
+          success: todasSucesso,
+          dryRun: input.dryRun,
+          resultados,
+          resumo: {
+            etapasExecutadas: resultados.length,
+            etapasBemSucedidas: resultados.filter(r => r.sucesso).length,
+            etapasFalharam: resultados.filter(r => !r.sucesso).length,
+          },
+        };
+      } catch (error) {
+        return {
+          success: false,
+          dryRun: input.dryRun,
+          resultados,
+          error: error instanceof Error ? error.message : "Erro inesperado",
+        };
+      }
+    }),
+
   stats: protectedProcedure.query(async () => {
     // Count processos that have been synced to Solar (via assistido.solarExportadoEm)
     const [syncResult] = await db

@@ -479,6 +479,58 @@ ATENDIMENTO_BUSCA = {
     ],
 }
 
+# === Upload de Documento (GED / Fase Processual) ===
+# Descoberto via Chrome MCP Discovery em 2026-02-26
+# Documentos podem ser anexados a fases processuais ou ao GED do atendimento.
+# Form: CadastroDocumentoFaseForm → POST /processo/fase/documento/salvar/
+# A aba Documentos do atendimento (#/documentos) mostra o GED.
+DOCUMENTO = {
+    # Aba documentos (dentro do atendimento)
+    "tab": 'a[href="#/documentos"]',
+    # URL pattern para aba documentos
+    "url_pattern": "/atendimento/{atendimento_numero}/#/documentos",
+    # Botão para novo anexo
+    "btn_novo_anexo": (
+        'a:has-text("Novo Anexo"), '
+        'button:has-text("Novo Anexo"), '
+        'a:has-text("Anexar"), '
+        'button:has-text("Anexar"), '
+        'a[ng-click*="anexar"], '
+        'a[ng-click*="novo_documento"]'
+    ),
+    # Input file para upload
+    "file_input": 'input[type="file"]',
+    # Formulário de documento de fase
+    "form_name": "CadastroDocumentoFaseForm",
+    "form_action": "/processo/fase/documento/salvar/",
+    # Campos do formulário de documento
+    "nome_input": 'input[name="nome"], input[ng-model*="nome"]',
+    "tipo_select": 'select[name="tipo"], select[ng-model*="tipo"]',
+    "descricao_input": (
+        'textarea[name="descricao"], '
+        'textarea[ng-model*="descricao"], '
+        'input[name="descricao"]'
+    ),
+    # Botões do formulário
+    "btn_salvar": (
+        '.btn-primary[type="submit"], '
+        'button:has-text("Salvar"), '
+        'button:has-text("Enviar"), '
+        'a:has-text("Salvar")'
+    ),
+    "btn_cancelar": (
+        'button:has-text("Cancelar"), '
+        'a:has-text("Cancelar")'
+    ),
+    # Lista de documentos existentes
+    "lista_documentos": 'table.table-bordered tbody tr, [ng-repeat*="documento"]',
+    # Indicadores de sucesso/erro
+    "alert_success": '.alert-success',
+    "alert_error": '.alert-danger, .alert-error',
+    # GED (Gestão Eletrônica de Documentos)
+    "ged_url": "/ged/painel/",
+}
+
 # === AngularJS Scope Functions (key actions) ===
 SCOPE_FUNCTIONS = {
     # BuscarProcessoCtrl

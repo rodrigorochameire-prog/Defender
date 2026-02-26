@@ -30,6 +30,7 @@ import {
   Plus,
   RefreshCw,
   Settings,
+  Send,
   Shield,
   WifiOff,
   Zap,
@@ -43,6 +44,7 @@ import { SolarStatusBar } from "@/components/solar/solar-status-bar";
 import { SolarBatchOperations } from "@/components/solar/solar-batch-operations";
 import { SolarSyncFases } from "@/components/solar/solar-sync-fases";
 import { SolarLogs } from "@/components/solar/solar-logs";
+import { ProtocolarTab } from "@/components/solar/protocolar-tab";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Tipos
@@ -410,6 +412,14 @@ export default function SolarHubPage() {
               <span className="hidden sm:inline">Logs & Stats</span>
               <span className="sm:hidden">Logs</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="protocolar"
+              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-emerald-600 data-[state=active]:text-white dark:data-[state=active]:bg-emerald-600 dark:data-[state=active]:text-white"
+            >
+              <Send className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Protocolar</span>
+              <span className="sm:hidden">Proto</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -761,6 +771,13 @@ export default function SolarHubPage() {
         <TabsContent value="logs" className="mt-0">
           <div className="p-4 md:p-6">
             <SolarLogs />
+          </div>
+        </TabsContent>
+
+        {/* ── Tab: Protocolar ─────────────────────────────────────── */}
+        <TabsContent value="protocolar" className="mt-0">
+          <div className="p-4 md:p-6">
+            <ProtocolarTab />
           </div>
         </TabsContent>
 

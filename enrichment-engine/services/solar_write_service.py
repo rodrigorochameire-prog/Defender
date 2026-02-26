@@ -38,6 +38,7 @@ from services.solar_selectors import (
     PROCESSO,
     FASE_PROCESSUAL,
     ANOTACAO,
+    DOCUMENTO,
     TIPO_MAP,
     TIPO_NOME,
     QUALIFICACAO_MAP,
@@ -1159,6 +1160,470 @@ class SolarWriteService:
                     "message": str(e),
                     "screenshots": screenshots,
                 }
+
+    # ==========================================
+    # Upload de Documento (Protocolar)
+    # ==========================================
+
+    async def _verificar_documento_upload(
+        self,
+        page: Any,
+        nome_arquivo: str,
+    ) -> dict[str, Any]:
+        """
+        Verifica se o documento foi registrado no Solar apos upload.
+
+        Busca na aba Documentos ou na lista de fases pelo nome do arquivo.
+
+        Returns:
+            {verified: bool, message: str}
+        """
+        try:
+            await page.wait_for_timeout(2000)
+
+            # Verificar alerta de sucesso
+            success_alert = await page.query_selector(DOCUMENTO["alert_success"])
+            if success_alert:
+                alert_text = await success_alert.text_content()
+                if alert_text:
+                    logger.info("Upload verificado via alerta sucesso: %s", alert_text[:100])
+                    return {
+                        "verified": True,
+                        "message": f"Sucesso: {alert_text[:100]}",
+                    }
+
+            # Verificar alerta de erro
+            error_alert = await page.query_selector(DOCUMENTO["alert_error"])
+            if error_alert:
+                error_text = await error_alert.text_content()
+                if error_text:
+                    logger.warning("Upload falhou - alerta erro: %s", error_text[:200])
+                    return {
+                        "verified": False,
+                        "message": f"Erro Solar: {error_text[:200]}",
+                    }
+
+            # Buscar na lista de documentos pelo nome do arquivo
+            docs_check = await page.evaluate(f"""() => {{
+                var rows = document.querySelectorAll('{DOCUMENTO["lista_documentos"]}');
+                if (!rows.length) return {{"found": false, "total": 0}};
+                var nome = "{nome_arquivo.replace('"', '\\"')}";
+                var found = false;
+                rows.forEach(function(row) {{
+                    if (row.textContent.indexOf(nome.replace('.pdf', '').substring(0, 30)) >= 0) {{
+                        found = true;
+                    }}
+                }});
+                return {{"found": found, "total": rows.length}};
+            }}""")
+
+            if docs_check and docs_check.get("found"):
+                return {
+                    "verified": True,
+                    "message": f"Documento encontrado na lista ({docs_check.get('total')} docs total)",
+                }
+
+            # Se nao encontrou por nome, mas nao houve erro, considerar provavel sucesso
+            # (o nome pode ter sido alterado pelo Solar)
+            if docs_check and docs_check.get("total", 0) > 0:
+                return {
+                    "verified": False,
+                    "message": f"Documento nao encontrado por nome na lista ({docs_check.get('total')} docs). Verifique manualmente.",
+                }
+
+            return {
+                "verified": False,
+                "message": "Nao foi possivel verificar upload (lista vazia ou nao carregou)",
+            }
+
+        except Exception as e:
+            logger.error("Erro verificando upload documento: %s", e)
+            return {"verified": False, "message": f"Erro: {e}"}
+
+    async def upload_document(
+        self,
+        atendimento_id: str,
+        numero_processo: str,
+        file_path: str,
+        nome_arquivo: str | None = None,
+        criar_fase: bool = True,
+        fase_tipo_id: int = 1,
+        fase_descricao: str = "",
+        grau: int = 1,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Faz upload de um documento (PDF) ao Solar e opcionalmente cria fase processual.
+
+        Este e o metodo principal do workflow "Protocolar". O Solar, ao receber o
+        documento, protocola automaticamente no PJe via integracao nativa.
+
+        Fluxo:
+        1. Navega para aba Documentos do atendimento
+        2. Clica "Novo Anexo" (ou equivalente)
+        3. Usa Playwright set_input_files() para upload do PDF
+        4. Preenche campos obrigatorios (nome, tipo)
+        5. Clica "Salvar"/"Enviar"
+        6. Verifica sucesso
+        7. Opcionalmente cria fase processual (Peticao, Recurso, etc.)
+
+        Args:
+            atendimento_id: Numero do atendimento Solar (ex: "260120000756")
+            numero_processo: Numero CNJ do processo (ex: "8000189-30.2025.8.05.0039")
+            file_path: Caminho local do arquivo PDF para upload
+            nome_arquivo: Nome do arquivo (ex: "RAC - FULANO.pdf"). Auto-detecta se None.
+            criar_fase: Se True, cria fase processual apos upload
+            fase_tipo_id: Tipo da fase (1=Peticao, 53=Apelacao, etc.)
+            fase_descricao: Descricao da fase processual
+            grau: Grau do processo (1 ou 2)
+            dry_run: Se True, prepara tudo mas nao envia
+
+        Returns:
+            Dict com: success, message, verified, fase_result, screenshots
+        """
+        import os
+
+        async with self._write_lock:
+            await self._write_rate_limit()
+
+            # Validar arquivo
+            if not os.path.exists(file_path):
+                return {
+                    "success": False,
+                    "error": "arquivo_nao_encontrado",
+                    "message": f"Arquivo nao encontrado: {file_path}",
+                    "screenshots": [],
+                }
+
+            if not nome_arquivo:
+                nome_arquivo = os.path.basename(file_path)
+
+            file_size = os.path.getsize(file_path)
+            file_size_mb = file_size / (1024 * 1024)
+
+            if file_size_mb > 50:
+                return {
+                    "success": False,
+                    "error": "arquivo_muito_grande",
+                    "message": f"Arquivo muito grande ({file_size_mb:.1f}MB). Maximo: 50MB",
+                    "screenshots": [],
+                }
+
+            # Idempotencia via hash do arquivo
+            import hashlib
+            file_hash = hashlib.sha256(f"{atendimento_id}|{numero_processo}|{nome_arquivo}".encode()).hexdigest()[:16]
+            if file_hash in self._created_hashes:
+                return {
+                    "success": True,
+                    "message": "Documento ja enviado (idempotencia)",
+                    "hash": file_hash,
+                    "screenshots": [],
+                }
+
+            logger.info(
+                "Upload documento: atendimento=%s processo=%s arquivo=%s (%.1fMB) dry_run=%s",
+                atendimento_id, numero_processo, nome_arquivo, file_size_mb, dry_run,
+            )
+
+            page = await self.auth.get_page()
+            screenshots: list[str] = []
+
+            try:
+                # 1. Navegar para aba Documentos do atendimento
+                doc_url = (
+                    f"{self.settings.solar_base_url}"
+                    f"/atendimento/{atendimento_id}/#/documentos"
+                )
+                await self.scraper._navigate(doc_url)
+                await page.wait_for_timeout(3000)
+
+                ss = await self._screenshot("pre_upload", nome_arquivo)
+                if ss:
+                    screenshots.append(ss)
+
+                # 2. Clicar no tab Documentos (garantir que esta ativo)
+                doc_tab = await page.query_selector(DOCUMENTO["tab"])
+                if doc_tab:
+                    await doc_tab.click()
+                    await page.wait_for_timeout(1500)
+
+                # 3. Buscar botao "Novo Anexo" ou equivalente
+                novo_anexo_btn = None
+                for selector_part in DOCUMENTO["btn_novo_anexo"].split(", "):
+                    novo_anexo_btn = await page.query_selector(selector_part.strip())
+                    if novo_anexo_btn:
+                        break
+
+                if not novo_anexo_btn:
+                    # Fallback: buscar qualquer link/botao que contenha "novo", "anexo", "upload"
+                    novo_anexo_btn = await page.evaluate("""() => {
+                        var links = document.querySelectorAll('a, button');
+                        for (var i = 0; i < links.length; i++) {
+                            var text = links[i].textContent.toLowerCase().trim();
+                            if (text.includes('novo anexo') || text.includes('anexar') ||
+                                text.includes('upload') || text.includes('novo documento')) {
+                                links[i].click();
+                                return true;
+                            }
+                        }
+                        return false;
+                    }""")
+                    if novo_anexo_btn is True:
+                        await page.wait_for_timeout(1500)
+                    else:
+                        logger.error("Botao 'Novo Anexo' nao encontrado na aba Documentos")
+                        ss = await self._screenshot("error_no_btn_anexo", nome_arquivo)
+                        if ss:
+                            screenshots.append(ss)
+                        return {
+                            "success": False,
+                            "error": "botao_novo_anexo_nao_encontrado",
+                            "message": "Botao 'Novo Anexo' nao encontrado na aba Documentos",
+                            "screenshots": screenshots,
+                        }
+                else:
+                    await novo_anexo_btn.click()
+                    await page.wait_for_timeout(1500)
+
+                ss = await self._screenshot("pos_click_novo_anexo", nome_arquivo)
+                if ss:
+                    screenshots.append(ss)
+
+                # 4. Localizar input[type="file"] e fazer upload
+                file_input = await page.query_selector(DOCUMENTO["file_input"])
+
+                if not file_input:
+                    # Tentar encontrar file input oculto (comum em UIs modernas)
+                    file_input = await page.query_selector('input[type="file"][style*="display: none"], input[type="file"][class*="hidden"]')
+
+                if not file_input:
+                    # Ultimo fallback: qualquer input file na pagina
+                    file_inputs = await page.query_selector_all('input[type="file"]')
+                    if file_inputs:
+                        file_input = file_inputs[0]
+
+                if not file_input:
+                    logger.error("Input file nao encontrado para upload")
+                    ss = await self._screenshot("error_no_file_input", nome_arquivo)
+                    if ss:
+                        screenshots.append(ss)
+                    return {
+                        "success": False,
+                        "error": "file_input_nao_encontrado",
+                        "message": "Campo de upload (input type=file) nao encontrado",
+                        "screenshots": screenshots,
+                    }
+
+                # Playwright set_input_files e a forma mais confiavel de upload
+                await file_input.set_input_files(file_path)
+                await page.wait_for_timeout(1000)
+
+                logger.info("Arquivo selecionado: %s (%s)", nome_arquivo, file_path)
+
+                # 5. Preencher campos adicionais se existirem
+                # Nome/titulo do documento
+                nome_input = await page.query_selector(DOCUMENTO["nome_input"])
+                if nome_input:
+                    nome_sem_ext = nome_arquivo.replace(".pdf", "").replace(".PDF", "")
+                    await nome_input.fill(nome_sem_ext[:200])
+
+                # Descricao
+                desc_input = await page.query_selector(DOCUMENTO["descricao_input"])
+                if desc_input:
+                    desc_text = fase_descricao or f"Upload via OMBUDS - {nome_arquivo}"
+                    await desc_input.fill(desc_text[:500])
+
+                ss = await self._screenshot("pre_save_upload", nome_arquivo)
+                if ss:
+                    screenshots.append(ss)
+
+                # 6. Dry-run: nao salvar
+                if dry_run:
+                    logger.info("DRY-RUN: documento preparado mas nao enviado")
+                    return {
+                        "success": True,
+                        "dry_run": True,
+                        "message": f"Upload preparado (dry-run): {nome_arquivo}",
+                        "hash": file_hash,
+                        "screenshots": screenshots,
+                    }
+
+                # 7. Clicar Salvar/Enviar
+                save_btn = None
+                for selector_part in DOCUMENTO["btn_salvar"].split(", "):
+                    save_btn = await page.query_selector(selector_part.strip())
+                    if save_btn:
+                        break
+
+                if save_btn:
+                    await save_btn.click()
+                else:
+                    # Fallback: submeter form
+                    await page.evaluate("""() => {
+                        var forms = document.querySelectorAll('form');
+                        for (var i = forms.length - 1; i >= 0; i--) {
+                            if (forms[i].querySelector('input[type="file"]')) {
+                                forms[i].submit();
+                                return true;
+                            }
+                        }
+                        return false;
+                    }""")
+
+                await page.wait_for_timeout(5000)
+
+                ss = await self._screenshot("pos_save_upload", nome_arquivo)
+                if ss:
+                    screenshots.append(ss)
+
+                # 8. Verificar sucesso
+                verificacao = await self._verificar_documento_upload(page, nome_arquivo)
+
+                if verificacao.get("verified"):
+                    self._created_hashes.add(file_hash)
+
+                logger.info(
+                    "Upload documento resultado: arquivo=%s verified=%s msg=%s",
+                    nome_arquivo, verificacao.get("verified"), verificacao.get("message"),
+                )
+
+                # 9. Opcionalmente criar fase processual
+                fase_result = None
+                if criar_fase and verificacao.get("verified", False):
+                    from datetime import datetime
+                    now = datetime.now()
+                    fase_result = await self._criar_fase_apos_upload(
+                        atendimento_id=atendimento_id,
+                        numero_processo=numero_processo,
+                        tipo_id=fase_tipo_id,
+                        descricao=fase_descricao or f"Petição - {nome_arquivo.replace('.pdf', '')}",
+                        data_atividade=now.strftime("%d/%m/%Y"),
+                        hora_atividade=now.strftime("%H:%M"),
+                        grau=grau,
+                    )
+
+                return {
+                    "success": True,
+                    "message": f"Documento enviado: {nome_arquivo}",
+                    "hash": file_hash,
+                    "verified": verificacao.get("verified", False),
+                    "verificacao_msg": verificacao.get("message"),
+                    "fase_result": fase_result,
+                    "file_size_mb": round(file_size_mb, 2),
+                    "screenshots": screenshots,
+                }
+
+            except Exception as e:
+                logger.error("Erro no upload documento: %s", e)
+                ss = await self._screenshot("error_upload", nome_arquivo or "unknown")
+                if ss:
+                    screenshots.append(ss)
+                return {
+                    "success": False,
+                    "error": "exception",
+                    "message": str(e),
+                    "screenshots": screenshots,
+                }
+
+    async def _criar_fase_apos_upload(
+        self,
+        atendimento_id: str,
+        numero_processo: str,
+        tipo_id: int,
+        descricao: str,
+        data_atividade: str,
+        hora_atividade: str,
+        grau: int = 1,
+    ) -> dict[str, Any]:
+        """
+        Cria fase processual apos upload de documento.
+
+        Chamado internamente por upload_document quando criar_fase=True.
+        NAO usa write_lock (ja esta dentro do lock do upload_document).
+        """
+        tipo_nome = TIPO_NOME.get(tipo_id, f"ID {tipo_id}")
+        logger.info(
+            "Criando fase pos-upload: tipo=%d(%s) processo=%s",
+            tipo_id, tipo_nome, numero_processo,
+        )
+
+        page = await self.auth.get_page()
+
+        try:
+            # Navegar para aba Processos
+            numero_puro = numero_processo.replace("-", "").replace(".", "")
+            processo_url = URLS["atendimento_processo_pattern"].format(
+                atendimento_numero=atendimento_id,
+                numero_puro=numero_puro,
+                grau=grau,
+            )
+            full_url = f"{self.settings.solar_base_url}{processo_url}"
+            await self.scraper._navigate(full_url)
+            await page.wait_for_timeout(3000)
+
+            # Clicar "+ Nova Fase"
+            nova_fase_btn = await page.query_selector(FASE_PROCESSUAL["btn_nova_fase"])
+            if not nova_fase_btn:
+                nova_fase_btn = await page.query_selector(
+                    'a:has-text("Nova Fase"), button:has-text("Nova Fase")'
+                )
+
+            if not nova_fase_btn:
+                return {
+                    "success": False,
+                    "error": "botao_nova_fase_nao_encontrado",
+                    "message": "Nao encontrou '+ Nova Fase' para criar fase pos-upload",
+                }
+
+            await nova_fase_btn.click()
+            await page.wait_for_timeout(2000)
+
+            # Verificar modal
+            modal = await page.query_selector(FASE_PROCESSUAL["modal"])
+            if not modal:
+                return {
+                    "success": False,
+                    "error": "modal_nao_abriu",
+                    "message": "Modal fase nao abriu pos-upload",
+                }
+
+            # Preencher formulario
+            filled = await self._preencher_form_fase(
+                page=page,
+                tipo_id=tipo_id,
+                data_atividade=data_atividade,
+                hora_atividade=hora_atividade,
+                descricao=descricao,
+            )
+
+            if not filled:
+                try:
+                    close_btn = await page.query_selector(FASE_PROCESSUAL["btn_fechar"])
+                    if close_btn:
+                        await close_btn.click()
+                except Exception:
+                    pass
+                return {
+                    "success": False,
+                    "error": "formulario_nao_preenchido",
+                    "message": "Nao preencheu campos obrigatorios da fase pos-upload",
+                }
+
+            # Salvar
+            save_result = await self._salvar_fase(page)
+
+            if save_result.get("success"):
+                logger.info("Fase pos-upload criada: tipo=%s", tipo_nome)
+
+            return save_result
+
+        except Exception as e:
+            logger.error("Erro criando fase pos-upload: %s", e)
+            return {
+                "success": False,
+                "error": "exception",
+                "message": str(e),
+            }
 
     # Tipos que devem ir como Anotação (Histórico) em vez de Fase Processual
     ANOTACAO_TIPOS = {"nota", "observacao", "lembrete", "sigad"}

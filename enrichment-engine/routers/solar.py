@@ -1,12 +1,13 @@
 """
 Routers do Solar — Endpoints de sincronização com o Sistema Solar (DPEBA).
 
-POST /solar/sync-processo    — Sincroniza um processo (leitura)
-POST /solar/sync-batch       — Sincroniza múltiplos processos (leitura)
-POST /solar/avisos           — Lista avisos pendentes (PJe/SEEU)
-GET  /solar/status           — Status da sessão Solar
-POST /solar/sync-to-solar    — Escreve anotações como fases/anotações no Solar
-POST /solar/criar-anotacao   — Cria anotação no Histórico do atendimento
+POST /solar/sync-processo       — Sincroniza um processo (leitura)
+POST /solar/sync-batch          — Sincroniza múltiplos processos (leitura)
+POST /solar/avisos              — Lista avisos pendentes (PJe/SEEU)
+GET  /solar/status              — Status da sessão Solar
+POST /solar/sync-to-solar       — Escreve anotações como fases/anotações no Solar
+POST /solar/criar-anotacao      — Cria anotação no Histórico do atendimento
+POST /solar/upload-document     — Upload de documento (PDF) ao Solar (Protocolar)
 """
 
 import logging
@@ -28,6 +29,8 @@ from models.schemas import (
     SolarSyncToOutput,
     SolarCriarAnotacaoInput,
     SolarCriarAnotacaoOutput,
+    SolarUploadDocumentoInput,
+    SolarUploadDocumentoOutput,
 )
 from services.solar_orchestrator import get_solar_orchestrator
 from services.solar_auth_service import get_solar_auth_service, SolarAuthService
@@ -300,4 +303,59 @@ async def criar_anotacao(input_data: SolarCriarAnotacaoInput) -> SolarCriarAnota
         return SolarCriarAnotacaoOutput(
             success=False,
             message=str(e),
+        )
+
+
+@router.post("/solar/upload-document", response_model=SolarUploadDocumentoOutput)
+async def upload_document(input_data: SolarUploadDocumentoInput) -> SolarUploadDocumentoOutput:
+    """
+    Upload de documento (PDF) ao Solar para protocolo.
+
+    O Solar protocola automaticamente no PJe via integracao nativa.
+    Fluxo: OMBUDS -> Solar -> PJe (um clique).
+
+    Passos:
+    1. Navega para aba Documentos do atendimento
+    2. Clica "Novo Anexo"
+    3. Faz upload do PDF via input[type="file"]
+    4. Verifica sucesso
+    5. Opcionalmente cria fase processual (Peticao, Recurso, etc.)
+
+    Safety:
+    - dry_run=True: prepara mas nao envia
+    - Rate limit: 5s entre escritas
+    - Idempotencia: hash SHA-256 evita duplicatas
+    - Verificacao pos-upload: confirma que documento apareceu no Solar
+    """
+    logger.info(
+        "Upload documento Solar: atendimento=%s processo=%s arquivo=%s dry_run=%s",
+        input_data.atendimento_id,
+        input_data.numero_processo,
+        input_data.nome_arquivo or input_data.file_path,
+        input_data.dry_run,
+    )
+
+    try:
+        write_service = get_solar_write_service()
+
+        result = await write_service.upload_document(
+            atendimento_id=input_data.atendimento_id,
+            numero_processo=input_data.numero_processo,
+            file_path=input_data.file_path,
+            nome_arquivo=input_data.nome_arquivo,
+            criar_fase=input_data.criar_fase,
+            fase_tipo_id=input_data.fase_tipo_id,
+            fase_descricao=input_data.fase_descricao,
+            grau=input_data.grau,
+            dry_run=input_data.dry_run,
+        )
+
+        return SolarUploadDocumentoOutput(**result)
+
+    except Exception as e:
+        logger.error("upload-document falhou: %s", e)
+        return SolarUploadDocumentoOutput(
+            success=False,
+            message=str(e),
+            error=str(e),
         )

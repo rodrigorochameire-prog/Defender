@@ -363,6 +363,35 @@ class SolarCriarAnotacaoOutput(BaseModel):
     screenshots: list[str] = Field(default_factory=list)
 
 
+# === Upload Documento (Protocolar) ===
+
+class SolarUploadDocumentoInput(BaseModel):
+    """Input para /solar/upload-document — faz upload de PDF ao Solar."""
+    atendimento_id: str = Field(..., description="Numero do atendimento Solar (ex: 260120000756)")
+    numero_processo: str = Field(..., description="Numero CNJ do processo (ex: 8000189-30.2025.8.05.0039)")
+    file_path: str = Field(..., description="Caminho local do arquivo PDF para upload")
+    nome_arquivo: str | None = Field(None, description="Nome do arquivo (auto-detecta se None)")
+    criar_fase: bool = Field(True, description="Se True, cria fase processual apos upload")
+    fase_tipo_id: int = Field(1, description="Tipo da fase Solar (1=Peticao, 53=Apelacao, etc.)")
+    fase_descricao: str = Field("", description="Descricao da fase processual")
+    grau: int = Field(1, description="Grau do processo (1 ou 2)")
+    dry_run: bool = Field(False, description="Se True, prepara mas nao envia")
+
+
+class SolarUploadDocumentoOutput(BaseModel):
+    """Output de /solar/upload-document."""
+    success: bool
+    message: str = ""
+    hash: str | None = None
+    dry_run: bool = False
+    verified: bool = False
+    verificacao_msg: str | None = None
+    fase_result: dict | None = None
+    file_size_mb: float | None = None
+    error: str | None = None
+    screenshots: list[str] = Field(default_factory=list)
+
+
 # === SIGAD ===
 
 class SigadAcao(BaseModel):
