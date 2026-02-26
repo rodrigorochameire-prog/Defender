@@ -1589,17 +1589,23 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
 export function DriveDetailPanel() {
   const ctx = useDriveContext();
 
-  // Determine active folder for the file query
+  // Determine active folder for the file query (mirror DriveContentArea logic)
   const activeFolderId = ctx.selectedFolderId || null;
+  const rootFolderId = ctx.rootSyncFolderId || activeFolderId;
+  const isInSubfolder =
+    ctx.breadcrumbPath.length > 1 &&
+    activeFolderId !== rootFolderId;
 
   // Fetch files to find the selected file
   // (tRPC deduplicates identical queries, so this shares cache with DriveContentArea)
   const { data } = trpc.drive.files.useQuery(
     {
-      folderId: activeFolderId!,
-      parentFileId: null,
+      folderId: rootFolderId!,
+      ...(isInSubfolder
+        ? { parentDriveFileId: activeFolderId! }
+        : { parentFileId: null }),
     },
-    { enabled: !!activeFolderId && ctx.detailPanelFileId !== null }
+    { enabled: !!rootFolderId && ctx.detailPanelFileId !== null }
   );
 
   // Find the file by detailPanelFileId
