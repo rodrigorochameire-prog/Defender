@@ -50,16 +50,16 @@ interface AdminSidebarProps {
 // 1. Menu principal - itens do dia a dia (sem Delegações)
 const MAIN_NAV: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
-  { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
   { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
   { label: "Agenda", path: "/admin/agenda", icon: "Calendar" },
 ];
 
-// 2. Cadastros - Assistidos, Processos, Casos (azul)
+// 2. Cadastros - Assistidos, Processos, Casos, Solar (azul)
 const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
   { label: "Processos", path: "/admin/processos", icon: "Scale" },
   { label: "Casos", path: "/admin/casos", icon: "Briefcase" },
+  { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
 ];
 
 // 3. Documentos - Drive, Modelos, Jurisprudência, Distribuição (laranja)
