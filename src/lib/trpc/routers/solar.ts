@@ -42,6 +42,8 @@ import {
   resolverFaseSolar,
   gerarDescricaoFase,
 } from "@/config/protocolar-solar";
+import { gerarTextoProtocolo } from "@/lib/utils/solar-text";
+import { shouldSync } from "@/config/solar-sync-config";
 
 // ==========================================
 // SOLAR ROUTER
@@ -1258,7 +1260,7 @@ export const solarRouter = router({
       // Safety
       dryRun: z.boolean().default(false),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const resultados: {
         etapa: string;
         sucesso: boolean;
@@ -1379,6 +1381,79 @@ export const solarRouter = router({
             sucesso: true,
             mensagem: `[DRY-RUN] Atualizaria demanda #${input.demandaId} para 7_PROTOCOLADO`,
           });
+        }
+
+        // 5. Criar anotação de registro no OMBUDS (providência automática)
+        if (input.demandaId && !input.dryRun) {
+          try {
+            // Buscar demanda para obter assistidoId e processoId
+            const demandaData = await db.query.demandas.findFirst({
+              where: eq(demandas.id, input.demandaId),
+              columns: { assistidoId: true, processoId: true },
+              with: {
+                processo: { columns: { atribuicao: true } },
+              },
+            });
+
+            if (demandaData) {
+              const textoAnotacao = gerarTextoProtocolo(input.ato, input.numeroProcesso);
+              const conteudoHash = createHash("sha256")
+                .update(textoAnotacao)
+                .digest("hex")
+                .slice(0, 16);
+
+              await db
+                .insert(anotacoes)
+                .values({
+                  assistidoId: demandaData.assistidoId,
+                  processoId: demandaData.processoId,
+                  demandaId: input.demandaId,
+                  conteudo: textoAnotacao,
+                  conteudoHash,
+                  tipo: "providencia",
+                  importante: false,
+                  createdById: ctx.user.id,
+                })
+                .onConflictDoNothing();
+
+              resultados.push({
+                etapa: "anotacao_ombuds",
+                sucesso: true,
+                mensagem: `Anotação de protocolo registrada no OMBUDS`,
+              });
+
+              // Se a config permite sync de anotações, tentar registrar no Solar também
+              const atribuicao = (demandaData as any).processo?.atribuicao || "JURI_CAMACARI";
+              if (shouldSync(atribuicao, "syncAnotacoes") && input.atendimentoId) {
+                try {
+                  await enrichmentClient.solarCriarAnotacao({
+                    atendimento_id: input.atendimentoId,
+                    numero_processo: input.numeroProcesso,
+                    texto: textoAnotacao,
+                    grau: input.grau,
+                  });
+                  resultados.push({
+                    etapa: "anotacao_solar",
+                    sucesso: true,
+                    mensagem: "Anotação de protocolo registrada no Solar",
+                  });
+                } catch (solarErr) {
+                  // Não é crítico — anotação local já foi salva
+                  resultados.push({
+                    etapa: "anotacao_solar",
+                    sucesso: false,
+                    mensagem: `Solar offline ou indisponível: ${solarErr instanceof Error ? solarErr.message : String(solarErr)}`,
+                  });
+                }
+              }
+            }
+          } catch (err) {
+            resultados.push({
+              etapa: "anotacao_ombuds",
+              sucesso: false,
+              mensagem: `Erro ao criar anotação: ${err instanceof Error ? err.message : String(err)}`,
+            });
+          }
         }
 
         const todasSucesso = resultados.every(r => r.sucesso);

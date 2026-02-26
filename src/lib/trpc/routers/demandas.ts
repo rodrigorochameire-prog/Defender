@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
-import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull } from "drizzle-orm";
+import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope, getDefensorResponsavel, getDefensoresVisiveis } from "../workspace";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
@@ -574,7 +574,11 @@ export const demandasRouter = router({
         updated: 0,
         skipped: 0,
         errors: [] as string[],
+        assistidosSemSolar: 0, // Assistidos importados sem exportação ao Solar
       };
+
+      // Rastrear IDs únicos dos assistidos envolvidos na importação
+      const assistidoIdsImportados = new Set<number>();
 
       for (const row of input.rows) {
         try {
@@ -615,6 +619,9 @@ export const demandasRouter = router({
             }).returning();
             assistido = newAssistido;
           }
+
+          // Rastrear assistido para contagem Solar
+          assistidoIdsImportados.add(assistido.id);
 
           // 2. Buscar ou criar processo por número
           const processoNumero = row.processoNumero?.trim() || "";
@@ -780,6 +787,20 @@ export const demandasRouter = router({
           results.errors.push(`${row.assistido}: ${(error as Error).message}`);
           results.skipped++;
         }
+      }
+
+      // Contar assistidos importados que não estão no Solar
+      if (assistidoIdsImportados.size > 0) {
+        const idsArray = Array.from(assistidoIdsImportados);
+        const [semSolarResult] = await db
+          .select({ count: sql<number>`cast(count(*) as int)` })
+          .from(assistidos)
+          .where(and(
+            inArray(assistidos.id, idsArray),
+            isNull(assistidos.solarExportadoEm),
+            isNull(assistidos.deletedAt),
+          ));
+        results.assistidosSemSolar = semSolarResult?.count ?? 0;
       }
 
       return results;

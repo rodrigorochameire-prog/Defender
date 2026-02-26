@@ -1095,6 +1095,22 @@ export default function Demandas() {
       if (result.errors.length > 0) {
         result.errors.forEach((err) => toast.error(err));
       }
+      // Alerta Solar: mostrar se há assistidos importados sem exportação ao Solar
+      if (result.assistidosSemSolar > 0) {
+        toast.warning(
+          `${result.assistidosSemSolar} assistido${result.assistidosSemSolar > 1 ? "s" : ""} importado${result.assistidosSemSolar > 1 ? "s" : ""} não está${result.assistidosSemSolar > 1 ? "ão" : ""} no Solar`,
+          {
+            duration: 8000,
+            description: "Exporte ao Solar para manter os sistemas sincronizados.",
+            action: {
+              label: "Ir para Solar",
+              onClick: () => {
+                window.location.href = "/admin/intimacoes?tab=assistidos";
+              },
+            },
+          }
+        );
+      }
     },
     onError: (error) => {
       toast.error("Erro na importação: " + error.message);

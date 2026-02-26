@@ -56,6 +56,8 @@ import {
   FileEdit,
   BookOpen,
   Shield,
+  Sun,
+  ExternalLink,
 } from "lucide-react";
 import {
   Popover,
@@ -301,6 +303,12 @@ export default function DashboardJuriPage() {
   const { data: assistidos = [], isLoading: loadingAssistidos } = trpc.assistidos.list.useQuery({
     limit: 100,
   });
+
+  // Solar pendências (stats only, sem lista)
+  const { data: solarSync } = trpc.solar.dashboardAssistidosSync.useQuery(
+    { limit: 1, offset: 0 },
+    { staleTime: 5 * 60 * 1000 } // cache 5min — dados mudam pouco
+  );
 
   const { data: casos = [], isLoading: loadingCasos } = trpc.casos.list.useQuery({
     limit: 100,
@@ -1117,6 +1125,92 @@ export default function DashboardJuriPage() {
             />
           ))}
         </KPIGrid>
+
+        {/* ===== 3.5 PENDÊNCIAS SOLAR (condicional) ===== */}
+        {solarSync && (solarSync.stats.pending > 0 || solarSync.stats.errors > 0) && (
+          <Card className="group/solar relative bg-white dark:bg-zinc-900 border border-amber-200/60 dark:border-amber-800/30 rounded-xl overflow-hidden hover:border-amber-300 dark:hover:border-amber-700/50 transition-all duration-300">
+            <div className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-amber-500/10">
+                    <Sun className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                    Pendências Solar
+                  </h3>
+                </div>
+                <Link href="/admin/intimacoes?tab=assistidos">
+                  <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-500 hover:text-amber-600">
+                    Ver todos <ExternalLink className="w-3 h-3 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {/* Pendentes de exportação */}
+                <div className="text-center p-2 rounded-lg bg-amber-50/50 dark:bg-amber-900/10">
+                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                    {solarSync.stats.pending}
+                  </p>
+                  <p className="text-[9px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                    Pendentes
+                  </p>
+                </div>
+
+                {/* Erros de exportação */}
+                <div className="text-center p-2 rounded-lg bg-rose-50/50 dark:bg-rose-900/10">
+                  <p className={cn(
+                    "text-lg font-bold",
+                    solarSync.stats.errors > 0
+                      ? "text-rose-600 dark:text-rose-400"
+                      : "text-zinc-400 dark:text-zinc-600"
+                  )}>
+                    {solarSync.stats.errors}
+                  </p>
+                  <p className="text-[9px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                    Erros
+                  </p>
+                </div>
+
+                {/* Cobertura */}
+                <div className="text-center p-2 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10">
+                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                    {solarSync.stats.total > 0
+                      ? Math.round((solarSync.stats.exportedSolar / solarSync.stats.total) * 100)
+                      : 0}%
+                  </p>
+                  <p className="text-[9px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                    Cobertura
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress bar cobertura */}
+              <div className="mt-2">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[9px] text-zinc-400">
+                    {solarSync.stats.exportedSolar}/{solarSync.stats.total} assistidos no Solar
+                  </span>
+                  {solarSync.stats.noCpf > 0 && (
+                    <span className="text-[9px] text-rose-400">
+                      {solarSync.stats.noCpf} sem CPF
+                    </span>
+                  )}
+                </div>
+                <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-400 to-emerald-500 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${solarSync.stats.total > 0
+                        ? Math.round((solarSync.stats.exportedSolar / solarSync.stats.total) * 100)
+                        : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* ===== 4. ALERTA CRÍTICO - Réu Preso com Prazo Vencido ===== */}
         {estatisticasPrazos.reuPresoVencido > 0 && (
