@@ -49,6 +49,8 @@ import {
   BookOpen,
   Bookmark,
   FileDown,
+  Mic,
+  FileAudio,
 } from "lucide-react";
 import { PdfViewerModal, getSectionConfig, type DocumentSection } from "./PdfViewerModal";
 import { format, differenceInDays } from "date-fns";
@@ -278,12 +280,20 @@ function ActionRow({
   isFavorited,
   onToggleFavorite,
   onStartRename,
+  onTranscribe,
+  isTranscribing,
 }: {
   file: DriveFile;
   isFavorited: boolean;
   onToggleFavorite: () => void;
   onStartRename: () => void;
+  onTranscribe?: () => void;
+  isTranscribing?: boolean;
 }) {
+  const isAudioVideo =
+    file.mimeType?.startsWith("audio/") ||
+    file.mimeType?.startsWith("video/");
+
   return (
     <div className="flex items-center gap-1">
       {/* Download / Open */}
@@ -316,6 +326,35 @@ function ActionRow({
             <ExternalLink className="h-4 w-4" />
           </Button>
         </a>
+      )}
+
+      {/* Transcribe (audio/video only) */}
+      {isAudioVideo && onTranscribe && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "h-8 w-8",
+            file.enrichmentStatus === "completed"
+              ? "text-emerald-500 hover:text-emerald-400"
+              : "text-cyan-500 hover:text-cyan-400"
+          )}
+          title={
+            file.enrichmentStatus === "completed"
+              ? "Transcrição concluída"
+              : file.enrichmentStatus === "processing"
+                ? "Transcrevendo..."
+                : "Transcrever com Whisper"
+          }
+          onClick={onTranscribe}
+          disabled={isTranscribing || file.enrichmentStatus === "processing"}
+        >
+          {isTranscribing || file.enrichmentStatus === "processing" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Mic className="h-4 w-4" />
+          )}
+        </Button>
       )}
 
       {/* Rename */}
@@ -571,6 +610,143 @@ function EnrichmentSection({ file }: { file: DriveFile }) {
             )}
             Re-processar
           </Button>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+// ─── Transcription Section (Audio/Video) ───────────────────────────
+
+function TranscriptionSection({
+  file,
+  onTranscribe,
+  isTranscribing,
+  transcriptionResult,
+}: {
+  file: DriveFile;
+  onTranscribe: () => void;
+  isTranscribing: boolean;
+  transcriptionResult?: {
+    transcript: string;
+    transcript_plain: string;
+    speakers: string[];
+    duration: number;
+    diarization_applied: boolean;
+  } | null;
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+  const [showFull, setShowFull] = useState(false);
+
+  const isAudioVideo =
+    file.mimeType?.startsWith("audio/") ||
+    file.mimeType?.startsWith("video/");
+
+  if (!isAudioVideo) return null;
+
+  const hasTranscription = transcriptionResult?.transcript_plain;
+  const statusLabel =
+    file.enrichmentStatus === "completed" && hasTranscription
+      ? "Concluída"
+      : file.enrichmentStatus === "processing" || isTranscribing
+        ? "Transcrevendo..."
+        : file.enrichmentStatus === "failed"
+          ? "Falhou"
+          : "Pendente";
+  const statusClass =
+    file.enrichmentStatus === "completed" && hasTranscription
+      ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+      : file.enrichmentStatus === "processing" || isTranscribing
+        ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20"
+        : file.enrichmentStatus === "failed"
+          ? "bg-red-500/10 text-red-400 border-red-500/20"
+          : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger asChild>
+        <div>
+          <SectionHeader
+            title="Transcrição"
+            icon={FileAudio}
+            isOpen={isOpen}
+            onToggle={() => setIsOpen(!isOpen)}
+            badge={statusLabel}
+          />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="px-4 pb-3 space-y-3">
+          {/* Status badge */}
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "text-[11px] px-2 py-0.5 rounded-full border",
+                statusClass
+              )}
+            >
+              {statusLabel}
+            </span>
+            {transcriptionResult?.speakers && transcriptionResult.speakers.length > 0 && (
+              <span className="text-[10px] text-zinc-500">
+                {transcriptionResult.speakers.length} speaker{transcriptionResult.speakers.length > 1 ? "s" : ""}
+              </span>
+            )}
+            {transcriptionResult?.duration ? (
+              <span className="text-[10px] text-zinc-500">
+                {Math.floor(transcriptionResult.duration / 60)}min {Math.floor(transcriptionResult.duration % 60)}s
+              </span>
+            ) : null}
+          </div>
+
+          {/* Transcription text (truncated) */}
+          {hasTranscription && (
+            <div className="space-y-2">
+              <div
+                className={cn(
+                  "text-xs text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap font-mono leading-relaxed bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-800",
+                  !showFull && "max-h-[200px] overflow-hidden relative"
+                )}
+              >
+                {showFull
+                  ? transcriptionResult.transcript
+                  : transcriptionResult.transcript_plain.slice(0, 500) +
+                    (transcriptionResult.transcript_plain.length > 500
+                      ? "..."
+                      : "")}
+                {!showFull &&
+                  transcriptionResult.transcript_plain.length > 500 && (
+                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-zinc-50 dark:from-zinc-900 to-transparent" />
+                  )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2.5 text-xs text-cyan-500 hover:text-cyan-400 hover:bg-cyan-500/10 w-full"
+                onClick={() => setShowFull(!showFull)}
+              >
+                {showFull ? "Mostrar menos" : "Ver transcrição completa"}
+              </Button>
+            </div>
+          )}
+
+          {/* Transcribe button */}
+          {!hasTranscription && file.enrichmentStatus !== "processing" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2.5 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 border border-cyan-500/20 rounded-lg w-full"
+              onClick={onTranscribe}
+              disabled={isTranscribing}
+            >
+              {isTranscribing ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Mic className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Transcrever com Whisper
+            </Button>
+          )}
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -1250,11 +1426,19 @@ function PecasProcessuaisSection({
 
 function DetailPanelContent({ file }: { file: DriveFile }) {
   const ctx = useDriveContext();
+  const utils = trpc.useUtils();
   const [isFavorited, setIsFavorited] = useState(() =>
     getFavorites().has(file.id)
   );
   const [isRenaming, setIsRenaming] = useState(false);
   const [showPdfViewer, setShowPdfViewer] = useState(false);
+  const [transcriptionResult, setTranscriptionResult] = useState<{
+    transcript: string;
+    transcript_plain: string;
+    speakers: string[];
+    duration: number;
+    diarization_applied: boolean;
+  } | null>(null);
 
   const handleToggleFavorite = useCallback(() => {
     const newState = toggleFavorite(file.id);
@@ -1262,8 +1446,44 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
   }, [file.id]);
 
   const isPdf = file.mimeType?.includes("pdf");
+  const isAudioVideo =
+    file.mimeType?.startsWith("audio/") ||
+    file.mimeType?.startsWith("video/");
   // Build PDF URL for viewer — use webContentLink (direct download) or proxy via Drive
   const pdfUrl = file.webContentLink || (file.webViewLink ? file.webViewLink.replace("/view", "/preview") : "");
+
+  // Transcription mutation
+  const transcribeMutation = trpc.drive.transcreverDrive.useMutation({
+    onSuccess: (data) => {
+      setTranscriptionResult({
+        transcript: data.transcript,
+        transcript_plain: data.transcript_plain,
+        speakers: data.speakers,
+        duration: data.duration,
+        diarization_applied: data.diarization_applied,
+      });
+      toast.success("Transcrição concluída", {
+        description: `${data.speakers.length} speaker(s) identificado(s)`,
+      });
+      utils.drive.files.invalidate();
+    },
+    onError: (err) => {
+      toast.error("Erro na transcrição", {
+        description: err.message,
+      });
+      utils.drive.files.invalidate();
+    },
+  });
+
+  const handleTranscribe = useCallback(() => {
+    transcribeMutation.mutate({
+      driveFileId: file.driveFileId,
+      processoId: file.processoId ?? undefined,
+      assistidoId: file.assistidoId ?? undefined,
+      diarize: true,
+      language: "pt",
+    });
+  }, [file.driveFileId, file.processoId, file.assistidoId, transcribeMutation]);
 
   return (
     <div className="flex flex-col h-full">
@@ -1321,6 +1541,8 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
             isFavorited={isFavorited}
             onToggleFavorite={handleToggleFavorite}
             onStartRename={() => setIsRenaming(true)}
+            onTranscribe={isAudioVideo ? handleTranscribe : undefined}
+            isTranscribing={transcribeMutation.isPending}
           />
         </div>
 
@@ -1333,6 +1555,14 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
             />
           )}
           <MetadataSection file={file} />
+          {isAudioVideo && (
+            <TranscriptionSection
+              file={file}
+              onTranscribe={handleTranscribe}
+              isTranscribing={transcribeMutation.isPending}
+              transcriptionResult={transcriptionResult}
+            />
+          )}
           <EnrichmentSection file={file} />
           <JuridicalContextSection file={file} />
           <IAInsightsSection file={file} />

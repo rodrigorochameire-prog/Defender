@@ -41,6 +41,7 @@ import {
   Home,
   AlertCircle,
   Mic,
+  Radio,
 } from "lucide-react";
 import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
 import { AudioRecorderButton } from "@/components/shared/audio-recorder";
@@ -652,11 +653,28 @@ export function RegistroRapidoAprimorado({
               onChange={(e) => setData(prev => ({ ...prev, descricao: e.target.value }))}
               className="min-h-[80px] text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none pr-10"
             />
-            <div className="absolute top-1.5 right-1.5">
+            <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5">
               <AudioRecorderButton
                 compact
                 onTranscriptReady={handleTranscriptReady}
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-violet-500 hover:text-violet-400 hover:bg-violet-500/10"
+                title="Gravar com Plaud Desktop"
+                onClick={() => {
+                  // Try deep link first, fallback to instruction
+                  window.open("plaud://record", "_blank");
+                  toast.info("Plaud Desktop", {
+                    description: "Inicie a gravação no Plaud Desktop. Após concluir, a transcrição será vinculada automaticamente.",
+                    duration: 6000,
+                  });
+                }}
+              >
+                <Radio className="h-3.5 w-3.5" />
+              </Button>
             </div>
           </div>
           {transcript && (

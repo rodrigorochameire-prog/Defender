@@ -34,4 +34,5 @@ async def health_check() -> HealthResponse:
         gemini_configured=bool(settings.gemini_api_key),
         supabase_configured=bool(settings.supabase_url and settings.supabase_service_role_key),
         solar_configured=bool(settings.solar_username and settings.solar_password),
+        transcription_configured=bool(settings.openai_api_key),
     )

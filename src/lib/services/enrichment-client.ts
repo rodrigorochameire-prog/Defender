@@ -118,6 +118,35 @@ export interface EnrichmentHealthResponse {
   gemini_configured: boolean;
   supabase_configured: boolean;
   solar_configured: boolean;
+  transcription_configured: boolean;
+}
+
+// === Transcription Types (Whisper + pyannote) ===
+
+export interface TranscribeInput {
+  fileUrl: string;
+  fileName?: string;
+  language?: string;
+  diarize?: boolean;
+  expectedSpeakers?: number | null;
+}
+
+export interface TranscribeSegment {
+  start: number;
+  end: number;
+  text: string;
+  speaker: string;
+}
+
+export interface TranscribeOutput {
+  transcript: string;
+  transcript_plain: string;
+  segments: TranscribeSegment[];
+  speakers: string[];
+  duration: number;
+  language: string;
+  confidence: number;
+  diarization_applied: boolean;
 }
 
 // === Solar Types ===
@@ -563,6 +592,27 @@ class EnrichmentClient {
       contact_id: input.contactId,
       assistido_id: input.assistidoId,
     });
+  }
+
+  /**
+   * Transcrever arquivo de áudio/vídeo (Whisper + pyannote).
+   * Chamado pelo: tRPC solar.transcreverDrive
+   */
+  async transcribe(input: TranscribeInput): Promise<TranscribeOutput> {
+    // Transcription can take longer (up to 5 min for large files)
+    const originalTimeout = this.timeout;
+    this.timeout = 300_000; // 5 min
+    try {
+      return await this.request<TranscribeOutput>("/api/transcribe", {
+        file_url: input.fileUrl,
+        file_name: input.fileName ?? "audio.mp3",
+        language: input.language ?? "pt",
+        diarize: input.diarize ?? true,
+        expected_speakers: input.expectedSpeakers ?? null,
+      });
+    } finally {
+      this.timeout = originalTimeout;
+    }
   }
 
   /**

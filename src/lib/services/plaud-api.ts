@@ -18,7 +18,7 @@ import {
   driveFiles,
 } from "@/lib/db/schema";
 import { eq, and, desc, isNull } from "drizzle-orm";
-import { uploadFileToDrive } from "./google-drive";
+import { uploadFileBuffer } from "./google-drive";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { enrichmentClient } from "@/lib/services/enrichment-client";
 
@@ -499,7 +499,8 @@ async function updateAtendimentoTranscription(
 // ==========================================
 
 /**
- * Faz upload da gravação para o Google Drive
+ * Faz upload da gravação para o Google Drive.
+ * Baixa o áudio da URL do Plaud, faz upload ao Drive, e registra no DB.
  */
 export async function uploadRecordingToDrive(
   recordingId: number,
@@ -515,13 +516,84 @@ export async function uploadRecordingToDrive(
     throw new Error("Gravação não encontrada");
   }
 
-  // Para fazer o upload real, precisaríamos do arquivo de áudio
-  // Como o Plaud envia o arquivo via URL, primeiro baixamos
-  // Por enquanto, vamos apenas simular a criação do registro
+  const fileName = `plaud_${recording.title || recording.plaudRecordingId}.m4a`;
 
-  const fileName = `atendimento_${recording.title || recording.plaudRecordingId}.m4a`;
+  // Extrair URL do áudio do payload raw
+  const rawPayload = recording.rawPayload as Record<string, unknown> | null;
+  const audioUrl = (rawPayload?.data as Record<string, unknown>)?.file_url as string | undefined;
 
-  // Cria registro no driveFiles
+  if (audioUrl) {
+    // Download real do arquivo de áudio
+    console.log(`[Plaud] Downloading audio from: ${audioUrl.slice(0, 80)}...`);
+    const audioResponse = await fetch(audioUrl, { signal: AbortSignal.timeout(60_000) });
+
+    if (!audioResponse.ok) {
+      throw new Error(`Falha ao baixar áudio do Plaud: ${audioResponse.status}`);
+    }
+
+    const audioBuffer = Buffer.from(await audioResponse.arrayBuffer());
+    const mimeType = audioResponse.headers.get("content-type") || "audio/m4a";
+
+    // Upload real ao Google Drive
+    const driveResult = await uploadFileBuffer(
+      audioBuffer,
+      fileName,
+      mimeType,
+      folderId,
+      `Gravação Plaud: ${recording.title || recording.plaudRecordingId}`,
+      { preventDuplicates: true },
+    );
+
+    if (!driveResult) {
+      throw new Error("Falha ao fazer upload do áudio ao Drive");
+    }
+
+    // Registra no driveFiles do OMBUDS (para indexação/enriquecimento)
+    const [driveFile] = await db
+      .insert(driveFiles)
+      .values({
+        driveFileId: driveResult.id,
+        driveFolderId: folderId,
+        name: driveResult.name || fileName,
+        mimeType: driveResult.mimeType || mimeType,
+        fileSize: recording.fileSize,
+        webViewLink: driveResult.webViewLink,
+        webContentLink: driveResult.webContentLink,
+        syncStatus: "synced",
+        lastSyncAt: new Date(),
+        assistidoId: recording.assistidoId,
+      })
+      .returning();
+
+    // Atualiza a gravação com IDs reais do Drive
+    await db
+      .update(plaudRecordings)
+      .set({
+        driveFileId: driveFile.driveFileId,
+        driveFileUrl: driveResult.webViewLink,
+        updatedAt: new Date(),
+      })
+      .where(eq(plaudRecordings.id, recordingId));
+
+    // Atualiza o atendimento se vinculado
+    if (recording.atendimentoId) {
+      await db
+        .update(atendimentos)
+        .set({
+          audioDriveFileId: driveFile.driveFileId,
+          audioUrl: driveResult.webViewLink,
+          updatedAt: new Date(),
+        })
+        .where(eq(atendimentos.id, recording.atendimentoId));
+    }
+
+    return {
+      driveFileId: driveFile.driveFileId,
+      driveFileUrl: driveResult.webViewLink || "",
+    };
+  }
+
+  // Fallback: sem URL de áudio — cria registro mock (compatibilidade)
   const [driveFile] = await db
     .insert(driveFiles)
     .values({
@@ -536,7 +608,6 @@ export async function uploadRecordingToDrive(
     })
     .returning();
 
-  // Atualiza a gravação
   await db
     .update(plaudRecordings)
     .set({
@@ -546,7 +617,6 @@ export async function uploadRecordingToDrive(
     })
     .where(eq(plaudRecordings.id, recordingId));
 
-  // Atualiza o atendimento se vinculado
   if (recording.atendimentoId) {
     await db
       .update(atendimentos)

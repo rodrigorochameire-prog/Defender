@@ -44,7 +44,11 @@ import {
   registerWebhookForFolder,
   checkSyncHealth,
 } from "@/lib/services/google-drive";
-import { processos, assistidos, casos, demandas } from "@/lib/db/schema";
+import { processos, assistidos, casos, demandas, atendimentos } from "@/lib/db/schema";
+import {
+  enrichmentClient,
+  type TranscribeOutput,
+} from "@/lib/services/enrichment-client";
 
 /**
  * Calcula a similaridade entre duas strings usando distância de Levenshtein normalizada
@@ -2205,6 +2209,109 @@ export const driveRouter = router({
   healthStatus: adminProcedure.query(async () => {
     return checkSyncHealth();
   }),
+
+  // ==========================================
+  // TRANSCRIPTION (Whisper + pyannote)
+  // ==========================================
+
+  /**
+   * Transcrever arquivo de áudio/vídeo do Drive.
+   * Usa Whisper (OpenAI) + pyannote para diarização de speakers.
+   */
+  transcreverDrive: protectedProcedure
+    .input(
+      z.object({
+        driveFileId: z.string(),
+        processoId: z.number().optional(),
+        assistidoId: z.number().optional(),
+        diarize: z.boolean().default(true),
+        expectedSpeakers: z.number().optional(),
+        language: z.string().default("pt"),
+      }),
+    )
+    .mutation(async ({ input }): Promise<TranscribeOutput & { driveFileId: string }> => {
+      // 1. Buscar arquivo no DB para obter URL de download
+      const [file] = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          mimeType: driveFiles.mimeType,
+          webContentLink: driveFiles.webContentLink,
+          webViewLink: driveFiles.webViewLink,
+          driveFileId: driveFiles.driveFileId,
+        })
+        .from(driveFiles)
+        .where(eq(driveFiles.driveFileId, input.driveFileId))
+        .limit(1);
+
+      if (!file) {
+        throw new Error(`Arquivo não encontrado no Drive: ${input.driveFileId}`);
+      }
+
+      // Verificar se é áudio/vídeo
+      const audioVideoMimes = [
+        "audio/", "video/",
+        "application/ogg", "application/octet-stream",
+      ];
+      const isAudioVideo = audioVideoMimes.some(
+        (m) => file.mimeType?.startsWith(m),
+      );
+      if (!isAudioVideo) {
+        throw new Error(
+          `Arquivo não é áudio/vídeo: ${file.mimeType}. Apenas áudio/vídeo pode ser transcrito.`,
+        );
+      }
+
+      // 2. Obter URL de download
+      const downloadUrl = file.webContentLink;
+      if (!downloadUrl) {
+        throw new Error(
+          "Arquivo não possui link de download. Verifique as permissões do Drive.",
+        );
+      }
+
+      // 3. Marcar como "processing"
+      await db
+        .update(driveFiles)
+        .set({
+          enrichmentStatus: "processing",
+        })
+        .where(eq(driveFiles.driveFileId, input.driveFileId));
+
+      try {
+        // 4. Chamar enrichment engine para transcrever
+        const result = await enrichmentClient.transcribe({
+          fileUrl: downloadUrl,
+          fileName: file.name || "audio.mp3",
+          language: input.language,
+          diarize: input.diarize,
+          expectedSpeakers: input.expectedSpeakers ?? null,
+        });
+
+        // 5. Atualizar status no Drive
+        await db
+          .update(driveFiles)
+          .set({
+            enrichmentStatus: "completed",
+            enrichedAt: new Date(),
+            documentType: "transcricao_audio",
+            enrichmentError: null,
+          })
+          .where(eq(driveFiles.driveFileId, input.driveFileId));
+
+        return { ...result, driveFileId: input.driveFileId };
+      } catch (error) {
+        // Marcar como failed
+        await db
+          .update(driveFiles)
+          .set({
+            enrichmentStatus: "failed",
+            enrichmentError: error instanceof Error ? error.message : "Erro desconhecido",
+          })
+          .where(eq(driveFiles.driveFileId, input.driveFileId));
+        throw error;
+      }
+    }),
 
   /**
    * Move um arquivo de uma pasta para outra no Google Drive.

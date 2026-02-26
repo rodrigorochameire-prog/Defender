@@ -545,6 +545,37 @@ class ConsolidationOutput(BaseModel):
     total_demandas: int = 0
 
 
+# === Transcription (Whisper + pyannote) ===
+
+class TranscribeSegment(BaseModel):
+    """Um segmento de transcrição com timestamp e speaker."""
+    start: float = Field(0, description="Início em segundos")
+    end: float = Field(0, description="Fim em segundos")
+    text: str = Field("", description="Texto transcrito")
+    speaker: str = Field("SPEAKER_0", description="Identificador do speaker")
+
+
+class TranscribeInput(BaseModel):
+    """Input para /api/transcribe — transcrição de áudio/vídeo."""
+    file_url: str | None = Field(None, description="URL para download do arquivo (Drive signed URL)")
+    file_name: str = Field("audio.mp3", description="Nome do arquivo (para detectar formato)")
+    language: str = Field("pt", description="Código ISO 639-1 do idioma")
+    diarize: bool = Field(True, description="Ativar diarização de speakers")
+    expected_speakers: int | None = Field(None, description="Número esperado de speakers (ajuda pyannote)")
+
+
+class TranscribeOutput(BaseModel):
+    """Output de /api/transcribe."""
+    transcript: str = Field("", description="Transcrição completa formatada com timestamps + speakers")
+    transcript_plain: str = Field("", description="Transcrição sem formatação (texto corrido)")
+    segments: list[TranscribeSegment] = Field(default_factory=list, description="Segmentos com timestamps")
+    speakers: list[str] = Field(default_factory=list, description="Lista de speakers identificados")
+    duration: float = Field(0, description="Duração total em segundos")
+    language: str = Field("pt", description="Idioma detectado/usado")
+    confidence: float = Field(0, ge=0, le=1, description="Score de confiança")
+    diarization_applied: bool = Field(False, description="Se diarização foi aplicada")
+
+
 # === Health ===
 
 class HealthResponse(BaseModel):
@@ -555,3 +586,4 @@ class HealthResponse(BaseModel):
     gemini_configured: bool
     supabase_configured: bool
     solar_configured: bool = False
+    transcription_configured: bool = False

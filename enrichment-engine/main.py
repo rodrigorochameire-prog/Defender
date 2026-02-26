@@ -21,6 +21,7 @@ from routers.solar import router as solar_router
 from routers.sigad import router as sigad_router
 from routers.search import router as search_router
 from routers.consolidation import router as consolidation_router
+from routers.transcription import router as transcription_router
 
 # Logging estruturado (sem PII)
 logging.basicConfig(
@@ -50,6 +51,8 @@ async def lifespan(app: FastAPI):
         logger.warning("ENRICHMENT_API_KEY not set — all authenticated routes blocked")
     if not settings.solar_username:
         logger.warning("SOLAR_USERNAME not set — Solar integration disabled")
+    if not settings.openai_api_key:
+        logger.warning("OPENAI_API_KEY not set — transcription service disabled")
 
     yield
 
@@ -87,6 +90,7 @@ def create_app() -> FastAPI:
     app.include_router(sigad_router, tags=["SIGAD"])
     app.include_router(search_router, tags=["Search"])
     app.include_router(consolidation_router, prefix="/enrich", tags=["Intelligence"])
+    app.include_router(transcription_router, prefix="/api", tags=["Transcription"])
 
     return app
 

@@ -44,6 +44,14 @@ class Settings(BaseSettings):
     solar_max_pdfs_per_sync: int = 10  # max PDFs to download per processo
     solar_headless: bool = True  # False for local debugging
 
+    # --- Transcription (Whisper + pyannote) ---
+    openai_api_key: str = ""
+    whisper_model: str = "whisper-1"  # OpenAI Whisper API model
+    whisper_max_file_size_mb: int = 25  # OpenAI limit
+    hf_token: str = ""  # HuggingFace token for pyannote (speaker diarization)
+    diarization_enabled: bool = True  # Enable speaker diarization by default
+    transcription_language: str = "pt"  # ISO 639-1 language code
+
     # --- Embedding ---
     embedding_model: str = "text-embedding-004"
     embedding_dimensions: int = 768
