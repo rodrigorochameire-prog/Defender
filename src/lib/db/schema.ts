@@ -5163,3 +5163,35 @@ export type InsertUserSettings = typeof userSettings.$inferInsert;
 export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   user: one(users, { fields: [userSettings.userId], references: [users.id] }),
 }));
+
+// ─── User Invitations ──────────────────────────────────────────────
+export const userInvitations = pgTable("user_invitations", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  nome: text("nome").notNull(),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  nucleo: varchar("nucleo", { length: 30 }),
+  funcao: varchar("funcao", { length: 30 }).default("defensor_titular"),
+  oab: varchar("oab", { length: 50 }),
+  podeVerTodosAssistidos: boolean("pode_ver_todos_assistidos").default(true),
+  podeVerTodosProcessos: boolean("pode_ver_todos_processos").default(true),
+  mensagem: text("mensagem"),
+  invitedById: integer("invited_by_id").references(() => users.id, { onDelete: "set null" }),
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, accepted, expired, revoked
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  acceptedUserId: integer("accepted_user_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("user_invitations_email_idx").on(table.email),
+  index("user_invitations_token_idx").on(table.token),
+  index("user_invitations_status_idx").on(table.status),
+]);
+
+export type UserInvitation = typeof userInvitations.$inferSelect;
+export type InsertUserInvitation = typeof userInvitations.$inferInsert;
+
+export const userInvitationsRelations = relations(userInvitations, ({ one }) => ({
+  invitedBy: one(users, { fields: [userInvitations.invitedById], references: [users.id] }),
+  acceptedUser: one(users, { fields: [userInvitations.acceptedUserId], references: [users.id] }),
+}));

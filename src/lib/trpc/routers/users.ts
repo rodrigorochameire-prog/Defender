@@ -1,6 +1,7 @@
 import { z } from "zod";
+import crypto from "crypto";
 import { router, protectedProcedure, adminProcedure } from "../init";
-import { db, users, processos, assistidos, workspaces } from "@/lib/db";
+import { db, users, processos, assistidos, workspaces, userInvitations } from "@/lib/db";
 import { eq, desc, sql, and, ne } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, emailSchema, nameSchema, phoneSchema } from "@/lib/validations";
@@ -623,6 +624,172 @@ export const usersRouter = router({
 
         return { success: true, userName: targetUser.name };
       }, "Erro ao redefinir senha");
+    }),
+
+  // ==========================================
+  // CONVITES
+  // ==========================================
+
+  /**
+   * Gera convite para novo defensor
+   */
+  invite: adminProcedure
+    .input(
+      z.object({
+        nome: z.string().min(2),
+        email: z.string().email(),
+        nucleo: z.string().optional(),
+        funcao: z.string().default("defensor_titular"),
+        oab: z.string().optional(),
+        podeVerTodosAssistidos: z.boolean().default(true),
+        podeVerTodosProcessos: z.boolean().default(true),
+        mensagemPersonalizada: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return safeAsync(async () => {
+        // Verificar se email já está cadastrado
+        const existingUser = await db.query.users.findFirst({
+          where: eq(users.email, input.email.toLowerCase().trim()),
+        });
+
+        if (existingUser) {
+          throw Errors.conflict("Este email já possui uma conta no sistema");
+        }
+
+        // Verificar se já existe convite pendente para este email
+        const existingInvite = await db.query.userInvitations.findFirst({
+          where: and(
+            eq(userInvitations.email, input.email.toLowerCase().trim()),
+            eq(userInvitations.status, "pending")
+          ),
+        });
+
+        if (existingInvite) {
+          throw Errors.conflict("Já existe um convite pendente para este email");
+        }
+
+        // Gerar token seguro
+        const token = crypto.randomBytes(32).toString("hex");
+
+        // Convite expira em 7 dias
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+
+        const [invitation] = await db
+          .insert(userInvitations)
+          .values({
+            email: input.email.toLowerCase().trim(),
+            nome: input.nome.trim(),
+            token,
+            nucleo: input.nucleo || null,
+            funcao: input.funcao,
+            oab: input.oab || null,
+            podeVerTodosAssistidos: input.podeVerTodosAssistidos,
+            podeVerTodosProcessos: input.podeVerTodosProcessos,
+            mensagem: input.mensagemPersonalizada || null,
+            invitedById: ctx.user!.id,
+            status: "pending",
+            expiresAt,
+          })
+          .returning();
+
+        return {
+          id: invitation.id,
+          token: invitation.token,
+          email: invitation.email,
+          nome: invitation.nome,
+          expiresAt: invitation.expiresAt,
+        };
+      }, "Erro ao gerar convite");
+    }),
+
+  /**
+   * Lista todos os convites
+   */
+  listInvitations: adminProcedure.query(async () => {
+    return safeAsync(async () => {
+      const invitations = await db
+        .select({
+          id: userInvitations.id,
+          email: userInvitations.email,
+          nome: userInvitations.nome,
+          nucleo: userInvitations.nucleo,
+          funcao: userInvitations.funcao,
+          status: userInvitations.status,
+          expiresAt: userInvitations.expiresAt,
+          acceptedAt: userInvitations.acceptedAt,
+          createdAt: userInvitations.createdAt,
+          invitedByName: users.name,
+        })
+        .from(userInvitations)
+        .leftJoin(users, eq(userInvitations.invitedById, users.id))
+        .orderBy(desc(userInvitations.createdAt));
+
+      return invitations;
+    }, "Erro ao listar convites");
+  }),
+
+  /**
+   * Revoga um convite pendente
+   */
+  revokeInvitation: adminProcedure
+    .input(z.object({ id: idSchema }))
+    .mutation(async ({ input }) => {
+      return safeAsync(async () => {
+        const [updated] = await db
+          .update(userInvitations)
+          .set({ status: "revoked" })
+          .where(and(
+            eq(userInvitations.id, input.id),
+            eq(userInvitations.status, "pending")
+          ))
+          .returning();
+
+        if (!updated) {
+          throw Errors.notFound("Convite pendente");
+        }
+
+        return { success: true };
+      }, "Erro ao revogar convite");
+    }),
+
+  /**
+   * Valida um token de convite (público, sem autenticação)
+   */
+  validateInvitation: protectedProcedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const invitation = await db.query.userInvitations.findFirst({
+          where: and(
+            eq(userInvitations.token, input.token),
+            eq(userInvitations.status, "pending")
+          ),
+        });
+
+        if (!invitation) {
+          return { valid: false, reason: "Convite não encontrado ou já utilizado" };
+        }
+
+        if (new Date() > invitation.expiresAt) {
+          // Marcar como expirado
+          await db
+            .update(userInvitations)
+            .set({ status: "expired" })
+            .where(eq(userInvitations.id, invitation.id));
+
+          return { valid: false, reason: "Convite expirado" };
+        }
+
+        return {
+          valid: true,
+          email: invitation.email,
+          nome: invitation.nome,
+          nucleo: invitation.nucleo,
+          funcao: invitation.funcao,
+        };
+      }, "Erro ao validar convite");
     }),
 
   /**

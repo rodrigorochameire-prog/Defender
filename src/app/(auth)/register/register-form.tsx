@@ -1,20 +1,55 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { registerAction } from "./actions";
-import { Mail, Lock, User, Loader2, Check, X, ArrowRight } from "lucide-react";
+import { registerAction, validateInviteAction } from "./actions";
+import { Mail, Lock, User, Loader2, Check, X, ArrowRight, Ticket } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("convite");
+
   const [isLoading, setIsLoading] = useState(false);
+  const [isValidating, setIsValidating] = useState(!!inviteToken);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [inviteValid, setInviteValid] = useState<boolean | null>(null);
+  const [inviteError, setInviteError] = useState("");
+
+  // Validar convite ao carregar
+  useEffect(() => {
+    if (!inviteToken) return;
+
+    async function validate() {
+      setIsValidating(true);
+      try {
+        const result = await validateInviteAction(inviteToken!);
+        if (result.valid) {
+          setInviteValid(true);
+          setName(result.nome || "");
+          setEmail(result.email || "");
+        } else {
+          setInviteValid(false);
+          setInviteError(result.reason || "Convite inválido");
+        }
+      } catch {
+        setInviteValid(false);
+        setInviteError("Erro ao validar convite");
+      } finally {
+        setIsValidating(false);
+      }
+    }
+
+    validate();
+  }, [inviteToken]);
 
   const passwordChecks = {
     length: password.length >= 6,
@@ -24,10 +59,6 @@ export function RegisterForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
 
     if (!passwordChecks.length) {
       toast.error("A senha deve ter no mínimo 6 caracteres");
@@ -42,7 +73,12 @@ export function RegisterForm() {
     }
 
     try {
-      const result = await registerAction({ name, email, password });
+      const result = await registerAction({
+        name,
+        email,
+        password,
+        inviteToken: inviteToken || undefined,
+      });
 
       if (result.error) {
         toast.error(result.error);
@@ -59,8 +95,44 @@ export function RegisterForm() {
     }
   }
 
+  // Loading state while validating invite
+  if (isValidating) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 space-y-3">
+        <Loader2 className="h-8 w-8 animate-spin text-teal-400" />
+        <p className="text-sm text-zinc-400">Validando convite...</p>
+      </div>
+    );
+  }
+
+  // Invalid invite
+  if (inviteToken && inviteValid === false) {
+    return (
+      <div className="space-y-4 text-center py-8">
+        <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center mx-auto">
+          <X className="w-6 h-6 text-red-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-white">Convite Inválido</h3>
+        <p className="text-sm text-zinc-400">{inviteError}</p>
+        <p className="text-xs text-zinc-500">
+          Solicite um novo convite ao administrador do sistema.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Invite banner */}
+      {inviteToken && inviteValid && (
+        <div className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-lg flex items-center gap-2">
+          <Ticket className="h-4 w-4 text-teal-400 flex-shrink-0" />
+          <p className="text-xs text-teal-300">
+            Convite válido! Sua conta será aprovada automaticamente.
+          </p>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="name" className="text-sm font-medium text-zinc-300">
           Nome completo
@@ -75,6 +147,8 @@ export function RegisterForm() {
             autoComplete="name"
             disabled={isLoading}
             className="pl-10 h-11 text-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:bg-zinc-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
           />
         </div>
@@ -92,11 +166,19 @@ export function RegisterForm() {
             type="email"
             placeholder="seu@email.com"
             autoComplete="email"
-            disabled={isLoading}
-            className="pl-10 h-11 text-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:bg-zinc-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all"
+            disabled={isLoading || (!!inviteToken && inviteValid === true)}
+            className={cn(
+              "pl-10 h-11 text-sm bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus:bg-zinc-900 focus:border-teal-500/50 focus:ring-teal-500/20 transition-all",
+              inviteToken && inviteValid && "opacity-70 cursor-not-allowed"
+            )}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
+        {inviteToken && inviteValid && (
+          <p className="text-xs text-zinc-500">Email vinculado ao convite, não pode ser alterado</p>
+        )}
       </div>
 
       <div className="space-y-2">

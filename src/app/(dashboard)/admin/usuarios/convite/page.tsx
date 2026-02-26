@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import { useState } from "react";
@@ -6,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -32,6 +30,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc/client";
 import { NUCLEOS_CONFIG, type Nucleo } from "@/hooks/use-nucleo-filter";
 
 export default function ConviteDefensorPage() {
@@ -45,36 +44,39 @@ export default function ConviteDefensorPage() {
     podeVerTodosProcessos: true,
     mensagemPersonalizada: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [conviteEnviado, setConviteEnviado] = useState(false);
   const [linkConvite, setLinkConvite] = useState("");
 
+  const inviteMutation = trpc.users.invite.useMutation({
+    onSuccess: (data) => {
+      const link = `${window.location.origin}/register?convite=${data.token}`;
+      setLinkConvite(link);
+      setConviteEnviado(true);
+      toast.success(`Convite gerado para ${data.nome}!`);
+    },
+    onError: (error) => {
+      toast.error("Erro ao gerar convite", { description: error.message });
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.nome || !formData.email || !formData.nucleo) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      // TODO: Chamar API real
-      // await trpc.users.convidar.mutate(formData);
-      
-      // Simular geração de link
-      const token = btoa(JSON.stringify({ email: formData.email, nucleo: formData.nucleo }));
-      const link = `${window.location.origin}/register?convite=${token}`;
-      setLinkConvite(link);
-      setConviteEnviado(true);
-      
-      toast.success(`Convite gerado para ${formData.nome}!`);
-    } catch (error) {
-      toast.error("Erro ao gerar convite");
-    } finally {
-      setIsSubmitting(false);
-    }
+    inviteMutation.mutate({
+      nome: formData.nome,
+      email: formData.email,
+      nucleo: formData.nucleo,
+      funcao: formData.funcao,
+      oab: formData.oab || undefined,
+      podeVerTodosAssistidos: formData.podeVerTodosAssistidos,
+      podeVerTodosProcessos: formData.podeVerTodosProcessos,
+      mensagemPersonalizada: formData.mensagemPersonalizada || undefined,
+    });
   };
 
   const handleCopyLink = () => {
@@ -96,7 +98,7 @@ ${linkConvite}
 Atenciosamente,
 Defensoria Pública de Camaçari
     `.trim());
-    
+
     window.open(`mailto:${formData.email}?subject=${subject}&body=${body}`);
     toast.success("Abrindo cliente de email...");
   };
@@ -343,10 +345,10 @@ Defensoria Pública de Camaçari
           </Link>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={inviteMutation.isPending}
             className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
           >
-            {isSubmitting ? (
+            {inviteMutation.isPending ? (
               "Gerando..."
             ) : (
               <>
