@@ -749,11 +749,34 @@ export default function AgendaPage() {
     },
   });
 
-  // Mutation para deletar evento
+  // Mutation para deletar evento (audiencias)
   const deleteEvento = trpc.audiencias.delete.useMutation({
     onSuccess: () => {
       toast.success("Evento deletado com sucesso!");
       utils.audiencias.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao deletar evento", { description: error.message });
+    },
+  });
+
+  // Mutations para calendar events
+  const updateCalendarEvent = trpc.calendar.update.useMutation({
+    onSuccess: () => {
+      toast.success("Evento atualizado com sucesso!");
+      setIsEditModalOpen(false);
+      setEditingEvento(null);
+      utils.calendar.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar evento", { description: error.message });
+    },
+  });
+
+  const deleteCalendarEvent = trpc.calendar.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Evento deletado com sucesso!");
+      utils.calendar.list.invalidate();
     },
     onError: (error) => {
       toast.error("Erro ao deletar evento", { description: error.message });
@@ -783,9 +806,16 @@ export default function AgendaPage() {
           horario: data.horarioInicio,
           status: data.status,
         });
-      } else {
-        // TODO: Implementar update para calendarEvents
-        toast.info("Edição de eventos do calendário ainda não implementada");
+      } else if (fonte === "calendar") {
+        updateCalendarEvent.mutate({
+          id: numericId,
+          title: data.titulo,
+          description: data.descricao,
+          eventDate: dataHora,
+          eventType: data.tipo,
+          location: data.local,
+          ...(data.status && { status: data.status as "scheduled" | "completed" | "cancelled" }),
+        });
       }
     }
   };
@@ -799,9 +829,8 @@ export default function AgendaPage() {
 
       if (fonte === "audiencia") {
         deleteEvento.mutate({ id: numericId });
-      } else {
-        // TODO: Implementar delete para calendarEvents
-        toast.info("Deleção de eventos do calendário ainda não implementada");
+      } else if (fonte === "calendar") {
+        deleteCalendarEvent.mutate({ id: numericId });
       }
     }
   };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { AudienciasHub } from "@/components/casos/audiencias-hub";
 import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import { Badge } from "@/components/ui/badge";
@@ -200,9 +201,26 @@ export default function AudienciasPage() {
     }
   };
 
+  const createDemanda = trpc.demandas.create.useMutation({
+    onSuccess: () => {
+      toast.success("Demanda criada com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao criar demanda", { description: error.message });
+    },
+  });
+
   const handleCreateTask = (audiencia: Audiencia, taskType: string) => {
-    console.log("Criando tarefa", taskType, "para audiência", audiencia.id);
-    // TODO: Implementar via tRPC - criar demanda
+    if (!audiencia.processoId || !audiencia.assistidoId) {
+      toast.error("Audiência sem processo ou assistido vinculado");
+      return;
+    }
+    createDemanda.mutate({
+      processoId: audiencia.processoId,
+      assistidoId: audiencia.assistidoId,
+      ato: taskType || `Providência para audiência ${audiencia.tipo}`,
+      prioridade: audiencia.assistidoPreso ? "REU_PRESO" : "NORMAL",
+    });
   };
   
   // Loading state

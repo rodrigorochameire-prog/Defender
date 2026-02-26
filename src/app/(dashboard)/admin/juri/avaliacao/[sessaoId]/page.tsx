@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -263,6 +265,94 @@ export default function AvaliacaoJuriPage() {
     observacoesAdicionais: "",
   });
 
+  // === tRPC: Buscar avaliação existente ===
+  const [avaliacaoId, setAvaliacaoId] = useState<number | null>(null);
+  const { data: avaliacaoExistente } = trpc.avaliacaoJuri.getBySessaoId.useQuery(
+    { sessaoJuriId: Number(sessaoId) },
+    { enabled: !!sessaoId }
+  );
+
+  // Carregar dados existentes quando disponíveis
+  useEffect(() => {
+    if (!avaliacaoExistente) return;
+    setAvaliacaoId(avaliacaoExistente.id);
+    setContexto(prev => ({
+      ...prev,
+      observador: avaliacaoExistente.observador || "",
+      dataJulgamento: avaliacaoExistente.dataJulgamento || "",
+      horarioInicio: avaliacaoExistente.horarioInicio || "",
+      duracaoEstimada: avaliacaoExistente.duracaoEstimada || "",
+      descricaoAmbiente: avaliacaoExistente.descricaoAmbiente || "",
+      disposicaoFisica: avaliacaoExistente.disposicaoFisica || "",
+      climaEmocionalInicial: avaliacaoExistente.climaEmocionalInicial || "",
+      presencaPublicoMidia: avaliacaoExistente.presencaPublicoMidia || "",
+    }));
+    if (avaliacaoExistente.avaliacaoJurados?.length) {
+      setJurados(avaliacaoExistente.avaliacaoJurados.map((j: any) => ({
+        posicao: j.posicao,
+        nome: j.nome || "",
+        profissao: j.profissao || "",
+        idadeAproximada: j.idadeAproximada || "",
+        sexo: j.sexo || "",
+        aparenciaPrimeiraImpressao: j.aparenciaPrimeiraImpressao || "",
+        linguagemCorporalInicial: j.linguagemCorporalInicial || "",
+        tendenciaVoto: j.tendenciaVoto || "",
+        nivelConfianca: j.nivelConfianca || "",
+        justificativaTendencia: j.justificativaTendencia || "",
+        anotacoesInterrogatorio: j.anotacoesInterrogatorio || "",
+        anotacoesMp: j.anotacoesMp || "",
+        anotacoesDefesa: j.anotacoesDefesa || "",
+        anotacoesGerais: j.anotacoesGerais || "",
+      })));
+    }
+    if (avaliacaoExistente.avaliacaoTestemunhas?.length) {
+      setTestemunhas(avaliacaoExistente.avaliacaoTestemunhas.map((t: any) => ({
+        ordem: t.ordem,
+        nome: t.nome || "",
+        resumoDepoimento: t.resumoDepoimento || "",
+        reacaoJurados: t.reacaoJurados || "",
+        expressoesFaciaisLinguagem: t.expressoesFaciaisLinguagem || "",
+        credibilidade: t.credibilidade,
+        observacoesComplementares: t.observacoesComplementares || "",
+      })));
+    }
+    setInterrogatorio(prev => ({
+      ...prev,
+      reacaoGeral: avaliacaoExistente.interrogatorioReacaoGeral || "",
+      juradosAcreditaram: avaliacaoExistente.interrogatorioJuradosAcreditaram || "",
+      juradosCeticos: avaliacaoExistente.interrogatorioJuradosCeticos || "",
+      momentosImpacto: avaliacaoExistente.interrogatorioMomentosImpacto || "",
+      contradicoes: avaliacaoExistente.interrogatorioContradicoes || "",
+      impressaoCredibilidade: avaliacaoExistente.interrogatorioImpressaoCredibilidade || "",
+      nivelCredibilidade: avaliacaoExistente.interrogatorioNivelCredibilidade,
+    }));
+    setMp(prev => ({
+      ...prev,
+      estrategiaGeral: avaliacaoExistente.mpEstrategiaGeral || "",
+      impactoGeral: avaliacaoExistente.mpImpactoGeral,
+      inclinacaoCondenar: avaliacaoExistente.mpInclinacaoCondenar || "",
+    }));
+    setDefesa(prev => ({
+      ...prev,
+      estrategiaGeral: avaliacaoExistente.defesaEstrategiaGeral || "",
+      impactoGeral: avaliacaoExistente.defesaImpactoGeral,
+      duvidaRazoavel: avaliacaoExistente.defesaDuvidaRazoavel || "",
+    }));
+    setAnaliseFinal(prev => ({
+      ...prev,
+      ladoMaisPersuasivo: avaliacaoExistente.ladoMaisPersuasivo || "",
+      impactoAcusacao: avaliacaoExistente.impactoAcusacao,
+      impactoDefesa: avaliacaoExistente.impactoDefesa,
+    }));
+  }, [avaliacaoExistente]);
+
+  // === tRPC: Mutations de salvamento ===
+  const createAvaliacao = trpc.avaliacaoJuri.create.useMutation();
+  const updateAvaliacao = trpc.avaliacaoJuri.update.useMutation();
+  const updateJuradoMutation = trpc.avaliacaoJuri.updateJurado.useMutation();
+  const upsertTestemunha = trpc.avaliacaoJuri.upsertTestemunha.useMutation();
+  const upsertArgumento = trpc.avaliacaoJuri.upsertArgumento.useMutation();
+
   // Calcular progresso
   const tabs = [
     { id: "contexto", label: "Contexto", icon: MapPin },
@@ -293,9 +383,121 @@ export default function AvaliacaoJuriPage() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    // TODO: Implementar salvamento via TRPC
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsSaving(false);
+    try {
+      let currentAvaliacaoId = avaliacaoId;
+
+      // 1. Criar ou atualizar avaliação principal
+      if (!currentAvaliacaoId) {
+        const result = await createAvaliacao.mutateAsync({
+          sessaoJuriId: Number(sessaoId),
+          observador: contexto.observador,
+          dataJulgamento: contexto.dataJulgamento,
+          horarioInicio: contexto.horarioInicio || undefined,
+          duracaoEstimada: contexto.duracaoEstimada || undefined,
+        });
+        currentAvaliacaoId = result.id;
+        setAvaliacaoId(currentAvaliacaoId);
+      }
+
+      // 2. Atualizar dados gerais
+      await updateAvaliacao.mutateAsync({
+        id: currentAvaliacaoId,
+        descricaoAmbiente: contexto.descricaoAmbiente || undefined,
+        disposicaoFisica: contexto.disposicaoFisica || undefined,
+        climaEmocionalInicial: contexto.climaEmocionalInicial || undefined,
+        presencaPublicoMidia: contexto.presencaPublicoMidia || undefined,
+        interrogatorioReacaoGeral: interrogatorio.reacaoGeral || undefined,
+        interrogatorioJuradosAcreditaram: interrogatorio.juradosAcreditaram || undefined,
+        interrogatorioJuradosCeticos: interrogatorio.juradosCeticos || undefined,
+        interrogatorioMomentosImpacto: interrogatorio.momentosImpacto || undefined,
+        interrogatorioContradicoes: interrogatorio.contradicoes || undefined,
+        interrogatorioImpressaoCredibilidade: interrogatorio.impressaoCredibilidade || undefined,
+        interrogatorioNivelCredibilidade: interrogatorio.nivelCredibilidade ?? undefined,
+        mpEstrategiaGeral: mp.estrategiaGeral || undefined,
+        mpImpactoGeral: mp.impactoGeral ?? undefined,
+        mpInclinacaoCondenar: mp.inclinacaoCondenar || undefined,
+        defesaEstrategiaGeral: defesa.estrategiaGeral || undefined,
+        defesaImpactoGeral: defesa.impactoGeral ?? undefined,
+        defesaDuvidaRazoavel: defesa.duvidaRazoavel || undefined,
+        ladoMaisPersuasivo: analiseFinal.ladoMaisPersuasivo || undefined,
+        impactoAcusacao: analiseFinal.impactoAcusacao ?? undefined,
+        impactoDefesa: analiseFinal.impactoDefesa ?? undefined,
+      });
+
+      // 3. Salvar jurados (em paralelo)
+      await Promise.all(
+        jurados
+          .filter(j => j.nome)
+          .map(j =>
+            updateJuradoMutation.mutateAsync({
+              avaliacaoJuriId: currentAvaliacaoId!,
+              posicao: j.posicao,
+              data: {
+                nome: j.nome || undefined,
+                profissao: j.profissao || undefined,
+                idadeAproximada: j.idadeAproximada ? Number(j.idadeAproximada) : undefined,
+                sexo: j.sexo || undefined,
+                aparenciaPrimeiraImpressao: j.aparenciaPrimeiraImpressao || undefined,
+                linguagemCorporalInicial: j.linguagemCorporalInicial || undefined,
+                tendenciaVoto: (j.tendenciaVoto as "CONDENAR" | "ABSOLVER" | "INDECISO") || undefined,
+                nivelConfianca: (j.nivelConfianca as "BAIXA" | "MEDIA" | "ALTA") || undefined,
+                justificativaTendencia: j.justificativaTendencia || undefined,
+                anotacoesInterrogatorio: j.anotacoesInterrogatorio || undefined,
+                anotacoesMp: j.anotacoesMp || undefined,
+                anotacoesDefesa: j.anotacoesDefesa || undefined,
+                anotacoesGerais: j.anotacoesGerais || undefined,
+              },
+            })
+          )
+      );
+
+      // 4. Salvar testemunhas (em paralelo)
+      await Promise.all(
+        testemunhas
+          .filter(t => t.nome)
+          .map(t =>
+            upsertTestemunha.mutateAsync({
+              avaliacaoJuriId: currentAvaliacaoId!,
+              data: {
+                ordem: t.ordem,
+                nome: t.nome,
+                resumoDepoimento: t.resumoDepoimento || undefined,
+                reacaoJurados: t.reacaoJurados || undefined,
+                expressoesFaciaisLinguagem: t.expressoesFaciaisLinguagem || undefined,
+                credibilidade: t.credibilidade ?? undefined,
+                observacoesComplementares: t.observacoesComplementares || undefined,
+              },
+            })
+          )
+      );
+
+      // 5. Salvar argumentos (em paralelo)
+      const allArgs = [
+        ...argumentos.mp.filter(a => a.descricaoArgumento).map(a => ({ ...a, tipo: "mp" as const })),
+        ...argumentos.defesa.filter(a => a.descricaoArgumento).map(a => ({ ...a, tipo: "defesa" as const })),
+      ];
+      await Promise.all(
+        allArgs.map(a =>
+          upsertArgumento.mutateAsync({
+            avaliacaoJuriId: currentAvaliacaoId!,
+            data: {
+              tipo: a.tipo,
+              ordem: a.ordem,
+              descricaoArgumento: a.descricaoArgumento,
+              reacaoJurados: a.reacaoJurados || undefined,
+              nivelPersuasao: a.nivelPersuasao ?? undefined,
+            },
+          })
+        )
+      );
+
+      toast.success("Avaliação salva com sucesso!");
+    } catch (error: any) {
+      toast.error("Erro ao salvar avaliação", { description: error.message });
+      console.error("Erro ao salvar avaliação:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateJurado = (index: number, field: string, value: string | number | null) => {

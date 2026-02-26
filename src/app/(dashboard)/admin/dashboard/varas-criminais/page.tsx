@@ -180,10 +180,35 @@ export default function DashboardVarasCriminaisPage() {
   const atoOptions = getAtosPorAtribuicao("Criminal Geral");
 
   const handleSaveNewDemanda = (data: DemandaFormData) => {
-    // TODO: Implementar criação de demanda com validação de assistido e processo
-    console.log("Criar demanda:", data);
-    // Por enquanto, apenas loga os dados
-    // A mutation espera processoId e assistidoId obrigatórios
+    // Buscar assistidoId pelo nome
+    const assistido = assistidos.find(
+      (a: any) => a.nomeCompleto?.toLowerCase() === data.assistido?.toLowerCase()
+    );
+    if (!assistido) {
+      toast.error("Assistido não encontrado. Verifique o nome.");
+      return;
+    }
+
+    // Buscar processoId pelo número de autos
+    const primeiroProcesso = data.processos?.[0];
+    const processo = primeiroProcesso
+      ? processos.find((p: any) => p.numeroAutos === primeiroProcesso.numero)
+      : null;
+    if (!processo) {
+      toast.error("Processo não encontrado. Verifique o número de autos.");
+      return;
+    }
+
+    createDemandaMutation.mutate({
+      processoId: processo.id,
+      assistidoId: assistido.id,
+      ato: data.ato || "Providência",
+      prazo: data.prazo || undefined,
+      status: data.status as any || "5_FILA",
+      prioridade: data.reuPreso ? "REU_PRESO" : "NORMAL",
+      providencias: data.providencias || undefined,
+      reuPreso: data.reuPreso || false,
+    });
   };
 
   // ==========================================
