@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,9 +41,16 @@ import {
   ArrowRight,
   X,
   Lock,
+  Mic,
+  Radio,
+  FileText,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
+import { AudioRecorderButton } from "@/components/shared/audio-recorder";
+import { TranscriptViewer } from "@/components/shared/transcript-viewer";
 import { format, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -205,6 +212,46 @@ export function PainelServidor({ user }: PainelServidorProps) {
   });
   const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
+
+  // Transcrição de áudio
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [showTranscriptViewer, setShowTranscriptViewer] = useState(false);
+
+  const handleTranscriptReady = useCallback((text: string) => {
+    setTranscript(text);
+    setRegistroRapido((prev) => ({
+      ...prev,
+      descricao: prev.descricao
+        ? `${prev.descricao}\n\n--- Transcrição ---\n${text}`
+        : text,
+    }));
+    toast.success("Transcrição concluída e inserida na descrição");
+  }, []);
+
+  const handleSummarize = useCallback(async () => {
+    if (!transcript) return;
+    setIsSummarizing(true);
+    try {
+      const res = await fetch("/api/ai/summarize-transcript", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transcript,
+          assistidoNome: registroRapido.assistidoNome || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("Falha ao gerar resumo");
+      const data = await res.json();
+      setSummary(data.summary || "");
+      toast.success("Resumo jurídico gerado");
+    } catch {
+      toast.error("Erro ao gerar resumo jurídico");
+    } finally {
+      setIsSummarizing(false);
+    }
+  }, [transcript, registroRapido.assistidoNome]);
 
   // ------------------------------------------
   // DADOS COMPUTADOS
@@ -783,11 +830,35 @@ export function PainelServidor({ user }: PainelServidorProps) {
               </div>
             )}
 
-            {/* Descricao */}
+            {/* Descricao + Gravação */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                Descricao
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                  Descricao
+                </label>
+                <div className="flex items-center gap-0.5">
+                  <AudioRecorderButton
+                    compact
+                    onTranscriptReady={handleTranscriptReady}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-violet-500 hover:text-violet-400 hover:bg-violet-500/10"
+                    title="Gravar com Plaud Desktop"
+                    onClick={() => {
+                      window.open("plaud://record", "_blank");
+                      toast.info("Plaud Desktop", {
+                        description: "Inicie a gravação no Plaud Desktop. Após concluir, a transcrição será vinculada automaticamente.",
+                        duration: 6000,
+                      });
+                    }}
+                  >
+                    <Radio className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
               <Textarea
                 placeholder={
                   registroRapido.tipo === "atendimento"
@@ -806,6 +877,32 @@ export function PainelServidor({ user }: PainelServidorProps) {
                 rows={3}
                 className="w-full text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
               />
+              {/* Ações pós-transcrição */}
+              {transcript && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowTranscriptViewer(true)}
+                    className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                  >
+                    <FileText className="h-3 w-3" />
+                    Ver transcrição
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSummarize}
+                    disabled={isSummarizing}
+                    className="text-[10px] text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {isSummarizing ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3 w-3" />
+                    )}
+                    Resumo jurídico IA
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Submit */}
@@ -960,6 +1057,19 @@ export function PainelServidor({ user }: PainelServidorProps) {
           </Link>
         </div>
       </div>
+
+      {/* Transcript Viewer Modal */}
+      {showTranscriptViewer && transcript && (
+        <TranscriptViewer
+          open={showTranscriptViewer}
+          onOpenChange={setShowTranscriptViewer}
+          transcript={transcript}
+          summary={summary}
+          assistidoNome={registroRapido.assistidoNome || undefined}
+          onSummarize={handleSummarize}
+          isSummarizing={isSummarizing}
+        />
+      )}
     </div>
   );
 }

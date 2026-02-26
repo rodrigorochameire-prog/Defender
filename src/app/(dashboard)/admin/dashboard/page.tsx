@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,10 @@ import {
   Shield,
   Sun,
   ExternalLink,
+  Mic,
+  Radio,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import {
   Popover,
@@ -87,6 +91,8 @@ import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { DashboardPorPerfil } from "@/components/dashboard/dashboard-por-perfil";
 import { PainelServidor } from "@/components/dashboard/painel-servidor";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
+import { AudioRecorderButton } from "@/components/shared/audio-recorder";
+import { TranscriptViewer } from "@/components/shared/transcript-viewer";
 
 // ============================================
 // HELPERS
@@ -522,6 +528,46 @@ export default function DashboardJuriPage() {
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
   const [showDetalhes, setShowDetalhes] = useState(false);
 
+  // Transcrição de áudio
+  const [audioTranscript, setAudioTranscript] = useState<string | null>(null);
+  const [audioSummary, setAudioSummary] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [showTranscriptViewer, setShowTranscriptViewer] = useState(false);
+
+  const handleTranscriptReady = useCallback((text: string) => {
+    setAudioTranscript(text);
+    setAtendimentoRapido((prev) => ({
+      ...prev,
+      descricao: prev.descricao
+        ? `${prev.descricao}\n\n--- Transcrição ---\n${text}`
+        : text,
+    }));
+    toast.success("Transcrição concluída e inserida na descrição");
+  }, []);
+
+  const handleSummarize = useCallback(async () => {
+    if (!audioTranscript) return;
+    setIsSummarizing(true);
+    try {
+      const res = await fetch("/api/ai/summarize-transcript", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transcript: audioTranscript,
+          assistidoNome: atendimentoRapido.assistidoNome || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("Falha ao gerar resumo");
+      const data = await res.json();
+      setAudioSummary(data.summary || "");
+      toast.success("Resumo jurídico gerado");
+    } catch {
+      toast.error("Erro ao gerar resumo jurídico");
+    } finally {
+      setIsSummarizing(false);
+    }
+  }, [audioTranscript, atendimentoRapido.assistidoNome]);
+
   const tiposRegistro = [
     { id: "atendimento", label: "Atendimento", icon: MessageSquare, color: "text-emerald-600", bgActive: "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300" },
     { id: "diligencia", label: "Diligência", icon: Search, color: "text-zinc-600", bgActive: "bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600" },
@@ -873,9 +919,33 @@ export default function DashboardJuriPage() {
               </div>
             </div>
 
-            {/* Descrição */}
+            {/* Descrição + Gravação */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Descrição</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Descrição</label>
+                <div className="flex items-center gap-0.5">
+                  <AudioRecorderButton
+                    compact
+                    onTranscriptReady={handleTranscriptReady}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-violet-500 hover:text-violet-400 hover:bg-violet-500/10"
+                    title="Gravar com Plaud Desktop"
+                    onClick={() => {
+                      window.open("plaud://record", "_blank");
+                      toast.info("Plaud Desktop", {
+                        description: "Inicie a gravação no Plaud Desktop. Após concluir, a transcrição será vinculada automaticamente.",
+                        duration: 6000,
+                      });
+                    }}
+                  >
+                    <Radio className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
               <Textarea
                 placeholder={
                   atendimentoRapido.tipo === "atendimento" ? "Descreva o atendimento realizado..." :
@@ -889,6 +959,32 @@ export default function DashboardJuriPage() {
                 rows={3}
                 className="w-full text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
               />
+              {/* Ações pós-transcrição */}
+              {audioTranscript && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowTranscriptViewer(true)}
+                    className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                  >
+                    <Mic className="h-3 w-3" />
+                    Ver transcrição
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSummarize}
+                    disabled={isSummarizing}
+                    className="text-[10px] text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {isSummarizing ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3 w-3" />
+                    )}
+                    Resumo jurídico IA
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Detalhes opcionais (colapsável) */}
@@ -1714,6 +1810,19 @@ export default function DashboardJuriPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Transcript Viewer Modal */}
+      {showTranscriptViewer && audioTranscript && (
+        <TranscriptViewer
+          open={showTranscriptViewer}
+          onOpenChange={setShowTranscriptViewer}
+          transcript={audioTranscript}
+          summary={audioSummary}
+          assistidoNome={atendimentoRapido.assistidoNome || undefined}
+          onSummarize={handleSummarize}
+          isSummarizing={isSummarizing}
+        />
+      )}
     </div>
   );
 }
