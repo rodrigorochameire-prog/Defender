@@ -52,8 +52,10 @@ import {
   Copy,
   Eye,
   EyeOff,
+  Mic,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PlaudConfigCard, PlaudRecordingsList } from "@/components/atendimentos";
 
 // ==========================================
 // TIPOS
@@ -467,6 +469,10 @@ export default function IntegracoesPage() {
               <Webhook className="w-4 h-4" />
               Webhooks
             </TabsTrigger>
+            <TabsTrigger value="gravacoes" className="flex items-center gap-2">
+              <Mic className="w-4 h-4" />
+              Gravações
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="integracoes" className="mt-6 space-y-6">
@@ -552,6 +558,9 @@ export default function IntegracoesPage() {
               </div>
             </Card>
 
+            {/* Plaud AI - Gravação e Transcrição */}
+            <PlaudConfigCard className="border-2 border-purple-200 dark:border-purple-800" />
+
             {/* Outras Integrações */}
             <div>
               <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">
@@ -633,6 +642,10 @@ export default function IntegracoesPage() {
 
           <TabsContent value="webhooks" className="mt-6">
             <WebhookSection />
+          </TabsContent>
+
+          <TabsContent value="gravacoes" className="mt-6">
+            <PlaudRecordingsList />
           </TabsContent>
         </Tabs>
       </div>

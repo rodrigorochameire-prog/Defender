@@ -219,6 +219,51 @@ async function handleRecordingCompleted(
       .where(eq(plaudRecordings.id, created.id));
   }
 
+  // Auto-link: buscar atendimento mais recente com awaiting_plaud
+  try {
+    const [awaiting] = await db
+      .select()
+      .from(atendimentos)
+      .where(
+        and(
+          eq(atendimentos.transcricaoStatus, "awaiting_plaud"),
+          config.workspaceId
+            ? eq(atendimentos.workspaceId, config.workspaceId)
+            : undefined
+        )
+      )
+      .orderBy(desc(atendimentos.createdAt))
+      .limit(1);
+
+    if (awaiting) {
+      console.log(
+        `[Plaud] Auto-linking recording ${created.id} to awaiting atendimento ${awaiting.id}`
+      );
+
+      await db
+        .update(plaudRecordings)
+        .set({
+          atendimentoId: awaiting.id,
+          assistidoId: awaiting.assistidoId,
+          updatedAt: new Date(),
+        })
+        .where(eq(plaudRecordings.id, created.id));
+
+      await db
+        .update(atendimentos)
+        .set({
+          plaudRecordingId: payload.recording_id,
+          plaudDeviceId: payload.device_id,
+          transcricaoStatus: "processing",
+          duracao: payload.data.duration,
+          updatedAt: new Date(),
+        })
+        .where(eq(atendimentos.id, awaiting.id));
+    }
+  } catch (error) {
+    console.error("[Plaud] Erro no auto-link:", error);
+  }
+
   return { success: true, recordingId: created.id };
 }
 
@@ -262,7 +307,61 @@ async function handleTranscriptionCompleted(
       .where(eq(plaudRecordings.id, existingRecording.id));
   }
 
-  // Se tiver atendimento vinculado, atualiza
+  // Auto-link: se não tem atendimento vinculado, buscar "awaiting_plaud"
+  if (!existingRecording.atendimentoId) {
+    try {
+      const [awaiting] = await db
+        .select()
+        .from(atendimentos)
+        .where(
+          and(
+            eq(atendimentos.transcricaoStatus, "awaiting_plaud"),
+            config.workspaceId
+              ? eq(atendimentos.workspaceId, config.workspaceId)
+              : undefined
+          )
+        )
+        .orderBy(desc(atendimentos.createdAt))
+        .limit(1);
+
+      if (awaiting) {
+        console.log(
+          `[Plaud] Auto-linking transcription recording ${existingRecording.id} to awaiting atendimento ${awaiting.id}`
+        );
+
+        await db
+          .update(plaudRecordings)
+          .set({
+            atendimentoId: awaiting.id,
+            assistidoId: awaiting.assistidoId,
+            updatedAt: new Date(),
+          })
+          .where(eq(plaudRecordings.id, existingRecording.id));
+
+        // Atualizar referência local
+        existingRecording = {
+          ...existingRecording,
+          atendimentoId: awaiting.id,
+          assistidoId: awaiting.assistidoId,
+        };
+
+        await db
+          .update(atendimentos)
+          .set({
+            plaudRecordingId: payload.recording_id,
+            plaudDeviceId: payload.device_id,
+            transcricaoStatus: "processing",
+            duracao: payload.data.duration,
+            updatedAt: new Date(),
+          })
+          .where(eq(atendimentos.id, awaiting.id));
+      }
+    } catch (error) {
+      console.error("[Plaud] Erro no auto-link (transcription):", error);
+    }
+  }
+
+  // Se tiver atendimento vinculado, atualiza transcrição
   if (existingRecording.atendimentoId) {
     await updateAtendimentoTranscription(
       existingRecording.atendimentoId,

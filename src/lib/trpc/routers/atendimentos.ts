@@ -297,6 +297,56 @@ export const atendimentosRouter = router({
     }),
 
   /**
+   * Inicia gravação no Plaud — cria atendimento em estado "awaiting_plaud"
+   * para auto-vinculação quando o webhook do Plaud chegar.
+   */
+  startPlaudRecording: protectedProcedure
+    .input(
+      z.object({
+        assistidoId: z.number(),
+        processoId: z.number().optional().nullable(),
+        casoId: z.number().optional().nullable(),
+        tipo: z.string().default("presencial"),
+        descricao: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const workspaceId = ctx.session.user.workspaceId;
+
+      // 1. Limpar qualquer "awaiting_plaud" anterior do mesmo workspace
+      if (workspaceId) {
+        await db
+          .update(atendimentos)
+          .set({ transcricaoStatus: "pending", updatedAt: new Date() })
+          .where(
+            and(
+              eq(atendimentos.transcricaoStatus, "awaiting_plaud"),
+              eq(atendimentos.workspaceId, workspaceId)
+            )
+          );
+      }
+
+      // 2. Criar atendimento com status "awaiting_plaud"
+      const [atendimento] = await db
+        .insert(atendimentos)
+        .values({
+          assistidoId: input.assistidoId,
+          processoId: input.processoId ?? null,
+          casoId: input.casoId ?? null,
+          workspaceId,
+          dataAtendimento: new Date(),
+          tipo: input.tipo,
+          descricao: input.descricao,
+          status: "realizado",
+          transcricaoStatus: "awaiting_plaud",
+          atendidoPorId: ctx.session.user.id,
+        })
+        .returning();
+
+      return { atendimentoId: atendimento.id };
+    }),
+
+  /**
    * Lista gravações não vinculadas
    */
   unlinkedRecordings: protectedProcedure.query(async ({ ctx }) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +42,9 @@ import {
   AlertCircle,
   Mic,
   Radio,
+  Loader2,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
 import { AudioRecorderButton } from "@/components/shared/audio-recorder";
 import { TranscriptViewer } from "@/components/shared/transcript-viewer";
@@ -192,6 +194,21 @@ export function RegistroRapidoAprimorado({
   const [summary, setSummary] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [showTranscriptViewer, setShowTranscriptViewer] = useState(false);
+  const [awaitingPlaud, setAwaitingPlaud] = useState(false);
+
+  const startPlaudRecording = trpc.atendimentos.startPlaudRecording.useMutation({
+    onSuccess: () => {
+      setAwaitingPlaud(true);
+      window.open("plaud://record", "_blank");
+      toast.info("Aguardando gravação do Plaud...", {
+        description: "Inicie a gravação no Plaud Desktop. A transcrição será vinculada automaticamente ao assistido.",
+        duration: 8000,
+      });
+    },
+    onError: (err: any) => {
+      toast.error("Erro ao iniciar gravação Plaud", { description: err.message });
+    },
+  });
 
   // Transcrição: handler quando áudio é transcrito
   const handleTranscriptReady = (text: string) => {
@@ -662,18 +679,36 @@ export function RegistroRapidoAprimorado({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-violet-500 hover:text-violet-400 hover:bg-violet-500/10"
-                title="Gravar com Plaud Desktop"
+                className={cn(
+                  "h-7 w-7 hover:bg-violet-500/10",
+                  awaitingPlaud
+                    ? "text-amber-500 animate-pulse"
+                    : "text-violet-500 hover:text-violet-400"
+                )}
+                title={awaitingPlaud ? "Aguardando gravação do Plaud..." : "Gravar com Plaud Desktop"}
+                disabled={startPlaudRecording.isPending}
                 onClick={() => {
-                  // Try deep link first, fallback to instruction
-                  window.open("plaud://record", "_blank");
-                  toast.info("Plaud Desktop", {
-                    description: "Inicie a gravação no Plaud Desktop. Após concluir, a transcrição será vinculada automaticamente.",
-                    duration: 6000,
-                  });
+                  if (data.assistidoId) {
+                    startPlaudRecording.mutate({
+                      assistidoId: data.assistidoId,
+                      processoId: data.processoId,
+                      tipo: data.tipo,
+                      descricao: data.descricao || undefined,
+                    });
+                  } else {
+                    window.open("plaud://record", "_blank");
+                    toast.info("Plaud Desktop", {
+                      description: "Selecione um assistido antes para vincular automaticamente, ou grave e vincule depois em Integrações.",
+                      duration: 6000,
+                    });
+                  }
                 }}
               >
-                <Radio className="h-3.5 w-3.5" />
+                {startPlaudRecording.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Radio className="h-3.5 w-3.5" />
+                )}
               </Button>
             </div>
           </div>
