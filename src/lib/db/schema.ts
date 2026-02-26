@@ -2868,6 +2868,54 @@ export const driveFilesRelations = relations(driveFiles, ({ one, many }) => ({
   documento: one(documentos, { fields: [driveFiles.documentoId], references: [documentos.id] }),
   createdBy: one(users, { fields: [driveFiles.createdById], references: [users.id] }),
   parent: one(driveFiles, { fields: [driveFiles.parentFileId], references: [driveFiles.id] }),
+  sections: many(driveDocumentSections),
+}));
+
+// ==========================================
+// DRIVE - SEÇÕES DE DOCUMENTOS PDF
+// ==========================================
+
+export const driveDocumentSections = pgTable("drive_document_sections", {
+  id: serial("id").primaryKey(),
+  driveFileId: integer("drive_file_id").notNull().references(() => driveFiles.id, { onDelete: "cascade" }),
+
+  // Classificação da peça processual
+  tipo: varchar("tipo", { length: 50 }).notNull(), // denuncia, sentenca, decisao, depoimento, etc.
+  titulo: text("titulo").notNull(), // "Depoimento de FULANO DE TAL"
+  paginaInicio: integer("pagina_inicio").notNull(),
+  paginaFim: integer("pagina_fim").notNull(),
+
+  // Conteúdo extraído
+  resumo: text("resumo"), // 2-3 frases geradas pelo Gemini
+  textoExtraido: text("texto_extraido"), // texto bruto das páginas
+
+  // Qualidade da classificação
+  confianca: integer("confianca").default(0), // 0-100
+
+  // Metadados estruturados (partes, datas, artigos de lei)
+  metadata: jsonb("metadata").$type<{
+    partesmencionadas?: string[];
+    datasExtraidas?: string[];
+    artigosLei?: string[];
+    juiz?: string;
+    promotor?: string;
+  }>().default({}),
+
+  // embedding vector(768) — será adicionado na Fase 5 (RAG/pgvector)
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("drive_doc_sections_drive_file_id_idx").on(table.driveFileId),
+  index("drive_doc_sections_tipo_idx").on(table.tipo),
+  index("drive_doc_sections_pagina_inicio_idx").on(table.paginaInicio),
+]);
+
+export type DriveDocumentSection = typeof driveDocumentSections.$inferSelect;
+export type InsertDriveDocumentSection = typeof driveDocumentSections.$inferInsert;
+
+export const driveDocumentSectionsRelations = relations(driveDocumentSections, ({ one }) => ({
+  driveFile: one(driveFiles, { fields: [driveDocumentSections.driveFileId], references: [driveFiles.id] }),
 }));
 
 export const driveSyncLogsRelations = relations(driveSyncLogs, ({ one }) => ({

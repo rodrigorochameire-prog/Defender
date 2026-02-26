@@ -883,6 +883,7 @@ export const driveAutoLinkAndEnrichFn = inngest.createFunction(
       const files = await db
         .select({
           id: driveFiles.id,
+          driveFileId: driveFiles.driveFileId,
           mimeType: driveFiles.mimeType,
           webViewLink: driveFiles.webViewLink,
           assistidoId: driveFiles.assistidoId,
@@ -898,6 +899,8 @@ export const driveAutoLinkAndEnrichFn = inngest.createFunction(
         );
 
       let queued = 0;
+      const pdfFiles: Array<{ id: number; driveFileId: string }> = [];
+
       for (const file of files) {
         const isEnrichable =
           file.mimeType && ENRICHABLE_TYPES.some((t) => file.mimeType!.includes(t));
@@ -909,6 +912,11 @@ export const driveAutoLinkAndEnrichFn = inngest.createFunction(
             .set({ enrichmentStatus: "pending", updatedAt: new Date() })
             .where(eq(driveFiles.id, file.id));
           queued++;
+
+          // Track PDFs for section extraction pipeline
+          if (file.mimeType?.includes("pdf")) {
+            pdfFiles.push({ id: file.id, driveFileId: file.driveFileId });
+          }
         } else {
           await db
             .update(driveFiles)
@@ -921,13 +929,28 @@ export const driveAutoLinkAndEnrichFn = inngest.createFunction(
         }
       }
 
-      return { queued, total: files.length };
+      return { queued, total: files.length, pdfFiles };
     });
+
+    // Step 3: Trigger PDF extraction pipeline for PDF files
+    if (enrichResult.pdfFiles && enrichResult.pdfFiles.length > 0) {
+      await step.run("trigger-pdf-pipelines", async () => {
+        const events = enrichResult.pdfFiles.map(
+          (f: { id: number; driveFileId: string }) => ({
+            name: "pdf/extract-and-classify" as const,
+            data: { driveFileId: f.id, driveGoogleId: f.driveFileId },
+          })
+        );
+        await inngest.send(events);
+        return { triggered: events.length };
+      });
+    }
 
     return {
       linked: linkResult.linked,
       enrichQueued: enrichResult.queued,
       totalFiles: enrichResult.total,
+      pdfPipelinesTriggered: enrichResult.pdfFiles?.length || 0,
     };
   }
 );
@@ -1051,6 +1074,245 @@ export const healthCheckFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// PDF ENRICHMENT PIPELINE
+// ============================================
+
+/**
+ * Pipeline completo: extrai texto → classifica seções → salva no banco.
+ * Trigger: "pdf/extract-and-classify" (enviado pelo auto-link-and-enrich)
+ */
+export const pdfExtractAndClassifyFn = inngest.createFunction(
+  {
+    id: "pdf-extract-and-classify",
+    name: "PDF Extract & Classify Sections",
+    retries: 2,
+    concurrency: { limit: 3 },
+  },
+  { event: "pdf/extract-and-classify" },
+  async ({ event, step }) => {
+    const { driveFileId, driveGoogleId } = event.data;
+
+    // Step 1: Download PDF from Drive
+    const pdfBuffer = await step.run("download-pdf", async () => {
+      const { downloadFileContent } = await import("@/lib/services/google-drive");
+      const content = await downloadFileContent(driveGoogleId);
+      if (!content) throw new Error(`Failed to download file ${driveGoogleId}`);
+      return Buffer.from(content).toString("base64");
+    });
+
+    // Step 2: Extract text from PDF (pdfjs-dist)
+    const extraction = await step.run("extract-text", async () => {
+      const { extractTextFromPdf } = await import("@/lib/services/pdf-extractor");
+      const buffer = Buffer.from(pdfBuffer, "base64");
+      return await extractTextFromPdf(buffer);
+    });
+
+    if (!extraction.success || extraction.pages.length === 0) {
+      // Mark as failed
+      await step.run("mark-failed-extraction", async () => {
+        const { driveFiles } = await import("@/lib/db/schema");
+        const { eq } = await import("drizzle-orm");
+        await db
+          .update(driveFiles)
+          .set({
+            enrichmentStatus: "failed",
+            enrichmentError: extraction.error || "No text extracted",
+            updatedAt: new Date(),
+          })
+          .where(eq(driveFiles.id, driveFileId));
+      });
+      return { success: false, error: extraction.error, driveFileId };
+    }
+
+    // Step 3: Mark as processing
+    await step.run("mark-processing", async () => {
+      const { driveFiles } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+      await db
+        .update(driveFiles)
+        .set({ enrichmentStatus: "processing", updatedAt: new Date() })
+        .where(eq(driveFiles.id, driveFileId));
+    });
+
+    // Step 4: Classify sections with Gemini (in chunks of 20 pages)
+    const classification = await step.run("classify-sections", async () => {
+      const { chunkPages } = await import("@/lib/services/pdf-extractor");
+      const { classifyFullDocument, isClassifierConfigured } = await import(
+        "@/lib/services/pdf-classifier"
+      );
+
+      if (!isClassifierConfigured()) {
+        return { success: false, sections: [], error: "Gemini not configured" };
+      }
+
+      const chunks = chunkPages(extraction.pages, 20);
+      return await classifyFullDocument(chunks);
+    });
+
+    if (!classification.success || classification.sections.length === 0) {
+      await step.run("mark-failed-classification", async () => {
+        const { driveFiles } = await import("@/lib/db/schema");
+        const { eq } = await import("drizzle-orm");
+        await db
+          .update(driveFiles)
+          .set({
+            enrichmentStatus: "failed",
+            enrichmentError: classification.error || "No sections classified",
+            updatedAt: new Date(),
+          })
+          .where(eq(driveFiles.id, driveFileId));
+      });
+      return {
+        success: false,
+        error: classification.error,
+        driveFileId,
+        pagesExtracted: extraction.totalPages,
+      };
+    }
+
+    // Step 5: Store sections in database
+    const stored = await step.run("store-sections", async () => {
+      const { driveDocumentSections, driveFiles } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+
+      // Delete existing sections for this file (re-processing)
+      await db
+        .delete(driveDocumentSections)
+        .where(eq(driveDocumentSections.driveFileId, driveFileId));
+
+      // Insert new sections
+      const values = classification.sections.map((s) => ({
+        driveFileId,
+        tipo: s.tipo,
+        titulo: s.titulo,
+        paginaInicio: s.paginaInicio,
+        paginaFim: s.paginaFim,
+        resumo: s.resumo,
+        textoExtraido: extraction.pages
+          .filter((p) => p.pageNumber >= s.paginaInicio && p.pageNumber <= s.paginaFim)
+          .map((p) => p.text)
+          .join("\n\n"),
+        confianca: s.confianca,
+        metadata: s.metadata,
+      }));
+
+      const inserted = await db
+        .insert(driveDocumentSections)
+        .values(values)
+        .returning({ id: driveDocumentSections.id });
+
+      // Mark file as completed
+      await db
+        .update(driveFiles)
+        .set({
+          enrichmentStatus: "completed",
+          enrichmentError: null,
+          enrichedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(driveFiles.id, driveFileId));
+
+      return { sectionsStored: inserted.length };
+    });
+
+    // Step 6: Trigger bookmark insertion pipeline
+    await step.run("trigger-bookmark-pipeline", async () => {
+      await inngest.send({
+        name: "pdf/insert-bookmarks",
+        data: { driveFileId, driveGoogleId },
+      });
+    });
+
+    return {
+      success: true,
+      driveFileId,
+      totalPages: extraction.totalPages,
+      sectionsFound: classification.sections.length,
+      sectionsStored: stored.sectionsStored,
+      tokensUsed: classification.tokensUsed,
+    };
+  }
+);
+
+// ============================================
+// PDF BOOKMARK INSERTION
+// ============================================
+
+/**
+ * Insere bookmarks/outline no PDF original e faz upload de volta ao Drive.
+ * Trigger: "pdf/insert-bookmarks" (enviado após classificação)
+ */
+export const pdfInsertBookmarksFn = inngest.createFunction(
+  {
+    id: "pdf-insert-bookmarks",
+    name: "PDF Insert Bookmarks",
+    retries: 2,
+    concurrency: { limit: 2 },
+  },
+  { event: "pdf/insert-bookmarks" },
+  async ({ event, step }) => {
+    const { driveFileId, driveGoogleId } = event.data;
+
+    // Step 1: Load sections from database
+    const sections = await step.run("load-sections", async () => {
+      const { driveDocumentSections } = await import("@/lib/db/schema");
+      const { eq, asc } = await import("drizzle-orm");
+      return db
+        .select({
+          tipo: driveDocumentSections.tipo,
+          titulo: driveDocumentSections.titulo,
+          paginaInicio: driveDocumentSections.paginaInicio,
+          paginaFim: driveDocumentSections.paginaFim,
+          resumo: driveDocumentSections.resumo,
+        })
+        .from(driveDocumentSections)
+        .where(eq(driveDocumentSections.driveFileId, driveFileId))
+        .orderBy(asc(driveDocumentSections.paginaInicio));
+    });
+
+    if (sections.length === 0) {
+      return { success: true, skipped: true, reason: "No sections to bookmark" };
+    }
+
+    // Step 2: Download PDF
+    const pdfBase64 = await step.run("download-pdf", async () => {
+      const { downloadFileContent } = await import("@/lib/services/google-drive");
+      const content = await downloadFileContent(driveGoogleId);
+      if (!content) throw new Error(`Failed to download file ${driveGoogleId}`);
+      return Buffer.from(content).toString("base64");
+    });
+
+    // Step 3: Add bookmarks
+    const bookmarkResult = await step.run("add-bookmarks", async () => {
+      const { addBookmarksToPdf } = await import("@/lib/services/pdf-bookmarker");
+      const buffer = Buffer.from(pdfBase64, "base64");
+      const result = await addBookmarksToPdf(buffer, sections);
+      if (!result.success) throw new Error(result.error || "Bookmark insertion failed");
+      return {
+        bookmarksAdded: result.bookmarksAdded,
+        pdfBase64: result.pdfBuffer.toString("base64"),
+      };
+    });
+
+    // Step 4: Upload modified PDF back to Drive
+    const uploadResult = await step.run("upload-bookmarked-pdf", async () => {
+      const { updateFileInDrive } = await import("@/lib/services/google-drive");
+      const buffer = Buffer.from(bookmarkResult.pdfBase64, "base64");
+      const result = await updateFileInDrive(driveGoogleId, buffer, "application/pdf");
+      if (!result) throw new Error("Failed to upload bookmarked PDF to Drive");
+      return { uploadedFileId: result.id };
+    });
+
+    return {
+      success: true,
+      driveFileId,
+      bookmarksAdded: bookmarkResult.bookmarksAdded,
+      uploadedFileId: uploadResult.uploadedFileId,
+    };
+  }
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -1070,4 +1332,6 @@ export const functions = [
   incrementalSyncFn,
   renewChannelsFn,
   healthCheckFn,
+  pdfExtractAndClassifyFn,
+  pdfInsertBookmarksFn,
 ];

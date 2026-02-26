@@ -46,7 +46,11 @@ import {
   FileText,
   Check,
   RotateCcw,
+  BookOpen,
+  Bookmark,
+  FileDown,
 } from "lucide-react";
+import { PdfViewerModal, getSectionConfig, type DocumentSection } from "./PdfViewerModal";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -1025,17 +1029,241 @@ function LinkActionsSection({ file }: { file: DriveFile }) {
 
 // ─── Detail Panel Content ───────────────────────────────────────────
 
+// ─── Types for Report ───────────────────────────────────────────────
+
+type ReportSection = {
+  tipo: string;
+  titulo: string;
+  paginaInicio: number;
+  paginaFim: number;
+  resumo?: string | null;
+  confianca?: number;
+  metadata?: {
+    partesmencionadas?: string[];
+    datasExtraidas?: string[];
+    artigosLei?: string[];
+    juiz?: string;
+    promotor?: string;
+  } | null;
+};
+
+// ─── Peças Processuais Section ──────────────────────────────────────
+
+function PecasProcessuaisSection({
+  file,
+  onOpenViewer,
+}: {
+  file: DriveFile;
+  onOpenViewer: () => void;
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+  const [isBookmarking, setIsBookmarking] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const isPdf = file.mimeType?.includes("pdf");
+
+  // Only query sections for PDFs
+  const { data: summary, isLoading } = trpc.documentSections.getSummary.useQuery(
+    { driveFileId: file.id },
+    { enabled: !!isPdf }
+  );
+
+  const triggerBookmarks = trpc.documentSections.triggerBookmarks.useMutation({
+    onSuccess: () => {
+      toast.success("Bookmarks sendo inseridos no PDF. O arquivo será atualizado no Drive em instantes.");
+      setIsBookmarking(false);
+    },
+    onError: (err) => {
+      toast.error(`Erro ao inserir bookmarks: ${err.message}`);
+      setIsBookmarking(false);
+    },
+  });
+
+  const { data: reportData } = trpc.documentSections.getReportData.useQuery(
+    { driveFileId: file.id },
+    { enabled: !!isPdf && isExporting }
+  );
+
+  // Generate and download report when data is ready
+  useEffect(() => {
+    if (!isExporting || !reportData || reportData.sections.length === 0) return;
+
+    (async () => {
+      try {
+        const { generateSectionReport } = await import("@/lib/services/pdf-report-generator");
+        const pdfBytes = generateSectionReport({
+          fileName: reportData.fileName,
+          totalPages: reportData.sections.reduce(
+            (max, s) => Math.max(max, s.paginaFim),
+            0
+          ),
+          sections: reportData.sections.map((s) => ({
+            tipo: s.tipo,
+            titulo: s.titulo,
+            paginaInicio: s.paginaInicio,
+            paginaFim: s.paginaFim,
+            resumo: s.resumo,
+            confianca: s.confianca ?? 0,
+            metadata: s.metadata as ReportSection["metadata"],
+          })),
+        });
+
+        const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `relatorio-pecas-${file.name.replace(/\.pdf$/i, "")}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Relatório exportado com sucesso!");
+      } catch (err) {
+        toast.error("Erro ao gerar relatório");
+        console.error(err);
+      } finally {
+        setIsExporting(false);
+      }
+    })();
+  }, [reportData, isExporting, file.name]);
+
+  if (!isPdf) return null;
+
+  const hasSections = summary && summary.length > 0;
+
+  const handleBookmark = () => {
+    setIsBookmarking(true);
+    triggerBookmarks.mutate({ driveFileId: file.id });
+  };
+
+  const handleExport = () => {
+    setIsExporting(true);
+  };
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger asChild>
+        <div>
+          <SectionHeader
+            title="Peças Processuais"
+            icon={BookOpen}
+            isOpen={isOpen}
+            onToggle={() => setIsOpen(!isOpen)}
+            badge={hasSections ? `${summary.reduce((acc: number, s: any) => acc + s.count, 0)}` : undefined}
+          />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="px-4 pb-3 space-y-2">
+          {isLoading ? (
+            <div className="flex items-center gap-2 py-2">
+              <Loader2 className="w-3 h-3 animate-spin text-zinc-400" />
+              <span className="text-[11px] text-zinc-400">Carregando...</span>
+            </div>
+          ) : hasSections ? (
+            <>
+              {/* Section type badges */}
+              <div className="flex flex-wrap gap-1">
+                {summary.map((s: any) => {
+                  const config = getSectionConfig(s.tipo);
+                  const SIcon = config.icon;
+                  return (
+                    <Badge
+                      key={s.tipo}
+                      variant="outline"
+                      className={cn("text-[9px] px-1.5 py-0 h-5", config.bgColor)}
+                    >
+                      <SIcon className="w-2.5 h-2.5 mr-0.5" />
+                      {s.count} {config.label}
+                    </Badge>
+                  );
+                })}
+              </div>
+
+              {/* Action buttons */}
+              <div className="space-y-1.5">
+                {/* Open viewer button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/5 hover:border-emerald-500/50"
+                  onClick={onOpenViewer}
+                >
+                  <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+                  Abrir Visualizador de Peças
+                </Button>
+
+                {/* Bookmark + Export row */}
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 h-7 text-[10px] text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    onClick={handleBookmark}
+                    disabled={isBookmarking}
+                  >
+                    {isBookmarking ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Bookmark className="h-3 w-3 mr-1" />
+                    )}
+                    Bookmarkar PDF
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 h-7 text-[10px] text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    onClick={handleExport}
+                    disabled={isExporting}
+                  >
+                    {isExporting ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <FileDown className="h-3 w-3 mr-1" />
+                    )}
+                    Exportar Relatório
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                {file.enrichmentStatus === "processing"
+                  ? "Pipeline de IA processando..."
+                  : file.enrichmentStatus === "completed"
+                    ? "Nenhuma peça identificada"
+                    : "PDF não processado pela IA"}
+              </p>
+              {file.enrichmentStatus === "processing" && (
+                <div className="flex items-center gap-1.5">
+                  <Loader2 className="w-3 h-3 animate-spin text-amber-500" />
+                  <span className="text-[10px] text-amber-500">Extraindo peças...</span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+// ─── Detail Panel Content ───────────────────────────────────────────
+
 function DetailPanelContent({ file }: { file: DriveFile }) {
   const ctx = useDriveContext();
   const [isFavorited, setIsFavorited] = useState(() =>
     getFavorites().has(file.id)
   );
   const [isRenaming, setIsRenaming] = useState(false);
+  const [showPdfViewer, setShowPdfViewer] = useState(false);
 
   const handleToggleFavorite = useCallback(() => {
     const newState = toggleFavorite(file.id);
     setIsFavorited(newState);
   }, [file.id]);
+
+  const isPdf = file.mimeType?.includes("pdf");
+  // Build PDF URL for viewer — use webContentLink (direct download) or proxy via Drive
+  const pdfUrl = file.webContentLink || (file.webViewLink ? file.webViewLink.replace("/view", "/preview") : "");
 
   return (
     <div className="flex flex-col h-full">
@@ -1072,6 +1300,18 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
         {/* Preview */}
         <div className="p-4">
           <FilePreview file={file} />
+          {/* Open in viewer button for PDFs */}
+          {isPdf && pdfUrl && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-2 h-8 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/5"
+              onClick={() => setShowPdfViewer(true)}
+            >
+              <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+              Abrir Visualizador
+            </Button>
+          )}
         </div>
 
         {/* Actions Row */}
@@ -1086,6 +1326,12 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
 
         {/* Collapsible Sections */}
         <div className="divide-y divide-zinc-200/50 dark:divide-zinc-800/50">
+          {isPdf && (
+            <PecasProcessuaisSection
+              file={file}
+              onOpenViewer={() => setShowPdfViewer(true)}
+            />
+          )}
           <MetadataSection file={file} />
           <EnrichmentSection file={file} />
           <JuridicalContextSection file={file} />
@@ -1093,6 +1339,17 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
           <LinkActionsSection file={file} />
         </div>
       </div>
+
+      {/* PDF Viewer Modal */}
+      {isPdf && pdfUrl && (
+        <PdfViewerModal
+          isOpen={showPdfViewer}
+          onClose={() => setShowPdfViewer(false)}
+          fileId={file.id}
+          fileName={file.name}
+          pdfUrl={pdfUrl}
+        />
+      )}
     </div>
   );
 }

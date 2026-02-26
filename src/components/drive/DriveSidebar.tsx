@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { useDriveContext } from "./DriveContext";
@@ -32,6 +32,8 @@ import {
   FolderOpen,
   Loader2,
   HardDrive,
+  Search,
+  X,
 } from "lucide-react";
 
 // --- Types ---
@@ -146,22 +148,41 @@ function AtribuicaoSubfolders({
   folderId,
   atribuicaoKey,
   color,
+  onCount,
 }: {
   folderId: string;
   atribuicaoKey: string;
   color: string;
+  onCount?: (count: number) => void;
 }) {
   const ctx = useDriveContext();
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const onCountRef = useRef(onCount);
+  onCountRef.current = onCount;
 
   const { data, isLoading } = trpc.drive.files.useQuery(
     {
       folderId,
       parentFileId: null,
       mimeType: "application/vnd.google-apps.folder",
-      limit: 100,
+      limit: 200,
     },
     { staleTime: 60_000 }
   );
+
+  const subfolders = data?.files ?? [];
+
+  // Report count to parent (using ref to avoid infinite loop)
+  useEffect(() => {
+    if (onCountRef.current && !isLoading) onCountRef.current(subfolders.length);
+  }, [subfolders.length, isLoading]);
+
+  const filteredFolders = useMemo(() => {
+    if (!searchQuery.trim()) return subfolders;
+    const q = searchQuery.toLowerCase().trim();
+    return subfolders.filter((f) => f.name.toLowerCase().includes(q));
+  }, [subfolders, searchQuery]);
 
   if (isLoading) {
     return (
@@ -171,8 +192,6 @@ function AtribuicaoSubfolders({
       </div>
     );
   }
-
-  const subfolders = data?.files ?? [];
 
   if (subfolders.length === 0) {
     return (
@@ -184,71 +203,107 @@ function AtribuicaoSubfolders({
 
   const recents = getRecents();
   const recentIds = new Set(recents.map((r) => r.id));
+  const showSearch = subfolders.length > 5;
 
   return (
-    <div className={cn(
-      "overflow-hidden transition-all duration-300 ease-in-out max-h-96 opacity-100"
-    )}>
-      <div className="relative pl-4 space-y-0.5">
-        {/* Vertical connector line (matches main sidebar) */}
+    <div className="overflow-hidden transition-all duration-300 ease-in-out opacity-100">
+      {/* Inline search (shows when 6+ subfolders) */}
+      {showSearch && (
+        <div className="relative mx-3 mb-1">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-zinc-500" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Filtrar assistidos..."
+            className="w-full h-7 pl-7 pr-7 text-[11px] bg-zinc-800/60 border border-zinc-700/40 rounded-lg text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600/60 focus:bg-zinc-800/80 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => { setSearchQuery(""); searchInputRef.current?.focus(); }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Scrollable list */}
+      <div className="relative pl-4 space-y-0.5 max-h-[280px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700/50 scrollbar-track-transparent">
+        {/* Vertical connector line */}
         <div className={cn(
           "absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b",
           getAttrConnectorGradient(color)
         )} />
 
-        {subfolders.map((folder) => {
-          const isActive = ctx.selectedFolderId === folder.driveFileId;
-          const isRecent = recentIds.has(folder.driveFileId);
+        {filteredFolders.length === 0 ? (
+          <div className="py-2 pl-4 text-zinc-600 text-[11px]">
+            Nenhum resultado para &ldquo;{searchQuery}&rdquo;
+          </div>
+        ) : (
+          filteredFolders.map((folder) => {
+            const isActive = ctx.selectedFolderId === folder.driveFileId;
+            const isRecent = recentIds.has(folder.driveFileId);
 
-          return (
-            <button
-              key={folder.id}
-              onClick={() => {
-                ctx.navigateToFolder(folder.driveFileId, folder.name);
-                const updated = [
-                  {
-                    id: folder.driveFileId,
-                    name: folder.name,
-                    atribuicao: atribuicaoKey,
-                    visitedAt: Date.now(),
-                  },
-                  ...getRecents().filter((r) => r.id !== folder.driveFileId),
-                ].slice(0, 10);
-                localStorage.setItem(RECENTS_KEY, JSON.stringify(updated));
-              }}
-              className={cn(
-                "flex items-center gap-2 w-full text-left px-3 py-1.5 transition-all duration-300 rounded-lg group/subitem relative",
-                isActive
-                  ? getAttrSubItemActive(color)
-                  : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
-              )}
-            >
-              {/* Horizontal connection indicator */}
-              <div className={cn(
-                "absolute left-[-12px] w-2 h-px transition-all duration-200",
-                isActive ? getAttrSubItemConnector(color) : "bg-zinc-700/50"
-              )} />
-              <FolderOpen className={cn(
-                "h-3.5 w-3.5 shrink-0 transition-all duration-300",
-                isActive ? "" : "text-zinc-500 group-hover/subitem:text-zinc-300"
-              )} />
-              <span className="truncate text-[12px]">{folder.name}</span>
-              {isRecent && !isActive && (
-                <span className={cn(
-                  "h-1.5 w-1.5 rounded-full shrink-0 ml-auto",
-                  getAttrActiveDot(color)
-                )} />
-              )}
-              {isActive && (
+            return (
+              <button
+                key={folder.id}
+                onClick={() => {
+                  ctx.navigateToFolder(folder.driveFileId, folder.name);
+                  const updated = [
+                    {
+                      id: folder.driveFileId,
+                      name: folder.name,
+                      atribuicao: atribuicaoKey,
+                      visitedAt: Date.now(),
+                    },
+                    ...getRecents().filter((r) => r.id !== folder.driveFileId),
+                  ].slice(0, 10);
+                  localStorage.setItem(RECENTS_KEY, JSON.stringify(updated));
+                }}
+                className={cn(
+                  "flex items-center gap-2 w-full text-left px-3 py-1.5 transition-all duration-300 rounded-lg group/subitem relative",
+                  isActive
+                    ? getAttrSubItemActive(color)
+                    : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
+                )}
+              >
+                {/* Horizontal connection indicator */}
                 <div className={cn(
-                  "absolute right-2 w-1 h-1 rounded-full",
-                  getAttrActiveDot(color)
+                  "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                  isActive ? getAttrSubItemConnector(color) : "bg-zinc-700/50"
                 )} />
-              )}
-            </button>
-          );
-        })}
+                <FolderOpen className={cn(
+                  "h-3.5 w-3.5 shrink-0 transition-all duration-300",
+                  isActive ? "" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                )} />
+                <span className="truncate text-[12px]">{folder.name}</span>
+                {isRecent && !isActive && (
+                  <span className={cn(
+                    "h-1.5 w-1.5 rounded-full shrink-0 ml-auto",
+                    getAttrActiveDot(color)
+                  )} />
+                )}
+                {isActive && (
+                  <div className={cn(
+                    "absolute right-2 w-1 h-1 rounded-full",
+                    getAttrActiveDot(color)
+                  )} />
+                )}
+              </button>
+            );
+          })
+        )}
       </div>
+
+      {/* Result count when filtering */}
+      {searchQuery && filteredFolders.length > 0 && (
+        <div className="px-7 py-0.5 text-[10px] text-zinc-600">
+          {filteredFolders.length} de {subfolders.length}
+        </div>
+      )}
     </div>
   );
 }
@@ -268,6 +323,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   );
   const [recents, setRecents] = useState<RecentItem[]>([]);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const [subfolderCounts, setSubfolderCounts] = useState<Record<string, number>>({});
 
   const { data: syncFolders } = trpc.drive.syncFolders.useQuery(undefined, {
     staleTime: 30_000,
@@ -358,6 +414,11 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                           </TooltipContent>
                         </Tooltip>
                       )}
+                      {subfolderCounts[attr.key] != null && subfolderCounts[attr.key] > 0 && (
+                        <span className="text-[10px] tabular-nums text-zinc-500 ml-auto mr-1">
+                          {subfolderCounts[attr.key]}
+                        </span>
+                      )}
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 ml-auto transition-transform duration-300 shrink-0",
@@ -381,6 +442,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                         folderId={attr.folderId}
                         atribuicaoKey={attr.key}
                         color={attr.color}
+                        onCount={(count) => setSubfolderCounts((prev) => ({ ...prev, [attr.key]: count }))}
                       />
                     )}
                   </div>

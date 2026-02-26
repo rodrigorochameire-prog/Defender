@@ -137,6 +137,14 @@ export type InngestEvents = {
     };
   };
 
+  // PDF Enrichment Pipeline
+  "pdf/extract-and-classify": {
+    data: {
+      driveFileId: number; // ID in drive_files table
+      driveGoogleId: string; // Google Drive file ID
+    };
+  };
+
   // Prazos
   "prazos/check": {
     data: {

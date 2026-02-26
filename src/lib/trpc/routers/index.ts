@@ -47,6 +47,7 @@ import { enrichmentRouter } from "./enrichment";
 import { solarRouter } from "./solar";
 import { searchRouter } from "./search";
 import { intelligenceRouter } from "./intelligence";
+import { documentSectionsRouter } from "./document-sections";
 
 
 export const appRouter = router({
@@ -107,11 +108,6 @@ export const appRouter = router({
   // ATENDIMENTOS (PLAUD INTEGRATION)
   // ==========================================
   atendimentos: atendimentosRouter,
-
-  // ==========================================
-  // INVESTIGAÇÃO - DILIGÊNCIAS
-  // ==========================================
-  diligencias: diligenciasRouter,
 
   // ==========================================
   // JURISPRUDÊNCIA - BANCO DE JULGADOS
@@ -192,6 +188,11 @@ export const appRouter = router({
   // INTELIGÊNCIA — SISTEMA NERVOSO DEFENSIVO
   // ==========================================
   intelligence: intelligenceRouter,
+
+  // ==========================================
+  // SEÇÕES DE DOCUMENTOS PDF (ENRICHMENT PIPELINE)
+  // ==========================================
+  documentSections: documentSectionsRouter,
 });
 
 export type AppRouter = typeof appRouter;
