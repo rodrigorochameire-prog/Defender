@@ -48,6 +48,7 @@ import { solarRouter } from "./solar";
 import { searchRouter } from "./search";
 import { intelligenceRouter } from "./intelligence";
 import { documentSectionsRouter } from "./document-sections";
+import { settingsRouter } from "./settings";
 
 
 export const appRouter = router({
@@ -193,6 +194,11 @@ export const appRouter = router({
   // SEÇÕES DE DOCUMENTOS PDF (ENRICHMENT PIPELINE)
   // ==========================================
   documentSections: documentSectionsRouter,
+
+  // ==========================================
+  // CONFIGURAÇÕES DO USUÁRIO
+  // ==========================================
+  settings: settingsRouter,
 });
 
 export type AppRouter = typeof appRouter;

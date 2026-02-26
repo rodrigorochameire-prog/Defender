@@ -5145,3 +5145,21 @@ export const muralNotasRelations = relations(muralNotas, ({ one }) => ({
   assistido: one(assistidos, { fields: [muralNotas.assistidoId], references: [assistidos.id] }),
   processo: one(processos, { fields: [muralNotas.processoId], references: [processos.id] }),
 }));
+
+// ─── User Settings ──────────────────────────────────────────────────
+export const userSettings = pgTable("user_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  settings: jsonb("settings").default({}).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("user_settings_user_id_idx").on(table.userId),
+]);
+
+export type UserSettings = typeof userSettings.$inferSelect;
+export type InsertUserSettings = typeof userSettings.$inferInsert;
+
+export const userSettingsRelations = relations(userSettings, ({ one }) => ({
+  user: one(users, { fields: [userSettings.userId], references: [users.id] }),
+}));

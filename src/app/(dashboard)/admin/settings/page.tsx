@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,17 @@ export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState("geral");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Carregar configurações do servidor
+  const { data: savedSettings, isLoading: isLoadingSettings } = trpc.settings.get.useQuery();
+  const saveMutation = trpc.settings.save.useMutation({
+    onSuccess: () => {
+      toast.success("Configurações salvas com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao salvar configurações", { description: error.message });
+    },
+  });
+
   // Estados locais para configurações
   const [settings, setSettings] = useState({
     // Configurações Gerais
@@ -30,7 +42,7 @@ export default function AdminSettingsPage() {
     comarca: "Camaçari",
     telefone: "(71) 3621-0000",
     email: "defensoria@example.com",
-    
+
     // Notificações
     notificarPrazos: true,
     diasAntesPrazo: 3,
@@ -38,21 +50,26 @@ export default function AdminSettingsPage() {
     diasAntesAudiencia: 2,
     notificarJuri: true,
     diasAntesJuri: 7,
-    
+
     // Integrações
     googleDriveEnabled: false,
     googleCalendarEnabled: false,
     whatsappEnabled: false,
   });
 
+  // Atualizar estado local quando dados do servidor chegarem
+  useEffect(() => {
+    if (savedSettings) {
+      setSettings(prev => ({ ...prev, ...savedSettings as any }));
+    }
+  }, [savedSettings]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // TODO: Implementar salvamento real
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success("Configurações salvas com sucesso!");
-    } catch (error) {
-      toast.error("Erro ao salvar configurações");
+      await saveMutation.mutateAsync(settings);
+    } catch {
+      // Error handled by mutation onError
     } finally {
       setIsSaving(false);
     }
