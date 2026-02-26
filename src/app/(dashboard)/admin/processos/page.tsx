@@ -1565,6 +1565,7 @@ export default function ProcessosPage() {
         nome: p.assistido?.nome || "Não identificado",
         preso: p.assistido?.statusPrisional && ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(p.assistido.statusPrisional),
       },
+      defensorNome: p.defensorNome || null,
       demandasAbertas: 0,
       ultimaMovimentacao: "",
       proximoPrazo: null as string | null,
@@ -1663,7 +1664,7 @@ export default function ProcessosPage() {
       let key = "";
       if (groupBy === "comarca") key = processo.comarca;
       else if (groupBy === "area") key = ATRIBUICAO_OPTIONS.find(o => o.value === normalizeAreaToFilter(processo.area))?.label || processo.area;
-      else if (groupBy === "defensor") key = "Dr. Rodrigo Rocha"; // TODO: usar processo.defensorNome quando disponível
+      else if (groupBy === "defensor") key = processo.defensorNome || "Sem defensor";
       
       if (!groups[key]) groups[key] = [];
       groups[key].push(processo);

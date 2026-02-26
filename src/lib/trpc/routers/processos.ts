@@ -46,6 +46,8 @@ export const processosRouter = router({
         conditions.push(eq(processos.workspaceId, workspaceId));
       }
       
+      const defensorAlias = alias(users, "defensor");
+
       const result = await db
         .select({
           id: processos.id,
@@ -57,6 +59,7 @@ export const processosRouter = router({
           assunto: processos.assunto,
           isJuri: processos.isJuri,
           assistidoId: processos.assistidoId,
+          defensorId: processos.defensorId,
           situacao: processos.situacao,
           createdAt: processos.createdAt,
           assistido: {
@@ -64,14 +67,16 @@ export const processosRouter = router({
             nome: assistidos.nome,
             statusPrisional: assistidos.statusPrisional,
           },
+          defensorNome: defensorAlias.name,
         })
         .from(processos)
         .leftJoin(assistidos, eq(processos.assistidoId, assistidos.id))
+        .leftJoin(defensorAlias, eq(processos.defensorId, defensorAlias.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(processos.createdAt))
         .limit(limit)
         .offset(offset);
-      
+
       return result;
     }),
 

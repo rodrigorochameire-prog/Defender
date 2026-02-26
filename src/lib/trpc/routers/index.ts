@@ -49,6 +49,7 @@ import { searchRouter } from "./search";
 import { intelligenceRouter } from "./intelligence";
 import { documentSectionsRouter } from "./document-sections";
 import { settingsRouter } from "./settings";
+import { tesesRouter } from "./teses";
 
 
 export const appRouter = router({
@@ -199,6 +200,11 @@ export const appRouter = router({
   // CONFIGURAÇÕES DO USUÁRIO
   // ==========================================
   settings: settingsRouter,
+
+  // ==========================================
+  // TESES DEFENSIVAS (ESTRATÉGIA)
+  // ==========================================
+  teses: tesesRouter,
 });
 
 export type AppRouter = typeof appRouter;
