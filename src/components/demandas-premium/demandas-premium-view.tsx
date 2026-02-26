@@ -1124,6 +1124,8 @@ export default function Demandas() {
       // Rastreamento de importação
       importBatchId,
       ordemOriginal: data.pjeData?.ordemOriginal ?? index, // Posição original no texto colado
+      // PJe Import v2: vinculação direta com assistido existente
+      assistidoMatchId: data.assistidoMatchId || undefined,
     }));
 
     // Por padrão, sempre atualizar existentes para evitar duplicatas

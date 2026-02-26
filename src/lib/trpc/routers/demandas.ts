@@ -5,6 +5,7 @@ import { demandas, processos, assistidos, users } from "@/lib/db/schema";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope, getDefensorResponsavel, getDefensoresVisiveis } from "../workspace";
+import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
 
 export const demandasRouter = router({
   // Listar todas as demandas
@@ -498,6 +499,8 @@ export const demandasRouter = router({
             // Rastreamento de importação
             importBatchId: z.string().optional(), // UUID do lote de importação
             ordemOriginal: z.number().optional(), // Posição original no texto colado
+            // Match de assistido (PJe Import v2)
+            assistidoMatchId: z.number().optional(), // ID do assistido já vinculado na revisão
           })
         ),
         atualizarExistentes: z.boolean().optional().default(false),
@@ -575,13 +578,27 @@ export const demandasRouter = router({
 
       for (const row of input.rows) {
         try {
-          // 1. Buscar ou criar assistido por nome
-          let assistido = await db.query.assistidos.findFirst({
-            where: and(
-              ilike(assistidos.nome, row.assistido.trim()),
-              isNull(assistidos.deletedAt),
-            ),
-          });
+          // 1. Buscar ou criar assistido
+          // Se assistidoMatchId disponível (PJe Import v2), buscar por ID direto
+          let assistido;
+          if (row.assistidoMatchId) {
+            assistido = await db.query.assistidos.findFirst({
+              where: and(
+                eq(assistidos.id, row.assistidoMatchId),
+                isNull(assistidos.deletedAt),
+              ),
+            });
+          }
+
+          // Fallback: buscar por nome (comportamento original)
+          if (!assistido) {
+            assistido = await db.query.assistidos.findFirst({
+              where: and(
+                ilike(assistidos.nome, row.assistido.trim()),
+                isNull(assistidos.deletedAt),
+              ),
+            });
+          }
 
           if (!assistido) {
             const statusPrisional = row.estadoPrisional === "preso"
@@ -814,6 +831,82 @@ export const demandasRouter = router({
           .where(eq(demandas.id, item.id));
       }
       return { success: true };
+    }),
+
+  // Batch match de nomes com assistidos existentes (PJe Import v2)
+  // Recebe array de nomes, retorna match result para cada um
+  batchMatchAssistidos: protectedProcedure
+    .input(z.object({
+      nomes: z.array(z.string()).max(200),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { workspaceId } = getWorkspaceScope(ctx.user);
+
+      // 1. Buscar todos assistidos do workspace (1 query)
+      const conditions: any[] = [isNull(assistidos.deletedAt)];
+      if (workspaceId) {
+        conditions.push(eq(assistidos.workspaceId, workspaceId));
+      }
+
+      const todosAssistidos = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          cpf: assistidos.cpf,
+          statusPrisional: assistidos.statusPrisional,
+        })
+        .from(assistidos)
+        .where(and(...conditions));
+
+      // 2. Pre-normalizar todos os nomes dos assistidos
+      const assistidosNormalizados = todosAssistidos.map((a) => ({
+        ...a,
+        nomeNormalizado: normalizarNome(a.nome),
+      }));
+
+      // 3. Para cada nome da importação, encontrar melhor match
+      return input.nomes.map((nome) => {
+        const nomeNorm = normalizarNome(nome);
+        let bestMatch: {
+          type: "exact" | "similar" | "new";
+          matchedId?: number;
+          matchedNome?: string;
+          matchedCpf?: string | null;
+          statusPrisional?: string | null;
+          similarity?: number;
+        } = { type: "new" };
+        let bestSimilarity = 0;
+
+        for (const assistido of assistidosNormalizados) {
+          const similarity = calcularSimilaridade(nomeNorm, assistido.nomeNormalizado);
+
+          if (similarity > bestSimilarity) {
+            bestSimilarity = similarity;
+
+            if (similarity >= 0.90) {
+              bestMatch = {
+                type: "exact",
+                matchedId: assistido.id,
+                matchedNome: assistido.nome,
+                matchedCpf: assistido.cpf,
+                statusPrisional: assistido.statusPrisional,
+                similarity,
+              };
+            } else if (similarity >= 0.75) {
+              bestMatch = {
+                type: "similar",
+                matchedId: assistido.id,
+                matchedNome: assistido.nome,
+                matchedCpf: assistido.cpf,
+                statusPrisional: assistido.statusPrisional,
+                similarity,
+              };
+            }
+          }
+        }
+
+        return { nome, match: bestMatch };
+      });
     }),
 
   searchProcessos: protectedProcedure

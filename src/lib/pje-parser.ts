@@ -896,7 +896,14 @@ function gerarProvidencias(intimacao: IntimacaoPJeSimples): string {
 
 export function intimacaoToDemanda(
   intimacao: IntimacaoPJeSimples,
-  atribuicao: string
+  atribuicao: string,
+  overrides?: {
+    ato?: string;
+    status?: string;
+    prazo?: string;
+    estadoPrisional?: string;
+    assistidoMatchId?: number;
+  }
 ): any {
   // Usar atribuição detectada se disponível e não foi especificada
   const atribuicaoFinal = atribuicao || intimacao.atribuicaoDetectada || 'Criminal';
@@ -907,7 +914,7 @@ export function intimacaoToDemanda(
   return {
     id: `pje-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     assistido: intimacao.assistido,
-    status: 'Analisar',
+    status: overrides?.status || 'Analisar',
     data: dataISO,
     // dataInclusao com precisão de milissegundos para ordenação precisa
     // Usa 999 - ordemOriginal para que a primeira da lista (ordem 0) tenha valor maior (999)
@@ -915,18 +922,19 @@ export function intimacaoToDemanda(
     dataInclusao: intimacao.ordemOriginal !== undefined
       ? `${dataISO.split('T')[0]}T00:00:00.${String(999 - intimacao.ordemOriginal).padStart(3, '0')}`
       : new Date().toISOString(),
-    prazo: '',
+    prazo: overrides?.prazo || '',
     processos: [
       {
         tipo: intimacao.tipoProcesso || 'AP',
         numero: intimacao.numeroProcesso,
       }
     ],
-    ato: 'Ciência',
+    ato: overrides?.ato || 'Ciência',
     providencias: gerarProvidencias(intimacao),
     atribuicao: atribuicaoFinal,
-    estadoPrisional: 'Solto',
+    estadoPrisional: overrides?.estadoPrisional || 'Solto',
     tipoAto: 'Geral',
+    ...(overrides?.assistidoMatchId && { assistidoMatchId: overrides.assistidoMatchId }),
     pjeData: {
       ...intimacao,
       dataExpedicao: intimacao.dataExpedicao,
@@ -1053,7 +1061,7 @@ export function verificarDuplicatas(
   };
 }
 
-function normalizarNome(nome: string): string {
+export function normalizarNome(nome: string): string {
   return nome
     .toLowerCase()
     .normalize('NFD')
@@ -1062,7 +1070,7 @@ function normalizarNome(nome: string): string {
     .trim();
 }
 
-function calcularSimilaridade(str1: string, str2: string): number {
+export function calcularSimilaridade(str1: string, str2: string): number {
   const comprimentoMaior = Math.max(str1.length, str2.length);
   if (comprimentoMaior === 0) return 1.0;
 

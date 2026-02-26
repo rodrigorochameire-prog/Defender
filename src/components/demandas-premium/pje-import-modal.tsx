@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FileText, AlertCircle, CheckCircle2, Upload, Download, Settings, User, Scale, ArrowRight, Sparkles, Info, Edit3, AlertTriangle, ChevronDown, Shield, MessageCircle, RefreshCw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,9 @@ import {
   type ResultadoVerificacaoDuplicatas,
   type ResultadoParserVVD,
 } from "@/lib/pje-parser";
+import { suggestAto } from "@/lib/ato-suggestion";
+import { calcularPrazoPorAto, converterISOParaBR } from "@/lib/prazo-calculator";
+import { PjeReviewTable, type PjeReviewRow } from "./pje-review-table";
 
 interface PJeImportModalProps {
   isOpen: boolean;
@@ -61,6 +64,9 @@ export function PJeImportModal({
   // Opção para atualizar duplicatas existentes
   const [atualizarDuplicatas, setAtualizarDuplicatas] = useState(false);
 
+  // PJe Import v2 — review table rows
+  const [reviewRows, setReviewRows] = useState<PjeReviewRow[]>([]);
+
   // Mutation para importação VVD
   const importarVVDMutation = trpc.vvd.importarIntimacoesPJe.useMutation({
     onSuccess: (resultado) => {
@@ -79,6 +85,47 @@ export function PJeImportModal({
       setIsImporting(false);
     },
   });
+
+  // Batch match de assistidos (PJe Import v2)
+  const nomesParaMatch = useMemo(
+    () => intimacoes.map((i) => i.assistido),
+    [intimacoes]
+  );
+  const matchQuery = trpc.demandas.batchMatchAssistidos.useQuery(
+    { nomes: nomesParaMatch },
+    { enabled: nomesParaMatch.length > 0 && etapa === "revisar" }
+  );
+
+  // Merge match results into review rows
+  useEffect(() => {
+    if (matchQuery.data && reviewRows.length > 0) {
+      const matchMap = new Map(matchQuery.data.map((m) => [m.nome, m.match]));
+      setReviewRows((prev) =>
+        prev.map((row) => {
+          const match = matchMap.get(row.assistidoNome);
+          if (!match) return row;
+
+          const updates: Partial<PjeReviewRow> = {
+            assistidoMatch: match,
+          };
+
+          // Se assistido encontrado estiver preso, auto-setar estado prisional
+          if (
+            match.statusPrisional &&
+            (match.statusPrisional === "CADEIA_PUBLICA" ||
+              match.statusPrisional === "PRESO" ||
+              match.statusPrisional === "CUSTODIA")
+          ) {
+            updates.estadoPrisional = "preso";
+          } else if (match.statusPrisional === "MONITORADO") {
+            updates.estadoPrisional = "monitorado";
+          }
+
+          return { ...row, ...updates };
+        })
+      );
+    }
+  }, [matchQuery.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Verificar se é importação VVD
   const isVVD = atribuicao === "Violência Doméstica";
@@ -129,6 +176,56 @@ export function PJeImportModal({
         setIntimacoesGerais(separadas.intimacoesGerais);
       }
 
+      // PJe Import v2: Construir review rows com ato sugerido e prazo auto
+      const atribuicaoFinal = resultadoParser.atribuicaoDetectada || atribuicao;
+      const rows: PjeReviewRow[] = verificacao.novas.map((intimacao, index) => {
+        const suggestion = suggestAto(
+          intimacao.tipoDocumento,
+          intimacao.tipoProcesso,
+          atribuicaoFinal
+        );
+
+        // Calcular prazo automático baseado no ato sugerido
+        let prazoCalculado = "";
+        if (suggestion.ato && intimacao.dataExpedicao) {
+          try {
+            const parts = intimacao.dataExpedicao.split(/[\s/]/);
+            const dia = parseInt(parts[0]);
+            const mes = parseInt(parts[1]) - 1;
+            const ano = parseInt(parts[2]);
+            const fullYear = ano < 100 ? 2000 + ano : ano;
+            const dataExp = new Date(fullYear, mes, dia);
+            if (!isNaN(dataExp.getTime())) {
+              const isoResult = calcularPrazoPorAto(dataExp, suggestion.ato);
+              if (isoResult) {
+                prazoCalculado = converterISOParaBR(isoResult);
+              }
+            }
+          } catch {
+            // Prazo não calculado
+          }
+        }
+
+        return {
+          assistidoNome: intimacao.assistido,
+          numeroProcesso: intimacao.numeroProcesso,
+          dataExpedicao: intimacao.dataExpedicao,
+          tipoDocumento: intimacao.tipoDocumento,
+          tipoProcesso: intimacao.tipoProcesso,
+          crime: intimacao.crime,
+          ordemOriginal: intimacao.ordemOriginal ?? index,
+          ato: suggestion.ato,
+          atoConfidence: suggestion.confidence,
+          status: "analisar",
+          prazo: prazoCalculado,
+          estadoPrisional: "Solto",
+          excluded: false,
+          prazoManual: false,
+          assistidoMatch: { type: "new" }, // Será atualizado pelo matchQuery
+        };
+      });
+
+      setReviewRows(rows);
       setEtapa("revisar");
     } catch (error) {
       console.error("Erro ao processar:", error);
@@ -147,6 +244,7 @@ export function PJeImportModal({
     setResultadoVerificacao(null);
     setIsImporting(false);
     setAtualizarDuplicatas(false);
+    setReviewRows([]);
   };
 
   const handleImportar = async () => {
@@ -194,17 +292,37 @@ export function PJeImportModal({
       }
     } else {
       // Importação regular - vai para demandas
-      // Se atualizarDuplicatas está ativo, incluir também as duplicadas
-      const intimacoesParaImportar = atualizarDuplicatas && resultadoVerificacao
-        ? [...intimacoes, ...resultadoVerificacao.duplicadas]
-        : intimacoes;
+      // PJe Import v2: usa reviewRows para gerar demandas com overrides
+      const rowsToImport = reviewRows.filter((r) => !r.excluded);
 
-      const demandas = intimacoesParaImportar.map((intimacao) =>
-        intimacaoToDemanda(intimacao, atribuicao)
-      );
+      // Se atualizarDuplicatas está ativo, incluir também as duplicadas (com defaults)
+      const demandasFromRows = rowsToImport.map((row) => {
+        const intimacao = intimacoes.find(
+          (i) => (i.ordemOriginal ?? 0) === row.ordemOriginal
+        );
+        if (!intimacao) return null;
+
+        return intimacaoToDemanda(intimacao, atribuicao, {
+          ato: row.ato,
+          status: row.status,
+          prazo: row.prazo,
+          estadoPrisional: row.estadoPrisional,
+          assistidoMatchId: row.assistidoMatch.matchedId,
+        });
+      }).filter(Boolean);
+
+      // Se atualizar duplicatas, adicionar as duplicadas com defaults
+      let demandasDuplicadas: any[] = [];
+      if (atualizarDuplicatas && resultadoVerificacao) {
+        demandasDuplicadas = resultadoVerificacao.duplicadas.map((intimacao) =>
+          intimacaoToDemanda(intimacao, atribuicao)
+        );
+      }
+
+      const todasDemandas = [...demandasFromRows, ...demandasDuplicadas];
 
       // Passar flag indicando que deve atualizar existentes
-      onImport(demandas, atualizarDuplicatas);
+      onImport(todasDemandas, atualizarDuplicatas);
       onClose();
       resetModal();
     }
@@ -348,17 +466,17 @@ export function PJeImportModal({
               </div>
             )}
 
-            {/* Card de Edição Posterior - Só mostra para não-VVD */}
+            {/* Card de Revisão v2 - Só mostra para não-VVD */}
             {!isVVD && (
-              <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 border-l-2 border-amber-400 rounded-r-lg">
+              <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 border-l-2 border-emerald-400 rounded-r-lg">
                 <div className="flex items-start gap-2">
-                  <Edit3 className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="font-medium text-xs text-zinc-700 dark:text-zinc-300 mb-1">
-                      Valores padrão (editáveis depois)
+                      Revisão inteligente
                     </p>
                     <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
-                      Ato: Ciência • Status: Analisar • Prazo: Auto
+                      Ato sugerido automaticamente • Prazo calculado em dobro • Assistidos vinculados
                     </p>
                   </div>
                 </div>
@@ -696,82 +814,29 @@ export function PJeImportModal({
               </div>
             )}
 
-            {/* Lista de intimações (apenas se houver intimações novas) */}
-            {intimacoes.length > 0 && !isVVD && (
+            {/* Tabela de revisão editável (PJe Import v2) */}
+            {reviewRows.length > 0 && !isVVD && (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 flex items-center justify-center border border-blue-200 dark:border-blue-800">
                     <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-                    Intimações que serão importadas ({intimacoes.length})
+                    Revise e ajuste antes de importar
                   </h3>
+                  {matchQuery.isLoading && (
+                    <span className="text-[10px] text-zinc-400 animate-pulse">
+                      Buscando assistidos...
+                    </span>
+                  )}
                 </div>
-                
-                <div className="max-h-[420px] overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-                  {intimacoes.map((intimacao, index) => (
-                    <div
-                      key={index}
-                      className="group p-4 bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all duration-200"
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-50 mb-1.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                            {intimacao.assistido}
-                          </h4>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-400 font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded inline-block">
-                            {intimacao.numeroProcesso}
-                          </p>
-                          {intimacao.idDocumento && (
-                            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">
-                              {intimacao.tipoDocumento} (ID: {intimacao.idDocumento})
-                            </p>
-                          )}
-                        </div>
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 whitespace-nowrap">
-                          #{index + 1}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 gap-3">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="p-2.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                            <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 mb-1">Data de Expedição</p>
-                            <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{intimacao.dataExpedicao}</p>
-                          </div>
-                          {intimacao.crime && (
-                            <div className="p-2.5 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
-                              <p className="text-[10px] font-semibold text-purple-500 dark:text-purple-400 mb-1">Crime</p>
-                              <p className="text-xs font-bold text-purple-900 dark:text-purple-100">{intimacao.crime}</p>
-                            </div>
-                          )}
-                          {intimacao.prazo && (
-                            <div className="p-2.5 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                              <p className="text-[10px] font-semibold text-blue-500 dark:text-blue-400 mb-1">Prazo PJe</p>
-                              <p className="text-xs font-bold text-blue-900 dark:text-blue-100">{intimacao.prazo} dias</p>
-                            </div>
-                          )}
-                          {intimacao.tipoProcesso && (
-                            <div className="p-2.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                              <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 mb-1">Tipo</p>
-                              <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{intimacao.tipoProcesso}</p>
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-2.5 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
-                          <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 mb-1 flex items-center gap-1">
-                            <Edit3 className="w-3 h-3" />
-                            Providências (ajustar após importar)
-                          </p>
-                          <p className="text-xs text-amber-800 dark:text-amber-200">
-                            {intimacao.camposNaoExtraidos && intimacao.camposNaoExtraidos.length > 0
-                              ? `(ajustar status e ato${intimacao.camposNaoExtraidos.filter(c => c !== 'prazo' && c !== 'crime').length > 0 ? ' e ' + intimacao.camposNaoExtraidos.filter(c => c !== 'prazo' && c !== 'crime').join(' e ') : ''})`
-                              : '(ajustar status e ato)'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+
+                <div className="max-h-[420px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+                  <PjeReviewTable
+                    rows={reviewRows}
+                    onRowsChange={setReviewRows}
+                    atribuicao={atribuicao}
+                  />
                 </div>
               </div>
             )}
@@ -854,7 +919,7 @@ export function PJeImportModal({
               <Button
                 type="button"
                 onClick={handleImportar}
-                disabled={isImporting || (intimacoes.length === 0 && (!atualizarDuplicatas || !resultadoVerificacao?.totalDuplicadas))}
+                disabled={isImporting || (reviewRows.filter(r => !r.excluded).length === 0 && intimacoes.length === 0 && (!atualizarDuplicatas || !resultadoVerificacao?.totalDuplicadas))}
                 className="h-11 px-6 text-sm font-semibold text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/30"
               >
                 {isImporting ? (
@@ -863,26 +928,35 @@ export function PJeImportModal({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    {atualizarDuplicatas && intimacoes.length === 0 ? "Atualizando..." : "Importando..."}
+                    {atualizarDuplicatas && reviewRows.filter(r => !r.excluded).length === 0 ? "Atualizando..." : "Importando..."}
                   </>
                 ) : (
                   <>
-                    {atualizarDuplicatas && intimacoes.length === 0 ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Atualizar {resultadoVerificacao?.totalDuplicadas || 0} {resultadoVerificacao?.totalDuplicadas === 1 ? "Intimação" : "Intimações"}
-                      </>
-                    ) : atualizarDuplicatas && resultadoVerificacao?.totalDuplicadas ? (
-                      <>
-                        <Download className="w-4 h-4 mr-2" />
-                        Importar {intimacoes.length} + Atualizar {resultadoVerificacao.totalDuplicadas}
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 mr-2" />
-                        Importar {intimacoes.length} {intimacoes.length === 1 ? "Intimação" : "Intimações"}
-                      </>
-                    )}
+                    {(() => {
+                      const includedCount = reviewRows.filter(r => !r.excluded).length;
+                      if (atualizarDuplicatas && includedCount === 0) {
+                        return (
+                          <>
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Atualizar {resultadoVerificacao?.totalDuplicadas || 0} {resultadoVerificacao?.totalDuplicadas === 1 ? "Intimação" : "Intimações"}
+                          </>
+                        );
+                      } else if (atualizarDuplicatas && resultadoVerificacao?.totalDuplicadas) {
+                        return (
+                          <>
+                            <Download className="w-4 h-4 mr-2" />
+                            Importar {includedCount} + Atualizar {resultadoVerificacao.totalDuplicadas}
+                          </>
+                        );
+                      } else {
+                        return (
+                          <>
+                            <Download className="w-4 h-4 mr-2" />
+                            Importar {includedCount} {includedCount === 1 ? "Intimação" : "Intimações"}
+                          </>
+                        );
+                      }
+                    })()}
                   </>
                 )}
               </Button>
