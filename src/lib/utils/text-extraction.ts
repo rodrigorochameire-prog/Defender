@@ -17,7 +17,7 @@ export interface ExtractedData {
 }
 
 export interface AtribuicaoResult {
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO";
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI";
   confianca: number; // 0-100
   motivo: string;
 }
@@ -28,6 +28,7 @@ export const ATRIBUICAO_FOLDER_IDS = {
   VVD: "1fN2GiGlNzc61g01ZeBMg9ZBy1hexx0ti",
   EP: "1-mbwgP3-ygVVjoN9RPTbHwnaicnBAv0q",
   SUBSTITUICAO: "1eNDT0j-5KQkzYXbqK6IBa9sIMT3QFWVU",
+  GRUPO_JURI: "1LUW4yauxm6iaJYCrjRgXAnSgTZIbel2j",
 } as const;
 
 // Pastas especiais
@@ -376,7 +377,7 @@ export function identificarAtribuicao(
  * Retorna o ID da pasta do Drive para uma atribuição
  */
 export function getFolderIdForAtribuicao(
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO"
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"
 ): string {
   return ATRIBUICAO_FOLDER_IDS[atribuicao];
 }
@@ -386,7 +387,7 @@ export function getFolderIdForAtribuicao(
  */
 export function mapAtribuicaoEnumToSimple(
   atribuicaoEnum: string
-): "JURI" | "VVD" | "EP" | "SUBSTITUICAO" {
+): "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI" {
   switch (atribuicaoEnum) {
     case "JURI_CAMACARI":
     case "GRUPO_JURI":
@@ -406,7 +407,7 @@ export function mapAtribuicaoEnumToSimple(
  * Mapeia atribuição simplificada para valor do enum atribuicao (banco)
  */
 export function mapSimpleToAtribuicaoEnum(
-  simple: "JURI" | "VVD" | "EP" | "SUBSTITUICAO"
+  simple: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"
 ): string {
   switch (simple) {
     case "JURI":

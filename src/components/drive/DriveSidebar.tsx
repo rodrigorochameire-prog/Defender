@@ -80,6 +80,7 @@ function getAttrConnectorGradient(color: string) {
     case "rose": return "from-rose-500/30 via-zinc-700/40 to-transparent";
     case "amber": return "from-amber-500/30 via-zinc-700/40 to-transparent";
     case "sky": return "from-sky-500/30 via-zinc-700/40 to-transparent";
+    case "orange": return "from-orange-500/30 via-zinc-700/40 to-transparent";
     default: return "from-zinc-500/30 via-zinc-700/40 to-transparent";
   }
 }
@@ -90,6 +91,7 @@ function getAttrActiveBg(color: string) {
     case "rose": return "bg-rose-600/15 text-rose-400";
     case "amber": return "bg-amber-600/15 text-amber-400";
     case "sky": return "bg-sky-600/15 text-sky-400";
+    case "orange": return "bg-orange-600/15 text-orange-400";
     default: return "bg-zinc-700/60 text-zinc-100";
   }
 }
@@ -100,6 +102,7 @@ function getAttrActiveIconBg(color: string) {
     case "rose": return "bg-rose-500/20";
     case "amber": return "bg-amber-500/20";
     case "sky": return "bg-sky-500/20";
+    case "orange": return "bg-orange-500/20";
     default: return "bg-white/20";
   }
 }
@@ -110,6 +113,7 @@ function getAttrSubItemActive(color: string) {
     case "rose": return "bg-rose-500/15 text-rose-400 font-medium";
     case "amber": return "bg-amber-500/15 text-amber-400 font-medium";
     case "sky": return "bg-sky-500/15 text-sky-400 font-medium";
+    case "orange": return "bg-orange-500/15 text-orange-400 font-medium";
     default: return "bg-zinc-700/40 text-zinc-200 font-medium";
   }
 }
@@ -120,6 +124,7 @@ function getAttrSubItemConnector(color: string) {
     case "rose": return "bg-rose-500/50";
     case "amber": return "bg-amber-500/50";
     case "sky": return "bg-sky-500/50";
+    case "orange": return "bg-orange-500/50";
     default: return "bg-zinc-700/50";
   }
 }
@@ -130,6 +135,7 @@ function getAttrActiveDot(color: string) {
     case "rose": return "bg-rose-400";
     case "amber": return "bg-amber-400";
     case "sky": return "bg-sky-400";
+    case "orange": return "bg-orange-400";
     default: return "bg-zinc-400";
   }
 }

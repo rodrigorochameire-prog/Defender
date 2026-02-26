@@ -2936,10 +2936,10 @@ export async function listSubfolders(folderId: string): Promise<DriveFolder[]> {
  */
 export function mapAtribuicaoToFolderKey(
   atribuicao: string
-): "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | null {
-  const mapping: Record<string, "JURI" | "VVD" | "EP" | "SUBSTITUICAO"> = {
+): "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI" | null {
+  const mapping: Record<string, "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"> = {
     JURI_CAMACARI: "JURI",
-    GRUPO_JURI: "JURI",
+    GRUPO_JURI: "GRUPO_JURI",
     VVD_CAMACARI: "VVD",
     EXECUCAO_PENAL: "EP",
     SUBSTITUICAO: "SUBSTITUICAO",
@@ -2957,7 +2957,7 @@ export function mapAtribuicaoToFolderKey(
  * @returns Pasta criada ou existente
  */
 export async function createOrFindAssistidoFolder(
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO",
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
   nomeAssistido: string
 ): Promise<DriveFolder | null> {
   const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao];
@@ -2984,8 +2984,8 @@ export async function createOrFindAssistidoFolder(
  */
 export async function moveAssistidoFolder(
   folderId: string,
-  oldAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO",
-  newAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO"
+  oldAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
+  newAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"
 ): Promise<{ success: boolean; error?: string }> {
   if (oldAtribuicao === newAtribuicao) {
     return { success: true };
@@ -3239,7 +3239,7 @@ export async function distributeFileToPasta(
  */
 export async function distributeFileComplete(
   fileId: string,
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO",
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
   nomeAssistido: string,
   numeroProcesso: string
 ): Promise<{
@@ -3343,7 +3343,7 @@ export async function getFileCountInFolder(folderId: string): Promise<number> {
  * Lista pastas de assistidos com contagem de processos
  */
 export async function listAssistidoFoldersWithCount(
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO"
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"
 ): Promise<Array<DriveFolder & { processoCount: number }>> {
   const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao];
   const folders = await listSubfolders(parentFolderId);
@@ -3578,7 +3578,7 @@ export async function createOrFindProcessoFolderHierarchical(
  */
 export async function distributeFileIntelligent(
   fileId: string,
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO",
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
   nomeAssistido: string,
   numeroProcesso: string,
   tipoProcesso: TipoProcesso,

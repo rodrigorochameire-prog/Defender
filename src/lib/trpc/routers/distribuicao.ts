@@ -84,7 +84,7 @@ export const distribuicaoRouter = router({
 
       // Aplicar correções baseadas em padrões aprendidos
       let orgaoCorrigido = extracted.orgaoJulgador;
-      let atribuicaoFromPattern: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | null = null;
+      let atribuicaoFromPattern: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI" | null = null;
 
       if (extracted.orgaoJulgador) {
         // Buscar padrão correspondente ao órgão
@@ -99,7 +99,7 @@ export const distribuicaoRouter = router({
             orgaoCorrigido = orgaoPattern.correctedValue;
           }
           if (orgaoPattern.correctAtribuicao) {
-            atribuicaoFromPattern = orgaoPattern.correctAtribuicao as "JURI" | "VVD" | "EP" | "SUBSTITUICAO";
+            atribuicaoFromPattern = orgaoPattern.correctAtribuicao as "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI";
           }
         }
       }
