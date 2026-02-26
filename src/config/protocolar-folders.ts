@@ -119,6 +119,7 @@ export function resolverSubpastaDrive(
  *     "AF - BELTRANO.pdf" → "Alegações finais"
  */
 export const FILE_PREFIX_TO_ATO: Record<string, string> = {
+  // Prefixos curtos (padrão "XX - nome.pdf")
   "RAC": "Resposta à Acusação",
   "RA": "Resposta à Acusação",
   "AF": "Alegações finais",
@@ -141,13 +142,65 @@ export const FILE_PREFIX_TO_ATO: Record<string, string> = {
 };
 
 /**
+ * Nomes completos para detectar ato no início do nome do arquivo.
+ * Esses cobrem casos onde o arquivo não usa prefixo curto.
+ * Ex: "Apelação (VVD) - 21 LCP.pdf" → "Apelação"
+ *     "Alegações finais - caso X.pdf" → "Alegações finais"
+ *
+ * Ordenados por comprimento decrescente para match mais específico primeiro.
+ */
+export const FULL_WORD_TO_ATO: Record<string, string> = {
+  "Contrarrazões de apelação": "Contrarrazões de apelação",
+  "Contrarrazoes de apelacao": "Contrarrazões de apelação",
+  "Contrarrazões de RESE": "Contrarrazões de RESE",
+  "Contrarrazoes de RESE": "Contrarrazões de RESE",
+  "Embargos de Declaração": "Embargos de Declaração",
+  "Embargos de Declaracao": "Embargos de Declaração",
+  "Resposta à Acusação": "Resposta à Acusação",
+  "Resposta a Acusacao": "Resposta à Acusação",
+  "Resposta à acusação": "Resposta à Acusação",
+  "Alegações finais": "Alegações finais",
+  "Alegacoes finais": "Alegações finais",
+  "Alegações Finais": "Alegações finais",
+  "Habeas Corpus": "Habeas Corpus",
+  "Habeas corpus": "Habeas Corpus",
+  "Mandado de Segurança": "Mandado de Segurança",
+  "Mandado de Seguranca": "Mandado de Segurança",
+  "Agravo em Execução": "Agravo em Execução",
+  "Agravo em Execucao": "Agravo em Execução",
+  "Petição intermediária": "Petição intermediária",
+  "Peticao intermediaria": "Petição intermediária",
+  "Diligências do 422": "Diligências do 422",
+  "Diligencias do 422": "Diligências do 422",
+  "Relaxamento da prisão": "Relaxamento da prisão",
+  "Relaxamento da prisao": "Relaxamento da prisão",
+  "Revogação da prisão": "Revogação da prisão",
+  "Revogacao da prisao": "Revogação da prisão",
+  "Revogação de MPU": "Revogação de MPU",
+  "Modulação de MPU": "Modulação de MPU",
+  "Impronúncia": "Alegações finais",
+  "Impronuncia": "Alegações finais",
+  "Absolvição": "Alegações finais",
+  "Absolvicao": "Alegações finais",
+  "Apelação": "Apelação",
+  "Apelacao": "Apelação",
+  "Memoriais": "Memoriais",
+  "RESE": "RESE",
+};
+
+/**
  * Extrai o tipo de ato do nome de um arquivo
  * Tenta match por prefixo (ex: "RAC - FULANO.pdf" → "Resposta à Acusação")
  */
 export function detectarAtoDoNomeArquivo(fileName: string): string | null {
-  const name = fileName.replace(/\.(pdf|docx?)$/i, "").trim();
+  // Normalizar Unicode (NFD→NFC) para lidar com variações do Google Drive
+  const name = fileName
+    .normalize("NFC")
+    .replace(/\.(pdf|docx?)$/i, "")
+    .trim();
 
-  // Ordenar prefixos por comprimento decrescente (match mais específico primeiro)
+  // 1. Tentar match por prefixo curto (ex: "AF - FULANO.pdf")
+  //    Ordenar por comprimento decrescente (match mais específico primeiro)
   const prefixos = Object.entries(FILE_PREFIX_TO_ATO)
     .sort(([a], [b]) => b.length - a.length);
 
@@ -155,6 +208,18 @@ export function detectarAtoDoNomeArquivo(fileName: string): string | null {
     // Match case-insensitive no início do nome, seguido de separador
     const regex = new RegExp(`^_?${prefix.replace(/\s+/g, "\\s+")}\\s*[-–—\\s]`, "i");
     if (regex.test(name)) {
+      return ato;
+    }
+  }
+
+  // 2. Tentar match por nome completo (ex: "Apelação (VVD) - 21 LCP.pdf")
+  //    Ordenar por comprimento decrescente para match mais específico
+  const fullWords = Object.entries(FULL_WORD_TO_ATO)
+    .sort(([a], [b]) => b.length - a.length);
+
+  const nameLower = name.toLowerCase();
+  for (const [word, ato] of fullWords) {
+    if (nameLower.startsWith(word.normalize("NFC").toLowerCase())) {
       return ato;
     }
   }
