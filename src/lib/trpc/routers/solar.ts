@@ -17,7 +17,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { processos, documentos, anotacoes, assistidos, demandas } from "@/lib/db/schema";
-import { eq, and, isNull, isNotNull, ilike, desc, asc, or, sql } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, ilike, desc, asc, or, sql, inArray, count as drizzleCount } from "drizzle-orm";
 import {
   enrichmentClient,
   type SolarSyncOutput,
@@ -1455,4 +1455,226 @@ export const solarRouter = router({
       assistidosNoSigad: sigadResult?.count ?? 0,
     };
   }),
+
+  // ==========================================
+  // DASHBOARD ASSISTIDOS × SOLAR
+  // ==========================================
+
+  /**
+   * Painel comparativo: status de sync dos assistidos com SIGAD/Solar.
+   * Retorna stats globais, stats por atribuição, e lista paginada.
+   * Tudo baseado em dados do DB (sem scraping).
+   */
+  dashboardAssistidosSync: protectedProcedure
+    .input(
+      z.object({
+        atribuicao: z.string().optional(),
+        status: z.enum(["all", "exported", "pending", "no_cpf", "error", "unchecked"]).default("all"),
+        search: z.string().optional(),
+        limit: z.number().min(1).max(100).default(50),
+        offset: z.number().min(0).default(0),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      const { atribuicao, status = "all", search, limit = 50, offset = 0 } = input || {};
+
+      // === 1. Stats globais (sem paginação) ===
+      const allAssistidos = await db
+        .select({
+          id: assistidos.id,
+          cpf: assistidos.cpf,
+          atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+          sigadId: assistidos.sigadId,
+          sigadExportadoEm: assistidos.sigadExportadoEm,
+          solarExportadoEm: assistidos.solarExportadoEm,
+        })
+        .from(assistidos)
+        .where(isNull(assistidos.deletedAt));
+
+      const stats = {
+        total: allAssistidos.length,
+        exportedSolar: allAssistidos.filter(a => a.solarExportadoEm != null).length,
+        pending: allAssistidos.filter(a => a.cpf && !a.solarExportadoEm).length,
+        noCpf: allAssistidos.filter(a => !a.cpf).length,
+        withSigad: allAssistidos.filter(a => a.sigadId != null).length,
+        // "error" = tentou exportar (sigadExportadoEm set) mas não foi ao Solar
+        errors: allAssistidos.filter(a =>
+          a.sigadExportadoEm != null && a.solarExportadoEm == null && a.cpf != null
+        ).length,
+      };
+
+      // === 2. Stats por atribuição ===
+      const atribuicaoLabels: Record<string, string> = {
+        JURI_CAMACARI: "Júri",
+        GRUPO_JURI: "Grupo Júri",
+        VVD_CAMACARI: "VVD",
+        EXECUCAO_PENAL: "Exec. Penal",
+        SUBSTITUICAO: "Substituição",
+        SUBSTITUICAO_CIVEL: "Subst. Cível",
+      };
+
+      const byAtribuicaoMap = new Map<string, { total: number; exported: number }>();
+      for (const a of allAssistidos) {
+        const key = a.atribuicaoPrimaria || "SUBSTITUICAO";
+        const cur = byAtribuicaoMap.get(key) || { total: 0, exported: 0 };
+        cur.total++;
+        if (a.solarExportadoEm != null) cur.exported++;
+        byAtribuicaoMap.set(key, cur);
+      }
+
+      const byAtribuicao = Array.from(byAtribuicaoMap.entries())
+        .map(([key, val]) => ({
+          atribuicao: key,
+          label: atribuicaoLabels[key] || key,
+          total: val.total,
+          exported: val.exported,
+          percentage: val.total > 0 ? Math.round((val.exported / val.total) * 100) : 0,
+        }))
+        .sort((a, b) => b.total - a.total);
+
+      // === 3. Lista filtrada + paginada ===
+      const conditions: ReturnType<typeof eq>[] = [isNull(assistidos.deletedAt)];
+
+      // Filtro por atribuição
+      if (atribuicao && atribuicao !== "all") {
+        const atribuicaoMap: Record<string, string[]> = {
+          "JURI": ["JURI_CAMACARI", "GRUPO_JURI"],
+          "VVD": ["VVD_CAMACARI"],
+          "EXECUCAO": ["EXECUCAO_PENAL"],
+          "SUBSTITUICAO": ["SUBSTITUICAO"],
+          "SUBSTITUICAO_CIVEL": ["SUBSTITUICAO_CIVEL"],
+        };
+        const valores = atribuicaoMap[atribuicao] || [atribuicao];
+        conditions.push(inArray(assistidos.atribuicaoPrimaria, valores as any));
+      }
+
+      // Filtro por busca
+      if (search) {
+        conditions.push(
+          or(
+            ilike(assistidos.nome, `%${search}%`),
+            ilike(assistidos.cpf || "", `%${search}%`),
+          )!
+        );
+      }
+
+      // Filtro por status de sync
+      if (status !== "all") {
+        switch (status) {
+          case "exported":
+            conditions.push(isNotNull(assistidos.solarExportadoEm));
+            break;
+          case "pending":
+            conditions.push(isNotNull(assistidos.cpf));
+            conditions.push(isNull(assistidos.solarExportadoEm));
+            break;
+          case "no_cpf":
+            conditions.push(isNull(assistidos.cpf));
+            break;
+          case "error":
+            conditions.push(isNotNull(assistidos.sigadExportadoEm));
+            conditions.push(isNull(assistidos.solarExportadoEm));
+            conditions.push(isNotNull(assistidos.cpf));
+            break;
+          case "unchecked":
+            conditions.push(isNull(assistidos.sigadExportadoEm));
+            conditions.push(isNull(assistidos.solarExportadoEm));
+            conditions.push(isNotNull(assistidos.cpf));
+            break;
+        }
+      }
+
+      // Query principal
+      const result = await db
+        .select()
+        .from(assistidos)
+        .where(and(...conditions))
+        .orderBy(
+          // Pendentes primeiro, depois exportados
+          sql`CASE
+            WHEN ${assistidos.solarExportadoEm} IS NULL AND ${assistidos.cpf} IS NOT NULL THEN 0
+            WHEN ${assistidos.cpf} IS NULL THEN 1
+            WHEN ${assistidos.solarExportadoEm} IS NOT NULL THEN 2
+            ELSE 3
+          END`,
+          asc(assistidos.nome),
+        )
+        .limit(limit)
+        .offset(offset);
+
+      // Count total filtrado (para paginação)
+      const [totalFiltered] = await db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(assistidos)
+        .where(and(...conditions));
+
+      if (result.length === 0) {
+        return { stats, byAtribuicao, assistidos: [], total: totalFiltered?.count ?? 0 };
+      }
+
+      // Contagens agregadas
+      const assistidoIds = result.map(a => a.id);
+
+      const processosCountData = await db
+        .select({
+          assistidoId: processos.assistidoId,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(processos)
+        .where(and(
+          inArray(processos.assistidoId, assistidoIds),
+          isNull(processos.deletedAt),
+        ))
+        .groupBy(processos.assistidoId);
+
+      const processosMap = new Map(processosCountData.map(p => [p.assistidoId, p.count]));
+
+      const demandasCountData = await db
+        .select({
+          assistidoId: demandas.assistidoId,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(demandas)
+        .where(and(
+          inArray(demandas.assistidoId, assistidoIds),
+          isNull(demandas.deletedAt),
+        ))
+        .groupBy(demandas.assistidoId);
+
+      const demandasMap = new Map(demandasCountData.map(d => [d.assistidoId, d.count]));
+
+      // Calcular statusSync para cada assistido
+      const assistidosList = result.map(a => {
+        let statusSync: "exported" | "pending" | "no_cpf" | "error" | "unchecked";
+        if (a.solarExportadoEm != null) {
+          statusSync = "exported";
+        } else if (!a.cpf) {
+          statusSync = "no_cpf";
+        } else if (a.sigadExportadoEm != null) {
+          statusSync = "error";
+        } else {
+          statusSync = a.cpf ? "pending" : "unchecked";
+        }
+
+        return {
+          id: a.id,
+          nome: a.nome,
+          cpf: a.cpf,
+          atribuicaoPrimaria: a.atribuicaoPrimaria,
+          sigadId: a.sigadId,
+          sigadExportadoEm: a.sigadExportadoEm,
+          solarExportadoEm: a.solarExportadoEm,
+          processosCount: processosMap.get(a.id) ?? 0,
+          demandasCount: demandasMap.get(a.id) ?? 0,
+          statusSync,
+        };
+      });
+
+      return {
+        stats,
+        byAtribuicao,
+        assistidos: assistidosList,
+        total: totalFiltered?.count ?? 0,
+      };
+    }),
 });

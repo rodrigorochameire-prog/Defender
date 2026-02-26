@@ -32,6 +32,7 @@ import {
   Settings,
   Send,
   Shield,
+  Users,
   WifiOff,
   Zap,
 } from "lucide-react";
@@ -45,6 +46,7 @@ import { SolarBatchOperations } from "@/components/solar/solar-batch-operations"
 import { SolarSyncFases } from "@/components/solar/solar-sync-fases";
 import { SolarLogs } from "@/components/solar/solar-logs";
 import { ProtocolarTab } from "@/components/solar/protocolar-tab";
+import { AssistidosSyncTab } from "@/components/solar/assistidos-sync-tab";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Tipos
@@ -413,6 +415,14 @@ export default function SolarHubPage() {
               <span className="sm:hidden">Logs</span>
             </TabsTrigger>
             <TabsTrigger
+              value="assistidos-sync"
+              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Assistidos</span>
+              <span className="sm:hidden">Assist.</span>
+            </TabsTrigger>
+            <TabsTrigger
               value="protocolar"
               className="text-xs gap-1.5 rounded-md data-[state=active]:bg-emerald-600 data-[state=active]:text-white dark:data-[state=active]:bg-emerald-600 dark:data-[state=active]:text-white"
             >
@@ -771,6 +781,13 @@ export default function SolarHubPage() {
         <TabsContent value="logs" className="mt-0">
           <div className="p-4 md:p-6">
             <SolarLogs />
+          </div>
+        </TabsContent>
+
+        {/* ── Tab: Assistidos × Solar ──────────────────────────────── */}
+        <TabsContent value="assistidos-sync" className="mt-0">
+          <div className="p-4 md:p-6">
+            <AssistidosSyncTab />
           </div>
         </TabsContent>
 
