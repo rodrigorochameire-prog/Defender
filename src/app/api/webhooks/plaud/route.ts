@@ -143,6 +143,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Garante que o device_id do payload corresponde ao config encontrado
+    // (necessário quando Zapier envia sem device_id e usamos fallback)
+    payload.device_id = config.deviceId;
+
     // Processa o webhook
     const result = await processWebhook(payload);
 
