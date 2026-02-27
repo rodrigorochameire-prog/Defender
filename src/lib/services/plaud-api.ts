@@ -370,10 +370,28 @@ async function handleTranscriptionCompleted(
     );
   }
 
-  // Upload automático para Drive
-  if (config.autoUploadToDrive && config.driveFolderId && payload.data.file_url) {
+  // Upload automático para Drive (preferir pasta do assistido)
+  if (config.autoUploadToDrive && payload.data.file_url) {
     try {
-      await uploadRecordingToDrive(existingRecording.id, config.driveFolderId);
+      let targetFolderId = config.driveFolderId;
+
+      // Se tem assistido vinculado, usar a pasta dele no Drive
+      if (existingRecording.assistidoId) {
+        const [assistido] = await db
+          .select({ driveFolderId: assistidos.driveFolderId })
+          .from(assistidos)
+          .where(eq(assistidos.id, existingRecording.assistidoId))
+          .limit(1);
+
+        if (assistido?.driveFolderId) {
+          targetFolderId = assistido.driveFolderId;
+          console.log(`[Plaud] Upload para pasta do assistido: ${targetFolderId}`);
+        }
+      }
+
+      if (targetFolderId) {
+        await uploadRecordingToDrive(existingRecording.id, targetFolderId);
+      }
     } catch (error) {
       console.error("[Plaud] Erro ao fazer upload para Drive:", error);
     }
