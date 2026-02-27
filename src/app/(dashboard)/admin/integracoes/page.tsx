@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -438,6 +439,8 @@ function AISection() {
 // ==========================================
 
 export default function IntegracoesPage() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") || "integracoes";
   const { data: pendingRecordings } = trpc.atendimentos.pendingRecordings.useQuery(undefined, {
     refetchInterval: 30_000,
   });
@@ -461,7 +464,7 @@ export default function IntegracoesPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="integracoes">
+        <Tabs defaultValue={initialTab}>
           <TabsList className="bg-zinc-100 dark:bg-zinc-800">
             <TabsTrigger value="integracoes" className="flex items-center gap-2">
               <Link2 className="w-4 h-4" />

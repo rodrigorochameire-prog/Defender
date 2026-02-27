@@ -146,7 +146,7 @@ export const atendimentosRouter = router({
         .insert(atendimentos)
         .values({
           ...input,
-          atendidoPorId: ctx.session.user.id,
+          atendidoPorId: ctx.user.id,
         })
         .returning();
 
@@ -260,7 +260,7 @@ export const atendimentosRouter = router({
    * Busca configuração ativa do Plaud
    */
   getPlaudConfig: adminProcedure.query(async ({ ctx }) => {
-    const config = await getActiveConfig(ctx.session.user.workspaceId ?? undefined);
+    const config = await getActiveConfig(ctx.user.workspaceId ?? undefined);
     return config;
   }),
 
@@ -294,8 +294,8 @@ export const atendimentosRouter = router({
 
       return await createConfig({
         ...input,
-        workspaceId: ctx.session.user.workspaceId,
-        createdById: ctx.session.user.id,
+        workspaceId: ctx.user.workspaceId,
+        createdById: ctx.user.id,
       });
     }),
 
@@ -314,7 +314,7 @@ export const atendimentosRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const workspaceId = ctx.session.user.workspaceId;
+      const workspaceId = ctx.user.workspaceId;
 
       // 1. Limpar qualquer "awaiting_plaud" anterior do mesmo workspace
       if (workspaceId) {
@@ -342,7 +342,7 @@ export const atendimentosRouter = router({
           descricao: input.descricao,
           status: "realizado",
           transcricaoStatus: "awaiting_plaud",
-          atendidoPorId: ctx.session.user.id,
+          atendidoPorId: ctx.user.id,
         })
         .returning();
 
@@ -353,7 +353,7 @@ export const atendimentosRouter = router({
    * Lista gravações não vinculadas
    */
   unlinkedRecordings: protectedProcedure.query(async ({ ctx }) => {
-    const config = await getActiveConfig(ctx.session.user.workspaceId ?? undefined);
+    const config = await getActiveConfig(ctx.user.workspaceId ?? undefined);
     if (!config) return [];
 
     return await getUnlinkedRecordings(config.id);
@@ -404,7 +404,7 @@ export const atendimentosRouter = router({
    * Estatísticas de gravações
    */
   recordingStats: adminProcedure.query(async ({ ctx }) => {
-    const config = await getActiveConfig(ctx.session.user.workspaceId ?? undefined);
+    const config = await getActiveConfig(ctx.user.workspaceId ?? undefined);
     if (!config) {
       return {
         total: 0,
@@ -624,13 +624,13 @@ export const atendimentosRouter = router({
         const [novo] = await db.insert(atendimentos).values({
           assistidoId: input.assistidoId,
           processoId: input.processoId || null,
-          workspaceId: ctx.session.user.workspaceId,
+          workspaceId: ctx.user.workspaceId,
           dataAtendimento: new Date(),
           tipo: input.novoAtendimento.tipo,
           descricao: input.novoAtendimento.descricao || null,
           status: "realizado",
           transcricaoStatus: "completed",
-          atendidoPorId: ctx.session.user.id,
+          atendidoPorId: ctx.user.id,
         }).returning();
         atendimentoId = novo.id;
       }
