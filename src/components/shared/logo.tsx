@@ -163,31 +163,19 @@ interface SidebarLogoProps {
 }
 
 export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) {
+  const iconSize = collapsed ? 28 : 38;
   return (
-    <div className={cn("sidebar-logo", collapsed && "sidebar-collapsed", className)}>
-      {/* Forçar tema escuro na sidebar - usar logo-dark sempre */}
+    <div className={cn("sidebar-logo flex items-center justify-center", collapsed && "sidebar-collapsed", className)}>
       <Link href="/admin" className="inline-block transition-opacity hover:opacity-90">
-        <div className="flex items-center gap-3">
-          <div className="relative" style={{ width: collapsed ? 32 : 48, height: collapsed ? 32 : 48 }}>
-            <Image
-              src="/logo-dark.png"
-              alt="OMBUDS"
-              width={collapsed ? 32 : 48}
-              height={collapsed ? 32 : 48}
-              priority
-              className="object-contain"
-            />
-          </div>
-          {!collapsed && (
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-white">
-                OMBUDS
-              </h2>
-              <p className="text-[9px] font-light tracking-[0.15em] uppercase text-zinc-400">
-                GESTÃO PARA DEFESA CRIMINAL
-              </p>
-            </div>
-          )}
+        <div className="relative" style={{ width: iconSize, height: iconSize }}>
+          <Image
+            src="/logo-dark.png"
+            alt="OMBUDS"
+            width={iconSize}
+            height={iconSize}
+            priority
+            className="object-contain drop-shadow-[0_0_6px_rgba(16,185,129,0.25)]"
+          />
         </div>
       </Link>
     </div>

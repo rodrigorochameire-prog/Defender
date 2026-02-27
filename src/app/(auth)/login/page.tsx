@@ -25,18 +25,16 @@ export default function LoginPage() {
         
         <div className="relative z-10 max-w-md text-center">
           <div className="flex justify-center mb-8">
-            <div className="w-28 h-28 rounded-2xl bg-zinc-800/50 backdrop-blur-sm flex items-center justify-center shadow-2xl shadow-emerald-500/10 border border-zinc-700/50 p-3">
-              <Image
-                src="/logo-dark.png"
-                alt="OMBUDS"
-                width={96}
-                height={96}
-                priority
-                className="object-contain drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]"
-              />
-            </div>
+            <Image
+              src="/logo-dark.png"
+              alt="OMBUDS"
+              width={140}
+              height={140}
+              priority
+              className="object-contain drop-shadow-[0_0_20px_rgba(16,185,129,0.35)]"
+            />
           </div>
-          
+
           <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
             OMBUDS
           </h1>
@@ -71,16 +69,14 @@ export default function LoginPage() {
           {/* Logo mobile */}
           <div className="lg:hidden text-center mb-10">
             <div className="flex justify-center mb-4">
-              <div className="w-18 h-18 rounded-xl bg-zinc-800/50 flex items-center justify-center shadow-lg shadow-emerald-500/10 border border-zinc-700/50 p-2">
-                <Image
-                  src="/logo-dark.png"
-                  alt="OMBUDS"
-                  width={56}
-                  height={56}
-                  priority
-                  className="object-contain drop-shadow-[0_0_6px_rgba(16,185,129,0.3)]"
-                />
-              </div>
+              <Image
+                src="/logo-dark.png"
+                alt="OMBUDS"
+                width={80}
+                height={80}
+                priority
+                className="object-contain drop-shadow-[0_0_14px_rgba(16,185,129,0.3)]"
+              />
             </div>
             <h1 className="text-2xl font-bold text-white tracking-tight">OMBUDS</h1>
             <p className="text-[10px] font-light tracking-[0.2em] uppercase text-zinc-500 mt-1">

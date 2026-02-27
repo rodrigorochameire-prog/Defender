@@ -1,6 +1,6 @@
 {
-  "name": "INTELEX - Defesa Inteligente",
-  "short_name": "INTELEX",
+  "name": "OMBUDS - Gestão para Defesa Criminal",
+  "short_name": "OMBUDS",
   "description": "Sistema de gestão jurídica criminal de alta performance com inteligência artificial",
   "start_url": "/admin",
   "display": "standalone",

@@ -53,9 +53,9 @@ export const metadata: Metadata = {
     siteName: "OMBUDS",
     images: [
       {
-        url: "/logo-light.png",
-        width: 1200,
-        height: 630,
+        url: "/logo-full.png",
+        width: 512,
+        height: 512,
         alt: "OMBUDS - Gestão para Defesa Criminal",
       },
     ],
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "OMBUDS | Gestão para Defesa Criminal",
     description: "Sistema de gestão jurídica criminal de alta performance",
-    images: ["/logo-light.png"],
+    images: ["/logo-full.png"],
   },
   robots: {
     index: true,
