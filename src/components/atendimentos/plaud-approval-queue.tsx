@@ -97,7 +97,7 @@ export function PlaudApprovalQueue({ className }: PlaudApprovalQueueProps) {
                 <Mic className="h-5 w-5" />
                 Gravações Pendentes
                 {recordings && recordings.length > 0 && (
-                  <Badge variant="destructive" className="ml-2">
+                  <Badge variant="danger" className="ml-2">
                     {recordings.length}
                   </Badge>
                 )}

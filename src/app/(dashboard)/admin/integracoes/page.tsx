@@ -479,7 +479,7 @@ export default function IntegracoesPage() {
               <Mic className="w-4 h-4" />
               Gravações
               {pendingCount > 0 && (
-                <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
+                <Badge variant="danger" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
                   {pendingCount}
                 </Badge>
               )}

@@ -721,7 +721,7 @@ export async function processApprovedRecording(
       .select({
         id: assistidos.id,
         nome: assistidos.nome,
-        atribuicao: assistidos.atribuicao,
+        atribuicao: assistidos.atribuicaoPrimaria,
         driveFolderId: assistidos.driveFolderId,
       })
       .from(assistidos)
