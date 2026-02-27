@@ -194,7 +194,7 @@ export const palacioRouter = router({
     .input(createDiagramaSchema)
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await resolveWorkspaceId(ctx);
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
 
       // Verificar se o caso existe
       const caso = await db.query.casos.findFirst({
@@ -235,7 +235,7 @@ export const palacioRouter = router({
     .input(updateDiagramaSchema)
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await resolveWorkspaceId(ctx);
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
 
       const { id, ...data } = input;
 
@@ -272,7 +272,7 @@ export const palacioRouter = router({
     .input(saveExcalidrawDataSchema)
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await resolveWorkspaceId(ctx);
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
 
       // Verificar se o diagrama existe
       const existing = await db.query.palacioDiagramas.findFirst({
@@ -566,7 +566,7 @@ export const palacioRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await resolveWorkspaceId(ctx);
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
 
       const diagrama = await db.query.palacioDiagramas.findFirst({
         where: and(

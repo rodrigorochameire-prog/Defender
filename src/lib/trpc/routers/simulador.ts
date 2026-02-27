@@ -259,7 +259,7 @@ export const simuladorRouter = router({
     .input(createSimulacaoSchema)
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await resolveWorkspaceId(ctx);
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
 
       // Verificar se o caso existe
       const caso = await db.query.casos.findFirst({
@@ -345,7 +345,7 @@ export const simuladorRouter = router({
     .input(updateSimulacaoSchema)
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await resolveWorkspaceId(ctx);
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
 
       const { id, ...data } = input;
 
@@ -385,7 +385,7 @@ export const simuladorRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await resolveWorkspaceId(ctx);
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
 
       const existing = await db.query.simulacoes3d.findFirst({
         where: and(
@@ -764,7 +764,7 @@ export const simuladorRouter = router({
       fps: z.number().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
 
       const [exportacao] = await db.insert(simulacaoExportacoes).values({
         versaoId: input.versaoId,
@@ -871,7 +871,7 @@ export const simuladorRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await resolveWorkspaceId(ctx);
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
 
       const [asset] = await db.insert(simulacaoAssets).values({
         ...input,

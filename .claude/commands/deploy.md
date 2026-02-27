@@ -3,228 +3,132 @@
 > **Tipo**: Workflow de Publicação
 > **Trigger**: "deploy", "publica", "manda pra produção", "vercel"
 
-## Descrição
+## Contexto do Projeto
 
-Publicar alterações na Vercel com verificações de segurança.
+| Item | Valor |
+|------|-------|
+| **Projeto Vercel** | `DEFENSAVEL` |
+| **URL Produção** | `https://ombuds.vercel.app` |
+| **Alias automático** | `https://defender-gray.vercel.app` |
+| **Projeto local (.vercel)** | `prj_e7AmqP2eyhZ4qqDWKpmnk8HkPPB2` |
+| **Team** | `team_BszWdly5JzLOjvTzoz0wNXCU` |
 
----
-
-## Pré-Deploy Checklist
-
-### 1. Código Pronto
-
-```bash
-# Build local passa
-npm run build
-
-# Sem erros de lint
-npm run lint
-
-# Testes passam
-npm test
-```
-
-### 2. Variáveis de Ambiente
-
-Verificar se existem na Vercel:
-
-| Variável | Onde |
-|----------|------|
-| `DATABASE_URL` | Vercel → Settings → Environment |
-| `NEXTAUTH_SECRET` | Vercel → Settings → Environment |
-| `NEXTAUTH_URL` | Vercel → Settings → Environment |
-| `GOOGLE_CLIENT_ID` | Vercel → Settings → Environment |
-| `GOOGLE_CLIENT_SECRET` | Vercel → Settings → Environment |
-| `GEMINI_API_KEY` | Vercel → Settings → Environment |
-
-### 3. Migrations
-
-```bash
-# Se houver mudanças no schema
-npm run db:generate
-npm run db:push  # Aplicar em produção antes do deploy
-```
+> **IMPORTANTE**: O domínio `ombuds.vercel.app` pertence ao projeto DEFENSAVEL.
+> Após `vercel --prod`, ambos os aliases são atribuídos automaticamente:
+> - `ombuds.vercel.app` (produção)
+> - `defender-gray.vercel.app` (alias secundário)
+> **NÃO precisa mais de `vercel alias set` manual.**
 
 ---
 
 ## Processo de Deploy
 
-### Deploy Automático (via Git)
+### 1. Pré-Deploy
 
 ```bash
-# Push para branch principal
+# Build local (obrigatório — não deployar com build quebrado)
+npm run build
+
+# Se houver mudanças no schema, aplicar ANTES do deploy
+npm run db:push
+```
+
+### 2. Commit e Push
+
+```bash
+# Commitar mudanças (usar /commit para formato padronizado)
+git add <arquivos>
+git commit -m "mensagem"
 git push origin main
-
-# Vercel detecta e faz deploy automaticamente
 ```
 
-### Deploy Manual (via CLI)
+### 3. Deploy via CLI
 
 ```bash
-# Instalar Vercel CLI se necessário
-npm i -g vercel
-
-# Deploy de preview
-vercel
-
-# Deploy de produção
-vercel --prod
+# Deploy de produção (alias ombuds.vercel.app é automático)
+vercel --prod --yes
 ```
 
-### Verificar Status
+### 4. Verificação Pós-Deploy
 
 ```bash
-# Via CLI
-vercel ls
+# Testar webhook (endpoint público, sem auth)
+curl -s https://ombuds.vercel.app/api/webhooks/plaud | jq .
 
-# Ou acessar
-# https://vercel.com/[seu-usuario]/defender
+# Testar página (deve retornar HTML)
+curl -s -o /dev/null -w "%{http_code}" https://ombuds.vercel.app/admin
 ```
+
+Checklist:
+- [ ] `ombuds.vercel.app` responde
+- [ ] Login funciona
+- [ ] Dashboard carrega dados
+- [ ] Webhook Plaud acessível
 
 ---
 
-## Após Deploy
-
-### 1. Verificar Build na Vercel
-
-- Acessar dashboard da Vercel
-- Verificar logs do build
-- Confirmar status "Ready"
-
-### 2. Testar em Produção
+## Deploy Rápido (one-liner)
 
 ```bash
-# Abrir URL de produção
-open https://seu-dominio.vercel.app/admin
+npm run build && vercel --prod --yes
 ```
-
-Verificar:
-- [ ] Página carrega
-- [ ] Login funciona
-- [ ] Dados aparecem
-- [ ] Funcionalidades principais OK
-
-### 3. Monitorar
-
-- Verificar logs de erro na Vercel
-- Checar métricas de performance
-- Observar primeiros acessos
 
 ---
 
 ## Rollback
 
-Se algo der errado:
-
-### Via Dashboard
-
-1. Acessar Vercel → Deployments
-2. Encontrar último deploy estável
-3. Clicar "..." → "Promote to Production"
-
 ### Via CLI
 
 ```bash
-# Listar deployments
+# Listar deployments recentes
 vercel ls
 
-# Promover deployment específico
-vercel promote [deployment-url]
+# Promover deployment anterior para produção
+vercel promote <deployment-url>
+
+# Re-apontar alias
+vercel alias set <deployment-url> ombuds.vercel.app
 ```
+
+### Via Dashboard
+
+1. Vercel → Projeto DEFENSAVEL → Deployments
+2. Encontrar último deploy estável
+3. "..." → "Promote to Production"
+4. Executar `vercel alias set <url> ombuds.vercel.app` localmente
 
 ---
 
-## Deploy de Branches
-
-### Preview (Branches não-main)
+## Variáveis de Ambiente
 
 ```bash
-# Push para qualquer branch
-git push origin feature/nova-funcionalidade
+# Listar variáveis configuradas
+vercel env ls
 
-# Vercel cria URL de preview automaticamente
-# https://defender-[hash]-[usuario].vercel.app
-```
+# Adicionar nova variável
+vercel env add NOME_VARIAVEL
 
-### Produção (Branch main)
-
-```bash
-# Merge para main
-git checkout main
-git merge feature/nova-funcionalidade
-git push origin main
-
-# Deploy automático para produção
+# Variáveis obrigatórias
+# DATABASE_URL, SESSION_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+# GOOGLE_AI_API_KEY, PLAUD_WEBHOOK_SECRET (opcional)
 ```
 
 ---
 
 ## Troubleshooting
 
-### Build Falha
+| Problema | Solução |
+|----------|---------|
+| Build falha no Vercel | `npm run build` local, corrigir erros TS |
+| `ombuds.vercel.app` mostra versão antiga | `vercel alias set <new-deploy> ombuds.vercel.app` |
+| Erro de banco em produção | Verificar `DATABASE_URL` em `vercel env ls` |
+| Webhook Plaud retorna 500 | Verificar `vercel logs <deploy-url>` |
+| Variável não encontrada | `vercel env add NOME` → selecionar Production |
 
 ```bash
-# Ver logs detalhados na Vercel
-# Ou testar localmente
-npm run build 2>&1 | tee build.log
-```
+# Logs de produção (streaming)
+vercel logs <deployment-url>
 
-**Causas comuns:**
-- Variável de ambiente faltando
-- Dependência não instalada
-- Erro de TypeScript ignorado localmente
-
-### Página em Branco
-
-- Verificar console do browser
-- Checar logs da Vercel (Functions)
-- Verificar variáveis de ambiente
-
-### Erro de Banco
-
-```bash
-# Verificar conexão
-# Acessar Supabase → Database → Connection Pooler
-
-# Verificar se migration foi aplicada
-npm run db:studio
-```
-
----
-
-## Comandos Úteis
-
-```bash
-# Status do projeto
-vercel ls
-
-# Logs de produção
-vercel logs
-
-# Variáveis de ambiente
-vercel env ls
-
-# Adicionar variável
-vercel env add NOME_VARIAVEL
-
-# Remover deployment
-vercel remove [url]
-```
-
----
-
-## Segurança no Deploy
-
-### Antes de Publicar
-
-- [ ] Sem `console.log` com dados sensíveis
-- [ ] Sem credenciais hardcoded
-- [ ] Variáveis de ambiente configuradas
-- [ ] Rotas protegidas por autenticação
-
-### Verificação Rápida
-
-```bash
-# Buscar possíveis vazamentos
-grep -rn "password\|secret\|key" src/ --include="*.ts" --include="*.tsx" | grep -v ".env"
+# Logs filtrados por erro
+vercel logs <deployment-url> 2>&1 | grep -i error
 ```
