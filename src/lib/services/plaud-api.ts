@@ -176,7 +176,8 @@ export async function processWebhook(
 export async function saveAsPendingReview(
   payload: PlaudWebhookPayload,
   configId: number,
-  createdById: number | null
+  createdById: number | null,
+  rawIncoming?: Record<string, unknown>
 ): Promise<{ success: boolean; recordingId?: number; error?: string }> {
   try {
     const title = payload.data.title || "Gravação sem título";
@@ -204,7 +205,10 @@ export async function saveAsPendingReview(
           transcription: payload.data.transcription,
           summary: payload.data.summary,
           speakers: payload.data.speakers,
-          rawPayload: payload as unknown as Record<string, unknown>,
+          rawPayload: {
+            ...payload,
+            _rawIncoming: rawIncoming || null,
+          } as unknown as Record<string, unknown>,
           updatedAt: new Date(),
         })
         .where(eq(plaudRecordings.id, existingRecording.id))
@@ -226,7 +230,10 @@ export async function saveAsPendingReview(
           transcription: payload.data.transcription,
           summary: payload.data.summary,
           speakers: payload.data.speakers,
-          rawPayload: payload as unknown as Record<string, unknown>,
+          rawPayload: {
+            ...payload,
+            _rawIncoming: rawIncoming || null,
+          } as unknown as Record<string, unknown>,
         })
         .returning();
 
