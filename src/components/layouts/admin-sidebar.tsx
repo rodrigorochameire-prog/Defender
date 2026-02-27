@@ -28,6 +28,7 @@ import { NotificationsPopover } from "@/components/notifications-popover";
 import { ContextControl } from "@/components/layout/context-control";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { EntitySheetProvider } from "@/contexts/entity-sheet-context";
+import { PlaudArrivalToast } from "@/components/atendimentos/plaud-arrival-toast";
 import { SidebarLogo } from "@/components/shared/logo";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { StatusBar } from "@/components/layout/status-bar";
@@ -1691,6 +1692,9 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           {children}
         </main>
       </SidebarInset>
+
+      {/* Notificação real-time de gravações Plaud pendentes */}
+      <PlaudArrivalToast />
     </>
   );
 }

@@ -66,6 +66,8 @@ export const searchRouter = router({
           id: assistidos.id,
           nome: assistidos.nome,
           cpf: assistidos.cpf,
+          driveFolderId: assistidos.driveFolderId,
+          atribuicao: assistidos.atribuicao,
         })
         .from(assistidos)
         .where(

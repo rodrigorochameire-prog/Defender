@@ -16,6 +16,7 @@ import {
   atendimentos,
   assistidos,
   driveFiles,
+  notifications,
 } from "@/lib/db/schema";
 import { eq, and, desc, isNull } from "drizzle-orm";
 import { uploadFileBuffer } from "./google-drive";
@@ -161,6 +162,92 @@ export async function processWebhook(
     }
   } catch (error) {
     console.error("[Plaud] Erro ao processar webhook:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
+}
+
+/**
+ * Salva gravação como pendente de aprovação (NÃO processa automaticamente).
+ * O usuário deverá revisar e aprovar antes de vincular a atendimentos.
+ */
+export async function saveAsPendingReview(
+  payload: PlaudWebhookPayload,
+  configId: number,
+  createdById: number | null
+): Promise<{ success: boolean; recordingId?: number; error?: string }> {
+  try {
+    const title = payload.data.title || "Gravação sem título";
+
+    // Verifica se já existe um registro para esta gravação
+    const [existingRecording] = await db
+      .select()
+      .from(plaudRecordings)
+      .where(eq(plaudRecordings.plaudRecordingId, payload.recording_id))
+      .limit(1);
+
+    let recording;
+
+    if (existingRecording) {
+      // Atualiza registro existente
+      const [updated] = await db
+        .update(plaudRecordings)
+        .set({
+          configId,
+          plaudDeviceId: payload.device_id,
+          title: payload.data.title || existingRecording.title,
+          duration: payload.data.duration,
+          recordedAt: new Date(payload.timestamp),
+          status: "pending_review",
+          transcription: payload.data.transcription,
+          summary: payload.data.summary,
+          speakers: payload.data.speakers,
+          rawPayload: payload as unknown as Record<string, unknown>,
+          updatedAt: new Date(),
+        })
+        .where(eq(plaudRecordings.id, existingRecording.id))
+        .returning();
+
+      recording = updated;
+    } else {
+      // Cria novo registro
+      const [created] = await db
+        .insert(plaudRecordings)
+        .values({
+          configId,
+          plaudRecordingId: payload.recording_id,
+          plaudDeviceId: payload.device_id,
+          title: payload.data.title,
+          duration: payload.data.duration,
+          recordedAt: new Date(payload.timestamp),
+          status: "pending_review",
+          transcription: payload.data.transcription,
+          summary: payload.data.summary,
+          speakers: payload.data.speakers,
+          rawPayload: payload as unknown as Record<string, unknown>,
+        })
+        .returning();
+
+      recording = created;
+    }
+
+    // Cria notificação para o usuário que configurou o Plaud
+    if (createdById) {
+      await db.insert(notifications).values({
+        userId: createdById,
+        type: "info",
+        title: "Nova gravação Plaud",
+        message: `"${title}" — Aguardando sua aprovação`,
+        actionUrl: "/admin/integracoes?tab=gravacoes",
+        isRead: false,
+      });
+    }
+
+    return { success: true, recordingId: recording.id };
+  } catch (error) {
+    console.error("[Plaud] Erro ao salvar como pendente:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erro desconhecido",
@@ -609,6 +696,125 @@ async function updateAtendimentoTranscription(
       updatedAt: new Date(),
     })
     .where(eq(atendimentos.id, atendimentoId));
+}
+
+// ==========================================
+// PIPELINE PÓS-APROVAÇÃO
+// ==========================================
+
+/**
+ * Executa o pipeline completo pós-aprovação:
+ * 1. Garante pasta no Drive do assistido
+ * 2. Upload do áudio ao Drive (pasta do assistido)
+ * 3. Enrichment da transcrição (fire-and-forget)
+ * 4. Extração de pontos-chave com Gemini
+ */
+export async function processApprovedRecording(
+  recordingId: number,
+  assistidoId: number,
+  atendimentoId: number | null,
+  processoId: number | null
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. Buscar dados do assistido para garantir pasta no Drive
+    const [assistido] = await db
+      .select({
+        id: assistidos.id,
+        nome: assistidos.nome,
+        atribuicao: assistidos.atribuicao,
+        driveFolderId: assistidos.driveFolderId,
+      })
+      .from(assistidos)
+      .where(eq(assistidos.id, assistidoId))
+      .limit(1);
+
+    if (!assistido) {
+      console.error(`[Plaud] Assistido ${assistidoId} não encontrado`);
+      return { success: false, error: "Assistido não encontrado" };
+    }
+
+    // 2. Garantir pasta no Drive (se não existir)
+    let driveFolderId = assistido.driveFolderId;
+    if (!driveFolderId && assistido.atribuicao) {
+      try {
+        const {
+          createOrFindAssistidoFolder,
+          mapAtribuicaoToFolderKey,
+          isGoogleDriveConfigured,
+        } = await import("@/lib/services/google-drive");
+
+        if (isGoogleDriveConfigured()) {
+          const folderKey = mapAtribuicaoToFolderKey(assistido.atribuicao);
+          if (folderKey) {
+            const folder = await createOrFindAssistidoFolder(folderKey, assistido.nome);
+            if (folder) {
+              driveFolderId = folder.id;
+              await db
+                .update(assistidos)
+                .set({ driveFolderId: folder.id, updatedAt: new Date() })
+                .where(eq(assistidos.id, assistidoId));
+              console.log(`[Plaud] Pasta Drive criada para assistido ${assistidoId}: ${folder.id}`);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`[Plaud] Erro ao criar pasta Drive para assistido ${assistidoId}:`, error);
+      }
+    }
+
+    // 3. Upload do áudio ao Drive (se tiver pasta)
+    if (driveFolderId) {
+      try {
+        await uploadRecordingToDrive(recordingId, driveFolderId);
+        console.log(`[Plaud] Upload ao Drive concluído para recording ${recordingId}`);
+      } catch (error) {
+        console.error(`[Plaud] Erro no upload ao Drive:`, error);
+        // Não falha todo o pipeline por causa do upload
+      }
+    }
+
+    // 4. Buscar gravação para transcrição
+    const [recording] = await db
+      .select()
+      .from(plaudRecordings)
+      .where(eq(plaudRecordings.id, recordingId))
+      .limit(1);
+
+    if (!recording) {
+      return { success: false, error: "Gravação não encontrada" };
+    }
+
+    // 5. Enrichment da transcrição (fire-and-forget)
+    if (recording.transcription && atendimentoId) {
+      enrichmentClient.enrichAsync(
+        () => enrichmentClient.enrichTranscript({
+          transcript: recording.transcription!,
+          assistidoId,
+          processoId,
+          casoId: null,
+        }),
+        `Transcript enrichment for atendimento ${atendimentoId} (approved)`,
+      ).catch(() => {}); // fire-and-forget
+    }
+
+    // 6. Extração de pontos-chave com Gemini
+    if (recording.transcription && atendimentoId) {
+      try {
+        await extractKeyPointsWithAI(atendimentoId, recording.transcription);
+        console.log(`[Plaud] Pontos-chave extraídos para atendimento ${atendimentoId}`);
+      } catch (error) {
+        console.error(`[Plaud] Erro ao extrair pontos-chave:`, error);
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error(`[Plaud] Erro no pipeline pós-aprovação:`, error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
 }
 
 // ==========================================

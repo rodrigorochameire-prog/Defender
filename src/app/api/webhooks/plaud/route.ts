@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { processWebhook, PlaudWebhookPayload } from "@/lib/services/plaud-api";
+import { processWebhook, PlaudWebhookPayload, saveAsPendingReview } from "@/lib/services/plaud-api";
 import { db } from "@/lib/db";
 import { plaudConfig } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -147,8 +147,8 @@ export async function POST(request: NextRequest) {
     // (necessário quando Zapier envia sem device_id e usamos fallback)
     payload.device_id = config.deviceId;
 
-    // Processa o webhook
-    const result = await processWebhook(payload);
+    // Salvar como pendente de aprovação (NÃO processa automaticamente)
+    const result = await saveAsPendingReview(payload, config.id, config.createdById);
 
     if (!result.success) {
       console.error(`[Plaud Webhook] Erro ao processar: ${result.error}`);
@@ -159,11 +159,11 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(
-      `[Plaud Webhook] Processado com sucesso: recording=${result.recordingId}`
+      `[Plaud Webhook] Salvo como pendente de aprovação: recording=${result.recordingId}`
     );
 
     return NextResponse.json({
-      status: "success",
+      status: "pending_review",
       recordingId: result.recordingId,
     });
   } catch (error) {

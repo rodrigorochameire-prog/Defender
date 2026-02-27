@@ -5,11 +5,13 @@ import {
   atendimentos,
   assistidos,
   processos,
+  assistidosProcessos,
   users,
   plaudConfig,
   plaudRecordings,
 } from "@/lib/db/schema";
 import { eq, desc, and, like, or, isNull, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import {
   getActiveConfig,
   createConfig,
@@ -21,6 +23,7 @@ import {
   getRecordingStats,
   getRecentRecordings,
   extractKeyPointsWithAI,
+  processApprovedRecording,
 } from "@/lib/services/plaud-api";
 
 export const atendimentosRouter = router({
@@ -556,5 +559,145 @@ export const atendimentosRouter = router({
         .where(eq(atendimentos.assistidoId, input.assistidoId))
         .orderBy(desc(atendimentos.dataAtendimento))
         .limit(input.limit);
+    }),
+
+  // ==========================================
+  // FLUXO DE APROVAÇÃO DE GRAVAÇÕES PLAUD
+  // ==========================================
+
+  /**
+   * Lista gravações pendentes de revisão
+   */
+  pendingRecordings: protectedProcedure.query(async () => {
+    return db.select().from(plaudRecordings)
+      .where(eq(plaudRecordings.status, "pending_review"))
+      .orderBy(desc(plaudRecordings.createdAt));
+  }),
+
+  /**
+   * Rejeita e remove permanentemente uma gravação
+   */
+  rejectRecording: protectedProcedure
+    .input(z.object({ recordingId: z.number() }))
+    .mutation(async ({ input }) => {
+      await db.delete(plaudRecordings)
+        .where(eq(plaudRecordings.id, input.recordingId));
+      return { success: true };
+    }),
+
+  /**
+   * Aprova gravação: vincula a assistido/processo/atendimento,
+   * salva metadados do interlocutor e dispara pipeline pós-aprovação
+   */
+  approveRecording: protectedProcedure
+    .input(z.object({
+      recordingId: z.number(),
+      assistidoId: z.number(),
+      processoId: z.number().optional(),
+      atendimentoId: z.number().optional(),
+      novoAtendimento: z.object({
+        tipo: z.string(),
+        descricao: z.string().optional(),
+      }).optional(),
+      interlocutor: z.object({
+        tipo: z.enum(["assistido", "testemunha", "familiar", "vitima", "perito", "outro"]),
+        observacao: z.string().optional(),
+      }),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      // 1. Find the pending recording
+      const [recording] = await db.select().from(plaudRecordings)
+        .where(and(
+          eq(plaudRecordings.id, input.recordingId),
+          eq(plaudRecordings.status, "pending_review")
+        ))
+        .limit(1);
+
+      if (!recording) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Gravação não encontrada ou já processada" });
+      }
+
+      let atendimentoId = input.atendimentoId;
+
+      // 2. Create new atendimento if needed
+      if (!atendimentoId && input.novoAtendimento) {
+        const [novo] = await db.insert(atendimentos).values({
+          assistidoId: input.assistidoId,
+          processoId: input.processoId || null,
+          workspaceId: ctx.session.user.workspaceId,
+          dataAtendimento: new Date(),
+          tipo: input.novoAtendimento.tipo,
+          descricao: input.novoAtendimento.descricao || null,
+          status: "realizado",
+          transcricaoStatus: "completed",
+          atendidoPorId: ctx.session.user.id,
+        }).returning();
+        atendimentoId = novo.id;
+      }
+
+      // 3. Update recording with all links and metadata
+      const interlocutorData = {
+        ...(recording.rawPayload as Record<string, unknown> || {}),
+        interlocutor: input.interlocutor,
+      };
+
+      await db.update(plaudRecordings).set({
+        status: "completed",
+        assistidoId: input.assistidoId,
+        processoId: input.processoId || null,
+        atendimentoId: atendimentoId || null,
+        rawPayload: interlocutorData,
+        updatedAt: new Date(),
+      }).where(eq(plaudRecordings.id, input.recordingId));
+
+      // 4. Update atendimento with transcription data if linked
+      if (atendimentoId) {
+        await db.update(atendimentos).set({
+          plaudRecordingId: recording.plaudRecordingId,
+          plaudDeviceId: recording.plaudDeviceId,
+          transcricao: recording.transcription,
+          transcricaoResumo: recording.summary,
+          transcricaoStatus: "completed",
+          updatedAt: new Date(),
+        }).where(eq(atendimentos.id, atendimentoId));
+      }
+
+      // 5. Fire-and-forget: post-approval pipeline (Drive upload + enrichment)
+      processApprovedRecording(
+        input.recordingId,
+        input.assistidoId,
+        atendimentoId || null,
+        input.processoId || null
+      ).catch((err) => {
+        console.error(`[Plaud] Erro no pipeline pós-aprovação:`, err);
+      });
+
+      return { success: true, recordingId: input.recordingId, atendimentoId };
+    }),
+
+  /**
+   * Busca processos vinculados a um assistido via tabela de junção
+   */
+  processosByAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const results = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          assunto: processos.assunto,
+          vara: processos.vara,
+          fase: processos.fase,
+          area: processos.area,
+          atribuicao: processos.atribuicao,
+          papel: assistidosProcessos.papel,
+          isPrincipal: assistidosProcessos.isPrincipal,
+        })
+        .from(assistidosProcessos)
+        .innerJoin(processos, eq(assistidosProcessos.processoId, processos.id))
+        .where(eq(assistidosProcessos.assistidoId, input.assistidoId))
+        .orderBy(desc(assistidosProcessos.isPrincipal));
+
+      return results;
     }),
 });

@@ -1390,7 +1390,7 @@ export const plaudRecordings = pgTable("plaud_recordings", {
   fileSize: integer("file_size"),
 
   // Status de processamento
-  status: varchar("status", { length: 20 }).default("received"), // received | transcribing | completed | failed
+  status: varchar("status", { length: 20 }).default("received"), // pending_review | received | transcribing | completed | failed
   errorMessage: text("error_message"),
 
   // Transcrição recebida
@@ -1401,6 +1401,7 @@ export const plaudRecordings = pgTable("plaud_recordings", {
   // Vinculação ao atendimento
   atendimentoId: integer("atendimento_id").references(() => atendimentos.id, { onDelete: "set null" }),
   assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
+  processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
 
   // Arquivo no Drive
   driveFileId: varchar("drive_file_id", { length: 100 }),

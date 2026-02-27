@@ -55,7 +55,8 @@ import {
   Mic,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PlaudConfigCard, PlaudRecordingsList } from "@/components/atendimentos";
+import { trpc } from "@/lib/trpc/client";
+import { PlaudConfigCard, PlaudRecordingsList, PlaudApprovalQueue } from "@/components/atendimentos";
 
 // ==========================================
 // TIPOS
@@ -437,6 +438,11 @@ function AISection() {
 // ==========================================
 
 export default function IntegracoesPage() {
+  const { data: pendingRecordings } = trpc.atendimentos.pendingRecordings.useQuery(undefined, {
+    refetchInterval: 30_000,
+  });
+  const pendingCount = pendingRecordings?.length ?? 0;
+
   return (
     <TooltipProvider>
       <div className="p-6 space-y-6">
@@ -472,6 +478,11 @@ export default function IntegracoesPage() {
             <TabsTrigger value="gravacoes" className="flex items-center gap-2">
               <Mic className="w-4 h-4" />
               Gravações
+              {pendingCount > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
+                  {pendingCount}
+                </Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -644,7 +655,8 @@ export default function IntegracoesPage() {
             <WebhookSection />
           </TabsContent>
 
-          <TabsContent value="gravacoes" className="mt-6">
+          <TabsContent value="gravacoes" className="mt-6 space-y-6">
+            <PlaudApprovalQueue />
             <PlaudRecordingsList />
           </TabsContent>
         </Tabs>
