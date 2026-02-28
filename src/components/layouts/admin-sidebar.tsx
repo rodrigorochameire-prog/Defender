@@ -10,7 +10,8 @@ import {
   Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
-  MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun
+  MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
+  MessageSquare, FileCheck, ArrowLeftRight
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -71,10 +72,15 @@ const DOCUMENTOS_NAV: AssignmentMenuItem[] = [
   { label: "Jurisprudência", path: "/admin/jurisprudencia", icon: "Scale" },
 ];
 
-// 4. Cowork - Delegações, Equipe (roxo)
+// 4. Cowork - Delegações, Equipe, Mural, Agenda, Pareceres, Coberturas (roxo)
 const COWORK_NAV: AssignmentMenuItem[] = [
   { label: "Delegações", path: "/admin/delegacoes", icon: "UserCheck", requiredRoles: ["admin", "defensor", "servidor", "estagiario"] },
   { label: "Equipe", path: "/admin/equipe", icon: "UsersRound", requiredRoles: ["admin", "defensor", "servidor"] },
+  // --- divider after index 1 (rendered in CoworkMenu) ---
+  { label: "Mural", path: "/admin/mural", icon: "MessageSquare" },
+  { label: "Agenda Equipe", path: "/admin/agenda-equipe", icon: "CalendarDays" },
+  { label: "Pareceres", path: "/admin/pareceres", icon: "FileCheck", requiredRoles: ["admin", "defensor", "servidor"] },
+  { label: "Coberturas", path: "/admin/coberturas", icon: "ArrowLeftRight", requiredRoles: ["admin", "defensor"] },
 ];
 
 // 5. Ferramentas - Lógica, Calculadoras, Calc. Prazos, Inteligência, Investigação (verde)
@@ -123,7 +129,8 @@ const iconMap: Record<string, React.ElementType> = {
   Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
-  BookUser, Users2, Home, FolderInput, Sun
+  BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
+  ArrowLeftRight
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
@@ -1058,27 +1065,29 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
               <Users2 className="h-3 w-3" />
               Cowork
             </p>
-            {items.map((item) => {
+            {items.map((item, idx) => {
               if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
                 return null;
               }
               const Icon = iconMap[item.icon] || Briefcase;
               const isActive = pathname.startsWith(item.path);
               return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={onNavigate}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
-                    isActive
-                      ? "bg-purple-500/20 text-purple-400 font-medium"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
+                <div key={item.path}>
+                  {idx === 2 && <div className="my-1.5 mx-2 h-px bg-zinc-700/40" />}
+                  <Link
+                    href={item.path}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
+                      isActive
+                        ? "bg-purple-500/20 text-purple-400 font-medium"
+                        : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                </div>
               );
             })}
           </PopoverContent>
@@ -1122,47 +1131,52 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
       {/* Sub-itens com animação */}
       <div className={cn(
         "overflow-hidden transition-all duration-300 ease-in-out",
-        expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        expanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
       )}>
         <div className="relative pl-4 space-y-0.5">
           {/* Linha vertical conectora */}
           <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-purple-500/30 via-zinc-700/40 to-transparent" />
 
-          {items.map((item) => {
+          {items.map((item, idx) => {
             if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
               return null;
             }
             const Icon = iconMap[item.icon] || Briefcase;
             const isActive = pathname.startsWith(item.path);
             return (
-              <SidebarMenuItem key={item.path}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive}
-                  className={cn(
-                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
-                    isActive
-                      ? "bg-purple-500/15 text-purple-400 font-medium"
-                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
-                  )}
-                >
-                  <Link href={item.path} prefetch={true} onClick={onNavigate}>
-                    {/* Indicador de conexão */}
-                    <div className={cn(
-                      "absolute left-[-12px] w-2 h-px transition-all duration-200",
-                      isActive ? "bg-purple-500/50" : "bg-zinc-700/50"
-                    )} />
-                    <Icon className={cn(
-                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                      isActive ? "text-purple-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
-                    )} />
-                    <span className="text-[12px] truncate">{item.label}</span>
-                    {isActive && (
-                      <div className="absolute right-2 w-1 h-1 rounded-full bg-purple-400" />
+              <div key={item.path}>
+                {idx === 2 && (
+                  <div className="my-1.5 ml-2 mr-1 h-px bg-gradient-to-r from-zinc-700/40 to-transparent" />
+                )}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    className={cn(
+                      "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                      isActive
+                        ? "bg-purple-500/15 text-purple-400 font-medium"
+                        : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
                     )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                  >
+                    <Link href={item.path} prefetch={true} onClick={onNavigate}>
+                      {/* Indicador de conexão */}
+                      <div className={cn(
+                        "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                        isActive ? "bg-purple-500/50" : "bg-zinc-700/50"
+                      )} />
+                      <Icon className={cn(
+                        "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                        isActive ? "text-purple-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                      )} />
+                      <span className="text-[12px] truncate">{item.label}</span>
+                      {isActive && (
+                        <div className="absolute right-2 w-1 h-1 rounded-full bg-purple-400" />
+                      )}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </div>
             );
           })}
         </div>

@@ -714,9 +714,21 @@ export const demandasRouter = router({
                 isNull(demandas.deletedAt),
               ),
             });
-          } else {
-            // Se não tem data, verificar demandas recentes (últimos 30 dias)
-            // do mesmo processo que também não têm data de entrada
+          }
+
+          // Fallback: verificar por processo + ato (mesmo ato no mesmo processo = provável duplicata)
+          if (!existingDemanda && row.ato && row.ato !== "Demanda importada") {
+            existingDemanda = await db.query.demandas.findFirst({
+              where: and(
+                eq(demandas.processoId, processo.id),
+                eq(demandas.ato, row.ato),
+                isNull(demandas.deletedAt),
+              ),
+            });
+          }
+
+          // Fallback final: demandas recentes sem data no mesmo processo
+          if (!existingDemanda && !dataExpedicaoParaBusca) {
             const trintaDiasAtras = new Date();
             trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
 
@@ -962,5 +974,112 @@ export const demandasRouter = router({
         .limit(8);
 
       return results;
+    }),
+
+  // Encontrar duplicatas: agrupa por processo + ato com COUNT >= 2
+  findDuplicates: protectedProcedure.query(async ({ ctx }) => {
+    const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+
+    // Passo 1: Encontrar grupos (processo_id, ato) com 2+ demandas
+    const accessFilter = defensoresVisiveis === "all"
+      ? isNull(demandas.deletedAt)
+      : and(
+          isNull(demandas.deletedAt),
+          defensoresVisiveis.length === 1
+            ? eq(demandas.defensorId, defensoresVisiveis[0])
+            : inArray(demandas.defensorId, defensoresVisiveis),
+        );
+
+    const groups = await db
+      .select({
+        processoId: demandas.processoId,
+        ato: demandas.ato,
+        count: sql<number>`cast(count(*) as int)`,
+      })
+      .from(demandas)
+      .where(accessFilter)
+      .groupBy(demandas.processoId, demandas.ato)
+      .having(sql`count(*) >= 2`)
+      .orderBy(sql`count(*) desc`);
+
+    if (groups.length === 0) return [];
+
+    // Passo 2: Para cada grupo, buscar demandas completas com joins
+    const result = [];
+    for (const group of groups) {
+      const groupDemandas = await db
+        .select({
+          id: demandas.id,
+          status: demandas.status,
+          substatus: demandas.substatus,
+          ato: demandas.ato,
+          dataEntrada: demandas.dataEntrada,
+          prazo: demandas.prazo,
+          providencias: demandas.providencias,
+          reuPreso: demandas.reuPreso,
+          prioridade: demandas.prioridade,
+          createdAt: demandas.createdAt,
+          updatedAt: demandas.updatedAt,
+          processoNumero: processos.numeroAutos,
+          assistidoNome: assistidos.nome,
+        })
+        .from(demandas)
+        .leftJoin(processos, eq(demandas.processoId, processos.id))
+        .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+        .where(
+          and(
+            eq(demandas.processoId, group.processoId),
+            eq(demandas.ato, group.ato),
+            isNull(demandas.deletedAt),
+          )
+        )
+        .orderBy(desc(demandas.updatedAt));
+
+      result.push({
+        processoId: group.processoId,
+        processoNumero: groupDemandas[0]?.processoNumero || "Sem número",
+        assistidoNome: groupDemandas[0]?.assistidoNome || "Desconhecido",
+        ato: group.ato,
+        count: group.count,
+        demandas: groupDemandas,
+      });
+    }
+
+    return result;
+  }),
+
+  // Excluir duplicatas em batch (soft delete)
+  deleteBatch: protectedProcedure
+    .input(z.object({ ids: z.array(z.number()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+
+      // Aplicar controle de acesso
+      let accessCondition;
+      if (defensoresVisiveis === "all") {
+        accessCondition = and(
+          inArray(demandas.id, input.ids),
+          isNull(demandas.deletedAt),
+        );
+      } else if (defensoresVisiveis.length > 0) {
+        accessCondition = and(
+          inArray(demandas.id, input.ids),
+          inArray(demandas.defensorId, defensoresVisiveis),
+          isNull(demandas.deletedAt),
+        );
+      } else {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem permissão para excluir demandas",
+        });
+      }
+
+      const excluidos = await db
+        .update(demandas)
+        .set({ deletedAt: new Date() })
+        .where(accessCondition)
+        .returning({ id: demandas.id });
+
+      return { deleted: excluidos.length };
     }),
 });

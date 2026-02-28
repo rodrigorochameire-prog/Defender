@@ -43,7 +43,7 @@ import { format, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
+import { SOLID_COLOR_MAP, getAtribuicaoColors } from "@/lib/config/atribuicoes";
 
 interface EventoCardProps {
   evento: any;

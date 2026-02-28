@@ -60,9 +60,12 @@ import {
   Theater,
   ArrowRight,
   Pin,
+  Brain,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { PrisonerIndicator, StatusPrisionalDot } from "@/components/shared/prisoner-indicator";
 import { format, isToday, isTomorrow, isPast, differenceInDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -96,6 +99,7 @@ interface Audiencia {
   vara?: string | null;
   comarca?: string | null;
   defensorNome?: string | null;
+  atribuicao?: string | null;
 }
 
 interface AudienciasHubProps {
@@ -224,11 +228,20 @@ function AudienciaCard({
           </Badge>
         </div>
 
-        {/* Tipo e Local */}
+        {/* Tipo, Atribuição e Local */}
         <div className="flex items-center gap-2 mb-2">
           <Badge className={cn("text-xs", tipoConfig.color)}>
             <tipoConfig.icon className="w-3 h-3" /> {tipoConfig.label}
           </Badge>
+          {audiencia.atribuicao && (() => {
+            const atribColors = getAtribuicaoColors(audiencia.atribuicao);
+            return (
+              <span className={cn("inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded", atribColors.bgSolid, atribColors.text)}>
+                <span className={cn("w-1.5 h-1.5 rounded-full", atribColors.dot)} />
+                {atribColors.shortLabel}
+              </span>
+            );
+          })()}
           {audiencia.sala && (
             <span className="text-xs text-zinc-500">
               Sala {audiencia.sala}
@@ -329,9 +342,22 @@ function ListView({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={cn("text-xs px-1.5 py-0", tipoConfig.color)}>
-                      <tipoConfig.icon className="w-3 h-3" /> {tipoConfig.label}
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      <Badge className={cn("text-xs px-1.5 py-0", tipoConfig.color)}>
+                        <tipoConfig.icon className="w-3 h-3" /> {tipoConfig.label}
+                      </Badge>
+                      {audiencia.atribuicao && (() => {
+                        const atribColors = getAtribuicaoColors(audiencia.atribuicao);
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <span className={cn("w-2.5 h-2.5 rounded-full inline-block", atribColors.dot)} />
+                            </TooltipTrigger>
+                            <TooltipContent>{atribColors.label}</TooltipContent>
+                          </Tooltip>
+                        );
+                      })()}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {audiencia.assistidoNome && (
@@ -417,6 +443,12 @@ function ListView({
                   <Badge className={cn("text-[9px] px-1.5 py-0", tipoConfig.color)}>
                     <tipoConfig.icon className="w-3 h-3" />
                   </Badge>
+                  {audiencia.atribuicao && (() => {
+                    const atribColors = getAtribuicaoColors(audiencia.atribuicao);
+                    return (
+                      <span className={cn("w-2 h-2 rounded-full", atribColors.dot)} />
+                    );
+                  })()}
                   <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", statusConfig.color)}>
                     {statusConfig.label}
                   </Badge>
@@ -900,13 +932,24 @@ function AudienciaSidePeek({
                 <ChevronRight className="w-4 h-4 mr-1" />
                 Recurso
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => onCreateTask?.(audiencia, "alegacoes")}
               >
                 <FileText className="w-4 h-4 mr-1" />
                 Alegações
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-purple-200 text-purple-600 hover:bg-purple-50"
+                onClick={() => {
+                  toast.info("Em breve: preparação de audiência com IA");
+                }}
+              >
+                <Brain className="w-4 h-4 mr-1" />
+                Preparar com IA
               </Button>
             </div>
           </div>

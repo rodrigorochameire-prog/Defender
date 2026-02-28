@@ -1,6 +1,5 @@
 import { LoginForm } from "./login-form";
 import Link from "next/link";
-import { AuthLogo } from "@/components/shared/logo";
 import Image from "next/image";
 
 // Forçar renderização dinâmica
@@ -8,110 +7,53 @@ export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex bg-zinc-950">
-      {/* Lado esquerdo - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 items-center justify-center p-12">
-        {/* Pattern sutil de fundo */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
-            backgroundSize: '32px 32px'
-          }} />
-        </div>
-        
-        {/* Glow effect */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl" />
-        
-        <div className="relative z-10 max-w-md text-center">
-          <div className="flex justify-center mb-8">
+    <div className="min-h-screen flex items-center justify-center bg-[#0f0f11] relative overflow-hidden py-10">
+      {/* Ambient glow — sutil, atmosférico */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/[0.04] rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-emerald-500/[0.02] rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Conteúdo centralizado */}
+      <div className="relative z-10 w-full max-w-sm mx-auto px-6">
+        {/* Logo + Identidade */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
             <Image
               src="/logo-dark.png"
               alt="OMBUDS"
-              width={140}
-              height={140}
+              width={52}
+              height={52}
               priority
-              className="object-contain drop-shadow-[0_0_20px_rgba(16,185,129,0.35)]"
+              className="object-contain drop-shadow-[0_0_12px_rgba(16,185,129,0.2)]"
             />
           </div>
-
-          <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
+          <h1 className="font-serif text-xl font-semibold text-zinc-100 tracking-tight">
             OMBUDS
           </h1>
-          <p className="text-xs font-light tracking-[0.25em] uppercase text-zinc-500 mb-8">
+          <p className="text-[10px] font-light tracking-[0.2em] uppercase text-zinc-500 mt-1">
             Gestão para Defesa Criminal
           </p>
-          
-          <p className="text-zinc-400 text-lg leading-relaxed">
-            Sistema completo para gestão de processos, assistidos e demandas da Defensoria Pública.
-          </p>
-          
-          <div className="mt-12 grid grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-teal-400">100%</div>
-              <div className="text-xs text-zinc-500 mt-1">Seguro</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-teal-400">24/7</div>
-              <div className="text-xs text-zinc-500 mt-1">Disponível</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-teal-400">IA</div>
-              <div className="text-xs text-zinc-500 mt-1">Integrada</div>
-            </div>
-          </div>
         </div>
-      </div>
-      
-      {/* Lado direito - Formulário */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-zinc-950">
-        <div className="w-full max-w-md">
-          {/* Logo mobile */}
-          <div className="lg:hidden text-center mb-10">
-            <div className="flex justify-center mb-4">
-              <Image
-                src="/logo-dark.png"
-                alt="OMBUDS"
-                width={80}
-                height={80}
-                priority
-                className="object-contain drop-shadow-[0_0_14px_rgba(16,185,129,0.3)]"
-              />
-            </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">OMBUDS</h1>
-            <p className="text-[10px] font-light tracking-[0.2em] uppercase text-zinc-500 mt-1">
-              Gestão para Defesa Criminal
-            </p>
-          </div>
-          
-          {/* Título */}
-          <div className="text-center lg:text-left mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-2">
-              Bem-vindo de volta
-            </h2>
-            <p className="text-zinc-500 text-sm">
-              Entre com suas credenciais para acessar o sistema
-            </p>
-          </div>
 
-          {/* Card de Login */}
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
-            <LoginForm />
+        {/* Separador sutil */}
+        <div className="w-8 h-px bg-zinc-800 mx-auto mb-6" />
 
-            {/* Links */}
-            <div className="mt-6 space-y-3">
-              <Link
-                href="/forgot-password"
-                className="block text-center text-sm text-zinc-500 hover:text-teal-400 transition-colors"
-              >
-                Esqueceu sua senha?
-              </Link>
-            </div>
-          </div>
+        {/* Formulário */}
+        <LoginForm />
 
-          {/* Footer */}
-          <p className="text-center text-xs text-zinc-600 mt-8">
-            © 2026 OMBUDS | Gestão para Defesa Criminal
+        {/* Link esqueceu senha */}
+        <div className="mt-5 text-center">
+          <Link
+            href="/forgot-password"
+            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors duration-200"
+          >
+            Esqueceu sua senha?
+          </Link>
+        </div>
+
+        {/* Footer institucional */}
+        <div className="mt-10 pt-5 border-t border-zinc-800/50">
+          <p className="text-center text-[10px] text-zinc-700 tracking-wide">
+            Defensoria Pública do Estado da Bahia
           </p>
         </div>
       </div>

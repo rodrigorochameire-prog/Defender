@@ -53,7 +53,7 @@ export function PJeImportModal({
   // Configurações globais - APENAS ATRIBUIÇÃO
   // Inicializa com a primeira opção disponível, ou "Júri" como fallback
   const [atribuicao, setAtribuicao] = useState(
-    atribuicaoOptions.length > 0 ? atribuicaoOptions[0].value : "Júri"
+    atribuicaoOptions.length > 0 ? atribuicaoOptions[0].value : "Tribunal do Júri"
   );
 
   // Para VVD - separação de MPU e demandas gerais
@@ -239,7 +239,7 @@ export function PJeImportModal({
     setIntimacoesMPU([]);
     setIntimacoesGerais([]);
     setEtapa("configurar");
-    setAtribuicao(atribuicaoOptions.length > 0 ? atribuicaoOptions[0].value : "Júri");
+    setAtribuicao(atribuicaoOptions.length > 0 ? atribuicaoOptions[0].value : "Tribunal do Júri");
     setTipoIntimacaoVVD("CIENCIA");
     setResultadoVerificacao(null);
     setIsImporting(false);
@@ -252,41 +252,64 @@ export function PJeImportModal({
       // Importação VVD com separação:
       // - MPUMPCrim vai para página especial de MPUs
       // - Demais classes vão para demandas gerais com atribuição VVD
+      // AGORA USA reviewRows para respeitar edições e exclusões do usuário
       setIsImporting(true);
 
-      // 1. Importar MPUs para tabela especial (sempre como CIENCIA por padrão)
-      if (intimacoesMPU.length > 0) {
-        const intimacoesParaVVD = intimacoesMPU.map((intimacao, index) => ({
-          assistido: intimacao.assistido,
-          numeroProcesso: intimacao.numeroProcesso,
-          dataExpedicao: intimacao.dataExpedicao,
-          prazo: intimacao.prazo,
-          tipoProcesso: intimacao.tipoProcesso,
-          crime: intimacao.crime,
-          pjeDocumentoId: intimacao.idDocumento,
-          pjeTipoDocumento: intimacao.tipoDocumento,
-          tipoIntimacao: "CIENCIA" as const, // MPUs sempre entram como ciência, pode mudar na triagem
-          ordemOriginal: intimacao.ordemOriginal ?? index, // Preserva ordem do PJe
-        }));
+      // Filtrar rows não excluídas e separar por tipo
+      const includedRows = reviewRows.filter((r) => !r.excluded);
+      const mpuRows = includedRows.filter((r) => r.tipoProcesso === "MPUMPCrim");
+      const geraisRows = includedRows.filter((r) => r.tipoProcesso !== "MPUMPCrim");
+
+      // 1. Importar MPUs para tabela especial
+      if (mpuRows.length > 0) {
+        const intimacoesParaVVD = mpuRows.map((row, index) => {
+          const intimacao = intimacoes.find(
+            (i) => (i.ordemOriginal ?? 0) === row.ordemOriginal
+          );
+          return {
+            assistido: row.assistidoNome,
+            numeroProcesso: row.numeroProcesso,
+            dataExpedicao: row.dataExpedicao,
+            prazo: intimacao?.prazo,
+            tipoProcesso: row.tipoProcesso,
+            crime: row.crime,
+            pjeDocumentoId: intimacao?.idDocumento,
+            pjeTipoDocumento: row.tipoDocumento,
+            tipoIntimacao: "CIENCIA" as const,
+            ordemOriginal: row.ordemOriginal ?? index,
+          };
+        });
 
         importarVVDMutation.mutate({ intimacoes: intimacoesParaVVD });
       }
 
-      // 2. Importar demandas gerais (não-MPU) para lista de demandas com atribuição VVD
-      if (intimacoesGerais.length > 0) {
-        const demandasGerais = intimacoesGerais.map((intimacao) =>
-          intimacaoToDemanda(intimacao, "Violência Doméstica")
-        );
-        onImport(demandasGerais);
+      // 2. Importar demandas gerais (não-MPU) com overrides da review table
+      if (geraisRows.length > 0) {
+        const demandasGerais = geraisRows.map((row) => {
+          const intimacao = intimacoes.find(
+            (i) => (i.ordemOriginal ?? 0) === row.ordemOriginal
+          );
+          if (!intimacao) return null;
+          return intimacaoToDemanda(intimacao, "Violência Doméstica", {
+            ato: row.ato,
+            status: row.status,
+            prazo: row.prazo,
+            estadoPrisional: row.estadoPrisional,
+            assistidoMatchId: row.assistidoMatch.matchedId,
+          });
+        }).filter(Boolean);
 
-        toast.success(
-          `${demandasGerais.length} demandas VVD (não-MPU) importadas para a lista geral`,
-          { duration: 3000 }
-        );
+        if (demandasGerais.length > 0) {
+          onImport(demandasGerais);
+          toast.success(
+            `${demandasGerais.length} demandas VVD importadas para a lista geral`,
+            { duration: 3000 }
+          );
+        }
       }
 
       // Se não tem MPUs, só fecha
-      if (intimacoesMPU.length === 0) {
+      if (mpuRows.length === 0) {
         onClose();
         resetModal();
       }
@@ -814,8 +837,8 @@ export function PJeImportModal({
               </div>
             )}
 
-            {/* Tabela de revisão editável (PJe Import v2) */}
-            {reviewRows.length > 0 && !isVVD && (
+            {/* Tabela de revisão editável (PJe Import v2) — todas as atribuições incluindo VVD */}
+            {reviewRows.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 flex items-center justify-center border border-blue-200 dark:border-blue-800">
@@ -836,74 +859,13 @@ export function PJeImportModal({
                     rows={reviewRows}
                     onRowsChange={setReviewRows}
                     atribuicao={atribuicao}
+                    showTipoProcesso={isVVD}
                   />
                 </div>
               </div>
             )}
 
-            {/* Lista de MPUs (VVD) */}
-            {isVVD && intimacoesMPU.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
-                    <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-                    Medidas Protetivas ({intimacoesMPU.length}) → Página Especial VVD
-                  </h3>
-                </div>
-                <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
-                  {intimacoesMPU.map((intimacao, index) => (
-                    <div key={index} className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-sm text-emerald-900 dark:text-emerald-100">{intimacao.assistido}</p>
-                          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-mono">{intimacao.numeroProcesso}</p>
-                        </div>
-                        <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 rounded">
-                          MPU
-                        </span>
-                      </div>
-                      {intimacao.crime && (
-                        <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">{intimacao.crime}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Lista de Demandas Gerais (VVD) */}
-            {isVVD && intimacoesGerais.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-                    <FileText className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-                  </div>
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-                    Demandas Gerais ({intimacoesGerais.length}) → Lista de Demandas
-                  </h3>
-                </div>
-                <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
-                  {intimacoesGerais.map((intimacao, index) => (
-                    <div key={index} className="p-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{intimacao.assistido}</p>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-400 font-mono">{intimacao.numeroProcesso}</p>
-                        </div>
-                        <span className="px-2 py-0.5 text-[10px] font-bold bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded">
-                          {intimacao.tipoProcesso || "VVD"}
-                        </span>
-                      </div>
-                      {intimacao.crime && (
-                        <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">{intimacao.crime}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* As listas simplificadas de MPU/Gerais foram substituídas pela review table acima */}
 
             {/* Botões */}
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">

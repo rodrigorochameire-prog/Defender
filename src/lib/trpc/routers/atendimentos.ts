@@ -602,7 +602,13 @@ export const atendimentosRouter = router({
       interlocutor: z.object({
         tipo: z.enum(["assistido", "testemunha", "familiar", "vitima", "perito", "outro"]),
         observacao: z.string().optional(),
-      }),
+      }).optional(),
+      tipoGravacao: z.enum(["conversa", "audiencia", "outro"]).optional(),
+      subtipoGravacao: z.string().optional(),
+      depoentes: z.array(z.object({
+        nome: z.string(),
+        tipo: z.string(),
+      })).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       // 1. Find the pending recording
@@ -638,7 +644,10 @@ export const atendimentosRouter = router({
       // 3. Update recording with all links and metadata
       const interlocutorData = {
         ...(recording.rawPayload as Record<string, unknown> || {}),
-        interlocutor: input.interlocutor,
+        ...(input.interlocutor && { interlocutor: input.interlocutor }),
+        ...(input.tipoGravacao && { tipoGravacao: input.tipoGravacao }),
+        ...(input.subtipoGravacao && { subtipoGravacao: input.subtipoGravacao }),
+        ...(input.depoentes && { depoentes: input.depoentes }),
       };
 
       await db.update(plaudRecordings).set({
@@ -650,7 +659,7 @@ export const atendimentosRouter = router({
         updatedAt: new Date(),
       }).where(eq(plaudRecordings.id, input.recordingId));
 
-      // 4. Update atendimento with transcription data if linked
+      // 4. Update atendimento with transcription data + duration if linked
       if (atendimentoId) {
         await db.update(atendimentos).set({
           plaudRecordingId: recording.plaudRecordingId,
@@ -658,6 +667,7 @@ export const atendimentosRouter = router({
           transcricao: recording.transcription,
           transcricaoResumo: recording.summary,
           transcricaoStatus: "completed",
+          duracao: recording.duration || null,
           updatedAt: new Date(),
         }).where(eq(atendimentos.id, atendimentoId));
       }

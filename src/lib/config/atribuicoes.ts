@@ -7,7 +7,7 @@
  * - Execução Penal (EXECUCAO): Azul (blue)
  * - Substituição Criminal (SUBSTITUICAO): Vermelho (rose)
  * - Substituição Não Penal (CIVEL): Laranja (orange)
- * - Grupo Especial do Júri: Verde escuro (teal)
+ * - Grupo Especial do Júri: Laranja (orange)
  */
 
 import {
@@ -161,29 +161,29 @@ export const ATRIBUICAO_COLORS = {
     iconName: "Gavel",
   },
   "Grupo Especial do Júri": {
-    border: "border-l-teal-500",
-    bg: "bg-teal-50/50 dark:bg-teal-900/10",
-    bgSolid: "bg-teal-100 dark:bg-teal-900/30",
-    text: "text-teal-700 dark:text-teal-400",
-    textMuted: "text-teal-600/70 dark:text-teal-400/70",
-    hoverBg: "hover:bg-teal-50 dark:hover:bg-teal-900/20",
-    indicator: "bg-teal-500",
-    ring: "ring-teal-500/20",
-    dot: "bg-teal-500",
+    border: "border-l-orange-500",
+    bg: "bg-orange-50/50 dark:bg-orange-900/10",
+    bgSolid: "bg-orange-100 dark:bg-orange-900/30",
+    text: "text-orange-700 dark:text-orange-400",
+    textMuted: "text-orange-600/70 dark:text-orange-400/70",
+    hoverBg: "hover:bg-orange-50 dark:hover:bg-orange-900/20",
+    indicator: "bg-orange-500",
+    ring: "ring-orange-500/20",
+    dot: "bg-orange-500",
     label: "Grupo Especial do Júri",
     shortLabel: "G. Júri",
     iconName: "Gavel",
   },
   GRUPO_JURI: {
-    border: "border-l-teal-500",
-    bg: "bg-teal-50/50 dark:bg-teal-900/10",
-    bgSolid: "bg-teal-100 dark:bg-teal-900/30",
-    text: "text-teal-700 dark:text-teal-400",
-    textMuted: "text-teal-600/70 dark:text-teal-400/70",
-    hoverBg: "hover:bg-teal-50 dark:hover:bg-teal-900/20",
-    indicator: "bg-teal-500",
-    ring: "ring-teal-500/20",
-    dot: "bg-teal-500",
+    border: "border-l-orange-500",
+    bg: "bg-orange-50/50 dark:bg-orange-900/10",
+    bgSolid: "bg-orange-100 dark:bg-orange-900/30",
+    text: "text-orange-700 dark:text-orange-400",
+    textMuted: "text-orange-600/70 dark:text-orange-400/70",
+    hoverBg: "hover:bg-orange-50 dark:hover:bg-orange-900/20",
+    indicator: "bg-orange-500",
+    ring: "ring-orange-500/20",
+    dot: "bg-orange-500",
     label: "Grupo Especial do Júri",
     shortLabel: "G. Júri",
     iconName: "Gavel",
@@ -390,8 +390,8 @@ export const SOLID_COLOR_MAP: Record<string, string> = {
   JURI: "#10b981",          // emerald-500
   "Tribunal do Júri": "#10b981",
   JURI_CAMACARI: "#10b981",
-  "Grupo Especial do Júri": "#14b8a6", // teal-500
-  GRUPO_JURI: "#14b8a6",
+  "Grupo Especial do Júri": "#f97316", // orange-500
+  GRUPO_JURI: "#f97316",
   EXECUCAO: "#3b82f6",      // blue-500
   EXECUCAO_PENAL: "#3b82f6",
   "Execução Penal": "#3b82f6",

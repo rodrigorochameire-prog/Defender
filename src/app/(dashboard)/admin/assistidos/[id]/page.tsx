@@ -28,6 +28,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("processos");
 
+  // AI Analysis state
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+
   // Transcription state
   const [transcriptions, setTranscriptions] = useState<Map<string, TranscriptionData>>(new Map());
   const [transcribing, setTranscribing] = useState<Set<string>>(new Set());
@@ -308,6 +312,45 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               {sincronizarComSolar.isPending ? "Sincronizando..." : "Sync Fases ao Solar"}
             </Button>
 
+            {data.driveFolderId && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-[11px] gap-1.5 border-purple-200 text-purple-600 hover:bg-purple-50"
+                disabled={isAnalyzing}
+                onClick={async () => {
+                  setIsAnalyzing(true);
+                  setAnalysisResult(null);
+                  try {
+                    const res = await fetch("/api/ai/analyze-folder", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ assistidoId: Number(id) }),
+                    });
+                    if (!res.ok) {
+                      const err = (await res.json().catch(() => ({}))) as { error?: string };
+                      throw new Error(err?.error ?? "Falha na análise");
+                    }
+                    const json = (await res.json()) as { summary?: string };
+                    setAnalysisResult(json.summary ?? "Análise concluída sem resumo.");
+                    toast.success("Análise da pasta concluída");
+                  } catch (err) {
+                    const message = err instanceof Error ? err.message : "Erro ao analisar pasta";
+                    toast.error(message);
+                  } finally {
+                    setIsAnalyzing(false);
+                  }
+                }}
+              >
+                {isAnalyzing ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Brain className="h-3 w-3" />
+                )}
+                {isAnalyzing ? "Analisando..." : "Analisar pasta com IA"}
+              </Button>
+            )}
+
             {sigadResult && (
               <div className="flex items-center gap-1.5 text-[11px]">
                 {sigadResult.success ? (
@@ -395,6 +438,14 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 O assistido foi encontrado no SIGAD, mas o processo vinculado ({sigadResult.sigad_processo}) não
                 corresponde a nenhum processo cadastrado no OMBUDS. Verifique se o número de autos está correto.
               </span>
+            </div>
+          )}
+
+          {/* Resultado da Análise IA */}
+          {analysisResult && (
+            <div className="flex items-start gap-1.5 text-[11px] text-purple-700 bg-purple-50 dark:bg-purple-950 rounded px-2 py-1.5 w-fit max-w-lg">
+              <Brain className="h-3 w-3 text-purple-500 flex-shrink-0 mt-0.5" />
+              <span className="whitespace-pre-wrap">{analysisResult}</span>
             </div>
           )}
         </div>

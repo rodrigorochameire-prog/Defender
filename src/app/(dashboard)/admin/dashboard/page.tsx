@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { DEMANDA_STATUS, isStatusConcluido } from "@/config/demanda-status";
-import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { getAtribuicaoColors, ATRIBUICAO_OPTIONS, areaMatchesFilter } from "@/lib/config/atribuicoes";
 import { toast } from "sonner";
 import {
   Users,
@@ -76,7 +76,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// Avatar removido — busca agora usa dots de atribuição
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -93,6 +93,7 @@ import { PainelServidor } from "@/components/dashboard/painel-servidor";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import { AudioRecorderButton } from "@/components/shared/audio-recorder";
 import { TranscriptViewer } from "@/components/shared/transcript-viewer";
+import { EquipeCoworkCard } from "@/components/dashboard/equipe-cowork-card";
 
 // ============================================
 // HELPERS
@@ -397,7 +398,7 @@ export default function DashboardJuriPage() {
     label: config.label,
   }));
 
-  const atoOptions = getAtosPorAtribuicao(atribuicaoAtual === "JURI_EP" ? "Júri" : "VVD");
+  const atoOptions = getAtosPorAtribuicao(atribuicaoAtual === "JURI_EP" ? "Tribunal do Júri" : "Violência Doméstica");
 
   const handleSaveNewDemanda = (data: DemandaFormData) => {
     console.log("Criar demanda:", data);
@@ -526,6 +527,7 @@ export default function DashboardJuriPage() {
   }>({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, prazo: "" });
   const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
+  const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>("all");
   const [showDetalhes, setShowDetalhes] = useState(false);
 
   // Transcrição de áudio
@@ -617,16 +619,20 @@ export default function DashboardJuriPage() {
              nome !== "" &&
              nome !== "-";
     });
-    if (!assistidoSearchQuery.trim()) return assistidosValidos.slice(0, 10);
+    // Filtrar por atribuição
+    const filtradosPorAtribuicao = atribuicaoFilter === "all"
+      ? assistidosValidos
+      : assistidosValidos.filter((a: any) => areaMatchesFilter(a.atribuicaoPrimaria, atribuicaoFilter));
+    if (!assistidoSearchQuery.trim()) return filtradosPorAtribuicao.slice(0, 10);
     const query = assistidoSearchQuery.toLowerCase();
-    return assistidosValidos
+    return filtradosPorAtribuicao
       .filter((a: any) =>
         a.nome?.toLowerCase().includes(query) ||
         a.cpf?.includes(query) ||
         a.vulgo?.toLowerCase().includes(query)
       )
       .slice(0, 10);
-  }, [assistidos, assistidoSearchQuery]);
+  }, [assistidos, assistidoSearchQuery, atribuicaoFilter]);
 
   // Stats para KPI cards — reformulados
   const totalDemandas = demandasFiltradas.length;
@@ -755,52 +761,95 @@ export default function DashboardJuriPage() {
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
 
-        {/* ===== GRID: REGISTRO RÁPIDO + EQUIPE & COWORK ===== */}
-        <div className="grid grid-cols-1 lg:grid-cols-[5fr_3fr] gap-4 items-stretch">
-
-        {/* ===== 1. REGISTRO RÁPIDO ===== */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border-l-2 border-l-emerald-500 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-emerald-200/60 dark:hover:border-emerald-800/40 flex flex-col">
-          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-emerald-500" />
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Registro Rápido</h3>
-            <div className="ml-auto flex items-center gap-1.5">
-              <span className="text-[10px] text-zinc-400 uppercase tracking-wide">Atendimento</span>
+        {/* ===== 1. REGISTRO RÁPIDO (full-width, stacked rows) ===== */}
+        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden transition-all duration-300 hover:border-emerald-200/50 dark:hover:border-emerald-800/30">
+          <div className="px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-zinc-900 dark:bg-white flex items-center justify-center">
+              <Plus className="w-3.5 h-3.5 text-white dark:text-zinc-900" />
             </div>
+            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 font-serif">Registro Rapido</h3>
           </div>
-          <div className="p-4 space-y-3">
 
-            {/* Assistido */}
+          <div className="p-4 space-y-4">
+
+            {/* Row 1 — Assistido + Tipo lado a lado */}
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Assistido</label>
+              {/* Row 1 — Busca de Assistido */}
               <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     role="combobox"
                     aria-expanded={assistidoSearchOpen}
-                    className="w-full h-9 justify-between text-sm bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-700 focus:ring-emerald-500/20 transition-all duration-200"
+                    className={cn(
+                      "w-full h-9 justify-between text-sm transition-all duration-200",
+                      atendimentoRapido.assistidoId
+                        ? cn(
+                            getAtribuicaoColors(assistidoSelecionado?.atribuicaoPrimaria).bg,
+                            getAtribuicaoColors(assistidoSelecionado?.atribuicaoPrimaria).border.replace("border-l-", "border-"),
+                            "hover:opacity-90"
+                          )
+                        : "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-700"
+                    )}
                   >
                     {atendimentoRapido.assistidoId ? (
                       <span className="flex items-center gap-2 truncate">
-                        <User className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                        <span className="truncate">{atendimentoRapido.assistidoNome}</span>
+                        <span className={cn("w-2.5 h-2.5 rounded-full flex-shrink-0", getAtribuicaoColors(assistidoSelecionado?.atribuicaoPrimaria).dot)} />
+                        <span className={cn("truncate font-medium", getAtribuicaoColors(assistidoSelecionado?.atribuicaoPrimaria).text)}>{atendimentoRapido.assistidoNome}</span>
                       </span>
                     ) : (
                       <span className="text-zinc-400 flex items-center gap-2">
-                        <Search className="w-4 h-4" />
-                        Buscar por nome, CPF ou vulgo...
+                        <Search className="w-3.5 h-3.5" />
+                        Nome, CPF ou vulgo...
                       </span>
                     )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40" />
+                    {atendimentoRapido.assistidoId ? (
+                      <span
+                        role="button"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setAtendimentoRapido(prev => ({ ...prev, assistidoId: null, assistidoNome: "", processoId: null }));
+                        }}
+                        className="ml-2 h-4 w-4 shrink-0 text-zinc-400 hover:text-red-500 transition-colors cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </span>
+                    ) : (
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40" />
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  {/* Chips de filtro por atribuição */}
+                  <div className="flex gap-1 p-2 border-b border-zinc-100 dark:border-zinc-800 overflow-x-auto">
+                    {ATRIBUICAO_OPTIONS.map((opt) => {
+                      const colors = getAtribuicaoColors(opt.value);
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => setAtribuicaoFilter(opt.value)}
+                          className={cn(
+                            "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium whitespace-nowrap transition-colors",
+                            atribuicaoFilter === opt.value
+                              ? cn(colors.bgSolid, colors.text)
+                              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          )}
+                        >
+                          {opt.value !== "all" && <span className={cn("w-1.5 h-1.5 rounded-full", colors.dot)} />}
+                          {opt.shortLabel}
+                        </button>
+                      );
+                    })}
+                  </div>
                   <Command>
                     <CommandInput
                       placeholder="Digite o nome, CPF ou vulgo..."
                       value={assistidoSearchQuery}
                       onValueChange={setAssistidoSearchQuery}
                       className="h-10"
+                      autoFocus
                     />
                     <CommandList>
                       <CommandEmpty>
@@ -816,7 +865,9 @@ export default function DashboardJuriPage() {
                         </div>
                       </CommandEmpty>
                       <CommandGroup heading="Assistidos">
-                        {assistidosFiltrados.map((assistido: any) => (
+                        {assistidosFiltrados.map((assistido: any) => {
+                          const atribColors = getAtribuicaoColors(assistido.atribuicaoPrimaria);
+                          return (
                           <CommandItem
                             key={assistido.id}
                             value={assistido.nome}
@@ -832,14 +883,14 @@ export default function DashboardJuriPage() {
                             }}
                             className="flex items-center gap-2 py-2"
                           >
-                            <Avatar className="h-7 w-7">
-                              <AvatarImage src={assistido.photoUrl || ""} />
-                              <AvatarFallback className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
-                                {assistido.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
-                              </AvatarFallback>
-                            </Avatar>
+                            <span className={cn("w-2.5 h-2.5 rounded-full flex-shrink-0", atribColors.dot)} />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{assistido.nome}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium truncate">{assistido.nome}</p>
+                                <span className={cn("text-[9px] px-1 py-0.5 rounded flex-shrink-0", atribColors.bgSolid, atribColors.text)}>
+                                  {atribColors.shortLabel}
+                                </span>
+                              </div>
                               <div className="flex items-center gap-2 text-[10px] text-zinc-500">
                                 {assistido.vulgo && <span>({assistido.vulgo})</span>}
                                 {assistido.situacaoPrisional === "PRESO" && (
@@ -854,87 +905,218 @@ export default function DashboardJuriPage() {
                               <Check className="w-4 h-4 text-emerald-500" />
                             )}
                           </CommandItem>
-                        ))}
+                          );
+                        })}
                       </CommandGroup>
                     </CommandList>
                   </Command>
                 </PopoverContent>
               </Popover>
-            </div>
 
-            {/* Card do Assistido Selecionado */}
-            {assistidoSelecionado && (
-              <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
-                <Avatar className="h-7 w-7 flex-shrink-0">
-                  <AvatarImage src={assistidoSelecionado.photoUrl || ""} />
-                  <AvatarFallback className="text-[9px] bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
-                    {assistidoSelecionado.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100 truncate">
-                    {assistidoSelecionado.nome}
-                  </p>
-                  <div className="flex items-center gap-2 text-[10px] text-zinc-500">
-                    {assistidoSelecionado.situacaoPrisional === "PRESO" && (
-                      <span className="flex items-center gap-0.5 text-red-600">
-                        <Lock className="w-2 h-2" /> Preso
-                      </span>
-                    )}
-                    {processosDoAssistido.length > 0 && (
-                      <span className="text-emerald-600 dark:text-emerald-400">
-                        {processosDoAssistido.length} processo{processosDoAssistido.length > 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-zinc-400 hover:text-red-500 flex-shrink-0"
-                  onClick={() => setAtendimentoRapido(prev => ({ ...prev, assistidoId: null, assistidoNome: "", processoId: null }))}
+              {/* Row 2 — Recentes / Processo */}
+              {atendimentoRapido.assistidoId ? (
+                <select
+                  value={atendimentoRapido.processoId || ""}
+                  onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, processoId: e.target.value ? Number(e.target.value) : null }))}
+                  className="w-full h-9 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-3 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
                 >
-                  <X className="w-3 h-3" />
-                </Button>
-              </div>
-            )}
-
-            {/* Tipo de Registro */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Tipo</label>
-              <div className="flex flex-wrap gap-1.5">
-                {tiposRegistro.map((tipo) => {
-                  const Icon = tipo.icon;
-                  const isSelected = atendimentoRapido.tipo === tipo.id;
-                  const isDelegacao = tipo.id === "delegacao";
-                  return (
-                    <button
-                      key={tipo.id}
-                      onClick={() => {
-                        if (isDelegacao) {
-                          setPedidoTrabalhoModalOpen(true);
-                        } else {
-                          setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }));
-                        }
-                      }}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
-                        isSelected && !isDelegacao
-                          ? `${tipo.bgActive} ${tipo.color}`
-                          : isDelegacao
-                            ? "border border-rose-200 dark:border-rose-800 hover:border-rose-400 dark:hover:border-rose-600 bg-rose-50 dark:bg-rose-900/20 text-rose-500"
-                            : "border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-500"
-                      }`}
-                      title={tipo.label}
+                  <option value="">
+                    {processosDoAssistido.length === 0 ? "Sem processos vinculados" : "Processo (opcional)"}
+                  </option>
+                  {processosDoAssistido.map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      {p.numeroAutos || `Processo #${p.id}`}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full h-9 justify-between text-xs bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:border-emerald-300"
                     >
-                      <Icon className={`w-3.5 h-3.5 ${isSelected && !isDelegacao ? tipo.color : isDelegacao ? "text-rose-500" : "text-zinc-400"}`} />
-                      <span className="hidden sm:inline">{tipo.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+                      <span className="flex items-center gap-2">
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        Audiências próximas
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 max-h-80 overflow-y-auto" align="start">
+                    {audienciasExibir.length === 0 ? (
+                      <div className="p-4 text-center">
+                        <CalendarDays className="w-6 h-6 mx-auto mb-2 text-zinc-300" />
+                        <p className="text-xs text-zinc-400">Nenhuma audiência próxima</p>
+                      </div>
+                    ) : (
+                      <div className="py-1">
+                        {(() => {
+                          const hoje = new Date();
+                          const fimSemana = addDays(hoje, 7 - hoje.getDay());
+                          const estaSemana = audienciasExibir.filter((a: any) => {
+                            const d = new Date(a.dataHora);
+                            return d <= fimSemana;
+                          });
+                          const proximaSemana = audienciasExibir.filter((a: any) => {
+                            const d = new Date(a.dataHora);
+                            return d > fimSemana;
+                          });
+                          return (
+                            <>
+                              {estaSemana.length > 0 && (
+                                <>
+                                  <div className="px-3 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wide bg-zinc-50 dark:bg-zinc-800/50">
+                                    Esta semana
+                                  </div>
+                                  {estaSemana.map((aud: any) => {
+                                    const atribColors = getAtribuicaoColors(aud.processo?.atribuicao);
+                                    return (
+                                      <button
+                                        key={aud.id}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors text-left"
+                                        onClick={() => {
+                                          if (aud.assistido?.id) {
+                                            setAtendimentoRapido(prev => ({
+                                              ...prev,
+                                              assistidoId: aud.assistido.id,
+                                              assistidoNome: aud.assistido.nome || "",
+                                              processoId: aud.processo?.id || null,
+                                            }));
+                                          }
+                                        }}
+                                      >
+                                        <span className={cn("w-2 h-2 rounded-full flex-shrink-0", atribColors.dot)} />
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 tabular-nums">
+                                              {format(new Date(aud.dataHora), "dd/MM HH:mm", { locale: ptBR })}
+                                            </span>
+                                            <span className={cn("text-[9px] px-1 py-0.5 rounded", atribColors.bgSolid, atribColors.text)}>
+                                              {atribColors.shortLabel}
+                                            </span>
+                                          </div>
+                                          <p className="text-[11px] text-zinc-500 truncate">
+                                            {aud.assistido?.nome || aud.titulo || "Sem assistido"}
+                                          </p>
+                                        </div>
+                                        <span className="text-[10px] text-zinc-400 flex-shrink-0">{aud.tipo}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </>
+                              )}
+                              {proximaSemana.length > 0 && (
+                                <>
+                                  <div className="px-3 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wide bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800">
+                                    Próxima semana
+                                  </div>
+                                  {proximaSemana.map((aud: any) => {
+                                    const atribColors = getAtribuicaoColors(aud.processo?.atribuicao);
+                                    return (
+                                      <button
+                                        key={aud.id}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors text-left"
+                                        onClick={() => {
+                                          if (aud.assistido?.id) {
+                                            setAtendimentoRapido(prev => ({
+                                              ...prev,
+                                              assistidoId: aud.assistido.id,
+                                              assistidoNome: aud.assistido.nome || "",
+                                              processoId: aud.processo?.id || null,
+                                            }));
+                                          }
+                                        }}
+                                      >
+                                        <span className={cn("w-2 h-2 rounded-full flex-shrink-0", atribColors.dot)} />
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 tabular-nums">
+                                              {format(new Date(aud.dataHora), "dd/MM HH:mm", { locale: ptBR })}
+                                            </span>
+                                            <span className={cn("text-[9px] px-1 py-0.5 rounded", atribColors.bgSolid, atribColors.text)}>
+                                              {atribColors.shortLabel}
+                                            </span>
+                                          </div>
+                                          <p className="text-[11px] text-zinc-500 truncate">
+                                            {aud.assistido?.nome || aud.titulo || "Sem assistido"}
+                                          </p>
+                                        </div>
+                                        <span className="text-[10px] text-zinc-400 flex-shrink-0">{aud.tipo}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
 
-            {/* Descrição + Gravação */}
+            {/* Tipo de Registro (estilo padronizado com Cowork) */}
+            <div className="grid grid-cols-3 gap-1.5">
+              {tiposRegistro.map((tipo) => {
+                const Icon = tipo.icon;
+                const isSelected = atendimentoRapido.tipo === tipo.id;
+                const isDelegacao = tipo.id === "delegacao";
+                return (
+                  <button
+                    key={tipo.id}
+                    onClick={() => {
+                      if (isDelegacao) {
+                        setPedidoTrabalhoModalOpen(true);
+                      } else {
+                        setAtendimentoRapido(prev => ({ ...prev, tipo: tipo.id as typeof prev.tipo }));
+                      }
+                    }}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200",
+                      isDelegacao
+                        ? cn(
+                            "border border-rose-200 dark:border-rose-800/50",
+                            "bg-rose-50/50 dark:bg-rose-900/10",
+                            "hover:bg-rose-50 dark:hover:bg-rose-900/20",
+                            "hover:border-rose-300 dark:hover:border-rose-700"
+                          )
+                        : isSelected
+                          ? cn(
+                              "border-2 border-emerald-400 dark:border-emerald-600",
+                              "bg-emerald-50 dark:bg-emerald-900/20",
+                              "shadow-sm shadow-emerald-500/10"
+                            )
+                          : cn(
+                              "border border-zinc-200/80 dark:border-zinc-700",
+                              "bg-white dark:bg-zinc-800/50",
+                              "hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10",
+                              "hover:border-emerald-200 dark:hover:border-emerald-800"
+                            )
+                    )}
+                    title={tipo.label}
+                  >
+                    <Icon className={cn(
+                      "w-3.5 h-3.5",
+                      isDelegacao ? "text-rose-500 dark:text-rose-400"
+                        : isSelected ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-zinc-400"
+                    )} />
+                    <span className={cn(
+                      "text-xs font-medium",
+                      isDelegacao ? "text-rose-600 dark:text-rose-400"
+                        : isSelected ? "text-emerald-700 dark:text-emerald-300 font-semibold"
+                        : "text-zinc-500 dark:text-zinc-400"
+                    )}>{tipo.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            </div>
+
+            {/* Row 2 — Descrição + Gravação */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Descrição</label>
@@ -1021,8 +1203,8 @@ export default function DashboardJuriPage() {
               )}
             </div>
 
-            {/* Detalhes opcionais (colapsável) */}
-            <div>
+            {/* Footer: Detalhes opcionais + Botão Submit */}
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/60">
               <button
                 onClick={() => setShowDetalhes(!showDetalhes)}
                 className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 uppercase tracking-wide transition-colors"
@@ -1030,233 +1212,72 @@ export default function DashboardJuriPage() {
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showDetalhes ? "rotate-180" : ""}`} />
                 Detalhes opcionais
               </button>
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showDetalhes ? "max-h-40 opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Processo vinculado</label>
-                    <select
-                      value={atendimentoRapido.processoId || ""}
-                      onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, processoId: e.target.value ? Number(e.target.value) : null }))}
-                      disabled={!atendimentoRapido.assistidoId || processosDoAssistido.length === 0}
-                      className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 disabled:opacity-40 transition-colors"
-                    >
-                      <option value="">
-                        {!atendimentoRapido.assistidoId ? "Selecione um assistido primeiro" :
-                         processosDoAssistido.length === 0 ? "Nenhum processo" :
-                         "Selecionar processo..."}
-                      </option>
-                      {processosDoAssistido.map((p: any) => (
-                        <option key={p.id} value={p.id}>
-                          {p.numeroAutos || `Processo #${p.id}`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Prazo</label>
-                    <input
-                      type="date"
-                      value={atendimentoRapido.prazo}
-                      onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, prazo: e.target.value }))}
-                      className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
-                    />
-                  </div>
+
+              <Button
+                size="sm"
+                className="h-8 px-4 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white shadow-none transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                disabled={!atendimentoRapido.descricao.trim()}
+                onClick={() => {
+                  if (atendimentoRapido.descricao.trim()) {
+                    const tipoLabel = tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro";
+                    const nomeExibicao = atendimentoRapido.assistidoNome || "sem vínculo";
+                    toast.success(`${tipoLabel} de ${nomeExibicao} registrado!`);
+                    setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, prazo: "" });
+                    setShowDetalhes(false);
+                  } else {
+                    toast.error("Adicione uma descrição ao registro");
+                  }
+                }}
+              >
+                <Send className="w-3 h-3 mr-1.5" />
+                {!atendimentoRapido.descricao.trim()
+                  ? "Adicione uma descrição"
+                  : `Registrar ${tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro"}`}
+              </Button>
+            </div>
+
+            {/* Detalhes opcionais (colapsável) */}
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showDetalhes ? "max-h-40 opacity-100 mt-3" : "max-h-0 opacity-0"}`}>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50">
+                <div className="space-y-1 w-48">
+                  <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Prazo</label>
+                  <input
+                    type="date"
+                    value={atendimentoRapido.prazo}
+                    onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, prazo: e.target.value }))}
+                    className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                  />
                 </div>
               </div>
             </div>
-
-            {/* Botão Submit */}
-            <Button
-              className="w-full h-9 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white shadow-none transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
-              disabled={!atendimentoRapido.assistidoId || !atendimentoRapido.descricao.trim()}
-              onClick={() => {
-                if (atendimentoRapido.assistidoId && atendimentoRapido.descricao.trim()) {
-                  const tipoLabel = tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro";
-                  toast.success(`${tipoLabel} de ${atendimentoRapido.assistidoNome} registrado!`);
-                  setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, prazo: "" });
-                  setShowDetalhes(false);
-                } else {
-                  toast.error("Selecione um assistido e descreva o registro");
-                }
-              }}
-            >
-              <Send className="w-3.5 h-3.5 mr-2" />
-              {!atendimentoRapido.assistidoId
-                ? "Selecione um assistido"
-                : !atendimentoRapido.descricao.trim()
-                ? "Adicione uma descrição"
-                : `Registrar ${tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro"}`}
-            </Button>
           </div>
         </Card>
 
         {/* ===== 2. EQUIPE & COWORK ===== */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-emerald-200/40 dark:hover:border-emerald-800/30 flex flex-col">
-          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800/60">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-zinc-500" />
-                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Equipe & Cowork</h3>
-                {delegacoesAtivas.length > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium">
-                    {delegacoesAtivas.length} ativa{delegacoesAtivas.length > 1 ? "s" : ""}
-                  </span>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                onClick={() => setPedidoTrabalhoModalOpen(true)}
-              >
-                <Send className="w-3 h-3 mr-1" />
-                Delegar
-              </Button>
-            </div>
-          </div>
+        <EquipeCoworkCard
+          delegacoesAtivas={delegacoesAtivas.length}
+          muralNaoLidas={0}
+          equipeMembros={3}
+          coberturasAtivas={0}
+          pareceresPendentes={0}
+          pendentesCount={delegacoesAtivas.filter((d: any) => d.status === 'pendente').length}
+          prazosEstaSemana={estatisticasPrazos.venceHoje + estatisticasPrazos.proximosDias}
+          atividades={delegacoesAtivas.slice(0, 5).map((d: any, i: number) => ({
+            id: d.id || i,
+            texto: d.instrucoes?.slice(0, 60) || "Pedido de trabalho",
+            tempo: d.createdAt ? format(new Date(d.createdAt), "dd/MM", { locale: ptBR }) : "",
+            tipo: d.status === "aceita" ? "aceita" as const : "andamento" as const,
+            autor: { nome: d.delegadoPara?.name || "Equipe", iniciais: (d.delegadoPara?.name || "E")[0] },
+          }))}
+          onPedidoTrabalho={() => setPedidoTrabalhoModalOpen(true)}
+          onParecer={() => setParecerModalOpen(true)}
+          onCobertura={() => setCoberturaModalOpen(true)}
+          onMural={() => setMuralSheetOpen(true)}
+        />
 
-          <div className="flex-1 overflow-y-auto">
-            {/* Atalhos Cowork */}
-            <div className="p-4 pb-3">
-              <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide mb-2.5">Ações rápidas</p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  { icon: FileEdit, label: "Pedir Minuta", desc: "Elaborar peça jurídica", onClick: () => { setPedidoTrabalhoModalOpen(true); } },
-                  { icon: BookOpen, label: "Pedir Parecer", desc: "Consulta à equipe", onClick: () => { setParecerModalOpen(true); } },
-                  { icon: Shield, label: "Cobrir Colega", desc: "Cobertura temporária", onClick: () => { setCoberturaModalOpen(true); } },
-                  { icon: MessageSquare, label: "Mural", desc: "Notas da equipe", onClick: () => { setMuralSheetOpen(true); } },
-                ].map((feat, i) => {
-                  const FeatIcon = feat.icon;
-                  return (
-                    <button
-                      key={i}
-                      onClick={feat.onClick}
-                      className="p-3.5 rounded-lg border text-left transition-all duration-200 bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 hover:border-emerald-200 dark:hover:border-emerald-800 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 cursor-pointer group"
-                    >
-                      <div className="w-8 h-8 rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center mb-2 shadow-sm group-hover:border-emerald-200 transition-colors">
-                        <FeatIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700 transition-colors" />
-                      </div>
-                      <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-0.5">{feat.label}</p>
-                      <p className="text-[10px] text-zinc-400">{feat.desc}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+        {/* fim seção Registro + Equipe (agora stacked, sem grid) */}
 
-            {/* Pedidos ativos */}
-            {loadingDelegacoesEnviadas ? (
-              <div className="px-3 pb-3 space-y-2">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
-              </div>
-            ) : delegacoesAtivas.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center border-t border-zinc-100 dark:border-zinc-800 mx-4 mt-1 mb-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/30">
-                <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
-                  <UserCheck className="w-5 h-5 text-zinc-400" />
-                </div>
-                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Nenhum pedido ativo</p>
-                <p className="text-[11px] text-zinc-400 mt-1">Delegue trabalho para sua equipe usando as ações acima</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 h-8 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                  onClick={() => setPedidoTrabalhoModalOpen(true)}
-                >
-                  <Send className="w-3 h-3 mr-1.5" />
-                  Fazer primeiro pedido
-                </Button>
-              </div>
-            ) : (
-              <div className="border-t border-zinc-100 dark:border-zinc-800">
-                <div className="px-3 pt-2 pb-1">
-                  <p className="text-[9px] font-medium text-zinc-400 uppercase tracking-wide">Pedidos ativos</p>
-                </div>
-                <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                  {delegacoesAtivas.map((deleg: any) => {
-                    const tipoIcons: Record<string, any> = {
-                      minuta: FileEdit,
-                      atendimento: UserCheck,
-                      diligencia: Search,
-                      analise: BookOpen,
-                      outro: Send,
-                      delegacao_generica: Send,
-                    };
-                    const TipoIcon = tipoIcons[deleg.tipo || "delegacao_generica"] || Send;
-
-                    const statusConfig: Record<string, { label: string; color: string }> = {
-                      pendente: { label: "Pendente", color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" },
-                      aceita: { label: "Aceita", color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" },
-                      em_andamento: { label: "Em andamento", color: "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400" },
-                      aguardando_revisao: { label: "Aguard. revisão", color: "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400" },
-                    };
-                    const status = statusConfig[deleg.status] || { label: deleg.status, color: "bg-zinc-100 text-zinc-600" };
-
-                    const assistidoName = deleg.assistido?.nome || deleg.demanda?.assistido?.nome || "";
-
-                    return (
-                      <div key={deleg.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                        <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                          <TipoIcon className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                            {deleg.instrucoes?.slice(0, 50) || "Pedido de trabalho"}
-                          </p>
-                          <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
-                            <span>{deleg.delegadoPara?.name || "Equipe"}</span>
-                            {assistidoName && (
-                              <>
-                                <span>·</span>
-                                <span className="truncate">{assistidoName}</span>
-                              </>
-                            )}
-                            {deleg.prazoSugerido && (
-                              <>
-                                <span>·</span>
-                                <span>{format(new Date(deleg.prazoSugerido), "dd/MM", { locale: ptBR })}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded whitespace-nowrap ${status.color}`}>
-                          {status.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                {delegacoesAtivas.length >= 5 && (
-                  <div className="px-3 py-2 border-t border-zinc-100 dark:border-zinc-800">
-                    <Link href="/admin/delegacoes" className="text-[10px] text-emerald-600 hover:text-emerald-700 font-medium">
-                      Ver todos os pedidos →
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
-          {/* Pareceres aguardando resposta */}
-          <ParecerRecebidoSection />
-          </div>
-        </Card>
-
-        </div>{/* fim grid Registro + Equipe */}
-
-        {/* ===== 3. KPI CARDS (todos zinc) ===== */}
-        <KPIGrid columns={4}>
-          {statsData.map((stat, index) => (
-            <KPICardPremium
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              subtitle={stat.subtitle}
-              icon={stat.icon}
-              gradient={stat.gradient}
-              size="sm"
-            />
-          ))}
-        </KPIGrid>
-
-        {/* ===== 3.5 PENDÊNCIAS SOLAR (condicional) ===== */}
+        {/* ===== PENDÊNCIAS SOLAR (condicional) ===== */}
         {solarSync && (solarSync.stats.pending > 0 || solarSync.stats.errors > 0) && (
           <Card className="group/solar relative bg-white dark:bg-zinc-900 border border-amber-200/60 dark:border-amber-800/30 rounded-xl overflow-hidden hover:border-amber-300 dark:hover:border-amber-700/50 transition-all duration-300">
             <div className="p-3">
@@ -1276,7 +1297,7 @@ export default function DashboardJuriPage() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 {/* Pendentes de exportação */}
                 <div className="text-center p-2 rounded-lg bg-amber-50/50 dark:bg-amber-900/10">
                   <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
@@ -1313,6 +1334,21 @@ export default function DashboardJuriPage() {
                     Cobertura
                   </p>
                 </div>
+
+                {/* Sem CPF */}
+                <div className="text-center p-2 rounded-lg bg-zinc-50/50 dark:bg-zinc-800/50">
+                  <p className={cn(
+                    "text-lg font-bold",
+                    solarSync.stats.noCpf > 0
+                      ? "text-zinc-600 dark:text-zinc-400"
+                      : "text-zinc-400 dark:text-zinc-600"
+                  )}>
+                    {solarSync.stats.noCpf}
+                  </p>
+                  <p className="text-[9px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                    Sem CPF
+                  </p>
+                </div>
               </div>
 
               {/* Progress bar cobertura */}
@@ -1321,11 +1357,6 @@ export default function DashboardJuriPage() {
                   <span className="text-[9px] text-zinc-400">
                     {solarSync.stats.exportedSolar}/{solarSync.stats.total} assistidos no Solar
                   </span>
-                  {solarSync.stats.noCpf > 0 && (
-                    <span className="text-[9px] text-rose-400">
-                      {solarSync.stats.noCpf} sem CPF
-                    </span>
-                  )}
                 </div>
                 <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                   <div
@@ -1337,10 +1368,35 @@ export default function DashboardJuriPage() {
                     }}
                   />
                 </div>
+
+                {/* Ações */}
+                <div className="mt-2 flex justify-end">
+                  <Link href="/admin/intimacoes?tab=assistidos&action=export">
+                    <Button variant="outline" size="sm" className="h-7 text-xs text-amber-600 hover:text-amber-700 border-amber-200 hover:border-amber-300 hover:bg-amber-50 dark:border-amber-800 dark:hover:border-amber-700 dark:hover:bg-amber-900/20">
+                      <RefreshCw className="w-3 h-3 mr-1.5" />
+                      Exportar em lote
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </Card>
         )}
+
+        {/* ===== KPI CARDS (todos zinc) ===== */}
+        <KPIGrid columns={4}>
+          {statsData.map((stat, index) => (
+            <KPICardPremium
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              subtitle={stat.subtitle}
+              icon={stat.icon}
+              gradient={stat.gradient}
+              size="sm"
+            />
+          ))}
+        </KPIGrid>
 
         {/* ===== 4. ALERTA CRÍTICO - Réu Preso com Prazo Vencido ===== */}
         {estatisticasPrazos.reuPresoVencido > 0 && (
@@ -1368,7 +1424,10 @@ export default function DashboardJuriPage() {
           </Card>
         )}
 
-        {/* ===== 5. PRAZOS COM AÇÃO RÁPIDA ===== */}
+        {/* ===== 5. PRAZOS + JÚRIS ===== */}
+        <div className={cn("grid gap-4", isDefensorCriminalGeral ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2")}>
+
+        {/* PRAZOS COM AÇÃO RÁPIDA */}
         <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
           <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
             <div className="flex items-center justify-between">
@@ -1485,7 +1544,119 @@ export default function DashboardJuriPage() {
           </div>
         </Card>
 
-        {/* ===== 6. AUDIÊNCIAS/JÚRIS (full-width) ===== */}
+        {/* PRÓXIMOS JÚRIS — só especializado */}
+        {!isDefensorCriminalGeral && (
+          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+            <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Gavel className="w-4 h-4 text-zinc-500" />
+                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Próximos Júris</h3>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
+                    {jurisProximos.length}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md p-0.5">
+                    {[
+                      { id: "todos", label: "Todos" },
+                      { id: "rodrigo", label: "Dr. Rodrigo" },
+                      { id: "juliane", label: "Dra. Juliane" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setFiltroDefensorJuri(opt.id as typeof filtroDefensorJuri)}
+                        className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
+                          filtroDefensorJuri === opt.id
+                            ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow-sm"
+                            : "text-zinc-500 hover:text-zinc-700"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <Link href="/admin/juri">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[400px] overflow-y-auto">
+              {loadingJuris ? (
+                <div className="p-4 space-y-2">
+                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              ) : jurisProximos.length === 0 ? (
+                <div className="p-6 text-center">
+                  <Gavel className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+                  <p className="text-sm text-zinc-500">Nenhum júri agendado</p>
+                </div>
+              ) : (
+                jurisProximos.map((juri: any) => {
+                  const dataSessao = juri.dataSessao ? new Date(juri.dataSessao) : null;
+                  const diasRestantes = dataSessao ? differenceInDays(dataSessao, new Date()) : null;
+
+                  return (
+                    <Link href={`/admin/juri/${juri.id}`} key={juri.id}>
+                      <div className="flex items-center gap-3 px-3 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                        <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
+                          diasRestantes !== null && diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30" :
+                          diasRestantes !== null && diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30" :
+                          "bg-zinc-100 dark:bg-zinc-800"
+                        }`}>
+                          <span className={`text-sm font-bold ${
+                            diasRestantes !== null && diasRestantes <= 3 ? "text-rose-700 dark:text-rose-400" :
+                            diasRestantes !== null && diasRestantes <= 7 ? "text-amber-700 dark:text-amber-400" :
+                            "text-zinc-700 dark:text-zinc-300"
+                          }`}>
+                            {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
+                          </span>
+                          <span className="text-[9px] text-zinc-500 uppercase">
+                            {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : ""}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                            {juri.assistidoNome || "Réu"}
+                          </p>
+                          <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                            <span>{juri.horario || "Horário a definir"}</span>
+                            {juri.defensorNome && (
+                              <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
+                                {juri.defensorNome}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {juri.status === "CANCELADA" && <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
+                        {juri.status === "REDESIGNADA" && <RefreshCw className="w-4 h-4 text-orange-500 flex-shrink-0" />}
+                        {juri.status === "REALIZADA" && <CircleCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
+                        {diasRestantes !== null && (
+                          <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
+                            diasRestantes <= 0 ? "bg-rose-500 text-white" :
+                            diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
+                            diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
+                            "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                          }`}>
+                            {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </Card>
+        )}
+
+        </div>{/* fim grid Prazos + Júris */}
+
+        {/* ===== 6. AUDIÊNCIAS (full-width) ===== */}
         {isDefensorCriminalGeral ? (
           /* Criminal Geral: Minhas Audiências */
           <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
@@ -1580,11 +1751,8 @@ export default function DashboardJuriPage() {
             </div>
           </Card>
         ) : (
-          /* Especializado: Audiências (esq) + Júris (dir) lado a lado */
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-            {/* AUDIÊNCIAS DA SEMANA — esquerda */}
-            <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
+          /* Especializado: Audiências da Semana */
+          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
               <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -1679,115 +1847,6 @@ export default function DashboardJuriPage() {
               </div>
             </Card>
 
-            {/* PRÓXIMOS JÚRIS — direita */}
-            <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-              <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Gavel className="w-4 h-4 text-zinc-500" />
-                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Próximos Júris</h3>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
-                      {jurisProximos.length}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md p-0.5">
-                      {[
-                        { id: "todos", label: "Todos" },
-                        { id: "rodrigo", label: "Dr. Rodrigo" },
-                        { id: "juliane", label: "Dra. Juliane" },
-                      ].map((opt) => (
-                        <button
-                          key={opt.id}
-                          onClick={() => setFiltroDefensorJuri(opt.id as typeof filtroDefensorJuri)}
-                          className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
-                            filtroDefensorJuri === opt.id
-                              ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 shadow-sm"
-                              : "text-zinc-500 hover:text-zinc-700"
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                    <Link href="/admin/juri">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600">
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[400px] overflow-y-auto">
-                {loadingJuris ? (
-                  <div className="p-4 space-y-2">
-                    {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
-                  </div>
-                ) : jurisProximos.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <Gavel className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
-                    <p className="text-sm text-zinc-500">Nenhum júri agendado</p>
-                  </div>
-                ) : (
-                  jurisProximos.map((juri: any) => {
-                    const dataSessao = juri.dataSessao ? new Date(juri.dataSessao) : null;
-                    const diasRestantes = dataSessao ? differenceInDays(dataSessao, new Date()) : null;
-
-                    return (
-                      <Link href={`/admin/juri/${juri.id}`} key={juri.id}>
-                        <div className="flex items-center gap-3 px-3 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                          <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
-                            diasRestantes !== null && diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30" :
-                            diasRestantes !== null && diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30" :
-                            "bg-zinc-100 dark:bg-zinc-800"
-                          }`}>
-                            <span className={`text-sm font-bold ${
-                              diasRestantes !== null && diasRestantes <= 3 ? "text-rose-700 dark:text-rose-400" :
-                              diasRestantes !== null && diasRestantes <= 7 ? "text-amber-700 dark:text-amber-400" :
-                              "text-zinc-700 dark:text-zinc-300"
-                            }`}>
-                              {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
-                            </span>
-                            <span className="text-[9px] text-zinc-500 uppercase">
-                              {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : ""}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                              {juri.assistidoNome || "Réu"}
-                            </p>
-                            <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                              <span>{juri.horario || "Horário a definir"}</span>
-                              {juri.defensorNome && (
-                                <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
-                                  {juri.defensorNome}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {juri.status === "CANCELADA" && <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
-                          {juri.status === "REDESIGNADA" && <RefreshCw className="w-4 h-4 text-orange-500 flex-shrink-0" />}
-                          {juri.status === "REALIZADA" && <CircleCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
-                          {diasRestantes !== null && (
-                            <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
-                              diasRestantes <= 0 ? "bg-rose-500 text-white" :
-                              diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
-                              diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
-                              "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-                            }`}>
-                              {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
-                            </span>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })
-                )}
-              </div>
-            </Card>
-
-          </div>
         )}
       </div>
 

@@ -296,6 +296,90 @@ export const processosRouter = router({
       return novoProcesso;
     }),
 
+  // Extrair dados de processo a partir de PDF via IA
+  extractFromPdf: protectedProcedure
+    .input(
+      z.object({
+        file: z.string(), // base64 encoded PDF
+        assistidoId: z.number().optional(),
+        deep: z.boolean().default(false),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { extractFromPdf: extract, isPdfExtractionConfigured } = await import("@/lib/ai/pdf-extraction");
+
+      if (!isPdfExtractionConfigured()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Extração de PDF não configurada. Verifique a API key do Gemini.",
+        });
+      }
+
+      const result = await extract(input.file, { deep: input.deep });
+
+      if (!result.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: result.error || "Erro ao extrair dados do PDF",
+        });
+      }
+
+      return result;
+    }),
+
+  // Criar assistido rapidamente (inline, para modal Plaud)
+  quickCreateAssistido: protectedProcedure
+    .input(
+      z.object({
+        nome: z.string().min(2),
+        atribuicaoPrimaria: z.enum([
+          "JURI_CAMACARI", "VVD_CAMACARI", "EXECUCAO_PENAL",
+          "SUBSTITUICAO", "SUBSTITUICAO_CIVEL", "GRUPO_JURI"
+        ]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
+
+      // Create the assistido with minimal data
+      const [novoAssistido] = await db
+        .insert(assistidos)
+        .values({
+          nome: input.nome,
+          atribuicaoPrimaria: input.atribuicaoPrimaria,
+          workspaceId: workspaceId,
+          statusPrisional: "SOLTO",
+        })
+        .returning();
+
+      // Fire-and-forget: create Drive folder
+      (async () => {
+        try {
+          const { createOrFindAssistidoFolder, mapAtribuicaoToFolderKey, isGoogleDriveConfigured } =
+            await import("@/lib/services/google-drive");
+          if (!isGoogleDriveConfigured()) return;
+
+          const folderKey = mapAtribuicaoToFolderKey(input.atribuicaoPrimaria);
+          if (!folderKey) return;
+
+          const folder = await createOrFindAssistidoFolder(folderKey, input.nome);
+          if (folder) {
+            await db
+              .update(assistidos)
+              .set({
+                driveFolderId: folder.id,
+                updatedAt: new Date(),
+              })
+              .where(eq(assistidos.id, novoAssistido.id));
+          }
+        } catch (error) {
+          console.error(`[Drive] Erro ao criar pasta para assistido ${novoAssistido.id}:`, error);
+        }
+      })();
+
+      return novoAssistido;
+    }),
+
   // Atualizar processo
   update: protectedProcedure
     .input(

@@ -180,7 +180,7 @@ export function detectarAtribuicao(texto: string): { atribuicao: string | null; 
   // Júri
   if (textoLower.includes('vara do júri') || textoLower.includes('vara do juri') ||
       textoLower.includes('júri e execuções') || textoLower.includes('juri e execucoes')) {
-    return { atribuicao: 'Júri', vara: 'Vara do Júri' };
+    return { atribuicao: 'Tribunal do Júri', vara: 'Vara do Júri' };
   }
 
   // Execução Penal
@@ -192,7 +192,7 @@ export function detectarAtribuicao(texto: string): { atribuicao: string | null; 
   // Criminal
   if (textoLower.includes('vara criminal') || textoLower.includes('1ª vara criminal') ||
       textoLower.includes('2ª vara criminal') || textoLower.includes('3ª vara criminal')) {
-    return { atribuicao: 'Criminal', vara: 'Vara Criminal' };
+    return { atribuicao: 'Substituição Criminal', vara: 'Vara Criminal' };
   }
 
   // Infância e Juventude
@@ -906,7 +906,7 @@ export function intimacaoToDemanda(
   }
 ): any {
   // Usar atribuição detectada se disponível e não foi especificada
-  const atribuicaoFinal = atribuicao || intimacao.atribuicaoDetectada || 'Criminal';
+  const atribuicaoFinal = atribuicao || intimacao.atribuicaoDetectada || 'Substituição Criminal';
 
   // Converter data para ISO (inclui horário se disponível)
   const dataISO = converterDataParaISO(intimacao.dataExpedicao);

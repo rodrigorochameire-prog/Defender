@@ -15,6 +15,7 @@ import { AdminConfigModal } from "@/components/demandas-premium/admin-config-mod
 import { ImportDropdown } from "@/components/demandas-premium/import-dropdown";
 import { SheetsImportModal } from "@/components/demandas-premium/sheets-import-modal";
 import { SEEUImportModal } from "@/components/demandas-premium/seeu-import-modal";
+import { DuplicatesModal } from "@/components/demandas-premium/duplicates-modal";
 import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
@@ -89,6 +90,7 @@ import {
   ChevronUp,
   SlidersHorizontal,
   Filter,
+  Layers,
   type LucideIcon,
 } from "lucide-react";
 
@@ -551,6 +553,7 @@ export default function Demandas() {
   const [isSheetsImportModalOpen, setIsSheetsImportModalOpen] = useState(false);
   const [isSEEUImportModalOpen, setIsSEEUImportModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isDuplicatesModalOpen, setIsDuplicatesModalOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDemanda, setEditingDemanda] = useState<DemandaFormData | null>(null);
@@ -1506,10 +1509,19 @@ export default function Demandas() {
               onImportSheets={() => setIsSheetsImportModalOpen(true)}
               onImportSEEU={() => setIsSEEUImportModalOpen(true)}
             />
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
-              onClick={() => setIsExportModalOpen(true)} 
+              onClick={() => setIsDuplicatesModalOpen(true)}
+              title="Encontrar Duplicatas"
+              className="h-7 w-7 p-0 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <Layers className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExportModalOpen(true)}
               title="Exportar"
               className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             >
@@ -2132,6 +2144,11 @@ export default function Demandas() {
         demandasFiltradas={demandasFiltradas}
       />
       <AdminConfigModal isOpen={isAdminConfigModalOpen} onClose={() => setIsAdminConfigModalOpen(false)} />
+      <DuplicatesModal
+        isOpen={isDuplicatesModalOpen}
+        onClose={() => setIsDuplicatesModalOpen(false)}
+        onResolved={() => utils.demandas.list.invalidate()}
+      />
 
       {/* Modal de Delegação - Aparece ao selecionar status de delegação (amanda, emilly, taissa) */}
       <DelegacaoModal

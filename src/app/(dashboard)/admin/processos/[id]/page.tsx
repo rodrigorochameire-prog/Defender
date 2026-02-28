@@ -4,7 +4,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
-import { ArrowLeft, ExternalLink, Lock, Scale, Sun, User } from "lucide-react";
+import { ArrowLeft, Brain, ExternalLink, Loader2, Lock, Scale, Sun, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,6 +28,8 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
   const { id } = use(params);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("partes");
+  const [isAnalyzingProcesso, setIsAnalyzingProcesso] = useState(false);
+
   const [solarResult, setSolarResult] = useState<{
     cadastrado: boolean;
     ja_existia: boolean;
@@ -164,6 +166,40 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             className="text-[11px] px-2 py-1 rounded border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50"
           >
             {cadastrarMutation.isPending ? "Verificando..." : "Cadastrar no Solar"}
+          </button>
+        )}
+        {data.driveFolderId && (
+          <button
+            onClick={async () => {
+              setIsAnalyzingProcesso(true);
+              try {
+                const res = await fetch("/api/ai/analyze-folder", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ processoId: Number(id) }),
+                });
+                if (!res.ok) {
+                  const err = (await res.json().catch(() => ({}))) as { error?: string };
+                  throw new Error(err?.error ?? "Falha na análise");
+                }
+                const json = (await res.json()) as { summary?: string };
+                toast.success(json.summary ?? "Análise concluída");
+              } catch (err) {
+                const message = err instanceof Error ? err.message : "Erro ao analisar";
+                toast.error(message);
+              } finally {
+                setIsAnalyzingProcesso(false);
+              }
+            }}
+            disabled={isAnalyzingProcesso}
+            className="text-[11px] px-2 py-1 rounded border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50 flex items-center gap-1"
+          >
+            {isAnalyzingProcesso ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Brain className="h-3 w-3" />
+            )}
+            {isAnalyzingProcesso ? "Analisando..." : "Análise IA"}
           </button>
         )}
       </div>

@@ -38,7 +38,7 @@ export function PlaudArrivalToast() {
           {
             description: "Clique para revisar e aprovar",
             duration: 10_000,
-            icon: <Mic className="h-4 w-4 text-purple-600" />,
+            icon: <Mic className="h-4 w-4 text-emerald-500" />,
             action: {
               label: "Revisar",
               onClick: () => {

@@ -237,8 +237,13 @@ export const assistidosRouter = router({
 
       return result.map(a => {
         const processoData = processosDataMap.get(a.id);
+        // Derivar atribuicaoPrimaria dos processos quando o valor do assistido é o default
+        const atribuicaoDerived = (a.atribuicaoPrimaria === "SUBSTITUICAO" && processoData && processoData.atribuicoes.size > 0)
+          ? Array.from(processoData.atribuicoes)[0]
+          : a.atribuicaoPrimaria;
         return {
           ...a,
+          atribuicaoPrimaria: atribuicaoDerived,
           // Dados agregados
           processosCount: processosCountMap.get(a.id) || 0,
           demandasAbertasCount: demandasCountMap.get(a.id) || 0,
@@ -675,6 +680,122 @@ export const assistidosRouter = router({
       }
 
       return atualizado;
+    }),
+
+  // Analisar todos os documentos da pasta Drive com IA
+  analyzeAllDocuments: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .mutation(async ({ input }) => {
+      // 1. Buscar assistido
+      const [assistido] = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          cpf: assistidos.cpf,
+          driveFolderId: assistidos.driveFolderId,
+        })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+
+      if (!assistido) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+      }
+
+      if (!assistido.driveFolderId) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Assistido não possui pasta no Google Drive",
+        });
+      }
+
+      // 2. Listar arquivos PDF na pasta
+      const { listFilesInFolder, downloadFileContent, isGoogleDriveConfigured } =
+        await import("@/lib/services/google-drive");
+
+      if (!isGoogleDriveConfigured()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Google Drive não configurado",
+        });
+      }
+
+      const files = await listFilesInFolder(assistido.driveFolderId);
+      const pdfFiles = (files || []).filter(
+        (f: any) => f.mimeType === "application/pdf" || f.name?.endsWith(".pdf")
+      );
+
+      if (pdfFiles.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Nenhum arquivo PDF encontrado na pasta do assistido",
+        });
+      }
+
+      // 3. Download e converter para base64 (máx 10 arquivos)
+      const documents: Array<{ name: string; base64: string; mimeType: string }> = [];
+      const limit = Math.min(pdfFiles.length, 10);
+
+      for (let i = 0; i < limit; i++) {
+        try {
+          const content = await downloadFileContent(pdfFiles[i].id);
+          if (content) {
+            const base64 = Buffer.from(content).toString("base64");
+            documents.push({
+              name: pdfFiles[i].name || `documento_${i + 1}.pdf`,
+              base64,
+              mimeType: "application/pdf",
+            });
+          }
+        } catch (error) {
+          console.error(`[AI] Erro ao baixar arquivo ${pdfFiles[i].name}:`, error);
+        }
+      }
+
+      if (documents.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Não foi possível baixar nenhum documento",
+        });
+      }
+
+      // 4. Analisar com IA
+      const { analyzeMultipleDocuments, isPdfExtractionConfigured } =
+        await import("@/lib/ai/pdf-extraction");
+
+      if (!isPdfExtractionConfigured()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Extração de PDF não configurada. Verifique a API key do Gemini.",
+        });
+      }
+
+      const result = await analyzeMultipleDocuments(documents);
+
+      if (!result.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: result.error || "Erro na análise multi-documento",
+        });
+      }
+
+      // 5. Atualizar assistido com dados consolidados
+      const updateData: Record<string, any> = { updatedAt: new Date() };
+      if (result.dadosConsolidados.cpf && !assistido.cpf) {
+        updateData.cpf = result.dadosConsolidados.cpf;
+      }
+
+      await db
+        .update(assistidos)
+        .set(updateData)
+        .where(eq(assistidos.id, input.assistidoId));
+
+      return {
+        ...result,
+        assistidoId: input.assistidoId,
+        totalPdfs: pdfFiles.length,
+        processados: documents.length,
+      };
     }),
 
   // Excluir assistido (soft delete)

@@ -198,7 +198,7 @@ export async function saveAsPendingReview(
         .set({
           configId,
           plaudDeviceId: payload.device_id,
-          title: payload.data.title || existingRecording.title,
+          title: title,
           duration: payload.data.duration,
           recordedAt: new Date(payload.timestamp),
           status: "pending_review",
@@ -223,7 +223,7 @@ export async function saveAsPendingReview(
           configId,
           plaudRecordingId: payload.recording_id,
           plaudDeviceId: payload.device_id,
-          title: payload.data.title,
+          title: title,
           duration: payload.data.duration,
           recordedAt: new Date(payload.timestamp),
           status: "pending_review",
@@ -923,44 +923,11 @@ export async function uploadRecordingToDrive(
     };
   }
 
-  // Fallback: sem URL de áudio — cria registro mock (compatibilidade)
-  const [driveFile] = await db
-    .insert(driveFiles)
-    .values({
-      driveFileId: `plaud_${recording.plaudRecordingId}`,
-      driveFolderId: folderId,
-      name: fileName,
-      mimeType: "audio/m4a",
-      fileSize: recording.fileSize,
-      syncStatus: "synced",
-      lastSyncAt: new Date(),
-      assistidoId: recording.assistidoId,
-    })
-    .returning();
-
-  await db
-    .update(plaudRecordings)
-    .set({
-      driveFileId: driveFile.driveFileId,
-      driveFileUrl: driveFile.webViewLink,
-      updatedAt: new Date(),
-    })
-    .where(eq(plaudRecordings.id, recordingId));
-
-  if (recording.atendimentoId) {
-    await db
-      .update(atendimentos)
-      .set({
-        audioDriveFileId: driveFile.driveFileId,
-        audioUrl: driveFile.webViewLink,
-        updatedAt: new Date(),
-      })
-      .where(eq(atendimentos.id, recording.atendimentoId));
-  }
-
+  // Sem URL de áudio — skip upload silenciosamente
+  console.log(`[Plaud] Sem audio URL para recording ${recordingId} — upload ao Drive ignorado`);
   return {
-    driveFileId: driveFile.driveFileId,
-    driveFileUrl: driveFile.webViewLink || "",
+    driveFileId: "",
+    driveFileUrl: "",
   };
 }
 
@@ -983,22 +950,22 @@ export async function extractKeyPointsWithAI(
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const prompt = `Analise a seguinte transcrição de um atendimento jurídico e extraia os pontos-chave.
+    const prompt = `Analise a seguinte transcrição de um atendimento da Defensoria Pública (defesa criminal) e extraia os pontos-chave.
 
 TRANSCRIÇÃO:
-${transcription.substring(0, 10000)} ${transcription.length > 10000 ? "..." : ""}
+${transcription.substring(0, 15000)} ${transcription.length > 15000 ? "..." : ""}
 
 Retorne um JSON com a seguinte estrutura:
 {
-  "compromissos": ["lista de compromissos assumidos durante o atendimento"],
-  "informacoesRelevantes": ["informações importantes mencionadas"],
-  "duvidasPendentes": ["dúvidas que ficaram sem resposta"],
-  "providenciasNecessarias": ["providências/ações que precisam ser tomadas"]
+  "compromissos": ["compromissos assumidos pelo defensor ou pelo assistido"],
+  "informacoesRelevantes": ["fatos, datas, nomes, endereços ou detalhes processuais mencionados"],
+  "duvidasPendentes": ["dúvidas ou pontos que ficaram em aberto"],
+  "providenciasNecessarias": ["diligências, petições, documentos a juntar ou ações concretas"]
 }
 
-Seja conciso e objetivo. Retorne APENAS o JSON, sem explicações.`;
+Seja conciso, objetivo e em português. Se a transcrição for muito curta ou não tiver conteúdo substantivo, retorne arrays vazios. Retorne APENAS o JSON, sem explicações.`;
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();

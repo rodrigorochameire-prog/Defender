@@ -163,11 +163,11 @@ interface SidebarLogoProps {
 }
 
 export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) {
-  const iconSize = collapsed ? 28 : 38;
+  const iconSize = collapsed ? 28 : 34;
   return (
-    <div className={cn("sidebar-logo flex items-center justify-center", collapsed && "sidebar-collapsed", className)}>
-      <Link href="/admin" className="inline-block transition-opacity hover:opacity-90">
-        <div className="relative" style={{ width: iconSize, height: iconSize }}>
+    <div className={cn("sidebar-logo flex items-center", collapsed ? "justify-center" : "justify-start", className)}>
+      <Link href="/admin" className="flex items-center gap-3 transition-opacity hover:opacity-90">
+        <div className="relative flex-shrink-0" style={{ width: iconSize, height: iconSize }}>
           <Image
             src="/logo-dark.png"
             alt="OMBUDS"
@@ -177,6 +177,16 @@ export function SidebarLogo({ collapsed = false, className }: SidebarLogoProps) 
             className="object-contain drop-shadow-[0_0_6px_rgba(16,185,129,0.25)]"
           />
         </div>
+        {!collapsed && (
+          <div className="min-w-0">
+            <span className="font-serif text-lg font-semibold tracking-tight text-zinc-100 block leading-tight">
+              OMBUDS
+            </span>
+            <span className="text-[9px] font-light tracking-[0.12em] uppercase text-zinc-500 block leading-tight">
+              Ecossistema de Defesa Criminal
+            </span>
+          </div>
+        )}
       </Link>
     </div>
   );

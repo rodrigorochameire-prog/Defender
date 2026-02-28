@@ -54,6 +54,7 @@ interface PjeReviewTableProps {
   rows: PjeReviewRow[];
   onRowsChange: (rows: PjeReviewRow[]) => void;
   atribuicao: string;
+  showTipoProcesso?: boolean; // Mostra badge MPU/Geral para VVD
 }
 
 // ============================================================================
@@ -120,6 +121,7 @@ export function PjeReviewTable({
   rows,
   onRowsChange,
   atribuicao,
+  showTipoProcesso = false,
 }: PjeReviewTableProps) {
   // Opções de ato baseadas na atribuição
   const atoOptions = useMemo(() => {
@@ -236,6 +238,11 @@ export function PjeReviewTable({
                   <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[140px]">
                     Processo
                   </th>
+                  {showTipoProcesso && (
+                    <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[60px]">
+                      Tipo
+                    </th>
+                  )}
                   <th className="px-2 py-2 text-left text-zinc-500 dark:text-zinc-400 font-medium min-w-[150px]">
                     Ato
                   </th>
@@ -264,6 +271,7 @@ export function PjeReviewTable({
                     onStatusChange={(i, v) => updateRow(i, { status: v })}
                     onEstadoPrisionalChange={(i, v) => updateRow(i, { estadoPrisional: v })}
                     onToggleExclude={handleToggleExclude}
+                    showTipoProcesso={showTipoProcesso}
                   />
                 ))}
               </tbody>
@@ -290,6 +298,7 @@ interface PjeReviewRowProps {
   onStatusChange: (index: number, value: string) => void;
   onEstadoPrisionalChange: (index: number, value: string) => void;
   onToggleExclude: (index: number) => void;
+  showTipoProcesso?: boolean;
 }
 
 function PjeReviewRow({
@@ -303,6 +312,7 @@ function PjeReviewRow({
   onStatusChange,
   onEstadoPrisionalChange,
   onToggleExclude,
+  showTipoProcesso = false,
 }: PjeReviewRowProps) {
   const matchInfo = getMatchDot(row.assistidoMatch);
   const confidenceClass = getConfidenceDot(row.atoConfidence);
@@ -378,6 +388,21 @@ function PjeReviewRow({
           {row.numeroProcesso || "—"}
         </span>
       </td>
+
+      {/* Tipo Processo (VVD) */}
+      {showTipoProcesso && (
+        <td className="px-2 py-1.5">
+          <span
+            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+              row.tipoProcesso === "MPUMPCrim"
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+            }`}
+          >
+            {row.tipoProcesso === "MPUMPCrim" ? "MPU" : "Geral"}
+          </span>
+        </td>
+      )}
 
       {/* Ato (dropdown) */}
       <td className="px-2 py-1.5">

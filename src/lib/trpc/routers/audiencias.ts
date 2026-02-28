@@ -127,9 +127,14 @@ export const audienciasRouter = router({
             numero: processos.numeroAutos,
             atribuicao: processos.atribuicao,
           },
+          assistido: {
+            id: assistidos.id,
+            nome: assistidos.nome,
+          },
         })
         .from(audiencias)
         .leftJoin(processos, eq(audiencias.processoId, processos.id))
+        .leftJoin(assistidos, eq(audiencias.assistidoId, assistidos.id))
         .where(and(...whereConditions))
         .orderBy(asc(audiencias.dataAudiencia))
         .limit(limite);

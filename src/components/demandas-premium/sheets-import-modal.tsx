@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -17,7 +17,6 @@ import {
   FileText,
   Clock,
   Lock,
-  AlertCircle,
   Trash2,
   Gavel,
   Home,
@@ -26,6 +25,62 @@ import {
   Target,
   RefreshCw,
 } from "lucide-react";
+
+// Componente de célula editável inline — clique para editar
+function EditableCell({
+  value,
+  onChange,
+  className = "",
+  placeholder = "",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  placeholder?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => {
+          setEditing(false);
+          if (draft !== value) onChange(draft);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            setEditing(false);
+            if (draft !== value) onChange(draft);
+          }
+          if (e.key === "Escape") {
+            setEditing(false);
+            setDraft(value);
+          }
+        }}
+        className={`w-full bg-white dark:bg-zinc-900 border border-emerald-400 rounded px-1 py-0.5 text-xs outline-none ${className}`}
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={() => {
+        setDraft(value);
+        setEditing(true);
+      }}
+      className={`cursor-text hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded px-1 py-0.5 -mx-1 block truncate ${
+        value ? className : "text-zinc-400 italic"
+      }`}
+      title="Clique para editar"
+    >
+      {value || placeholder}
+    </span>
+  );
+}
 
 interface SheetsImportModalProps {
   isOpen: boolean;
@@ -126,9 +181,32 @@ function normalizarNome(nome: string): string {
     .trim();
 }
 
+// Normaliza qualquer formato de data para YYYY-MM-DD (ISO) para comparação consistente
+// Suporta: DD/MM/YY, DD/MM/YYYY, DD.MM.YY, YYYY-MM-DD
+function normalizarData(dataStr: string | null | undefined): string | null {
+  if (!dataStr || !dataStr.trim()) return null;
+  const cleaned = dataStr.trim().replace(/\./g, '/');
+
+  // Formato DD/MM/YY ou DD/MM/YYYY
+  const brMatch = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (brMatch) {
+    const [, dia, mes, ano] = brMatch;
+    const anoFull = ano.length === 2 ? `20${ano}` : ano;
+    return `${anoFull}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  }
+
+  // Formato ISO YYYY-MM-DD (pode ter T depois)
+  const isoMatch = cleaned.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoMatch) return isoMatch[1];
+
+  return null;
+}
+
 // Função para verificar se duas demandas são duplicatas
-// Critério: mesmo processo + mesma data de expedição
-// Isso permite múltiplas demandas do mesmo processo para diferentes intimações
+// Critérios (em ordem):
+// 1. Mesmo processo + mesma data de expedição
+// 2. Mesmo processo + mesmo ato (fallback quando sem datas)
+// 3. Mesmo nome + mesma data (fallback quando sem processo)
 function saoMesmaDemanda(nova: ParsedDemanda, existente: any): boolean {
   // Comparar por número de processo
   const processoNovo = nova.processos[0]?.numero;
@@ -140,23 +218,40 @@ function saoMesmaDemanda(nova: ParsedDemanda, existente: any): boolean {
     const nomeNovo = normalizarNome(nova.assistido);
     const nomeExistente = normalizarNome(existente.assistido || '');
 
-    if (nomeNovo === nomeExistente && nova.data && nova.data === existente.data) {
-      return true;
+    if (nomeNovo === nomeExistente) {
+      // Mesmo nome + mesma data normalizada
+      const dataNova = normalizarData(nova.data);
+      const dataExist = normalizarData(existente.dataEntrada || existente.data);
+      if (dataNova && dataExist && dataNova === dataExist) return true;
+
+      // Mesmo nome + mesmo ato (quando ambos sem data)
+      if (!dataNova && !dataExist) {
+        const atoNovo = nova.ato?.toLowerCase().trim();
+        const atoExist = (existente.ato || '').toLowerCase().trim();
+        if (atoNovo && atoExist && atoNovo === atoExist) return true;
+      }
     }
     return false;
   }
 
-  // Mesmo processo - verificar data de expedição (data de entrada)
-  const dataNovaISO = nova.data; // Já deve estar em formato ISO
-  const dataExistente = existente.dataEntrada || existente.data;
+  // Mesmo processo - comparar datas normalizadas para ISO
+  const dataNova = normalizarData(nova.data);
+  const dataExistente = normalizarData(existente.dataEntrada || existente.data);
 
-  // Se ambas têm data, comparar - é duplicata se mesma data
-  if (dataNovaISO && dataExistente) {
-    return dataNovaISO === dataExistente;
+  // Se ambas têm data, comparar em formato normalizado
+  if (dataNova && dataExistente) {
+    return dataNova === dataExistente;
+  }
+
+  // Se uma tem data e outra não: verificar por processo + ato como fallback
+  const atoNovo = nova.ato?.toLowerCase().trim();
+  const atoExistente = (existente.ato || '').toLowerCase().trim();
+  if (atoNovo && atoExistente && atoNovo !== 'demanda importada' && atoNovo === atoExistente) {
+    return true;
   }
 
   // Se nenhuma tem data, verificar se demanda existente é recente (últimos 30 dias)
-  if (!dataNovaISO && !dataExistente) {
+  if (!dataNova && !dataExistente) {
     const createdAt = existente.createdAt ? new Date(existente.createdAt) : null;
     if (createdAt) {
       const trintaDiasAtras = new Date();
@@ -450,7 +545,28 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
 
   const handleRemove = (id: string) => {
     setParsedDemandas(prev => prev.filter(d => d.id !== id));
+    setDemandasNovas(prev => prev.filter(d => d.id !== id));
+    setDuplicatas(prev => prev.filter(d => d.nova.id !== id));
   };
+
+  // Edição inline de campos na prévia
+  const handleUpdateField = useCallback((id: string, field: keyof ParsedDemanda, value: string) => {
+    const updateDemanda = (d: ParsedDemanda) => {
+      if (d.id !== id) return d;
+      if (field === 'processos') {
+        // Para processos, re-parsear o número
+        return { ...d, processos: [{ tipo: '', numero: value }] };
+      }
+      return { ...d, [field]: value };
+    };
+
+    setParsedDemandas(prev => prev.map(updateDemanda));
+    setDemandasNovas(prev => prev.map(updateDemanda));
+    setDuplicatas(prev => prev.map(dup => ({
+      ...dup,
+      nova: updateDemanda(dup.nova),
+    })));
+  }, []);
 
   const handleImport = () => {
     if (demandasNovas.length === 0 && duplicatas.length === 0) {
@@ -617,7 +733,7 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
             </div>
           </div>
 
-          {/* Prévia das demandas */}
+          {/* Prévia das demandas — tabela editável */}
           {parsedDemandas.length > 0 && (
             <div className="space-y-3">
               {/* Stats */}
@@ -650,9 +766,9 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
               {stats.atualizacoes > 0 && (
                 <div className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
                   <p className="text-xs font-medium text-purple-800 dark:text-purple-200 mb-2">
-                    🔄 {stats.atualizacoes} demandas serão atualizadas:
+                    {stats.atualizacoes} demandas existentes serão atualizadas com dados da planilha
                   </p>
-                  <div className="space-y-1 max-h-[100px] overflow-auto">
+                  <div className="space-y-1 max-h-[80px] overflow-auto">
                     {duplicatas.map((dup, i) => (
                       <div key={i} className="text-[10px] text-purple-700 dark:text-purple-300">
                         <span className="font-semibold">{dup.nova.assistido}</span>: {dup.diferencas.join(", ")}
@@ -662,70 +778,116 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
                 </div>
               )}
 
-              {/* Lista de demandas */}
-              <div className="max-h-[300px] overflow-auto space-y-2">
-                {parsedDemandas.map((demanda) => (
-                  <Card
-                    key={demanda.id}
-                    className={`p-3 ${!demanda.valido ? "border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/10" : ""}`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0 space-y-1">
-                        {/* Linha 1: Nome e Status */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <User className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
-                          <span className="font-medium text-sm truncate">{demanda.assistido || "Sem nome"}</span>
-                          <Badge variant="outline" className="text-[10px]">
-                            {demanda.status}
-                          </Badge>
-                          {demanda.estadoPrisional === "preso" && (
-                            <Lock className="w-3 h-3 text-red-500" />
-                          )}
-                        </div>
+              {/* Tabela editável */}
+              <p className="text-[10px] text-zinc-400">Clique em qualquer campo para editar antes de importar</p>
+              <div className="max-h-[300px] overflow-auto border rounded-lg">
+                <table className="w-full text-xs">
+                  <thead className="bg-zinc-100 dark:bg-zinc-800 sticky top-0 z-10">
+                    <tr>
+                      <th className="px-2 py-1.5 text-left font-medium w-[60px]">Status</th>
+                      <th className="px-2 py-1.5 text-left font-medium">Assistido</th>
+                      <th className="px-2 py-1.5 text-left font-medium">Processo</th>
+                      <th className="px-2 py-1.5 text-left font-medium">Ato</th>
+                      <th className="px-2 py-1.5 text-left font-medium w-[80px]">Data</th>
+                      <th className="px-2 py-1.5 text-left font-medium w-[80px]">Prazo</th>
+                      <th className="px-2 py-1.5 text-left font-medium w-[60px]"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {parsedDemandas.map((demanda) => {
+                      const isDup = duplicatas.some(d => d.nova.id === demanda.id);
+                      const isNew = demandasNovas.some(d => d.id === demanda.id);
 
-                        {/* Linha 2: Tipo, Processo e Ato */}
-                        <div className="flex items-center gap-2 text-xs text-zinc-500">
-                          <FileText className="w-3 h-3 flex-shrink-0" />
-                          {demanda.processos[0]?.tipo && (
-                            <span className="font-semibold text-emerald-600">{demanda.processos[0].tipo}</span>
-                          )}
-                          <span className="font-mono">{demanda.processos[0]?.numero || "Sem processo"}</span>
-                          <span>•</span>
-                          <span className="truncate">{demanda.ato}</span>
-                        </div>
+                      return (
+                        <tr
+                          key={demanda.id}
+                          className={
+                            !demanda.valido
+                              ? "bg-amber-50/50 dark:bg-amber-900/10"
+                              : isDup
+                                ? "bg-purple-50/50 dark:bg-purple-900/10"
+                                : ""
+                          }
+                        >
+                          {/* Status */}
+                          <td className="px-2 py-1.5">
+                            <div className="flex items-center gap-1">
+                              {isDup ? (
+                                <Badge variant="outline" className="text-[9px] py-0 px-1 border-purple-300 text-purple-700 dark:text-purple-300 whitespace-nowrap">
+                                  Atualizar
+                                </Badge>
+                              ) : isNew ? (
+                                <Badge variant="outline" className="text-[9px] py-0 px-1 border-blue-300 text-blue-700 dark:text-blue-300 whitespace-nowrap">
+                                  Nova
+                                </Badge>
+                              ) : null}
+                              {demanda.estadoPrisional === "preso" && (
+                                <Lock className="w-3 h-3 text-red-500 shrink-0" />
+                              )}
+                            </div>
+                          </td>
 
-                        {/* Linha 3: Data e Atribuição */}
-                        <div className="flex items-center gap-2 text-xs text-zinc-400">
-                          {demanda.data && (
-                            <>
-                              <Clock className="w-3 h-3" />
-                              <span>{demanda.data}</span>
-                            </>
-                          )}
-                          <span>•</span>
-                          <span>{demanda.atribuicao}</span>
-                        </div>
+                          {/* Assistido — editável */}
+                          <td className="px-2 py-1.5">
+                            <EditableCell
+                              value={demanda.assistido}
+                              onChange={(v) => handleUpdateField(demanda.id, 'assistido', v)}
+                              className="font-medium"
+                            />
+                          </td>
 
-                        {/* Erros */}
-                        {demanda.erros.length > 0 && (
-                          <div className="flex items-center gap-1 text-xs text-amber-600">
-                            <AlertCircle className="w-3 h-3" />
-                            {demanda.erros.join(", ")}
-                          </div>
-                        )}
-                      </div>
+                          {/* Processo — editável */}
+                          <td className="px-2 py-1.5">
+                            <EditableCell
+                              value={demanda.processos[0]?.numero || ""}
+                              onChange={(v) => handleUpdateField(demanda.id, 'processos', v)}
+                              className="font-mono text-[10px]"
+                              placeholder="Sem processo"
+                            />
+                          </td>
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-zinc-400 hover:text-red-500"
-                        onClick={() => handleRemove(demanda.id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
+                          {/* Ato — editável */}
+                          <td className="px-2 py-1.5">
+                            <EditableCell
+                              value={demanda.ato}
+                              onChange={(v) => handleUpdateField(demanda.id, 'ato', v)}
+                            />
+                          </td>
+
+                          {/* Data — editável */}
+                          <td className="px-2 py-1.5">
+                            <EditableCell
+                              value={demanda.data}
+                              onChange={(v) => handleUpdateField(demanda.id, 'data', v)}
+                              placeholder="-"
+                            />
+                          </td>
+
+                          {/* Prazo — editável */}
+                          <td className="px-2 py-1.5">
+                            <EditableCell
+                              value={demanda.prazo}
+                              onChange={(v) => handleUpdateField(demanda.id, 'prazo', v)}
+                              placeholder="-"
+                            />
+                          </td>
+
+                          {/* Ações */}
+                          <td className="px-2 py-1.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-zinc-400 hover:text-red-500"
+                              onClick={() => handleRemove(demanda.id)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
