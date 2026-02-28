@@ -261,15 +261,14 @@ export const driveRouter = router({
    * Busca pastas nas atribuições que correspondem ao nome do assistido
    */
   autoLinkAssistidosByName: adminProcedure.mutation(async ({ ctx }) => {
-    const { ATRIBUICAO_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
-    const { toTitleCase } = await import("@/lib/utils/text-extraction");
+    const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
 
     // Buscar todos os assistidos sem pasta vinculada
     const assistidosSemPasta = await db
       .select({
         id: assistidos.id,
         nome: assistidos.nome,
-        atribuicaoPrincipal: assistidos.atribuicaoPrincipal,
+        atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
       })
       .from(assistidos)
       .where(isNull(assistidos.driveFolderId));
@@ -279,56 +278,83 @@ export const driveRouter = router({
       linked: 0,
       notFound: 0,
       errors: 0,
-      details: [] as { nome: string; status: string; folderId?: string }[],
+      details: [] as { nome: string; status: string; folderId?: string; searchedIn?: string }[],
+    };
+
+    // Mapeia atribuicaoPrimaria (enum do banco) para chave do ATRIBUICAO_FOLDER_IDS
+    const atribToFolder: Record<string, string> = {
+      JURI_CAMACARI: "JURI",
+      GRUPO_JURI: "GRUPO_JURI",
+      VVD_CAMACARI: "VVD",
+      EXECUCAO_PENAL: "EP",
+      SUBSTITUICAO: "SUBSTITUICAO",
+      SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
     };
 
     for (const assistido of assistidosSemPasta) {
       try {
-        // Determinar a atribuição para buscar
-        const atribuicao = assistido.atribuicaoPrincipal || "JURI";
-        const atribuicaoFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao as keyof typeof ATRIBUICAO_FOLDER_IDS];
+        // Determinar a atribuição para buscar (CORRIGIDO: usa atribuicaoPrimaria)
+        const atribKey = atribToFolder[assistido.atribuicaoPrimaria || ""] || null;
 
-        if (!atribuicaoFolderId) {
+        // Normalizar nome: remove acentos + lowercase para matching robusto
+        const nomeNorm = normalizeName(assistido.nome).toLowerCase().replace(/\s+/g, " ").trim();
+
+        // Buscar em TODAS as atribuições se a primária não deu match,
+        // mas priorizando a atribuição primária
+        const foldersToSearch: Array<{ key: string; folderId: string; priority: number }> = [];
+
+        // Prioridade 1: atribuição primária do assistido
+        if (atribKey && ATRIBUICAO_FOLDER_IDS[atribKey as keyof typeof ATRIBUICAO_FOLDER_IDS]) {
+          foldersToSearch.push({
+            key: atribKey,
+            folderId: ATRIBUICAO_FOLDER_IDS[atribKey as keyof typeof ATRIBUICAO_FOLDER_IDS],
+            priority: 1,
+          });
+        }
+
+        // Prioridade 2: todas as outras atribuições (fallback)
+        for (const [key, folderId] of Object.entries(ATRIBUICAO_FOLDER_IDS)) {
+          if (key !== atribKey) {
+            foldersToSearch.push({ key, folderId, priority: 2 });
+          }
+        }
+
+        if (foldersToSearch.length === 0) {
           results.notFound++;
           results.details.push({ nome: assistido.nome, status: "atribuicao_invalida" });
           continue;
         }
 
-        // Buscar subpastas na pasta da atribuição
-        const subfolders = await listFilesInFolder(atribuicaoFolderId);
-        if (!subfolders || subfolders.length === 0) {
-          results.notFound++;
-          results.details.push({ nome: assistido.nome, status: "pasta_atribuicao_vazia" });
-          continue;
-        }
-
-        // Normalizar nome do assistido para comparação
-        const nomeNormalizado = toTitleCase(assistido.nome).toLowerCase().trim();
-        const nomeSimplificado = nomeNormalizado.replace(/\s+/g, " ");
-
-        // Buscar pasta com nome similar
         let matchingFolder = null;
-        for (const folder of subfolders) {
-          if (folder.mimeType !== "application/vnd.google-apps.folder") continue;
+        let matchedIn = "";
 
-          const folderNameNormalizado = folder.name.toLowerCase().trim();
-          const folderNameSimplificado = folderNameNormalizado.replace(/\s+/g, " ");
+        for (const { key, folderId } of foldersToSearch) {
+          const subfolders = await listFilesInFolder(folderId);
+          if (!subfolders || subfolders.length === 0) continue;
 
-          // Match exato ou parcial (começa com)
-          if (
-            folderNameSimplificado === nomeSimplificado ||
-            folderNameSimplificado.startsWith(nomeSimplificado) ||
-            nomeSimplificado.startsWith(folderNameSimplificado) ||
-            // Fuzzy match: pelo menos 80% de similaridade
-            calculateSimilarity(folderNameSimplificado, nomeSimplificado) > 0.8
-          ) {
-            matchingFolder = folder;
-            break;
+          for (const folder of subfolders) {
+            if (folder.mimeType !== "application/vnd.google-apps.folder") continue;
+
+            // Normalizar nome da pasta: remove acentos + lowercase
+            const folderNorm = normalizeName(folder.name).toLowerCase().replace(/\s+/g, " ").trim();
+
+            // Match exato, parcial ou fuzzy (com nomes sem acento)
+            if (
+              folderNorm === nomeNorm ||
+              folderNorm.startsWith(nomeNorm) ||
+              nomeNorm.startsWith(folderNorm) ||
+              calculateSimilarity(folderNorm, nomeNorm) > 0.8
+            ) {
+              matchingFolder = folder;
+              matchedIn = key;
+              break;
+            }
           }
+
+          if (matchingFolder) break;
         }
 
         if (matchingFolder) {
-          // Vincular assistido à pasta
           await db
             .update(assistidos)
             .set({ driveFolderId: matchingFolder.id, updatedAt: new Date() })
@@ -339,6 +365,7 @@ export const driveRouter = router({
             nome: assistido.nome,
             status: "linked",
             folderId: matchingFolder.id,
+            searchedIn: matchedIn,
           });
         } else {
           results.notFound++;
@@ -360,8 +387,8 @@ export const driveRouter = router({
   suggestFoldersForAssistido: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
     .query(async ({ input }) => {
-      const { ATRIBUICAO_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
-      const { toTitleCase } = await import("@/lib/utils/text-extraction");
+      const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+      const { mapAtribuicaoToFolderKey } = await import("@/lib/services/google-drive");
 
       // Buscar assistido
       const [assistido] = await db
@@ -374,36 +401,39 @@ export const driveRouter = router({
         return { suggestions: [], assistidoNome: "" };
       }
 
-      const atribuicao = assistido.atribuicaoPrincipal || "JURI";
-      const atribuicaoFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao as keyof typeof ATRIBUICAO_FOLDER_IDS];
+      const folderKey = mapAtribuicaoToFolderKey(assistido.atribuicaoPrimaria || "SUBSTITUICAO");
+      const atribuicaoFolderId = folderKey
+        ? ATRIBUICAO_FOLDER_IDS[folderKey as keyof typeof ATRIBUICAO_FOLDER_IDS]
+        : null;
 
-      if (!atribuicaoFolderId) {
-        return { suggestions: [], assistidoNome: assistido.nome };
+      // Buscar em todas as atribuições, priorizando a do assistido
+      const allSuggestions: Array<{ id: string; name: string; similarity: number; atribuicao: string }> = [];
+      const nomeNorm = normalizeName(assistido.nome).toLowerCase().replace(/\s+/g, " ").trim();
+
+      for (const [key, folderId] of Object.entries(ATRIBUICAO_FOLDER_IDS)) {
+        const subfolders = await listFilesInFolder(folderId);
+        if (!subfolders || subfolders.length === 0) continue;
+
+        for (const folder of subfolders) {
+          if (folder.mimeType !== "application/vnd.google-apps.folder") continue;
+          const folderNorm = normalizeName(folder.name).toLowerCase().replace(/\s+/g, " ").trim();
+          const similarity = calculateSimilarity(folderNorm, nomeNorm);
+          if (similarity > 0.3) {
+            // Boost de prioridade se for da atribuição do assistido
+            const boost = (atribuicaoFolderId && folderId === atribuicaoFolderId) ? 0.1 : 0;
+            allSuggestions.push({
+              id: folder.id,
+              name: folder.name,
+              similarity: Math.min(similarity + boost, 1),
+              atribuicao: key,
+            });
+          }
+        }
       }
 
-      // Buscar subpastas
-      const subfolders = await listFilesInFolder(atribuicaoFolderId);
-      if (!subfolders || subfolders.length === 0) {
-        return { suggestions: [], assistidoNome: assistido.nome };
-      }
-
-      const nomeNormalizado = toTitleCase(assistido.nome).toLowerCase().trim();
-
-      // Calcular similaridade para cada pasta
-      const suggestions = subfolders
-        .filter((f) => f.mimeType === "application/vnd.google-apps.folder")
-        .map((folder) => {
-          const folderNameNormalizado = folder.name.toLowerCase().trim();
-          const similarity = calculateSimilarity(folderNameNormalizado, nomeNormalizado);
-          return {
-            id: folder.id,
-            name: folder.name,
-            similarity,
-          };
-        })
-        .filter((s) => s.similarity > 0.3) // Mínimo 30% de similaridade
+      const suggestions = allSuggestions
         .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 5); // Top 5 sugestões
+        .slice(0, 5);
 
       return { suggestions, assistidoNome: assistido.nome };
     }),

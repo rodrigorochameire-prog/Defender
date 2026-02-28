@@ -2881,7 +2881,20 @@ const TIPOS_DEPENDENTES: TipoProcesso[] = ["IP", "APF", "CAUTELAR"];
 const TIPOS_INDEPENDENTES: TipoProcesso[] = ["AP", "EP", "MPU", "ANPP", "OUTRO"];
 
 /**
+ * Normaliza nome para comparação: remove acentos, lowercase, normaliza espaços
+ */
+function normNameForMatch(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
  * Busca uma pasta por nome dentro de um parent folder
+ * Estratégia: busca exata → busca 'contains' com melhor match
  */
 export async function searchFolderByName(
   name: string,
@@ -2891,10 +2904,10 @@ export async function searchFolderByName(
   if (!accessToken) return null;
 
   try {
-    // Busca exata por nome (case insensitive no Drive)
-    const query = `name='${name.replace(/'/g, "\\'")}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-    const response = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,webViewLink)`,
+    // 1. Busca exata por nome (case insensitive no Drive)
+    const exactQuery = `name='${name.replace(/'/g, "\\'")}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    const exactResponse = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(exactQuery)}&fields=files(id,name,webViewLink)`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -2902,21 +2915,88 @@ export async function searchFolderByName(
       }
     );
 
-    if (!response.ok) {
-      console.error("Erro ao buscar pasta:", await response.text());
+    if (exactResponse.ok) {
+      const exactData = await exactResponse.json();
+      if (exactData.files && exactData.files.length > 0) {
+        return {
+          id: exactData.files[0].id,
+          name: exactData.files[0].name,
+          webViewLink: exactData.files[0].webViewLink,
+        };
+      }
+    }
+
+    // 2. Fallback: busca 'contains' com o sobrenome mais distinto
+    //    Ex: "Walter Dias de Andrade" → busca por "Andrade" (último sobrenome)
+    const words = name.split(/\s+/).filter(w => w.length > 2 && !["da", "de", "do", "das", "dos"].includes(w.toLowerCase()));
+    const searchTerm = words.length > 1 ? words[words.length - 1] : words[0] || name;
+
+    const containsQuery = `name contains '${searchTerm.replace(/'/g, "\\'")}' and '${parentFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    const containsResponse = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(containsQuery)}&fields=files(id,name,webViewLink)&pageSize=20`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!containsResponse.ok) {
       return null;
     }
 
-    const data = await response.json();
-    if (data.files && data.files.length > 0) {
-      return {
-        id: data.files[0].id,
-        name: data.files[0].name,
-        webViewLink: data.files[0].webViewLink,
-      };
+    const containsData = await containsResponse.json();
+    if (!containsData.files || containsData.files.length === 0) {
+      return null;
     }
 
-    return null;
+    // 3. Encontrar melhor match entre os resultados (normalizado, sem acentos)
+    const nameNorm = normNameForMatch(name);
+    let bestMatch: DriveFolder | null = null;
+    let bestSimilarity = 0;
+
+    for (const file of containsData.files) {
+      const folderNorm = normNameForMatch(file.name);
+
+      // Match exato (sem acentos)
+      if (folderNorm === nameNorm) {
+        return { id: file.id, name: file.name, webViewLink: file.webViewLink };
+      }
+
+      // Match parcial (um contém o outro)
+      if (folderNorm.startsWith(nameNorm) || nameNorm.startsWith(folderNorm)) {
+        const similarity = Math.min(nameNorm.length, folderNorm.length) / Math.max(nameNorm.length, folderNorm.length);
+        if (similarity > bestSimilarity) {
+          bestSimilarity = similarity;
+          bestMatch = { id: file.id, name: file.name, webViewLink: file.webViewLink };
+        }
+        continue;
+      }
+
+      // Levenshtein similarity (>85% para evitar falsos positivos)
+      const maxLen = Math.max(nameNorm.length, folderNorm.length);
+      if (maxLen > 0) {
+        let d = 0;
+        const s1 = nameNorm, s2 = folderNorm;
+        const matrix: number[][] = [];
+        for (let i = 0; i <= s1.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= s2.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= s1.length; i++) {
+          for (let j = 1; j <= s2.length; j++) {
+            const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
+          }
+        }
+        d = matrix[s1.length][s2.length];
+        const similarity = 1 - d / maxLen;
+        if (similarity > 0.85 && similarity > bestSimilarity) {
+          bestSimilarity = similarity;
+          bestMatch = { id: file.id, name: file.name, webViewLink: file.webViewLink };
+        }
+      }
+    }
+
+    return bestMatch;
   } catch (error) {
     console.error("Erro ao buscar pasta:", error);
     return null;
