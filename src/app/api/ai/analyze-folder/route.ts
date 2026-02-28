@@ -67,8 +67,8 @@ export async function POST(request: Request) {
       }
 
       // List and filter PDFs
-      const files = await listFilesInFolder(assistido.driveFolderId);
-      const pdfFiles = (files || []).filter(
+      const filesResult = await listFilesInFolder(assistido.driveFolderId);
+      const pdfFiles = (filesResult?.files || []).filter(
         (f: any) => f.mimeType === "application/pdf" || f.name?.endsWith(".pdf")
       );
 
@@ -156,8 +156,8 @@ export async function POST(request: Request) {
       }
 
       // List PDFs in processo folder
-      const files = await listFilesInFolder(processo.driveFolderId);
-      const pdfFiles = (files || []).filter(
+      const procFilesResult = await listFilesInFolder(processo.driveFolderId);
+      const pdfFiles = (procFilesResult?.files || []).filter(
         (f: any) => f.mimeType === "application/pdf" || f.name?.endsWith(".pdf")
       );
 

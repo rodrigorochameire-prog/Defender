@@ -720,8 +720,8 @@ export const assistidosRouter = router({
         });
       }
 
-      const files = await listFilesInFolder(assistido.driveFolderId);
-      const pdfFiles = (files || []).filter(
+      const filesResult = await listFilesInFolder(assistido.driveFolderId);
+      const pdfFiles = (filesResult?.files || []).filter(
         (f: any) => f.mimeType === "application/pdf" || f.name?.endsWith(".pdf")
       );
 

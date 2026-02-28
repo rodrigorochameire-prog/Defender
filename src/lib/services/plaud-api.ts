@@ -769,18 +769,7 @@ export async function processApprovedRecording(
       }
     }
 
-    // 3. Upload do áudio ao Drive (se tiver pasta)
-    if (driveFolderId) {
-      try {
-        await uploadRecordingToDrive(recordingId, driveFolderId);
-        console.log(`[Plaud] Upload ao Drive concluído para recording ${recordingId}`);
-      } catch (error) {
-        console.error(`[Plaud] Erro no upload ao Drive:`, error);
-        // Não falha todo o pipeline por causa do upload
-      }
-    }
-
-    // 4. Buscar gravação para transcrição
+    // 3. Buscar gravação para dados completos
     const [recording] = await db
       .select()
       .from(plaudRecordings)
@@ -789,6 +778,58 @@ export async function processApprovedRecording(
 
     if (!recording) {
       return { success: false, error: "Gravação não encontrada" };
+    }
+
+    // 4. Upload do áudio ao Drive (se tiver pasta)
+    if (driveFolderId) {
+      try {
+        await uploadRecordingToDrive(recordingId, driveFolderId);
+        console.log(`[Plaud] Upload ao Drive concluído para recording ${recordingId}`);
+      } catch (error) {
+        console.error(`[Plaud] Erro no upload ao Drive:`, error);
+        // Não falha todo o pipeline por causa do upload
+      }
+
+      // 4b. Upload da transcrição ao Drive (se houver)
+      if (recording.transcription) {
+        try {
+          const { uploadFileBuffer } = await import("@/lib/services/google-drive");
+          const titulo = recording.title || recording.plaudRecordingId || "gravacao";
+          const dataStr = new Date().toISOString().slice(0, 10);
+          const transcFileName = `transcricao_${titulo}_${dataStr}.md`;
+          const transcContent = `# Transcrição: ${titulo}\n\n**Data:** ${dataStr}\n**Assistido ID:** ${assistidoId}\n${processoId ? `**Processo ID:** ${processoId}\n` : ""}\n---\n\n${recording.transcription}`;
+          const transcBuffer = Buffer.from(transcContent, "utf-8");
+
+          const driveResult = await uploadFileBuffer(
+            transcBuffer,
+            transcFileName,
+            "text/markdown",
+            driveFolderId,
+            `Transcrição Plaud: ${titulo}`,
+            { preventDuplicates: true },
+          );
+
+          if (driveResult) {
+            // Registra no driveFiles para indexação
+            await db.insert(driveFiles).values({
+              driveFileId: driveResult.id,
+              driveFolderId: driveFolderId,
+              name: driveResult.name || transcFileName,
+              mimeType: "text/markdown",
+              fileSize: transcBuffer.length,
+              webViewLink: driveResult.webViewLink,
+              webContentLink: driveResult.webContentLink,
+              syncStatus: "synced",
+              lastSyncAt: new Date(),
+              assistidoId: assistidoId,
+              processoId: processoId,
+            }).onConflictDoNothing();
+            console.log(`[Plaud] Transcrição uploaded ao Drive: ${transcFileName}`);
+          }
+        } catch (error) {
+          console.error(`[Plaud] Erro ao subir transcrição ao Drive:`, error);
+        }
+      }
     }
 
     // 5. Enrichment da transcrição (fire-and-forget)

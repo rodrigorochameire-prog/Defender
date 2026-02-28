@@ -1150,34 +1150,52 @@ export async function listFilesInFolder(
 }
 
 /**
+ * Lista TODOS os itens (arquivos e pastas) de uma pasta, com paginação automática.
+ * Retorna array plano (flat) — ideal para iterar sem se preocupar com paginação.
+ *
+ * IMPORTANTE: Google Drive retorna no máximo 100 itens por página.
+ * Esta função itera automaticamente por todas as páginas.
+ */
+export async function listAllItemsInFolder(
+  folderId: string
+): Promise<DriveFileInfo[]> {
+  const allItems: DriveFileInfo[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const result = await listFilesInFolder(folderId, pageToken, 100);
+    if (!result) break;
+
+    allItems.push(...result.files);
+    pageToken = result.nextPageToken;
+  } while (pageToken);
+
+  return allItems;
+}
+
+/**
  * Lista todos os arquivos recursivamente (incluindo subpastas)
+ * maxDepth aumentado para 10 para cobrir hierarquias profundas
  */
 export async function listAllFilesRecursively(
   folderId: string,
-  maxDepth: number = 5,
+  maxDepth: number = 10,
   currentDepth: number = 0
 ): Promise<DriveFileInfo[]> {
   if (currentDepth >= maxDepth) return [];
 
   const allFiles: DriveFileInfo[] = [];
-  let pageToken: string | undefined;
+  const items = await listAllItemsInFolder(folderId);
 
-  do {
-    const result = await listFilesInFolder(folderId, pageToken);
-    if (!result) break;
+  for (const file of items) {
+    allFiles.push(file);
 
-    for (const file of result.files) {
-      allFiles.push(file);
-      
-      // Se for uma pasta, listar recursivamente
-      if (file.mimeType === "application/vnd.google-apps.folder") {
-        const subFiles = await listAllFilesRecursively(file.id, maxDepth, currentDepth + 1);
-        allFiles.push(...subFiles);
-      }
+    // Se for uma pasta, listar recursivamente
+    if (file.mimeType === "application/vnd.google-apps.folder") {
+      const subFiles = await listAllFilesRecursively(file.id, maxDepth, currentDepth + 1);
+      allFiles.push(...subFiles);
     }
-
-    pageToken = result.nextPageToken;
-  } while (pageToken);
+  }
 
   return allFiles;
 }

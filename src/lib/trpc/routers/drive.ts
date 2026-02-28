@@ -5,6 +5,7 @@ import { eq, and, desc, sql, isNull, or, like, not, gt } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
   listFilesInFolder,
+  listAllItemsInFolder,
   listAllFilesRecursively,
   syncFolderWithDatabase,
   registerSyncFolder,
@@ -329,7 +330,7 @@ export const driveRouter = router({
         let matchedIn = "";
 
         for (const { key, folderId } of foldersToSearch) {
-          const subfolders = await listFilesInFolder(folderId);
+          const subfolders = await listAllItemsInFolder(folderId);
           if (!subfolders || subfolders.length === 0) continue;
 
           for (const folder of subfolders) {
@@ -410,17 +411,17 @@ export const driveRouter = router({
       const allSuggestions: Array<{ id: string; name: string; similarity: number; atribuicao: string }> = [];
       const nomeNorm = normalizeName(assistido.nome).toLowerCase().replace(/\s+/g, " ").trim();
 
-      for (const [key, folderId] of Object.entries(ATRIBUICAO_FOLDER_IDS)) {
-        const subfolders = await listFilesInFolder(folderId);
-        if (!subfolders || subfolders.length === 0) continue;
+      for (const [key, fId] of Object.entries(ATRIBUICAO_FOLDER_IDS)) {
+        const items = await listAllItemsInFolder(fId);
+        if (!items || items.length === 0) continue;
 
-        for (const folder of subfolders) {
+        for (const folder of items) {
           if (folder.mimeType !== "application/vnd.google-apps.folder") continue;
           const folderNorm = normalizeName(folder.name).toLowerCase().replace(/\s+/g, " ").trim();
           const similarity = calculateSimilarity(folderNorm, nomeNorm);
           if (similarity > 0.3) {
             // Boost de prioridade se for da atribuição do assistido
-            const boost = (atribuicaoFolderId && folderId === atribuicaoFolderId) ? 0.1 : 0;
+            const boost = (atribuicaoFolderId && fId === atribuicaoFolderId) ? 0.1 : 0;
             allSuggestions.push({
               id: folder.id,
               name: folder.name,
