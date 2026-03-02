@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { useDriveContext } from "./DriveContext";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipTrigger,
@@ -18,7 +23,20 @@ import {
   LayoutGrid,
   List,
   X,
+  FilePlus2,
+  FileText,
+  Scale,
+  Shield,
+  MessageSquare,
+  Send,
+  Gavel,
+  Mail,
+  FolderOpen,
+  FolderPlus,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
+import { toast } from "sonner";
 
 // ─── Sync Health Indicator ──────────────────────────────────────────
 
@@ -113,6 +131,226 @@ function SyncHealthDot() {
             </ul>
           )}
         </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+// ─── Category Config ────────────────────────────────────────────────
+
+const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType }> = {
+  peticao: { label: "Peticoes", icon: FileText },
+  hc: { label: "Habeas Corpus", icon: Shield },
+  alegacoes: { label: "Alegacoes Finais", icon: Scale },
+  resposta: { label: "Resposta a Acusacao", icon: MessageSquare },
+  recurso: { label: "Recursos", icon: Send },
+  oficio: { label: "Oficios", icon: Mail },
+  outros: { label: "Outros", icon: FolderOpen },
+};
+
+// ─── New Document Button ────────────────────────────────────────────
+
+function NewDocumentButton() {
+  const ctx = useDriveContext();
+  const [open, setOpen] = useState(false);
+
+  const targetFolderId = ctx.selectedFolderId || ctx.rootSyncFolderId;
+
+  const { data: templates, isLoading } = trpc.templates.list.useQuery(
+    undefined,
+    { enabled: open, staleTime: 60_000 }
+  );
+
+  const generateMutation = trpc.templates.generateFromTemplate.useMutation({
+    onSuccess: (result) => {
+      setOpen(false);
+      toast.success(`Documento "${result.fileName}" criado!`, {
+        action: {
+          label: "Abrir",
+          onClick: () => window.open(result.webViewLink, "_blank"),
+        },
+      });
+    },
+    onError: (err) => {
+      toast.error(`Erro ao criar documento: ${err.message}`);
+    },
+  });
+
+  // Group templates by category
+  const grouped = useMemo(() => {
+    if (!templates) return {};
+    const map: Record<string, typeof templates> = {};
+    for (const t of templates) {
+      const cat = t.category || "outros";
+      if (!map[cat]) map[cat] = [];
+      map[cat].push(t);
+    }
+    return map;
+  }, [templates]);
+
+  const categoryOrder = ["peticao", "hc", "alegacoes", "resposta", "recurso", "oficio", "outros"];
+  const sortedCategories = categoryOrder.filter((c) => grouped[c]?.length);
+
+  const handleSelect = (templateId: number, templateName: string) => {
+    if (!targetFolderId) {
+      toast.error("Navegue ate uma pasta antes de criar um documento");
+      return;
+    }
+    generateMutation.mutate({
+      templateId,
+      targetFolderId,
+      fileName: templateName,
+    });
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-zinc-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
+              disabled={!targetFolderId}
+            >
+              <FilePlus2 className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {targetFolderId ? "Novo documento a partir de template" : "Navegue ate uma pasta para criar documentos"}
+        </TooltipContent>
+      </Tooltip>
+      <PopoverContent
+        align="end"
+        className="w-72 p-0 max-h-[400px] overflow-y-auto"
+      >
+        <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
+          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+            Novo Documento
+          </p>
+          <p className="text-[10px] text-zinc-400 mt-0.5">
+            Escolha um template para criar na pasta atual
+          </p>
+        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+          </div>
+        ) : sortedCategories.length === 0 ? (
+          <div className="py-6 text-center">
+            <FileText className="h-6 w-6 mx-auto mb-2 text-zinc-300" />
+            <p className="text-xs text-zinc-400">
+              Nenhum template cadastrado
+            </p>
+            <p className="text-[10px] text-zinc-400 mt-1">
+              Cadastre templates na area de administracao
+            </p>
+          </div>
+        ) : (
+          <div className="py-1">
+            {sortedCategories.map((cat) => {
+              const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.outros;
+              const Icon = config.icon;
+              const items = grouped[cat] || [];
+              return (
+                <div key={cat}>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 mt-1">
+                    <Icon className="h-3 w-3 text-zinc-400" />
+                    <span className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                      {config.label}
+                    </span>
+                  </div>
+                  {items.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => handleSelect(t.id, t.name)}
+                      disabled={generateMutation.isPending}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors",
+                        "hover:bg-emerald-50 dark:hover:bg-emerald-950/30",
+                        "disabled:opacity-50 disabled:cursor-not-allowed"
+                      )}
+                    >
+                      <FileText className="h-3.5 w-3.5 text-emerald-600/60 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-zinc-700 dark:text-zinc-300 truncate">
+                          {t.name}
+                        </p>
+                        {t.description && (
+                          <p className="text-[10px] text-zinc-400 truncate">
+                            {t.description}
+                          </p>
+                        )}
+                      </div>
+                      {generateMutation.isPending && generateMutation.variables?.templateId === t.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin text-emerald-500 shrink-0" />
+                      ) : (
+                        <ExternalLink className="h-3 w-3 text-zinc-300 shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ─── New Folder Button ──────────────────────────────────────────────
+
+function NewFolderButton() {
+  const ctx = useDriveContext();
+  const utils = trpc.useUtils();
+  const targetFolderId = ctx.selectedFolderId || ctx.rootSyncFolderId;
+
+  const createFolder = trpc.drive.createFolder.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Pasta "${result.name}" criada`);
+      utils.drive.files.invalidate();
+    },
+    onError: (err) => {
+      toast.error(`Erro ao criar pasta: ${err.message}`);
+    },
+  });
+
+  const handleCreateFolder = () => {
+    if (!targetFolderId) {
+      toast.error("Navegue ate uma pasta antes de criar subpastas");
+      return;
+    }
+    const name = window.prompt("Nome da nova pasta:");
+    if (!name?.trim()) return;
+
+    createFolder.mutate({
+      name: name.trim(),
+      parentFolderId: targetFolderId,
+    });
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-zinc-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
+          onClick={handleCreateFolder}
+          disabled={!targetFolderId || createFolder.isPending}
+        >
+          {createFolder.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FolderPlus className="h-4 w-4" />
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        {targetFolderId ? "Criar nova pasta" : "Navegue ate uma pasta para criar subpastas"}
       </TooltipContent>
     </Tooltip>
   );
@@ -230,6 +468,9 @@ export function DriveTopBar() {
             </TooltipContent>
           </Tooltip>
 
+          {/* New Folder */}
+          <NewFolderButton />
+
           {/* Upload Placeholder */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -246,6 +487,9 @@ export function DriveTopBar() {
             </TooltipTrigger>
             <TooltipContent side="bottom">Upload de arquivo</TooltipContent>
           </Tooltip>
+
+          {/* New Document from Template */}
+          <NewDocumentButton />
 
           {/* ─── Separator ─── */}
           <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700 mx-0.5" />

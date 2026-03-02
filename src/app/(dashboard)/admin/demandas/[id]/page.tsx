@@ -5,8 +5,8 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  FileText, 
+import {
+  FileText,
   ArrowLeft,
   Edit,
   Trash2,
@@ -18,6 +18,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   ExternalLink,
+  Sparkles,
+  Mail,
 } from "lucide-react";
 import { format, parseISO, differenceInDays, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -309,6 +311,37 @@ export default function DemandaDetalhesPage() {
                 {demanda.updatedAt ? format(parseISO(demanda.updatedAt), "dd/MM/yyyy", { locale: ptBR }) : "-"}
               </p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ofício Sugerido */}
+      <Card className="border-violet-500/20 bg-violet-50/5 dark:bg-violet-950/10">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Mail className="h-5 w-5 text-violet-500" />
+            Criar Oficio
+          </CardTitle>
+          <CardDescription>
+            Gere um oficio relacionado a esta demanda com IA
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/admin/oficios/novo?assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}`}
+            >
+              <Button variant="outline" size="sm" className="border-violet-500/30 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30">
+                <Sparkles className="h-4 w-4 mr-2" />
+                Novo Oficio com IA
+              </Button>
+            </Link>
+            <Link href={`/admin/oficios/novo?assistidoId=${demanda.assistidoId}&processoId=${demanda.processoId}`}>
+              <Button variant="outline" size="sm">
+                <FileText className="h-4 w-4 mr-2" />
+                Oficio em Branco
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

@@ -403,6 +403,90 @@ export const delegacaoRouter = router({
       );
     }),
 
+  // Criar delegações em lote (batch)
+  criarEmLote: protectedProcedure
+    .input(z.object({
+      demandaIds: z.array(z.number()).min(1).max(50),
+      destinatarioId: z.number(),
+      instrucoes: z.string().min(1, "Instruções são obrigatórias"),
+      prazoSugerido: z.string().optional(),
+      prioridade: z.enum(["NORMAL", "URGENTE", "BAIXA"]).default("NORMAL"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id;
+      const userRole = ctx.user.role;
+
+      if (!["admin", "defensor"].includes(userRole)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Apenas defensores podem criar pedidos de trabalho",
+        });
+      }
+
+      // Verificar destinatário
+      const destinatario = await db.query.users.findFirst({
+        where: eq(users.id, input.destinatarioId),
+      });
+
+      if (!destinatario || !["servidor", "estagiario"].includes(destinatario.role)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Destinatário inválido",
+        });
+      }
+
+      const remetente = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { name: true },
+      });
+
+      const delegacoes = [];
+      const prazo = input.prazoSugerido ? new Date(input.prazoSugerido).toISOString().split("T")[0] : null;
+
+      for (const demandaId of input.demandaIds) {
+        // Atualizar demanda
+        await db.update(demandas)
+          .set({
+            delegadoParaId: input.destinatarioId,
+            dataDelegacao: new Date(),
+            motivoDelegacao: input.instrucoes,
+            statusDelegacao: "pendente",
+            prazoSugerido: prazo,
+            updatedAt: new Date(),
+          })
+          .where(eq(demandas.id, demandaId));
+
+        // Criar registro no histórico
+        const [delegacao] = await db.insert(delegacoesHistorico)
+          .values({
+            tipo: "delegacao_generica",
+            demandaId,
+            delegadoDeId: userId,
+            delegadoParaId: input.destinatarioId,
+            instrucoes: input.instrucoes,
+            prazoSugerido: prazo,
+            prioridade: input.prioridade,
+            status: "pendente",
+            workspaceId: ctx.user.workspaceId || null,
+          })
+          .returning();
+
+        delegacoes.push(delegacao);
+      }
+
+      // Uma única notificação consolidada
+      await db.insert(notifications).values({
+        userId: input.destinatarioId,
+        title: `${input.demandaIds.length} novas tarefas delegadas`,
+        message: `${remetente?.name || "Um defensor"} delegou ${input.demandaIds.length} demanda(s) para você.`,
+        type: input.prioridade === "URGENTE" ? "warning" : "info",
+        actionUrl: "/admin/delegacoes",
+        isRead: false,
+      });
+
+      return { count: delegacoes.length, delegacoes };
+    }),
+
   // Estatísticas de delegações
   estatisticas: protectedProcedure
     .query(async ({ ctx }) => {

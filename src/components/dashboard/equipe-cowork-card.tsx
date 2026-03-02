@@ -171,7 +171,7 @@ export function EquipeCoworkCard({
           <div className="space-y-1">
             <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide">Atividade recente</p>
             <div className="space-y-1.5">
-              {atividades.slice(0, 3).map((ativ) => (
+              {atividades.slice(0, 5).map((ativ) => (
                 <div key={ativ.id} className="flex items-start gap-2">
                   <div className="relative mt-1.5 flex-shrink-0">
                     <div className={cn("w-1.5 h-1.5 rounded-full", TIPO_DOT_COLORS[ativ.tipo] || "bg-zinc-400")} />

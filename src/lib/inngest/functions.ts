@@ -1125,6 +1125,38 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
       return { success: false, error: extraction.error, driveFileId };
     }
 
+    // Step: Check if OCR is needed
+    const needsOcr = await step.run("check-ocr-need", async () => {
+      const { detectNeedsOcr } = await import("@/lib/services/pdf-extractor");
+      return detectNeedsOcr(extraction.pages);
+    });
+
+    // Step: Run OCR if needed
+    let finalPages = extraction.pages;
+    if (needsOcr) {
+      const ocrResult = await step.run("run-ocr", async () => {
+        try {
+          const { enrichmentClient } = await import("@/lib/services/enrichment-client");
+          const result = await enrichmentClient.ocr({
+            fileUrl: `drive://${driveGoogleId}`,
+            driveFileId: driveGoogleId,
+          });
+          return { success: true, pages: result.pages };
+        } catch (err) {
+          console.error("OCR failed, continuing with original extraction:", err);
+          return { success: false, pages: [] as { page_number: number; text: string }[] };
+        }
+      });
+
+      if (ocrResult.success && ocrResult.pages.length > 0) {
+        finalPages = ocrResult.pages.map((p) => ({
+          pageNumber: p.page_number,
+          text: p.text,
+          lineCount: p.text.split("\n").length,
+        }));
+      }
+    }
+
     // Step 3: Mark as processing
     await step.run("mark-processing", async () => {
       const { driveFiles } = await import("@/lib/db/schema");
@@ -1146,7 +1178,7 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
         return { success: false, sections: [], error: "Gemini not configured" };
       }
 
-      const chunks = chunkPages(extraction.pages, 20);
+      const chunks = chunkPages(finalPages, 20);
       return await classifyFullDocument(chunks);
     });
 
@@ -1189,7 +1221,7 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
         paginaInicio: s.paginaInicio,
         paginaFim: s.paginaFim,
         resumo: s.resumo,
-        textoExtraido: extraction.pages
+        textoExtraido: finalPages
           .filter((p) => p.pageNumber >= s.paginaInicio && p.pageNumber <= s.paginaFim)
           .map((p) => p.text)
           .join("\n\n"),
@@ -1215,6 +1247,43 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
 
       return { sectionsStored: inserted.length };
     });
+
+    // Step: Mark OCR status in driveFileContents
+    if (needsOcr) {
+      await step.run("mark-ocr-applied", async () => {
+        const { driveFileContents } = await import("@/lib/db/schema");
+        const { eq } = await import("drizzle-orm");
+
+        const [existing] = await db
+          .select()
+          .from(driveFileContents)
+          .where(eq(driveFileContents.driveFileId, driveFileId))
+          .limit(1);
+
+        if (existing) {
+          await db
+            .update(driveFileContents)
+            .set({
+              ocrApplied: true,
+              contentText: finalPages.map((p) => p.text).join("\n\n---PAGE---\n\n"),
+              extractionStatus: "COMPLETED",
+              extractedAt: new Date(),
+            })
+            .where(eq(driveFileContents.driveFileId, driveFileId));
+        } else {
+          await db
+            .insert(driveFileContents)
+            .values({
+              driveFileId: driveFileId,
+              extractionStatus: "COMPLETED",
+              ocrApplied: true,
+              contentText: finalPages.map((p) => p.text).join("\n\n---PAGE---\n\n"),
+              pageCount: finalPages.length,
+              extractedAt: new Date(),
+            });
+        }
+      });
+    }
 
     // Step 6: Trigger bookmark insertion pipeline
     await step.run("trigger-bookmark-pipeline", async () => {
@@ -1313,6 +1382,105 @@ export const pdfInsertBookmarksFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// SECTION FICHA GENERATION
+// ============================================
+
+/**
+ * Gera ficha tipo-específica para seção aprovada pelo defensor.
+ * Trigger: "section/generate-ficha" (enviado pelo approveSection mutation)
+ *
+ * Fluxo: defensor aprova seção → Inngest → enrichment-engine → fichaData salva no banco
+ */
+export const sectionGenerateFichaFn = inngest.createFunction(
+  {
+    id: "section-generate-ficha",
+    name: "Generate Section Ficha",
+    retries: 2,
+    concurrency: { limit: 5 },
+  },
+  { event: "section/generate-ficha" },
+  async ({ event, step }) => {
+    const { sectionId, tipo } = event.data as { sectionId: number; tipo: string };
+
+    // Step 1: Load section data from database
+    const section = await step.run("load-section", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveDocumentSections } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+
+      const [result] = await db
+        .select()
+        .from(driveDocumentSections)
+        .where(eq(driveDocumentSections.id, sectionId))
+        .limit(1);
+
+      if (!result) throw new Error(`Section ${sectionId} not found`);
+      return {
+        id: result.id,
+        tipo: result.tipo,
+        titulo: result.titulo,
+        textoExtraido: result.textoExtraido,
+        resumo: result.resumo,
+        fichaData: result.fichaData,
+      };
+    });
+
+    // Skip if ficha already exists
+    if (section.fichaData && Object.keys(section.fichaData).length > 0) {
+      return { success: true, skipped: true, reason: "Ficha already exists", sectionId };
+    }
+
+    // Step 2: Check if we have text to process
+    if (!section.textoExtraido || section.textoExtraido.trim().length < 20) {
+      // Mark as needs_review — not enough text
+      await step.run("mark-insufficient-text", async () => {
+        const { db } = await import("@/lib/db");
+        const { driveDocumentSections } = await import("@/lib/db/schema");
+        const { eq } = await import("drizzle-orm");
+        await db
+          .update(driveDocumentSections)
+          .set({ fichaData: { error: "Texto insuficiente para geração de ficha", confidence: 0 } })
+          .where(eq(driveDocumentSections.id, sectionId));
+      });
+      return { success: false, error: "Insufficient text", sectionId };
+    }
+
+    // Step 3: Call enrichment-engine to generate ficha
+    const fichaResult = await step.run("generate-ficha", async () => {
+      const { enrichmentClient } = await import("@/lib/services/enrichment-client");
+      return await enrichmentClient.generateFicha({
+        sectionText: section.textoExtraido!,
+        sectionTipo: tipo || section.tipo || "outro",
+        sectionTitulo: section.titulo || "",
+      });
+    });
+
+    // Step 4: Store ficha in database
+    await step.run("store-ficha", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveDocumentSections } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+
+      await db
+        .update(driveDocumentSections)
+        .set({
+          fichaData: fichaResult.ficha_data as Record<string, unknown>,
+          updatedAt: new Date(),
+        })
+        .where(eq(driveDocumentSections.id, sectionId));
+    });
+
+    return {
+      success: true,
+      sectionId,
+      tipo: fichaResult.section_tipo,
+      confidence: fichaResult.confidence,
+      fieldsExtracted: Object.keys(fichaResult.ficha_data).length,
+    };
+  }
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -1334,4 +1502,5 @@ export const functions = [
   healthCheckFn,
   pdfExtractAndClassifyFn,
   pdfInsertBookmarksFn,
+  sectionGenerateFichaFn,
 ];

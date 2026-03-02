@@ -51,8 +51,14 @@ import {
   FileDown,
   Mic,
   FileAudio,
+  Columns,
+  Maximize2,
+  ScanLine,
+  FilePen,
 } from "lucide-react";
 import { PdfViewerModal, getSectionConfig, type DocumentSection } from "./PdfViewerModal";
+import { DocumentCompareModal } from "./DocumentCompareModal";
+import { ExpandedPreviewModal } from "./ExpandedPreviewModal";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -183,7 +189,7 @@ function FilePreview({ file }: { file: DriveFile }) {
 
   if (isPdf && file.webViewLink) {
     return (
-      <div className="aspect-video bg-zinc-100 dark:bg-zinc-900 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
+      <div className="h-[500px] bg-zinc-100 dark:bg-zinc-900 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
         <iframe
           src={`${file.webViewLink.replace("/view", "/preview")}`}
           className="w-full h-full border-0"
@@ -533,6 +539,12 @@ function MetaRow({
 function EnrichmentSection({ file }: { file: DriveFile }) {
   const [isOpen, setIsOpen] = useState(true);
   const utils = trpc.useUtils();
+  const isPdf = file.mimeType?.includes("pdf");
+
+  const { data: ocrStatus } = trpc.documentSections.getOcrStatus.useQuery(
+    { driveFileId: file.id },
+    { enabled: !!file.id && !!isPdf }
+  );
 
   const retryMutation = trpc.drive.retryEnrichment.useMutation({
     onSuccess: () => {
@@ -572,6 +584,12 @@ function EnrichmentSection({ file }: { file: DriveFile }) {
               >
                 {badge.label}
               </span>
+              {ocrStatus?.ocrApplied && (
+                <Badge className="text-[9px] bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border-amber-300 dark:border-amber-700">
+                  <ScanLine className="w-3 h-3 mr-1" />
+                  OCR
+                </Badge>
+              )}
             </div>
           )}
 
@@ -1432,6 +1450,29 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
   );
   const [isRenaming, setIsRenaming] = useState(false);
   const [showPdfViewer, setShowPdfViewer] = useState(false);
+
+  // Query sibling files from same folder for file navigation in PDF viewer
+  // Pre-fetch when detail opens so files list is ready when viewer opens
+  const { data: siblingData } = trpc.drive.files.useQuery(
+    {
+      folderId: file.driveFolderId,
+      limit: 200,
+    },
+    { enabled: !!file.driveFolderId }
+  );
+
+  const siblingPdfFiles = useMemo(() => {
+    if (!siblingData?.files) return [];
+    return siblingData.files
+      .filter((f: any) => f.mimeType?.includes("pdf") && f.driveFileId)
+      .map((f: any) => ({
+        id: f.id as number,
+        name: f.name as string,
+        pdfUrl: `/api/drive/proxy?fileId=${f.driveFileId}`,
+      }));
+  }, [siblingData]);
+  const [showCompare, setShowCompare] = useState(false);
+  const [showExpandedPreview, setShowExpandedPreview] = useState(false);
   const [transcriptionResult, setTranscriptionResult] = useState<{
     transcript: string;
     transcript_plain: string;
@@ -1446,11 +1487,20 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
   }, [file.id]);
 
   const isPdf = file.mimeType?.includes("pdf");
+  const isEditableDoc =
+    file.mimeType?.includes("document") ||
+    file.mimeType?.includes("wordprocessing") ||
+    file.mimeType?.includes("msword") ||
+    file.mimeType?.includes("opendocument.text") ||
+    file.mimeType?.includes("rtf") ||
+    file.name.endsWith(".docx") ||
+    file.name.endsWith(".doc") ||
+    file.name.endsWith(".odt");
   const isAudioVideo =
     file.mimeType?.startsWith("audio/") ||
     file.mimeType?.startsWith("video/");
-  // Build PDF URL for viewer — use webContentLink (direct download) or proxy via Drive
-  const pdfUrl = file.webContentLink || (file.webViewLink ? file.webViewLink.replace("/view", "/preview") : "");
+  // Build PDF URL for viewer — use server-side proxy to avoid CORS
+  const pdfUrl = `/api/drive/proxy?fileId=${file.driveFileId}`;
 
   // Transcription mutation
   const transcribeMutation = trpc.drive.transcreverDrive.useMutation({
@@ -1522,15 +1572,56 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
           <FilePreview file={file} />
           {/* Open in viewer button for PDFs */}
           {isPdf && pdfUrl && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full mt-2 h-8 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/5"
-              onClick={() => setShowPdfViewer(true)}
-            >
-              <BookOpen className="h-3.5 w-3.5 mr-1.5" />
-              Abrir Visualizador
-            </Button>
+            <div className="flex flex-col gap-1.5 mt-2">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-8 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/5"
+                  onClick={() => setShowPdfViewer(true)}
+                >
+                  <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+                  Visualizador
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-8 text-xs text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  onClick={() => setShowExpandedPreview(true)}
+                >
+                  <Maximize2 className="h-3.5 w-3.5 mr-1.5" />
+                  Expandir
+                </Button>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-8 text-xs text-violet-600 dark:text-violet-400 border-violet-500/30 hover:bg-violet-500/5"
+                onClick={() => setShowCompare(true)}
+              >
+                <Columns className="h-3.5 w-3.5 mr-1.5" />
+                Comparar Documentos
+              </Button>
+            </div>
+          )}
+          {/* Google Docs edit button for .docx/.doc/.odt files */}
+          {isEditableDoc && file.webViewLink && (
+            <div className="mt-2">
+              <a
+                href={file.webViewLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 text-xs text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/5"
+                >
+                  <FilePen className="h-3.5 w-3.5 mr-1.5" />
+                  Editar no Google Docs
+                </Button>
+              </a>
+            </div>
           )}
         </div>
 
@@ -1570,6 +1661,32 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
         </div>
       </div>
 
+      {/* Expanded Preview Modal */}
+      {isPdf && file.webViewLink && (
+        <ExpandedPreviewModal
+          isOpen={showExpandedPreview}
+          onClose={() => setShowExpandedPreview(false)}
+          fileName={file.name}
+          webViewLink={file.webViewLink}
+        />
+      )}
+
+      {/* Document Compare Modal */}
+      {isPdf && (
+        <DocumentCompareModal
+          isOpen={showCompare}
+          onClose={() => setShowCompare(false)}
+          initialFileA={{
+            id: file.id,
+            name: file.name,
+            webViewLink: file.webViewLink || "",
+            driveFolderId: file.driveFolderId,
+          }}
+          currentFolderId={file.driveFolderId}
+          assistidoId={file.assistidoId || undefined}
+        />
+      )}
+
       {/* PDF Viewer Modal */}
       {isPdf && pdfUrl && (
         <PdfViewerModal
@@ -1578,6 +1695,10 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
           fileId={file.id}
           fileName={file.name}
           pdfUrl={pdfUrl}
+          siblingFiles={siblingPdfFiles}
+          onFileChange={(newFileId) => {
+            ctx.openDetailPanel(newFileId);
+          }}
         />
       )}
     </div>

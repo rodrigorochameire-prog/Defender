@@ -4,7 +4,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
-import { ArrowLeft, Brain, ExternalLink, Loader2, Lock, Scale, Sun, User } from "lucide-react";
+import { ArrowLeft, Brain, ExternalLink, Loader2, Lock, Scale, Sun, User, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -202,6 +202,13 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
             {isAnalyzingProcesso ? "Analisando..." : "Análise IA"}
           </button>
         )}
+        <button
+          onClick={() => router.push(`/admin/processos/${id}/sistematizacao`)}
+          className="text-[11px] px-2 py-1 rounded border border-violet-200 bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors flex items-center gap-1"
+        >
+          <Sparkles className="h-3 w-3" />
+          Sistematização
+        </button>
       </div>
 
       {/* Drive Status Bar */}

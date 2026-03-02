@@ -168,4 +168,20 @@ export type InngestEvents = {
       userId: string;
     };
   };
+
+  // PDF bookmark insertion (triggered after classification)
+  "pdf/insert-bookmarks": {
+    data: {
+      driveFileId: number;
+      driveGoogleId: string;
+    };
+  };
+
+  // Section ficha generation (triggered after approval)
+  "section/generate-ficha": {
+    data: {
+      sectionId: number;
+      tipo: string;
+    };
+  };
 };

@@ -380,6 +380,91 @@ export const processosRouter = router({
       return novoAssistido;
     }),
 
+  // Quick-create processo minimal (from FileLinkDialog)
+  quickCreateProcesso: protectedProcedure
+    .input(
+      z.object({
+        numero: z.string().min(5),
+        assistidoId: z.number(),
+        atribuicao: z.enum([
+          "JURI_CAMACARI", "VVD_CAMACARI", "EXECUCAO_PENAL",
+          "SUBSTITUICAO", "SUBSTITUICAO_CIVEL", "GRUPO_JURI",
+        ]),
+        area: z.enum([
+          "JURI", "EXECUCAO_PENAL", "VIOLENCIA_DOMESTICA",
+          "SUBSTITUICAO", "CURADORIA", "FAMILIA", "CIVEL", "FAZENDA_PUBLICA",
+        ]).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { workspaceId } = getWorkspaceScope(ctx.user);
+
+      // Derive area from atribuicao if not provided
+      const area = input.area || (() => {
+        switch (input.atribuicao) {
+          case "JURI_CAMACARI":
+          case "GRUPO_JURI":
+            return "JURI" as const;
+          case "VVD_CAMACARI":
+            return "VIOLENCIA_DOMESTICA" as const;
+          case "EXECUCAO_PENAL":
+            return "EXECUCAO_PENAL" as const;
+          case "SUBSTITUICAO_CIVEL":
+            return "CIVEL" as const;
+          default:
+            return "SUBSTITUICAO" as const;
+        }
+      })();
+
+      const [novoProcesso] = await db
+        .insert(processos)
+        .values({
+          assistidoId: input.assistidoId,
+          atribuicao: input.atribuicao,
+          workspaceId,
+          numeroAutos: input.numero,
+          area,
+          fase: "conhecimento",
+          situacao: "ativo",
+        })
+        .returning();
+
+      // Fire-and-forget: create Drive folder for processo
+      (async () => {
+        try {
+          const [assistido] = await db
+            .select({ driveFolderId: assistidos.driveFolderId, nome: assistidos.nome })
+            .from(assistidos)
+            .where(eq(assistidos.id, input.assistidoId))
+            .limit(1);
+
+          if (!assistido?.driveFolderId) return;
+
+          const { createOrFindProcessoFolder, isGoogleDriveConfigured } =
+            await import("@/lib/services/google-drive");
+          if (!isGoogleDriveConfigured()) return;
+
+          const folder = await createOrFindProcessoFolder(
+            assistido.driveFolderId,
+            input.numero
+          );
+          if (folder) {
+            await db
+              .update(processos)
+              .set({
+                driveFolderId: folder.id,
+                linkDrive: folder.webViewLink || null,
+              })
+              .where(eq(processos.id, novoProcesso.id));
+          }
+        } catch (error) {
+          console.error(`[Drive] Erro ao criar pasta para processo ${novoProcesso.id}:`, error);
+        }
+      })();
+
+      return novoProcesso;
+    }),
+
   // Atualizar processo
   update: protectedProcedure
     .input(

@@ -10,7 +10,7 @@ import { eq, sql, desc, and, or, ilike } from "drizzle-orm";
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 
 // Modelo para processamento de texto
-const textModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const textModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 // Modelo para embeddings (busca semântica)
 const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });

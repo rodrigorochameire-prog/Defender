@@ -2870,6 +2870,7 @@ export const driveFilesRelations = relations(driveFiles, ({ one, many }) => ({
   createdBy: one(users, { fields: [driveFiles.createdById], references: [users.id] }),
   parent: one(driveFiles, { fields: [driveFiles.parentFileId], references: [driveFiles.id] }),
   sections: many(driveDocumentSections),
+  annotations: many(driveFileAnnotations),
 }));
 
 // ==========================================
@@ -2893,6 +2894,12 @@ export const driveDocumentSections = pgTable("drive_document_sections", {
   // Qualidade da classificação
   confianca: integer("confianca").default(0), // 0-100
 
+  // Status de revisão pelo defensor (HITL)
+  reviewStatus: varchar("review_status", { length: 20 }).default("pending").notNull(), // pending | approved | rejected | needs_review
+
+  // Ficha tipo-específica gerada pela IA (Pydantic → JSON)
+  fichaData: jsonb("ficha_data").$type<Record<string, unknown>>(),
+
   // Metadados estruturados (partes, datas, artigos de lei)
   metadata: jsonb("metadata").$type<{
     partesmencionadas?: string[];
@@ -2910,6 +2917,7 @@ export const driveDocumentSections = pgTable("drive_document_sections", {
   index("drive_doc_sections_drive_file_id_idx").on(table.driveFileId),
   index("drive_doc_sections_tipo_idx").on(table.tipo),
   index("drive_doc_sections_pagina_inicio_idx").on(table.paginaInicio),
+  index("drive_doc_sections_review_status_idx").on(table.reviewStatus),
 ]);
 
 export type DriveDocumentSection = typeof driveDocumentSections.$inferSelect;
@@ -2922,6 +2930,81 @@ export const driveDocumentSectionsRelations = relations(driveDocumentSections, (
 export const driveSyncLogsRelations = relations(driveSyncLogs, ({ one }) => ({
   user: one(users, { fields: [driveSyncLogs.userId], references: [users.id] }),
 }));
+
+// ==========================================
+// DRIVE - ANOTAÇÕES EM PDF (HIGHLIGHTS E NOTAS)
+// ==========================================
+
+export const driveFileAnnotations = pgTable("drive_file_annotations", {
+  id: serial("id").primaryKey(),
+  driveFileId: integer("drive_file_id").notNull()
+    .references(() => driveFiles.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Annotation type
+  tipo: varchar("tipo", { length: 20 }).notNull(), // "highlight" | "note"
+  pagina: integer("pagina").notNull(),
+
+  // Colors: yellow (fatos), red (contradições), green (teses), blue (referências), purple (outros)
+  cor: varchar("cor", { length: 20 }).default("yellow").notNull(),
+
+  // Content
+  texto: text("texto"), // For notes: the note content
+  textoSelecionado: text("texto_selecionado"), // For highlights: the selected text
+
+  // Position on page (relative coordinates 0-1)
+  // Supports legacy single-rect {x,y,width,height} and multi-rect {rects: [...]}
+  posicao: jsonb("posicao").$type<
+    | { x: number; y: number; width: number; height: number }
+    | { rects: Array<{ x: number; y: number; width: number; height: number }> }
+  >(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_annotations_file").on(table.driveFileId),
+  index("idx_annotations_page").on(table.driveFileId, table.pagina),
+]);
+
+export type DriveFileAnnotation = typeof driveFileAnnotations.$inferSelect;
+export type InsertDriveFileAnnotation = typeof driveFileAnnotations.$inferInsert;
+
+export const driveFileAnnotationsRelations = relations(driveFileAnnotations, ({ one }) => ({
+  driveFile: one(driveFiles, { fields: [driveFileAnnotations.driveFileId], references: [driveFiles.id] }),
+  user: one(users, { fields: [driveFileAnnotations.userId], references: [users.id] }),
+}));
+
+// ==========================================
+// TEMPLATES DE DOCUMENTOS
+// ==========================================
+
+export const documentTemplates = pgTable("document_templates", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+
+  // Google Drive file ID of the template document
+  driveFileId: varchar("drive_file_id", { length: 100 }).notNull(),
+  driveFolderId: varchar("drive_folder_id", { length: 100 }),
+
+  // Category for grouping
+  category: varchar("category", { length: 50 }).notNull(),
+
+  // Placeholders used in this template
+  placeholders: jsonb("placeholders").$type<string[]>().default([]),
+
+  // Status
+  isActive: boolean("is_active").default(true).notNull(),
+
+  // Tracking
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type DocumentTemplate = typeof documentTemplates.$inferSelect;
+export type InsertDocumentTemplate = typeof documentTemplates.$inferInsert;
 
 // ==========================================
 // VINCULAÇÃO ASSISTIDOS-PROCESSOS (MUITOS-PARA-MUITOS)
@@ -3020,6 +3103,9 @@ export const driveFileContents = pgTable("drive_file_contents", {
   tableCount: integer("table_count"),
   imageCount: integer("image_count"),
   wordCount: integer("word_count"),
+
+  // OCR
+  ocrApplied: boolean("ocr_applied").default(false),
 
   // Erros (se houver)
   errorMessage: text("error_message"),
@@ -3918,6 +4004,22 @@ export const documentosGerados = pgTable("documentos_gerados", {
   googleDocUrl: text("google_doc_url"),
   driveFileId: text("drive_file_id"),
 
+  // Metadata estendido (ofícios, revisão IA, versionamento)
+  metadata: jsonb("metadata").$type<{
+    tipoOficio?: string;
+    destinatario?: string;
+    urgencia?: "normal" | "urgente" | "urgentissimo";
+    status?: "rascunho" | "revisao" | "enviado" | "arquivado";
+    iaModelo?: string;
+    iaRevisao?: {
+      modelo: string;
+      score: number;
+      sugestoes: string[];
+    };
+    driveSourceId?: string;
+    versao?: number;
+  }>(),
+
   // Workspace e usuario
   workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdById: integer("created_by_id").references(() => users.id),
@@ -3952,6 +4054,65 @@ export const documentosGeradosRelations = relations(documentosGerados, ({ one })
   caso: one(casos, { fields: [documentosGerados.casoId], references: [casos.id] }),
   workspace: one(workspaces, { fields: [documentosGerados.workspaceId], references: [workspaces.id] }),
   createdBy: one(users, { fields: [documentosGerados.createdById], references: [users.id] }),
+}));
+
+// ==========================================
+// OFÍCIO ANÁLISES - Tracking de análises do Drive
+// ==========================================
+
+export const oficioAnaliseStatusEnum = pgEnum("oficio_analise_status", [
+  "pendente",
+  "processando",
+  "concluido",
+  "erro",
+]);
+
+export const oficioAnalises = pgTable("oficio_analises", {
+  id: serial("id").primaryKey(),
+
+  // Arquivo no Drive
+  driveFileId: text("drive_file_id").notNull(),
+  driveFileName: text("drive_file_name").notNull(),
+  driveFolderId: text("drive_folder_id"),
+
+  // Resultado da análise
+  tipoOficio: varchar("tipo_oficio", { length: 100 }),
+  destinatarioTipo: varchar("destinatario_tipo", { length: 100 }),
+  assunto: text("assunto"),
+  estrutura: jsonb("estrutura").$type<{
+    saudacao?: string;
+    corpo?: string;
+    fechamento?: string;
+    assinatura?: string;
+  }>(),
+  variaveisIdentificadas: jsonb("variaveis_identificadas").$type<string[]>(),
+  qualidadeScore: integer("qualidade_score"),
+  conteudoExtraido: text("conteudo_extraido"),
+
+  // Controle
+  modeloGeradoId: integer("modelo_gerado_id").references(() => documentoModelos.id, { onDelete: "set null" }),
+  status: oficioAnaliseStatusEnum("status").default("pendente").notNull(),
+  erro: text("erro"),
+
+  // Workspace
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("oficio_analises_drive_file_id_idx").on(table.driveFileId),
+  index("oficio_analises_tipo_oficio_idx").on(table.tipoOficio),
+  index("oficio_analises_status_idx").on(table.status),
+  index("oficio_analises_workspace_id_idx").on(table.workspaceId),
+]);
+
+export type OficioAnalise = typeof oficioAnalises.$inferSelect;
+export type InsertOficioAnalise = typeof oficioAnalises.$inferInsert;
+
+export const oficioAnalisesRelations = relations(oficioAnalises, ({ one }) => ({
+  modeloGerado: one(documentoModelos, { fields: [oficioAnalises.modeloGeradoId], references: [documentoModelos.id] }),
+  workspace: one(workspaces, { fields: [oficioAnalises.workspaceId], references: [workspaces.id] }),
 }));
 
 // ==========================================

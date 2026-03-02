@@ -34,6 +34,7 @@ import {
   MessageSquarePlus,
   Save,
   X,
+  UserPlus,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
@@ -78,6 +79,7 @@ interface DemandaCardProps {
   atoOptions?: Array<{ value: string; label: string }>; // Lista de atos disponíveis
   onProvidenciasChange?: (id: string, providencias: string) => void; // Callback para mudança de providências
   onAtribuicaoChange?: (id: string, atribuicao: string) => void;
+  onDelegate?: (demanda: Demanda) => void;
   isSelectMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
@@ -115,6 +117,7 @@ export function DemandaCard({
   atoOptions,
   onProvidenciasChange,
   onAtribuicaoChange,
+  onDelegate,
   isSelectMode,
   isSelected,
   onToggleSelect,
@@ -821,6 +824,15 @@ export function DemandaCard({
                     className="absolute top-full right-0 mt-1 w-40 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl z-50 overflow-hidden py-1"
                     style={{ animation: 'fadeInDown 0.15s ease-out' }}
                   >
+                    {onDelegate && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelegate(demanda); }}
+                        className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 transition-colors"
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        Delegar
+                      </button>
+                    )}
                     <button
                       onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(demanda); }}
                       className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors"

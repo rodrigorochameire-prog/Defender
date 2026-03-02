@@ -12,10 +12,21 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/ge
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
 
-// Modelos disponíveis
+// Modelos disponíveis (atualizado fev/2026)
+// - gemini-3.1-pro-preview: Reasoning-first, 1M context, agentic workflows
+// - gemini-2.5-flash: Stable GA, fast multimodal, great for high volume
+// - gemini-2.5-flash-lite: Ultra-cheap classification, reasoning off by default
+// - gemini-2.5-pro: Stable GA, deep reasoning for complex tasks
 export const GEMINI_MODELS = {
-  PRO: "gemini-1.5-pro",
-  FLASH: "gemini-1.5-flash",
+  /** Reasoning-first model. Análises processuais, relatórios, minutas (1M tokens) */
+  PRO: "gemini-2.5-pro",
+  /** Fast multimodal. Extração, classificação, resumos (alto volume) */
+  FLASH: "gemini-2.5-flash",
+  /** Ultra-cheap. Classificação simples, triagem (thinking off by default) */
+  FLASH_LITE: "gemini-2.5-flash-lite",
+  /** Reasoning-first preview. Análises profundas, raciocínio complexo */
+  PRO_REASONING: "gemini-3.1-pro-preview",
+  /** @deprecated Use PRO or FLASH instead — 1.5 models retired, returns 404 */
   PRO_VISION: "gemini-1.5-pro-vision",
 } as const;
 

@@ -17,6 +17,7 @@ import { SheetsImportModal } from "@/components/demandas-premium/sheets-import-m
 import { SEEUImportModal } from "@/components/demandas-premium/seeu-import-modal";
 import { DuplicatesModal } from "@/components/demandas-premium/duplicates-modal";
 import { DelegacaoModal } from "@/components/demandas/delegacao-modal";
+import { DelegacaoBatchModal } from "@/components/demandas/delegacao-batch-modal";
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -575,6 +576,9 @@ export default function Demandas() {
     destinatarioNome: string;
   } | null>(null);
 
+  // Estado para o modal de delegação em lote
+  const [batchDelegacaoOpen, setBatchDelegacaoOpen] = useState(false);
+
   const [viewMode, setViewMode] = useState<"table" | "cards" | "grid" | "compact">(() => {
     if (typeof window !== "undefined") {
       // Padrão é "compact" (modo planilha editável)
@@ -777,6 +781,38 @@ export default function Demandas() {
       }
     }
   };
+
+  // Handler para delegação direta (via botão no card/row)
+  const handleDelegateDirectly = (demanda: any) => {
+    setDelegacaoDemanda({
+      demandaId: parseInt(demanda.id, 10) || null,
+      demandaAto: demanda.ato || "",
+      assistidoId: demanda.assistidoId || null,
+      assistidoNome: demanda.assistido || "",
+      processoId: demanda.processoId || null,
+      processoNumero: demanda.processos?.[0]?.numero || "",
+      destinatarioNome: "",
+    });
+    setDelegacaoModalOpen(true);
+  };
+
+  // Handler para delegação em lote
+  const handleBatchDelegate = () => {
+    if (selectedIds.size === 0) return;
+    setBatchDelegacaoOpen(true);
+  };
+
+  // Demandas selecionadas para batch
+  const selectedDemandasForBatch = useMemo(() => {
+    return demandas
+      .filter(d => selectedIds.has(d.id))
+      .map(d => ({
+        id: parseInt(d.id, 10) || 0,
+        ato: d.ato,
+        processoNumero: d.processos?.[0]?.numero,
+        assistidoNome: d.assistido,
+      }));
+  }, [demandas, selectedIds]);
 
   const handleAtoChange = (demandaId: string, newAto: string) => {
     // Atualizar localmente para feedback imediato
@@ -1786,6 +1822,7 @@ export default function Demandas() {
                   onArchive={handleArchiveDemanda}
                   onUnarchive={handleUnarchiveDemanda}
                   onDelete={handleDeleteDemanda}
+                  onDelegate={handleDelegateDirectly}
                   copyToClipboard={copyToClipboard}
                   onAtoChange={handleAtoChange}
                   onProvidenciasChange={handleProvidenciasChange}
@@ -1832,6 +1869,7 @@ export default function Demandas() {
                           onArchive={handleArchiveDemanda}
                           onUnarchive={handleUnarchiveDemanda}
                           onDelete={handleDeleteDemanda}
+                          onDelegate={handleDelegateDirectly}
                           copyToClipboard={copyToClipboard}
                           onProvidenciasChange={handleProvidenciasChange}
                           onAtribuicaoChange={handleAtribuicaoChange}
@@ -1968,6 +2006,15 @@ export default function Demandas() {
                             <option value="sem_atuacao">Sem atuação</option>
                           </optgroup>
                         </select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1.5 border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/20"
+                          onClick={handleBatchDelegate}
+                        >
+                          <UserCheck className="w-3 h-3" />
+                          Delegar ({selectedIds.size})
+                        </Button>
                         <Button
                           variant="destructive"
                           size="sm"
@@ -2160,12 +2207,22 @@ export default function Demandas() {
         assistidoNome={delegacaoDemanda?.assistidoNome}
         processoId={delegacaoDemanda?.processoId}
         processoNumero={delegacaoDemanda?.processoNumero}
+        destinatarioNome={delegacaoDemanda?.destinatarioNome}
         onDelegacaoSucesso={() => {
           setDelegacaoDemanda(null);
-          toast.success(
-            `Tarefa delegada para ${delegacaoDemanda?.destinatarioNome}!`,
-            { description: "As instruções foram enviadas com sucesso." }
-          );
+          utils.demandas.list.invalidate();
+        }}
+      />
+
+      {/* Modal de Delegação em Lote */}
+      <DelegacaoBatchModal
+        open={batchDelegacaoOpen}
+        onOpenChange={setBatchDelegacaoOpen}
+        demandas={selectedDemandasForBatch}
+        onSuccess={() => {
+          setSelectedIds(new Set());
+          setIsSelectMode(false);
+          setBatchDelegacaoOpen(false);
           utils.demandas.list.invalidate();
         }}
       />

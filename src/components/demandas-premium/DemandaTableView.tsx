@@ -17,6 +17,7 @@ import {
   ExternalLink,
   FileText,
   Calendar,
+  UserPlus,
 } from "lucide-react";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
@@ -59,6 +60,7 @@ interface DemandaTableViewProps {
   onArchive: (id: string) => void;
   onUnarchive: (id: string) => void;
   onDelete: (id: string) => void;
+  onDelegate?: (demanda: Demanda) => void;
   copyToClipboard: (text: string, message?: string) => void;
   onAtoChange?: (id: string, ato: string) => void;
   onProvidenciasChange?: (id: string, providencias: string) => void;
@@ -129,6 +131,7 @@ function Row({
   onArchive,
   onUnarchive,
   onDelete,
+  onDelegate,
   copyToClipboard,
   onAtoChange,
   onProvidenciasChange,
@@ -144,6 +147,7 @@ function Row({
   onArchive: (id: string) => void;
   onUnarchive: (id: string) => void;
   onDelete: (id: string) => void;
+  onDelegate?: (demanda: Demanda) => void;
   copyToClipboard: (text: string, message?: string) => void;
   onAtoChange?: (id: string, ato: string) => void;
   onProvidenciasChange?: (id: string, providencias: string) => void;
@@ -476,6 +480,14 @@ function Row({
 
           {showMenu && (
             <div className="absolute right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-50 py-1 w-36">
+              {onDelegate && (
+                <button
+                  onClick={() => { onDelegate(demanda); setShowMenu(false); }}
+                  className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400"
+                >
+                  <UserPlus className="w-3.5 h-3.5" /> Delegar
+                </button>
+              )}
               <button
                 onClick={() => { onEdit(demanda); setShowMenu(false); }}
                 className="w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
@@ -525,6 +537,7 @@ export function DemandaTableView({
   onArchive,
   onUnarchive,
   onDelete,
+  onDelegate,
   copyToClipboard,
   onAtoChange,
   onProvidenciasChange,
@@ -572,6 +585,7 @@ export function DemandaTableView({
               onArchive={onArchive}
               onUnarchive={onUnarchive}
               onDelete={onDelete}
+              onDelegate={onDelegate}
               copyToClipboard={copyToClipboard}
               onAtoChange={onAtoChange}
               onProvidenciasChange={onProvidenciasChange}

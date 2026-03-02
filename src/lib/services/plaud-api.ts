@@ -991,7 +991,7 @@ export async function extractKeyPointsWithAI(
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `Analise a seguinte transcrição de um atendimento da Defensoria Pública (defesa criminal) e extraia os pontos-chave.
 

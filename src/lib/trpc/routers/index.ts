@@ -48,8 +48,11 @@ import { solarRouter } from "./solar";
 import { searchRouter } from "./search";
 import { intelligenceRouter } from "./intelligence";
 import { documentSectionsRouter } from "./document-sections";
+import { annotationsRouter } from "./annotations";
 import { settingsRouter } from "./settings";
 import { tesesRouter } from "./teses";
+import { oficiosRouter } from "./oficios";
+import { templatesRouter } from "./templates";
 
 
 export const appRouter = router({
@@ -197,6 +200,11 @@ export const appRouter = router({
   documentSections: documentSectionsRouter,
 
   // ==========================================
+  // ANOTAÇÕES EM PDF (HIGHLIGHTS E NOTAS)
+  // ==========================================
+  annotations: annotationsRouter,
+
+  // ==========================================
   // CONFIGURAÇÕES DO USUÁRIO
   // ==========================================
   settings: settingsRouter,
@@ -205,6 +213,16 @@ export const appRouter = router({
   // TESES DEFENSIVAS (ESTRATÉGIA)
   // ==========================================
   teses: tesesRouter,
+
+  // ==========================================
+  // OFÍCIOS (GERAÇÃO + IA + ANÁLISE DRIVE)
+  // ==========================================
+  oficios: oficiosRouter,
+
+  // ==========================================
+  // TEMPLATES DE DOCUMENTOS (GOOGLE DRIVE)
+  // ==========================================
+  templates: templatesRouter,
 });
 
 export type AppRouter = typeof appRouter;

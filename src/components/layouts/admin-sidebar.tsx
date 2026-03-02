@@ -64,10 +64,11 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
 ];
 
-// 3. Documentos - Drive, Modelos, Jurisprudência, Distribuição (laranja)
+// 3. Documentos - Drive, Distribuição, Ofícios, Modelos, Jurisprudência (laranja)
 const DOCUMENTOS_NAV: AssignmentMenuItem[] = [
-  { label: "Distribuição", path: "/admin/distribuicao", icon: "FolderInput" },
   { label: "Drive", path: "/admin/drive", icon: "FolderOpen" },
+  { label: "Distribuição", path: "/admin/distribuicao", icon: "FolderInput" },
+  { label: "Ofícios", path: "/admin/oficios", icon: "Mail" },
   { label: "Modelos", path: "/admin/modelos", icon: "FileText" },
   { label: "Jurisprudência", path: "/admin/jurisprudencia", icon: "Scale" },
 ];

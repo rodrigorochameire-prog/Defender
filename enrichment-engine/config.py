@@ -52,6 +52,17 @@ class Settings(BaseSettings):
     diarization_enabled: bool = True  # Enable speaker diarization by default
     transcription_language: str = "pt"  # ISO 639-1 language code
 
+    # --- Anthropic (Claude) ---
+    anthropic_api_key: str = ""
+    claude_sonnet_model: str = "claude-sonnet-4-20250514"
+    claude_opus_model: str = "claude-opus-4-20250514"
+    claude_max_tokens: int = 4096
+    claude_timeout: int = 120  # seconds
+
+    # --- Gemini Pro (para minutas/análises) ---
+    gemini_pro_model: str = "gemini-2.5-pro"
+    gemini_reasoning_model: str = "gemini-3.1-pro-preview"
+
     # --- Embedding ---
     embedding_model: str = "text-embedding-004"
     embedding_dimensions: int = 768

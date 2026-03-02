@@ -686,6 +686,37 @@ export const atendimentosRouter = router({
     }),
 
   /**
+   * Re-executa o pipeline pós-aprovação para uma gravação já aprovada.
+   * Útil quando o pipeline original falhou silenciosamente.
+   */
+  reprocessRecording: protectedProcedure
+    .input(z.object({ recordingId: z.number() }))
+    .mutation(async ({ input }) => {
+      const [recording] = await db
+        .select()
+        .from(plaudRecordings)
+        .where(eq(plaudRecordings.id, input.recordingId))
+        .limit(1);
+
+      if (!recording) {
+        throw new Error("Gravação não encontrada");
+      }
+
+      if (!recording.assistidoId) {
+        throw new Error("Gravação não possui assistido vinculado");
+      }
+
+      const result = await processApprovedRecording(
+        recording.id,
+        recording.assistidoId,
+        recording.atendimentoId || null,
+        recording.processoId || null
+      );
+
+      return result;
+    }),
+
+  /**
    * Busca processos vinculados a um assistido via tabela de junção
    */
   processosByAssistido: protectedProcedure

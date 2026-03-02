@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useDriveContext } from "./DriveContext";
 import { trpc } from "@/lib/trpc/client";
@@ -15,14 +15,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Sparkles, Trash2, X, Loader2 } from "lucide-react";
+import { Sparkles, Trash2, X, Loader2, FolderInput } from "lucide-react";
 import { toast } from "sonner";
+import { MoveFileModal } from "./MoveFileModal";
+
+// ─── Types ──────────────────────────────────────────────────────────
+
+interface DriveFileMinimal {
+  id: number;
+  driveFileId: string;
+  name: string;
+  isFolder: boolean;
+}
+
+interface DriveBatchActionsProps {
+  files?: DriveFileMinimal[];
+}
 
 // ─── Main Component ─────────────────────────────────────────────────
 
-export function DriveBatchActions() {
+export function DriveBatchActions({ files = [] }: DriveBatchActionsProps) {
   const ctx = useDriveContext();
+  const utils = trpc.useUtils();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const retryEnrichment = trpc.drive.retryEnrichment.useMutation({
     onSuccess: () => {
@@ -34,13 +51,14 @@ export function DriveBatchActions() {
     },
   });
 
-  const deleteFile = trpc.drive.deleteFile.useMutation({
-    onError: (error) => {
-      toast.error(error.message || "Erro ao excluir arquivo");
-    },
-  });
+  const deleteFile = trpc.drive.deleteFile.useMutation();
 
   const selectedCount = ctx.selectedFileIds.size;
+
+  // Map selected DB ids to their driveFileIds and names
+  const selectedFiles = useMemo(() => {
+    return files.filter((f) => ctx.selectedFileIds.has(f.id) && !f.isFolder);
+  }, [files, ctx.selectedFileIds]);
 
   if (selectedCount === 0) return null;
 
@@ -51,13 +69,41 @@ export function DriveBatchActions() {
   };
 
   const handleDelete = async () => {
-    // Note: deleteFile expects driveFileId (string), but we have DB ids (number)
-    // For batch delete, we would need to map ids. For now, we close the dialog
-    // and show a toast, as the mutation input type is { fileId: string }.
-    // In practice, the parent component or a batch-delete endpoint would handle this.
-    toast.info("Exclusao em lote sera implementada em breve");
+    if (selectedFiles.length === 0) {
+      toast.error("Nenhum arquivo selecionado para exclusao");
+      setShowDeleteDialog(false);
+      return;
+    }
+
+    setIsDeleting(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const file of selectedFiles) {
+      try {
+        await deleteFile.mutateAsync({ fileId: file.driveFileId });
+        successCount++;
+      } catch {
+        errorCount++;
+      }
+    }
+
+    setIsDeleting(false);
     setShowDeleteDialog(false);
+
+    if (errorCount === 0) {
+      toast.success(`${successCount} arquivo${successCount !== 1 ? "s" : ""} excluido${successCount !== 1 ? "s" : ""}`);
+    } else {
+      toast.warning(`${successCount} excluido${successCount !== 1 ? "s" : ""}, ${errorCount} falha${errorCount !== 1 ? "s" : ""}`);
+    }
+
     ctx.clearSelection();
+    utils.drive.files.invalidate();
+  };
+
+  const handleMoveSuccess = () => {
+    ctx.clearSelection();
+    utils.drive.files.invalidate();
   };
 
   return (
@@ -95,6 +141,18 @@ export function DriveBatchActions() {
           Extrair com IA
         </Button>
 
+        {/* Move */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-3 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-full"
+          onClick={() => setShowMoveModal(true)}
+          disabled={selectedFiles.length === 0}
+        >
+          <FolderInput className="h-3.5 w-3.5 mr-1.5" />
+          Mover
+        </Button>
+
         {/* Delete */}
         <Button
           variant="ghost"
@@ -127,26 +185,46 @@ export function DriveBatchActions() {
             <AlertDialogDescription className="text-zinc-500 dark:text-zinc-400">
               Tem certeza que deseja excluir{" "}
               <span className="font-medium text-zinc-900 dark:text-zinc-200">
-                {selectedCount} arquivo{selectedCount !== 1 ? "s" : ""}
+                {selectedFiles.length} arquivo{selectedFiles.length !== 1 ? "s" : ""}
               </span>
               ? Esta acao nao pode ser desfeita e os arquivos serao removidos
               permanentemente do Google Drive.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+            <AlertDialogCancel
+              disabled={isDeleting}
+              className="border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir {selectedCount} arquivo{selectedCount !== 1 ? "s" : ""}
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              {isDeleting
+                ? "Excluindo..."
+                : `Excluir ${selectedFiles.length} arquivo${selectedFiles.length !== 1 ? "s" : ""}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Move Files Modal */}
+      <MoveFileModal
+        open={showMoveModal}
+        onOpenChange={setShowMoveModal}
+        fileIds={selectedFiles.map((f) => f.id)}
+        driveFileIds={selectedFiles.map((f) => f.driveFileId)}
+        fileNames={selectedFiles.map((f) => f.name)}
+        onSuccess={handleMoveSuccess}
+      />
     </>
   );
 }

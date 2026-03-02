@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { sql } from "drizzle-orm";
+import { setRuntimeRefreshToken } from "@/lib/services/google-drive";
 
 /**
  * GET /api/google/callback
  * Recebe o authorization code do Google OAuth2,
- * troca por access_token + refresh_token e exibe na tela.
+ * troca por access_token + refresh_token.
  *
- * O refresh_token deve ser copiado para GOOGLE_REFRESH_TOKEN no .env.local
- * e nas variáveis de ambiente do Vercel.
+ * Salva o refresh_token no banco (tabela google_tokens) para uso
+ * automático sem depender de env vars. Também exibe na tela para
+ * backup manual.
  */
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -80,6 +84,37 @@ export async function GET(request: NextRequest) {
       // Ignorar erro
     }
 
+    // Salvar refresh token no banco para uso automático
+    let savedToDb = false;
+    if (refreshToken) {
+      try {
+        // Upsert na tabela google_tokens (cria se não existir)
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS google_tokens (
+            id SERIAL PRIMARY KEY,
+            email TEXT NOT NULL,
+            refresh_token TEXT NOT NULL,
+            access_token TEXT,
+            expires_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+          )
+        `);
+        // Remove tokens antigos e insere o novo
+        await db.execute(sql`DELETE FROM google_tokens WHERE email = ${userEmail}`);
+        await db.execute(sql`
+          INSERT INTO google_tokens (email, refresh_token, access_token, expires_at)
+          VALUES (${userEmail}, ${refreshToken}, ${accessToken}, ${new Date(Date.now() + expiresIn * 1000).toISOString()}::timestamptz)
+        `);
+        savedToDb = true;
+        // Atualiza o token em runtime para uso imediato
+        setRuntimeRefreshToken(refreshToken);
+        console.log("[Google Auth] Refresh token salvo no banco para", userEmail);
+      } catch (err) {
+        console.error("[Google Auth] Erro ao salvar token no banco:", err);
+      }
+    }
+
     const html = htmlPage("Google Drive Conectado!", `
       <div class="success-badge">Autorizado com sucesso</div>
       <p><strong>Conta:</strong> ${userEmail}</p>
@@ -88,6 +123,7 @@ export async function GET(request: NextRequest) {
       ${refreshToken ? `
         <div class="token-section">
           <h2>Novo Refresh Token</h2>
+          ${savedToDb ? `<div class="success-badge" style="background:#059669;margin-bottom:8px">✅ Token salvo no banco automaticamente</div>` : ''}
           <p class="instruction">Copie e atualize no <code>.env.local</code> e no Vercel:</p>
           <div class="token-box">
             <code id="token">${refreshToken}</code>

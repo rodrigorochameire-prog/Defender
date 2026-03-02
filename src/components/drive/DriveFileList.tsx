@@ -9,9 +9,19 @@ import {
   getEnrichmentBadge,
 } from "./drive-constants";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FolderOpen, ChevronUp, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FolderOpen, ChevronUp, ChevronDown, MoreVertical, ExternalLink, Pencil, FolderInput, Download, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
+import { MoveFileModal } from "./MoveFileModal";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -23,6 +33,7 @@ interface DriveFile {
   size: number | null;
   isFolder: boolean;
   webViewLink: string | null;
+  webContentLink?: string | null;
   thumbnailLink: string | null;
   enrichmentStatus: string | null;
   assistidoId: number | null;
@@ -99,9 +110,21 @@ function SortHeader({
 
 function FileRow({ file }: { file: DriveFile }) {
   const ctx = useDriveContext();
+  const utils = trpc.useUtils();
+  const [showMoveModal, setShowMoveModal] = useState(false);
   const isSelected = ctx.selectedFileIds.has(file.id);
   const Icon = file.isFolder ? FolderOpen : getFileIcon(file.mimeType);
   const enrichment = getEnrichmentBadge(file.enrichmentStatus);
+
+  const deleteFile = trpc.drive.deleteFile.useMutation({
+    onSuccess: () => {
+      toast.success("Arquivo excluido com sucesso");
+      utils.drive.files.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao excluir arquivo");
+    },
+  });
 
   const handleClick = () => {
     if (file.isFolder) {
@@ -113,6 +136,13 @@ function FileRow({ file }: { file: DriveFile }) {
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+  };
+
+  const handleDelete = () => {
+    const confirmed = window.confirm(`Excluir "${file.name}"? Esta acao nao pode ser desfeita.`);
+    if (confirmed) {
+      deleteFile.mutate({ fileId: file.driveFileId });
+    }
   };
 
   const dateStr = useMemo(() => {
@@ -132,7 +162,7 @@ function FileRow({ file }: { file: DriveFile }) {
     <div
       onClick={handleClick}
       className={cn(
-        "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors duration-150",
+        "group flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors duration-150",
         "hover:bg-zinc-50 dark:hover:bg-zinc-800/80",
         isSelected && "bg-emerald-50 dark:bg-emerald-500/10"
       )}
@@ -190,6 +220,76 @@ function FileRow({ file }: { file: DriveFile }) {
           <span className="text-xs text-zinc-400 dark:text-zinc-600">-</span>
         )}
       </div>
+
+      {/* Actions */}
+      <div className="w-8 shrink-0 flex justify-center" onClick={(e) => e.stopPropagation()}>
+        {!file.isFolder ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="h-7 w-7 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all">
+                <MoreVertical className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem
+                className="text-xs gap-2 cursor-pointer"
+                onClick={() => {
+                  if (file.webViewLink) window.open(file.webViewLink, "_blank");
+                }}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Abrir
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-xs gap-2 cursor-pointer"
+                onClick={() => ctx.openDetailPanel(file.id)}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Renomear
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-xs gap-2 cursor-pointer"
+                onClick={() => setShowMoveModal(true)}
+              >
+                <FolderInput className="h-3.5 w-3.5" />
+                Mover para...
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-xs gap-2 cursor-pointer"
+                onClick={() => {
+                  const link = file.webContentLink || file.webViewLink;
+                  if (link) window.open(link, "_blank");
+                }}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Baixar
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-xs gap-2 cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-500/10"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="w-7" />
+        )}
+      </div>
+
+      {/* Move File Modal */}
+      {!file.isFolder && (
+        <MoveFileModal
+          open={showMoveModal}
+          onOpenChange={setShowMoveModal}
+          fileIds={[file.id]}
+          driveFileIds={[file.driveFileId]}
+          fileNames={[file.name]}
+          onSuccess={() => utils.drive.files.invalidate()}
+        />
+      )}
     </div>
   );
 }
@@ -329,6 +429,7 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
             Enrichment
           </span>
         </div>
+        <div className="w-8" /> {/* actions spacer */}
       </div>
 
       {/* Rows */}

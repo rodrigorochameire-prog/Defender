@@ -450,6 +450,76 @@ export interface BriefingAudienciaResponse {
 }
 
 // ==========================================
+// TIPOS - OFÍCIOS (IA)
+// ==========================================
+
+export interface GerarMinutaRequest {
+  tipo_oficio: string;
+  template_base: string;
+  dados_assistido: Record<string, string>;
+  dados_processo: Record<string, string>;
+  contexto_adicional: string;
+  instrucoes: string;
+}
+
+export interface GerarMinutaResponse {
+  success: boolean;
+  conteudo: string;
+  modelo: string;
+  tokens_entrada: number;
+  tokens_saida: number;
+  error?: string;
+}
+
+export interface RevisarOficioRequest {
+  conteudo: string;
+  tipo_oficio: string;
+  destinatario: string;
+  contexto_adicional: string;
+}
+
+export interface RevisarOficioResponse {
+  success: boolean;
+  score: number;
+  sugestoes: Array<{ tipo: string; descricao: string; trecho?: string; sugestao?: string }>;
+  tom_adequado: boolean;
+  formalidade_ok: boolean;
+  dados_corretos: boolean;
+  conteudo_revisado: string | null;
+  modelo: string;
+  tokens_entrada: number;
+  tokens_saida: number;
+  error?: string;
+}
+
+export interface MelhorarTextoRequest {
+  conteudo: string;
+  instrucao: string;
+}
+
+export interface MelhorarTextoResponse {
+  success: boolean;
+  conteudo: string;
+  modelo: string;
+  error?: string;
+}
+
+export interface ClassificarOficioRequest {
+  conteudo_markdown: string;
+}
+
+export interface ClassificarOficioResponse {
+  success: boolean;
+  tipo_oficio: string;
+  destinatario_tipo: string;
+  assunto: string;
+  qualidade_score: number;
+  variaveis_detectadas: string[];
+  estrutura: Record<string, string>;
+  error?: string;
+}
+
+// ==========================================
 // CLIENTE
 // ==========================================
 
@@ -710,6 +780,84 @@ class PythonBackendClient {
         entity_id: casoId,
         content,
       } satisfies EnrichRequest),
+    });
+  }
+
+  // ==========================================
+  // OFÍCIOS (IA)
+  // ==========================================
+
+  /**
+   * Gera corpo de ofício com Gemini 2.5 Pro
+   */
+  async gerarMinuta(
+    tipoOficio: string,
+    templateBase: string,
+    dadosAssistido: Record<string, string>,
+    dadosProcesso: Record<string, string>,
+    contextoAdicional: string = "",
+    instrucoes: string = ""
+  ): Promise<GerarMinutaResponse> {
+    return this.request<GerarMinutaResponse>("/api/oficios/gerar-minuta", {
+      method: "POST",
+      body: JSON.stringify({
+        tipo_oficio: tipoOficio,
+        template_base: templateBase,
+        dados_assistido: dadosAssistido,
+        dados_processo: dadosProcesso,
+        contexto_adicional: contextoAdicional,
+        instrucoes: instrucoes,
+      } satisfies GerarMinutaRequest),
+    });
+  }
+
+  /**
+   * Revisa ofício com Claude Sonnet 4.6
+   */
+  async revisarOficio(
+    conteudo: string,
+    tipoOficio: string = "comunicacao",
+    destinatario: string = "",
+    contextoAdicional: string = ""
+  ): Promise<RevisarOficioResponse> {
+    return this.request<RevisarOficioResponse>("/api/oficios/revisar", {
+      method: "POST",
+      body: JSON.stringify({
+        conteudo,
+        tipo_oficio: tipoOficio,
+        destinatario,
+        contexto_adicional: contextoAdicional,
+      } satisfies RevisarOficioRequest),
+    });
+  }
+
+  /**
+   * Melhora texto de ofício com Claude Sonnet 4.6
+   */
+  async melhorarTexto(
+    conteudo: string,
+    instrucao: string
+  ): Promise<MelhorarTextoResponse> {
+    return this.request<MelhorarTextoResponse>("/api/oficios/melhorar", {
+      method: "POST",
+      body: JSON.stringify({
+        conteudo,
+        instrucao,
+      } satisfies MelhorarTextoRequest),
+    });
+  }
+
+  /**
+   * Classifica ofício existente com Gemini Flash
+   */
+  async classificarOficio(
+    conteudoMarkdown: string
+  ): Promise<ClassificarOficioResponse> {
+    return this.request<ClassificarOficioResponse>("/api/oficios/classificar", {
+      method: "POST",
+      body: JSON.stringify({
+        conteudo_markdown: conteudoMarkdown,
+      } satisfies ClassificarOficioRequest),
     });
   }
 

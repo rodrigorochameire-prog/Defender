@@ -15,6 +15,8 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  // Externalizar pacotes de PDF para que funcionem em Vercel serverless
+  serverExternalPackages: ['pdfjs-dist', 'unpdf'],
   // Temporário: ignorar erros de tipo para permitir build
   // TODO: Corrigir erros de tipo nos routers tRPC relacionados a workspaceId
   typescript: {

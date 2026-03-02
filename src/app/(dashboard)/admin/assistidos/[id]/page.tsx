@@ -3,11 +3,13 @@
 import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Mic, Music, Video, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain } from "lucide-react";
+import { ArrowLeft, Lock, User, Mic, Music, Video, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain, FileText, Plus, Sparkles, Pencil, Clock, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TranscriptViewer } from "@/components/shared/transcript-viewer";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { IntelligenceTab } from "@/components/intelligence/IntelligenceTab";
@@ -16,7 +18,7 @@ import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
-type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "inteligencia";
+type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "oficios" | "inteligencia";
 
 interface TranscriptionData {
   transcript: string;
@@ -115,6 +117,12 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const { data, isLoading, error } = trpc.assistidos.getById.useQuery(
     { id: Number(id) },
     { staleTime: 60_000 }
+  );
+
+  // Ofícios do assistido
+  const { data: oficiosData } = trpc.oficios.list.useQuery(
+    { assistidoId: Number(id), limit: 50 },
+    { enabled: !!id }
   );
 
   // Filter media files (audio/* or video/*)
@@ -230,6 +238,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { key: "drive", label: "Drive", count: data.driveFiles.length },
     { key: "audiencias", label: "Audiências", count: data.audiencias.length },
     { key: "midias", label: "Mídias", count: mediaFiles.length },
+    { key: "oficios", label: "Ofícios", count: oficiosData?.total ?? 0 },
     { key: "inteligencia", label: "Inteligência" },
   ];
 
@@ -661,6 +670,90 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                       </div>
                     </div>
                   </div>
+                );
+              })
+            )}
+          </div>
+        )}
+        {tab === "oficios" && (
+          <div className="space-y-3">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-zinc-500">
+                {oficiosData?.total ?? 0} oficio(s) vinculado(s)
+              </p>
+              <Button
+                size="sm"
+                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
+                onClick={() => router.push(`/admin/oficios/novo?assistidoId=${id}`)}
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Novo Oficio
+              </Button>
+            </div>
+
+            {/* Lista */}
+            {!oficiosData?.items?.length ? (
+              <div className="text-center py-12">
+                <FileText className="w-8 h-8 mx-auto text-zinc-600 mb-2" />
+                <p className="text-sm text-zinc-500">Nenhum oficio vinculado</p>
+                <p className="text-xs text-zinc-600 mt-1">
+                  Crie um novo oficio para este assistido
+                </p>
+              </div>
+            ) : (
+              oficiosData.items.map((oficio) => {
+                const meta = (oficio.metadata as Record<string, string> | null) || {};
+                const statusKey = meta.status || "rascunho";
+                const statusLabel = statusKey === "rascunho" ? "Rascunho" :
+                  statusKey === "revisao" ? "Em Revisao" :
+                  statusKey === "enviado" ? "Enviado" :
+                  statusKey === "arquivado" ? "Arquivado" : statusKey;
+                const statusColor = statusKey === "rascunho" ? "text-yellow-400 border-yellow-500/20" :
+                  statusKey === "revisao" ? "text-blue-400 border-blue-500/20" :
+                  statusKey === "enviado" ? "text-emerald-400 border-emerald-500/20" :
+                  "text-zinc-400 border-zinc-500/20";
+
+                return (
+                  <Link
+                    key={oficio.id}
+                    href={`/admin/oficios/${oficio.id}`}
+                    className="block p-3 rounded-lg border border-zinc-700/30 bg-zinc-800/30
+                      hover:bg-zinc-800/60 hover:border-emerald-500/20 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className={`text-[9px] ${statusColor}`}>
+                            {statusLabel}
+                          </Badge>
+                          {meta.tipoOficio && (
+                            <Badge variant="outline" className="text-[9px] text-zinc-400 border-zinc-600">
+                              {meta.tipoOficio}
+                            </Badge>
+                          )}
+                          {oficio.geradoPorIA && (
+                            <Sparkles className="w-3 h-3 text-violet-400" />
+                          )}
+                        </div>
+                        <h4 className="text-sm font-medium text-zinc-200 truncate">
+                          {oficio.titulo}
+                        </h4>
+                        <div className="flex items-center gap-3 mt-1 text-[10px] text-zinc-600">
+                          {oficio.processoNumero && (
+                            <span className="font-mono">{oficio.processoNumero}</span>
+                          )}
+                          {meta.destinatario && (
+                            <span><Send className="w-2.5 h-2.5 inline mr-0.5" />{meta.destinatario}</span>
+                          )}
+                          <span>
+                            <Clock className="w-2.5 h-2.5 inline mr-0.5" />
+                            {new Date(oficio.updatedAt).toLocaleDateString("pt-BR")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
                 );
               })
             )}

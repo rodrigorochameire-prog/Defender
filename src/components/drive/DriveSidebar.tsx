@@ -166,7 +166,7 @@ function AtribuicaoSubfolders({
       folderId,
       parentFileId: null,
       mimeType: "application/vnd.google-apps.folder",
-      limit: 200,
+      limit: 1000,
     },
     { staleTime: 60_000 }
   );

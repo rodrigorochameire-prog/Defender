@@ -355,7 +355,7 @@ export async function extractFromPdf(
 
     const genAI = getClient();
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       safetySettings: SAFETY_SETTINGS,
     });
 
@@ -532,7 +532,7 @@ export async function analyzeMultipleDocuments(
 
     const genAI = getClient();
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       safetySettings: SAFETY_SETTINGS,
     });
 

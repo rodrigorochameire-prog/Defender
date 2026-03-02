@@ -136,7 +136,7 @@ export function DriveContentArea() {
       </div>
 
       {/* ─── Batch Actions (floating) ─── */}
-      <DriveBatchActions />
+      <DriveBatchActions files={filteredFiles} />
     </div>
   );
 }

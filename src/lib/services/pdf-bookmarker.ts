@@ -32,6 +32,17 @@ const TIPO_LABELS: Record<string, string> = {
   laudo: "Laudo Pericial",
   inquerito: "Inquérito Policial",
   recurso: "Recurso",
+  pronuncia: "Pronúncia",
+  resposta_acusacao: "Resposta à Acusação",
+  habeas_corpus: "Habeas Corpus",
+  diligencias_422: "Diligências (Art. 422 CPP)",
+  interrogatorio: "Interrogatório",
+  termo_inquerito: "Termo do Inquérito",
+  ata_audiencia: "Ata de Audiência",
+  alegacoes_mp: "Alegações Finais (MP)",
+  alegacoes_defesa: "Alegações Finais (Defesa)",
+  laudo_necroscopico: "Laudo Necroscópico",
+  laudo_local: "Laudo de Local",
   outros: "Outros",
 };
 

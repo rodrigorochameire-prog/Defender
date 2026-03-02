@@ -17,6 +17,8 @@ from prompts.document_sentenca import SENTENCA_PROMPT
 from prompts.document_decisao import DECISAO_PROMPT
 from prompts.document_laudo import LAUDO_PROMPT
 from prompts.document_certidao import CERTIDAO_PROMPT
+from prompts.document_depoimento import DEPOIMENTO_PROMPT
+from prompts.document_denuncia import DENUNCIA_PROMPT
 from prompts.pje_extraction import PJE_PROMPT
 from prompts.transcript_analysis import TRANSCRIPT_PROMPT
 from prompts.audiencia_parsing import AUDIENCIA_PROMPT
@@ -30,7 +32,12 @@ DOCUMENT_PROMPTS = {
     "decisao": DECISAO_PROMPT,
     "laudo": LAUDO_PROMPT,
     "certidao": CERTIDAO_PROMPT,
+    "depoimento": DEPOIMENTO_PROMPT,
+    "denuncia": DENUNCIA_PROMPT,
 }
+
+# Mapeamento tipo → prompt para geração de fichas (mesmo, expandível)
+FICHA_PROMPTS = DOCUMENT_PROMPTS
 
 
 class EnrichmentOrchestrator:
@@ -235,6 +242,48 @@ class EnrichmentOrchestrator:
                 })
 
         return facts
+
+    # === Ficha Generation ===
+
+    async def generate_ficha(
+        self,
+        section_text: str,
+        section_tipo: str,
+        section_titulo: str = "",
+    ) -> dict[str, Any]:
+        """
+        Gera ficha tipo-específica a partir do texto extraído de uma seção.
+        Chamado quando defensor aprova uma seção no CasoPanel.
+        """
+        start = time.time()
+
+        prompt = FICHA_PROMPTS.get(section_tipo)
+        if not prompt:
+            logger.warning("No ficha prompt for type: %s — using classifier", section_tipo)
+            prompt = CLASSIFIER_PROMPT
+
+        # Adicionar contexto de seção ao texto
+        contextualized_text = section_text
+        if section_titulo:
+            contextualized_text = f"SEÇÃO: {section_titulo}\nTIPO: {section_tipo}\n\n{section_text}"
+
+        ficha_data = await self.gemini.extract(prompt, contextualized_text)
+
+        elapsed = time.time() - start
+        confidence = ficha_data.get("confidence", 0)
+        logger.info(
+            "Ficha generated | tipo=%s titulo=%s confidence=%.2f time=%.1fs",
+            section_tipo,
+            section_titulo[:50],
+            confidence,
+            elapsed,
+        )
+
+        return {
+            "ficha_data": ficha_data,
+            "section_tipo": section_tipo,
+            "confidence": confidence,
+        }
 
     # === PJe Enrichment ===
 
