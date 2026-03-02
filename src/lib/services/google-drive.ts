@@ -1432,6 +1432,70 @@ export async function downloadFileContent(fileId: string): Promise<ArrayBuffer |
 }
 
 /**
+ * Faz streaming de um arquivo do Drive com suporte a Range headers.
+ * Essencial para reprodução de áudio/vídeo com seeking.
+ * Retorna a Response do Google Drive para ser encaminhada ao cliente.
+ */
+export async function streamFileContent(
+  fileId: string,
+  rangeHeader?: string | null,
+): Promise<{ body: ReadableStream | null; status: number; headers: Record<string, string> } | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    const fileInfo = await getFileInfo(fileId);
+    if (!fileInfo) return null;
+
+    // Google Docs precisam de export, não suportam streaming
+    if (fileInfo.mimeType.startsWith("application/vnd.google-apps.")) {
+      return null;
+    }
+
+    const downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${accessToken}`,
+    };
+
+    // Passa Range header para Google Drive API (suporta Range requests nativamente)
+    if (rangeHeader) {
+      headers["Range"] = rangeHeader;
+    }
+
+    const response = await fetch(downloadUrl, { headers });
+
+    if (!response.ok && response.status !== 206) {
+      console.error("[Drive Stream] Error:", response.status);
+      return null;
+    }
+
+    const contentType = fileInfo.mimeType || "application/octet-stream";
+    const contentLength = response.headers.get("content-length") || fileInfo.size || "0";
+    const contentRange = response.headers.get("content-range") || "";
+
+    const responseHeaders: Record<string, string> = {
+      "Content-Type": contentType,
+      "Content-Length": contentLength,
+      "Accept-Ranges": "bytes",
+      "Cache-Control": "private, max-age=3600",
+    };
+
+    if (contentRange) {
+      responseHeaders["Content-Range"] = contentRange;
+    }
+
+    return {
+      body: response.body,
+      status: response.status, // 200 or 206
+      headers: responseHeaders,
+    };
+  } catch (error) {
+    console.error("[Drive Stream] Error:", error);
+    return null;
+  }
+}
+
+/**
  * Obtém informações de um arquivo específico
  */
 export async function getFileInfo(fileId: string): Promise<DriveFileInfo | null> {

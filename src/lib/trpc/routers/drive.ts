@@ -8,6 +8,7 @@ import {
   listAllItemsInFolder,
   listAllFilesRecursively,
   syncFolderWithDatabase,
+  smartSync,
   registerSyncFolder,
   getSyncFolders,
   getSyncedFiles,
@@ -472,19 +473,21 @@ export const driveRouter = router({
     }),
 
   /**
-   * Força sincronização de uma pasta
+   * Força sincronização de uma pasta (usa smartSync para incremental quando possível)
    */
   syncFolder: protectedProcedure
     .input(z.object({ folderId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return safeAsync(async () => {
-        const result = await syncFolderWithDatabase(input.folderId, ctx.user.id);
+        const result = await smartSync(input.folderId, ctx.user.id);
         return result;
       }, "Erro ao sincronizar pasta");
     }),
 
   /**
-   * Sincroniza todas as pastas configuradas
+   * Sincroniza todas as pastas configuradas.
+   * Usa smartSync (incremental quando syncToken disponível, full apenas na 1ª vez).
+   * Após sync, tenta registrar webhooks para push notifications automáticas.
    */
   syncAll: adminProcedure.mutation(async ({ ctx }) => {
     return safeAsync(async () => {
@@ -493,7 +496,21 @@ export const driveRouter = router({
       // Sync all folders in parallel — each folder is independent
       const settled = await Promise.allSettled(
         folders.map(async (folder) => {
-          const result = await syncFolderWithDatabase(folder.driveFolderId, ctx.user.id);
+          const result = await smartSync(folder.driveFolderId, ctx.user.id);
+
+          // Após sync bem-sucedido, registrar webhook se ainda não existe
+          if (result.success) {
+            try {
+              const webhookBaseUrl = process.env.NEXT_PUBLIC_APP_URL
+                || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+                || "https://ombuds.vercel.app";
+              await registerWebhookForFolder(folder.driveFolderId, webhookBaseUrl);
+            } catch {
+              // Webhook registration is non-fatal
+              console.warn("[Drive Sync] Webhook registration failed for", folder.name);
+            }
+          }
+
           return {
             folderId: folder.driveFolderId,
             folderName: folder.name,

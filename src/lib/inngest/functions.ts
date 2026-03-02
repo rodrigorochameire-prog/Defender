@@ -293,7 +293,7 @@ export const syncDriveFolderFn = inngest.createFunction(
     }
     
     const result = await step.run("sync-folder", async () => {
-      return await syncFolderWithDatabase(folderId, userId);
+      return await smartSync(folderId, userId);
     });
     
     return result;
@@ -326,7 +326,7 @@ export const syncAllDriveFn = inngest.createFunction(
     for (const folder of folders) {
       const result = await step.run(`sync-folder-${folder.id}`, async () => {
         try {
-          const syncResult = await syncFolderWithDatabase(folder.driveFolderId, userId);
+          const syncResult = await smartSync(folder.driveFolderId, userId);
           return {
             folderId: folder.driveFolderId,
             folderName: folder.name,
@@ -341,14 +341,14 @@ export const syncAllDriveFn = inngest.createFunction(
           };
         }
       });
-      
+
       results.push(result);
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       foldersProcessed: results.length,
-      results 
+      results
     };
   }
 );

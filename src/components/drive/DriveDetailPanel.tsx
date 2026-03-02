@@ -55,6 +55,9 @@ import {
   Maximize2,
   ScanLine,
   FilePen,
+  Play,
+  Volume2,
+  MonitorPlay,
 } from "lucide-react";
 import { PdfViewerModal, getSectionConfig, type DocumentSection } from "./PdfViewerModal";
 import { DocumentCompareModal } from "./DocumentCompareModal";
@@ -178,6 +181,165 @@ function SectionHeader({
   );
 }
 
+// ─── Media Player ───────────────────────────────────────────────────
+
+const SMALL_FILE_THRESHOLD = 50 * 1024 * 1024; // 50MB
+
+function MediaPlayer({ file }: { file: DriveFile }) {
+  const [mode, setMode] = useState<"native" | "drive">("native");
+  const [hasError, setHasError] = useState(false);
+  const mimeType = file.mimeType || "";
+  const isAudio = mimeType.startsWith("audio/");
+  const isVideo = mimeType.startsWith("video/");
+  const fileSize = file.fileSize ?? 0;
+  const isSmallFile = fileSize < SMALL_FILE_THRESHOLD || fileSize === 0;
+
+  // Proxy URL para streaming com auth (suporta Range headers)
+  const proxyUrl = `/api/drive/proxy?fileId=${file.driveFileId}&stream=1`;
+
+  // Google Drive embed URL para fallback
+  const driveEmbedUrl = file.webViewLink
+    ? file.webViewLink.replace("/view", "/preview")
+    : null;
+
+  // Decidir modo inicial baseado no tamanho do arquivo
+  const effectiveMode = (!isSmallFile || hasError) && driveEmbedUrl ? "drive" : mode;
+
+  if (isAudio) {
+    return (
+      <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 flex flex-col items-center gap-3">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center">
+          <Volume2 className="w-8 h-8 text-cyan-400" />
+        </div>
+        <p className="text-xs text-zinc-400 font-medium truncate max-w-full">
+          {file.name}
+        </p>
+        <audio
+          controls
+          className="w-full max-w-full"
+          preload="metadata"
+          onError={() => setHasError(true)}
+        >
+          <source src={proxyUrl} type={mimeType} />
+          {/* Fallback para webContentLink */}
+          {file.webContentLink && (
+            <source src={file.webContentLink} />
+          )}
+        </audio>
+        {hasError && driveEmbedUrl && (
+          <div className="w-full">
+            <p className="text-xs text-zinc-500 mb-2 text-center">Player nativo indisponivel. Usando Google Drive:</p>
+            <iframe
+              src={driveEmbedUrl}
+              className="w-full h-[80px] border-0 rounded"
+              title={file.name}
+              allow="autoplay"
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Vídeo
+  return (
+    <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      {/* Toggle de modo */}
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-200 dark:border-zinc-800">
+        <p className="text-xs text-zinc-400 truncate max-w-[200px]">{file.name}</p>
+        <div className="flex items-center gap-1">
+          {isSmallFile && !hasError && (
+            <button
+              onClick={() => setMode("native")}
+              className={cn(
+                "px-2 py-0.5 rounded text-[10px] font-medium transition-colors",
+                effectiveMode === "native"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "text-zinc-500 hover:text-zinc-300",
+              )}
+              title="Player HTML5 nativo"
+            >
+              <Play className="w-3 h-3 inline mr-0.5" />
+              Player
+            </button>
+          )}
+          {driveEmbedUrl && (
+            <button
+              onClick={() => { setMode("drive"); setHasError(false); }}
+              className={cn(
+                "px-2 py-0.5 rounded text-[10px] font-medium transition-colors",
+                effectiveMode === "drive"
+                  ? "bg-blue-500/20 text-blue-400"
+                  : "text-zinc-500 hover:text-zinc-300",
+              )}
+              title="Google Drive player"
+            >
+              <MonitorPlay className="w-3 h-3 inline mr-0.5" />
+              Drive
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Player nativo HTML5 */}
+      {effectiveMode === "native" && (
+        <div className="aspect-video">
+          <video
+            controls
+            className="w-full h-full bg-black"
+            preload="metadata"
+            onError={() => setHasError(true)}
+          >
+            <source src={proxyUrl} type={mimeType} />
+            Seu navegador nao suporta reproducao de video.
+          </video>
+        </div>
+      )}
+
+      {/* Google Drive iframe player */}
+      {effectiveMode === "drive" && driveEmbedUrl && (
+        <div className="aspect-video">
+          <iframe
+            src={driveEmbedUrl}
+            className="w-full h-full border-0"
+            title={file.name}
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+          />
+        </div>
+      )}
+
+      {/* Fallback: nenhum player disponível */}
+      {effectiveMode === "drive" && !driveEmbedUrl && (
+        <div className="aspect-video flex flex-col items-center justify-center gap-2">
+          <MonitorPlay className="w-12 h-12 text-zinc-600" />
+          <p className="text-xs text-zinc-500">Preview indisponivel</p>
+          {file.webViewLink && (
+            <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="sm" className="text-xs text-emerald-400 hover:text-emerald-300">
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                Abrir no Drive
+              </Button>
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Info de tamanho */}
+      {fileSize > 0 && (
+        <div className="px-3 py-1 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <span className="text-[10px] text-zinc-500">
+            {formatFileSize(fileSize)}
+            {!isSmallFile && (
+              <span className="ml-1 text-amber-500">(arquivo grande — player Drive recomendado)</span>
+            )}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Preview Section ────────────────────────────────────────────────
 
 function FilePreview({ file }: { file: DriveFile }) {
@@ -185,6 +347,7 @@ function FilePreview({ file }: { file: DriveFile }) {
   const isPdf = mimeType.includes("pdf");
   const isImage = mimeType.startsWith("image/");
   const isAudio = mimeType.startsWith("audio/");
+  const isVideo = mimeType.startsWith("video/");
   const isGoogleDoc =
     mimeType.includes("google-apps.document") ||
     mimeType.includes("google-apps.spreadsheet");
@@ -224,23 +387,9 @@ function FilePreview({ file }: { file: DriveFile }) {
     }
   }
 
-  if (isAudio) {
-    const audioSrc = file.webContentLink || file.webViewLink;
-    return (
-      <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 flex flex-col items-center gap-3">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center">
-          {(() => {
-            const AudioIcon = getFileIcon(file.mimeType);
-            return <AudioIcon className="w-8 h-8 text-cyan-400" />;
-          })()}
-        </div>
-        {audioSrc && (
-          <audio controls className="w-full max-w-full" preload="metadata">
-            <source src={audioSrc} />
-          </audio>
-        )}
-      </div>
-    );
+  // Áudio e Vídeo: usar MediaPlayer com fallback
+  if (isAudio || isVideo) {
+    return <MediaPlayer file={file} />;
   }
 
   if (isGoogleDoc && file.webViewLink) {
