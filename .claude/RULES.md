@@ -18,6 +18,8 @@ Antes de executar qualquer tarefa, identifique o tipo e consulte os recursos apr
 | **Bug em mutation** | Este arquivo §3.4 | - |
 | **Bug visual** | `AGENTS.md §4` (Design System) | `/fix-style` |
 | **Integração externa** | `AGENTS.md §5` (Integrações) | - |
+| **Gerenciar backlog** | `commands/jira.md` | `/jira` |
+| **Criar ticket** | `commands/jira.md` | `/jira` |
 
 ---
 

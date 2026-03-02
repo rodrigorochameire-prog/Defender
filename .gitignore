@@ -50,3 +50,6 @@ coverage/
 
 # Credenciais sensíveis
 CREDENCIAIS.md
+
+# MCP config (contém API tokens)
+.claude/mcp.json

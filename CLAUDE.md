@@ -44,9 +44,12 @@
 │   ├── architecture-analysis.md # /architecture-analysis - DDD/Domínios
 │   │
 │   │ # Ideação
-│   └── ideias-defesa.md      # /ideias-defesa - Gerador de ideias
+│   ├── ideias-defesa.md      # /ideias-defesa - Gerador de ideias
+│   │
+│   │ # Gerenciamento
+│   └── jira.md               # /jira - Gerenciamento Jira (backlog, tickets, sprint)
 │
-├── mcp.json              # Configuração MCP (Supabase)
+├── mcp.json              # Configuração MCP (Supabase + Jira)
 └── settings.local.json   # Permissões locais
 ```
 
@@ -82,6 +85,9 @@ Detalhes: `/tool-selection`
 | "corrige estilo", "padrão defender" | `/fix-style` |
 | "ideias", "sugere funcionalidade", "próxima feature" | `/ideias-defesa` |
 | "criar TDD", "design doc", "especificação técnica" | `/tdd` |
+| "jira", "ticket", "backlog", "sprint", "card" | `/jira` |
+| "lista tarefas", "o que tem pendente" | `/jira` |
+| "anota no jira", "cria um card" | `/jira` |
 | "CI falhou", "build quebrou", "GitHub Actions erro" | `/fix-ci` |
 | "otimizar query", "performance do banco", "índices" | `supabase-postgres-best-practices` |
 | "melhorar UI", "design", "cores", "tipografia" | `ui-ux-pro-max` |
