@@ -46,6 +46,7 @@ async def transcribe_audio(input_data: TranscribeInput) -> TranscribeOutput:
             language=input_data.language,
             diarize=input_data.diarize,
             expected_speakers=input_data.expected_speakers,
+            auth_header=input_data.auth_header,
         )
 
         # Converter segmentos para schema

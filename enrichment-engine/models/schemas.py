@@ -562,6 +562,7 @@ class TranscribeInput(BaseModel):
     language: str = Field("pt", description="Código ISO 639-1 do idioma")
     diarize: bool = Field(True, description="Ativar diarização de speakers")
     expected_speakers: int | None = Field(None, description="Número esperado de speakers (ajuda pyannote)")
+    auth_header: str | None = Field(None, description="Header de autenticação para download (ex: Bearer token)")
 
 
 class TranscribeOutput(BaseModel):

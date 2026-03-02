@@ -44,6 +44,8 @@ import {
   // Webhook & health
   registerWebhookForFolder,
   checkSyncHealth,
+  // Auth
+  getAccessToken,
 } from "@/lib/services/google-drive";
 import { processos, assistidos, casos, demandas, atendimentos } from "@/lib/db/schema";
 import {
@@ -2320,13 +2322,14 @@ export const driveRouter = router({
         );
       }
 
-      // 2. Obter URL de download
-      const downloadUrl = file.webContentLink;
-      if (!downloadUrl) {
+      // 2. Obter URL de download autenticada via Google Drive API
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
         throw new Error(
-          "Arquivo não possui link de download. Verifique as permissões do Drive.",
+          "Não foi possível obter token de acesso do Google Drive. Verifique as credenciais.",
         );
       }
+      const downloadUrl = `https://www.googleapis.com/drive/v3/files/${file.driveFileId}?alt=media`;
 
       // 3. Marcar como "processing"
       await db
@@ -2344,6 +2347,7 @@ export const driveRouter = router({
           language: input.language,
           diarize: input.diarize,
           expectedSpeakers: input.expectedSpeakers ?? null,
+          authHeader: `Bearer ${accessToken}`,
         });
 
         // 5. Atualizar status no Drive

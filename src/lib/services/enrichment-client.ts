@@ -129,6 +129,8 @@ export interface TranscribeInput {
   language?: string;
   diarize?: boolean;
   expectedSpeakers?: number | null;
+  /** Bearer token para download autenticado (ex: Google Drive API) */
+  authHeader?: string;
 }
 
 export interface TranscribeSegment {
@@ -470,6 +472,29 @@ export interface SemanticSearchOutput {
   query: string;
 }
 
+// === OCR Types ===
+
+export interface OcrOutput {
+  pages: { page_number: number; text: string }[];
+  total_pages: number;
+  ocr_engine: string;
+  processing_time_ms: number;
+}
+
+// === Ficha Types ===
+
+export interface GenerateFichaInput {
+  sectionText: string;
+  sectionTipo: string;
+  sectionTitulo?: string;
+}
+
+export interface GenerateFichaOutput {
+  ficha_data: Record<string, unknown>;
+  section_tipo: string;
+  confidence: number;
+}
+
 // === Client ===
 
 class EnrichmentClient {
@@ -609,6 +634,7 @@ class EnrichmentClient {
         language: input.language ?? "pt",
         diarize: input.diarize ?? true,
         expected_speakers: input.expectedSpeakers ?? null,
+        auth_header: input.authHeader ?? null,
       });
     } finally {
       this.timeout = originalTimeout;
@@ -843,6 +869,38 @@ class EnrichmentClient {
       filters: input.filters || {},
       limit: input.limit || 20,
     });
+  }
+
+  /**
+   * OCR: extrair texto de PDFs digitalizados via Tesseract.
+   * Chamado pelo: Inngest pipeline quando detectNeedsOcr retorna true
+   */
+  async ocr(input: { fileUrl: string; driveFileId: string }): Promise<OcrOutput> {
+    return this.request<OcrOutput>("/api/ocr", {
+      file_url: input.fileUrl,
+      drive_file_id: input.driveFileId,
+    });
+  }
+
+  // === Ficha Methods ===
+
+  /**
+   * Gerar ficha tipo-específica para seção aprovada.
+   * Chamado pelo: Inngest function section/generate-ficha
+   */
+  async generateFicha(input: GenerateFichaInput): Promise<GenerateFichaOutput> {
+    // Ficha generation can take up to 2 min for large sections
+    const originalTimeout = this.timeout;
+    this.timeout = 120_000;
+    try {
+      return await this.request<GenerateFichaOutput>("/enrich/ficha", {
+        section_text: input.sectionText,
+        section_tipo: input.sectionTipo,
+        section_titulo: input.sectionTitulo ?? "",
+      });
+    } finally {
+      this.timeout = originalTimeout;
+    }
   }
 
   /**

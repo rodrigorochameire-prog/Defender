@@ -2,3 +2,6 @@ _archive/
 tetecare-v2/
 *.md
 scripts/
+
+# Enrichment Engine (deployed on Railway, not Vercel)
+enrichment-engine/

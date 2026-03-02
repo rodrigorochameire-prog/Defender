@@ -186,7 +186,7 @@ async function getDbRefreshToken(): Promise<string | null> {
  * Service Accounts NÃO têm storage quota no Google Drive, então não conseguem
  * fazer upload de arquivos. Por isso, OAuth é preferido quando disponível.
  */
-async function getAccessToken(): Promise<string | null> {
+export async function getAccessToken(): Promise<string | null> {
   // Verifica cache (com margem de 5 minutos)
   if (cachedAccessToken && cachedAccessToken.expiresAt > Date.now() + 300000) {
     return cachedAccessToken.token;
