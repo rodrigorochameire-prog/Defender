@@ -242,11 +242,13 @@ class TranscriptionService:
         )
 
         # 1. Upload do arquivo para Gemini File API
-        logger.info("Fazendo upload do arquivo para Gemini File API...")
+        # Sanitizar display_name para evitar problemas de encoding
+        safe_name = file_name.encode("ascii", errors="replace").decode("ascii")
+        logger.info("Fazendo upload do arquivo para Gemini File API... (%s)", safe_name)
         uploaded_file = client.files.upload(
             file=file_path,
             config=types.UploadFileConfig(
-                display_name=file_name,
+                display_name=safe_name,
             ),
         )
         logger.info("Upload concluído: %s (state=%s)", uploaded_file.name, uploaded_file.state)
@@ -426,26 +428,33 @@ Regras para segments:
         if file_url:
             headers = {}
             if auth_header:
+                # Garantir que o header é string ASCII válida
+                auth_header = auth_header.strip()
                 headers["Authorization"] = auth_header
+            logger.info("Downloading file from URL (%d chars)...", len(file_url))
             async with httpx.AsyncClient(timeout=300, follow_redirects=True) as client:
                 response = await client.get(file_url, headers=headers)
                 response.raise_for_status()
                 data = response.content
+            logger.info("Download complete: %d bytes", len(data))
         elif file_bytes:
             data = file_bytes
         else:
             raise ValueError("Forneça file_url ou file_bytes")
 
+        # Usar extensão segura (ASCII only)
         suffix = Path(file_name).suffix or ".mp3"
+        suffix = suffix.encode("ascii", errors="replace").decode("ascii")
         tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
         tmp.write(data)
         tmp.close()
+        logger.info("Saved to temp file: %s (%d bytes)", tmp.name, len(data))
         return Path(tmp.name)
 
     def _ensure_compatible_format(self, path: Path) -> Path:
         """Converte vídeo/formatos exóticos para MP3 usando pydub."""
         suffix = path.suffix.lower()
-        compatible = {".mp3", ".wav", ".flac", ".m4a", ".ogg", ".webm"}
+        compatible = {".mp3", ".wav", ".flac", ".m4a", ".ogg", ".webm", ".mp4", ".mpeg", ".mpga"}
 
         if suffix in compatible:
             return path

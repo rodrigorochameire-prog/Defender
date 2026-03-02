@@ -2,6 +2,11 @@ FROM python:3.12-slim AS base
 
 WORKDIR /app
 
+# Garantir encoding UTF-8
+ENV PYTHONIOENCODING=utf-8
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
 # Dependências do sistema para Docling (OCR, PDF rendering)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
@@ -9,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     poppler-utils \
     tesseract-ocr \
     tesseract-ocr-por \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar dependências Python
