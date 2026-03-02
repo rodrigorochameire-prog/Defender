@@ -1528,6 +1528,122 @@ export const sectionGenerateFichaFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// TRANSCRIPTION (async, avoids Vercel 60s timeout)
+// ============================================
+
+/**
+ * Transcreve arquivo de áudio/vídeo do Drive de forma assíncrona.
+ * Disparado pelo tRPC mutation que retorna imediatamente.
+ * Para arquivos >25MB usa Gemini (pode levar 5-10 min).
+ */
+export const transcribeDriveFileFn = inngest.createFunction(
+  {
+    id: "transcribe-drive-file",
+    name: "Transcribe Drive File",
+    retries: 2,
+    concurrency: [{ limit: 2 }], // Max 2 concurrent transcriptions
+  },
+  { event: "drive/transcribe.file" },
+  async ({ event, step }) => {
+    const { driveFileId, diarize, expectedSpeakers, language } = event.data;
+
+    // Step 1: Get file metadata and validate
+    const fileData = await step.run("get-file-metadata", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveFiles } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+
+      const [file] = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          mimeType: driveFiles.mimeType,
+          fileSize: driveFiles.fileSize,
+          driveFileId: driveFiles.driveFileId,
+        })
+        .from(driveFiles)
+        .where(eq(driveFiles.driveFileId, driveFileId))
+        .limit(1);
+
+      if (!file) {
+        throw new Error(`Arquivo não encontrado: ${driveFileId}`);
+      }
+
+      const audioVideoMimes = ["audio/", "video/", "application/ogg"];
+      const isAudioVideo = audioVideoMimes.some(
+        (m) => file.mimeType?.startsWith(m),
+      );
+      if (!isAudioVideo) {
+        throw new Error(`Não é áudio/vídeo: ${file.mimeType}`);
+      }
+
+      return file;
+    });
+
+    // Step 2: Get access token
+    const accessToken = await step.run("get-access-token", async () => {
+      const { getAccessToken } = await import("@/lib/services/google-drive");
+      const token = await getAccessToken();
+      if (!token) {
+        throw new Error("Não foi possível obter token do Google Drive");
+      }
+      return token;
+    });
+
+    // Step 3: Call enrichment engine (this is the long step — may take 5+ min)
+    const transcriptionResult = await step.run("call-enrichment-engine", async () => {
+      const { enrichmentClient } = await import("@/lib/services/enrichment-client");
+      const downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileData.driveFileId}?alt=media`;
+
+      return await enrichmentClient.transcribe({
+        fileUrl: downloadUrl,
+        fileName: fileData.name || "audio.mp3",
+        language: language,
+        diarize: diarize,
+        expectedSpeakers: expectedSpeakers ?? null,
+        authHeader: `Bearer ${accessToken}`,
+      });
+    });
+
+    // Step 4: Save result to database
+    await step.run("save-transcription", async () => {
+      const { db } = await import("@/lib/db");
+      const { driveFiles } = await import("@/lib/db/schema");
+      const { eq } = await import("drizzle-orm");
+
+      await db
+        .update(driveFiles)
+        .set({
+          enrichmentStatus: "completed",
+          enrichedAt: new Date(),
+          documentType: "transcricao_audio",
+          enrichmentError: null,
+          enrichmentData: {
+            sub_type: "transcricao_audio",
+            confidence: transcriptionResult.confidence,
+            // Store transcript data for UI polling
+            transcript: transcriptionResult.transcript,
+            transcript_plain: transcriptionResult.transcript_plain,
+            speakers: transcriptionResult.speakers,
+            duration: transcriptionResult.duration,
+            diarization_applied: transcriptionResult.diarization_applied,
+          },
+          updatedAt: new Date(),
+        })
+        .where(eq(driveFiles.driveFileId, driveFileId));
+    });
+
+    return {
+      success: true,
+      driveFileId,
+      fileName: fileData.name,
+      speakers: transcriptionResult.speakers?.length ?? 0,
+      duration: transcriptionResult.duration,
+    };
+  }
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -1550,4 +1666,5 @@ export const functions = [
   pdfExtractAndClassifyFn,
   pdfInsertBookmarksFn,
   sectionGenerateFichaFn,
+  transcribeDriveFileFn,
 ];

@@ -184,4 +184,17 @@ export type InngestEvents = {
       tipo: string;
     };
   };
+
+  // Transcription (async via Inngest to avoid Vercel timeout)
+  "drive/transcribe.file": {
+    data: {
+      driveFileId: string;
+      processoId?: number;
+      assistidoId?: number;
+      diarize: boolean;
+      expectedSpeakers?: number;
+      language: string;
+      userId: number;
+    };
+  };
 };

@@ -53,6 +53,7 @@ import {
   enrichmentClient,
   type TranscribeOutput,
 } from "@/lib/services/enrichment-client";
+import { inngest } from "@/lib/inngest/client";
 
 /**
  * Calcula a similaridade entre duas strings usando distância de Levenshtein normalizada
@@ -2293,7 +2294,9 @@ export const driveRouter = router({
 
   /**
    * Transcrever arquivo de áudio/vídeo do Drive.
-   * Usa Whisper (OpenAI) + pyannote para diarização de speakers.
+   * Dispara evento Inngest para processamento assíncrono (evita timeout Vercel 60s).
+   * A transcrição real acontece na function transcribeDriveFileFn.
+   * O resultado é salvo em driveFiles.enrichmentData e o UI faz polling.
    */
   transcreverDrive: protectedProcedure
     .input(
@@ -2306,7 +2309,7 @@ export const driveRouter = router({
         language: z.string().default("pt"),
       }),
     )
-    .mutation(async ({ input }): Promise<TranscribeOutput & { driveFileId: string }> => {
+    .mutation(async ({ ctx, input }) => {
       // 0. Recovery: resetar arquivos stuck em "processing" por mais de 15 min
       await db
         .update(driveFiles)
@@ -2321,15 +2324,13 @@ export const driveRouter = router({
           ),
         );
 
-      // 1. Buscar arquivo no DB para obter URL de download
+      // 1. Buscar arquivo no DB e validar
       const [file] = await db
         .select({
           id: driveFiles.id,
           name: driveFiles.name,
           mimeType: driveFiles.mimeType,
           fileSize: driveFiles.fileSize,
-          webContentLink: driveFiles.webContentLink,
-          webViewLink: driveFiles.webViewLink,
           driveFileId: driveFiles.driveFileId,
         })
         .from(driveFiles)
@@ -2341,83 +2342,49 @@ export const driveRouter = router({
       }
 
       // Verificar se é áudio/vídeo
-      const audioVideoMimes = [
-        "audio/", "video/",
-        "application/ogg", "application/octet-stream",
-      ];
-      const isAudioVideo = audioVideoMimes.some(
-        (m) => file.mimeType?.startsWith(m),
-      );
+      const audioVideoMimes = ["audio/", "video/", "application/ogg", "application/octet-stream"];
+      const isAudioVideo = audioVideoMimes.some((m) => file.mimeType?.startsWith(m));
       if (!isAudioVideo) {
         throw new Error(
           `Arquivo não é áudio/vídeo: ${file.mimeType}. Apenas áudio/vídeo pode ser transcrito.`,
         );
       }
 
-      // Verificar tamanho do arquivo (warn para >500MB)
+      // Verificar tamanho (>500MB)
       const fileSizeMB = (file.fileSize ?? 0) / (1024 * 1024);
       if (fileSizeMB > 500) {
-        throw new Error(
-          `Arquivo muito grande (${fileSizeMB.toFixed(0)}MB). Máximo recomendado: 500MB.`,
-        );
+        throw new Error(`Arquivo muito grande (${fileSizeMB.toFixed(0)}MB). Máximo recomendado: 500MB.`);
       }
 
-      // 2. Obter URL de download autenticada via Google Drive API
-      const accessToken = await getAccessToken();
-      if (!accessToken) {
-        throw new Error(
-          "Não foi possível obter token de acesso do Google Drive. Verifique as credenciais.",
-        );
-      }
-      const downloadUrl = `https://www.googleapis.com/drive/v3/files/${file.driveFileId}?alt=media`;
-
-      // 3. Marcar como "processing"
+      // 2. Marcar como "processing"
       await db
         .update(driveFiles)
         .set({
           enrichmentStatus: "processing",
+          enrichmentError: null,
           updatedAt: new Date(),
         })
         .where(eq(driveFiles.driveFileId, input.driveFileId));
 
-      try {
-        // 4. Chamar enrichment engine para transcrever
-        const result = await enrichmentClient.transcribe({
-          fileUrl: downloadUrl,
-          fileName: file.name || "audio.mp3",
-          language: input.language,
+      // 3. Disparar Inngest event (async — retorna imediatamente)
+      await inngest.send({
+        name: "drive/transcribe.file",
+        data: {
+          driveFileId: input.driveFileId,
+          processoId: input.processoId,
+          assistidoId: input.assistidoId,
           diarize: input.diarize,
-          expectedSpeakers: input.expectedSpeakers ?? null,
-          authHeader: `Bearer ${accessToken}`,
-        });
+          expectedSpeakers: input.expectedSpeakers,
+          language: input.language,
+          userId: ctx.user.id,
+        },
+      });
 
-        // 5. Atualizar status no Drive
-        await db
-          .update(driveFiles)
-          .set({
-            enrichmentStatus: "completed",
-            enrichedAt: new Date(),
-            documentType: "transcricao_audio",
-            enrichmentError: null,
-            enrichmentData: {
-              sub_type: "transcricao_audio",
-              confidence: result.confidence,
-            },
-          })
-          .where(eq(driveFiles.driveFileId, input.driveFileId));
-
-        return { ...result, driveFileId: input.driveFileId };
-      } catch (error) {
-        // Marcar como failed
-        await db
-          .update(driveFiles)
-          .set({
-            enrichmentStatus: "failed",
-            enrichmentError: error instanceof Error ? error.message : "Erro desconhecido",
-          })
-          .where(eq(driveFiles.driveFileId, input.driveFileId));
-        throw error;
-      }
+      return {
+        queued: true,
+        driveFileId: input.driveFileId,
+        message: `Transcrição de "${file.name}" iniciada em background. Acompanhe o progresso no painel.`,
+      };
     }),
 
   /**

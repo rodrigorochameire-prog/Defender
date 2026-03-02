@@ -93,6 +93,16 @@ interface DriveFile {
   lastModifiedTime?: Date | null;
   driveFolderId: string;
   parentFileId?: number | null;
+  enrichmentData?: {
+    sub_type?: string;
+    confidence?: number;
+    transcript?: string;
+    transcript_plain?: string;
+    speakers?: string[];
+    duration?: number;
+    diarization_applied?: boolean;
+    [key: string]: unknown;
+  } | null;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -987,18 +997,10 @@ function TranscriptionSection({
   file,
   onTranscribe,
   isTranscribing,
-  transcriptionResult,
 }: {
   file: DriveFile;
   onTranscribe: () => void;
   isTranscribing: boolean;
-  transcriptionResult?: {
-    transcript: string;
-    transcript_plain: string;
-    speakers: string[];
-    duration: number;
-    diarization_applied: boolean;
-  } | null;
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const [showFull, setShowFull] = useState(false);
@@ -1009,11 +1011,20 @@ function TranscriptionSection({
 
   if (!isAudioVideo) return null;
 
-  const hasTranscription = transcriptionResult?.transcript_plain;
+  // Read transcription from enrichmentData (saved by Inngest function)
+  const enrichData = file.enrichmentData;
+  const transcriptPlain = enrichData?.transcript_plain as string | undefined;
+  const transcriptFull = enrichData?.transcript as string | undefined;
+  const speakers = enrichData?.speakers as string[] | undefined;
+  const duration = enrichData?.duration as number | undefined;
+
+  const hasTranscription = !!transcriptPlain;
+  const isProcessing = file.enrichmentStatus === "processing" || isTranscribing;
+
   const statusLabel =
     file.enrichmentStatus === "completed" && hasTranscription
       ? "Concluída"
-      : file.enrichmentStatus === "processing" || isTranscribing
+      : isProcessing
         ? "Transcrevendo..."
         : file.enrichmentStatus === "failed"
           ? "Falhou"
@@ -1021,7 +1032,7 @@ function TranscriptionSection({
   const statusClass =
     file.enrichmentStatus === "completed" && hasTranscription
       ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-      : file.enrichmentStatus === "processing" || isTranscribing
+      : isProcessing
         ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20"
         : file.enrichmentStatus === "failed"
           ? "bg-red-500/10 text-red-400 border-red-500/20"
@@ -1032,7 +1043,7 @@ function TranscriptionSection({
       <CollapsibleTrigger asChild>
         <div>
           <SectionHeader
-            title="Transcrição"
+            title="TRANSCRIÇÃO"
             icon={FileAudio}
             isOpen={isOpen}
             onToggle={() => setIsOpen(!isOpen)}
@@ -1050,19 +1061,35 @@ function TranscriptionSection({
                 statusClass
               )}
             >
+              {isProcessing && <Loader2 className="h-3 w-3 mr-1 animate-spin inline" />}
               {statusLabel}
             </span>
-            {transcriptionResult?.speakers && transcriptionResult.speakers.length > 0 && (
+            {speakers && speakers.length > 0 && (
               <span className="text-[10px] text-zinc-500">
-                {transcriptionResult.speakers.length} speaker{transcriptionResult.speakers.length > 1 ? "s" : ""}
+                {speakers.length} speaker{speakers.length > 1 ? "s" : ""}
               </span>
             )}
-            {transcriptionResult?.duration ? (
+            {duration ? (
               <span className="text-[10px] text-zinc-500">
-                {Math.floor(transcriptionResult.duration / 60)}min {Math.floor(transcriptionResult.duration % 60)}s
+                {Math.floor(duration / 60)}min {Math.floor(duration % 60)}s
               </span>
             ) : null}
           </div>
+
+          {/* Processing message */}
+          {isProcessing && !hasTranscription && (
+            <div className="text-xs text-cyan-400/80 bg-cyan-500/5 border border-cyan-500/10 rounded-lg p-2.5 flex items-center gap-2">
+              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+              <span>Transcrição em andamento... O status será atualizado automaticamente.</span>
+            </div>
+          )}
+
+          {/* Error message */}
+          {file.enrichmentStatus === "failed" && file.enrichmentError && (
+            <div className="text-xs text-red-400/80 bg-red-500/5 border border-red-500/10 rounded-lg p-2.5">
+              {file.enrichmentError}
+            </div>
+          )}
 
           {/* Transcription text (truncated) */}
           {hasTranscription && (
@@ -1074,15 +1101,12 @@ function TranscriptionSection({
                 )}
               >
                 {showFull
-                  ? transcriptionResult.transcript
-                  : transcriptionResult.transcript_plain.slice(0, 500) +
-                    (transcriptionResult.transcript_plain.length > 500
-                      ? "..."
-                      : "")}
-                {!showFull &&
-                  transcriptionResult.transcript_plain.length > 500 && (
-                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-zinc-50 dark:from-zinc-900 to-transparent" />
-                  )}
+                  ? (transcriptFull || transcriptPlain)
+                  : transcriptPlain.slice(0, 500) +
+                    (transcriptPlain.length > 500 ? "..." : "")}
+                {!showFull && transcriptPlain.length > 500 && (
+                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-zinc-50 dark:from-zinc-900 to-transparent" />
+                )}
               </div>
               <Button
                 variant="ghost"
@@ -1096,7 +1120,7 @@ function TranscriptionSection({
           )}
 
           {/* Transcribe button */}
-          {!hasTranscription && file.enrichmentStatus !== "processing" && (
+          {!hasTranscription && !isProcessing && (
             <Button
               variant="ghost"
               size="sm"
@@ -1104,11 +1128,7 @@ function TranscriptionSection({
               onClick={onTranscribe}
               disabled={isTranscribing}
             >
-              {isTranscribing ? (
-                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-              ) : (
-                <Mic className="h-3.5 w-3.5 mr-1.5" />
-              )}
+              <Mic className="h-3.5 w-3.5 mr-1.5" />
               Transcrever com Whisper
             </Button>
           )}
@@ -1821,13 +1841,15 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
   }, [siblingData]);
   const [showCompare, setShowCompare] = useState(false);
   const [showExpandedPreview, setShowExpandedPreview] = useState(false);
-  const [transcriptionResult, setTranscriptionResult] = useState<{
-    transcript: string;
-    transcript_plain: string;
-    speakers: string[];
-    duration: number;
-    diarization_applied: boolean;
-  } | null>(null);
+  // Polling: auto-refetch when file is processing (transcription/enrichment)
+  const isProcessing = file.enrichmentStatus === "processing";
+  useEffect(() => {
+    if (!isProcessing) return;
+    const interval = setInterval(() => {
+      utils.drive.files.invalidate();
+    }, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
+  }, [isProcessing, utils.drive.files]);
 
   const handleToggleFavorite = useCallback(() => {
     const newState = toggleFavorite(file.id);
@@ -1850,7 +1872,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
   // Build PDF URL for viewer — use server-side proxy to avoid CORS
   const pdfUrl = `/api/drive/proxy?fileId=${file.driveFileId}`;
 
-  // Transcription mutation with progress toast
+  // Transcription mutation — fires Inngest event (async, returns immediately)
   const transcribeJobId = `transcribe-${file.driveFileId}`;
   const transcribeMutation = trpc.drive.transcreverDrive.useMutation({
     onMutate: () => {
@@ -1858,16 +1880,9 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
       showProgressToast({ id: transcribeJobId, type: "transcription", label: file.name, progress: -1, detail: "Enviando para processamento..." });
     },
     onSuccess: (data) => {
-      setTranscriptionResult({
-        transcript: data.transcript,
-        transcript_plain: data.transcript_plain,
-        speakers: data.speakers,
-        duration: data.duration,
-        diarization_applied: data.diarization_applied,
-      });
-      const summary = `${data.speakers.length} speaker(s) · ${Math.round(data.duration / 60)} min`;
-      completeJob(transcribeJobId, summary);
-      completeProgressToast(transcribeJobId, `${file.name} — ${summary}`);
+      // Mutation returns immediately — transcription runs in background via Inngest
+      completeJob(transcribeJobId, data.message || "Transcrição iniciada em background");
+      completeProgressToast(transcribeJobId, `${file.name} — Processando em background`);
       utils.drive.files.invalidate();
     },
     onError: (err) => {
@@ -2003,7 +2018,6 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
               file={file}
               onTranscribe={handleTranscribe}
               isTranscribing={transcribeMutation.isPending}
-              transcriptionResult={transcriptionResult}
             />
           )}
           <EnrichmentSection file={file} />
