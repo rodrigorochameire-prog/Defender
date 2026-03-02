@@ -65,74 +65,194 @@ export interface GoogleDriveConfig {
 }
 
 // ==========================================
-// CONFIGURAÇÃO
+// CONFIGURAÇÃO E AUTENTICAÇÃO
 // ==========================================
+//
+// Prioridade de autenticação:
+// 1. Service Account (GOOGLE_SERVICE_ACCOUNT_KEY) — NUNCA expira, preferido
+// 2. OAuth refresh token (GOOGLE_REFRESH_TOKEN) — expira a cada 7 dias em modo teste
+// 3. Fallback: token do banco (salvo pelo callback /api/google/callback)
+//
+
+// Runtime override para OAuth (quando callback salva novo refresh token)
+let runtimeRefreshToken: string | null = null;
+
+export function setRuntimeRefreshToken(token: string) {
+  runtimeRefreshToken = token;
+  cachedAccessToken = null;
+}
+
+/**
+ * Verifica se Service Account está configurada
+ */
+function hasServiceAccount(): boolean {
+  return !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+}
+
+/**
+ * Obtém access token via Service Account (JWT)
+ * Usa google-auth-library para assinar o JWT
+ */
+async function getServiceAccountToken(): Promise<string | null> {
+  const keyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  if (!keyJson) return null;
+
+  try {
+    const { GoogleAuth } = await import("google-auth-library");
+
+    // Decodifica a key (pode ser base64 ou JSON direto)
+    let credentials;
+    try {
+      credentials = JSON.parse(keyJson);
+    } catch {
+      // Tenta decodificar de base64
+      credentials = JSON.parse(Buffer.from(keyJson, "base64").toString("utf-8"));
+    }
+
+    const auth = new GoogleAuth({
+      credentials,
+      scopes: [
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/calendar",
+      ],
+    });
+
+    const client = await auth.getClient();
+    const tokenResponse = await client.getAccessToken();
+    const token = tokenResponse?.token;
+
+    if (token) {
+      cachedAccessToken = {
+        token,
+        expiresAt: Date.now() + 3500 * 1000, // ~58 min (SA tokens duram 1h)
+      };
+      return token;
+    }
+    return null;
+  } catch (error) {
+    console.error("[Google Drive] Erro na autenticação Service Account:", error);
+    return null;
+  }
+}
 
 const getConfig = (): GoogleDriveConfig | null => {
-  if (
-    !process.env.GOOGLE_CLIENT_ID ||
-    !process.env.GOOGLE_CLIENT_SECRET ||
-    !process.env.GOOGLE_REFRESH_TOKEN ||
-    !process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID
-  ) {
+  const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
+  if (!rootFolderId) return null;
+
+  // Service Account não precisa de client ID/secret/refresh token
+  if (hasServiceAccount()) {
+    return {
+      clientId: "",
+      clientSecret: "",
+      refreshToken: "",
+      rootFolderId,
+    };
+  }
+
+  // Fallback: OAuth
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const refreshToken = runtimeRefreshToken || process.env.GOOGLE_REFRESH_TOKEN;
+
+  if (!clientId || !clientSecret || !refreshToken) {
     return null;
   }
 
-  return {
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
-    rootFolderId: process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID,
-  };
+  return { clientId, clientSecret, refreshToken, rootFolderId };
 };
 
 // Cache de access token
 let cachedAccessToken: { token: string; expiresAt: number } | null = null;
 
 /**
- * Obtém um token de acesso válido usando o refresh token
- * Implementa cache para evitar requisições desnecessárias
+ * Tenta obter um refresh token do banco (salvo pelo callback /api/google/callback)
+ */
+async function getDbRefreshToken(): Promise<string | null> {
+  try {
+    const result = await db.execute(
+      sql`SELECT refresh_token FROM google_tokens ORDER BY updated_at DESC LIMIT 1`
+    );
+    const rows = result as unknown as Array<{ refresh_token: string }>;
+    return rows?.[0]?.refresh_token || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Obtém um token de acesso válido
+ * Prioridade: 1) OAuth (permite uploads - tem storage)  2) OAuth do banco  3) Service Account (somente leitura)
+ *
+ * Service Accounts NÃO têm storage quota no Google Drive, então não conseguem
+ * fazer upload de arquivos. Por isso, OAuth é preferido quando disponível.
  */
 async function getAccessToken(): Promise<string | null> {
-  const config = getConfig();
-  if (!config) return null;
-
   // Verifica cache (com margem de 5 minutos)
   if (cachedAccessToken && cachedAccessToken.expiresAt > Date.now() + 300000) {
     return cachedAccessToken.token;
   }
 
+  // 1. Tenta OAuth refresh token (preferido — permite uploads)
+  // Busca credenciais OAuth diretamente das env vars (getConfig retorna vazio quando SA está configurada)
+  const oauthClientId = process.env.GOOGLE_CLIENT_ID;
+  const oauthClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const oauthRefreshToken = runtimeRefreshToken || process.env.GOOGLE_REFRESH_TOKEN;
+
+  if (oauthClientId && oauthClientSecret && oauthRefreshToken) {
+    const token = await tryRefreshToken(oauthClientId, oauthClientSecret, oauthRefreshToken);
+    if (token) return token;
+  }
+
+  // 2. Tenta token OAuth do banco
+  const dbToken = await getDbRefreshToken();
+  if (dbToken && oauthClientId && oauthClientSecret) {
+    const tokenFromDb = await tryRefreshToken(oauthClientId, oauthClientSecret, dbToken);
+    if (tokenFromDb) {
+      runtimeRefreshToken = dbToken;
+      return tokenFromDb;
+    }
+  }
+
+  // 3. Fallback: Service Account (funciona para leitura, mas não para uploads)
+  if (hasServiceAccount()) {
+    const saToken = await getServiceAccountToken();
+    if (saToken) return saToken;
+    console.error("[Google Drive] Service Account configurada mas falhou!");
+  }
+
+  console.error("[Google Drive] TODOS os métodos de auth falharam. Configure OAuth ou GOOGLE_SERVICE_ACCOUNT_KEY");
+  return null;
+}
+
+async function tryRefreshToken(clientId: string, clientSecret: string, refreshToken: string): Promise<string | null> {
+  if (!clientId || !clientSecret || !refreshToken) return null;
   try {
     const response = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-        refresh_token: config.refreshToken,
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
         grant_type: "refresh_token",
       }),
     });
 
     if (!response.ok) {
-      console.error("Erro ao obter access token:", await response.text());
+      const errorText = await response.text();
+      console.error("[Google Drive] OAuth refresh falhou:", errorText);
       cachedAccessToken = null;
       return null;
     }
 
     const data = await response.json();
-    
-    // Cache do token
     cachedAccessToken = {
       token: data.access_token,
       expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
     };
-    
     return data.access_token;
   } catch (error) {
-    console.error("Erro ao obter access token:", error);
+    console.error("[Google Drive] Erro ao obter access token:", error);
     cachedAccessToken = null;
     return null;
   }
@@ -1107,22 +1227,54 @@ export async function getRootFolderLink(): Promise<string | null> {
 // ==========================================
 
 /**
+ * Retry helper — retries on transient errors (429, 500, 503) with exponential backoff
+ */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  { maxRetries = 2, label = "operation" }: { maxRetries?: number; label?: string } = {}
+): Promise<T> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const isRetryable = lastError.message.includes("429") ||
+        lastError.message.includes("500") ||
+        lastError.message.includes("503") ||
+        lastError.message.includes("ECONNRESET") ||
+        lastError.message.includes("fetch failed");
+
+      if (!isRetryable || attempt === maxRetries) {
+        throw lastError;
+      }
+
+      const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
+      console.warn(`[Drive] ${label} attempt ${attempt + 1} failed (${lastError.message}), retrying in ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  throw lastError!;
+}
+
+/**
  * Lista todos os arquivos de uma pasta do Drive
+ * Throws on error instead of returning null — errors propagate to caller.
  */
 export async function listFilesInFolder(
   folderId: string,
   pageToken?: string,
   pageSize: number = 100
-): Promise<{ files: DriveFileInfo[]; nextPageToken?: string } | null> {
+): Promise<{ files: DriveFileInfo[]; nextPageToken?: string }> {
   const accessToken = await getAccessToken();
-  if (!accessToken) return null;
+  if (!accessToken) throw new Error(`[Drive] Auth failed — no access token for folder ${folderId}`);
 
-  try {
+  return withRetry(async () => {
     const query = `'${folderId}' in parents and trashed = false`;
     const fields = "nextPageToken,files(id,name,mimeType,size,modifiedTime,createdTime,webViewLink,webContentLink,thumbnailLink,iconLink,parents,md5Checksum,description)";
-    
+
     let url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&pageSize=${pageSize}&orderBy=folder,name`;
-    
+
     if (pageToken) {
       url += `&pageToken=${pageToken}`;
     }
@@ -1134,8 +1286,8 @@ export async function listFilesInFolder(
     });
 
     if (!response.ok) {
-      console.error("Erro ao listar arquivos:", await response.text());
-      return null;
+      const body = await response.text();
+      throw new Error(`Drive API ${response.status}: ${body.slice(0, 200)} (folder=${folderId})`);
     }
 
     const data = await response.json();
@@ -1143,10 +1295,7 @@ export async function listFilesInFolder(
       files: data.files || [],
       nextPageToken: data.nextPageToken,
     };
-  } catch (error) {
-    console.error("Erro ao listar arquivos:", error);
-    return null;
-  }
+  }, { label: `listFilesInFolder(${folderId.slice(0, 8)}...)` });
 }
 
 /**
@@ -1155,6 +1304,7 @@ export async function listFilesInFolder(
  *
  * IMPORTANTE: Google Drive retorna no máximo 100 itens por página.
  * Esta função itera automaticamente por todas as páginas.
+ * Throws on error — callers must handle or let propagate.
  */
 export async function listAllItemsInFolder(
   folderId: string
@@ -1164,8 +1314,6 @@ export async function listAllItemsInFolder(
 
   do {
     const result = await listFilesInFolder(folderId, pageToken, 100);
-    if (!result) break;
-
     allItems.push(...result.files);
     pageToken = result.nextPageToken;
   } while (pageToken);
@@ -1175,7 +1323,8 @@ export async function listAllItemsInFolder(
 
 /**
  * Lista todos os arquivos recursivamente (incluindo subpastas)
- * maxDepth aumentado para 10 para cobrir hierarquias profundas
+ * maxDepth aumentado para 10 para cobrir hierarquias profundas.
+ * Uses concurrency limit of 3 to avoid rate-limiting on large folder trees.
  */
 export async function listAllFilesRecursively(
   folderId: string,
@@ -1187,13 +1336,36 @@ export async function listAllFilesRecursively(
   const allFiles: DriveFileInfo[] = [];
   const items = await listAllItemsInFolder(folderId);
 
+  // Separate folders from files
+  const folders: DriveFileInfo[] = [];
   for (const file of items) {
     allFiles.push(file);
-
-    // Se for uma pasta, listar recursivamente
     if (file.mimeType === "application/vnd.google-apps.folder") {
-      const subFiles = await listAllFilesRecursively(file.id, maxDepth, currentDepth + 1);
-      allFiles.push(...subFiles);
+      folders.push(file);
+    }
+  }
+
+  // Process subfolders with concurrency limit of 3
+  if (folders.length > 0) {
+    const MAX_CONCURRENT = 3;
+    for (let i = 0; i < folders.length; i += MAX_CONCURRENT) {
+      const batch = folders.slice(i, i + MAX_CONCURRENT);
+      if (folders.length > 5) {
+        console.log(`[Drive] Scanning subfolders ${i + 1}-${Math.min(i + MAX_CONCURRENT, folders.length)}/${folders.length} in ${folderId.slice(0, 8)}...`);
+      }
+      const results = await Promise.allSettled(
+        batch.map(folder =>
+          listAllFilesRecursively(folder.id, maxDepth, currentDepth + 1)
+        )
+      );
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          allFiles.push(...result.value);
+        } else {
+          console.error(`[Drive] Failed to list subfolder: ${result.reason}`);
+          // Continue with other folders instead of failing entirely
+        }
+      }
     }
   }
 
@@ -1366,28 +1538,47 @@ export async function syncFolderWithDatabase(
       const existing = existingFilesMap.get(driveFile.id);
 
       if (!existing) {
-        // Novo arquivo - inserir
-        const [inserted] = await db.insert(driveFiles).values({
-          driveFileId: driveFile.id,
-          driveFolderId: folderId,
-          name: driveFile.name,
-          mimeType: driveFile.mimeType,
-          fileSize: driveFile.size ? parseInt(driveFile.size) : null,
-          webViewLink: driveFile.webViewLink,
-          webContentLink: driveFile.webContentLink,
-          thumbnailLink: driveFile.thumbnailLink,
-          iconLink: driveFile.iconLink,
-          description: driveFile.description,
-          lastModifiedTime: driveFile.modifiedTime ? new Date(driveFile.modifiedTime) : null,
-          driveChecksum: driveFile.md5Checksum,
-          isFolder: driveFile.mimeType === "application/vnd.google-apps.folder",
-          syncStatus: "synced",
-          lastSyncAt: new Date(),
-          createdById: userId,
-        }).returning({ id: driveFiles.id });
-        result.filesAdded++;
-        if (inserted) {
-          result.newFileIds.push(inserted.id);
+        // Novo arquivo - inserir (com onConflict como safety net para race conditions)
+        try {
+          const [inserted] = await db.insert(driveFiles).values({
+            driveFileId: driveFile.id,
+            driveFolderId: folderId,
+            name: driveFile.name,
+            mimeType: driveFile.mimeType,
+            fileSize: driveFile.size ? parseInt(driveFile.size) : null,
+            webViewLink: driveFile.webViewLink,
+            webContentLink: driveFile.webContentLink,
+            thumbnailLink: driveFile.thumbnailLink,
+            iconLink: driveFile.iconLink,
+            description: driveFile.description,
+            lastModifiedTime: driveFile.modifiedTime ? new Date(driveFile.modifiedTime) : null,
+            driveChecksum: driveFile.md5Checksum,
+            isFolder: driveFile.mimeType === "application/vnd.google-apps.folder",
+            syncStatus: "synced",
+            lastSyncAt: new Date(),
+            createdById: userId,
+          }).onConflictDoUpdate({
+            target: driveFiles.driveFileId,
+            set: {
+              name: driveFile.name,
+              mimeType: driveFile.mimeType,
+              fileSize: driveFile.size ? parseInt(driveFile.size) : null,
+              webViewLink: driveFile.webViewLink,
+              webContentLink: driveFile.webContentLink,
+              thumbnailLink: driveFile.thumbnailLink,
+              lastModifiedTime: driveFile.modifiedTime ? new Date(driveFile.modifiedTime) : null,
+              driveChecksum: driveFile.md5Checksum,
+              syncStatus: "synced" as const,
+              lastSyncAt: new Date(),
+            },
+          }).returning({ id: driveFiles.id });
+          result.filesAdded++;
+          if (inserted) {
+            result.newFileIds.push(inserted.id);
+          }
+        } catch (insertError) {
+          console.error(`[Drive] Failed to insert/upsert file ${driveFile.id} (${driveFile.name}):`, insertError);
+          result.errors.push(`Insert failed for ${driveFile.name}: ${insertError instanceof Error ? insertError.message : String(insertError)}`);
         }
       } else {
         // Arquivo existente - verificar se precisa atualizar
@@ -2019,6 +2210,45 @@ export async function uploadFileBuffer(
     return data;
   } catch (error) {
     console.error("Erro ao fazer upload:", error);
+    return null;
+  }
+}
+
+/**
+ * Copia um arquivo no Drive para outra pasta
+ */
+export async function copyFileInDrive(
+  sourceFileId: string,
+  targetFolderId: string,
+  newName: string
+): Promise<DriveFileInfo | null> {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${sourceFileId}/copy?fields=id,name,mimeType,webViewLink,webContentLink`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newName,
+          parents: [targetFolderId],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error("[Drive] Failed to copy file:", await response.text());
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[Drive] Error copying file:", error);
     return null;
   }
 }

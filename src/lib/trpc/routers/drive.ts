@@ -487,18 +487,32 @@ export const driveRouter = router({
   syncAll: adminProcedure.mutation(async ({ ctx }) => {
     return safeAsync(async () => {
       const folders = await getSyncFolders();
-      const results = [];
 
-      for (const folder of folders) {
-        const result = await syncFolderWithDatabase(folder.driveFolderId, ctx.user.id);
-        results.push({
-          folderId: folder.driveFolderId,
-          folderName: folder.name,
-          ...result,
-        });
-      }
+      // Sync all folders in parallel — each folder is independent
+      const settled = await Promise.allSettled(
+        folders.map(async (folder) => {
+          const result = await syncFolderWithDatabase(folder.driveFolderId, ctx.user.id);
+          return {
+            folderId: folder.driveFolderId,
+            folderName: folder.name,
+            ...result,
+          };
+        })
+      );
 
-      return results;
+      return settled.map((s, i) => {
+        if (s.status === "fulfilled") return s.value;
+        return {
+          folderId: folders[i].driveFolderId,
+          folderName: folders[i].name,
+          success: false,
+          filesAdded: 0,
+          filesUpdated: 0,
+          filesRemoved: 0,
+          errors: [s.reason instanceof Error ? s.reason.message : String(s.reason)],
+          newFileIds: [],
+        };
+      });
     }, "Erro ao sincronizar todas as pastas");
   }),
 
@@ -584,13 +598,7 @@ export const driveRouter = router({
     )
     .query(async ({ input }) => {
       return safeAsync(async () => {
-        const result = await listFilesInFolder(input.folderId, input.pageToken, input.pageSize);
-        
-        if (!result) {
-          throw Errors.internal("Falha ao listar arquivos do Drive");
-        }
-
-        return result;
+        return await listFilesInFolder(input.folderId, input.pageToken, input.pageSize);
       }, "Erro ao listar arquivos do Drive");
     }),
 
@@ -1479,7 +1487,7 @@ export const driveRouter = router({
           .select({
             id: demandas.id,
             ato: demandas.ato,
-            prazoFatal: demandas.prazoFatal,
+            prazo: demandas.prazo,
             status: demandas.status,
             prioridade: demandas.prioridade,
           })
@@ -1491,7 +1499,7 @@ export const driveRouter = router({
               not(eq(demandas.status, "ARQUIVADO"))
             )
           )
-          .orderBy(demandas.prazoFatal)
+          .orderBy(demandas.prazo)
           .limit(3);
 
         return {
@@ -1716,6 +1724,25 @@ export const driveRouter = router({
   /**
    * Vincular arquivo a assistido/processo
    */
+  getFileById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const [file] = await db
+          .select({
+            id: driveFiles.id,
+            assistidoId: driveFiles.assistidoId,
+            processoId: driveFiles.processoId,
+            fileSize: driveFiles.fileSize,
+            enrichmentStatus: driveFiles.enrichmentStatus,
+          })
+          .from(driveFiles)
+          .where(eq(driveFiles.id, input.id))
+          .limit(1);
+        return file || null;
+      }, "Erro ao buscar arquivo");
+    }),
+
   linkFileToEntity: protectedProcedure
     .input(z.object({
       fileId: z.number(),
