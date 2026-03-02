@@ -448,10 +448,11 @@ export const audienciasRouter = router({
                   nome: nomeFormatado,
                   cpf: primeiroAssistido.cpf || null,
                   statusPrisional: "SOLTO",
+                  atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any,
                   workspaceId: targetWorkspaceId,
                 })
                 .returning({ id: assistidos.id });
-              
+
               assistidoId = novoAssistido.id;
               assistidosCriados.push(novoAssistido.id);
             }
@@ -493,12 +494,28 @@ export const audienciasRouter = router({
                 .values({
                   nome: nomeFormatado,
                   statusPrisional: "SOLTO",
+                  atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any,
                   workspaceId: targetWorkspaceId,
                 })
                 .returning({ id: assistidos.id });
-              
+
               assistidoId = novoAssistido.id;
               assistidosCriados.push(novoAssistido.id);
+            }
+          }
+
+          // Backfill atribuicaoPrimaria if null
+          if (assistidoId) {
+            const [existingAssistido] = await db
+              .select({ atribuicaoPrimaria: assistidos.atribuicaoPrimaria })
+              .from(assistidos)
+              .where(eq(assistidos.id, assistidoId))
+              .limit(1);
+
+            if (existingAssistido && !existingAssistido.atribuicaoPrimaria) {
+              await db.update(assistidos)
+                .set({ atribuicaoPrimaria: mapAtribuicao(evento.atribuicao) as any })
+                .where(eq(assistidos.id, assistidoId));
             }
           }
 
@@ -512,6 +529,24 @@ export const audienciasRouter = router({
 
           if (processoExistente) {
             processoId = processoExistente.id;
+
+            // Backfill processo data if incomplete
+            const [processoData] = await db
+              .select({ classeProcessual: processos.classeProcessual, vara: processos.vara, isJuri: processos.isJuri })
+              .from(processos)
+              .where(eq(processos.id, processoExistente.id))
+              .limit(1);
+
+            const updates: Record<string, any> = {};
+            if ((!processoData?.classeProcessual || processoData.classeProcessual === "Não informado") && evento.classeJudicial) {
+              updates.classeProcessual = evento.classeJudicial;
+            }
+            if ((!processoData?.vara || processoData.vara === "Não informado") && evento.orgaoJulgador) {
+              updates.vara = evento.orgaoJulgador;
+            }
+            if (Object.keys(updates).length > 0) {
+              await db.update(processos).set(updates).where(eq(processos.id, processoExistente.id));
+            }
           } else {
             // Criar processo com todos os campos obrigatórios
             const atribuicaoEnum = mapAtribuicao(evento.atribuicao);
@@ -559,6 +594,11 @@ export const audienciasRouter = router({
                 workspaceId: targetWorkspaceId,
               })
               .returning({ id: sessoesJuri.id });
+
+            // Atualizar processo com flag de júri
+            await db.update(processos)
+              .set({ isJuri: true })
+              .where(eq(processos.id, processoId!));
 
             importados.push(sessao.id);
           } else {

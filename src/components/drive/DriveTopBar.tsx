@@ -35,8 +35,12 @@ import {
   FolderPlus,
   Loader2,
   ExternalLink,
+  Activity,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useProcessingQueue } from "@/contexts/processing-queue";
+import { ProcessingQueuePanel } from "./ProcessingQueuePanel";
+import { showProgressToast, completeProgressToast, failProgressToast } from "@/components/ui/progress-toast";
 
 // ─── Sync Health Indicator ──────────────────────────────────────────
 
@@ -365,6 +369,7 @@ export function DriveTopBar() {
 
   const syncAll = trpc.drive.syncAll.useMutation();
   const utils = trpc.useUtils();
+  const { addJob, completeJob, failJob, activeCount } = useProcessingQueue();
 
   // Debounce search
   const handleSearchChange = useCallback(
@@ -395,14 +400,24 @@ export function DriveTopBar() {
   }, []);
 
   const handleSyncAll = useCallback(() => {
+    const syncJobId = "sync-drive-topbar";
+    addJob({ id: syncJobId, type: "sync", label: "Google Drive", status: "running", progress: -1, detail: "Sincronizando pastas..." });
+    showProgressToast({ id: syncJobId, type: "sync", label: "Google Drive", progress: -1, detail: "Sincronizando pastas..." });
+
     syncAll.mutate(undefined, {
       onSuccess: () => {
+        completeJob(syncJobId, "Pastas sincronizadas");
+        completeProgressToast(syncJobId, "Drive sincronizado com sucesso");
         utils.drive.syncFolders.invalidate();
         utils.drive.stats.invalidate();
         utils.drive.healthStatus.invalidate();
       },
+      onError: (err) => {
+        failJob(syncJobId, err.message);
+        failProgressToast(syncJobId, err.message);
+      },
     });
-  }, [syncAll, utils]);
+  }, [syncAll, utils, addJob, completeJob, failJob]);
 
   const clearSearch = useCallback(() => {
     setLocalSearch("");
@@ -490,6 +505,24 @@ export function DriveTopBar() {
 
           {/* New Document from Template */}
           <NewDocumentButton />
+
+          {/* Processing Queue */}
+          <ProcessingQueuePanel>
+            <button
+              className={cn(
+                "h-8 w-8 inline-flex items-center justify-center gap-1 rounded-md transition-colors",
+                activeCount > 0
+                  ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400"
+                  : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+              title="Fila de processamento"
+            >
+              <Activity className={cn("h-3.5 w-3.5", activeCount > 0 && "animate-pulse")} />
+              {activeCount > 0 && (
+                <span className="text-[10px] font-medium">{activeCount}</span>
+              )}
+            </button>
+          </ProcessingQueuePanel>
 
           {/* ─── Separator ─── */}
           <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700 mx-0.5" />

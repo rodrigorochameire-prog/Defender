@@ -624,9 +624,10 @@ class EnrichmentClient {
    * Chamado pelo: tRPC solar.transcreverDrive
    */
   async transcribe(input: TranscribeInput): Promise<TranscribeOutput> {
-    // Transcription can take longer (up to 5 min for large files)
+    // Transcription via Gemini can take 10+ min for large files (190MB+)
+    // Pipeline: download file + upload to Gemini File API + process + generate
     const originalTimeout = this.timeout;
-    this.timeout = 300_000; // 5 min
+    this.timeout = 600_000; // 10 min
     try {
       return await this.request<TranscribeOutput>("/api/transcribe", {
         file_url: input.fileUrl,

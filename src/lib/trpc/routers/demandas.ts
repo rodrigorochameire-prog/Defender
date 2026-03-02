@@ -7,6 +7,17 @@ import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope, getDefensorResponsavel, getDefensoresVisiveis } from "../workspace";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
 
+// Helper: inferir fase processual com base no tipo de documento PJe
+function inferirFaseProcessual(tipoDocumento?: string): string | undefined {
+  if (!tipoDocumento) return undefined;
+  const tipo = tipoDocumento.toLowerCase();
+  if (tipo.includes("sentença") || tipo.includes("sentenca")) return "sentença";
+  if (tipo.includes("decisão") || tipo.includes("decisao")) return "instrução";
+  if (tipo.includes("ato ordinatório") || tipo.includes("ato ordinatorio")) return "instrução";
+  if (tipo.includes("despacho")) return "instrução";
+  return undefined;
+}
+
 export const demandasRouter = router({
   // Listar todas as demandas
   // ARQUITETURA: Cada defensor tem seu "banco de dados" de demandas
@@ -501,6 +512,13 @@ export const demandasRouter = router({
             ordemOriginal: z.number().optional(), // Posição original no texto colado
             // Match de assistido (PJe Import v2)
             assistidoMatchId: z.number().optional(), // ID do assistido já vinculado na revisão
+            // PJe pass-through de dados (Fase 1)
+            tipoDocumento: z.string().optional(), // Intimação, Sentença, Decisão, etc.
+            crime: z.string().optional(), // Maus Tratos, Ameaça, etc.
+            tipoProcesso: z.string().optional(), // MPUMPCrim, APOrd, etc.
+            vara: z.string().optional(), // Vara de Violência Doméstica, etc.
+            idDocumentoPje: z.string().optional(), // ID único do documento PJe
+            atribuicaoDetectada: z.string().optional(), // Atribuição auto-detectada pelo parser
           })
         ),
         atualizarExistentes: z.boolean().optional().default(false),
@@ -604,6 +622,16 @@ export const demandasRouter = router({
             });
           }
 
+          // Backfill: se assistido existente não tem atribuicaoPrimaria, preencher
+          if (assistido && !assistido.atribuicaoPrimaria) {
+            const targetAtribuicaoPrimariaBackfill = (ATRIBUICAO_TO_ENUM[row.atribuicao || row.atribuicaoDetectada || ""] || null);
+            if (targetAtribuicaoPrimariaBackfill) {
+              await db.update(assistidos)
+                .set({ atribuicaoPrimaria: targetAtribuicaoPrimariaBackfill as any })
+                .where(eq(assistidos.id, assistido.id));
+            }
+          }
+
           if (!assistido) {
             const statusPrisional = row.estadoPrisional === "preso"
               ? "CADEIA_PUBLICA"
@@ -611,13 +639,20 @@ export const demandasRouter = router({
                 ? "MONITORADO"
                 : "SOLTO";
 
+            // Determinar atribuicaoPrimaria para o novo assistido
+            const targetAtribuicaoPrimaria = (ATRIBUICAO_TO_ENUM[row.atribuicao || row.atribuicaoDetectada || ""] || "JURI_CAMACARI") as any;
+
             const [newAssistido] = await db.insert(assistidos).values({
               nome: row.assistido.trim(),
               statusPrisional: statusPrisional as any,
+              atribuicaoPrimaria: targetAtribuicaoPrimaria,
               defensorId: defensorId || ctx.user.id,
               workspaceId: workspaceId,
             }).returning();
             assistido = newAssistido;
+
+            // TODO: auto-create Drive folder for new assistido
+            // ensureDriveFolderForAssistido(newAssistido.id, newAssistido.nome, targetAtribuicaoPrimaria)
           }
 
           // Rastrear assistido para contagem Solar
@@ -791,6 +826,16 @@ export const demandasRouter = router({
             workspaceId: workspaceId,
             importBatchId: row.importBatchId || null,
             ordemOriginal: row.ordemOriginal ?? null,
+            // PJe pass-through: enrichmentData com dados extraídos do parser
+            enrichmentData: (row.crime || row.tipoDocumento || row.tipoProcesso) ? {
+              crime: row.crime || undefined,
+              artigos: [],
+              fase_processual: inferirFaseProcessual(row.tipoDocumento),
+              tipo_documento_pje: row.tipoDocumento || undefined,
+              tipo_processo: row.tipoProcesso || undefined,
+              id_documento_pje: row.idDocumentoPje || undefined,
+              vara: row.vara || undefined,
+            } as any : undefined,
             // createdAt usa defaultNow() — momento real da importação
           }).returning();
 

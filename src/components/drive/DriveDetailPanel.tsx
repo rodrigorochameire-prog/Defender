@@ -62,6 +62,8 @@ import { ExpandedPreviewModal } from "./ExpandedPreviewModal";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useProcessingQueue } from "@/contexts/processing-queue";
+import { showProgressToast, completeProgressToast, failProgressToast } from "@/components/ui/progress-toast";
 import Link from "next/link";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -628,6 +630,202 @@ function EnrichmentSection({ file }: { file: DriveFile }) {
             )}
             Re-processar
           </Button>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+// ─── Suggested Actions Section (Enrichment Bridge) ──────────────────
+
+function SuggestedActionsSection({ file }: { file: DriveFile }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const utils = trpc.useUtils();
+
+  const { data: actionData } = trpc.enrichment.suggestActionsFromEnrichment.useQuery(
+    { driveFileId: file.id },
+    { enabled: !!file.id && (file.enrichmentStatus === "completed" || file.enrichmentStatus === "classified") }
+  );
+
+  const applyMutation = trpc.enrichment.applyEnrichmentActions.useMutation({
+    onSuccess: (data) => {
+      const created = data.results.filter(r => r.success).length;
+      if (created > 0) {
+        toast.success(`${created} ação(ões) aplicada(s)`);
+        utils.drive.files.invalidate();
+      }
+    },
+    onError: (err) => {
+      toast.error(err.message || "Erro ao aplicar ações");
+    },
+  });
+
+  const suggestions = actionData?.suggestions || [];
+  if (suggestions.length === 0) return null;
+
+  const urgencyColors: Record<string, string> = {
+    alta: "bg-red-500/10 text-red-500 border-red-500/20",
+    media: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    baixa: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+  };
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger asChild>
+        <div>
+          <SectionHeader
+            title="Ações Sugeridas"
+            icon={Scale}
+            isOpen={isOpen}
+            onToggle={() => setIsOpen(!isOpen)}
+            badge={`${suggestions.length}`}
+          />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="px-4 pb-3 space-y-2">
+          {suggestions.map((s, i) => (
+            <div
+              key={i}
+              className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-2.5 border border-zinc-200 dark:border-zinc-700 space-y-1.5"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-zinc-800 dark:text-zinc-200 flex-1">
+                  {s.title}
+                </span>
+                {s.urgencia && (
+                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full border font-medium", urgencyColors[s.urgencia] || urgencyColors.baixa)}>
+                    {s.urgencia}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                {s.description}
+              </p>
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/20 rounded"
+                  onClick={() => applyMutation.mutate({
+                    driveFileId: file.id,
+                    actions: [{
+                      type: s.type,
+                      demandaTipo: s.demandaTipo,
+                      processoId: actionData?.processoId ?? undefined,
+                      assistidoId: actionData?.assistidoId ?? undefined,
+                    }],
+                  })}
+                  disabled={applyMutation.isPending}
+                >
+                  {applyMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Check className="h-3 w-3 mr-1" />
+                  )}
+                  Aplicar
+                </Button>
+                <span className="text-[9px] text-zinc-400">
+                  {Math.round(s.confidence * 100)}% confiança
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+// ─── Link Suggestions Section (Auto-link from Enrichment) ───────────
+
+function LinkSuggestionsSection({ file }: { file: DriveFile }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const utils = trpc.useUtils();
+
+  const { data: suggestions } = trpc.drive.suggestLinksFromEnrichment.useQuery(
+    { fileIds: [file.id] },
+    { enabled: !!file.id && !file.processoId && (file.enrichmentStatus === "completed" || file.enrichmentStatus === "classified") }
+  );
+
+  const applyMutation = trpc.drive.applyLinkSuggestions.useMutation({
+    onSuccess: (data) => {
+      if (data.linked > 0) {
+        toast.success(`Arquivo vinculado com sucesso`);
+        utils.drive.files.invalidate();
+      }
+    },
+    onError: (err) => {
+      toast.error(err.message || "Erro ao vincular");
+    },
+  });
+
+  if (!suggestions || suggestions.length === 0) return null;
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger asChild>
+        <div>
+          <SectionHeader
+            title="Vinculação Sugerida"
+            icon={Link2}
+            isOpen={isOpen}
+            onToggle={() => setIsOpen(!isOpen)}
+            badge="Auto"
+          />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="px-4 pb-3 space-y-2">
+          {suggestions.map((s) => (
+            <div
+              key={s.fileId}
+              className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-2.5 space-y-1.5"
+            >
+              {s.suggestedProcessoNumero && (
+                <div className="flex items-center gap-1.5">
+                  <Scale className="h-3 w-3 text-blue-400" />
+                  <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400">
+                    {s.suggestedProcessoNumero}
+                  </span>
+                </div>
+              )}
+              {s.suggestedAssistidoNome && (
+                <div className="flex items-center gap-1.5">
+                  <User className="h-3 w-3 text-blue-400" />
+                  <span className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                    {s.suggestedAssistidoNome}
+                  </span>
+                </div>
+              )}
+              <p className="text-[10px] text-zinc-400">{s.reason}</p>
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 border border-blue-500/20 rounded"
+                  onClick={() => applyMutation.mutate({
+                    suggestions: [{
+                      fileId: s.fileId,
+                      processoId: s.suggestedProcessoId,
+                      assistidoId: s.suggestedAssistidoId,
+                    }],
+                  })}
+                  disabled={applyMutation.isPending}
+                >
+                  {applyMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Check className="h-3 w-3 mr-1" />
+                  )}
+                  Vincular
+                </Button>
+                <span className="text-[9px] text-zinc-400">
+                  {Math.round(s.confidence * 100)}% confiança
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -1445,6 +1643,7 @@ function PecasProcessuaisSection({
 function DetailPanelContent({ file }: { file: DriveFile }) {
   const ctx = useDriveContext();
   const utils = trpc.useUtils();
+  const { addJob, completeJob, failJob } = useProcessingQueue();
   const [isFavorited, setIsFavorited] = useState(() =>
     getFavorites().has(file.id)
   );
@@ -1502,8 +1701,13 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
   // Build PDF URL for viewer — use server-side proxy to avoid CORS
   const pdfUrl = `/api/drive/proxy?fileId=${file.driveFileId}`;
 
-  // Transcription mutation
+  // Transcription mutation with progress toast
+  const transcribeJobId = `transcribe-${file.driveFileId}`;
   const transcribeMutation = trpc.drive.transcreverDrive.useMutation({
+    onMutate: () => {
+      addJob({ id: transcribeJobId, type: "transcription", label: file.name, status: "running", progress: -1, detail: "Enviando para processamento..." });
+      showProgressToast({ id: transcribeJobId, type: "transcription", label: file.name, progress: -1, detail: "Enviando para processamento..." });
+    },
     onSuccess: (data) => {
       setTranscriptionResult({
         transcript: data.transcript,
@@ -1512,15 +1716,14 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
         duration: data.duration,
         diarization_applied: data.diarization_applied,
       });
-      toast.success("Transcrição concluída", {
-        description: `${data.speakers.length} speaker(s) identificado(s)`,
-      });
+      const summary = `${data.speakers.length} speaker(s) · ${Math.round(data.duration / 60)} min`;
+      completeJob(transcribeJobId, summary);
+      completeProgressToast(transcribeJobId, `${file.name} — ${summary}`);
       utils.drive.files.invalidate();
     },
     onError: (err) => {
-      toast.error("Erro na transcrição", {
-        description: err.message,
-      });
+      failJob(transcribeJobId, err.message);
+      failProgressToast(transcribeJobId, err.message);
       utils.drive.files.invalidate();
     },
   });
@@ -1655,6 +1858,8 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
             />
           )}
           <EnrichmentSection file={file} />
+          <SuggestedActionsSection file={file} />
+          <LinkSuggestionsSection file={file} />
           <JuridicalContextSection file={file} />
           <IAInsightsSection file={file} />
           <LinkActionsSection file={file} />

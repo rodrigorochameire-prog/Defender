@@ -86,6 +86,8 @@ import {
   Crosshair,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useProcessingQueue } from "@/contexts/processing-queue";
+import { showProgressToast, updateProgressToast, completeProgressToast, failProgressToast } from "@/components/ui/progress-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -1963,6 +1965,7 @@ export function PdfViewerModal({
   onFileChange,
 }: PdfViewerModalProps) {
   // State
+  const { addJob, updateJob: updateQueueJob, completeJob, failJob } = useProcessingQueue();
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1.0);
@@ -2118,11 +2121,18 @@ export function PdfViewerModal({
   });
 
   // ─── Processing: Simple Mode (< 5MB) ─────────────────────────
+  const classifyJobId = `classify-${fileId}`;
   const triggerClassification = trpc.documentSections.triggerClassification.useMutation({
+    onMutate: () => {
+      addJob({ id: classifyJobId, type: "classification", label: fileName, status: "running", progress: -1, detail: "Classificando seções..." });
+      showProgressToast({ id: classifyJobId, type: "classification", label: fileName, progress: -1, detail: "Classificando seções..." });
+    },
     onSuccess: (data) => {
       setIsProcessing(false);
       const count = data && "sectionsFound" in data ? (data as { sectionsFound?: number }).sectionsFound : 0;
-      toast.success(`Classificação concluída! ${count || 0} seções encontradas.`);
+      const summary = `${count || 0} seções encontradas`;
+      completeJob(classifyJobId, summary);
+      completeProgressToast(classifyJobId, `${fileName} — ${summary}`);
       utils.documentSections.listByFile.invalidate({ driveFileId: fileId });
       setSidebarTab("sections");
     },
@@ -2130,12 +2140,11 @@ export function PdfViewerModal({
       setIsProcessing(false);
       const isTimeout = err.message?.includes("504") || err.message?.includes("timeout") || err.message?.includes("TIMEOUT") || err.message?.includes("Gateway");
       if (isTimeout) {
-        toast.error(
-          "Arquivo muito grande para modo rápido. Use o modo Profundo (▼ ao lado da varinha).",
-          { duration: 8000 }
-        );
+        failJob(classifyJobId, "Timeout — use modo profundo");
+        failProgressToast(classifyJobId, "Arquivo grande demais. Use o modo Profundo.");
       } else {
-        toast.error(`Erro ao processar: ${err.message}`);
+        failJob(classifyJobId, err.message);
+        failProgressToast(classifyJobId, err.message);
       }
     },
   });
@@ -2144,6 +2153,7 @@ export function PdfViewerModal({
   const startDeepProcessing = trpc.documentSections.startDeepProcessing.useMutation();
   const processNextChunks = trpc.documentSections.processNextChunks.useMutation();
 
+  const deepJobId = `deep-classify-${fileId}`;
   const runDeepProcessingLoop = useCallback(async () => {
     if (deepProcessingRef.current) return; // already running
     deepProcessingRef.current = true;
@@ -2151,6 +2161,9 @@ export function PdfViewerModal({
     try {
       // Step 1: Extract text
       setDeepProcessingProgress({ phase: "extracting", processedChunks: 0, totalChunks: 0, sectionsFound: 0 });
+      addJob({ id: deepJobId, type: "classification", label: fileName, status: "running", progress: 5, detail: "Extraindo texto..." });
+      showProgressToast({ id: deepJobId, type: "classification", label: fileName, progress: 5, detail: "Extraindo texto..." });
+
       const extraction = await startDeepProcessing.mutateAsync({ driveFileId: fileId });
       if (!extraction.success) throw new Error("Falha na extração");
 
@@ -2169,6 +2182,9 @@ export function PdfViewerModal({
         processedChunks = batch.processedChunks;
         sectionsFound += batch.newSections;
 
+        const pct = Math.round((processedChunks / totalChunks) * 100);
+        const detail = `Bloco ${processedChunks}/${totalChunks} · ${sectionsFound} seções`;
+
         setDeepProcessingProgress({
           phase: batch.isComplete ? "done" : "classifying",
           processedChunks,
@@ -2176,22 +2192,29 @@ export function PdfViewerModal({
           sectionsFound,
         });
 
+        // Update toast and queue with real progress
+        updateQueueJob(deepJobId, { progress: pct, detail });
+        updateProgressToast(deepJobId, { type: "classification", label: fileName, progress: pct, detail });
+
         // Refresh sections sidebar progressively
         utils.documentSections.listByFile.invalidate({ driveFileId: fileId });
 
         if (batch.isComplete) break;
       }
 
-      toast.success(`Processamento profundo concluído! ${sectionsFound} seções em ${extraction.totalPages} páginas.`);
+      const summary = `${sectionsFound} seções em ${extraction.totalPages} páginas`;
+      completeJob(deepJobId, summary);
+      completeProgressToast(deepJobId, `${fileName} — ${summary}`);
       setSidebarTab("sections");
     } catch (err: any) {
-      toast.error(`Erro no processamento profundo: ${err.message}`);
+      failJob(deepJobId, err.message);
+      failProgressToast(deepJobId, err.message);
     } finally {
       setIsProcessing(false);
       setDeepProcessingProgress(null);
       deepProcessingRef.current = false;
     }
-  }, [fileId, startDeepProcessing, processNextChunks, utils]);
+  }, [fileId, fileName, startDeepProcessing, processNextChunks, utils, addJob, updateQueueJob, completeJob, failJob, deepJobId]);
 
   // Smart mode: auto-detect based on file size AND page count
   const fileSizeBytes = fileMetadata?.fileSize || 0;

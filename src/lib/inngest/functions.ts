@@ -1234,7 +1234,47 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
         .values(values)
         .returning({ id: driveDocumentSections.id });
 
-      // Mark file as completed
+      // Build enrichmentData from classified sections
+      const extractedSections = classification.sections.map((s) => ({
+        titulo: s.titulo,
+        tipo: s.tipo,
+        pagina: s.paginaInicio,
+      }));
+
+      // Extract pessoa_nome from sections metadata (first person found)
+      let pessoaNome: string | undefined;
+      for (const s of classification.sections) {
+        if (s.metadata?.pessoas && s.metadata.pessoas.length > 0) {
+          pessoaNome = s.metadata.pessoas[0].nome;
+          break;
+        }
+        if (s.metadata?.partesmencionadas && s.metadata.partesmencionadas.length > 0) {
+          pessoaNome = s.metadata.partesmencionadas[0];
+          break;
+        }
+      }
+
+      // Extract numero_processo from text (CNJ pattern)
+      let numeroProcesso: string | undefined;
+      const fullText = finalPages.map((p) => p.text).join(" ");
+      const cnjMatch = fullText.match(/\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}/);
+      if (cnjMatch) {
+        numeroProcesso = cnjMatch[0];
+      }
+
+      // Compute average confidence
+      const avgConfidence = classification.sections.length > 0
+        ? classification.sections.reduce((sum, s) => sum + s.confianca, 0) / classification.sections.length / 100
+        : 0;
+
+      // Determine sub_type from the most common section tipo
+      const tipoCount: Record<string, number> = {};
+      for (const s of classification.sections) {
+        tipoCount[s.tipo] = (tipoCount[s.tipo] || 0) + 1;
+      }
+      const subType = Object.entries(tipoCount).sort((a, b) => b[1] - a[1])[0]?.[0];
+
+      // Mark file as completed with enrichmentData
       await db
         .update(driveFiles)
         .set({
@@ -1242,6 +1282,13 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
           enrichmentError: null,
           enrichedAt: new Date(),
           updatedAt: new Date(),
+          enrichmentData: {
+            numero_processo: numeroProcesso,
+            pessoa_nome: pessoaNome,
+            sub_type: subType,
+            extracted_sections: extractedSections,
+            confidence: Math.round(avgConfidence * 100) / 100,
+          },
         })
         .where(eq(driveFiles.id, driveFileId));
 

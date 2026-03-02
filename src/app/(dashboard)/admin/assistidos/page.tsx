@@ -93,6 +93,7 @@ import {
   FileStack,
   Sun,
   Loader2,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -146,6 +147,8 @@ import { getInitials } from "@/lib/utils";
 import { format, differenceInDays, parseISO, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
+import { ProcessingQueuePanel } from "@/components/drive/ProcessingQueuePanel";
+import { useProcessingQueue } from "@/contexts/processing-queue";
 
 // Interface para o tipo Assistido usado na UI
 interface AssistidoUI {
@@ -1367,6 +1370,7 @@ function FilterSectionAssistidos({
   viewMode,
   setViewMode,
 }: FilterSectionAssistidosProps) {
+  const { activeCount } = useProcessingQueue();
   const [isMainExpanded, setIsMainExpanded] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     atribuicoes: false,
@@ -1605,29 +1609,47 @@ function FilterSectionAssistidos({
           </div>
         </div>
         
-        <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={cn(
-              "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
-              viewMode === "grid"
-                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700"
-            )}
-          >
-            <LayoutGrid className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={cn(
-              "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
-              viewMode === "list"
-                ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700"
-            )}
-          >
-            <List className="w-3.5 h-3.5" />
-          </button>
+        <div className="flex items-center gap-2">
+          <ProcessingQueuePanel>
+            <button
+              className={cn(
+                "h-8 w-8 inline-flex items-center justify-center gap-1 rounded-md transition-colors",
+                activeCount > 0
+                  ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400"
+                  : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+              title="Fila de processamento"
+            >
+              <Activity className={cn("h-3.5 w-3.5", activeCount > 0 && "animate-pulse")} />
+              {activeCount > 0 && (
+                <span className="text-[10px] font-medium">{activeCount}</span>
+              )}
+            </button>
+          </ProcessingQueuePanel>
+          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-lg">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
+                viewMode === "grid"
+                  ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700"
+              )}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 h-7 text-xs font-medium rounded-md transition-all",
+                viewMode === "list"
+                  ? "bg-white dark:bg-zinc-700 text-zinc-800 dark:text-white shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700"
+              )}
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1637,7 +1659,7 @@ function FilterSectionAssistidos({
 export default function AssistidosPage() {
   // Atribuicao do contexto global
   const { currentAssignment } = useAssignment();
-  
+
   // Buscar assistidos do banco de dados
   const { data: assistidosData, isLoading } = trpc.assistidos.list.useQuery({
     limit: 100,

@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useProcessingQueue } from "@/contexts/processing-queue";
+import { ProcessingQueuePanel } from "./ProcessingQueuePanel";
+import { Activity } from "lucide-react";
 
 function getSyncHealth(lastSyncAt: string | null | undefined): {
   color: string;
@@ -39,6 +42,7 @@ interface DriveStatusBarProps {
 
 export function DriveStatusBar({ assistidoId, processoId }: DriveStatusBarProps) {
   const [expanded, setExpanded] = useState(false);
+  const { activeCount } = useProcessingQueue();
 
   const isAssistido = !!assistidoId;
 
@@ -176,6 +180,23 @@ export function DriveStatusBar({ assistidoId, processoId }: DriveStatusBarProps)
             })()}
           </div>
         </div>
+
+        {/* Processing Queue button */}
+        <ProcessingQueuePanel>
+          <button
+            className={cn(
+              "text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 transition-colors",
+              activeCount > 0
+                ? "bg-blue-50 dark:bg-blue-950 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900"
+                : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+            )}
+            onClick={(e) => e.stopPropagation()}
+            title="Fila de processamento"
+          >
+            <Activity className={cn("h-3 w-3", activeCount > 0 && "animate-pulse")} />
+            {activeCount > 0 && <span className="font-medium">{activeCount}</span>}
+          </button>
+        </ProcessingQueuePanel>
 
         {/* Open in Drive link */}
         {data.folderUrl && (

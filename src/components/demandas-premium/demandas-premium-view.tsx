@@ -1181,6 +1181,13 @@ export default function Demandas() {
       ordemOriginal: data.pjeData?.ordemOriginal ?? index, // Posição original no texto colado
       // PJe Import v2: vinculação direta com assistido existente
       assistidoMatchId: data.assistidoMatchId || undefined,
+      // PJe pass-through de dados (Fase 1)
+      tipoDocumento: data.pjeData?.tipoDocumento || undefined,
+      crime: data.pjeData?.crime || undefined,
+      tipoProcesso: data.pjeData?.tipoProcesso || undefined,
+      vara: data.pjeData?.vara || undefined,
+      idDocumentoPje: data.pjeData?.idDocumento || undefined,
+      atribuicaoDetectada: data.pjeData?.atribuicaoDetectada || undefined,
     }));
 
     // Por padrão, sempre atualizar existentes para evitar duplicatas

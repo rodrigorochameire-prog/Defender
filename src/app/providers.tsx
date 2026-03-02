@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc/client";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { AssignmentProvider } from "@/contexts/assignment-context";
 import { ProfissionalProvider } from "@/contexts/profissional-context";
+import { ProcessingQueueProvider } from "@/contexts/processing-queue";
 import { Toaster } from "sonner";
 // Clerk removido - usando autenticação customizada
 
@@ -66,6 +67,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
           <AssignmentProvider>
             <ProfissionalProvider>
+              <ProcessingQueueProvider>
               <Suspense fallback={<LoadingSpinner />}>
                 {children}
               </Suspense>
@@ -77,6 +79,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                   duration: 3000,
                 }}
               />
+            </ProcessingQueueProvider>
             </ProfissionalProvider>
           </AssignmentProvider>
         </ThemeProvider>

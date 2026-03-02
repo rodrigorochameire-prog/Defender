@@ -20,6 +20,8 @@ import {
   Scale,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
+import { useProcessingQueue } from "@/contexts/processing-queue";
+import { showProgressToast, completeProgressToast, failProgressToast } from "@/components/ui/progress-toast";
 import { useDriveContext } from "./DriveContext";
 import {
   DRIVE_ATRIBUICOES,
@@ -62,6 +64,7 @@ export function DriveCommandPalette() {
   const ctx = useDriveContext();
   const router = useRouter();
   const utils = trpc.useUtils();
+  const { addJob, completeJob, failJob } = useProcessingQueue();
 
   // ── Keyboard shortcut: Ctrl+K / Cmd+K ──
   useEffect(() => {
@@ -137,9 +140,20 @@ export function DriveCommandPalette() {
   );
 
   // ── Mutations ──
+  const syncJobId = "sync-drive-all";
   const syncAll = trpc.drive.syncAll.useMutation({
+    onMutate: () => {
+      addJob({ id: syncJobId, type: "sync", label: "Google Drive", status: "running", progress: -1, detail: "Sincronizando pastas..." });
+      showProgressToast({ id: syncJobId, type: "sync", label: "Google Drive", progress: -1, detail: "Sincronizando pastas..." });
+    },
     onSuccess: () => {
+      completeJob(syncJobId, "Sincronização concluída");
+      completeProgressToast(syncJobId, "Google Drive sincronizado");
       utils.drive.files.invalidate();
+    },
+    onError: (err) => {
+      failJob(syncJobId, err.message);
+      failProgressToast(syncJobId, err.message);
     },
   });
 

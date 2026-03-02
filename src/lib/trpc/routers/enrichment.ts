@@ -15,7 +15,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db } from "@/lib/db";
-import { documentos, atendimentos, demandas, driveFiles } from "@/lib/db/schema";
+import { documentos, atendimentos, demandas, driveFiles, processos, assistidos } from "@/lib/db/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
 import {
   enrichmentClient,
@@ -510,6 +510,211 @@ export const enrichmentRouter = router({
       atendimentos: formatStats(atendStats),
     };
   }),
+
+  /**
+   * Sugere ações a partir do enrichment de um arquivo Drive
+   * Ex: Sentença → sugerir "Criar demanda: Apelação"
+   */
+  suggestActionsFromEnrichment: protectedProcedure
+    .input(z.object({ driveFileId: z.number() }))
+    .query(async ({ input }) => {
+      const file = await db.query.driveFiles.findFirst({
+        where: eq(driveFiles.id, input.driveFileId),
+      });
+
+      if (!file) return { suggestions: [] };
+
+      const docType = (file.documentType || "").toLowerCase();
+      const categoria = (file.categoria || "").toLowerCase();
+      const enrichData = (file.enrichmentData || {}) as Record<string, unknown>;
+      const subType = ((enrichData.sub_type as string) || "").toLowerCase();
+
+      const suggestions: Array<{
+        type: "criar_demanda" | "atualizar_processo" | "criar_atendimento";
+        title: string;
+        description: string;
+        demandaTipo?: string;
+        urgencia?: "alta" | "media" | "baixa";
+        confidence: number;
+      }> = [];
+
+      // Sentença → sugerir Apelação ou Embargos
+      if (docType.includes("sentença") || docType.includes("sentenca") || subType.includes("sentença") || subType.includes("sentenca")) {
+        suggestions.push({
+          type: "criar_demanda",
+          title: "Interpor Apelação",
+          description: "Sentença detectada. Prazo de 5 dias úteis para apelação criminal.",
+          demandaTipo: "Apelação",
+          urgencia: "alta",
+          confidence: 0.85,
+        });
+        suggestions.push({
+          type: "criar_demanda",
+          title: "Embargos de Declaração",
+          description: "Verificar se há omissão, contradição ou obscuridade na sentença.",
+          demandaTipo: "Embargos de Declaração",
+          urgencia: "media",
+          confidence: 0.6,
+        });
+        suggestions.push({
+          type: "atualizar_processo",
+          title: "Atualizar fase: Sentença",
+          description: "Marcar processo como fase 'sentença' para controle de prazos.",
+          confidence: 0.9,
+        });
+      }
+
+      // Decisão → sugerir Agravo ou Recurso
+      if (docType.includes("decisão") || docType.includes("decisao") || subType.includes("decisão") || subType.includes("decisao")) {
+        suggestions.push({
+          type: "criar_demanda",
+          title: "Agravo de Instrumento",
+          description: "Decisão interlocutória detectada. Avaliar cabimento de agravo.",
+          demandaTipo: "Agravo de Instrumento",
+          urgencia: "media",
+          confidence: 0.7,
+        });
+      }
+
+      // Intimação → sugerir Resposta/Manifestação
+      if (docType.includes("intimação") || docType.includes("intimacao") || subType.includes("intimação") || subType.includes("intimacao")) {
+        suggestions.push({
+          type: "criar_demanda",
+          title: "Manifestação/Resposta",
+          description: "Intimação detectada. Verificar prazo e providenciar resposta.",
+          demandaTipo: "Manifestação",
+          urgencia: "alta",
+          confidence: 0.75,
+        });
+      }
+
+      // Acórdão → possível recurso especial/extraordinário
+      if (docType.includes("acórdão") || docType.includes("acordao") || subType.includes("acórdão") || subType.includes("acordao")) {
+        suggestions.push({
+          type: "criar_demanda",
+          title: "Recurso Especial/Extraordinário",
+          description: "Acórdão detectado. Avaliar cabimento de recurso às instâncias superiores.",
+          demandaTipo: "Recurso Especial",
+          urgencia: "media",
+          confidence: 0.6,
+        });
+      }
+
+      // Mandado de Prisão → urgência alta
+      if (docType.includes("mandado") || subType.includes("mandado") || docType.includes("prisão") || docType.includes("prisao")) {
+        suggestions.push({
+          type: "criar_demanda",
+          title: "Habeas Corpus",
+          description: "Mandado/prisão detectado. Avaliar urgência de HC.",
+          demandaTipo: "Habeas Corpus",
+          urgencia: "alta",
+          confidence: 0.7,
+        });
+      }
+
+      // Denúncia → resposta à acusação
+      if (docType.includes("denúncia") || docType.includes("denuncia") || subType.includes("denúncia") || subType.includes("denuncia")) {
+        suggestions.push({
+          type: "criar_demanda",
+          title: "Resposta à Acusação",
+          description: "Denúncia detectada. Prazo de 10 dias para resposta à acusação.",
+          demandaTipo: "Resposta à Acusação",
+          urgencia: "alta",
+          confidence: 0.8,
+        });
+      }
+
+      // If file has processo but no demandas linked, suggest creating one
+      if (file.processoId && suggestions.length === 0 && (file.enrichmentStatus === "completed" || file.enrichmentStatus === "classified")) {
+        suggestions.push({
+          type: "criar_demanda",
+          title: "Criar Demanda Genérica",
+          description: "Arquivo classificado vinculado a processo. Registrar providência.",
+          demandaTipo: "Providência",
+          urgencia: "baixa",
+          confidence: 0.4,
+        });
+      }
+
+      return { suggestions, fileId: file.id, processoId: file.processoId, assistidoId: file.assistidoId };
+    }),
+
+  /**
+   * Aplica ações sugeridas pelo enrichment (cria demandas, atualiza processos)
+   */
+  applyEnrichmentActions: protectedProcedure
+    .input(z.object({
+      driveFileId: z.number(),
+      actions: z.array(z.object({
+        type: z.enum(["criar_demanda", "atualizar_processo", "criar_atendimento"]),
+        demandaTipo: z.string().optional(),
+        processoId: z.number().optional(),
+        assistidoId: z.number().optional(),
+      })),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const results: Array<{ type: string; success: boolean; id?: number; error?: string }> = [];
+
+      const file = await db.query.driveFiles.findFirst({
+        where: eq(driveFiles.id, input.driveFileId),
+      });
+      if (!file) return { results: [{ type: "error", success: false, error: "Arquivo não encontrado" }] };
+
+      const processoId = input.actions[0]?.processoId || file.processoId;
+      const assistidoId = input.actions[0]?.assistidoId || file.assistidoId;
+
+      for (const action of input.actions) {
+        try {
+          if (action.type === "criar_demanda") {
+            // Create a demanda linked to the processo/assistido
+            const [novaDemanda] = await db.insert(demandas).values({
+              tipo: action.demandaTipo || "Providência",
+              descricao: `Demanda criada automaticamente a partir de enrichment do arquivo: ${file.name}`,
+              status: "pendente",
+              prioridade: "media",
+              processoId: processoId || undefined,
+              assistidoId: assistidoId || undefined,
+              defensorId: ctx.user.id,
+              enrichmentData: {
+                origem: "enrichment_bridge",
+                arquivo_origem: file.name,
+                drive_file_id: file.id,
+                documento_tipo: file.documentType,
+                categoria: file.categoria,
+              },
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }).returning({ id: demandas.id });
+
+            results.push({ type: "criar_demanda", success: true, id: novaDemanda?.id });
+          }
+
+          if (action.type === "atualizar_processo" && processoId) {
+            // Update processo fase based on document type
+            const docType = (file.documentType || "").toLowerCase();
+            let fase: string | undefined;
+            if (docType.includes("sentença") || docType.includes("sentenca")) fase = "sentença";
+            else if (docType.includes("decisão") || docType.includes("decisao")) fase = "instrução";
+            else if (docType.includes("denúncia") || docType.includes("denuncia")) fase = "instrução";
+
+            if (fase) {
+              await db.update(processos)
+                .set({ fase, updatedAt: new Date() })
+                .where(eq(processos.id, processoId));
+            }
+            results.push({ type: "atualizar_processo", success: true, id: processoId });
+          }
+        } catch (err) {
+          results.push({
+            type: action.type,
+            success: false,
+            error: err instanceof Error ? err.message : "Erro desconhecido",
+          });
+        }
+      }
+
+      return { results };
+    }),
 });
 
 export type EnrichmentRouter = typeof enrichmentRouter;

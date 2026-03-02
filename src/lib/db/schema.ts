@@ -441,6 +441,11 @@ export const demandas = pgTable("demandas", {
     vitima?: string;
     urgencia?: string;
     confidence?: number;
+    // PJe pass-through (Fase 1)
+    tipo_documento_pje?: string;
+    tipo_processo?: string;
+    id_documento_pje?: string;
+    vara?: string;
   }>(),
 
   // Metadados
@@ -2801,6 +2806,16 @@ export const driveFiles = pgTable("drive_files", {
   enrichedAt: timestamp("enriched_at"),
   categoria: varchar("categoria", { length: 50 }),
   documentType: varchar("document_type", { length: 100 }),
+
+  // Dados estruturados extraídos pelo enrichment
+  enrichmentData: jsonb("enrichment_data").$type<{
+    numero_processo?: string;
+    pessoa_nome?: string;
+    area?: string;
+    sub_type?: string;
+    extracted_sections?: { titulo: string; tipo: string; pagina: number }[];
+    confidence?: number;
+  }>(),
 
   // Metadados
   createdById: integer("created_by_id").references(() => users.id),

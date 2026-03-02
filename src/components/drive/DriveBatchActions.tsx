@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Sparkles, Trash2, X, Loader2, FolderInput } from "lucide-react";
 import { toast } from "sonner";
+import { useProcessingQueue } from "@/contexts/processing-queue";
+import { showProgressToast, completeProgressToast, failProgressToast } from "@/components/ui/progress-toast";
 import { MoveFileModal } from "./MoveFileModal";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -37,17 +39,26 @@ interface DriveBatchActionsProps {
 export function DriveBatchActions({ files = [] }: DriveBatchActionsProps) {
   const ctx = useDriveContext();
   const utils = trpc.useUtils();
+  const { addJob, completeJob, failJob } = useProcessingQueue();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const batchJobId = `batch-enrich-${Date.now()}`;
   const retryEnrichment = trpc.drive.retryEnrichment.useMutation({
+    onMutate: () => {
+      const count = ctx.selectedFileIds.size;
+      addJob({ id: batchJobId, type: "extraction", label: `${count} arquivo(s)`, status: "running", progress: -1, detail: "Processando em lote..." });
+      showProgressToast({ id: batchJobId, type: "extraction", label: `${count} arquivo(s)`, progress: -1, detail: "Processando em lote..." });
+    },
     onSuccess: () => {
-      toast.success("Extracao iniciada para os arquivos selecionados");
+      completeJob(batchJobId, "Extração iniciada com sucesso");
+      completeProgressToast(batchJobId, "Extração em lote iniciada");
       ctx.clearSelection();
     },
     onError: (error) => {
-      toast.error(error.message || "Erro ao iniciar extracao");
+      failJob(batchJobId, error.message || "Erro ao iniciar extração");
+      failProgressToast(batchJobId, error.message || "Erro ao iniciar extração");
     },
   });
 

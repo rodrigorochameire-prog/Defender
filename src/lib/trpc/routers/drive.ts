@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, driveFiles, driveSyncFolders, driveSyncLogs } from "@/lib/db";
-import { eq, and, desc, sql, isNull, or, like, not, gt } from "drizzle-orm";
+import { eq, and, desc, sql, isNull, or, like, not, gt, lt } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
   listFilesInFolder,
@@ -2290,12 +2290,27 @@ export const driveRouter = router({
       }),
     )
     .mutation(async ({ input }): Promise<TranscribeOutput & { driveFileId: string }> => {
+      // 0. Recovery: resetar arquivos stuck em "processing" por mais de 15 min
+      await db
+        .update(driveFiles)
+        .set({
+          enrichmentStatus: "failed",
+          enrichmentError: "Timeout: transcrição ficou em processing por mais de 15 minutos. Tente novamente.",
+        })
+        .where(
+          and(
+            eq(driveFiles.enrichmentStatus, "processing"),
+            lt(driveFiles.updatedAt, new Date(Date.now() - 15 * 60 * 1000)),
+          ),
+        );
+
       // 1. Buscar arquivo no DB para obter URL de download
       const [file] = await db
         .select({
           id: driveFiles.id,
           name: driveFiles.name,
           mimeType: driveFiles.mimeType,
+          fileSize: driveFiles.fileSize,
           webContentLink: driveFiles.webContentLink,
           webViewLink: driveFiles.webViewLink,
           driveFileId: driveFiles.driveFileId,
@@ -2322,6 +2337,14 @@ export const driveRouter = router({
         );
       }
 
+      // Verificar tamanho do arquivo (warn para >500MB)
+      const fileSizeMB = (file.fileSize ?? 0) / (1024 * 1024);
+      if (fileSizeMB > 500) {
+        throw new Error(
+          `Arquivo muito grande (${fileSizeMB.toFixed(0)}MB). Máximo recomendado: 500MB.`,
+        );
+      }
+
       // 2. Obter URL de download autenticada via Google Drive API
       const accessToken = await getAccessToken();
       if (!accessToken) {
@@ -2336,6 +2359,7 @@ export const driveRouter = router({
         .update(driveFiles)
         .set({
           enrichmentStatus: "processing",
+          updatedAt: new Date(),
         })
         .where(eq(driveFiles.driveFileId, input.driveFileId));
 
@@ -2358,6 +2382,10 @@ export const driveRouter = router({
             enrichedAt: new Date(),
             documentType: "transcricao_audio",
             enrichmentError: null,
+            enrichmentData: {
+              sub_type: "transcricao_audio",
+              confidence: result.confidence,
+            },
           })
           .where(eq(driveFiles.driveFileId, input.driveFileId));
 
@@ -2408,5 +2436,126 @@ export const driveRouter = router({
           parents: result.parents,
         },
       };
+    }),
+
+  /**
+   * Sugere links (processo/assistido) a partir de enrichmentData dos arquivos.
+   * Lê enrichmentData e tenta match por número de processo ou nome de pessoa.
+   */
+  suggestLinksFromEnrichment: protectedProcedure
+    .input(z.object({
+      fileIds: z.array(z.number()),
+    }))
+    .query(async ({ input }) => {
+      const suggestions: Array<{
+        fileId: number;
+        fileName: string;
+        suggestedProcessoId: number | null;
+        suggestedProcessoNumero: string | null;
+        suggestedAssistidoId: number | null;
+        suggestedAssistidoNome: string | null;
+        confidence: number;
+        reason: string;
+      }> = [];
+
+      for (const fileId of input.fileIds) {
+        const file = await db.query.driveFiles.findFirst({
+          where: eq(driveFiles.id, fileId),
+        });
+        if (!file || !file.enrichmentData) continue;
+
+        const data = file.enrichmentData as Record<string, unknown>;
+
+        // Try to match by processo number
+        if (data.numero_processo && typeof data.numero_processo === "string") {
+          const processo = await db.query.processos.findFirst({
+            where: and(
+              eq(processos.numeroAutos, data.numero_processo),
+              isNull(processos.deletedAt),
+            ),
+          });
+          if (processo) {
+            let suggestedAssistidoNome: string | null = null;
+            if (processo.assistidoId) {
+              const assistido = await db.query.assistidos.findFirst({
+                where: eq(assistidos.id, processo.assistidoId),
+                columns: { nome: true },
+              });
+              if (assistido) {
+                suggestedAssistidoNome = assistido.nome;
+              }
+            }
+
+            suggestions.push({
+              fileId,
+              fileName: file.name,
+              suggestedProcessoId: processo.id,
+              suggestedProcessoNumero: processo.numeroAutos,
+              suggestedAssistidoId: processo.assistidoId,
+              suggestedAssistidoNome,
+              confidence: 0.9,
+              reason: `Número do processo ${data.numero_processo} encontrado no documento`,
+            });
+            continue;
+          }
+        }
+
+        // Try to match by pessoa name
+        if (data.pessoa_nome && typeof data.pessoa_nome === "string") {
+          const candidatos = await db
+            .select({ id: assistidos.id, nome: assistidos.nome })
+            .from(assistidos)
+            .where(isNull(assistidos.deletedAt))
+            .limit(50);
+
+          for (const candidato of candidatos) {
+            const similarity = calculateSimilarity(candidato.nome, data.pessoa_nome as string);
+            if (similarity >= 0.85) {
+              suggestions.push({
+                fileId,
+                fileName: file.name,
+                suggestedProcessoId: null,
+                suggestedProcessoNumero: null,
+                suggestedAssistidoId: candidato.id,
+                suggestedAssistidoNome: candidato.nome,
+                confidence: similarity,
+                reason: `Nome "${data.pessoa_nome}" similar a assistido "${candidato.nome}"`,
+              });
+              break;
+            }
+          }
+        }
+      }
+
+      return suggestions;
+    }),
+
+  /**
+   * Aplica sugestões de link confirmadas pelo usuário.
+   * Vincula driveFiles a processos e/ou assistidos.
+   */
+  applyLinkSuggestions: protectedProcedure
+    .input(z.object({
+      suggestions: z.array(z.object({
+        fileId: z.number(),
+        processoId: z.number().nullable(),
+        assistidoId: z.number().nullable(),
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      let linked = 0;
+      for (const suggestion of input.suggestions) {
+        const updates: Record<string, unknown> = {};
+        if (suggestion.processoId) updates.processoId = suggestion.processoId;
+        if (suggestion.assistidoId) updates.assistidoId = suggestion.assistidoId;
+
+        if (Object.keys(updates).length > 0) {
+          await db.update(driveFiles)
+            .set({ ...updates, updatedAt: new Date() })
+            .where(eq(driveFiles.id, suggestion.fileId));
+          linked++;
+        }
+      }
+      return { linked };
     }),
 });
