@@ -194,10 +194,15 @@ export const notificationsRouter = router({
       const userId = ctx.user!.id;
 
       // Disparar via Inngest para processamento assíncrono
-      await inngest.send({
-        name: "prazos/check",
-        data: { userId },
-      });
+      try {
+        await inngest.send({
+          name: "prazos/check",
+          data: { userId },
+        });
+      } catch (err) {
+        console.warn("[Prazos] Inngest send failed (non-fatal):", err);
+        // Inngest não configurado — operação continua sem background job
+      }
 
       return {
         success: true,

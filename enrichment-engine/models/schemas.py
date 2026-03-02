@@ -565,6 +565,14 @@ class TranscribeInput(BaseModel):
     auth_header: str | None = Field(None, description="Header de autenticação para download (ex: Bearer token)")
 
 
+class TranscribeAsyncInput(TranscribeInput):
+    """Input para /api/transcribe-async — transcrição async com callback via Supabase.
+    Retorna 202 imediatamente. O resultado é salvo diretamente no drive_files via Supabase.
+    """
+    drive_file_id: str = Field(..., description="driveFileId (Google Drive ID) para atualizar o registro no Supabase")
+    db_record_id: int = Field(..., description="ID do registro na tabela drive_files")
+
+
 class TranscribeOutput(BaseModel):
     """Output de /api/transcribe."""
     transcript: str = Field("", description="Transcrição completa formatada com timestamps + speakers")

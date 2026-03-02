@@ -620,8 +620,8 @@ class EnrichmentClient {
   }
 
   /**
-   * Transcrever arquivo de áudio/vídeo (Whisper + pyannote).
-   * Chamado pelo: tRPC solar.transcreverDrive
+   * Transcrever arquivo de áudio/vídeo (Whisper + pyannote) — SÍNCRONO.
+   * Chamado por: Inngest functions (se configurado)
    */
   async transcribe(input: TranscribeInput): Promise<TranscribeOutput> {
     // Transcription via Gemini can take 10+ min for large files (190MB+)
@@ -636,6 +636,35 @@ class EnrichmentClient {
         diarize: input.diarize ?? true,
         expected_speakers: input.expectedSpeakers ?? null,
         auth_header: input.authHeader ?? null,
+      });
+    } finally {
+      this.timeout = originalTimeout;
+    }
+  }
+
+  /**
+   * Transcrever arquivo de áudio/vídeo — ASSÍNCRONO.
+   * Retorna 202 Accepted imediatamente. O enrichment engine processa em
+   * background no Railway (sem timeout) e atualiza o DB via Supabase.
+   * Chamado pelo: tRPC drive.transcreverDrive
+   */
+  async transcribeAsync(input: TranscribeInput & {
+    driveFileId: string;
+    dbRecordId: number;
+  }): Promise<{ status: string; message: string }> {
+    // Short timeout — only needs to reach the server and get 202 back
+    const originalTimeout = this.timeout;
+    this.timeout = 30_000; // 30s
+    try {
+      return await this.request<{ status: string; message: string }>("/api/transcribe-async", {
+        file_url: input.fileUrl,
+        file_name: input.fileName ?? "audio.mp3",
+        language: input.language ?? "pt",
+        diarize: input.diarize ?? true,
+        expected_speakers: input.expectedSpeakers ?? null,
+        auth_header: input.authHeader ?? null,
+        drive_file_id: input.driveFileId,
+        db_record_id: input.dbRecordId,
       });
     } finally {
       this.timeout = originalTimeout;

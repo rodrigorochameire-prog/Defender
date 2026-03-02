@@ -53,7 +53,6 @@ import {
   enrichmentClient,
   type TranscribeOutput,
 } from "@/lib/services/enrichment-client";
-import { inngest } from "@/lib/inngest/client";
 
 /**
  * Calcula a similaridade entre duas strings usando distância de Levenshtein normalizada
@@ -2294,9 +2293,10 @@ export const driveRouter = router({
 
   /**
    * Transcrever arquivo de áudio/vídeo do Drive.
-   * Dispara evento Inngest para processamento assíncrono (evita timeout Vercel 60s).
-   * A transcrição real acontece na function transcribeDriveFileFn.
-   * O resultado é salvo em driveFiles.enrichmentData e o UI faz polling.
+   * Chama enrichment engine /api/transcribe-async que retorna 202 imediatamente.
+   * O enrichment engine processa em background (Railway, sem timeout) e
+   * atualiza drive_files via Supabase diretamente quando terminar.
+   * O UI faz polling a cada 5s para detectar mudanças de status.
    */
   transcreverDrive: protectedProcedure
     .input(
@@ -2309,7 +2309,7 @@ export const driveRouter = router({
         language: z.string().default("pt"),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       // 0. Recovery: resetar arquivos stuck em "processing" por mais de 15 min
       await db
         .update(driveFiles)
@@ -2356,7 +2356,13 @@ export const driveRouter = router({
         throw new Error(`Arquivo muito grande (${fileSizeMB.toFixed(0)}MB). Máximo recomendado: 500MB.`);
       }
 
-      // 2. Marcar como "processing"
+      // 2. Obter token de acesso do Google Drive
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new Error("Não foi possível obter token de acesso do Google Drive.");
+      }
+
+      // 3. Marcar como "processing"
       await db
         .update(driveFiles)
         .set({
@@ -2366,24 +2372,40 @@ export const driveRouter = router({
         })
         .where(eq(driveFiles.driveFileId, input.driveFileId));
 
-      // 3. Disparar Inngest event (async — retorna imediatamente)
-      await inngest.send({
-        name: "drive/transcribe.file",
-        data: {
-          driveFileId: input.driveFileId,
-          processoId: input.processoId,
-          assistidoId: input.assistidoId,
-          diarize: input.diarize,
-          expectedSpeakers: input.expectedSpeakers,
+      // 4. Chamar enrichment engine ASYNC (retorna 202 Accepted em <1s)
+      // O enrichment engine processa em background e atualiza o DB via Supabase
+      const downloadUrl = `https://www.googleapis.com/drive/v3/files/${file.driveFileId}?alt=media`;
+
+      try {
+        await enrichmentClient.transcribeAsync({
+          fileUrl: downloadUrl,
+          fileName: file.name || "audio.mp3",
           language: input.language,
-          userId: ctx.user.id,
-        },
-      });
+          diarize: input.diarize,
+          expectedSpeakers: input.expectedSpeakers ?? null,
+          authHeader: `Bearer ${accessToken}`,
+          driveFileId: input.driveFileId,
+          dbRecordId: file.id,
+        });
+      } catch (error) {
+        // Se o enrichment engine estiver indisponível, marcar como failed
+        await db
+          .update(driveFiles)
+          .set({
+            enrichmentStatus: "failed",
+            enrichmentError: `Enrichment engine indisponível: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
+          })
+          .where(eq(driveFiles.driveFileId, input.driveFileId));
+
+        throw new Error(
+          `Falha ao iniciar transcrição: ${error instanceof Error ? error.message : "Enrichment engine indisponível"}`,
+        );
+      }
 
       return {
         queued: true,
         driveFileId: input.driveFileId,
-        message: `Transcrição de "${file.name}" iniciada em background. Acompanhe o progresso no painel.`,
+        message: `Transcrição de "${file.name}" iniciada em background. O status será atualizado automaticamente.`,
       };
     }),
 

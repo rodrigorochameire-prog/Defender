@@ -840,14 +840,18 @@ export const documentSectionsRouter = router({
 
       if (!file) throw new Error("File not found");
 
-      const { inngest } = await import("@/lib/inngest/client");
-      await inngest.send({
-        name: "pdf/insert-bookmarks",
-        data: {
-          driveFileId: input.driveFileId,
-          driveGoogleId: file.driveFileId,
-        },
-      });
+      try {
+        const { inngest } = await import("@/lib/inngest/client");
+        await inngest.send({
+          name: "pdf/insert-bookmarks",
+          data: {
+            driveFileId: input.driveFileId,
+            driveGoogleId: file.driveFileId,
+          },
+        });
+      } catch (err) {
+        console.warn("[Bookmarks] Inngest send failed (non-fatal):", err);
+      }
 
       return { triggered: true };
     }),
