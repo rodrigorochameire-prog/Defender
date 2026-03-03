@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef, useCallback } from "react";
+import React, { useState, useMemo, useRef, useCallback, Fragment } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import {
@@ -706,122 +706,105 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
           </div>
         )}
 
-        {/* 4. Mini KPIs */}
-        <div className="grid grid-cols-3 gap-2.5">
+        {/* 4. Inline Stats */}
+        <div className="flex items-center gap-3 px-1">
           <Link
             href={`/admin/processos?assistido=${assistido.id}`}
-            className="group/kpi flex flex-col items-center p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 hover:shadow-sm"
+            className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
           >
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700/50 flex items-center justify-center mb-1.5 group-hover/kpi:bg-emerald-100 dark:group-hover/kpi:bg-emerald-900/30 transition-colors">
-              <Scale className="w-4 h-4 text-zinc-400 group-hover/kpi:text-emerald-600 dark:group-hover/kpi:text-emerald-400 transition-colors" />
-            </div>
-            <span className="text-base font-bold text-zinc-800 dark:text-zinc-200">{assistido.processosAtivos || 0}</span>
-            <span className="text-[10px] text-zinc-400 font-medium">Processos</span>
+            <Scale className="w-3.5 h-3.5" />
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">{assistido.processosAtivos || 0}</span>
+            <span>proc.</span>
           </Link>
-
+          <span className="text-zinc-300 dark:text-zinc-600">·</span>
           <Link
             href={`/admin/demandas?assistido=${assistido.id}`}
-            className="group/kpi flex flex-col items-center p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 hover:shadow-sm"
-          >
-            <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 transition-colors",
+            className={cn(
+              "flex items-center gap-1.5 text-xs transition-colors",
               assistido.demandasAbertas > 0
-                ? "bg-amber-100 dark:bg-amber-900/30"
-                : "bg-zinc-100 dark:bg-zinc-700/50 group-hover/kpi:bg-emerald-100 dark:group-hover/kpi:bg-emerald-900/30"
-            )}>
-              <FileText className={cn(
-                "w-4 h-4 transition-colors",
-                assistido.demandasAbertas > 0
-                  ? "text-amber-600 dark:text-amber-400"
-                  : "text-zinc-400 group-hover/kpi:text-emerald-600 dark:group-hover/kpi:text-emerald-400"
-              )} />
-            </div>
-            <span className={cn(
-              "text-base font-bold",
-              assistido.demandasAbertas > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-800 dark:text-zinc-200"
-            )}>
-              {assistido.demandasAbertas || 0}
-            </span>
-            <span className="text-[10px] text-zinc-400 font-medium">Demandas</span>
+                ? "text-amber-600 dark:text-amber-400 hover:text-amber-700"
+                : "text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+            )}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span className="font-semibold">{assistido.demandasAbertas || 0}</span>
+            <span>dem.</span>
           </Link>
-
-          <div className="group/kpi flex flex-col items-center p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200">
-            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700/50 flex items-center justify-center mb-1.5 group-hover/kpi:bg-violet-100 dark:group-hover/kpi:bg-violet-900/30 transition-colors">
-              <Brain className="w-4 h-4 text-zinc-400 group-hover/kpi:text-violet-600 dark:group-hover/kpi:text-violet-400 transition-colors" />
-            </div>
-            <span className="text-base font-bold text-zinc-800 dark:text-zinc-200">{score}</span>
-            <span className="text-[10px] text-zinc-400 font-medium">Score</span>
+          <span className="text-zinc-300 dark:text-zinc-600">·</span>
+          <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+            <Brain className="w-3.5 h-3.5" />
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">{score}</span>
           </div>
         </div>
 
-        {/* 5. Próxima Audiência Premium */}
+        {/* 5. Próxima Audiência Compact */}
         {assistido.proximaAudiencia && (
           <div className={cn(
-            "flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 hover:shadow-sm",
+            "flex items-center gap-2.5 px-2.5 py-2 rounded-lg border transition-all duration-200 hover:shadow-sm",
             audienciaHoje
-              ? "bg-gradient-to-r from-amber-50 to-amber-50/50 dark:from-amber-900/20 dark:to-amber-900/10 border-amber-200/80 dark:border-amber-800/40 hover:border-amber-300 dark:hover:border-amber-700/60"
+              ? "bg-amber-50/80 dark:bg-amber-900/20 border-amber-200/60 dark:border-amber-800/40"
               : audienciaAmanha
-                ? "bg-gradient-to-r from-blue-50 to-blue-50/50 dark:from-blue-900/20 dark:to-blue-900/10 border-blue-200/80 dark:border-blue-800/40 hover:border-blue-300 dark:hover:border-blue-700/60"
-                : "bg-zinc-50/80 dark:bg-zinc-800/40 border-zinc-200/60 dark:border-zinc-700/40 hover:border-zinc-300 dark:hover:border-zinc-600"
+                ? "bg-blue-50/80 dark:bg-blue-900/20 border-blue-200/60 dark:border-blue-800/40"
+                : "bg-zinc-50/80 dark:bg-zinc-800/40 border-zinc-200/60 dark:border-zinc-700/40"
           )}>
             <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-transform hover:scale-105",
-              audienciaHoje && "bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-amber-500/30",
-              audienciaAmanha && "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-blue-500/30",
-              !audienciaHoje && !audienciaAmanha && "bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400"
+              "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
+              audienciaHoje && "bg-amber-500 text-white",
+              audienciaAmanha && "bg-blue-500 text-white",
+              !audienciaHoje && !audienciaAmanha && "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400"
             )}>
-              <Calendar className="w-5 h-5" />
+              <Calendar className="w-3.5 h-3.5" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <span className={cn(
-                  "text-xs font-bold tracking-wide",
+                  "text-[10px] font-bold uppercase tracking-wide",
                   audienciaHoje && "text-amber-700 dark:text-amber-400",
                   audienciaAmanha && "text-blue-700 dark:text-blue-400",
-                  !audienciaHoje && !audienciaAmanha && "text-zinc-700 dark:text-zinc-300"
+                  !audienciaHoje && !audienciaAmanha && "text-zinc-600 dark:text-zinc-300"
                 )}>
                   {audienciaHoje ? "HOJE" : audienciaAmanha ? "AMANHÃ" : format(parseISO(assistido.proximaAudiencia), "dd/MM")}
                 </span>
-                <span className="text-xs text-zinc-500 font-medium">
+                <span className="text-[10px] text-zinc-400 font-medium">
                   {format(parseISO(assistido.proximaAudiencia), "HH:mm")}
                 </span>
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">
+                  · {assistido.tipoProximaAudiencia || "Audiência"}
+                </span>
               </div>
-              <p className="text-[10px] text-zinc-500 truncate mt-0.5">
-                {assistido.tipoProximaAudiencia || "Audiência"}
-              </p>
             </div>
             {(audienciaHoje || audienciaAmanha) && (
               <div className={cn(
-                "w-2.5 h-2.5 rounded-full",
-                audienciaHoje && "bg-amber-500 animate-pulse shadow-sm shadow-amber-500/50",
-                audienciaAmanha && "bg-blue-500 shadow-sm shadow-blue-500/50"
+                "w-2 h-2 rounded-full shrink-0",
+                audienciaHoje && "bg-amber-500 animate-pulse",
+                audienciaAmanha && "bg-blue-500"
               )} />
             )}
           </div>
         )}
 
-        {/* 6. Crime Principal */}
+        {/* 6. Crime Principal — inline */}
         {assistido.crimePrincipal && (
-          <div className="px-2.5 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-            <p className="text-[9px] text-zinc-400 uppercase tracking-wide mb-0.5">Tipo Penal</p>
-            <p className="text-xs text-zinc-700 dark:text-zinc-300 line-clamp-2">{assistido.crimePrincipal}</p>
-          </div>
+          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-1 px-1">
+            <span className="text-zinc-400 dark:text-zinc-500 uppercase tracking-wide mr-1">Tipo:</span>
+            {assistido.crimePrincipal}
+          </p>
         )}
 
-        {/* 7. Número do Processo */}
+        {/* 7. Número do Processo — inline */}
         {assistido.numeroProcesso && (
           <div
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 cursor-pointer group/copy hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="flex items-center gap-1.5 px-1 cursor-pointer group/copy"
             onClick={handleCopyProcesso}
           >
-            <Scale className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400 truncate flex-1">
+            <Scale className="w-3 h-3 text-zinc-400" />
+            <span className="font-mono text-[10px] text-zinc-400 dark:text-zinc-500 truncate flex-1">
               {assistido.numeroProcesso}
             </span>
             {copied ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
             ) : (
-              <Copy className="w-3.5 h-3.5 text-zinc-300 group-hover/copy:text-zinc-400 transition-colors" />
+              <Copy className="w-3 h-3 text-zinc-300 group-hover/copy:text-zinc-400 transition-colors" />
             )}
           </div>
         )}
@@ -2229,156 +2212,38 @@ export default function AssistidosPage() {
       {/* KPI Cards Premium - Padrão Defender (cores neutras) */}
       {!showNaoIdentificados && (
       <>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {/* Total */}
-          <button
-            onClick={() => { setStatusFilter("all"); setShowPinnedOnly(false); }}
-            className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
-              statusFilter === "all" && !showPinnedOnly
-                ? "border-emerald-200/50 dark:border-emerald-800/30"
-                : "border-zinc-200/80 dark:border-zinc-800/80",
-              "cursor-pointer"
-            )}
-          >
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="relative flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Total</p>
-                <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.total - naoIdentificadosCount}</p>
-                <p className="text-[9px] text-emerald-600 dark:text-emerald-400">assistidos</p>
-              </div>
-              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
-                <Users className="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
-              </div>
-            </div>
-          </button>
-
-          {/* Presos */}
-          <button
-            onClick={() => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }}
-            className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
-              statusFilter === "CADEIA_PUBLICA"
-                ? "border-emerald-200/50 dark:border-emerald-800/30"
-                : "border-zinc-200/80 dark:border-zinc-800/80",
-              "cursor-pointer"
-            )}
-          >
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="relative flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Presos</p>
-                <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.presos}</p>
-                <p className="text-[9px] text-zinc-500 dark:text-zinc-400">prioridade</p>
-              </div>
-              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
-                <Lock className="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
-              </div>
-            </div>
-          </button>
-
-          {/* Monitorados */}
-          <button
-            onClick={() => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }}
-            className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
-              statusFilter === "MONITORADO"
-                ? "border-emerald-200/50 dark:border-emerald-800/30"
-                : "border-zinc-200/80 dark:border-zinc-800/80",
-              "cursor-pointer"
-            )}
-          >
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="relative flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Monitorados</p>
-                <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.monitorados}</p>
-                <p className="text-[9px] text-zinc-500 dark:text-zinc-400">tornozeleira</p>
-              </div>
-              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
-                <Timer className="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
-              </div>
-            </div>
-          </button>
-
-          {/* Audiencias Hoje - mantém azul funcional */}
-          <button
-            onClick={() => {}}
-            className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
-              "border-zinc-200/80 dark:border-zinc-800/80",
-              "cursor-pointer"
-            )}
-          >
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="relative flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Aud. Hoje</p>
-                <p className={cn("text-xl font-bold", stats.audienciasHoje > 0 ? "text-blue-600 dark:text-blue-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.audienciasHoje}</p>
-                <p className="text-[9px] text-blue-600/70 dark:text-blue-400/70">{stats.audienciasSemana} semana</p>
-              </div>
-              <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-300",
-                stats.audienciasHoje > 0
-                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400"
-                  : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
-              )}>
-                <Calendar className="w-4 h-4" />
-              </div>
-            </div>
-          </button>
-
-          {/* Com Demandas */}
-          <button
-            onClick={() => {}}
-            className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
-              "border-zinc-200/80 dark:border-zinc-800/80",
-              "cursor-pointer"
-            )}
-          >
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="relative flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Demandas</p>
-                <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.comDemandas}</p>
-                <p className="text-[9px] text-zinc-500 dark:text-zinc-400">pendentes</p>
-              </div>
-              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-all duration-300">
-                <FileText className="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300" />
-              </div>
-            </div>
-          </button>
-
-          {/* Fixados */}
-          <button
-            onClick={() => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }}
-            className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
-              showPinnedOnly
-                ? "border-emerald-200/50 dark:border-emerald-800/30"
-                : "border-zinc-200/80 dark:border-zinc-800/80",
-              "cursor-pointer"
-            )}
-          >
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
-            <div className="relative flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Fixados</p>
-                <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.pinned}</p>
-                <p className="text-[9px] text-zinc-500 dark:text-zinc-400">favoritos</p>
-              </div>
-              <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-300",
-                showPinnedOnly
-                  ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400"
-                  : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 group-hover:border-emerald-300/30 dark:group-hover:border-emerald-700/30 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
-              )}>
-                <BookmarkCheck className="w-4 h-4" />
-              </div>
-            </div>
-          </button>
+        {/* Stats Ribbon — compact inline KPIs */}
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+          {[
+            { icon: Users, value: stats.total - naoIdentificadosCount, label: "assistidos", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
+            { icon: Lock, value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", alert: stats.presos > 0 },
+            { icon: Timer, value: stats.monitorados, label: "monitorados", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
+            { icon: Calendar, value: stats.audienciasHoje, label: "aud. hoje", sublabel: `${stats.audienciasSemana} semana`, alert: stats.audienciasHoje > 0 },
+            { icon: FileText, value: stats.comDemandas, label: "demandas" },
+            { icon: BookmarkCheck, value: stats.pinned, label: "fixados", onClick: () => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }, active: showPinnedOnly },
+          ].map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Fragment key={index}>
+                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                <button
+                  onClick={stat.onClick}
+                  className={cn(
+                    "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
+                    stat.onClick && "cursor-pointer",
+                    stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                    stat.alert && !stat.active ? "bg-rose-50 dark:bg-rose-950/20" : ""
+                  )}
+                >
+                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
+                  <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                </button>
+              </Fragment>
+            );
+          })}
+          <div className="flex-1" />
+          <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total - naoIdentificadosCount} total</span>
         </div>
 
         {/* Alertas de Urgência */}
