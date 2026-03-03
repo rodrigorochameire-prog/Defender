@@ -2,7 +2,6 @@
 Testes unitários para TranscriptionService — funções utilitárias.
 Sem I/O real: mocks para OpenAI, httpx, pydub.
 """
-import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch, mock_open
 import pytest
@@ -48,8 +47,8 @@ def test_quality_too_long_triggers_cleaning(service):
     result = {"transcript_plain": repeated}
     with patch.object(service, "_clean_repetition_aggressive", return_value="cleaned") as mock_clean:
         out = service._validate_output_quality(result, duration_s=60)
-    assert out["quality_warning"] == "output_too_long_cleaned"
-    mock_clean.assert_called_once()
+        assert out["quality_warning"] == "output_too_long_cleaned"
+        mock_clean.assert_called_once()
 
 
 # ── Task 1: _clean_repetition_aggressive ─────────────────────────
