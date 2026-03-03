@@ -9,16 +9,20 @@ type DriveFile = {
   name: string;
   mimeType: string | null;
   webViewLink: string | null;
-  lastModifiedTime: string | null;
+  lastModifiedTime: string | Date | null;
   isFolder: boolean | null;
   driveFolderId: string | null;
 };
+
+function toDate(value: string | Date): Date {
+  return value instanceof Date ? value : parseISO(value);
+}
 
 function groupByMonth(files: DriveFile[]): Map<string, DriveFile[]> {
   const map = new Map<string, DriveFile[]>();
   for (const f of files) {
     const key = f.lastModifiedTime
-      ? format(parseISO(f.lastModifiedTime), "MMMM yyyy", { locale: ptBR })
+      ? format(toDate(f.lastModifiedTime), "MMMM yyyy", { locale: ptBR })
       : "Sem data";
     const list = map.get(key) ?? [];
     list.push(f);
@@ -61,7 +65,7 @@ export function TimelineDocumental({ files }: { files: DriveFile[] }) {
                 </span>
                 {f.lastModifiedTime && (
                   <span className="text-[10px] text-zinc-400 shrink-0">
-                    {format(parseISO(f.lastModifiedTime), "dd/MM HH'h'mm", { locale: ptBR })}
+                    {format(toDate(f.lastModifiedTime), "dd/MM HH'h'mm", { locale: ptBR })}
                   </span>
                 )}
                 {f.webViewLink && (

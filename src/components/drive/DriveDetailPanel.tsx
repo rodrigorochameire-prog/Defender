@@ -734,17 +734,19 @@ function EnrichmentSection({ file }: { file: DriveFile }) {
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="px-4 pb-3 space-y-3">
-          {/* Status badge */}
-          {badge.label && (
+          {/* Status badge + OCR indicator */}
+          {(badge.label || ocrStatus?.ocrApplied) && (
             <div className="flex items-center gap-2">
-              <span
-                className={cn(
-                  "text-[11px] px-2 py-0.5 rounded-full border",
-                  badge.class
-                )}
-              >
-                {badge.label}
-              </span>
+              {badge.label && (
+                <span
+                  className={cn(
+                    "text-[11px] px-2 py-0.5 rounded-full border",
+                    badge.class
+                  )}
+                >
+                  {badge.label}
+                </span>
+              )}
               {ocrStatus?.ocrApplied && (
                 <Badge className="text-[9px] bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border-amber-300 dark:border-amber-700">
                   <ScanLine className="w-3 h-3 mr-1" />
@@ -1076,13 +1078,31 @@ function TranscriptionSection({
             ) : null}
           </div>
 
-          {/* Processing message */}
-          {isProcessing && !hasTranscription && (
-            <div className="text-xs text-cyan-400/80 bg-cyan-500/5 border border-cyan-500/10 rounded-lg p-2.5 flex items-center gap-2">
-              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-              <span>Transcrição em andamento... O status será atualizado automaticamente.</span>
-            </div>
-          )}
+          {/* Processing message with progress bar */}
+          {isProcessing && !hasTranscription && (() => {
+            const progress = enrichData?.progress as { step?: string; percent?: number; detail?: string } | undefined;
+            const pct = progress?.percent ?? 15;
+            const detail = progress?.detail ?? "Processando...";
+            return (
+              <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-lg p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 transition-all duration-1000 ease-out"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-zinc-500 tabular-nums w-8 text-right shrink-0">
+                    {pct}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-3 w-3 animate-spin text-cyan-400 shrink-0" />
+                  <span className="text-[11px] text-cyan-400/80">{detail}</span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Error message */}
           {file.enrichmentStatus === "failed" && file.enrichmentError && (

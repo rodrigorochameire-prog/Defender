@@ -109,8 +109,29 @@ async def _process_transcription_background(input_data: TranscribeAsyncInput):
         db_record_id,
     )
 
+    # Helper para atualizar progresso no DB (polling pelo frontend)
+    def _update_progress(step: str, progress: int, detail: str = ""):
+        """Atualiza enrichment_data.progress para o frontend mostrar barra de progresso."""
+        try:
+            from services.supabase_service import get_supabase_service
+            supa = get_supabase_service()
+            client = supa._get_client()
+            client.table("drive_files").update({
+                "enrichment_data": {
+                    "progress": {"step": step, "percent": progress, "detail": detail},
+                },
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }).eq("id", db_record_id).execute()
+        except Exception:
+            pass  # Non-critical — don't break the pipeline
+
     try:
+        # ── Etapa 1: Download + Transcrição ──
+        _update_progress("downloading", 10, "Baixando arquivo do Drive...")
+
         service = get_transcription_service()
+        _update_progress("transcribing", 25, "Transcrevendo com Whisper...")
+
         result = await service.transcribe(
             file_url=input_data.file_url,
             file_name=input_data.file_name,
@@ -120,7 +141,58 @@ async def _process_transcription_background(input_data: TranscribeAsyncInput):
             auth_header=input_data.auth_header,
         )
 
-        # Salvar resultado diretamente no Supabase (drive_files)
+        logger.info(
+            "Transcrição concluída | file=%s | speakers=%d | duration=%.0fs",
+            input_data.file_name,
+            len(result.get("speakers", [])),
+            result.get("duration", 0),
+        )
+
+        _update_progress("transcribed", 60, "Transcrição concluída. Iniciando análise IA...")
+
+        # ── Etapa 2: Análise Sonnet (se disponível) ──
+        analysis = None
+        try:
+            from services.analysis_service import get_analysis_service
+
+            analysis_svc = get_analysis_service()
+            if analysis_svc.available:
+                transcript_text = (
+                    result.get("transcript_plain", "")
+                    or result.get("transcript", "")
+                )
+                if transcript_text and len(transcript_text) > 100:
+                    logger.info(
+                        "Iniciando análise Sonnet | file=%s | transcript_len=%d",
+                        input_data.file_name,
+                        len(transcript_text),
+                    )
+                    _update_progress("analyzing", 70, "Analisando depoimento com Claude Sonnet...")
+
+                    analysis = await analysis_svc.analyze_deposition(
+                        transcript=transcript_text,
+                        file_name=input_data.file_name,
+                        speakers=result.get("speakers"),
+                    )
+                    if analysis:
+                        logger.info(
+                            "Análise Sonnet OK | file=%s | highlights=%d | pontos_fav=%d",
+                            input_data.file_name,
+                            len(analysis.get("highlights", [])),
+                            len(analysis.get("pontos_favoraveis", [])),
+                        )
+                    else:
+                        logger.warning("Análise Sonnet retornou None para %s", input_data.file_name)
+                else:
+                    logger.info("Transcrição muito curta para análise Sonnet (%d chars)", len(transcript_text or ""))
+            else:
+                logger.info("Análise Sonnet indisponível (ANTHROPIC_API_KEY não configurada)")
+        except Exception as e:
+            logger.warning("Análise Sonnet falhou (continuando sem): %s", str(e))
+
+        _update_progress("saving", 90, "Salvando resultado...")
+
+        # ── Etapa 3: Salvar no Supabase ──
         from services.supabase_service import get_supabase_service
 
         supa = get_supabase_service()
@@ -134,7 +206,12 @@ async def _process_transcription_background(input_data: TranscribeAsyncInput):
             "speakers": result.get("speakers", []),
             "duration": result.get("duration", 0),
             "diarization_applied": result.get("diarization_applied", False),
+            "progress": {"step": "completed", "percent": 100, "detail": "Concluído"},
         }
+
+        # Incluir análise Sonnet se disponível
+        if analysis:
+            enrichment_data["analysis"] = analysis
 
         client.table("drive_files").update({
             "enrichment_status": "completed",
@@ -146,10 +223,11 @@ async def _process_transcription_background(input_data: TranscribeAsyncInput):
         }).eq("id", db_record_id).execute()
 
         logger.info(
-            "Background transcription COMPLETED | file=%s | speakers=%d | duration=%.0fs",
+            "Background transcription COMPLETED | file=%s | speakers=%d | duration=%.0fs | analysis=%s",
             input_data.file_name,
             len(result.get("speakers", [])),
             result.get("duration", 0),
+            "yes" if analysis else "no",
         )
 
     except Exception as e:

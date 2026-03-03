@@ -172,8 +172,8 @@ const SECTION_TYPE_CONFIG: Record<
   },
   pronuncia: {
     label: "Pronúncia",
-    color: "#ea580c",
-    bgColor: "bg-orange-600/10 text-orange-600 border-orange-600/20",
+    color: "#d97706",
+    bgColor: "bg-amber-600/10 text-amber-600 border-amber-600/20",
     icon: Gavel,
     relevancia: "alto",
   },
@@ -207,8 +207,8 @@ const SECTION_TYPE_CONFIG: Record<
   },
   interrogatorio: {
     label: "Interrogatório",
-    color: "#3b82f6",
-    bgColor: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    color: "#2563eb",
+    bgColor: "bg-blue-600/10 text-blue-600 border-blue-600/20",
     icon: MessageSquare,
     relevancia: "alto",
   },

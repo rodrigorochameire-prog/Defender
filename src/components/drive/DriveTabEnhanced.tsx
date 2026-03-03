@@ -13,12 +13,23 @@ import {
   FileText,
   ExternalLink,
   RefreshCw,
-  Filter,
+  X,
+  Music,
+  Video,
+  Brain,
+  FileAudio,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SubpastaExplorer } from "@/components/hub/SubpastaExplorer";
 import { TimelineDocumental } from "@/components/hub/TimelineDocumental";
 import { toast } from "sonner";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { TranscriptViewer, type AnalysisData } from "@/components/shared/transcript-viewer";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 type ViewMode = "tree" | "timeline" | "status";
 
@@ -30,10 +41,11 @@ interface DriveFileData {
   isFolder: boolean | null;
   parentFileId: number | null;
   driveFolderId: string | null;
-  lastModifiedTime: string | null;
+  lastModifiedTime: string | Date | null;
   enrichmentStatus?: string | null;
   documentType?: string | null;
   categoria?: string | null;
+  enrichmentData?: unknown;
 }
 
 interface DriveTabEnhancedProps {
@@ -200,9 +212,197 @@ function StatusView({ files, assistidoId, processoId }: { files: DriveFileData[]
   );
 }
 
+// ─── File Detail Sheet ───────────────────────────────────────────────
+
+function FileDetailSheet({
+  file,
+  onClose,
+}: {
+  file: DriveFileData;
+  onClose: () => void;
+}) {
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
+
+  const isAudio = file.mimeType?.startsWith("audio/");
+  const isVideo = file.mimeType?.startsWith("video/");
+  const isAudioVideo = isAudio || isVideo;
+
+  // Extract transcript data from enrichmentData
+  const enrichData = file.enrichmentData as Record<string, unknown> | null | undefined;
+  const rawTranscriptPlain = enrichData?.transcript_plain as string | undefined;
+  const rawTranscript = enrichData?.transcript as string | undefined;
+  let transcript: string | undefined;
+  if (rawTranscriptPlain && !rawTranscriptPlain.startsWith("{")) {
+    transcript = rawTranscriptPlain;
+  } else if (rawTranscript && !rawTranscript.startsWith("{")) {
+    transcript = rawTranscript;
+  } else if (rawTranscript) {
+    try {
+      const parsed = JSON.parse(rawTranscript);
+      transcript = parsed.transcript_plain || parsed.transcript || rawTranscript;
+    } catch {
+      transcript = rawTranscript;
+    }
+  }
+  const analysis = enrichData?.analysis as AnalysisData | undefined;
+  const speakers = enrichData?.speakers as string[] | undefined;
+  const duration = enrichData?.duration as number | undefined;
+  const hasTranscript = !!transcript;
+
+  const statusConfig: Record<string, { label: string; class: string }> = {
+    completed: { label: "Enriquecido", class: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+    processing: { label: "Processando", class: "bg-blue-100 text-blue-700 border-blue-200" },
+    failed: { label: "Falhou", class: "bg-rose-100 text-rose-700 border-rose-200" },
+    pending: { label: "Pendente", class: "bg-zinc-100 text-zinc-600 border-zinc-200" },
+    skipped: { label: "Ignorado", class: "bg-zinc-100 text-zinc-400 border-zinc-200" },
+  };
+  const status = file.enrichmentStatus ? (statusConfig[file.enrichmentStatus] ?? statusConfig.pending) : null;
+
+  return (
+    <>
+      <Sheet open onOpenChange={(open) => !open && onClose()}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-md bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 p-0"
+        >
+          <SheetTitle className="sr-only">{file.name}</SheetTitle>
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+              <div className="h-9 w-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                {isAudio ? (
+                  <Music className="h-4 w-4 text-cyan-500" />
+                ) : isVideo ? (
+                  <Video className="h-4 w-4 text-violet-500" />
+                ) : (
+                  <FileText className="h-4 w-4 text-zinc-400" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{file.name}</p>
+                {file.documentType && (
+                  <p className="text-[11px] text-zinc-500">{file.documentType}</p>
+                )}
+              </div>
+              <button
+                onClick={onClose}
+                className="h-7 w-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* Status + Category badges */}
+              <div className="flex flex-wrap gap-1.5">
+                {status && (
+                  <Badge variant="outline" className={cn("text-[10px] font-medium", status.class)}>
+                    {status.label}
+                  </Badge>
+                )}
+                {file.categoria && (
+                  <Badge variant="outline" className="text-[10px] bg-violet-50 text-violet-600 border-violet-200">
+                    {file.categoria}
+                  </Badge>
+                )}
+                {hasTranscript && (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
+                    <FileAudio className="h-2.5 w-2.5" />
+                    Transcrito
+                  </Badge>
+                )}
+                {analysis?.resumo_defesa && (
+                  <Badge variant="outline" className="text-[10px] bg-violet-50 text-violet-700 border-violet-200 flex items-center gap-1">
+                    <Brain className="h-2.5 w-2.5" />
+                    Analisado
+                  </Badge>
+                )}
+              </div>
+
+              {/* Metadata */}
+              <div className="space-y-2 rounded-lg border border-zinc-100 dark:border-zinc-800 p-3">
+                {file.mimeType && (
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-zinc-400">Tipo</span>
+                    <span className="text-zinc-600 dark:text-zinc-400 font-mono truncate ml-2">{file.mimeType}</span>
+                  </div>
+                )}
+                {file.lastModifiedTime && (
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-zinc-400">Modificado</span>
+                    <span className="text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {format(file.lastModifiedTime instanceof Date ? file.lastModifiedTime : new Date(file.lastModifiedTime), "dd/MM/yyyy", { locale: ptBR })}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Resumo IA */}
+              {analysis?.resumo_defesa && (
+                <div className="rounded-lg border border-violet-100 dark:border-violet-900 bg-violet-50/50 dark:bg-violet-950/20 p-3">
+                  <p className="text-[10px] font-semibold text-violet-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                    <Brain className="h-3 w-3" />
+                    Resumo Defesa
+                  </p>
+                  <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4">
+                    {analysis.resumo_defesa}
+                  </p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="space-y-2">
+                {hasTranscript && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full h-8 text-xs text-violet-600 border-violet-200 hover:bg-violet-50"
+                    onClick={() => setTranscriptOpen(true)}
+                  >
+                    <FileAudio className="h-3.5 w-3.5 mr-1.5" />
+                    Ver Transcrição
+                  </Button>
+                )}
+                {file.webViewLink && (
+                  <a href={file.webViewLink} target="_blank" rel="noopener noreferrer" className="block">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full h-8 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                      Abrir no Drive
+                    </Button>
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Transcript Viewer */}
+      {transcriptOpen && hasTranscript && (
+        <TranscriptViewer
+          open={transcriptOpen}
+          onOpenChange={setTranscriptOpen}
+          transcript={transcript!}
+          speakers={speakers}
+          duration={duration}
+          analysis={analysis ?? null}
+          title={file.name}
+        />
+      )}
+    </>
+  );
+}
+
 export function DriveTabEnhanced({ files, assistidoId, processoId }: DriveTabEnhancedProps) {
   const [view, setView] = useState<ViewMode>("tree");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFile, setSelectedFile] = useState<DriveFileData | null>(null);
 
   // Filter files by search
   const filteredFiles = useMemo(() => {
@@ -269,13 +469,26 @@ export function DriveTabEnhanced({ files, assistidoId, processoId }: DriveTabEnh
       </div>
 
       {/* View content */}
-      {view === "tree" && <SubpastaExplorer files={filteredFiles} />}
+      {view === "tree" && (
+        <SubpastaExplorer
+          files={filteredFiles}
+          onFileClick={(f) => setSelectedFile(f as DriveFileData)}
+        />
+      )}
       {view === "timeline" && <TimelineDocumental files={filteredFiles} />}
       {view === "status" && (
         <StatusView
           files={filteredFiles}
           assistidoId={assistidoId}
           processoId={processoId}
+        />
+      )}
+
+      {/* File Detail Sheet */}
+      {selectedFile && (
+        <FileDetailSheet
+          file={selectedFile}
+          onClose={() => setSelectedFile(null)}
         />
       )}
     </div>

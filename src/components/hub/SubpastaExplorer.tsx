@@ -12,6 +12,12 @@ type DriveFile = {
   isFolder: boolean | null;
   parentFileId: number | null;
   driveFolderId: string | null;
+  // Optional extended fields (passed from DriveTabEnhanced)
+  enrichmentStatus?: string | null;
+  documentType?: string | null;
+  categoria?: string | null;
+  lastModifiedTime?: string | Date | null;
+  enrichmentData?: unknown;
 };
 
 function buildTree(files: DriveFile[]): { roots: DriveFile[]; children: Map<number, DriveFile[]> } {
@@ -36,11 +42,13 @@ function FileNode({
   nodeChildren,
   allChildren,
   depth = 0,
+  onFileClick,
 }: {
   file: DriveFile;
   nodeChildren: DriveFile[];
   allChildren: Map<number, DriveFile[]>;
   depth?: number;
+  onFileClick?: (file: DriveFile) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const isFolder = file.isFolder;
@@ -51,11 +59,12 @@ function FileNode({
       <div
         className={cn(
           "flex items-center gap-1.5 py-1 px-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer group",
-          { "cursor-default": !isFolder && !file.webViewLink }
+          { "cursor-default": !isFolder && !file.webViewLink && !onFileClick }
         )}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
         onClick={() => {
           if (isFolder && hasChildren) setExpanded((e) => !e);
+          else if (onFileClick && !isFolder) onFileClick(file);
           else if (file.webViewLink) window.open(file.webViewLink, "_blank");
         }}
       >
@@ -92,6 +101,7 @@ function FileNode({
               nodeChildren={allChildren.get(child.id) ?? []}
               allChildren={allChildren}
               depth={depth + 1}
+              onFileClick={onFileClick}
             />
           ))}
         </div>
@@ -100,7 +110,7 @@ function FileNode({
   );
 }
 
-export function SubpastaExplorer({ files }: { files: DriveFile[] }) {
+export function SubpastaExplorer({ files, onFileClick }: { files: DriveFile[]; onFileClick?: (file: DriveFile) => void }) {
   const { roots, children } = buildTree(files);
 
   if (files.length === 0) {
@@ -120,6 +130,7 @@ export function SubpastaExplorer({ files }: { files: DriveFile[] }) {
           file={f}
           nodeChildren={children.get(f.id) ?? []}
           allChildren={children}
+          onFileClick={onFileClick}
         />
       ))}
     </div>

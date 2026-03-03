@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -437,43 +437,37 @@ export default function SolarHubPage() {
         <TabsContent value="caixa" className="mt-0">
           <div className="p-4 md:p-6 space-y-5">
 
-            {/* KPIs */}
-            <KPIGrid columns={4}>
-              <KPICardPremium
-                title="Total pendente"
-                value={contadores.total}
-                icon={Bell}
-                gradient="zinc"
-                size="sm"
-              />
-              <KPICardPremium
-                title="Vencidas"
-                value={contadores.vencidas}
-                icon={AlertTriangle}
-                gradient={contadores.vencidas > 0 ? "rose" : "zinc"}
-                size="sm"
-                onClick={() => setFilterUrgencia(filterUrgencia === "vencidas" ? "todos" : "vencidas")}
-                active={filterUrgencia === "vencidas"}
-              />
-              <KPICardPremium
-                title="Urgentes (≤2d)"
-                value={contadores.urgentes}
-                icon={Zap}
-                gradient={contadores.urgentes > 0 ? "rose" : "zinc"}
-                size="sm"
-                onClick={() => setFilterUrgencia(filterUrgencia === "urgentes" ? "todos" : "urgentes")}
-                active={filterUrgencia === "urgentes"}
-              />
-              <KPICardPremium
-                title="Avisos Solar"
-                value={contadores.solar}
-                icon={Shield}
-                gradient="zinc"
-                size="sm"
-                onClick={() => setFilterFonte(filterFonte === "solar" ? "todos" : "solar")}
-                active={filterFonte === "solar"}
-              />
-            </KPIGrid>
+            {/* Stats Ribbon — compact inline KPIs */}
+            <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+              {[
+                { icon: Bell, value: contadores.total, label: "pendentes" },
+                { icon: AlertTriangle, value: contadores.vencidas, label: "vencidas", onClick: () => setFilterUrgencia(filterUrgencia === "vencidas" ? "todos" : "vencidas"), active: filterUrgencia === "vencidas", alert: contadores.vencidas > 0 },
+                { icon: Zap, value: contadores.urgentes, label: "urgentes", onClick: () => setFilterUrgencia(filterUrgencia === "urgentes" ? "todos" : "urgentes"), active: filterUrgencia === "urgentes", alert: contadores.urgentes > 0 },
+                { icon: Shield, value: contadores.solar, label: "solar", onClick: () => setFilterFonte(filterFonte === "solar" ? "todos" : "solar"), active: filterFonte === "solar" },
+              ].map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <Fragment key={index}>
+                    {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                    <button
+                      onClick={stat.onClick}
+                      className={cn(
+                        "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
+                        stat.onClick && "cursor-pointer",
+                        stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                        stat.alert && !stat.active ? "bg-rose-50 dark:bg-rose-950/20" : ""
+                      )}
+                    >
+                      <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
+                      <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
+                      <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                    </button>
+                  </Fragment>
+                );
+              })}
+              <div className="flex-1" />
+              <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{contadores.total} intimações</span>
+            </div>
 
             {/* Filtros */}
             <div className="flex items-center justify-between gap-3 flex-wrap">

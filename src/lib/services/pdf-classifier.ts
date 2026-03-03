@@ -69,6 +69,7 @@ export const SECTION_TIPOS = [
   "portaria_ip",
   "relatorio_policial",
   "auto_prisao",
+  "termo_inquerito",
   "certidao_relevante",
   "diligencias_422",
   "alegacoes",
@@ -111,6 +112,7 @@ export const TIPO_RELEVANCIA: Record<SectionTipo, RelevanciaDefensiva> = {
   portaria_ip: "medio",
   relatorio_policial: "medio",
   auto_prisao: "medio",
+  termo_inquerito: "medio",
   certidao_relevante: "medio",
   diligencias_422: "medio",
   alegacoes: "medio",
@@ -160,7 +162,7 @@ export const SECTION_GROUPS = {
     label: "Investigação Policial",
     icon: "Shield",
     color: "#f97316",
-    tipos: ["relatorio_policial", "portaria_ip", "auto_prisao", "boletim_ocorrencia", "diligencias_422"] as const,
+    tipos: ["relatorio_policial", "portaria_ip", "auto_prisao", "termo_inquerito", "boletim_ocorrencia", "diligencias_422"] as const,
   },
   audiencias: {
     label: "Audiências",
@@ -273,8 +275,23 @@ denuncia, sentenca, depoimento_vitima, depoimento_testemunha, depoimento_investi
 decisao, pronuncia, laudo_pericial, laudo_necroscopico, laudo_local,
 ata_audiencia, interrogatorio, alegacoes_mp, alegacoes_defesa, resposta_acusacao,
 recurso, habeas_corpus, boletim_ocorrencia, portaria_ip, relatorio_policial,
-auto_prisao, certidao_relevante, diligencias_422, alegacoes,
+auto_prisao, termo_inquerito, certidao_relevante, diligencias_422, alegacoes,
 documento_identidade, outros, burocracia
+
+PADROES DE CLASSIFICACAO POR TIPO:
+| pronuncia | "PRONUNCIA", "PRONUNCIO O REU", "Decisao de Pronuncia" |
+| resposta_acusacao | "RESPOSTA A ACUSACAO", "DEFESA PRELIMINAR", "Art. 396-A CPP" |
+| habeas_corpus | "HABEAS CORPUS", "HC", "ORDEM DE HABEAS CORPUS", "LIBERDADE PROVISORIA" |
+| diligencias_422 | "ART. 422", "DILIGENCIAS", "REQUERIMENTO DE DILIGENCIAS", "ROL DE TESTEMUNHAS" |
+| interrogatorio | "INTERROGATORIO", "TERMO DE INTERROGATORIO", "QUALIFICACAO E INTERROGATORIO" |
+| termo_inquerito | "TERMO DE DECLARACOES DO INQUERITO", "AUTO DE PRISAO", "BOLETIM DE OCORRENCIA", "PORTARIA DO IP" |
+| ata_audiencia | "ATA DE AUDIENCIA", "TERMO DE AUDIENCIA", "AUDIENCIA DE INSTRUCAO" |
+| alegacoes_mp | "ALEGACOES FINAIS DO MINISTERIO PUBLICO", "ALEGACOES FINAIS DA ACUSACAO", "MEMORIAIS DO MP" |
+| alegacoes_defesa | "ALEGACOES FINAIS DA DEFESA", "MEMORIAIS DA DEFESA", "RAZOES FINAIS DEFENSIVAS" |
+| laudo_necroscopico | "LAUDO NECROSCOPICO", "EXAME CADAVERICO", "LAUDO DE NECROPSIA", "AUTO DE EXAME CADAVERICO" |
+| laudo_local | "LAUDO DE LOCAL", "EXAME DE LOCAL", "LAUDO DE EXAME DO LOCAL DO FATO" |
+
+Diferencie \`alegacoes_mp\` de \`alegacoes_defesa\` sempre que possivel. Use \`alegacoes\` generico apenas quando nao for possivel identificar a parte. Prefira \`interrogatorio\` para interrogatorios judiciais e \`termo_inquerito\` para termos do inquerito policial.
 
 REGRAS CRITICAS — IDENTIFICACAO DE DEPOIMENTOS E INTERROGATORIOS:
 
@@ -441,7 +458,6 @@ function mapLegacyTipo(tipo: string): SectionTipo {
     depoimento: "depoimento_testemunha", // fallback generico → testemunha
     laudo: "laudo_pericial",
     inquerito: "relatorio_policial",
-    termo_inquerito: "depoimento_investigado", // termos do IP geralmente sao do investigado
     certidao: "certidao_relevante",
   };
   return legacyMap[tipo] || "outros";
