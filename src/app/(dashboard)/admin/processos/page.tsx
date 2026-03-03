@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { Card } from "@/components/ui/card";
 import { SwissCard, SwissCardContent } from "@/components/ui/swiss-card";
 import {
@@ -798,7 +798,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
 
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         {/* Header Premium */}
-        <div className="p-4 space-y-3">
+        <div className="p-3.5 space-y-2">
           {/* Linha 1: Badges de Status */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -878,7 +878,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
           </div>
 
           {/* Linha 3: Assunto */}
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1">
             {processo.assunto}
           </p>
 
@@ -890,7 +890,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
           />
 
           {/* Linha 5: Assistido + Comarca */}
-          <div className="flex items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center justify-between gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
             <Link href={`/admin/assistidos/${processo.assistido.id}`} className="flex items-center gap-2.5 min-w-0 group/link">
               <Avatar className="w-8 h-8 ring-2 ring-white dark:ring-zinc-800 shadow-sm">
                 <AvatarImage src={processo.assistido.foto || undefined} />
@@ -920,7 +920,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
           </div>
 
           {/* Linha 6: Demandas + Ações */}
-          <div className="flex items-center justify-between gap-2 pt-2">
+          <div className="flex items-center justify-between gap-2 pt-1">
             <div className="flex items-center gap-3">
               {processo.demandasAbertas > 0 && (
                 <span className="inline-flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-md">
@@ -1898,70 +1898,39 @@ export default function ProcessosPage() {
         {/* Conteúdo Principal */}
         <div className="p-5 md:p-8 space-y-5 md:space-y-7">
 
-        {/* KPI Cards Premium - Grid Responsivo */}
-        <KPIGrid columns={6}>
-          <KPICardPremium
-            title="Total"
-            value={stats.total}
-            subtitle={`${stats.comarcas} comarcas`}
-            icon={Scale}
-            gradient="zinc"
-            size="sm"
-          />
-
-          <KPICardPremium
-            title="Júri"
-            value={stats.juri}
-            subtitle="processos"
-            icon={Gavel}
-            gradient="zinc"
-            onClick={() => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI")}
-            active={areaFilter === "JURI"}
-            size="sm"
-          />
-
-          <KPICardPremium
-            title="Réus Presos"
-            value={stats.reuPreso}
-            subtitle="prioridade máxima"
-            icon={Lock}
-            gradient="zinc"
-            size="sm"
-          />
-
-          <KPICardPremium
-            title="Vencidos"
-            value={stats.prazosVencidos}
-            subtitle="prazos"
-            icon={AlertCircle}
-            gradient="zinc"
-            onClick={() => setPrazoFilter(prazoFilter === "vencidos" ? "all" : "vencidos")}
-            active={prazoFilter === "vencidos"}
-            size="sm"
-          />
-
-          <KPICardPremium
-            title="Hoje"
-            value={stats.prazosHoje}
-            subtitle="vencem hoje"
-            icon={Timer}
-            gradient="zinc"
-            onClick={() => setPrazoFilter(prazoFilter === "hoje" ? "all" : "hoje")}
-            active={prazoFilter === "hoje"}
-            size="sm"
-          />
-
-          <KPICardPremium
-            title="Urgentes"
-            value={stats.prazosUrgentes}
-            subtitle="até 3 dias"
-            icon={CalendarClock}
-            gradient="zinc"
-            onClick={() => setPrazoFilter(prazoFilter === "semana" ? "all" : "semana")}
-            active={prazoFilter === "semana"}
-            size="sm"
-          />
-        </KPIGrid>
+        {/* Stats Ribbon — compact inline KPIs */}
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+          {[
+            { icon: Scale, value: stats.total, label: "total", sublabel: `${stats.comarcas} comarcas`, onClick: undefined, active: false, alert: false },
+            { icon: Gavel, value: stats.juri, label: "júri", onClick: () => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI"), active: areaFilter === "JURI", alert: false },
+            { icon: Lock, value: stats.reuPreso, label: "presos", onClick: undefined, active: false, alert: stats.reuPreso > 0 },
+            { icon: AlertCircle, value: stats.prazosVencidos, label: "vencidos", onClick: () => setPrazoFilter(prazoFilter === "vencidos" ? "all" : "vencidos"), active: prazoFilter === "vencidos", alert: stats.prazosVencidos > 0 },
+            { icon: Timer, value: stats.prazosHoje, label: "hoje", onClick: () => setPrazoFilter(prazoFilter === "hoje" ? "all" : "hoje"), active: prazoFilter === "hoje", alert: stats.prazosHoje > 0 },
+            { icon: CalendarClock, value: stats.prazosUrgentes, label: "urgentes", onClick: () => setPrazoFilter(prazoFilter === "semana" ? "all" : "semana"), active: prazoFilter === "semana", alert: stats.prazosUrgentes > 0 },
+          ].map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Fragment key={index}>
+                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                <button
+                  onClick={stat.onClick}
+                  className={cn(
+                    "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
+                    stat.onClick && "cursor-pointer",
+                    stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                    stat.alert && !stat.active ? "bg-rose-50 dark:bg-rose-950/20" : ""
+                  )}
+                >
+                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
+                  <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                </button>
+              </Fragment>
+            );
+          })}
+          <div className="flex-1" />
+          <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total} processos</span>
+        </div>
 
         {/* Filtros de Prazo - Chips Premium */}
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 p-5 shadow-apple dark:shadow-apple-dark">
