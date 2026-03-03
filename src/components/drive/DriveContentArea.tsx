@@ -122,12 +122,12 @@ export function DriveContentArea() {
       <DriveBreadcrumbs />
 
       {/* ─── Filters Row ─── */}
-      <div className="px-4 pt-3 pb-1 shrink-0">
+      <div className="px-3 sm:px-4 pt-2 sm:pt-3 pb-1 shrink-0">
         <DriveFilters />
       </div>
 
       {/* ─── File List / Grid ─── */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4">
         {ctx.viewMode === "grid" ? (
           <DriveFileGrid files={filteredFiles} isLoading={isLoading} />
         ) : (

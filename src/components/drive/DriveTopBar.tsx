@@ -426,17 +426,17 @@ export function DriveTopBar() {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center gap-3 h-14 px-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 h-12 sm:h-14 px-3 sm:px-4 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shrink-0">
         {/* ─── Search ─── */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
+        <div className="relative flex-1 max-w-xs sm:max-w-md">
+          <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
           <input
             type="text"
             value={localSearch}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Buscar na pasta atual..."
+            placeholder="Buscar..."
             className={cn(
-              "w-full h-9 pl-9 pr-8 rounded-lg text-sm",
+              "w-full h-8 sm:h-9 pl-8 sm:pl-9 pr-8 rounded-lg text-sm",
               "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700",
               "text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
               "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
@@ -454,7 +454,7 @@ export function DriveTopBar() {
         </div>
 
         {/* ─── Center-Right: Health + Actions ─── */}
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
           {/* Sync Health Indicator */}
           <SyncHealthDot />
 
@@ -484,7 +484,9 @@ export function DriveTopBar() {
           </Tooltip>
 
           {/* New Folder */}
-          <NewFolderButton />
+          <span className="hidden sm:inline-flex">
+            <NewFolderButton />
+          </span>
 
           {/* Upload Placeholder */}
           <Tooltip>
@@ -492,7 +494,7 @@ export function DriveTopBar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                className="hidden sm:inline-flex h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                 onClick={() => {
                   console.log("[Drive] Upload button clicked — not yet implemented");
                 }}
@@ -504,7 +506,9 @@ export function DriveTopBar() {
           </Tooltip>
 
           {/* New Document from Template */}
-          <NewDocumentButton />
+          <span className="hidden sm:inline-flex">
+            <NewDocumentButton />
+          </span>
 
           {/* Processing Queue */}
           <ProcessingQueuePanel>
@@ -525,10 +529,10 @@ export function DriveTopBar() {
           </ProcessingQueuePanel>
 
           {/* ─── Separator ─── */}
-          <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+          <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700 mx-0.5 hidden sm:block" />
 
           {/* ─── View Mode Toggle ─── */}
-          <div className="flex items-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800">
+          <div className="hidden sm:flex items-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button

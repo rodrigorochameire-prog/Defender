@@ -19,7 +19,7 @@ export function DriveBreadcrumbs() {
     : null;
 
   return (
-    <div className="flex items-center gap-1 h-10 px-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900 shrink-0 overflow-x-auto">
+    <div className="flex items-center gap-1 h-9 sm:h-10 px-3 sm:px-4 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/50 shrink-0 overflow-x-auto scrollbar-none">
       {/* ─── Back Button ─── */}
       {ctx.breadcrumbPath.length > 0 && (
         <Button

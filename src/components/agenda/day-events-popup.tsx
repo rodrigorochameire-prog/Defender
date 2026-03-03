@@ -344,34 +344,34 @@ export function DayEventsPopup({
         >
           <Card className="w-[calc(100vw-32px)] sm:w-[420px] max-h-[70vh] sm:max-h-[600px] overflow-hidden shadow-2xl border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 flex items-center justify-between sticky top-0 z-10">
+            <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 flex items-center justify-between sticky top-0 z-10">
               <div>
-                <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <p className="text-[10px] sm:text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   {format(date, "EEEE", { locale: ptBR })}
                 </p>
-                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+                <h3 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-50">
                   {format(date, "d 'de' MMMM", { locale: ptBR })}
                 </h3>
               </div>
               <button
                 onClick={onClose}
-                className="w-9 h-9 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center transition-colors"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center transition-colors"
               >
-                <X className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-600 dark:text-zinc-400" />
               </button>
             </div>
 
             {/* Content */}
             <div className="max-h-[calc(70vh-120px)] sm:max-h-[480px] overflow-y-auto overscroll-contain">
               {eventosOrdenados.length === 0 ? (
-                <div className="p-12 text-center">
-                  <CalendarIcon className="w-14 h-14 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
+                <div className="p-8 sm:p-12 text-center">
+                  <CalendarIcon className="w-12 h-12 sm:w-14 sm:h-14 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
                   <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
                     Nenhum evento neste dia
                   </p>
                 </div>
               ) : (
-                <div className="p-3">
+                <div className="p-2.5 sm:p-3">
                   {eventosOrdenados.map((evento, index) => {
                     const eventoCancelado = isEventoCancelado(evento.status);
                     const atribuicaoColor = atribuicaoColors[evento.atribuicao] || atribuicaoColors["Criminal Geral"];
@@ -389,13 +389,13 @@ export function DayEventsPopup({
                           onEventClick(evento);
                           onClose();
                         }}
-                        className={`mb-2.5 rounded-xl border cursor-pointer transition-all group shadow-sm hover:shadow-md relative ${
+                        className={`mb-2 sm:mb-2.5 rounded-xl border cursor-pointer transition-all group shadow-sm hover:shadow-md relative ${
                           eventoCancelado
                             ? "border-zinc-300/60 dark:border-zinc-700/60 bg-zinc-50/80 dark:bg-zinc-800/30 opacity-70"
                             : `border-zinc-300/60 dark:border-zinc-700/60 hover:border-zinc-400/80 dark:hover:border-zinc-600/80 ${atribuicaoColor.bg}`
                         }`}
                       >
-                        <div className="p-4 relative">
+                        <div className="p-3 sm:p-4 relative">
                           {/* Ações rápidas no hover */}
                           <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                             {onEditEvento && (
@@ -440,7 +440,7 @@ export function DayEventsPopup({
                           </div>
 
                           {/* Header do Evento */}
-                          <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center justify-between mb-2 sm:mb-3">
                             <div className="flex items-center gap-2.5 flex-1 min-w-0">
                               {/* Ícone de status cancelado/redesignado */}
                               {evento.status === "cancelado" && (
@@ -487,7 +487,7 @@ export function DayEventsPopup({
                           </div>
 
                           {/* Título e Tipo */}
-                          <div className="flex items-start gap-3 mb-3">
+                          <div className="flex items-start gap-2.5 sm:gap-3 mb-2 sm:mb-3">
                             <TipoIcon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
                               eventoCancelado ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
                             }`} />
@@ -514,7 +514,7 @@ export function DayEventsPopup({
 
                           {/* Info adicional */}
                           {(evento.local || evento.processo) && (
-                            <div className="space-y-1.5 mb-3">
+                            <div className="space-y-1 sm:space-y-1.5 mb-2 sm:mb-3">
                               {evento.local && (
                                 <div className={`flex items-center gap-2 text-sm ${
                                   eventoCancelado ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-400"
@@ -572,7 +572,7 @@ export function DayEventsPopup({
 
             {/* Footer com total */}
             {eventosOrdenados.length > 0 && (
-              <div className="px-5 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 sticky bottom-0">
+              <div className="px-4 py-2.5 sm:px-5 sm:py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 sticky bottom-0">
                 <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 text-center">
                   {eventosOrdenados.length} evento{eventosOrdenados.length !== 1 ? "s" : ""} neste dia
                 </p>

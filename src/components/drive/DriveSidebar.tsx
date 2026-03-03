@@ -311,7 +311,7 @@ function AtribuicaoSubfolders({
 // --- Gradient Divider (matches main sidebar) ---
 
 function NavDivider() {
-  return <div className="my-3 mx-3 h-px bg-gradient-to-r from-zinc-700/60 via-zinc-700/30 to-transparent" />;
+  return <div className="my-3 mx-3 h-px bg-gradient-to-r from-zinc-600/30 via-zinc-700/20 to-transparent" />;
 }
 
 // --- Sidebar Content ---
@@ -570,15 +570,15 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           </div>
         </div>
 
-        {/* --- Footer (matches main sidebar footer gradient) --- */}
+        {/* --- Footer --- */}
         {stats && (
           <div className={cn(
-            "mt-auto px-4 py-3 border-t border-zinc-700/30",
-            "bg-gradient-to-t from-[#1a1a1e] via-[#1f1f23] to-transparent"
+            "mt-auto px-4 py-3 border-t border-zinc-700/20",
+            "bg-gradient-to-t from-black/20 via-transparent to-transparent"
           )}>
             <div className="flex items-center justify-between text-[10px] text-zinc-500">
-              <span className="tabular-nums">{stats.totalFiles} arquivos</span>
-              <span className="tabular-nums">{stats.syncedFolders} pastas</span>
+              <span className="tabular-nums font-medium">{stats.totalFiles} arquivos</span>
+              <span className="tabular-nums font-medium">{stats.syncedFolders} pastas</span>
             </div>
           </div>
         )}
@@ -595,35 +595,36 @@ export function DriveSidebar() {
 
   return (
     <>
-      {/* --- Desktop Sidebar (matches main sidebar DNA) --- */}
+      {/* --- Desktop Sidebar (matches main sidebar DNA + glass) --- */}
       <aside
         className={cn(
-          "hidden md:flex flex-col shrink-0 transition-all duration-300",
-          "border-r border-zinc-700/30",
-          "bg-gradient-to-b from-[#1f1f23] via-[#1a1a1e] to-[#1f1f23]",
-          "shadow-2xl shadow-black/50",
+          "hidden lg:flex flex-col shrink-0 transition-all duration-300",
+          "border-r border-zinc-700/20",
+          "bg-gradient-to-b from-[#1f1f23]/95 via-[#1a1a1e]/95 to-[#1f1f23]/95",
+          "backdrop-blur-xl",
+          "shadow-2xl shadow-black/40",
           collapsed ? "w-0 overflow-hidden" : "w-60"
         )}
       >
-        {/* Header (matches main sidebar header gradient) */}
+        {/* Header */}
         <div className={cn(
-          "flex items-center justify-between h-12 px-3 border-b border-zinc-700/30",
-          "bg-gradient-to-br from-[#252529] via-[#1f1f23] to-[#252529]"
+          "flex items-center justify-between h-12 px-3 border-b border-zinc-700/20",
+          "bg-gradient-to-br from-white/[0.04] via-transparent to-white/[0.02]"
         )}>
           {!collapsed && (
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-md bg-zinc-700/50 flex items-center justify-center">
-                <HardDrive className="h-3.5 w-3.5 text-zinc-400" />
+            <div className="flex items-center gap-2.5">
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
+                <HardDrive className="h-3.5 w-3.5 text-emerald-400" />
               </div>
-              <span className="text-[13px] font-semibold text-zinc-300">
-                Drive
+              <span className="text-sm font-semibold text-zinc-200 tracking-tight">
+                Drive Hub
               </span>
             </div>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/60 rounded-lg"
+            className="h-7 w-7 text-zinc-500 hover:text-zinc-300 hover:bg-white/5 rounded-lg"
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? (
@@ -642,7 +643,7 @@ export function DriveSidebar() {
         <Button
           variant="ghost"
           size="icon"
-          className="hidden md:flex h-8 w-8 absolute left-1 top-16 z-10 text-zinc-500 hover:text-zinc-300 bg-[#1f1f23] border border-zinc-700/30 rounded-xl hover:bg-zinc-700/60 shadow-lg shadow-black/20"
+          className="hidden lg:flex h-8 w-8 absolute left-1 top-16 z-10 text-zinc-400 hover:text-zinc-200 bg-[#1f1f23]/90 backdrop-blur-lg border border-zinc-700/20 rounded-xl hover:bg-zinc-700/50 shadow-lg shadow-black/30"
           onClick={() => setCollapsed(false)}
         >
           <ChevronRight className="h-4 w-4" />
@@ -650,7 +651,7 @@ export function DriveSidebar() {
       )}
 
       {/* --- Mobile Sheet --- */}
-      <div className="md:hidden">
+      <div className="lg:hidden">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button
@@ -664,21 +665,21 @@ export function DriveSidebar() {
           <SheetContent
             side="left"
             className={cn(
-              "w-72 p-0 border-zinc-700/30",
+              "w-72 p-0 border-zinc-700/20",
               "bg-gradient-to-b from-[#1f1f23] via-[#1a1a1e] to-[#1f1f23]"
             )}
           >
             <SheetTitle className="sr-only">Menu de navegacao do Drive</SheetTitle>
             <div className={cn(
-              "h-12 flex items-center px-4 border-b border-zinc-700/30",
-              "bg-gradient-to-br from-[#252529] via-[#1f1f23] to-[#252529]"
+              "h-12 flex items-center px-4 border-b border-zinc-700/20",
+              "bg-gradient-to-br from-white/[0.04] via-transparent to-white/[0.02]"
             )}>
-              <div className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded-md bg-zinc-700/50 flex items-center justify-center">
-                  <HardDrive className="h-3.5 w-3.5 text-zinc-400" />
+              <div className="flex items-center gap-2.5">
+                <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
+                  <HardDrive className="h-3.5 w-3.5 text-emerald-400" />
                 </div>
-                <span className="text-[13px] font-semibold text-zinc-300">
-                  Drive
+                <span className="text-sm font-semibold text-zinc-200 tracking-tight">
+                  Drive Hub
                 </span>
               </div>
             </div>

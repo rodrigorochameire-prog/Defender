@@ -188,7 +188,7 @@ export function EventoDetailModal({
         
         {/* Banner de evento cancelado/redesignado */}
         {isEventoCancelado(evento.status) && (
-          <div className={`px-6 py-3 flex items-center gap-3 ${
+          <div className={`px-4 py-2.5 sm:px-6 sm:py-3 flex items-center gap-2.5 sm:gap-3 ${
             evento.status === "cancelado"
               ? "bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-800"
               : "bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800"
@@ -218,15 +218,15 @@ export function EventoDetailModal({
         )}
 
         {/* Header com actions */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
+        <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-3 py-2.5 sm:px-6 sm:py-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center flex-wrap gap-0.5">
               {/* Editar */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onEdit?.(evento)}
-                className="h-9 w-9"
+                className="h-8 w-8 sm:h-9 sm:w-9"
                 title="Editar evento"
               >
                 <Edit className="w-4 h-4" />
@@ -241,7 +241,7 @@ export function EventoDetailModal({
                     onDuplicate(evento);
                     toast.success("Evento duplicado! Edite os detalhes.");
                   }}
-                  className="h-9 w-9"
+                  className="h-8 w-8 sm:h-9 sm:w-9"
                   title="Duplicar evento"
                 >
                   <Copy className="w-4 h-4" />
@@ -258,7 +258,7 @@ export function EventoDetailModal({
                     toast.success("Evento arquivado!");
                     onClose();
                   }}
-                  className="h-9 w-9 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                  className="h-8 w-8 sm:h-9 sm:w-9 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
                   title="Arquivar evento"
                 >
                   <Archive className="w-4 h-4" />
@@ -270,13 +270,13 @@ export function EventoDetailModal({
                 variant="ghost"
                 size="icon"
                 onClick={handleDelete}
-                className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                className="h-8 w-8 sm:h-9 sm:w-9 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
                 title="Excluir evento"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
 
-              <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-1" />
+              <div className="hidden sm:block w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-1" />
 
               {/* Ações de status rápido */}
               {onStatusChange && !isEventoCancelado(evento.status) && evento.status !== "concluido" && (
@@ -291,8 +291,8 @@ export function EventoDetailModal({
                     className="h-8 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                     title="Marcar como realizado"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                    Realizado
+                    <CheckCircle2 className="w-3.5 h-3.5 sm:mr-1" />
+                    <span className="hidden sm:inline">Realizado</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -304,8 +304,8 @@ export function EventoDetailModal({
                     className="h-8 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     title="Marcar como cancelado"
                   >
-                    <XCircle className="w-3.5 h-3.5 mr-1" />
-                    Cancelar
+                    <XCircle className="w-3.5 h-3.5 sm:mr-1" />
+                    <span className="hidden sm:inline">Cancelar</span>
                   </Button>
                 </>
               )}
@@ -322,23 +322,23 @@ export function EventoDetailModal({
                   className="h-8 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
                   title="Restaurar evento"
                 >
-                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
-                  Restaurar
+                  <RefreshCw className="w-3.5 h-3.5 sm:mr-1" />
+                  <span className="hidden sm:inline">Restaurar</span>
                 </Button>
               )}
             </div>
 
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 sm:h-9 sm:w-9 shrink-0">
               <X className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="px-6 pb-6 space-y-6">
+        <div className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-4 sm:space-y-6">
           {/* Título e Data */}
           <div className="space-y-2">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2.5 sm:gap-3">
               <div
                 className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-1 ${
                   isEventoCancelado(evento.status)
@@ -356,7 +356,7 @@ export function EventoDetailModal({
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className={`text-2xl font-normal break-words ${
+                <h1 className={`text-xl sm:text-2xl font-normal break-words ${
                   isEventoCancelado(evento.status)
                     ? "text-zinc-400 dark:text-zinc-500 line-through"
                     : "text-zinc-900 dark:text-zinc-50"
@@ -399,12 +399,12 @@ export function EventoDetailModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
               <FileText className="w-4 h-4 text-zinc-500" />
-              <h2 className="font-bold text-sm uppercase tracking-wide">
-                INFORMAÇÕES DA AUDIÊNCIA
+              <h2 className="font-bold text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                Informações da Audiência
               </h2>
             </div>
 
-            <div className="space-y-4 pl-6">
+            <div className="space-y-4 pl-4 sm:pl-4 sm:pl-6">
               {/* Órgão Julgador */}
               {evento.local && (
                 <div>
@@ -588,7 +588,7 @@ export function EventoDetailModal({
           </div>
 
           {/* Divisor */}
-          <div className="border-t border-zinc-300 dark:border-zinc-700" />
+          <div className="border-t border-zinc-200 dark:border-zinc-800" />
 
           {/* Observação */}
           <div className="space-y-3">
@@ -598,7 +598,7 @@ export function EventoDetailModal({
             </div>
             
             {isEditingObs ? (
-              <div className="space-y-2 pl-6">
+              <div className="space-y-2 pl-4 sm:pl-6">
                 <Textarea
                   value={observacao}
                   onChange={(e) => setObservacao(e.target.value)}
@@ -624,7 +624,7 @@ export function EventoDetailModal({
             ) : (
               <div
                 onClick={() => setIsEditingObs(true)}
-                className="pl-6 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded p-2 -ml-2 transition-colors"
+                className="pl-4 sm:pl-6 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded p-2 -ml-2 transition-colors"
               >
                 <p className="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
                   {evento.observacoes ||
@@ -636,7 +636,7 @@ export function EventoDetailModal({
 
           {/* Descrição adicional */}
           {evento.descricao && (
-            <div className="pl-6">
+            <div className="pl-4 sm:pl-6">
               <p className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
                 {evento.descricao}
               </p>
@@ -650,7 +650,7 @@ export function EventoDetailModal({
                 <Paperclip className="w-4 h-4 text-zinc-500" />
                 <h3 className="font-bold text-sm">Documentos Anexados:</h3>
               </div>
-              <div className="pl-6 space-y-2">
+              <div className="pl-4 sm:pl-6 space-y-2">
                 {evento.documentos.map((doc: string, index: number) => (
                   <div
                     key={index}
@@ -665,7 +665,7 @@ export function EventoDetailModal({
           )}
 
           {/* Data de inclusão */}
-          <div className="pl-6 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="pl-4 sm:pl-6 text-xs text-zinc-500 dark:text-zinc-400">
             Criado em {new Date(evento.dataInclusao).toLocaleString("pt-BR")}
           </div>
         </div>

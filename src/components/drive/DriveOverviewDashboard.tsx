@@ -240,7 +240,7 @@ export function DriveOverviewDashboard() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-5xl mx-auto space-y-6 p-4 md:p-6">
+      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
         {/* --- Header + Inline Stats --- */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -258,19 +258,17 @@ export function DriveOverviewDashboard() {
           </div>
 
           {/* Inline stats — subtle, no big cards */}
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-3 sm:gap-4 text-sm flex-wrap">
             <div className="flex items-center gap-1.5">
               <FileText className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
               <span className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{totalFiles}</span>
               <span className="text-zinc-400 dark:text-zinc-500 text-xs">docs</span>
             </div>
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
             <div className="flex items-center gap-1.5">
               <Link2 className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
               <span className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{linkedPercent}%</span>
               <span className="text-zinc-400 dark:text-zinc-500 text-xs">vinculados</span>
             </div>
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
               <span className="text-xs text-zinc-500 dark:text-zinc-400">{lastSyncStr}</span>

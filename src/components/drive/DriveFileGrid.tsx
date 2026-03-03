@@ -51,8 +51,8 @@ interface DriveFileGridProps {
 function SkeletonCard() {
   return (
     <div className="bg-zinc-200/50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50 rounded-lg p-3 animate-pulse">
-      <div className="flex items-center justify-center h-20 mb-3">
-        <div className="w-10 h-10 rounded-lg bg-zinc-200/50 dark:bg-zinc-700/50" />
+      <div className="flex items-center justify-center h-14 sm:h-20 mb-2 sm:mb-3">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-zinc-200/50 dark:bg-zinc-700/50" />
       </div>
       <div className="h-4 bg-zinc-200/50 dark:bg-zinc-700/50 rounded w-3/4 mb-2" />
       <div className="flex items-center justify-between">
@@ -192,17 +192,17 @@ function FileGridCard({ file }: { file: DriveFile }) {
       )}
 
       {/* Icon / Thumbnail */}
-      <div className="flex items-center justify-center h-20 mb-3">
+      <div className="flex items-center justify-center h-14 sm:h-20 mb-2 sm:mb-3">
         {isImage && file.thumbnailLink ? (
           <img
             src={file.thumbnailLink}
             alt={file.name}
-            className="max-h-20 max-w-full object-contain rounded"
+            className="max-h-14 sm:max-h-20 max-w-full object-contain rounded"
           />
         ) : (
           <Icon
             className={cn(
-              "w-10 h-10",
+              "w-8 h-8 sm:w-10 sm:h-10",
               file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-zinc-400 dark:text-zinc-400"
             )}
           />
@@ -266,7 +266,7 @@ export function DriveFileGrid({ files, isLoading }: DriveFileGridProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
         {Array.from({ length: 8 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -277,8 +277,8 @@ export function DriveFileGrid({ files, isLoading }: DriveFileGridProps) {
   // Empty state
   if (sortedFiles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FolderOpen className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mb-3" />
+      <div className="flex flex-col items-center justify-center py-10 sm:py-16 text-center">
+        <FolderOpen className="w-10 h-10 sm:w-12 sm:h-12 text-zinc-300 dark:text-zinc-600 mb-3" />
         <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
           Nenhum arquivo nesta pasta
         </p>
@@ -290,7 +290,7 @@ export function DriveFileGrid({ files, isLoading }: DriveFileGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
       {sortedFiles.map((file) => (
         <FileGridCard key={file.id} file={file} />
       ))}
