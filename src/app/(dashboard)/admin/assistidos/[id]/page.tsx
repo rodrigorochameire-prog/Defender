@@ -304,8 +304,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               )}
             </div>
           </div>
-          {/* Mini KPIs inline */}
-          <div className="hidden sm:flex items-center gap-3">
+          {/* Mini KPIs inline — desktop only */}
+          <div className="hidden lg:flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-1.5 text-xs text-zinc-500">
               <Scale className="w-3.5 h-3.5 text-zinc-400" />
               <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.processos.length}</span>
@@ -329,6 +329,32 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.driveFiles.length}</span>
               <span className="text-zinc-400">arq.</span>
             </div>
+          </div>
+        </div>
+        {/* Mini KPIs — mobile/tablet compact row */}
+        <div className="flex lg:hidden items-center gap-3 mt-3 px-1">
+          <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <Scale className="w-3 h-3" />
+            <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.processos.length}</span>
+            <span>proc.</span>
+          </div>
+          <span className="text-zinc-300 dark:text-zinc-600">·</span>
+          <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <FileText className="w-3 h-3" />
+            <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.demandas.length}</span>
+            <span>dem.</span>
+          </div>
+          <span className="text-zinc-300 dark:text-zinc-600">·</span>
+          <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <Calendar className="w-3 h-3" />
+            <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.audiencias.length}</span>
+            <span>aud.</span>
+          </div>
+          <span className="text-zinc-300 dark:text-zinc-600">·</span>
+          <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <FolderOpen className="w-3 h-3" />
+            <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.driveFiles.length}</span>
+            <span>arq.</span>
           </div>
         </div>
       </div>
