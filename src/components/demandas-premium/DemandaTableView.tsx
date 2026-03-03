@@ -23,6 +23,7 @@ import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { EditableTextInline } from "@/components/shared/editable-text-inline";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 
 // ============================================
 // TIPOS
@@ -107,16 +108,7 @@ function formatarData(dataStr: string) {
   }
 }
 
-function getInitials(name: string): string {
-  if (!name) return "??";
-  const parts = name.split(" ").filter(p => p.length > 2);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
-  return name.substring(0, 2).toUpperCase();
-}
-
-// Dropdown and EditableTextInline imported from @/components/shared/
+// Dropdown, EditableTextInline, and AssistidoAvatar imported from @/components/shared/
 
 // ============================================
 // ROW COMPONENT
@@ -217,9 +209,12 @@ function Row({
         />
 
         {/* Avatar com iniciais */}
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-700 dark:to-zinc-800 flex items-center justify-center text-[12px] font-bold text-zinc-600 dark:text-zinc-300 flex-shrink-0 shadow-sm">
-          {getInitials(demanda.assistido)}
-        </div>
+        <AssistidoAvatar
+          nome={demanda.assistido || ""}
+          photoUrl={demanda.avatar}
+          size="sm"
+          atribuicao={demanda.atribuicao}
+        />
 
         {/* Conteúdo principal - Layout responsivo */}
         <div className="flex-1 min-w-0">

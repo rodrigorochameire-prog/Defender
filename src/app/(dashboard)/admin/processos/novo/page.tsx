@@ -122,8 +122,6 @@ export default function NovoProcessoPage() {
     
     try {
       // Em produção, chamar TRPC para criar
-      console.log("Criando processo:", formData);
-      
       // Simular delay
       await new Promise(resolve => setTimeout(resolve, 500));
       

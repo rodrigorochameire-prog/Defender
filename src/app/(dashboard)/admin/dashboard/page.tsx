@@ -400,8 +400,8 @@ export default function DashboardJuriPage() {
 
   const atoOptions = getAtosPorAtribuicao(atribuicaoAtual === "JURI_EP" ? "Tribunal do Júri" : "Violência Doméstica");
 
-  const handleSaveNewDemanda = (data: DemandaFormData) => {
-    console.log("Criar demanda:", data);
+  const handleSaveNewDemanda = (_data: DemandaFormData) => {
+    // TODO: wire to demandas.create mutation
   };
 
   // ==========================================
@@ -523,8 +523,9 @@ export default function DashboardJuriPage() {
     tipo: "atendimento" | "diligencia" | "informacao" | "peticao" | "anotacao" | "delegacao";
     descricao: string;
     processoId: number | null;
-    prazo: string;
-  }>({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, prazo: "" });
+    local: string;
+    assunto: string;
+  }>({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, local: "", assunto: "" });
   const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
   const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>("all");
@@ -549,7 +550,7 @@ export default function DashboardJuriPage() {
           ? { label: "Ver perfil", onClick: () => window.location.href = `/admin/assistidos/${atendimentoRapido.assistidoId}` }
           : undefined,
       });
-      setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, prazo: "" });
+      setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, local: "", assunto: "" });
       setShowDetalhes(false);
       setAudioTranscript("");
       setAudioSummary("");
@@ -1263,6 +1264,8 @@ export default function DashboardJuriPage() {
                     resumo: atendimentoRapido.descricao.trim(),
                     dataAtendimento: new Date().toISOString(),
                     ...(atendimentoRapido.processoId ? { processoId: atendimentoRapido.processoId } : {}),
+                    ...(atendimentoRapido.local ? { local: atendimentoRapido.local } : {}),
+                    ...(atendimentoRapido.assunto ? { assunto: atendimentoRapido.assunto.trim() } : {}),
                     status: "realizado",
                   });
                 }}
@@ -1284,13 +1287,29 @@ export default function DashboardJuriPage() {
 
             {/* Detalhes opcionais (colapsável) */}
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showDetalhes ? "max-h-40 opacity-100 mt-3" : "max-h-0 opacity-0"}`}>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50">
-                <div className="space-y-1 w-48">
-                  <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Prazo</label>
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Local</label>
+                  <select
+                    value={atendimentoRapido.local}
+                    onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, local: e.target.value }))}
+                    className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                  >
+                    <option value="">Não informado</option>
+                    <option value="Presencial">Presencial</option>
+                    <option value="Virtual">Virtual</option>
+                    <option value="Telefone">Telefone</option>
+                    <option value="Externo">Externo (diligência)</option>
+                    <option value="Fórum">Fórum</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Assunto</label>
                   <input
-                    type="date"
-                    value={atendimentoRapido.prazo}
-                    onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, prazo: e.target.value }))}
+                    type="text"
+                    placeholder="Ex: Instrução, Acordo, Alvará..."
+                    value={atendimentoRapido.assunto}
+                    onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, assunto: e.target.value }))}
                     className="w-full h-8 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
                   />
                 </div>
@@ -1735,8 +1754,8 @@ export default function DashboardJuriPage() {
             <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center">
-                    <CalendarDays className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                  <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                    <CalendarDays className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                   </div>
                   <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">Minhas Audiências</h3>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
@@ -1769,16 +1788,16 @@ export default function DashboardJuriPage() {
                   const diasRestantes = dataAud ? differenceInDays(dataAud, new Date()) : null;
 
                   return (
-                    <Link href={`/admin/audiencias/${aud.id}`} key={aud.id}>
-                      <div className="flex items-center gap-3 px-3 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <Link href={`/admin/audiencias/${aud.id}`} key={aud.id} className="flex items-stretch gap-0 transition-colors group hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                      {/* Barra de atribuição */}
+                      <div className={cn("w-1 group-hover:w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5 transition-all duration-200", getAtribuicaoColors(aud.processo?.atribuicao).indicator)} />
+                      <div className="flex items-center gap-3 px-3 py-3 flex-1 min-w-0">
                         <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
-                          isHoje ? "bg-rose-100 dark:bg-rose-900/30" :
-                          isAmanha ? "bg-amber-100 dark:bg-amber-900/30" :
+                          isHoje ? "bg-emerald-50 dark:bg-emerald-900/20" :
                           "bg-zinc-100 dark:bg-zinc-800"
                         }`}>
-                          <span className={`text-sm font-bold ${
-                            isHoje ? "text-rose-700 dark:text-rose-400" :
-                            isAmanha ? "text-amber-700 dark:text-amber-400" :
+                          <span className={`text-sm font-mono font-bold tabular-nums ${
+                            isHoje ? "text-emerald-700 dark:text-emerald-400" :
                             "text-zinc-700 dark:text-zinc-300"
                           }`}>
                             {dataAud ? format(dataAud, "dd", { locale: ptBR }) : "--"}
@@ -1792,7 +1811,7 @@ export default function DashboardJuriPage() {
                             {aud.assistidoNome || aud.titulo || "Audiência"}
                           </p>
                           <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                            <span>{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
+                            <span className="font-mono tabular-nums">{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
                             <span>•</span>
                             <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
                           </div>
@@ -1808,11 +1827,10 @@ export default function DashboardJuriPage() {
                           <CircleCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                         )}
                         {diasRestantes !== null && (
-                          <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
-                            diasRestantes <= 0 ? "bg-rose-500 text-white" :
-                            diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
-                            diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
-                            "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                          <span className={`text-[10px] font-medium tabular-nums ${
+                            diasRestantes <= 0 ? "text-emerald-600 dark:text-emerald-400 font-semibold" :
+                            diasRestantes <= 3 ? "text-amber-600 dark:text-amber-400" :
+                            "text-zinc-400 dark:text-zinc-500"
                           }`}>
                             {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
                           </span>
@@ -1830,8 +1848,8 @@ export default function DashboardJuriPage() {
               <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center">
-                      <CalendarDays className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                    <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                      <CalendarDays className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                     </div>
                     <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">
                       {mostrandoAlemDaSemana ? "Próximas Audiências" : "Audiências da Semana"}
@@ -1886,20 +1904,15 @@ export default function DashboardJuriPage() {
                             </span>
                           </div>
                         )}
-                        <Link href={`/admin/audiencias/${aud.id}`}>
-                          <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                            <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${
-                              aud.processo?.atribuicao === "JURI" ? "bg-emerald-500" :
-                              aud.processo?.atribuicao === "VD" ? "bg-amber-500" :
-                              aud.processo?.atribuicao === "EP" ? "bg-zinc-500" :
-                              "bg-zinc-400"
-                            }`} />
+                        <Link href={`/admin/audiencias/${aud.id}`} className="flex items-stretch gap-0 transition-colors group hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                          <div className={cn("w-1 group-hover:w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5 transition-all duration-200", getAtribuicaoColors(aud.processo?.atribuicao).indicator)} />
+                          <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                                 {aud.assistidoNome || aud.titulo || "Audiência"}
                               </p>
                               <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-                                <span>{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
+                                <span className="font-mono tabular-nums">{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
                                 <span>•</span>
                                 <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
                               </div>
@@ -1943,7 +1956,7 @@ export default function DashboardJuriPage() {
         assistidoId={atendimentoRapido.assistidoId}
         assistidoNome={atendimentoRapido.assistidoNome}
         onDelegacaoSucesso={() => {
-          setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, prazo: "" });
+          setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, local: "", assunto: "" });
           utils.delegacao.delegacoesEnviadas.invalidate();
         }}
       />

@@ -334,7 +334,7 @@ export function DemandaCard({
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <div className="relative flex-shrink-0">
-                <AssistidoAvatar name={demanda.assistido} photoUrl={demanda.avatar} />
+                <AssistidoAvatar nome={demanda.assistido} photoUrl={demanda.avatar} atribuicao={demanda.atribuicao} />
                 {demanda.prioridade === "URGENTE" && (
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg">
                     <Flame className="w-2.5 h-2.5 text-white" />
@@ -576,6 +576,16 @@ export function DemandaCard({
 
           {/* Actions */}
           <div className="flex gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+            <Link href={`/admin/demandas/${demanda.id}`} className="flex-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-full text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+              >
+                <ChevronRight className="w-3.5 h-3.5 mr-1.5" />
+                Abrir
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               size="sm"
@@ -682,7 +692,7 @@ export function DemandaCard({
           {/* Line 1: Nome + Ato + Status + Prazo */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="relative flex-shrink-0">
-              <AssistidoAvatar name={demanda.assistido} photoUrl={demanda.avatar} size="sm" />
+              <AssistidoAvatar nome={demanda.assistido} photoUrl={demanda.avatar} size="sm" atribuicao={demanda.atribuicao} />
               {demanda.prioridade === "URGENTE" && (
                 <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-sm">
                   <Flame className="w-2 h-2 text-white" />
@@ -824,6 +834,14 @@ export function DemandaCard({
                     className="absolute top-full right-0 mt-1 w-40 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl z-50 overflow-hidden py-1"
                     style={{ animation: 'fadeInDown 0.15s ease-out' }}
                   >
+                    <Link
+                      href={`/admin/demandas/${demanda.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 transition-colors"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                      Abrir demanda
+                    </Link>
                     {onDelegate && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelegate(demanda); }}

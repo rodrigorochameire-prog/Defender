@@ -2,9 +2,10 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
-import { ArrowLeft, Brain, Calendar, ExternalLink, FileText, FolderOpen, Loader2, Lock, Scale, Sun, User, Users, Sparkles } from "lucide-react";
+import { ArrowLeft, Brain, Calendar, ExternalLink, FileText, FolderOpen, Loader2, Lock, Pencil, Plus, Scale, Sun, User, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -139,6 +140,14 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
               )}
             </div>
           </div>
+          {/* Editar button */}
+          <Link
+            href={`/admin/processos/${data.id}/editar`}
+            className="h-8 w-8 flex items-center justify-center rounded-md text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors shrink-0"
+            title="Editar processo"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Link>
           {/* Mini KPIs inline — desktop only */}
           <div className="hidden lg:flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
@@ -283,25 +292,44 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
       <DriveStatusBar processoId={Number(id)} />
 
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-zinc-100 dark:border-zinc-800 px-6">
+      <div className="flex items-center gap-0 border-b border-zinc-100 dark:border-zinc-800 px-6">
         {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={cn(
-              "px-3 py-2.5 text-[11px] font-medium border-b-2 transition-colors",
-              tab === t.key
-                ? "border-emerald-500 text-emerald-700 dark:text-emerald-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-700"
+          <div key={t.key} className="flex items-center">
+            <button
+              onClick={() => setTab(t.key)}
+              className={cn(
+                "px-3 py-2.5 text-[11px] font-medium border-b-2 transition-colors",
+                tab === t.key
+                  ? "border-emerald-500 text-emerald-700 dark:text-emerald-400"
+                  : "border-transparent text-zinc-500 hover:text-zinc-700"
+              )}
+            >
+              {t.label}
+              {t.count !== undefined && t.count > 0 && (
+                <span className="ml-1.5 text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full">
+                  {t.count}
+                </span>
+              )}
+            </button>
+            {t.key === "demandas" && tab === "demandas" && (
+              <Link
+                href={`/admin/demandas/nova?processoId=${data.id}`}
+                className="h-5 w-5 flex items-center justify-center rounded text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors -ml-1"
+                title="Nova Demanda"
+              >
+                <Plus className="h-3 w-3" />
+              </Link>
             )}
-          >
-            {t.label}
-            {t.count !== undefined && t.count > 0 && (
-              <span className="ml-1.5 text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded-full">
-                {t.count}
-              </span>
+            {t.key === "audiencias" && tab === "audiencias" && (
+              <Link
+                href={`/admin/agenda?processoId=${data.id}`}
+                className="h-5 w-5 flex items-center justify-center rounded text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors -ml-1"
+                title="Agendar Audiência"
+              >
+                <Plus className="h-3 w-3" />
+              </Link>
             )}
-          </button>
+          </div>
         ))}
       </div>
 
@@ -360,12 +388,13 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
               <p className="text-sm text-zinc-400 text-center py-8">Nenhuma demanda</p>
             ) : (
               data.demandas.map((d) => (
-                <div
+                <Link
                   key={d.id}
-                  className="flex items-center gap-2 border border-zinc-100 rounded px-3 py-2"
+                  href={`/admin/demandas/${d.id}`}
+                  className="flex items-center gap-2 border border-zinc-100 dark:border-zinc-700 rounded px-3 py-2 hover:border-emerald-300 hover:bg-emerald-50/30 cursor-pointer transition-all"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-zinc-700 truncate">
+                    <p className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate">
                       {d.ato ?? d.tipoAto ?? "Demanda"}
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -386,7 +415,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
                       )}
                     </div>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>

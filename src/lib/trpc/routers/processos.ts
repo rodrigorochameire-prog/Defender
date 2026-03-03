@@ -66,6 +66,7 @@ export const processosRouter = router({
             id: assistidos.id,
             nome: assistidos.nome,
             statusPrisional: assistidos.statusPrisional,
+            photoUrl: assistidos.photoUrl,
           },
           defensorNome: defensorAlias.name,
         })

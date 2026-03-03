@@ -516,6 +516,7 @@ class EnrichmentClient {
   private async request<T>(
     endpoint: string,
     body: Record<string, unknown>,
+    timeoutMs?: number,
   ): Promise<T> {
     if (!this.isConfigured) {
       throw new Error(
@@ -524,7 +525,7 @@ class EnrichmentClient {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs ?? this.timeout);
 
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -946,20 +947,14 @@ class EnrichmentClient {
     dbRecordId: number;
     driveFileId?: string;
   }): Promise<{ status: string; message: string; db_record_id: number }> {
-    const originalTimeout = this.timeout;
-    this.timeout = 30_000;
-    try {
-      return await this.request<{ status: string; message: string; db_record_id: number }>("/api/analyze-async", {
-        transcript: input.transcript,
-        file_name: input.fileName,
-        speakers: input.speakers ?? null,
-        assistido_nome: input.assistidoNome ?? null,
-        db_record_id: input.dbRecordId,
-        drive_file_id: input.driveFileId ?? null,
-      });
-    } finally {
-      this.timeout = originalTimeout;
-    }
+    return await this.request<{ status: string; message: string; db_record_id: number }>("/api/analyze-async", {
+      transcript: input.transcript,
+      file_name: input.fileName,
+      speakers: input.speakers ?? null,
+      assistido_nome: input.assistidoNome ?? null,
+      db_record_id: input.dbRecordId,
+      drive_file_id: input.driveFileId ?? null,
+    }, 30_000);
   }
 
   /**

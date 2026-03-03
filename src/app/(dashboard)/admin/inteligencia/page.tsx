@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -233,12 +233,12 @@ export default function InteligenciaPage() {
         <Card className="border-violet-200/50 bg-gradient-to-r from-violet-50/50 to-transparent dark:from-violet-950/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16 ring-2 ring-violet-300 ring-offset-2">
-                <AvatarImage src={assistido.photoUrl || undefined} />
-                <AvatarFallback className="bg-violet-100 text-violet-700 text-lg font-semibold">
-                  {getInitials(assistido.nome)}
-                </AvatarFallback>
-              </Avatar>
+              <AssistidoAvatar
+                nome={assistido.nome}
+                photoUrl={assistido.photoUrl}
+                size="xl"
+                className="ring-2 ring-violet-300 ring-offset-2 rounded-full"
+              />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h2 className="font-semibold text-lg">{assistido.nome}</h2>

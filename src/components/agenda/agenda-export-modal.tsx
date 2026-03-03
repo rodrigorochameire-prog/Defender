@@ -53,14 +53,7 @@ export function AgendaExportModal({ isOpen, onClose, eventos }: AgendaExportModa
       description: `Formato: ${formatLabel}`,
     });
 
-    // Aqui viria a lógica real de exportação
-    console.log("Exportando eventos:", {
-      format: selectedFormat,
-      periodo: selectedPeriodo,
-      incluirCancelados,
-      incluirConcluidos,
-      eventos: eventosParaExportar,
-    });
+    // TODO: implementar lógica real de exportação
 
     onClose();
   };

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -196,6 +196,14 @@ export function RegistroRapidoAprimorado({
   const [showTranscriptViewer, setShowTranscriptViewer] = useState(false);
   const [awaitingPlaud, setAwaitingPlaud] = useState(false);
 
+  // tRPC mutations for persisting registro data
+  const createAtendimento = trpc.atendimentos.create.useMutation();
+  const createDemanda = trpc.demandas.create.useMutation();
+  const logActivity = trpc.activityLogs.log.useMutation();
+  const utils = trpc.useUtils();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const startPlaudRecording = trpc.atendimentos.startPlaudRecording.useMutation({
     onSuccess: () => {
       setAwaitingPlaud(true);
@@ -335,51 +343,136 @@ export function RegistroRapidoAprimorado({
   };
 
   // Handler para submeter o registro
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!data.assistidoId && data.tipo !== "anotacao") {
       toast.error("Selecione um assistido");
       return;
     }
-    
+
     if (!data.descricao.trim()) {
       toast.error("Preencha a descrição");
       return;
     }
 
     const tipoLabel = TIPOS_REGISTRO[data.tipo].label;
-    
-    // Simular registro (chamar onRegistro se disponível)
+
+    // Keep backward compat callback
     if (onRegistro) {
       onRegistro(data);
     }
 
-    // Feedback de sucesso
-    const messages = [];
-    messages.push(`${tipoLabel} registrado`);
-    if (data.criarDemanda) messages.push("Demanda criada");
-    if (data.salvarNoDrive) messages.push("Salvo no Drive");
-    if (data.agendarRetorno) messages.push("Retorno agendado");
-    
-    toast.success(messages.join(" • "), {
-      description: data.assistidoNome ? `Para: ${data.assistidoNome}` : undefined,
-    });
+    setIsSubmitting(true);
 
-    // Limpar formulário
-    setData({
-      assistidoId: null,
-      assistidoNome: "",
-      processoId: null,
-      processoNumero: "",
-      tipo: "atendimento",
-      descricao: "",
-      criarDemanda: false,
-      salvarNoDrive: false,
-      agendarRetorno: false,
-      atribuicao: "",
-      prioridade: "NORMAL",
-      prazo: "",
-    });
-    setShowAdvanced(false);
+    try {
+      // ---------------------------------------------------
+      // 1. Persist atendimento record (for all non-delegacao types)
+      // ---------------------------------------------------
+      if (data.tipo !== "delegacao" && data.assistidoId) {
+        // Map registro tipo to atendimento tipo value
+        const tipoAtendimentoMap: Record<string, string> = {
+          atendimento: "presencial",
+          diligencia: "diligencia",
+          informacao: "informacao",
+          peticao: "peticao",
+          anotacao: "anotacao",
+        };
+
+        await createAtendimento.mutateAsync({
+          assistidoId: data.assistidoId,
+          processoId: data.processoId ?? undefined,
+          dataAtendimento: new Date().toISOString(),
+          tipo: tipoAtendimentoMap[data.tipo] || data.tipo,
+          assunto: data.descricao.slice(0, 200),
+          resumo: data.descricao,
+          status: "realizado",
+        });
+      }
+
+      // ---------------------------------------------------
+      // 2. Create demanda if checkbox is checked
+      // ---------------------------------------------------
+      if (data.criarDemanda && data.assistidoId && data.processoId) {
+        await createDemanda.mutateAsync({
+          assistidoId: data.assistidoId,
+          processoId: data.processoId,
+          ato: `[${tipoLabel}] ${data.descricao.slice(0, 250)}`,
+          prazo: data.prazo || undefined,
+          prioridade: (data.prioridade as "BAIXA" | "NORMAL" | "ALTA" | "URGENTE" | "REU_PRESO") || "NORMAL",
+          status: "5_FILA",
+          providencias: data.descricao,
+        });
+      } else if (data.criarDemanda && !data.processoId) {
+        toast.warning("Demanda requer um processo selecionado", {
+          description: "O registro foi salvo, mas a demanda não foi criada.",
+        });
+      }
+
+      // ---------------------------------------------------
+      // 3. Log activity
+      // ---------------------------------------------------
+      logActivity.mutate({
+        acao: "CREATE",
+        entidadeTipo: "demanda",
+        entidadeId: data.assistidoId ?? undefined,
+        descricao: `${tipoLabel} registrado via Registro Rápido: ${data.descricao.slice(0, 100)}`,
+        detalhes: {
+          tipo: data.tipo,
+          assistidoNome: data.assistidoNome,
+          processoNumero: data.processoNumero || null,
+          criarDemanda: data.criarDemanda,
+        },
+      });
+
+      // ---------------------------------------------------
+      // 4. Invalidate relevant queries
+      // ---------------------------------------------------
+      utils.atendimentos.list.invalidate();
+      utils.atendimentos.stats.invalidate();
+      if (data.assistidoId) {
+        utils.atendimentos.recentByAssistido.invalidate({ assistidoId: data.assistidoId });
+      }
+      if (data.criarDemanda) {
+        utils.demandas.list.invalidate();
+      }
+
+      // ---------------------------------------------------
+      // 5. Success feedback
+      // ---------------------------------------------------
+      const messages = [];
+      messages.push(`${tipoLabel} registrado`);
+      if (data.criarDemanda && data.processoId) messages.push("Demanda criada");
+      if (data.salvarNoDrive) messages.push("Salvo no Drive");
+      if (data.agendarRetorno) messages.push("Retorno agendado");
+
+      toast.success(messages.join(" • "), {
+        description: data.assistidoNome ? `Para: ${data.assistidoNome}` : undefined,
+      });
+
+      // Limpar formulário
+      setData({
+        assistidoId: null,
+        assistidoNome: "",
+        processoId: null,
+        processoNumero: "",
+        tipo: "atendimento",
+        descricao: "",
+        criarDemanda: false,
+        salvarNoDrive: false,
+        agendarRetorno: false,
+        atribuicao: "",
+        prioridade: "NORMAL",
+        prazo: "",
+      });
+      setShowAdvanced(false);
+      setTranscript(null);
+      setSummary(null);
+    } catch (error: any) {
+      toast.error("Erro ao salvar registro", {
+        description: error?.message || "Tente novamente.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Verificar se tipo é delegação
@@ -469,12 +562,11 @@ export function RegistroRapidoAprimorado({
                           onSelect={() => handleSelectAssistido(assistido)}
                           className="flex items-center gap-2 py-2"
                         >
-                          <Avatar className="h-7 w-7">
-                            <AvatarImage src={assistido.photoUrl || ""} />
-                            <AvatarFallback className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700">
-                              {assistido.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
-                            </AvatarFallback>
-                          </Avatar>
+                          <AssistidoAvatar
+                            nome={assistido.nome || ""}
+                            photoUrl={assistido.photoUrl}
+                            size="sm"
+                          />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{assistido.nome}</p>
                             <div className="flex items-center gap-2 text-[10px] text-zinc-500">
@@ -574,12 +666,12 @@ export function RegistroRapidoAprimorado({
         {/* Chip do Assistido Selecionado */}
         {assistidoSelecionado && (
           <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
-            <Avatar className="h-8 w-8 flex-shrink-0">
-              <AvatarImage src={assistidoSelecionado.photoUrl || ""} />
-              <AvatarFallback className="text-[10px] bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300">
-                {assistidoSelecionado.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
-              </AvatarFallback>
-            </Avatar>
+            <AssistidoAvatar
+              nome={assistidoSelecionado.nome || ""}
+              photoUrl={assistidoSelecionado.photoUrl}
+              size="sm"
+              className="flex-shrink-0"
+            />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100 truncate">
                 {assistidoSelecionado.nome}
@@ -832,13 +924,17 @@ export function RegistroRapidoAprimorado({
         <div className="flex justify-end">
           <Button
             onClick={handleSubmit}
-            disabled={(!data.assistidoId && data.tipo !== "anotacao") || !data.descricao.trim()}
+            disabled={(!data.assistidoId && data.tipo !== "anotacao") || !data.descricao.trim() || isSubmitting}
             className="px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm"
           >
-            <Send className="w-4 h-4 mr-2" />
-            Registrar
-            {data.criarDemanda && " + Demanda"}
-            {data.salvarNoDrive && " + Drive"}
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
+            {isSubmitting ? "Salvando..." : "Registrar"}
+            {!isSubmitting && data.criarDemanda && " + Demanda"}
+            {!isSubmitting && data.salvarNoDrive && " + Drive"}
           </Button>
         </div>
       </div>

@@ -147,8 +147,10 @@ import { getInitials } from "@/lib/utils";
 import { format, differenceInDays, parseISO, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PrisonerIndicator } from "@/components/shared/prisoner-indicator";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { ProcessingQueuePanel } from "@/components/drive/ProcessingQueuePanel";
 import { useProcessingQueue } from "@/contexts/processing-queue";
+import { toast } from "sonner";
 
 // Interface para o tipo Assistido usado na UI
 interface AssistidoUI {
@@ -382,7 +384,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 
   // Cores das atribuições/áreas
   const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
-  const primaryColor = atribuicoesUnicas.length > 0
+  const primaryAttrValue = atribuicoesUnicas.length > 0
     ? (() => {
         const normalizedAttr = atribuicoesUnicas[0].toUpperCase().replace(/_/g, ' ');
         const option = ATRIBUICAO_OPTIONS.find(o =>
@@ -390,9 +392,10 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
           o.label.toUpperCase().includes(normalizedAttr) ||
           normalizedAttr.includes(o.value.toUpperCase())
         );
-        return option ? SOLID_COLOR_MAP[option.value] || '#6b7280' : '#6b7280';
+        return option?.value || null;
       })()
-    : '#6b7280';
+    : null;
+  const primaryColor = primaryAttrValue ? SOLID_COLOR_MAP[primaryAttrValue] || '#6b7280' : '#6b7280';
 
   // Determinar o status visual do card
   const getCardGlow = () => {
@@ -520,40 +523,15 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
         {/* 1. HEADER: Avatar + Info + Badges */}
         <div className="flex gap-3 items-start">
           {/* Avatar Premium - Cor neutra com indicador de status */}
-          <div className="relative flex-shrink-0">
-            <Avatar
-              className={cn(
-                "h-12 w-12 cursor-pointer transition-all duration-300",
-                "ring-2 shadow-md",
-                "hover:scale-105 hover:shadow-lg",
-                isPreso
-                  ? "ring-rose-400/70 shadow-rose-500/20"
-                  : isMonitorado
-                    ? "ring-amber-400/70 shadow-amber-500/20"
-                    : "ring-zinc-300 dark:ring-zinc-600 shadow-zinc-500/10 hover:ring-emerald-400/50"
-              )}
-              onClick={onPhotoClick}
-            >
-              <AvatarImage src={assistido.photoUrl || undefined} alt={assistido.nome} />
-              <AvatarFallback
-                className="text-sm font-semibold text-white"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {getInitials(assistido.nome)}
-              </AvatarFallback>
-            </Avatar>
-            {/* Status Prisional Badge */}
-            {isPreso && (
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-rose-500 border-2 border-white dark:border-zinc-900 flex items-center justify-center shadow-lg">
-                <Lock className="w-2.5 h-2.5 text-white" />
-              </div>
-            )}
-            {isMonitorado && (
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 border-2 border-white dark:border-zinc-900 flex items-center justify-center shadow-lg">
-                <Timer className="w-2.5 h-2.5 text-white" />
-              </div>
-            )}
-          </div>
+          <AssistidoAvatar
+            nome={assistido.nome}
+            photoUrl={assistido.photoUrl}
+            size="lg"
+            atribuicao={primaryAttrValue}
+            statusPrisional={assistido.statusPrisional}
+            showStatusDot
+            onClick={onPhotoClick}
+          />
 
           {/* Info Principal */}
           <div className="flex-1 min-w-0">
@@ -1006,7 +984,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 }
 
 // ========================================
-// ROW DO ASSISTIDO - DESIGN PREMIUM (Lista)
+// CARD-ROW DO ASSISTIDO — 2 LINHAS STACKED
 // ========================================
 
 function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: AssistidoCardProps) {
@@ -1025,17 +1003,17 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
   const audienciaAmanha = diasAteAudiencia === 1;
 
   const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
-  const primaryColor = atribuicoesUnicas.length > 0
+  const primaryAttrOption = atribuicoesUnicas.length > 0
     ? (() => {
         const normalizedAttr = atribuicoesUnicas[0].toUpperCase().replace(/_/g, ' ');
-        const option = ATRIBUICAO_OPTIONS.find(o =>
+        return ATRIBUICAO_OPTIONS.find(o =>
           o.value.toUpperCase() === normalizedAttr ||
           o.label.toUpperCase().includes(normalizedAttr) ||
           normalizedAttr.includes(o.value.toUpperCase())
         );
-        return option ? SOLID_COLOR_MAP[option.value] || '#6b7280' : '#6b7280';
       })()
-    : '#6b7280';
+    : null;
+  const primaryColor = primaryAttrOption ? SOLID_COLOR_MAP[primaryAttrOption.value] || '#6b7280' : '#6b7280';
 
   const telefone = assistido.telefone || assistido.telefoneContato;
   const whatsappUrl = telefone ? `https://wa.me/55${telefone.replace(/\D/g, '')}` : null;
@@ -1044,158 +1022,183 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
   const demCount = assistido.demandasAbertas || 0;
 
   return (
-    <SwissTableRow
+    <div
       className={cn(
-        "group transition-all duration-200 cursor-pointer",
-        "hover:bg-emerald-50/40 dark:hover:bg-emerald-950/10",
-        isPinned && "bg-amber-50/30 dark:bg-amber-950/10",
-        isUrgent && !isPinned && "bg-rose-50/20 dark:bg-rose-950/5",
+        "group relative rounded-xl border bg-white dark:bg-zinc-900 px-4 py-3 transition-all duration-200 cursor-pointer",
+        "border-zinc-200/80 dark:border-zinc-800/80",
+        "hover:shadow-md hover:border-emerald-200/50 dark:hover:border-emerald-800/30",
+        isPinned && "ring-1 ring-amber-400/40 dark:ring-amber-500/20 bg-amber-50/20 dark:bg-amber-950/5",
+        isUrgent && !isPinned && "bg-rose-50/15 dark:bg-rose-950/5",
       )}
       style={{
         borderLeftWidth: '3px',
         borderLeftColor: isPreso ? '#f43f5e' : isMonitorado ? '#f59e0b' : prazoVencido ? '#ef4444' : 'transparent',
       }}
     >
-      {/* Assistido */}
-      <SwissTableCell className="py-2.5 pl-4">
-        <Link href={`/admin/assistidos/${assistido.id}`} className="flex items-center gap-3 group/name">
-          <div className="relative flex-shrink-0">
-            <Avatar
-              className={cn(
-                "h-9 w-9 ring-1 transition-all",
-                isPreso ? "ring-rose-300 dark:ring-rose-700" : isMonitorado ? "ring-amber-300 dark:ring-amber-700" : "ring-zinc-200 dark:ring-zinc-700",
-              )}
-              onClick={(e) => { e.preventDefault(); onPhotoClick(); }}
+      {/* ═══ LINHA 1: Avatar + Nome + Status + Atribuição + Idade ═══ Ações ═══ */}
+      <div className="flex items-center justify-between gap-3">
+        {/* Esquerda: Avatar + Info */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {/* Avatar */}
+          <AssistidoAvatar
+            nome={assistido.nome}
+            photoUrl={assistido.photoUrl}
+            size="md"
+            atribuicao={primaryAttrOption?.value}
+            statusPrisional={assistido.statusPrisional}
+            showStatusDot
+            onClick={onPhotoClick}
+          />
+
+          {/* Nome + Badges inline */}
+          <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
+            <Link
+              href={`/admin/assistidos/${assistido.id}`}
+              className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             >
-              <AvatarImage src={assistido.photoUrl || undefined} alt={assistido.nome} />
-              <AvatarFallback className="text-xs font-semibold text-white" style={{ backgroundColor: primaryColor }}>
-                {getInitials(assistido.nome)}
-              </AvatarFallback>
-            </Avatar>
-            {isPreso && (
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-rose-500 border-[1.5px] border-white dark:border-zinc-900 flex items-center justify-center">
-                <Lock className="w-2 h-2 text-white" />
-              </div>
-            )}
-            {isMonitorado && (
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-500 border-[1.5px] border-white dark:border-zinc-900 flex items-center justify-center">
-                <Timer className="w-2 h-2 text-white" />
-              </div>
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate group-hover/name:text-emerald-600 dark:group-hover/name:text-emerald-400 transition-colors">
-                {assistido.nome}
+              {assistido.nome}
+            </Link>
+
+            {isPinned && <BookmarkCheck className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
+
+            {/* Status badge */}
+            <div className={cn(
+              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0",
+              isPreso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
+              isMonitorado && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
+              !isPreso && !isMonitorado && "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400",
+            )}>
+              <div className={cn(
+                "w-1.5 h-1.5 rounded-full",
+                isPreso && "bg-rose-500",
+                isMonitorado && "bg-amber-500",
+                !isPreso && !isMonitorado && "bg-emerald-500",
+              )} />
+              {statusCfg?.label || assistido.statusPrisional}
+              {isPreso && tempoPreso && (
+                <span className="font-mono text-rose-400 dark:text-rose-500 ml-0.5">{tempoPreso}</span>
+              )}
+            </div>
+
+            {/* Atribuição chip */}
+            {primaryAttrOption && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 flex-shrink-0">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: primaryColor }} />
+                {primaryAttrOption.shortLabel}
               </span>
-              {isPinned && <BookmarkCheck className="h-3 w-3 text-amber-500 flex-shrink-0" />}
-            </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              {assistido.vulgo && (
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 italic truncate max-w-[100px]">&ldquo;{assistido.vulgo}&rdquo;</span>
-              )}
-              {idade !== null && (
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{idade}a</span>
-              )}
-              {atribuicoesUnicas.slice(0, 3).map((attr, idx) => {
-                const normalizedAttr = attr.toUpperCase().replace(/_/g, ' ');
-                const option = ATRIBUICAO_OPTIONS.find(o =>
-                  o.value.toUpperCase() === normalizedAttr ||
-                  o.label.toUpperCase().includes(normalizedAttr) ||
-                  normalizedAttr.includes(o.value.toUpperCase())
-                );
-                const color = option ? SOLID_COLOR_MAP[option.value] || '#6b7280' : '#6b7280';
-                return (
-                  <Tooltip key={idx}>
-                    <TooltipTrigger asChild>
-                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 cursor-help" style={{ backgroundColor: color }} />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-[10px]">{option?.shortLabel || attr}</TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </div>
+            )}
+
+            {/* Idade */}
+            {idade !== null && (
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 flex-shrink-0">{idade}a</span>
+            )}
+
+            {/* Vulgo */}
+            {assistido.vulgo && (
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 italic truncate max-w-[80px] flex-shrink-0">&ldquo;{assistido.vulgo}&rdquo;</span>
+            )}
           </div>
-        </Link>
-      </SwissTableCell>
-
-      {/* Status */}
-      <SwissTableCell className="py-2.5">
-        <div className={cn(
-          "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium",
-          isPreso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
-          isMonitorado && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
-          !isPreso && !isMonitorado && "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400",
-        )}>
-          <div className={cn(
-            "w-1.5 h-1.5 rounded-full flex-shrink-0",
-            isPreso && "bg-rose-500",
-            isMonitorado && "bg-amber-500",
-            !isPreso && !isMonitorado && "bg-emerald-500",
-          )} />
-          {statusCfg?.label || assistido.statusPrisional}
         </div>
-        {isPreso && tempoPreso && (
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5 font-mono pl-0.5">{tempoPreso}</p>
-        )}
-      </SwissTableCell>
 
-      {/* Crime / Processo */}
-      <SwissTableCell className="py-2.5 max-w-[220px]">
+        {/* Direita: Ações — sempre visíveis */}
+        <div className="flex items-center gap-0.5 flex-shrink-0">
+          {whatsappUrl && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
+                    <MessageCircle className="h-3.5 w-3.5" />
+                  </Button>
+                </a>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-[10px]">WhatsApp</TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={`/admin/drive?assistido=${assistido.id}`}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
+                  <FolderOpen className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-[10px]">Drive</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-[10px]">Nova Demanda</TooltipContent>
+          </Tooltip>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-7 w-7 transition-all",
+              isPinned
+                ? "text-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                : "text-zinc-300 dark:text-zinc-600 hover:text-amber-500",
+            )}
+            onClick={onTogglePin}
+          >
+            {isPinned ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
+          </Button>
+          <Link href={`/admin/assistidos/${assistido.id}`}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2.5 text-xs text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-medium"
+            >
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              Ver
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* ═══ LINHA 2: Crime + Processo + Audiência + Vínculos ═══ */}
+      <div className="flex items-center gap-3 mt-1.5 ml-[52px] text-xs flex-wrap">
+        {/* Crime */}
         {assistido.crimePrincipal ? (
           <Tooltip>
             <TooltipTrigger asChild>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate cursor-help">{assistido.crimePrincipal}</p>
+              <span className="text-zinc-600 dark:text-zinc-400 truncate max-w-[200px] cursor-help">{assistido.crimePrincipal}</span>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs max-w-[300px]">{assistido.crimePrincipal}</TooltipContent>
           </Tooltip>
         ) : (
-          <span className="text-xs text-zinc-300 dark:text-zinc-600">&mdash;</span>
+          <span className="text-zinc-300 dark:text-zinc-600 italic text-[10px]">Sem tipificação</span>
         )}
+
+        {/* Separador */}
+        {assistido.numeroProcesso && <span className="text-zinc-300 dark:text-zinc-700">&middot;</span>}
+
+        {/* Processo */}
         {assistido.numeroProcesso && (
-          <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">
-            {assistido.numeroProcesso.length > 20 ? `${assistido.numeroProcesso.slice(0, 20)}...` : assistido.numeroProcesso}
-          </p>
+          <span className="font-mono text-[10px] text-zinc-400 dark:text-zinc-500 truncate max-w-[180px]">
+            {assistido.numeroProcesso.length > 25 ? `${assistido.numeroProcesso.slice(0, 25)}...` : assistido.numeroProcesso}
+          </span>
         )}
-      </SwissTableCell>
 
-      {/* Vínculos — inline minimal */}
-      <SwissTableCell className="py-2.5 text-center">
-        <div className="flex items-center justify-center gap-3">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href={`/admin/processos?assistido=${assistido.id}`} className="flex items-center gap-1 hover:text-emerald-600 transition-colors">
-                <Scale className="w-3 h-3 text-zinc-400" />
-                <span className={cn("text-xs font-semibold tabular-nums", procCount > 0 ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-300 dark:text-zinc-600")}>{procCount}</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-[10px]">{procCount} processo{procCount !== 1 ? 's' : ''}</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href={`/admin/demandas?assistido=${assistido.id}`} className="flex items-center gap-1 hover:text-emerald-600 transition-colors">
-                <FileText className="w-3 h-3 text-zinc-400" />
-                <span className={cn("text-xs font-semibold tabular-nums", demCount > 0 ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-300 dark:text-zinc-600")}>{demCount}</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-[10px]">{demCount} demanda{demCount !== 1 ? 's' : ''}</TooltipContent>
-          </Tooltip>
-        </div>
-      </SwissTableCell>
+        {/* Separador */}
+        {(assistido.proximaAudiencia || prazoInfo) && <span className="text-zinc-300 dark:text-zinc-700">&middot;</span>}
 
-      {/* Próxima */}
-      <SwissTableCell className="py-2.5">
+        {/* Próxima audiência / prazo */}
         {assistido.proximaAudiencia ? (
           <div className={cn(
-            "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs",
-            audienciaHoje && "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 font-semibold",
-            audienciaAmanha && "bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-400 font-medium",
-            !audienciaHoje && !audienciaAmanha && "text-zinc-600 dark:text-zinc-400",
+            "inline-flex items-center gap-1",
+            audienciaHoje && "text-amber-600 dark:text-amber-400 font-semibold",
+            audienciaAmanha && "text-sky-600 dark:text-sky-400 font-medium",
+            !audienciaHoje && !audienciaAmanha && "text-zinc-500 dark:text-zinc-400",
           )}>
             <Calendar className="w-3 h-3 flex-shrink-0" />
             <span>{audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanhã" : format(parseISO(assistido.proximaAudiencia), "dd/MM")}</span>
             <span className="text-[10px] text-zinc-400">{format(parseISO(assistido.proximaAudiencia), "HH:mm")}</span>
-            {audienciaHoje && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />}
+            {audienciaHoje && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
           </div>
         ) : prazoInfo ? (
           <div className={cn(
@@ -1205,77 +1208,28 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
             {prazoVencido && <AlertCircle className="w-3 h-3" />}
             <span>{prazoInfo.text}</span>
           </div>
-        ) : (
-          <span className="text-xs text-zinc-300 dark:text-zinc-600">&mdash;</span>
-        )}
-      </SwissTableCell>
+        ) : null}
 
-      {/* Ações */}
-      <SwissTableCell className="py-2.5 pr-4">
-        <div className="flex items-center justify-end gap-0.5">
-          {/* Ações secundárias — visíveis no hover */}
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            {whatsappUrl && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
-                      <MessageCircle className="h-3.5 w-3.5" />
-                    </Button>
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-[10px]">WhatsApp</TooltipContent>
-              </Tooltip>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href={`/admin/drive?assistido=${assistido.id}`}>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
-                    <FolderOpen className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-[10px]">Drive</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-[10px]">Nova Demanda</TooltipContent>
-            </Tooltip>
-          </div>
-          {/* Bookmark — sempre visível se fixado */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-7 w-7 transition-all",
-              isPinned
-                ? "text-amber-500"
-                : "text-zinc-300 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:text-amber-500",
-            )}
-            onClick={onTogglePin}
-          >
-            {isPinned ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
-          </Button>
-          {/* Ver — sempre visível */}
-          <Link href={`/admin/assistidos/${assistido.id}`}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-medium"
-            >
-              <Eye className="h-3.5 w-3.5 mr-1" />
-              Ver
-            </Button>
+        {/* Separador */}
+        {(procCount > 0 || demCount > 0) && <span className="text-zinc-300 dark:text-zinc-700">&middot;</span>}
+
+        {/* Vínculos */}
+        {procCount > 0 && (
+          <Link href={`/admin/processos?assistido=${assistido.id}`} className="inline-flex items-center gap-1 hover:text-emerald-600 transition-colors text-zinc-500 dark:text-zinc-400">
+            <Scale className="w-3 h-3" />
+            <span className="font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">{procCount}</span>
+            <span className="text-[10px]">proc</span>
           </Link>
-        </div>
-      </SwissTableCell>
-    </SwissTableRow>
+        )}
+        {demCount > 0 && (
+          <Link href={`/admin/demandas?assistido=${assistido.id}`} className="inline-flex items-center gap-1 hover:text-emerald-600 transition-colors text-zinc-500 dark:text-zinc-400">
+            <FileText className="w-3 h-3" />
+            <span className="font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">{demCount}</span>
+            <span className="text-[10px]">dem</span>
+          </Link>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -1611,6 +1565,7 @@ function FilterSectionAssistidos({
 export default function AssistidosPage() {
   // Atribuicao do contexto global
   const { currentAssignment } = useAssignment();
+  const utils = trpc.useUtils();
 
   // Buscar assistidos do banco de dados
   const { data: assistidosData, isLoading } = trpc.assistidos.list.useQuery({
@@ -2389,31 +2344,17 @@ export default function AssistidosPage() {
           </div>
         )
       ) : (
-        <SwissTableContainer className="max-h-[calc(100vh-320px)]">
-          <SwissTable>
-            <SwissTableHeader>
-              <SwissTableRow>
-                <SwissTableHead>Assistido</SwissTableHead>
-                <SwissTableHead>Status</SwissTableHead>
-                <SwissTableHead>Crime / Processo</SwissTableHead>
-                <SwissTableHead className="text-center">Vínculos</SwissTableHead>
-                <SwissTableHead>Próxima</SwissTableHead>
-                <SwissTableHead className="text-right">Ações</SwissTableHead>
-              </SwissTableRow>
-            </SwissTableHeader>
-            <SwissTableBody>
-              {filteredAssistidos.map((a) => (
-                <AssistidoRow 
-                  key={a.id} 
-                  assistido={a}
-                  onPhotoClick={() => handlePhotoClick(a)}
-                  isPinned={pinnedIds.has(a.id)}
-                  onTogglePin={() => togglePin(a.id)}
-                />
-              ))}
-            </SwissTableBody>
-          </SwissTable>
-        </SwissTableContainer>
+        <div className="space-y-1.5 max-h-[calc(100vh-320px)] overflow-y-auto custom-scrollbar pr-1">
+          {filteredAssistidos.map((a) => (
+            <AssistidoRow
+              key={a.id}
+              assistido={a}
+              onPhotoClick={() => handlePhotoClick(a)}
+              isPinned={pinnedIds.has(a.id)}
+              onTogglePin={() => togglePin(a.id)}
+            />
+          ))}
+        </div>
       )}
         </div>
       </Card>
@@ -2425,7 +2366,33 @@ export default function AssistidosPage() {
           onClose={() => { setPhotoDialogOpen(false); setSelectedAssistido(null); }}
           assistidoNome={selectedAssistido.nome}
           currentPhoto={selectedAssistido.photoUrl}
-          onUpload={(file) => console.log("Upload:", file)}
+          onUpload={async (file) => {
+            try {
+              const reader = new FileReader();
+              reader.onload = async () => {
+                try {
+                  const base64 = (reader.result as string).split(',')[1];
+                  await utils.client.assistidos.uploadPhoto.mutate({
+                    assistidoId: selectedAssistido!.id,
+                    imageBase64: base64,
+                    fileName: file.name,
+                    contentType: file.type,
+                  });
+                  utils.assistidos.list.invalidate();
+                  toast.success("Foto atualizada!");
+                  setPhotoDialogOpen(false);
+                  setSelectedAssistido(null);
+                } catch (err) {
+                  console.error("Upload error:", err);
+                  toast.error("Erro ao fazer upload da foto");
+                }
+              };
+              reader.readAsDataURL(file);
+            } catch (err) {
+              console.error("File read error:", err);
+              toast.error("Erro ao ler arquivo");
+            }
+          }}
         />
       )}
 

@@ -383,9 +383,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
       
       setRegistrosAnteriores(historico);
       
-      if (historico.length > 0) {
-        console.log(`📚 Encontrados ${historico.length} registro(s) anterior(es) para este evento`);
-      }
+      // historico loaded
     } else if (!isOpen) {
       // Resetar estado de salvamento quando fechar o modal
       setRegistroSalvo(false);
@@ -397,8 +395,6 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
   const resultadosDisponiveis = resultadoOptionsPorAtribuicao[evento.atribuicao] || resultadoOptionsPorAtribuicao["Criminal Geral"];
 
   const handleSubmit = () => {
-    console.log("🔍 Iniciando salvamento...", registro);
-    
     if (!registro.dataRealizacao) {
       toast.error("Data de realização é obrigatória");
       return;
@@ -412,8 +408,6 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
       return;
     }
 
-    console.log("✅ Validações passaram. Salvando registro...");
-
     // Adicionar IDs de vinculação para histórico
     const registroComVinculo: RegistroAudienciaData = {
       ...registro,
@@ -423,8 +417,6 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
       assistidoId: evento.assistido?.id || evento.assistidoId,
     };
 
-    console.log("💾 Salvando registro com vinculação:", registroComVinculo);
-    
     // Adicionar ao histórico
     const historicoSalvo = adicionarRegistroHistorico(registroComVinculo);
 
@@ -455,16 +447,11 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
         responsavel: evento.responsavel || "def-1",
       };
       
-      console.log("📅 Criando novo evento:", novoEvento);
       onCriarNovoEvento(novoEvento);
       
       // Vincular novo evento ao histórico
       vincularEventoRedesignado(historicoSalvo.historicoId, novoEventoId);
-      console.log("🔗 Evento redesignado vinculado ao histórico:", {
-        historicoId: historicoSalvo.historicoId,
-        novoEventoId
-      });
-      
+
       toast.success("Novo evento criado para a data redesignada!");
     }
     

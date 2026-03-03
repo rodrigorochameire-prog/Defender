@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import Link from "next/link";
 import {
   Users,
@@ -116,15 +116,23 @@ function StatCardPremium({
 }
 
 function DelegacaoCardCompact({ delegacao }: { delegacao: any }) {
-  const prazoInfo = delegacao.prazoSugerido 
+  const prazoInfo = delegacao.prazoSugerido
     ? {
         texto: format(new Date(delegacao.prazoSugerido), "dd/MM"),
         diasRestantes: differenceInDays(new Date(delegacao.prazoSugerido), new Date()),
       }
     : null;
 
-  return (
-    <div className="flex items-center gap-3 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:border-amber-200 dark:hover:border-amber-800/50 transition-colors bg-white dark:bg-zinc-900/50">
+  const href = delegacao.demandaId
+    ? `/admin/demandas/${delegacao.demandaId}`
+    : delegacao.assistidoId
+    ? `/admin/assistidos/${delegacao.assistidoId}`
+    : null;
+
+  const content = (
+    <div className={`flex items-center gap-3 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 transition-all bg-white dark:bg-zinc-900/50 ${
+      href ? "hover:border-emerald-200/50 dark:hover:border-emerald-800/30 cursor-pointer" : "hover:border-amber-200 dark:hover:border-amber-800/50"
+    }`}>
       <div className={`w-1.5 h-12 rounded-full ${
         delegacao.status === "pendente" ? "bg-amber-500" :
         delegacao.status === "em_andamento" ? "bg-blue-500" :
@@ -166,6 +174,11 @@ function DelegacaoCardCompact({ delegacao }: { delegacao: any }) {
       </div>
     </div>
   );
+
+  if (href) {
+    return <Link href={href}>{content}</Link>;
+  }
+  return content;
 }
 
 function EventoCompartilhadoCard({ evento }: { evento: any }) {
@@ -774,11 +787,10 @@ function DashboardTriagemV2({
             ) : (
               assistidos.slice(0, 8).map((assistido: any) => (
                 <div key={assistido.id} className="flex items-center gap-3 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                      {assistido.nome?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
-                    </AvatarFallback>
-                  </Avatar>
+                  <AssistidoAvatar
+                    nome={assistido.nome || ""}
+                    size="md"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                       {assistido.nome}

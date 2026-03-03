@@ -1732,8 +1732,8 @@ export default function AgendaPage() {
       <BuscaRegistrosModal
         isOpen={isBuscaRegistrosModalOpen}
         onClose={() => setIsBuscaRegistrosModalOpen(false)}
-        onViewRegistro={(registro) => {
-          console.log('Ver registro:', registro);
+        onViewRegistro={(_registro) => {
+          // TODO: implement view registro
         }}
       />
       </div>

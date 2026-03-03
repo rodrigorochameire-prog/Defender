@@ -33,6 +33,7 @@ import { PlaudArrivalToast } from "@/components/atendimentos/plaud-arrival-toast
 import { SidebarLogo } from "@/components/shared/logo";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { StatusBar } from "@/components/layout/status-bar";
+import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
 import { type AssignmentMenuItem } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
 import { logoutAction } from "@/app/(dashboard)/actions";
@@ -1703,9 +1704,12 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         </header>
 
         {/* Main */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-16 md:pb-0">
           {children}
         </main>
+
+        {/* Mobile bottom navigation */}
+        <MobileBottomNav />
       </SidebarInset>
 
       {/* Notificação real-time de gravações Plaud pendentes */}

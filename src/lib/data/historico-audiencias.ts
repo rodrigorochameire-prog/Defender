@@ -24,8 +24,7 @@ export const adicionarRegistroHistorico = (registro: RegistroAudienciaData): His
   };
 
   historicoAudiencias.push(historicoRegistro);
-  console.log("📝 Registro adicionado ao histórico:", historicoRegistro);
-  
+
   return historicoRegistro;
 };
 
@@ -62,10 +61,6 @@ export const vincularEventoRedesignado = (
       registro.eventosRelacionados = [];
     }
     registro.eventosRelacionados.push(novoEventoId);
-    console.log("🔗 Evento redesignado vinculado ao histórico:", {
-      historicoId,
-      novoEventoId,
-    });
   }
 };
 
@@ -95,5 +90,4 @@ export const exportarHistorico = (): HistoricoAudiencia[] => {
 // Limpar histórico (útil para testes)
 export const limparHistorico = (): void => {
   historicoAudiencias = [];
-  console.log("🗑️ Histórico limpo");
 };

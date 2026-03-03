@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import {
   Tooltip,
   TooltipContent,
@@ -318,20 +318,13 @@ export function DemandasTable() {
                     {/* Assistido */}
                     <SwissTableCell>
                       <div className="flex items-center gap-2">
-                        <Avatar className={cn(
-                          "h-8 w-8 ring-2 flex-shrink-0",
-                          item.preso ? "ring-rose-400 dark:ring-rose-500" : "ring-zinc-200 dark:ring-zinc-700"
-                        )}>
-                          <AvatarImage src={item.assistidoFoto || undefined} alt={item.assistidoNome} />
-                          <AvatarFallback className={cn(
-                            "text-xs font-semibold",
-                            item.preso
-                              ? "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400"
-                              : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                          )}>
-                            {item.assistidoNome.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <AssistidoAvatar
+                          nome={item.assistidoNome || ""}
+                          photoUrl={item.assistidoFoto}
+                          size="sm"
+                          statusPrisional={item.preso ? "CADEIA_PUBLICA" : "SOLTO"}
+                          showStatusDot
+                        />
                         <div className="flex-1 min-w-0">
                           <Link href={`/admin/assistidos/${item.assistidoId}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                             <p className="text-sm font-medium truncate">{item.assistidoNome}</p>

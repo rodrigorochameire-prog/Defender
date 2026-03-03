@@ -407,6 +407,32 @@ export const SOLID_COLOR_MAP: Record<string, string> = {
   "Curadoria Especial": "#8b5cf6",
 };
 
+// Mapeamento de gradientes pastel suaves para avatares
+export const AVATAR_GRADIENT_MAP: Record<string, {
+  from: string; to: string; text: string;
+  darkFrom: string; darkTo: string; darkText: string;
+}> = {
+  all:                 { from: 'from-zinc-100', to: 'to-zinc-200', text: 'text-zinc-600', darkFrom: 'dark:from-zinc-700', darkTo: 'dark:to-zinc-800', darkText: 'dark:text-zinc-300' },
+  VVD:                 { from: 'from-amber-50', to: 'to-amber-200', text: 'text-amber-700', darkFrom: 'dark:from-amber-900/40', darkTo: 'dark:to-amber-800/40', darkText: 'dark:text-amber-300' },
+  JURI:                { from: 'from-emerald-50', to: 'to-emerald-200', text: 'text-emerald-700', darkFrom: 'dark:from-emerald-900/40', darkTo: 'dark:to-emerald-800/40', darkText: 'dark:text-emerald-300' },
+  GRUPO_JURI:          { from: 'from-orange-50', to: 'to-orange-200', text: 'text-orange-700', darkFrom: 'dark:from-orange-900/40', darkTo: 'dark:to-orange-800/40', darkText: 'dark:text-orange-300' },
+  EXECUCAO:            { from: 'from-blue-50', to: 'to-blue-200', text: 'text-blue-700', darkFrom: 'dark:from-blue-900/40', darkTo: 'dark:to-blue-800/40', darkText: 'dark:text-blue-300' },
+  SUBSTITUICAO:        { from: 'from-rose-50', to: 'to-rose-200', text: 'text-rose-700', darkFrom: 'dark:from-rose-900/40', darkTo: 'dark:to-rose-800/40', darkText: 'dark:text-rose-300' },
+  SUBSTITUICAO_CIVEL:  { from: 'from-violet-50', to: 'to-violet-200', text: 'text-violet-700', darkFrom: 'dark:from-violet-900/40', darkTo: 'dark:to-violet-800/40', darkText: 'dark:text-violet-300' },
+  CURADORIA:           { from: 'from-zinc-100', to: 'to-zinc-200', text: 'text-zinc-600', darkFrom: 'dark:from-zinc-700', darkTo: 'dark:to-zinc-800', darkText: 'dark:text-zinc-300' },
+};
+
+// Helper para obter gradiente de avatar por atribuição
+// Verifica valor bruto primeiro (GRUPO_JURI → orange) antes de normalizar
+export function getAvatarGradient(atribuicao?: string | null) {
+  if (!atribuicao) return AVATAR_GRADIENT_MAP.all;
+  // Check raw value first (e.g. GRUPO_JURI has distinct color from JURI)
+  if (AVATAR_GRADIENT_MAP[atribuicao]) return AVATAR_GRADIENT_MAP[atribuicao];
+  // Fall back to normalized filter key
+  const normalized = normalizeAreaToFilter(atribuicao);
+  return AVATAR_GRADIENT_MAP[normalized] || AVATAR_GRADIENT_MAP.all;
+}
+
 // Função helper para obter cores de uma atribuição
 export function getAtribuicaoColors(atribuicao: string | undefined | null) {
   if (!atribuicao) {

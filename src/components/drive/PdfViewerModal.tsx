@@ -84,6 +84,7 @@ import {
   Ban,
   UserCheck,
   Crosshair,
+  ScanFace,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProcessingQueue } from "@/contexts/processing-queue";
@@ -118,6 +119,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { FileLinkDialog } from "./FileLinkDialog";
+import { ImageCaptureDialog } from "./ImageCaptureDialog";
 
 // ─── Section Type Config ───────────────────────────────────────────
 
@@ -1989,6 +1991,13 @@ export function PdfViewerModal({
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const selectionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Image capture mode
+  const [isCaptureMode, setIsCaptureMode] = useState(false);
+  const [captureStart, setCaptureStart] = useState<{ x: number; y: number } | null>(null);
+  const [captureRect, setCaptureRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [showCaptureDialog, setShowCaptureDialog] = useState(false);
+
   // Reset state when fileId changes (file navigation)
   const prevFileIdRef = useRef(fileId);
   useEffect(() => {
@@ -2011,6 +2020,19 @@ export function PdfViewerModal({
       setPdfError(null);
     }
   }, [isOpen]);
+
+  // Escape key to cancel capture mode
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && isCaptureMode) {
+        setIsCaptureMode(false);
+        setCaptureStart(null);
+        setCaptureRect(null);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isCaptureMode]);
 
   // Section filter: hide burocracia by default
   const [hideBurocracia, setHideBurocracia] = useState(true);
@@ -3085,6 +3107,24 @@ export function PdfViewerModal({
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomIn}>
                 <ZoomIn className="h-4.5 w-4.5 text-zinc-500" />
               </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-8 w-8",
+                      isCaptureMode && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
+                    )}
+                    onClick={() => setIsCaptureMode(!isCaptureMode)}
+                  >
+                    <ScanFace className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="text-xs">{isCaptureMode ? "Cancelar captura" : "Capturar imagem"}</p>
+                </TooltipContent>
+              </Tooltip>
               <Button
                 variant="ghost"
                 size="icon"
@@ -3457,6 +3497,81 @@ export function PdfViewerModal({
                       onDelete={handleDeleteAnnotation}
                     />
                   ))}
+
+                  {/* Image capture overlay */}
+                  {isCaptureMode && (
+                    <div
+                      className="absolute inset-0 z-50"
+                      style={{ cursor: "crosshair" }}
+                      onMouseDown={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setCaptureStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                        setCaptureRect(null);
+                      }}
+                      onMouseMove={(e) => {
+                        if (!captureStart) return;
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = Math.min(captureStart.x, e.clientX - rect.left);
+                        const y = Math.min(captureStart.y, e.clientY - rect.top);
+                        const w = Math.abs(e.clientX - rect.left - captureStart.x);
+                        const h = Math.abs(e.clientY - rect.top - captureStart.y);
+                        setCaptureRect({ x, y, w, h });
+                      }}
+                      onMouseUp={() => {
+                        if (captureRect && captureRect.w > 10 && captureRect.h > 10) {
+                          // Find the canvas element within this relative wrapper
+                          const pageCanvas = pageContainerRef.current?.querySelector(".react-pdf__Page__canvas") as HTMLCanvasElement;
+                          if (pageCanvas) {
+                            const canvasRect = pageCanvas.getBoundingClientRect();
+                            const parentRect = pageCanvas.parentElement?.getBoundingClientRect();
+                            if (parentRect) {
+                              // Calculate canvas-relative coordinates
+                              const scaleX = pageCanvas.width / canvasRect.width;
+                              const scaleY = pageCanvas.height / canvasRect.height;
+                              const offsetX = canvasRect.left - parentRect.left;
+                              const offsetY = canvasRect.top - parentRect.top;
+
+                              const tempCanvas = document.createElement("canvas");
+                              const ctx = tempCanvas.getContext("2d")!;
+                              const maxSize = 400;
+                              const srcX = (captureRect.x - offsetX) * scaleX;
+                              const srcY = (captureRect.y - offsetY) * scaleY;
+                              const srcW = captureRect.w * scaleX;
+                              const srcH = captureRect.h * scaleY;
+                              const capScale = Math.min(maxSize / srcW, maxSize / srcH, 1);
+                              tempCanvas.width = Math.round(srcW * capScale);
+                              tempCanvas.height = Math.round(srcH * capScale);
+                              ctx.drawImage(pageCanvas, srcX, srcY, srcW, srcH, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                              let dataUrl = tempCanvas.toDataURL("image/jpeg", 0.85);
+                              // If > 100KB, reduce quality
+                              if (dataUrl.length > 133333) {
+                                dataUrl = tempCanvas.toDataURL("image/jpeg", 0.7);
+                              }
+                              setCapturedImage(dataUrl);
+                              setShowCaptureDialog(true);
+                            }
+                          }
+                        }
+                        setCaptureStart(null);
+                        setCaptureRect(null);
+                        setIsCaptureMode(false);
+                      }}
+                    >
+                      {/* Selection rectangle */}
+                      {captureRect && (
+                        <div
+                          className="absolute border-2 border-dashed border-emerald-500 bg-emerald-500/10 rounded"
+                          style={{
+                            left: captureRect.x,
+                            top: captureRect.y,
+                            width: captureRect.w,
+                            height: captureRect.h,
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
                     </div>{/* Close relative wrapper around page + overlays */}
                   </ReactPdfDocument>
                 </div>
@@ -3532,6 +3647,20 @@ export function PdfViewerModal({
         currentAssistidoId={fileMetadata?.assistidoId}
         currentProcessoId={fileMetadata?.processoId}
       />
+
+      {/* Image Capture Dialog */}
+      {capturedImage && (
+        <ImageCaptureDialog
+          isOpen={showCaptureDialog}
+          onClose={() => {
+            setShowCaptureDialog(false);
+            setCapturedImage(null);
+          }}
+          imageDataUrl={capturedImage}
+          processoId={fileMetadata?.processoId}
+          assistidoId={fileMetadata?.assistidoId}
+        />
+      )}
     </TooltipProvider>
   );
 }

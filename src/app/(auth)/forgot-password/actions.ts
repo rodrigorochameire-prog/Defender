@@ -35,8 +35,6 @@ export async function forgotPasswordAction(email: string): Promise<ForgotPasswor
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
                    "https://defesahub.vercel.app";
     const redirectTo = `${baseUrl}/reset-password`;
-    
-    console.log(`[Forgot Password] Redirect URL: ${redirectTo}`);
 
     // Enviar email de recuperação via Supabase Auth
     const { error } = await supabase.auth.resetPasswordForEmail(
@@ -54,8 +52,6 @@ export async function forgotPasswordAction(email: string): Promise<ForgotPasswor
         message: "Se o email existir, você receberá as instruções de recuperação",
       };
     }
-
-    console.log(`[Forgot Password] Email de recuperação enviado para: ${email}`);
 
     return {
       success: true,

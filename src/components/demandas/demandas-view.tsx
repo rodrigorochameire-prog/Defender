@@ -461,9 +461,8 @@ export function DemandasView() {
     return result;
   }, [filter, statusFilter]);
 
-  const handleEdit = (id: number) => {
-    console.log("Editar demanda:", id);
-    // Implementar navegação ou modal
+  const handleEdit = (_id: number) => {
+    // TODO: Implementar navegação ou modal
   };
 
   return (

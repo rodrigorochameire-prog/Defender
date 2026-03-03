@@ -49,7 +49,6 @@ export function ResetPasswordForm() {
 
         // Pegar o hash da URL
         const hash = window.location.hash;
-        console.log("[Reset Password] Hash da URL:", hash ? "presente" : "ausente");
 
         if (hash && hash.includes("access_token")) {
           // Parsear os parâmetros do hash
@@ -57,8 +56,6 @@ export function ResetPasswordForm() {
           const accessToken = params.get("access_token");
           const refreshToken = params.get("refresh_token");
           const type = params.get("type");
-
-          console.log("[Reset Password] Tipo de token:", type);
 
           if (accessToken && type === "recovery") {
             // Definir a sessão manualmente com o token
@@ -75,7 +72,6 @@ export function ResetPasswordForm() {
             }
 
             if (data.session) {
-              console.log("[Reset Password] Sessão estabelecida com sucesso");
               setHasSession(true);
               // Limpar o hash da URL para não ficar visível
               window.history.replaceState(null, "", window.location.pathname);
@@ -87,7 +83,6 @@ export function ResetPasswordForm() {
           // Verificar se já existe uma sessão (usuário voltou para a página)
           const { data } = await supabase.auth.getSession();
           if (data.session) {
-            console.log("[Reset Password] Sessão existente encontrada");
             setHasSession(true);
           } else {
             setErrorMessage("Nenhum link de recuperação detectado.");

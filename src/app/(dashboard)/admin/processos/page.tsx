@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -128,6 +129,7 @@ interface Processo {
     id: number;
     nome: string;
     foto?: string | null;
+    photoUrl?: string | null;
     preso: boolean;
     localPrisao?: string | null;
   };
@@ -892,15 +894,12 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
           {/* Linha 5: Assistido + Comarca */}
           <div className="flex items-center justify-between gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
             <Link href={`/admin/assistidos/${processo.assistido.id}`} className="flex items-center gap-2.5 min-w-0 group/link">
-              <Avatar className="w-8 h-8 ring-2 ring-white dark:ring-zinc-800 shadow-sm">
-                <AvatarImage src={processo.assistido.foto || undefined} />
-                <AvatarFallback
-                  className="text-[10px] font-bold text-white"
-                  style={{ backgroundColor: areaColor }}
-                >
-                  {processo.assistido.nome.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <AssistidoAvatar
+                nome={processo.assistido?.nome || ""}
+                photoUrl={processo.assistido?.photoUrl || processo.assistido?.foto}
+                size="sm"
+                atribuicao={processo.area}
+              />
               <div className="min-w-0">
                 <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate block group-hover/link:text-emerald-600 transition-colors">
                   {processo.assistido.nome}
@@ -1115,12 +1114,12 @@ function ProcessoRow({ processo }: { processo: Processo }) {
       {/* Assistido */}
       <DataTableCell className="min-w-[180px]">
         <div className="flex items-center gap-2">
-          <Avatar className="w-8 h-8 ring-1 ring-border/50 flex-shrink-0">
-            <AvatarImage src={processo.assistido.foto || undefined} alt={processo.assistido.nome} />
-            <AvatarFallback className="text-xs font-semibold bg-muted text-foreground">
-              {processo.assistido.nome.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <AssistidoAvatar
+            nome={processo.assistido?.nome || ""}
+            photoUrl={processo.assistido?.photoUrl || processo.assistido?.foto}
+            size="sm"
+            atribuicao={processo.area}
+          />
           <div className="flex-1 min-w-0">
             <Link href={`/admin/assistidos/${processo.assistido.id}`} className="hover:text-primary transition-colors">
               <span className="text-sm font-medium block truncate">{processo.assistido.nome}</span>
@@ -1563,6 +1562,7 @@ export default function ProcessosPage() {
       assistido: {
         id: p.assistido?.id || 0,
         nome: p.assistido?.nome || "Não identificado",
+        photoUrl: p.assistido?.photoUrl || null,
         preso: p.assistido?.statusPrisional && ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(p.assistido.statusPrisional),
       },
       defensorNome: p.defensorNome || null,

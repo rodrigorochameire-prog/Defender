@@ -110,6 +110,7 @@ export const demandasRouter = router({
             id: assistidos.id,
             nome: assistidos.nome,
             statusPrisional: assistidos.statusPrisional,
+            photoUrl: assistidos.photoUrl,
           },
         })
         .from(demandas)
@@ -139,12 +140,61 @@ export const demandasRouter = router({
         }
       }
 
-      const [demanda] = await db
-        .select()
+      const [result] = await db
+        .select({
+          id: demandas.id,
+          ato: demandas.ato,
+          tipoAto: demandas.tipoAto,
+          prazo: demandas.prazo,
+          dataEntrada: demandas.dataEntrada,
+          dataIntimacao: demandas.dataIntimacao,
+          dataExpedicao: demandas.dataExpedicao,
+          dataConclusao: demandas.dataConclusao,
+          status: demandas.status,
+          substatus: demandas.substatus,
+          prioridade: demandas.prioridade,
+          providencias: demandas.providencias,
+          reuPreso: demandas.reuPreso,
+          processoId: demandas.processoId,
+          assistidoId: demandas.assistidoId,
+          defensorId: demandas.defensorId,
+          delegadoParaId: demandas.delegadoParaId,
+          dataDelegacao: demandas.dataDelegacao,
+          motivoDelegacao: demandas.motivoDelegacao,
+          statusDelegacao: demandas.statusDelegacao,
+          enrichmentData: demandas.enrichmentData,
+          createdAt: demandas.createdAt,
+          updatedAt: demandas.updatedAt,
+          processo: {
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+            area: processos.area,
+            atribuicao: processos.atribuicao,
+            comarca: processos.comarca,
+            vara: processos.vara,
+            classeProcessual: processos.classeProcessual,
+            assunto: processos.assunto,
+            fase: processos.fase,
+            parteContraria: processos.parteContraria,
+          },
+          assistido: {
+            id: assistidos.id,
+            nome: assistidos.nome,
+            statusPrisional: assistidos.statusPrisional,
+            photoUrl: assistidos.photoUrl,
+          },
+          defensor: {
+            id: users.id,
+            name: users.name,
+          },
+        })
         .from(demandas)
+        .leftJoin(processos, eq(demandas.processoId, processos.id))
+        .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+        .leftJoin(users, eq(demandas.defensorId, users.id))
         .where(and(...conditions));
-      
-      return demanda || null;
+
+      return result || null;
     }),
 
   // Listar prazos urgentes (próximos 7 dias)
@@ -203,6 +253,7 @@ export const demandasRouter = router({
             id: assistidos.id,
             nome: assistidos.nome,
             statusPrisional: assistidos.statusPrisional,
+            photoUrl: assistidos.photoUrl,
           },
         })
         .from(demandas)

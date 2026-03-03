@@ -91,7 +91,7 @@ export function EquipeCoworkCard({
   return (
     <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
       {/* Accent bar */}
-      <div className="h-1 bg-gradient-to-r from-violet-400 via-violet-500 to-indigo-500" />
+      <div className="h-1 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600" />
       {/* Header */}
       <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -156,15 +156,16 @@ export function EquipeCoworkCard({
                   onClick={acao.onClick}
                   className={cn(
                     "flex items-center gap-2 px-4 py-2.5 rounded-lg",
-                    "border border-zinc-200/80 dark:border-zinc-700",
-                    "bg-white dark:bg-zinc-800/50",
-                    "hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10",
-                    "hover:border-emerald-200 dark:hover:border-emerald-800",
+                    "border border-zinc-200/60 dark:border-zinc-700/60",
+                    "bg-zinc-50/50 dark:bg-zinc-800/30",
+                    "hover:bg-emerald-50/60 dark:hover:bg-emerald-900/10",
+                    "hover:border-emerald-300/60 dark:hover:border-emerald-800/50",
+                    "hover:shadow-sm",
                     "cursor-pointer transition-all duration-200"
                   )}
                 >
-                  <AcaoIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{acao.label}</span>
+                  <AcaoIcon className="w-4 h-4 text-emerald-600/80 dark:text-emerald-400/80" />
+                  <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{acao.label}</span>
                 </button>
               );
             })}

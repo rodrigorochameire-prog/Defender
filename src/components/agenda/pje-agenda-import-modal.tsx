@@ -596,8 +596,6 @@ Status: ${situacao}`;
       // Formato da pauta do PJe pode ter quebras de linha
       // ============================================
       if (eventos.length === 0) {
-        console.log("Tentando método alternativo de parsing...");
-        
         // Primeiro, encontrar todas as datas no formato DD/MM/AA HH:MM
         const regexData = /(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/g;
         const regexProcesso = /(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})/g;
@@ -605,8 +603,6 @@ Status: ${situacao}`;
         // Encontrar todos os processos
         const processos = [...conteudo.matchAll(regexProcesso)];
         const datas = [...conteudo.matchAll(regexData)];
-        
-        console.log(`Encontradas ${datas.length} datas e ${processos.length} processos`);
 
         // Para cada data, tentar encontrar o processo mais próximo
         for (let i = 0; i < datas.length; i++) {

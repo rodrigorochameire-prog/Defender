@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -252,15 +252,16 @@ function AudienciaCard({
         {/* Assistido */}
         {audiencia.assistidoNome && (
           <div className="flex items-center gap-2 mb-2">
-            <Avatar className={cn(
-              "w-6 h-6 ring-2",
-              audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
-            )}>
-              <AvatarImage src={audiencia.assistidoFoto || undefined} />
-              <AvatarFallback className="text-xs bg-zinc-100 dark:bg-zinc-800">
-                {audiencia.assistidoNome?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
+            <AssistidoAvatar
+              nome={audiencia.assistidoNome || ""}
+              photoUrl={audiencia.assistidoFoto}
+              size="xs"
+              atribuicao={audiencia.atribuicao}
+              className={cn(
+                "ring-2 rounded-full",
+                audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
+              )}
+            />
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
               {audiencia.assistidoNome}
             </span>
@@ -362,15 +363,16 @@ function ListView({
                   <TableCell>
                     {audiencia.assistidoNome && (
                       <div className="flex items-center gap-2">
-                        <Avatar className={cn(
-                          "w-6 h-6 ring-1",
-                          audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
-                        )}>
-                          <AvatarImage src={audiencia.assistidoFoto || undefined} />
-                          <AvatarFallback className="text-xs font-medium">
-                            {audiencia.assistidoNome?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <AssistidoAvatar
+                          nome={audiencia.assistidoNome || ""}
+                          photoUrl={audiencia.assistidoFoto}
+                          size="xs"
+                          atribuicao={audiencia.atribuicao}
+                          className={cn(
+                            "ring-1 rounded-full",
+                            audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
+                          )}
+                        />
                         <div className="min-w-0">
                           <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate block max-w-[140px] font-medium">
                             {audiencia.assistidoNome}
@@ -458,15 +460,16 @@ function ListView({
               {/* Middle: Assistido */}
               {audiencia.assistidoNome && (
                 <div className="flex items-center gap-2 mb-2">
-                  <Avatar className={cn(
-                    "w-7 h-7 ring-1",
-                    audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
-                  )}>
-                    <AvatarImage src={audiencia.assistidoFoto || undefined} />
-                    <AvatarFallback className="text-xs font-medium">
-                      {audiencia.assistidoNome?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <AssistidoAvatar
+                    nome={audiencia.assistidoNome || ""}
+                    photoUrl={audiencia.assistidoFoto}
+                    size="sm"
+                    atribuicao={audiencia.atribuicao}
+                    className={cn(
+                      "ring-1 rounded-full",
+                      audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
+                    )}
+                  />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm text-zinc-900 dark:text-zinc-100 font-medium block truncate">
                       {audiencia.assistidoNome}
@@ -775,15 +778,16 @@ function AudienciaSidePeek({
       <SheetContent className="w-[450px] sm:max-w-[450px] overflow-y-auto">
         <SheetHeader className="pb-4 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-3">
-            {audiencia.assistidoFoto && (
-              <Avatar className={cn(
-                "w-12 h-12 ring-2",
+            <AssistidoAvatar
+              nome={audiencia.assistidoNome || ""}
+              photoUrl={audiencia.assistidoFoto}
+              size="lg"
+              atribuicao={audiencia.atribuicao}
+              className={cn(
+                "ring-2 rounded-full",
                 audiencia.assistidoPreso ? "ring-rose-500" : "ring-emerald-500"
-              )}>
-                <AvatarImage src={audiencia.assistidoFoto} />
-                <AvatarFallback>{audiencia.assistidoNome?.charAt(0)}</AvatarFallback>
-              </Avatar>
-            )}
+              )}
+            />
             <div>
               <SheetTitle className="text-left">
                 {audiencia.assistidoNome || "Audiência"}

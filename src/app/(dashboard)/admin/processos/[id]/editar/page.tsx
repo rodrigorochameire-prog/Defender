@@ -172,8 +172,6 @@ export default function EditarProcessoPage() {
     
     try {
       // Em produção, chamar TRPC para atualizar
-      console.log("Salvando processo:", formData);
-      
       // Simular delay
       await new Promise(resolve => setTimeout(resolve, 500));
       

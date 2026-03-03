@@ -432,7 +432,7 @@ export function DriveTopBar() {
                 size="icon"
                 className="hidden sm:inline-flex h-8 w-8 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                 onClick={() => {
-                  console.log("[Drive] Upload button clicked — not yet implemented");
+                  // TODO: implement upload
                 }}
               >
                 <Upload className="h-4 w-4" />

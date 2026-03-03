@@ -24,7 +24,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import {
   Briefcase,
   Plus,
@@ -743,11 +743,11 @@ function CasoCard({ caso }: CasoCardProps) {
                             : "border-zinc-200 dark:border-zinc-700"
                         )}
                       >
-                        <Avatar className="h-6 w-6">
-                          <AvatarFallback className="text-[9px] font-bold bg-zinc-100 dark:bg-zinc-700">
-                            {getInitials(assistido.nome)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <AssistidoAvatar
+                          nome={assistido.nome}
+                          size="xs"
+                          atribuicao={caso.atribuicao}
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">
                             {assistido.nome}

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { enrichmentClient } from "@/lib/services/enrichment-client";
 import { db } from "@/lib/db";
-import { assistidos, processos } from "@/lib/db/schema";
+import { assistidos, processos, demandas } from "@/lib/db/schema";
 import { ilike, or } from "drizzle-orm";
 
 export const searchRouter = router({
@@ -97,9 +97,29 @@ export const searchRouter = router({
         )
         .limit(input.limit);
 
+      // Buscar demandas por ato ou tipo de ato
+      const matchingDemandas = await db
+        .select({
+          id: demandas.id,
+          ato: demandas.ato,
+          status: demandas.status,
+          prioridade: demandas.prioridade,
+          tipoAto: demandas.tipoAto,
+          createdAt: demandas.createdAt,
+        })
+        .from(demandas)
+        .where(
+          or(
+            ilike(demandas.ato, term),
+            ilike(demandas.tipoAto, term)
+          )
+        )
+        .limit(input.limit);
+
       return {
         assistidos: matchingAssistidos,
         processos: matchingProcessos,
+        demandas: matchingDemandas,
       };
     }),
 });

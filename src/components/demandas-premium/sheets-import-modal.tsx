@@ -508,8 +508,6 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
     const novas: ParsedDemanda[] = [];
     const dups: DuplicataInfo[] = [];
 
-    console.log("[SheetsImport] Verificando duplicatas. Existentes:", demandasExistentes.length);
-
     for (const demanda of demandas.filter(d => d.valido)) {
       const existente = demandasExistentes.find(e => saoMesmaDemanda(demanda, e));
 
@@ -519,10 +517,8 @@ export function SheetsImportModal({ isOpen, onClose, onImport, onUpdate, demanda
         // Se não detectou diferenças específicas, adicionar uma genérica para forçar atualização
         const diferencasFinais = diferencas.length > 0 ? diferencas : [`Sincronizar com planilha`];
         dups.push({ nova: demanda, existente, diferencas: diferencasFinais });
-        console.log(`[SheetsImport] Duplicata encontrada: ${demanda.assistido}`, { diferencas: diferencasFinais });
       } else {
         novas.push(demanda);
-        console.log(`[SheetsImport] Nova demanda: ${demanda.assistido}`);
       }
     }
 

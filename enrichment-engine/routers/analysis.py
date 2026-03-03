@@ -15,6 +15,23 @@ logger = logging.getLogger("enrichment-engine.analysis")
 router = APIRouter()
 
 
+def _update_progress(db_record_id: int, step: str, progress: int, detail: str = ""):
+    """Atualiza enrichment_data.progress para polling do frontend."""
+    try:
+        from services.supabase_service import get_supabase_service
+        supa = get_supabase_service()
+        client = supa._get_client()
+        result = client.table("drive_files").select("enrichment_data").eq("id", db_record_id).single().execute()
+        current_data = result.data.get("enrichment_data") or {} if result.data else {}
+        current_data["progress"] = {"step": step, "percent": progress, "detail": detail}
+        client.table("drive_files").update({
+            "enrichment_data": current_data,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", db_record_id).execute()
+    except Exception as e:
+        logger.warning("Progress update failed (non-critical) | db_id=%d | error=%s", db_record_id, str(e))
+
+
 async def _process_analysis_background(input_data: AnalyzeAsyncInput):
     """Background task: analisa transcricao e salva resultado no Supabase."""
     db_record_id = input_data.db_record_id
@@ -26,30 +43,13 @@ async def _process_analysis_background(input_data: AnalyzeAsyncInput):
         len(input_data.transcript),
     )
 
-    def _update_progress(step: str, progress: int, detail: str = ""):
-        """Atualiza enrichment_data.progress para polling do frontend."""
-        try:
-            from services.supabase_service import get_supabase_service
-            supa = get_supabase_service()
-            client = supa._get_client()
-            # Read current enrichment_data, merge progress
-            result = client.table("drive_files").select("enrichment_data").eq("id", db_record_id).single().execute()
-            current_data = result.data.get("enrichment_data") or {} if result.data else {}
-            current_data["progress"] = {"step": step, "percent": progress, "detail": detail}
-            client.table("drive_files").update({
-                "enrichment_data": current_data,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }).eq("id", db_record_id).execute()
-        except Exception:
-            pass  # Non-critical
-
     try:
         analysis_svc = get_analysis_service()
         if not analysis_svc.available:
             logger.warning("Analysis skipped — ANTHROPIC_API_KEY not configured")
             return
 
-        _update_progress("analyzing", 30, "Analisando com Claude Sonnet...")
+        _update_progress(db_record_id, "analyzing", 30, "Analisando com Claude Sonnet...")
 
         analysis = await analysis_svc.analyze_deposition(
             transcript=input_data.transcript,
@@ -60,16 +60,16 @@ async def _process_analysis_background(input_data: AnalyzeAsyncInput):
 
         if not analysis:
             logger.warning("Analysis returned None for db_id=%d", db_record_id)
+            _update_progress(db_record_id, "failed", 0, "Analise retornou resultado vazio")
             return
 
-        _update_progress("saving", 90, "Salvando resultado...")
+        _update_progress(db_record_id, "saving", 90, "Salvando resultado...")
 
         # Save analysis to drive_files.enrichment_data.analysis via Supabase
         from services.supabase_service import get_supabase_service
         supa = get_supabase_service()
         client = supa._get_client()
 
-        # Read current enrichment_data, add analysis
         result = client.table("drive_files").select("enrichment_data").eq("id", db_record_id).single().execute()
         current_data = result.data.get("enrichment_data") or {} if result.data else {}
         current_data["analysis"] = analysis
@@ -89,7 +89,7 @@ async def _process_analysis_background(input_data: AnalyzeAsyncInput):
 
     except Exception as e:
         logger.error("Analysis FAILED | db_id=%d | error=%s", db_record_id, str(e))
-        _update_progress("failed", 0, f"Erro: {str(e)[:200]}")
+        _update_progress(db_record_id, "failed", 0, f"Erro: {str(e)[:200]}")
 
 
 @router.post("/analyze-async", status_code=202)
@@ -119,9 +119,10 @@ async def analyze_transcript_async(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error("Analysis service init failed: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Analysis service not available: {str(e)}",
+            detail="Analysis service not available",
         )
 
     background_tasks.add_task(_process_analysis_background, input_data)

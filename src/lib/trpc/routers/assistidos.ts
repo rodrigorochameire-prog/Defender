@@ -5,6 +5,7 @@ import { assistidos, processos, demandas, audiencias, documentos, movimentacoes,
 import { eq, ilike, or, desc, sql, and, isNull, inArray, asc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getWorkspaceScope, resolveWorkspaceId } from "../workspace";
+import { uploadImageBuffer } from "@/lib/supabase/storage";
 
 // Drive lifecycle: cria ou move pasta em background (fire-and-forget)
 async function ensureDriveFolderForAssistido(
@@ -682,6 +683,29 @@ export const assistidosRouter = router({
       }
 
       return atualizado;
+    }),
+
+  // Upload de foto do assistido
+  uploadPhoto: protectedProcedure
+    .input(z.object({
+      assistidoId: z.number(),
+      imageBase64: z.string(),
+      fileName: z.string(),
+      contentType: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const buffer = Buffer.from(input.imageBase64, "base64");
+      const { url } = await uploadImageBuffer(
+        buffer,
+        input.fileName,
+        input.contentType,
+        "assistidos"
+      );
+      await db
+        .update(assistidos)
+        .set({ photoUrl: url, updatedAt: new Date() })
+        .where(eq(assistidos.id, input.assistidoId));
+      return { photoUrl: url };
     }),
 
   // Analisar todos os documentos da pasta Drive com IA

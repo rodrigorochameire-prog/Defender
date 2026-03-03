@@ -1174,7 +1174,6 @@ export async function getAuthenticatedAccountInfo(): Promise<GoogleAccountInfo |
     }
 
     const data = await response.json();
-    console.log("[Google Drive] About response:", JSON.stringify(data));
 
     if (data.user) {
       return {
