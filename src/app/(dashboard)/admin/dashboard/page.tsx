@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, Fragment } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -536,6 +536,30 @@ export default function DashboardJuriPage() {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [showTranscriptViewer, setShowTranscriptViewer] = useState(false);
   const [awaitingPlaud, setAwaitingPlaud] = useState(false);
+
+  const createAtendimento = trpc.atendimentos.create.useMutation({
+    onSuccess: (created) => {
+      const tipoLabel = tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro";
+      const nomeExibicao = atendimentoRapido.assistidoNome || "sem vínculo";
+      toast.success(`${tipoLabel} registrado para ${nomeExibicao}`, {
+        description: atendimentoRapido.assistidoId
+          ? `Ver perfil do assistido`
+          : undefined,
+        action: atendimentoRapido.assistidoId
+          ? { label: "Ver perfil", onClick: () => window.location.href = `/admin/assistidos/${atendimentoRapido.assistidoId}` }
+          : undefined,
+      });
+      setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, prazo: "" });
+      setShowDetalhes(false);
+      setAudioTranscript("");
+      setAudioSummary("");
+      utils.atendimentos.invalidate();
+      utils.demandas.list.invalidate();
+    },
+    onError: (err) => {
+      toast.error("Erro ao registrar", { description: err.message });
+    },
+  });
 
   const startPlaudRecording = trpc.atendimentos.startPlaudRecording.useMutation({
     onSuccess: () => {
@@ -1223,23 +1247,38 @@ export default function DashboardJuriPage() {
               <Button
                 size="sm"
                 className="h-8 px-4 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white shadow-none transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
-                disabled={!atendimentoRapido.descricao.trim()}
+                disabled={!atendimentoRapido.descricao.trim() || !atendimentoRapido.assistidoId || createAtendimento.isPending}
                 onClick={() => {
-                  if (atendimentoRapido.descricao.trim()) {
-                    const tipoLabel = tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro";
-                    const nomeExibicao = atendimentoRapido.assistidoNome || "sem vínculo";
-                    toast.success(`${tipoLabel} de ${nomeExibicao} registrado!`);
-                    setAtendimentoRapido({ assistidoId: null, assistidoNome: "", tipo: "atendimento", descricao: "", processoId: null, prazo: "" });
-                    setShowDetalhes(false);
-                  } else {
-                    toast.error("Adicione uma descrição ao registro");
+                  if (!atendimentoRapido.assistidoId) {
+                    toast.error("Selecione um assistido para registrar");
+                    return;
                   }
+                  if (!atendimentoRapido.descricao.trim()) {
+                    toast.error("Adicione uma descrição ao registro");
+                    return;
+                  }
+                  createAtendimento.mutate({
+                    assistidoId: atendimentoRapido.assistidoId,
+                    tipo: atendimentoRapido.tipo,
+                    resumo: atendimentoRapido.descricao.trim(),
+                    dataAtendimento: new Date().toISOString(),
+                    ...(atendimentoRapido.processoId ? { processoId: atendimentoRapido.processoId } : {}),
+                    status: "realizado",
+                  });
                 }}
               >
-                <Send className="w-3 h-3 mr-1.5" />
-                {!atendimentoRapido.descricao.trim()
-                  ? "Adicione uma descrição"
-                  : `Registrar ${tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro"}`}
+                {createAtendimento.isPending ? (
+                  <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                ) : (
+                  <Send className="w-3 h-3 mr-1.5" />
+                )}
+                {!atendimentoRapido.assistidoId
+                  ? "Selecione um assistido"
+                  : !atendimentoRapido.descricao.trim()
+                    ? "Adicione uma descrição"
+                    : createAtendimento.isPending
+                      ? "Registrando..."
+                      : `Registrar ${tiposRegistro.find(t => t.id === atendimentoRapido.tipo)?.label || "Registro"}`}
               </Button>
             </div>
 
@@ -1391,25 +1430,34 @@ export default function DashboardJuriPage() {
           </Card>
         )}
 
-        {/* ===== KPI SECTION ===== */}
-        <div className="space-y-3">
+        {/* ===== STATS RIBBON ===== */}
+        <div className="space-y-2">
           <div className="flex items-center gap-2 px-1">
             <div className="w-1.5 h-5 rounded-full bg-emerald-500" />
             <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Resumo</h2>
           </div>
-          <KPIGrid columns={4}>
-            {statsData.map((stat, index) => (
-              <KPICardPremium
-                key={index}
-                title={stat.title}
-                value={stat.value}
-                subtitle={stat.subtitle}
-                icon={stat.icon}
-                gradient={stat.gradient}
-                size="sm"
-              />
-            ))}
-          </KPIGrid>
+          <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+            {statsData.map((stat, index) => {
+              const Icon = stat.icon;
+              const isAlert = stat.gradient === "rose" || stat.gradient === "amber";
+              const hasValue = Number(String(stat.value).replace('%','')) > 0 && stat.value !== "...";
+              return (
+                <Fragment key={index}>
+                  {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                  <div className={cn(
+                    "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                    isAlert && hasValue ? "bg-rose-50 dark:bg-rose-950/20" : ""
+                  )}>
+                    <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", isAlert && hasValue ? "text-rose-500 dark:text-rose-400" : "text-zinc-400 dark:text-zinc-500")} />
+                    <span className={cn("font-bold tabular-nums", isAlert && hasValue ? "text-rose-600 dark:text-rose-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
+                    <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.title.toLowerCase()}</span>
+                  </div>
+                </Fragment>
+              );
+            })}
+            <div className="flex-1" />
+            <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{totalDemandas} demandas</span>
+          </div>
         </div>
 
         {/* ===== 4. ALERTA CRÍTICO - Réu Preso com Prazo Vencido ===== */}

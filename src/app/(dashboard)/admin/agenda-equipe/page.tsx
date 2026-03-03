@@ -9,15 +9,14 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  Gavel,
   Clock,
-  Plus,
-  User,
-  Scale,
-  Briefcase,
-  Shield,
+  CalendarX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, addDays, startOfWeek, isToday } from "date-fns";
+import { getInitials } from "@/lib/utils";
+import { format, addDays, isSameDay, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
 
@@ -25,49 +24,35 @@ import { trpc } from "@/lib/trpc/client";
 // TIPOS
 // ============================================
 
-type VisaoAgenda = "dia" | "semana" | "lista";
+type VisaoAgenda = "dia" | "lista";
 
-interface EventoAgenda {
-  id: number;
-  tipo: "prazo" | "audiencia" | "cobertura" | "manual";
+interface EventoUnificado {
+  id: string;
+  tipo: "audiencia" | "prazo";
   titulo: string;
   hora?: string;
-  membro: string;
-  membroIniciais: string;
+  data: Date;
+  membroId: number | null;
   processo?: string;
-  vara?: string;
+  assistido?: string;
   cor: string;
 }
-
-// ============================================
-// MOCK DATA (será substituído por tRPC)
-// ============================================
-
-const MOCK_MEMBROS = [
-  { nome: "Rodrigo", iniciais: "RM" },
-  { nome: "Maria", iniciais: "MS" },
-  { nome: "Pedro", iniciais: "PA" },
-];
-
-const MOCK_EVENTOS: EventoAgenda[] = [
-  { id: 1, tipo: "audiencia", titulo: "Audiencia Joao Silva", hora: "09:00", membro: "Rodrigo", membroIniciais: "RM", processo: "0500123-45.2024", vara: "Vara do Juri", cor: "emerald" },
-  { id: 2, tipo: "prazo", titulo: "Resposta a Acusacao", hora: "14:00", membro: "Rodrigo", membroIniciais: "RM", processo: "0500456-78.2024", cor: "amber" },
-  { id: 3, tipo: "prazo", titulo: "Alegacoes Finais", hora: "10:00", membro: "Maria", membroIniciais: "MS", processo: "0500789-01.2024", cor: "amber" },
-  { id: 4, tipo: "audiencia", titulo: "Audiencia Vara VVD", hora: "14:00", membro: "Maria", membroIniciais: "MS", vara: "Vara VVD", cor: "emerald" },
-  { id: 5, tipo: "cobertura", titulo: "Ferias ate 03/03", membro: "Pedro", membroIniciais: "PA", cor: "sky" },
-];
 
 // ============================================
 // COMPONENTES
 // ============================================
 
-function EventoCard({ evento }: { evento: EventoAgenda }) {
+function EventoCard({ evento }: { evento: EventoUnificado }) {
   const colorMap: Record<string, string> = {
     emerald: "border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10",
     amber: "border-l-amber-500 bg-amber-50/50 dark:bg-amber-900/10",
-    sky: "border-l-sky-500 bg-sky-50/50 dark:bg-sky-900/10",
-    violet: "border-l-violet-500 bg-violet-50/50 dark:bg-violet-900/10",
+    rose: "border-l-rose-500 bg-rose-50/50 dark:bg-rose-900/10",
   };
+  const iconMap: Record<string, typeof Gavel> = {
+    audiencia: Gavel,
+    prazo: Clock,
+  };
+  const Icon = iconMap[evento.tipo] || Clock;
 
   return (
     <div className={cn(
@@ -75,21 +60,27 @@ function EventoCard({ evento }: { evento: EventoAgenda }) {
       colorMap[evento.cor] || "border-l-zinc-300",
       "bg-white dark:bg-zinc-900/50 hover:shadow-sm"
     )}>
-      {evento.hora && (
-        <span className="text-[10px] font-semibold text-zinc-400 uppercase">{evento.hora}</span>
-      )}
-      <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mt-0.5 line-clamp-2">{evento.titulo}</p>
+      <div className="flex items-center gap-1.5">
+        <Icon className="w-3 h-3 text-zinc-400" />
+        {evento.hora && (
+          <span className="text-[10px] font-semibold text-zinc-400 uppercase">{evento.hora}</span>
+        )}
+        <Badge variant="outline" className="text-[9px] h-4 px-1">
+          {evento.tipo === "audiencia" ? "Audiencia" : "Prazo"}
+        </Badge>
+      </div>
+      <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mt-1 line-clamp-2">{evento.titulo}</p>
       {evento.processo && (
-        <p className="text-[10px] text-zinc-400 mt-0.5 font-mono">{evento.processo}</p>
+        <p className="text-[10px] text-zinc-400 mt-0.5 font-mono truncate">{evento.processo}</p>
       )}
-      {evento.vara && (
-        <p className="text-[10px] text-zinc-400 mt-0.5">{evento.vara}</p>
+      {evento.assistido && (
+        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">{evento.assistido}</p>
       )}
     </div>
   );
 }
 
-function MembroColuna({ nome, iniciais, eventos }: { nome: string; iniciais: string; eventos: EventoAgenda[] }) {
+function MembroColuna({ nome, iniciais, eventos }: { nome: string; iniciais: string; eventos: EventoUnificado[] }) {
   return (
     <div className="flex-1 min-w-[200px]">
       <div className="flex items-center gap-2 mb-3 px-1">
@@ -98,7 +89,10 @@ function MembroColuna({ nome, iniciais, eventos }: { nome: string; iniciais: str
             {iniciais}
           </AvatarFallback>
         </Avatar>
-        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{nome}</span>
+        <div>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{nome}</span>
+          <span className="text-[10px] text-zinc-400 ml-1.5">{eventos.length} evento{eventos.length !== 1 ? "s" : ""}</span>
+        </div>
       </div>
       <div className="space-y-2">
         {eventos.length === 0 ? (
@@ -121,14 +115,86 @@ export default function AgendaEquipePage() {
   const [visao, setVisao] = useState<VisaoAgenda>("dia");
   const [dataAtual, setDataAtual] = useState(new Date());
 
+  // Queries
+  const { data: audiencias, isLoading: loadingAud } = trpc.audiencias.proximas.useQuery({ dias: 30, limite: 100 });
+  const { data: prazos, isLoading: loadingPrazos } = trpc.demandas.prazosUrgentes.useQuery({ dias: 30 });
+  const { data: membros, isLoading: loadingMembros } = trpc.users.list.useQuery();
+
+  const isLoading = loadingAud || loadingPrazos || loadingMembros;
+
+  // Unify events
+  const todosEventos = useMemo(() => {
+    const eventos: EventoUnificado[] = [];
+
+    // Audiencias
+    (audiencias ?? []).forEach((aud) => {
+      const d = new Date(aud.dataHora);
+      eventos.push({
+        id: `aud-${aud.id}`,
+        tipo: "audiencia",
+        titulo: aud.titulo || aud.assistido?.nome || `Audiencia ${aud.tipo || ""}`,
+        hora: format(d, "HH:mm"),
+        data: d,
+        membroId: aud.responsavelId,
+        processo: aud.processo?.numero || undefined,
+        assistido: aud.assistido?.nome || undefined,
+        cor: "emerald",
+      });
+    });
+
+    // Prazos
+    (prazos ?? []).forEach((p) => {
+      const d = p.prazo ? parseISO(p.prazo) : new Date();
+      eventos.push({
+        id: `prazo-${p.id}`,
+        tipo: "prazo",
+        titulo: p.ato || "Prazo",
+        data: d,
+        membroId: p.defensorId,
+        processo: p.processo?.numeroAutos || undefined,
+        assistido: p.assistido?.nome || undefined,
+        cor: p.reuPreso ? "rose" : "amber",
+      });
+    });
+
+    return eventos.sort((a, b) => a.data.getTime() - b.data.getTime());
+  }, [audiencias, prazos]);
+
+  // Filter events for the selected date
+  const eventosDia = useMemo(() => {
+    return todosEventos.filter(ev => isSameDay(ev.data, dataAtual));
+  }, [todosEventos, dataAtual]);
+
+  // Events grouped by member for "dia" view
+  const membrosAtivos = useMemo(() => {
+    const lista = (membros ?? []).map(m => ({
+      id: m.id,
+      nome: m.name || m.email || "?",
+      iniciais: getInitials(m.name || m.email || "?"),
+    }));
+    return lista;
+  }, [membros]);
+
   const eventosPorMembro = useMemo(() => {
-    const map: Record<string, EventoAgenda[]> = {};
-    MOCK_MEMBROS.forEach(m => { map[m.nome] = []; });
-    MOCK_EVENTOS.forEach(ev => {
-      if (map[ev.membro]) map[ev.membro].push(ev);
+    const map: Record<number, EventoUnificado[]> = {};
+    membrosAtivos.forEach(m => { map[m.id] = []; });
+    eventosDia.forEach(ev => {
+      if (ev.membroId && map[ev.membroId]) {
+        map[ev.membroId].push(ev);
+      }
     });
     return map;
-  }, []);
+  }, [eventosDia, membrosAtivos]);
+
+  // Members that have events on the selected day (show only active)
+  const membrosComEventos = useMemo(() => {
+    return membrosAtivos.filter(m => (eventosPorMembro[m.id] || []).length > 0);
+  }, [membrosAtivos, eventosPorMembro]);
+
+  // For list view: all upcoming events
+  const eventosLista = useMemo(() => {
+    return todosEventos.slice(0, 30);
+  }, [todosEventos]);
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
@@ -148,9 +214,8 @@ export default function AgendaEquipePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Visão toggle */}
             <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
-              {(["dia", "semana", "lista"] as VisaoAgenda[]).map((v) => (
+              {(["dia", "lista"] as VisaoAgenda[]).map((v) => (
                 <button
                   key={v}
                   onClick={() => setVisao(v)}
@@ -165,14 +230,6 @@ export default function AgendaEquipePage() {
                 </button>
               ))}
             </div>
-
-            <Button
-              size="sm"
-              className="h-8 px-3 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 text-white text-xs"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Evento
-            </Button>
           </div>
         </div>
       </div>
@@ -203,54 +260,78 @@ export default function AgendaEquipePage() {
           >
             <ChevronRight className="w-4 h-4" />
           </button>
+          {/* Stats ribbon */}
+          <div className="ml-auto flex items-center gap-4 text-[10px] text-zinc-400">
+            <span><Gavel className="w-3 h-3 inline mr-1" />{(audiencias ?? []).length} audiencias</span>
+            <span><Clock className="w-3 h-3 inline mr-1" />{(prazos ?? []).length} prazos</span>
+          </div>
         </div>
 
+        {/* Loading */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+          </div>
+        )}
+
         {/* Visão Dia - Colunas por membro */}
-        {visao === "dia" && (
+        {!isLoading && visao === "dia" && (
           <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4">
-            <div className="flex gap-4 overflow-x-auto">
-              {MOCK_MEMBROS.map(membro => (
-                <MembroColuna
-                  key={membro.nome}
-                  nome={membro.nome}
-                  iniciais={membro.iniciais}
-                  eventos={eventosPorMembro[membro.nome] || []}
-                />
-              ))}
-            </div>
+            {membrosComEventos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <CalendarX className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-3" />
+                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Nenhum evento para {isToday(dataAtual) ? "hoje" : format(dataAtual, "dd/MM")}</p>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Navegue para outro dia ou mude para a visao Lista</p>
+              </div>
+            ) : (
+              <div className="flex gap-4 overflow-x-auto">
+                {membrosComEventos.map(membro => (
+                  <MembroColuna
+                    key={membro.id}
+                    nome={membro.nome}
+                    iniciais={membro.iniciais}
+                    eventos={eventosPorMembro[membro.id] || []}
+                  />
+                ))}
+              </div>
+            )}
           </Card>
         )}
 
         {/* Visão Lista */}
-        {visao === "lista" && (
+        {!isLoading && visao === "lista" && (
           <div className="space-y-2">
-            {MOCK_EVENTOS.map(ev => (
-              <Card key={ev.id} className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-center gap-3 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all">
-                <div className="flex items-center gap-2 min-w-[120px]">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-[9px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500">{ev.membroIniciais}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs text-zinc-500">{ev.membro}</span>
-                </div>
-                {ev.hora && (
-                  <span className="text-[10px] font-mono text-zinc-400 min-w-[40px]">{ev.hora}</span>
-                )}
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex-1">{ev.titulo}</p>
-                <Badge variant="outline" className="text-[9px] h-5">
-                  {ev.tipo}
-                </Badge>
-              </Card>
-            ))}
+            {eventosLista.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <CalendarX className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-3" />
+                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Nenhum evento proximo</p>
+              </div>
+            ) : (
+              eventosLista.map(ev => {
+                const membro = membrosAtivos.find(m => m.id === ev.membroId);
+                return (
+                  <Card key={ev.id} className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-center gap-3 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all">
+                    <div className="flex items-center gap-2 min-w-[100px]">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="text-[9px] bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+                          {membro?.iniciais || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-[10px] text-zinc-500 truncate">{membro?.nome || "—"}</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-zinc-400 min-w-[60px]">
+                      {format(ev.data, "dd/MM")}
+                      {ev.hora && ` ${ev.hora}`}
+                    </span>
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex-1 truncate">{ev.titulo}</p>
+                    <Badge variant="outline" className="text-[9px] h-5 flex-shrink-0">
+                      {ev.tipo === "audiencia" ? "Audiencia" : "Prazo"}
+                    </Badge>
+                  </Card>
+                );
+              })
+            )}
           </div>
-        )}
-
-        {/* Visão Semana - placeholder */}
-        {visao === "semana" && (
-          <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-8 text-center">
-            <CalendarDays className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
-            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Visao semanal em desenvolvimento</p>
-            <p className="text-xs text-zinc-400 mt-1">Grid 7 dias x N membros</p>
-          </Card>
         )}
       </div>
     </div>

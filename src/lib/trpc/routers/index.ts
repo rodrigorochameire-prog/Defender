@@ -40,8 +40,10 @@ import { distribuicaoRouter } from "./distribuicao";
 import { smartExtractRouter } from "./smart-extract";
 import { briefingRouter } from "./briefing";
 import { coberturaRouter } from "./cobertura";
+import { coberturasRouter } from "./coberturas";
 import { acompanhamentoRouter } from "./acompanhamento";
 import { parecerRouter } from "./parecer";
+import { pareceresRouter } from "./pareceres";
 import { muralRouter } from "./mural";
 import { enrichmentRouter } from "./enrichment";
 import { solarRouter } from "./solar";
@@ -158,6 +160,7 @@ export const appRouter = router({
   // COWORK - COBERTURA (AFASTAMENTOS)
   // ==========================================
   cobertura: coberturaRouter,
+  coberturas: coberturasRouter,
 
   // ==========================================
   // COWORK - ACOMPANHAMENTO (SEGUIR ENTIDADES)
@@ -168,6 +171,11 @@ export const appRouter = router({
   // COWORK - PARECER (CONSULTAS RÁPIDAS)
   // ==========================================
   parecer: parecerRouter,
+
+  // ==========================================
+  // COWORK - PARECERES (RECEBIDOS/ENVIADOS)
+  // ==========================================
+  pareceres: pareceresRouter,
 
   // ==========================================
   // COWORK - MURAL DE EQUIPE (NOTAS)
