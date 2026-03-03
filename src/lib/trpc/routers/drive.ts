@@ -2332,6 +2332,8 @@ export const driveRouter = router({
           mimeType: driveFiles.mimeType,
           fileSize: driveFiles.fileSize,
           driveFileId: driveFiles.driveFileId,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          updatedAt: driveFiles.updatedAt,
         })
         .from(driveFiles)
         .where(eq(driveFiles.driveFileId, input.driveFileId))
@@ -2339,6 +2341,16 @@ export const driveRouter = router({
 
       if (!file) {
         throw new Error(`Arquivo não encontrado no Drive: ${input.driveFileId}`);
+      }
+
+      // Idempotência: se já está em processing (e não é stuck — o reset acima já tratou stuck),
+      // retornar sem re-enfileirar para evitar transcrições duplicadas.
+      if (file.enrichmentStatus === "processing") {
+        return {
+          queued: false,
+          driveFileId: input.driveFileId,
+          message: `Transcrição de "${file.name}" já está em andamento. Aguarde a conclusão.`,
+        };
       }
 
       // Verificar se é áudio/vídeo
