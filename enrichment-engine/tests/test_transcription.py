@@ -87,3 +87,68 @@ def test_large_mp3_needs_extraction(service, tmp_path):
     f = tmp_path / "audio.mp3"
     f.write_bytes(b"x" * (15 * 1024 * 1024))  # 15MB > 10MB threshold
     assert service._is_already_compressed_audio(f) is False
+
+
+# ── Task 3: _get_audio_file streaming ────────────────────────────
+
+import pytest
+
+@pytest.mark.asyncio
+async def test_download_streaming_saves_to_disk(service, tmp_path):
+    """Garante que o download não carrega tudo em RAM."""
+    fake_content = b"fake audio data " * 100
+
+    mock_response = AsyncMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.headers = {"content-length": str(len(fake_content))}
+
+    # Simular aiter_bytes em chunks de 16 bytes
+    async def fake_aiter_bytes(chunk_size):
+        for i in range(0, len(fake_content), chunk_size):
+            yield fake_content[i:i + chunk_size]
+    mock_response.aiter_bytes = fake_aiter_bytes
+
+    mock_stream_ctx = AsyncMock()
+    mock_stream_ctx.__aenter__ = AsyncMock(return_value=mock_response)
+    mock_stream_ctx.__aexit__ = AsyncMock(return_value=False)
+
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.stream = MagicMock(return_value=mock_stream_ctx)
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        result_path = await service._get_audio_file(
+            file_url="https://example.com/audio.mp3",
+            file_bytes=None,
+            file_name="audio.mp3",
+        )
+
+    assert result_path.exists()
+    assert result_path.read_bytes() == fake_content
+    result_path.unlink(missing_ok=True)
+
+
+@pytest.mark.asyncio
+async def test_download_rejects_oversized_file(service):
+    """Arquivo declarado maior que 600MB deve ser rejeitado."""
+    mock_response = AsyncMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.headers = {"content-length": str(601 * 1024 * 1024)}
+
+    mock_stream_ctx = AsyncMock()
+    mock_stream_ctx.__aenter__ = AsyncMock(return_value=mock_response)
+    mock_stream_ctx.__aexit__ = AsyncMock(return_value=False)
+
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.stream = MagicMock(return_value=mock_stream_ctx)
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        with pytest.raises(ValueError, match="excede limite"):
+            await service._get_audio_file(
+                file_url="https://example.com/huge.mp4",
+                file_bytes=None,
+                file_name="huge.mp4",
+            )

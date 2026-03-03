@@ -53,6 +53,8 @@ def get_transcription_service() -> "TranscriptionService":
 class TranscriptionService:
     """Serviço de transcrição com Whisper + pyannote, fallback Gemini."""
 
+    MAX_DOWNLOAD_BYTES = 600 * 1024 * 1024  # 600MB hard limit
+
     def __init__(self) -> None:
         settings = get_settings()
 
@@ -614,32 +616,61 @@ Regras para segments:
         file_name: str,
         auth_header: str | None = None,
     ) -> Path:
-        """Baixa ou salva arquivo em temp."""
-        if file_url:
-            headers = {}
-            if auth_header:
-                # Garantir que o header é string ASCII válida
-                auth_header = auth_header.strip()
-                headers["Authorization"] = auth_header
-            logger.info("Downloading file from URL (%d chars)...", len(file_url))
-            async with httpx.AsyncClient(timeout=300, follow_redirects=True) as client:
-                response = await client.get(file_url, headers=headers)
-                response.raise_for_status()
-                data = response.content
-            logger.info("Download complete: %d bytes", len(data))
-        elif file_bytes:
-            data = file_bytes
-        else:
-            raise ValueError("Forneça file_url ou file_bytes")
-
-        # Usar extensão segura (ASCII only)
+        """Baixa ou salva arquivo em temp. Download em streaming — RAM constante O(64KB)."""
         suffix = Path(file_name).suffix or ".mp3"
         suffix = suffix.encode("ascii", errors="replace").decode("ascii")
+
+        if file_bytes:
+            tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+            tmp.write(file_bytes)
+            tmp.close()
+            logger.info("Saved %d bytes from file_bytes to %s", len(file_bytes), tmp.name)
+            return Path(tmp.name)
+
+        if not file_url:
+            raise ValueError("Forneça file_url ou file_bytes")
+
+        headers = {}
+        if auth_header:
+            headers["Authorization"] = auth_header.strip()
+
+        logger.info("Streaming download from URL (%d chars)...", len(file_url))
+
         tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
-        tmp.write(data)
-        tmp.close()
-        logger.info("Saved to temp file: %s (%d bytes)", tmp.name, len(data))
-        return Path(tmp.name)
+        tmp_path = Path(tmp.name)
+
+        try:
+            async with httpx.AsyncClient(timeout=300, follow_redirects=True) as client:
+                async with client.stream("GET", file_url, headers=headers) as response:
+                    response.raise_for_status()
+
+                    content_length = int(response.headers.get("content-length", 0))
+                    if content_length > self.MAX_DOWNLOAD_BYTES:
+                        raise ValueError(
+                            f"Arquivo declarado ({content_length / 1e6:.0f}MB) "
+                            f"excede limite de {self.MAX_DOWNLOAD_BYTES // (1024*1024)}MB"
+                        )
+
+                    downloaded = 0
+                    async for chunk in response.aiter_bytes(65536):  # 64KB chunks
+                        downloaded += len(chunk)
+                        if downloaded > self.MAX_DOWNLOAD_BYTES:
+                            raise ValueError(
+                                f"Download excedeu limite de "
+                                f"{self.MAX_DOWNLOAD_BYTES // (1024*1024)}MB"
+                            )
+                        tmp.write(chunk)
+
+            tmp.close()
+            logger.info(
+                "Streaming download complete: %d bytes → %s", downloaded, tmp_path
+            )
+            return tmp_path
+
+        except Exception:
+            tmp.close()
+            tmp_path.unlink(missing_ok=True)
+            raise
 
     def _ensure_compatible_format(self, path: Path) -> Path:
         """Converte vídeo/formatos exóticos para MP3 usando pydub."""
