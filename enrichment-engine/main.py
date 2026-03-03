@@ -25,6 +25,7 @@ from routers.transcription import router as transcription_router
 from routers.oficios import router as oficios_router
 from routers.ocr import router as ocr_router
 from routers.ficha import router as ficha_router
+from routers.analysis import router as analysis_router
 
 # Logging estruturado (sem PII)
 logging.basicConfig(
@@ -99,6 +100,7 @@ def create_app() -> FastAPI:
     app.include_router(oficios_router, prefix="/api", tags=["Oficios"])
     app.include_router(ocr_router, prefix="/api", tags=["OCR"])
     app.include_router(ficha_router, prefix="/enrich", tags=["Ficha"])
+    app.include_router(analysis_router, prefix="/api", tags=["Analysis"])
 
     return app
 

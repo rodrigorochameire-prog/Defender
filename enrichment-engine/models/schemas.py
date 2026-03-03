@@ -633,6 +633,22 @@ class ConsolidationOutput(BaseModel):
     total_demandas: int = 0
 
 
+# === Analysis (standalone — transcript already available) ===
+
+class AnalyzeInput(BaseModel):
+    """Input para /api/analyze — analisa transcricao ja disponivel."""
+    transcript: str = Field(..., min_length=50, description="Texto da transcricao")
+    file_name: str = Field("transcricao", description="Nome do arquivo (para contexto)")
+    speakers: list[str] | None = Field(None, description="Lista de speakers identificados")
+    assistido_nome: str | None = Field(None, description="Nome do assistido (para contexto)")
+
+
+class AnalyzeAsyncInput(AnalyzeInput):
+    """Input para /api/analyze-async — analisa em background, salva resultado no Supabase."""
+    db_record_id: int = Field(..., description="ID do registro na tabela drive_files")
+    drive_file_id: str | None = Field(None, description="Google Drive file ID (para referencia)")
+
+
 # === Transcription (Whisper + pyannote) ===
 
 class TranscribeSegment(BaseModel):

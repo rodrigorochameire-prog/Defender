@@ -935,6 +935,34 @@ class EnrichmentClient {
   }
 
   /**
+   * Analise async de transcricao — retorna 202 imediatamente.
+   * Resultado salvo em drive_files.enrichment_data.analysis via Supabase.
+   */
+  async analyzeAsync(input: {
+    transcript: string;
+    fileName: string;
+    speakers?: string[];
+    assistidoNome?: string;
+    dbRecordId: number;
+    driveFileId?: string;
+  }): Promise<{ status: string; message: string; db_record_id: number }> {
+    const originalTimeout = this.timeout;
+    this.timeout = 30_000;
+    try {
+      return await this.request<{ status: string; message: string; db_record_id: number }>("/api/analyze-async", {
+        transcript: input.transcript,
+        file_name: input.fileName,
+        speakers: input.speakers ?? null,
+        assistido_nome: input.assistidoNome ?? null,
+        db_record_id: input.dbRecordId,
+        drive_file_id: input.driveFileId ?? null,
+      });
+    } finally {
+      this.timeout = originalTimeout;
+    }
+  }
+
+  /**
    * Chamar enriquecimento de forma assíncrona (fire-and-forget).
    * Não bloqueia o fluxo principal — erros são logados mas ignorados.
    */
