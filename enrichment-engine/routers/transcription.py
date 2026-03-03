@@ -130,6 +130,16 @@ async def _process_transcription_background(input_data: TranscribeAsyncInput):
         _update_progress("downloading", 10, "Baixando arquivo do Drive...")
 
         service = get_transcription_service()
+
+        # Callback para progresso granular por chunk (usado em chunked paralelo)
+        def on_chunk_done(completed: int, total: int) -> None:
+            pct = 25 + int((completed / total) * 45)  # 25% → 70%
+            _update_progress(
+                "transcribing",
+                pct,
+                f"Transcrevendo... {completed}/{total} partes concluídas",
+            )
+
         _update_progress("transcribing", 25, "Transcrevendo com Whisper...")
 
         result = await service.transcribe(
@@ -139,6 +149,7 @@ async def _process_transcription_background(input_data: TranscribeAsyncInput):
             diarize=input_data.diarize,
             expected_speakers=input_data.expected_speakers,
             auth_header=input_data.auth_header,
+            progress_callback=on_chunk_done,
         )
 
         logger.info(
