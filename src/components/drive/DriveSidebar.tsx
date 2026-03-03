@@ -321,6 +321,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const [expandedAtribuicoes, setExpandedAtribuicoes] = useState<Set<string>>(
     new Set()
   );
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [recents, setRecents] = useState<RecentItem[]>([]);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [subfolderCounts, setSubfolderCounts] = useState<Record<string, number>>({});
@@ -347,6 +348,15 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     });
   }, []);
 
+  const toggleSection = useCallback((section: string) => {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
+  }, []);
+
   const isSynced = useCallback(
     (folderId: string): boolean => {
       if (!syncFolders) return false;
@@ -365,11 +375,21 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
       <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-zinc-700/50 scrollbar-track-transparent">
         <div className="px-3 pb-5 pt-2">
           {/* --- ATRIBUICOES --- */}
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+          <button
+            onClick={() => toggleSection("atribuicoes")}
+            className="w-full text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5 hover:text-zinc-300 transition-colors cursor-pointer"
+          >
             <HardDrive className="h-3 w-3" />
             Atribuicoes
-          </p>
-          <div className="space-y-0.5">
+            <ChevronDown className={cn(
+              "h-3 w-3 ml-auto transition-transform duration-200",
+              collapsedSections.has("atribuicoes") && "-rotate-90"
+            )} />
+          </button>
+          <div className={cn(
+            "space-y-0.5 overflow-hidden transition-all duration-300 ease-in-out",
+            collapsedSections.has("atribuicoes") ? "max-h-0 opacity-0" : "max-h-[2000px] opacity-100"
+          )}>
             {DRIVE_ATRIBUICOES.map((attr) => {
               const isActive = ctx.selectedAtribuicao === attr.key;
               const isExpanded = expandedAtribuicoes.has(attr.key);
@@ -454,10 +474,20 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           <NavDivider />
 
           {/* --- ESPECIAIS --- */}
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2">
+          <button
+            onClick={() => toggleSection("especiais")}
+            className="w-full text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5 hover:text-zinc-300 transition-colors cursor-pointer"
+          >
             Especiais
-          </p>
-          <div className="space-y-0.5">
+            <ChevronDown className={cn(
+              "h-3 w-3 ml-auto transition-transform duration-200",
+              collapsedSections.has("especiais") && "-rotate-90"
+            )} />
+          </button>
+          <div className={cn(
+            "space-y-0.5 overflow-hidden transition-all duration-300 ease-in-out",
+            collapsedSections.has("especiais") ? "max-h-0 opacity-0" : "max-h-[1000px] opacity-100"
+          )}>
             {SPECIAL_FOLDERS.map((sf) => {
               const Icon = sf.icon;
               const isActive = ctx.selectedFolderId === sf.folderId;
@@ -507,11 +537,21 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           <NavDivider />
 
           {/* --- ACESSO RAPIDO --- */}
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+          <button
+            onClick={() => toggleSection("acesso-rapido")}
+            className="w-full text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5 hover:text-zinc-300 transition-colors cursor-pointer"
+          >
             <Clock className="h-3 w-3" />
             Acesso Rapido
-          </p>
-          <div className="space-y-1">
+            <ChevronDown className={cn(
+              "h-3 w-3 ml-auto transition-transform duration-200",
+              collapsedSections.has("acesso-rapido") && "-rotate-90"
+            )} />
+          </button>
+          <div className={cn(
+            "space-y-1 overflow-hidden transition-all duration-300 ease-in-out",
+            collapsedSections.has("acesso-rapido") ? "max-h-0 opacity-0" : "max-h-[1000px] opacity-100"
+          )}>
             {/* Recentes */}
             {recents.length === 0 ? (
               <div className="px-5 py-1 text-zinc-600 text-[12px]">
@@ -587,6 +627,123 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+// --- Sidebar Search Field ---
+
+function SidebarSearch() {
+  const ctx = useDriveContext();
+  const [localSearch, setLocalSearch] = useState(ctx.searchQuery);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleChange = useCallback(
+    (value: string) => {
+      setLocalSearch(value);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => ctx.setSearchQuery(value), 300);
+    },
+    [ctx]
+  );
+
+  useEffect(() => {
+    setLocalSearch(ctx.searchQuery);
+  }, [ctx.searchQuery]);
+
+  useEffect(() => {
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, []);
+
+  return (
+    <div className="px-3 py-2 border-b border-zinc-700/20">
+      <div className="relative">
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 pointer-events-none" />
+        <input
+          type="text"
+          value={localSearch}
+          onChange={(e) => handleChange(e.target.value)}
+          placeholder="Buscar arquivos..."
+          className={cn(
+            "w-full h-7 pl-7 pr-7 rounded-md text-xs",
+            "bg-zinc-800/60 border border-zinc-700/40",
+            "text-zinc-200 placeholder:text-zinc-500",
+            "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
+            "transition-colors duration-200"
+          )}
+        />
+        {localSearch && (
+          <button
+            onClick={() => { setLocalSearch(""); ctx.setSearchQuery(""); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// --- Sync Health Dot (compact, for sidebar header — with tooltip) ---
+
+function SidebarSyncDot() {
+  const { data: health, isLoading } = trpc.drive.healthStatus.useQuery(
+    undefined,
+    { staleTime: 30_000, refetchInterval: 60_000 }
+  );
+
+  const { data: syncFolders } = trpc.drive.syncFolders.useQuery(undefined, {
+    staleTime: 30_000,
+  });
+
+  if (isLoading || !health) {
+    return <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 animate-pulse" />;
+  }
+
+  const dotClass = health.status === "healthy"
+    ? "bg-emerald-500"
+    : health.status === "degraded"
+    ? "bg-amber-500"
+    : "bg-red-500";
+
+  const statusLabel = health.status === "healthy"
+    ? "Sincronizacao saudavel"
+    : health.status === "degraded"
+    ? "Sincronizacao degradada"
+    : "Sincronizacao critica";
+
+  // Calculate time since last sync
+  let timeSinceSync = "";
+  if (health.lastSyncAgo !== null) {
+    const minutes = Math.floor(health.lastSyncAgo / 60_000);
+    if (minutes < 1) timeSinceSync = "ha menos de 1 min";
+    else if (minutes < 60) timeSinceSync = `ha ${minutes} min`;
+    else timeSinceSync = `ha ${Math.floor(minutes / 60)}h`;
+  } else if (syncFolders && syncFolders.length > 0) {
+    const mostRecent = syncFolders
+      .filter((f: { lastSyncAt: Date | null }) => f.lastSyncAt)
+      .sort((a: { lastSyncAt: Date | null }, b: { lastSyncAt: Date | null }) =>
+        new Date(b.lastSyncAt!).getTime() - new Date(a.lastSyncAt!).getTime()
+      )[0];
+    if (mostRecent?.lastSyncAt) {
+      const minutes = Math.floor((Date.now() - new Date(mostRecent.lastSyncAt).getTime()) / 60_000);
+      if (minutes < 1) timeSinceSync = "ha menos de 1 min";
+      else if (minutes < 60) timeSinceSync = `ha ${minutes} min`;
+      else timeSinceSync = `ha ${Math.floor(minutes / 60)}h`;
+    }
+  }
+  if (!timeSinceSync) timeSinceSync = "nunca sincronizado";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className={cn("h-1.5 w-1.5 rounded-full shrink-0 cursor-default", dotClass)} />
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="bg-[#1f1f23] border-zinc-700/50 text-zinc-200 shadow-xl shadow-black/30">
+        <p className="text-[11px] font-medium">{statusLabel}</p>
+        <p className="text-[10px] text-zinc-400">{timeSinceSync}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 // --- Main Sidebar Export ---
 
 export function DriveSidebar() {
@@ -595,7 +752,8 @@ export function DriveSidebar() {
 
   return (
     <>
-      {/* --- Desktop Sidebar (matches main sidebar DNA + glass) --- */}
+      {/* --- Desktop Sidebar (full-height, glass effect) --- */}
+      <TooltipProvider delayDuration={300}>
       <aside
         className={cn(
           "hidden lg:flex flex-col shrink-0 transition-all duration-300",
@@ -606,60 +764,65 @@ export function DriveSidebar() {
           collapsed ? "w-0 overflow-hidden" : "w-60"
         )}
       >
-        {/* Header */}
+        {/* Header with sync dot */}
         <div className={cn(
-          "flex items-center justify-between h-12 px-3 border-b border-zinc-700/20",
+          "flex items-center justify-between h-11 px-3 border-b border-zinc-700/20 shrink-0",
           "bg-gradient-to-br from-white/[0.04] via-transparent to-white/[0.02]"
         )}>
           {!collapsed && (
-            <div className="flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
-                <HardDrive className="h-3.5 w-3.5 text-emerald-400" />
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-md bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
+                <HardDrive className="h-3 w-3 text-emerald-400" />
               </div>
               <span className="text-sm font-semibold text-zinc-200 tracking-tight">
                 Drive Hub
               </span>
+              <SidebarSyncDot />
             </div>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-zinc-500 hover:text-zinc-300 hover:bg-white/5 rounded-lg"
+            className="h-6 w-6 text-zinc-500 hover:text-zinc-300 hover:bg-white/5 rounded-md"
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5" />
             ) : (
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3.5 w-3.5" />
             )}
           </Button>
         </div>
 
+        {/* Search */}
+        {!collapsed && <SidebarSearch />}
+
         <SidebarContent collapsed={collapsed} />
       </aside>
+      </TooltipProvider>
 
       {/* Collapsed expand button (desktop) */}
       {collapsed && (
         <Button
           variant="ghost"
           size="icon"
-          className="hidden lg:flex h-8 w-8 absolute left-1 top-16 z-10 text-zinc-400 hover:text-zinc-200 bg-[#1f1f23]/90 backdrop-blur-lg border border-zinc-700/20 rounded-xl hover:bg-zinc-700/50 shadow-lg shadow-black/30"
+          className="hidden lg:flex h-7 w-7 absolute left-1 top-2 z-10 text-zinc-400 hover:text-zinc-200 bg-[#1f1f23]/90 backdrop-blur-lg border border-zinc-700/20 rounded-lg hover:bg-zinc-700/50 shadow-lg shadow-black/30"
           onClick={() => setCollapsed(false)}
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-3.5 w-3.5" />
         </Button>
       )}
 
-      {/* --- Mobile Sheet --- */}
-      <div className="lg:hidden">
+      {/* --- Mobile/Tablet Sheet trigger (absolute positioned) --- */}
+      <div className="lg:hidden absolute left-2 top-1 z-20">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 text-zinc-500 hover:text-zinc-200"
+              className="h-8 w-8 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 rounded-lg"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
             </Button>
           </SheetTrigger>
           <SheetContent
@@ -671,18 +834,20 @@ export function DriveSidebar() {
           >
             <SheetTitle className="sr-only">Menu de navegacao do Drive</SheetTitle>
             <div className={cn(
-              "h-12 flex items-center px-4 border-b border-zinc-700/20",
+              "h-11 flex items-center justify-between px-3 border-b border-zinc-700/20 shrink-0",
               "bg-gradient-to-br from-white/[0.04] via-transparent to-white/[0.02]"
             )}>
-              <div className="flex items-center gap-2.5">
-                <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
-                  <HardDrive className="h-3.5 w-3.5 text-emerald-400" />
+              <div className="flex items-center gap-2">
+                <div className="h-6 w-6 rounded-md bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
+                  <HardDrive className="h-3 w-3 text-emerald-400" />
                 </div>
                 <span className="text-sm font-semibold text-zinc-200 tracking-tight">
                   Drive Hub
                 </span>
+                <SidebarSyncDot />
               </div>
             </div>
+            <SidebarSearch />
             <SidebarContent collapsed={false} />
           </SheetContent>
         </Sheet>

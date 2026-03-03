@@ -13,12 +13,16 @@ function DrivePageInner() {
   useKeyboardShortcuts();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-zinc-100 dark:bg-[#0f0f11] overflow-hidden">
-      <DriveTopBar />
-      <div className="flex flex-1 min-h-0">
-        <DriveSidebar />
-        <DriveContentArea />
-        {detailPanelFileId !== null && <DriveDetailPanel />}
+    <div className="flex h-[calc(100vh-4rem)] bg-zinc-100 dark:bg-[#0f0f11] overflow-hidden relative">
+      {/* Sidebar — full height, aligned with main sidebar */}
+      <DriveSidebar />
+      {/* Content column */}
+      <div className="flex flex-col flex-1 min-w-0 min-h-0">
+        <DriveTopBar />
+        <div className="flex flex-1 min-h-0">
+          <DriveContentArea />
+          {detailPanelFileId !== null && <DriveDetailPanel />}
+        </div>
       </div>
       <DriveCommandPalette />
     </div>

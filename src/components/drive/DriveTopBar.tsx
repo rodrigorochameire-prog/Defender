@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { useDriveContext } from "./DriveContext";
@@ -17,12 +17,10 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import {
-  Search,
   RefreshCw,
   Upload,
   LayoutGrid,
   List,
-  X,
   FilePlus2,
   FileText,
   Scale,
@@ -117,16 +115,12 @@ function SyncHealthDot() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-1.5 cursor-default">
-          <span className={cn("h-2 w-2 rounded-full shrink-0", config.dotClass)} />
-          <span className="text-[11px] text-zinc-500 dark:text-zinc-400 hidden sm:inline">
-            {timeSinceSync}
-          </span>
-        </div>
+        <span className={cn("h-2 w-2 rounded-full shrink-0 cursor-default", config.dotClass)} />
       </TooltipTrigger>
       <TooltipContent side="bottom">
         <div className="space-y-1">
           <p className="font-medium">{config.label}</p>
+          <p className="text-zinc-400 text-[10px]">{timeSinceSync}</p>
           {health.issues.length > 0 && (
             <ul className="text-zinc-400 text-[10px] space-y-0.5">
               {health.issues.slice(0, 3).map((issue: string, i: number) => (
@@ -364,40 +358,10 @@ function NewFolderButton() {
 
 export function DriveTopBar() {
   const ctx = useDriveContext();
-  const [localSearch, setLocalSearch] = useState(ctx.searchQuery);
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const syncAll = trpc.drive.syncAll.useMutation();
   const utils = trpc.useUtils();
   const { addJob, completeJob, failJob, activeCount } = useProcessingQueue();
-
-  // Debounce search
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setLocalSearch(value);
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-      searchTimeoutRef.current = setTimeout(() => {
-        ctx.setSearchQuery(value);
-      }, 300);
-    },
-    [ctx]
-  );
-
-  // Sync local search state when context changes externally (e.g., navigation reset)
-  useEffect(() => {
-    setLocalSearch(ctx.searchQuery);
-  }, [ctx.searchQuery]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const handleSyncAll = useCallback(() => {
     const syncJobId = "sync-drive-topbar";
@@ -419,41 +383,13 @@ export function DriveTopBar() {
     });
   }, [syncAll, utils, addJob, completeJob, failJob]);
 
-  const clearSearch = useCallback(() => {
-    setLocalSearch("");
-    ctx.setSearchQuery("");
-  }, [ctx]);
-
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center gap-2 sm:gap-3 h-12 sm:h-14 px-3 sm:px-4 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shrink-0">
-        {/* ─── Search ─── */}
-        <div className="relative flex-1 max-w-xs sm:max-w-md">
-          <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
-          <input
-            type="text"
-            value={localSearch}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Buscar..."
-            className={cn(
-              "w-full h-8 sm:h-9 pl-8 sm:pl-9 pr-8 rounded-lg text-sm",
-              "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700",
-              "text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
-              "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
-              "transition-colors duration-200"
-            )}
-          />
-          {localSearch && (
-            <button
-              onClick={clearSearch}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+      <div className="flex items-center gap-1.5 sm:gap-2 h-10 px-3 sm:px-4 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shrink-0">
+        {/* ─── Spacer for mobile hamburger area ─── */}
+        <div className="w-8 lg:hidden" />
 
-        {/* ─── Center-Right: Health + Actions ─── */}
+        {/* ─── Health + Actions ─── */}
         <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
           {/* Sync Health Indicator */}
           <SyncHealthDot />
