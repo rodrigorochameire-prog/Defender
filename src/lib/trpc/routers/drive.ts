@@ -1403,7 +1403,7 @@ export const driveRouter = router({
         const results = await db
           .select({
             id: processos.id,
-            numero: processos.numero,
+            numero: processos.numeroAutos,
             assistidoId: processos.assistidoId,
             assistidoNome: assistidos.nome,
           })
@@ -1411,7 +1411,7 @@ export const driveRouter = router({
           .leftJoin(assistidos, eq(processos.assistidoId, assistidos.id))
           .where(
             or(
-              like(processos.numero, `%${input.search}%`),
+              like(processos.numeroAutos, `%${input.search}%`),
               like(assistidos.nome, `%${input.search}%`)
             )
           )
@@ -1492,10 +1492,10 @@ export const driveRouter = router({
         const processosResult = await db
           .select({
             id: processos.id,
-            numero: processos.numero,
-            status: processos.status,
+            numero: processos.numeroAutos,
+            status: processos.situacao,
             vara: processos.vara,
-            tipoAcao: processos.tipoAcao,
+            tipoAcao: processos.classeProcessual,
           })
           .from(processos)
           .where(eq(processos.assistidoId, assistido.id))

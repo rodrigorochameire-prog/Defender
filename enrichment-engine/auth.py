@@ -4,7 +4,7 @@ Header: X-API-Key
 Exceção: /health (público)
 """
 
-from fastapi import Request, HTTPException, status
+from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -35,15 +35,15 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
             )
 
         if not api_key:
-            raise HTTPException(
+            return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Missing X-API-Key header",
+                content={"detail": "Missing X-API-Key header"},
             )
 
         if api_key != settings.enrichment_api_key:
-            raise HTTPException(
+            return JSONResponse(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid API key",
+                content={"detail": "Invalid API key"},
             )
 
         return await call_next(request)

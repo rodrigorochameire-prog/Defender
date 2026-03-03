@@ -1813,7 +1813,7 @@ export async function detectProcessoByFolderName(folderName: string): Promise<{
       const [processo] = await db
         .select({ id: processos.id, assistidoId: processos.assistidoId })
         .from(processos)
-        .where(eq(processos.numero, numeroProcesso))
+        .where(eq(processos.numeroAutos, numeroProcesso))
         .limit(1);
 
       if (processo) {
@@ -2030,7 +2030,7 @@ export async function getProcessoByDriveFolderId(driveFolderId: string): Promise
     const [processo] = await db
       .select({
         id: processos.id,
-        numero: processos.numero,
+        numero: processos.numeroAutos,
         assistidoId: processos.assistidoId,
       })
       .from(processos)
