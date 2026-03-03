@@ -783,10 +783,15 @@ Regras para segments:
                 return self._transcribe_whisper(audio_path, language)
             except openai.RateLimitError as e:
                 last_exc = e
+                next_delay_msg = (
+                    f"aguardando {delays[attempt + 1]}s"
+                    if attempt + 1 < len(delays)
+                    else "esgotadas as tentativas"
+                )
                 logger.warning(
-                    "Whisper RateLimitError (tentativa %d/3) — aguardando %ds",
+                    "Whisper RateLimitError (tentativa %d/3) — %s",
                     attempt + 1,
-                    delays[attempt + 1] if attempt + 1 < len(delays) else 0,
+                    next_delay_msg,
                 )
             except openai.APIStatusError as e:
                 if e.status_code >= 500:
@@ -800,7 +805,9 @@ Regras para segments:
             except Exception:
                 raise  # erros inesperados propagam direto
 
-        raise last_exc  # type: ignore[misc]
+        if last_exc is None:
+            raise RuntimeError("_whisper_with_retry: loop exauriu sem capturar exceção")
+        raise last_exc
 
     # ==========================================
     # INTERNAL: pyannote diarization
