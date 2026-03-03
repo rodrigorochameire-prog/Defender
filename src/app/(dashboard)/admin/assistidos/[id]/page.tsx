@@ -3,9 +3,10 @@
 import { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, Lock, User, Mic, Music, Video, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain, FileText, Plus, Sparkles, Pencil, Clock, Send } from "lucide-react";
+import { ArrowLeft, Lock, User, Mic, Music, Video, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, ChevronDown } from "lucide-react";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
-import { TranscriptViewer } from "@/components/shared/transcript-viewer";
+import { TranscriptViewer, type AnalysisData } from "@/components/shared/transcript-viewer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -23,6 +24,9 @@ type Tab = "processos" | "demandas" | "drive" | "audiencias" | "midias" | "ofici
 interface TranscriptionData {
   transcript: string;
   summary?: string;
+  speakers?: string[];
+  duration?: number;
+  analysis?: AnalysisData | null;
 }
 
 export default function AssistidoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -38,7 +42,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const [transcriptions, setTranscriptions] = useState<Map<string, TranscriptionData>>(new Map());
   const [transcribing, setTranscribing] = useState<Set<string>>(new Set());
   const [transcriptViewerFile, setTranscriptViewerFile] = useState<string | null>(null);
-  const [isSummarizing, setIsSummarizing] = useState(false);
 
   // Solar / SIGAD state
   const [sigadResult, setSigadResult] = useState<{
@@ -121,7 +124,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { id: Number(id) },
     {
       staleTime: pollingFiles.size > 0 ? 5_000 : 60_000,
-      refetchInterval: pollingFiles.size > 0 ? 10_000 : false,
+      refetchInterval: pollingFiles.size > 0 ? 5_000 : false,
     }
   );
 
@@ -192,35 +195,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     }
   };
 
-  const handleSummarize = async (driveFileId: string, assistidoNome?: string) => {
-    const transcriptionData = transcriptions.get(driveFileId);
-    if (!transcriptionData) return;
-    setIsSummarizing(true);
-    try {
-      const res = await fetch("/api/ai/summarize-transcript", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transcript: transcriptionData.transcript,
-          assistidoNome,
-        }),
-      });
-      if (!res.ok) throw new Error("Falha ao gerar resumo");
-      const json = (await res.json()) as { summary?: string };
-      setTranscriptions((prev) => {
-        const next = new Map(prev);
-        const existing = next.get(driveFileId);
-        if (existing) {
-          next.set(driveFileId, { ...existing, summary: json.summary ?? "" });
-        }
-        return next;
-      });
-    } catch {
-      toast.error("Não foi possível gerar o resumo.");
-    } finally {
-      setIsSummarizing(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -274,39 +248,86 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-6 pt-5 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+      {/* Header Premium */}
+      <div className="px-6 pt-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600 mb-3 transition-colors"
+          className="flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-zinc-600 mb-3 transition-colors uppercase tracking-wide font-medium"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Voltar
+          <ArrowLeft className="h-3 w-3" /> Voltar
         </button>
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-            <User className="h-5 w-5 text-emerald-600" />
-          </div>
-          <div>
-            <h1 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              {data.nome}
+        <div className="flex items-center gap-4">
+          {/* Avatar grande com iniciais */}
+          {(() => {
+            const colors = getAtribuicaoColors((data as any).atribuicaoPrimaria);
+            const initials = data.nome.split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+            return (
+              <div
+                className={cn(
+                  "h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-md text-white font-bold text-lg",
+                  colors.bgSolid || "bg-emerald-500"
+                )}
+              >
+                {initials || <User className="h-6 w-6" />}
+              </div>
+            );
+          })()}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                {data.nome}
+              </h1>
               {isPreso && (
-                <Lock className="h-3.5 w-3.5 text-rose-500" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse">
+                  <Lock className="h-3 w-3" />
+                  Preso
+                </span>
               )}
-            </h1>
-            <div className="flex items-center gap-2 mt-0.5">
+            </div>
+            <div className="flex items-center gap-2.5 mt-1">
               {data.cpf && (
                 <span className="text-[11px] text-zinc-400 font-mono">{data.cpf}</span>
               )}
-              {data.statusPrisional && (
-                <span className={cn(
-                  "text-[10px] px-1.5 py-0.5 rounded-full font-medium",
-                  isPreso
-                    ? "bg-rose-100 text-rose-700"
-                    : "bg-zinc-100 text-zinc-600"
-                )}>
+              {data.statusPrisional && !isPreso && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
                   {statusLabel[data.statusPrisional] ?? data.statusPrisional.toLowerCase()}
                 </span>
               )}
+              {(data as any).atribuicaoPrimaria && (
+                <span className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded-md font-medium",
+                  getAtribuicaoColors((data as any).atribuicaoPrimaria).bg,
+                  getAtribuicaoColors((data as any).atribuicaoPrimaria).text
+                )}>
+                  {(data as any).atribuicaoPrimaria}
+                </span>
+              )}
+            </div>
+          </div>
+          {/* Mini KPIs inline */}
+          <div className="hidden sm:flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+              <Scale className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.processos.length}</span>
+              <span className="text-zinc-400">proc.</span>
+            </div>
+            <span className="text-zinc-200 dark:text-zinc-700">|</span>
+            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+              <FileText className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.demandas.length}</span>
+              <span className="text-zinc-400">dem.</span>
+            </div>
+            <span className="text-zinc-200 dark:text-zinc-700">|</span>
+            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+              <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.audiencias.length}</span>
+              <span className="text-zinc-400">aud.</span>
+            </div>
+            <span className="text-zinc-200 dark:text-zinc-700">|</span>
+            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+              <FolderOpen className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.driveFiles.length}</span>
+              <span className="text-zinc-400">arq.</span>
             </div>
           </div>
         </div>
@@ -654,11 +675,23 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 const isCurrentlyTranscribing = transcribing.has(fileKey) || isProcessing;
 
                 // Merge local transcription with enrichment data
+                const enrichData = f.enrichmentData as Record<string, unknown> | null;
+
+                // Progress data from backend
+                const progress = (enrichData?.progress as { step?: string; percent?: number; detail?: string } | null);
+                const progressPercent = isProcessing ? (progress?.percent ?? 15) : 0;
+                const progressDetail = progress?.detail ?? "Processando...";
                 if (hasEnrichmentTranscript && !transcriptions.has(fileKey)) {
                   // Populate local state from DB (lazy)
-                  transcriptions.set(fileKey, { transcript: enrichmentTranscript });
+                  transcriptions.set(fileKey, {
+                    transcript: enrichmentTranscript,
+                    speakers: (enrichData?.speakers as string[]) ?? undefined,
+                    duration: (enrichData?.duration as number) ?? undefined,
+                    analysis: (enrichData?.analysis as AnalysisData) ?? undefined,
+                  });
                 }
                 const transcriptionData = transcriptions.get(fileKey);
+                const hasAnalysis = !!(transcriptionData?.analysis?.resumo_defesa);
 
                 return (
                   <div
@@ -684,25 +717,43 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                           <span className="text-[10px] text-zinc-400">
                             {f.mimeType}
                           </span>
-                          {isProcessing && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 font-medium animate-pulse">
-                              processando...
-                            </span>
-                          )}
                           {isFailed && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-medium">
                               falhou
                             </span>
                           )}
                           {isTranscribed && !isProcessing && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">
                               transcrito
                             </span>
                           )}
+                          {hasAnalysis && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 font-medium flex items-center gap-0.5">
+                              <Brain className="h-2.5 w-2.5" />
+                              analisado
+                            </span>
+                          )}
                         </div>
+                        {/* Progress bar with steps */}
                         {isCurrentlyTranscribing && (
-                          <div className="mt-1.5 h-1 rounded-full bg-zinc-100 overflow-hidden">
-                            <div className="h-full bg-cyan-400 animate-pulse rounded-full w-2/3" />
+                          <div className="mt-2 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 transition-all duration-1000 ease-out"
+                                  style={{ width: `${progressPercent}%` }}
+                                />
+                              </div>
+                              <span className="text-[9px] font-mono text-zinc-400 tabular-nums w-7 text-right shrink-0">
+                                {progressPercent}%
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Loader2 className="h-2.5 w-2.5 animate-spin text-cyan-500" />
+                              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                                {progressDetail}
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -845,10 +896,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             if (!open) setTranscriptViewerFile(null);
           }}
           transcript={currentViewerData.transcript}
-          summary={currentViewerData.summary}
+          speakers={currentViewerData.speakers}
+          duration={currentViewerData.duration}
+          analysis={currentViewerData.analysis}
           assistidoNome={data.nome}
-          onSummarize={() => handleSummarize(transcriptViewerFile, data.nome)}
-          isSummarizing={isSummarizing}
         />
       )}
     </div>
