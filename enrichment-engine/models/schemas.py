@@ -38,6 +38,94 @@ class PersonRole(str, Enum):
     OUTRO = "outro"
 
 
+# ==========================================
+# TAXONOMY v2 — mirrored from TypeScript pdf-classifier.ts
+# Source of truth: src/lib/services/pdf-classifier.ts
+# ==========================================
+
+SECTION_TIPOS = [
+    # CRITICO (vermelho) — impacto direto na defesa
+    "denuncia", "sentenca", "depoimento_vitima", "depoimento_testemunha", "depoimento_investigado",
+    # ALTO (laranja) — analise obrigatoria
+    "decisao", "pronuncia", "laudo_pericial", "laudo_necroscopico", "laudo_local",
+    "ata_audiencia", "interrogatorio", "alegacoes_mp", "alegacoes_defesa",
+    "resposta_acusacao", "recurso", "habeas_corpus",
+    # MEDIO (azul) — contexto investigativo
+    "boletim_ocorrencia", "portaria_ip", "relatorio_policial", "auto_prisao",
+    "termo_inquerito", "certidao_relevante", "diligencias_422", "alegacoes",
+    # BAIXO (cinza) — referencia
+    "documento_identidade", "outros",
+    # OCULTO — burocracia
+    "burocracia",
+]
+
+TIPO_RELEVANCIA: dict[str, str] = {
+    "denuncia": "critico", "sentenca": "critico",
+    "depoimento_vitima": "critico", "depoimento_testemunha": "critico",
+    "depoimento_investigado": "critico",
+    "decisao": "alto", "pronuncia": "alto",
+    "laudo_pericial": "alto", "laudo_necroscopico": "alto", "laudo_local": "alto",
+    "ata_audiencia": "alto", "interrogatorio": "alto",
+    "alegacoes_mp": "alto", "alegacoes_defesa": "alto",
+    "resposta_acusacao": "alto", "recurso": "alto", "habeas_corpus": "alto",
+    "boletim_ocorrencia": "medio", "portaria_ip": "medio",
+    "relatorio_policial": "medio", "auto_prisao": "medio",
+    "termo_inquerito": "medio", "certidao_relevante": "medio",
+    "diligencias_422": "medio", "alegacoes": "medio",
+    "documento_identidade": "baixo", "outros": "baixo",
+    "burocracia": "oculto",
+}
+
+SECTION_GROUPS: dict[str, dict] = {
+    "depoimentos": {
+        "label": "Depoimentos e Interrogatórios",
+        "tipos": ["depoimento_vitima", "depoimento_testemunha", "depoimento_investigado", "interrogatorio"],
+    },
+    "laudos": {
+        "label": "Laudos e Perícias",
+        "tipos": ["laudo_pericial", "laudo_necroscopico", "laudo_local"],
+    },
+    "decisoes": {
+        "label": "Decisões Judiciais",
+        "tipos": ["decisao", "sentenca", "pronuncia"],
+    },
+    "defesa": {
+        "label": "Manifestações da Defesa",
+        "tipos": ["alegacoes_defesa", "resposta_acusacao", "recurso", "habeas_corpus"],
+    },
+    "mp": {
+        "label": "Manifestações do MP",
+        "tipos": ["denuncia", "alegacoes_mp", "alegacoes"],
+    },
+    "investigacao": {
+        "label": "Investigação Policial",
+        "tipos": ["relatorio_policial", "portaria_ip", "auto_prisao", "termo_inquerito", "boletim_ocorrencia", "diligencias_422"],
+    },
+    "audiencias": {
+        "label": "Audiências",
+        "tipos": ["ata_audiencia"],
+    },
+    "documentos": {
+        "label": "Documentos e Certidões",
+        "tipos": ["certidao_relevante", "documento_identidade"],
+    },
+    "outros": {
+        "label": "Outros",
+        "tipos": ["outros"],
+    },
+    "burocracia": {
+        "label": "Burocracia",
+        "tipos": ["burocracia"],
+    },
+}
+
+# Reverse map: tipo -> group key
+TIPO_TO_GROUP: dict[str, str] = {}
+for _group_key, _group_data in SECTION_GROUPS.items():
+    for _tipo in _group_data["tipos"]:
+        TIPO_TO_GROUP[_tipo] = _group_key
+
+
 # === Document ===
 
 class DocumentInput(BaseModel):
@@ -53,7 +141,7 @@ class DocumentInput(BaseModel):
 
 class DocumentOutput(BaseModel):
     """Output de /enrich/document."""
-    document_type: str = Field(..., description="sentenca, decisao, laudo, certidao, peticao, outro")
+    document_type: str = Field(..., description="Taxonomy v2: denuncia, sentenca, depoimento_vitima, decisao, laudo_pericial, etc. (27 tipos)")
     extracted_data: dict = Field(default_factory=dict, description="JSON estruturado por tipo")
     entities_created: list[dict] = Field(default_factory=list, description="Entidades criadas/atualizadas")
     confidence: float = Field(..., ge=0, le=1, description="Score de confiança da extração")
