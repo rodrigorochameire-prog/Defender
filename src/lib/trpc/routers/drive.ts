@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, driveFiles, driveSyncFolders, driveSyncLogs } from "@/lib/db";
 import { eq, and, desc, sql, isNull, or, like, not, gt, lt } from "drizzle-orm";
@@ -2575,5 +2576,72 @@ export const driveRouter = router({
         }
       }
       return { linked };
+    }),
+
+  /**
+   * Backfill: criar pastas Drive para todos os assistidos que ainda não possuem.
+   * Processa em batches de 10 com delay de 1s entre batches para respeitar rate limits.
+   */
+  backfillAssistidoFolders: protectedProcedure
+    .mutation(async () => {
+      if (!isGoogleDriveConfigured()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Google Drive not configured" });
+      }
+
+      // Fetch all assistidos without drive folder
+      const missing = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          atribuicao: assistidos.atribuicaoPrimaria,
+        })
+        .from(assistidos)
+        .where(isNull(assistidos.driveFolderId))
+        .orderBy(assistidos.id);
+
+      let created = 0;
+      let failed = 0;
+      const errors: string[] = [];
+
+      // Process in batches of 10
+      for (let i = 0; i < missing.length; i += 10) {
+        const batch = missing.slice(i, i + 10);
+        for (const a of batch) {
+          try {
+            if (!a.atribuicao) {
+              errors.push(`${a.id} ${a.nome}: sem atribuicao`);
+              failed++;
+              continue;
+            }
+            const folderKey = mapAtribuicaoToFolderKey(a.atribuicao);
+            if (!folderKey) {
+              errors.push(`${a.id} ${a.nome}: atribuicao ${a.atribuicao} sem mapping`);
+              failed++;
+              continue;
+            }
+            const folder = await createOrFindAssistidoFolder(folderKey, a.nome);
+            if (folder) {
+              await db.update(assistidos).set({
+                driveFolderId: folder.id,
+                updatedAt: new Date(),
+              }).where(eq(assistidos.id, a.id));
+              created++;
+            } else {
+              errors.push(`${a.id} ${a.nome}: createOrFindAssistidoFolder retornou null`);
+              failed++;
+            }
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            errors.push(`${a.id} ${a.nome}: ${msg}`);
+            failed++;
+          }
+        }
+        // Small delay between batches to respect rate limits
+        if (i + 10 < missing.length) {
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      }
+
+      return { total: missing.length, created, failed, errors: errors.slice(0, 20) };
     }),
 });
