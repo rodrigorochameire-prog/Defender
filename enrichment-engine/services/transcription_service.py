@@ -34,6 +34,13 @@ logger = logging.getLogger("enrichment-engine.transcription")
 # Singleton
 _transcription_service: "TranscriptionService | None" = None
 
+# ---------------------------------------------------------------------------
+# Module-level constants
+# ---------------------------------------------------------------------------
+AUDIO_EXTENSIONS = {".mp3", ".wav", ".flac", ".m4a", ".ogg", ".webm"}
+VIDEO_EXTENSIONS = {".mp4", ".mpeg", ".mov", ".avi", ".mkv", ".mpga"}
+SKIP_EXTRACTION_MAX_MB = 10
+
 
 def get_transcription_service() -> "TranscriptionService":
     """Singleton factory."""
@@ -914,6 +921,10 @@ Regras para segments:
             cleaned = text[:cut].rstrip(" ,;.")
             if cleaned and cleaned[-1] not in ".!?":
                 cleaned += "."
+            logger.info(
+                "_clean_repetition_aggressive: frase repetida cortada %d chars na posição %d",
+                len(text) - len(cleaned), cut,
+            )
             return cleaned
 
         # Fallback: delega para o método original
@@ -926,10 +937,6 @@ Regras para segments:
         e pode ser enviado direto ao Whisper sem re-extração.
         Condições: extensão de áudio (não vídeo) E tamanho ≤ 10MB.
         """
-        AUDIO_EXTENSIONS = {".mp3", ".wav", ".flac", ".m4a", ".ogg", ".webm"}
-        VIDEO_EXTENSIONS = {".mp4", ".mpeg", ".mov", ".avi", ".mkv", ".mpga"}
-        SKIP_EXTRACTION_MAX_MB = 10
-
         suffix = path.suffix.lower()
         size_mb = path.stat().st_size / (1024 * 1024)
 
