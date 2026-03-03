@@ -133,7 +133,7 @@ async def _process_transcription_background(input_data: TranscribeAsyncInput):
 
         # Callback para progresso granular por chunk (usado em chunked paralelo)
         def on_chunk_done(completed: int, total: int) -> None:
-            pct = 25 + int((completed / total) * 45)  # 25% → 70%
+            pct = 25 + int((completed / total) * 45) if total else 25  # 25% → 70%
             _update_progress(
                 "transcribing",
                 pct,
