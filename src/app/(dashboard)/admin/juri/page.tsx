@@ -217,6 +217,7 @@ export default function JuriPage() {
             subtitle="sessões futuras"
             icon={Calendar}
             gradient="zinc"
+            size="sm"
           />
           <KPICardPremium
             title="Este Mês"
@@ -224,6 +225,7 @@ export default function JuriPage() {
             subtitle="sessões previstas"
             icon={Clock}
             gradient="zinc"
+            size="sm"
           />
           <KPICardPremium
             title="Adiadas"
@@ -231,6 +233,7 @@ export default function JuriPage() {
             subtitle="aguardando data"
             icon={AlertTriangle}
             gradient={stats.adiadas > 0 ? "amber" : "zinc"}
+            size="sm"
           />
           <KPICardPremium
             title="Próxima"
@@ -238,6 +241,7 @@ export default function JuriPage() {
             subtitle={stats.diasProxima !== null && stats.diasProxima <= 7 ? "atenção!" : "dias"}
             icon={Zap}
             gradient={stats.diasProxima !== null && stats.diasProxima <= 7 ? "emerald" : "zinc"}
+            size="sm"
           />
         </KPIGrid>
 

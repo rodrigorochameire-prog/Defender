@@ -734,43 +734,50 @@ export default function DashboardJuriPage() {
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
 
-      {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <Briefcase className="w-5 h-5 text-white dark:text-zinc-900" />
+      {/* Header — Premium hero-style */}
+      <div className="relative px-5 md:px-8 py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+        {/* Subtle gradient accent */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-transparent to-transparent dark:from-emerald-950/20 dark:via-transparent pointer-events-none" />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg ring-4 ring-zinc-900/5 dark:ring-white/10">
+              <Briefcase className="w-5.5 h-5.5 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Dashboard</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Painel de atividades</p>
+              <h1 className="font-serif text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Dashboard</h1>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Painel de atividades e acompanhamento</p>
             </div>
           </div>
 
           <Button
             size="sm"
             onClick={() => setIsCreateModalOpen(true)}
-            className="h-7 px-2.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+            className="h-9 px-4 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-emerald-500 dark:hover:text-white text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 mr-1" />
-            Nova
+            <Plus className="w-4 h-4 mr-1.5" />
+            Nova Demanda
           </Button>
         </div>
       </div>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="p-5 md:p-8 space-y-6 md:space-y-8">
 
         {/* ===== 1. REGISTRO RÁPIDO (full-width, stacked rows) ===== */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden transition-all duration-300 hover:border-emerald-200/50 dark:hover:border-emerald-800/30">
-          <div className="px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-zinc-900 dark:bg-white flex items-center justify-center">
-              <Plus className="w-3.5 h-3.5 text-white dark:text-zinc-900" />
+        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+          {/* Accent top bar */}
+          <div className="h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
+          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
+              <Plus className="w-4 h-4 text-white dark:text-zinc-900" />
             </div>
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 font-serif">Registro Rapido</h3>
+            <div>
+              <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">Registro Rápido</h3>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">Atendimento, diligência ou anotação</p>
+            </div>
           </div>
 
-          <div className="p-4 space-y-4">
+          <div className="p-5 space-y-4">
 
             {/* Row 1 — Assistido + Tipo lado a lado */}
             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
@@ -1279,14 +1286,15 @@ export default function DashboardJuriPage() {
 
         {/* ===== PENDÊNCIAS SOLAR (condicional) ===== */}
         {solarSync && (solarSync.stats.pending > 0 || solarSync.stats.errors > 0) && (
-          <Card className="group/solar relative bg-white dark:bg-zinc-900 border border-amber-200/60 dark:border-amber-800/30 rounded-xl overflow-hidden hover:border-amber-300 dark:hover:border-amber-700/50 transition-all duration-300">
-            <div className="p-3">
+          <Card className="group/solar relative bg-white dark:bg-zinc-900 border border-amber-200/60 dark:border-amber-800/30 rounded-2xl overflow-hidden hover:border-amber-300 dark:hover:border-amber-700/50 transition-all duration-300 shadow-apple dark:shadow-apple-dark">
+            <div className="h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-400" />
+            <div className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-amber-500/10">
                     <Sun className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                  <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">
                     Pendências Solar
                   </h3>
                 </div>
@@ -1383,20 +1391,26 @@ export default function DashboardJuriPage() {
           </Card>
         )}
 
-        {/* ===== KPI CARDS (todos zinc) ===== */}
-        <KPIGrid columns={4}>
-          {statsData.map((stat, index) => (
-            <KPICardPremium
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              subtitle={stat.subtitle}
-              icon={stat.icon}
-              gradient={stat.gradient}
-              size="sm"
-            />
-          ))}
-        </KPIGrid>
+        {/* ===== KPI SECTION ===== */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <div className="w-1.5 h-5 rounded-full bg-emerald-500" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Resumo</h2>
+          </div>
+          <KPIGrid columns={4}>
+            {statsData.map((stat, index) => (
+              <KPICardPremium
+                key={index}
+                title={stat.title}
+                value={stat.value}
+                subtitle={stat.subtitle}
+                icon={stat.icon}
+                gradient={stat.gradient}
+                size="sm"
+              />
+            ))}
+          </KPIGrid>
+        </div>
 
         {/* ===== 4. ALERTA CRÍTICO - Réu Preso com Prazo Vencido ===== */}
         {estatisticasPrazos.reuPresoVencido > 0 && (
@@ -1425,15 +1439,22 @@ export default function DashboardJuriPage() {
         )}
 
         {/* ===== 5. PRAZOS + JÚRIS ===== */}
-        <div className={cn("grid gap-4", isDefensorCriminalGeral ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2")}>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <div className="w-1.5 h-5 rounded-full bg-rose-500" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Prazos & Agenda</h2>
+          </div>
+        <div className={cn("grid gap-6", isDefensorCriminalGeral ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2")}>
 
         {/* PRAZOS COM AÇÃO RÁPIDA */}
-        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-          <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+        <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+          <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-zinc-400" />
-                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Prazos</h3>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center">
+                  <AlertCircle className="w-4 h-4 text-rose-500 dark:text-rose-400" />
+                </div>
+                <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">Prazos</h3>
                 {estatisticasPrazos.vencidos > 0 && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-semibold">
                     {estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}
@@ -1444,14 +1465,14 @@ export default function DashboardJuriPage() {
                 </span>
               </div>
               <Link href="/admin/demandas">
-                <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-500 hover:text-emerald-600">
+                <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-400 hover:text-emerald-600 transition-colors cursor-pointer">
                   Ver todas <ArrowRight className="w-3 h-3 ml-1" />
                 </Button>
               </Link>
             </div>
           </div>
 
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800 max-h-[360px] overflow-y-auto">
+          <div className="divide-y divide-zinc-100/80 dark:divide-zinc-800/60 max-h-[420px] overflow-y-auto">
             {loadingDemandas ? (
               <div className="p-4 space-y-2">
                 {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
@@ -1485,10 +1506,10 @@ export default function DashboardJuriPage() {
                         : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
                     )}
                   >
-                    {/* Barra de cor de atribuição — substitui a bolinha */}
-                    <div className={cn("w-1 flex-shrink-0 rounded-r-sm my-1.5 ml-1", barColor)} />
+                    {/* Barra de cor de atribuição */}
+                    <div className={cn("w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5", barColor)} />
 
-                    <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-3 px-4 py-3 flex-1 min-w-0">
                       {/* Info principal */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
@@ -1546,12 +1567,14 @@ export default function DashboardJuriPage() {
 
         {/* PRÓXIMOS JÚRIS — só especializado */}
         {!isDefensorCriminalGeral && (
-          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-            <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Gavel className="w-4 h-4 text-zinc-500" />
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Próximos Júris</h3>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                    <Gavel className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                  </div>
+                  <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">Próximos Júris</h3>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
                     {jurisProximos.length}
                   </span>
@@ -1655,22 +1678,25 @@ export default function DashboardJuriPage() {
         )}
 
         </div>{/* fim grid Prazos + Júris */}
+        </div>{/* fim section Prazos & Agenda */}
 
         {/* ===== 6. AUDIÊNCIAS (full-width) ===== */}
         {isDefensorCriminalGeral ? (
           /* Criminal Geral: Minhas Audiências */
-          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-            <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-zinc-500" />
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Minhas Audiências</h3>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center">
+                    <CalendarDays className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                  </div>
+                  <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">Minhas Audiências</h3>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
                     {audienciasExibir.length}
                   </span>
                 </div>
                 <Link href="/admin/agenda">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-500 hover:text-emerald-600">
+                  <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-400 hover:text-emerald-600 transition-colors cursor-pointer">
                     Ver agenda <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </Link>
@@ -1752,12 +1778,14 @@ export default function DashboardJuriPage() {
           </Card>
         ) : (
           /* Especializado: Audiências da Semana */
-          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300">
-              <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/60">
+          <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+              <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4 text-zinc-500" />
-                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center">
+                      <CalendarDays className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                    </div>
+                    <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">
                       {mostrandoAlemDaSemana ? "Próximas Audiências" : "Audiências da Semana"}
                     </h3>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
@@ -1765,7 +1793,7 @@ export default function DashboardJuriPage() {
                     </span>
                   </div>
                   <Link href="/admin/agenda">
-                    <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-500 hover:text-emerald-600">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-400 hover:text-emerald-600 transition-colors cursor-pointer">
                       Ver agenda <ArrowRight className="w-3 h-3 ml-1" />
                     </Button>
                   </Link>
@@ -1893,7 +1921,7 @@ export default function DashboardJuriPage() {
       <Sheet open={muralSheetOpen} onOpenChange={setMuralSheetOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md p-0">
           <SheetHeader className="p-4 pb-0">
-            <SheetTitle className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+            <SheetTitle className="text-sm font-bold text-zinc-800 dark:text-zinc-200 tracking-tight flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-amber-500" />
               Mural da Equipe
             </SheetTitle>

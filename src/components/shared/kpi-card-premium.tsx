@@ -66,7 +66,7 @@ interface KPICardPremiumProps {
   onClick?: () => void;
   active?: boolean;
   href?: string;
-  size?: "sm" | "md";
+  size?: "compact" | "sm" | "md";
   className?: string;
 }
 
@@ -86,19 +86,27 @@ export function KPICardPremium({
   const config = GRADIENT_CONFIGS[gradient];
 
   const sizeStyles = {
+    compact: {
+      container: "px-2.5 py-2",
+      icon: "w-7 h-7",
+      iconInner: "w-3 h-3",
+      value: "text-sm font-bold",
+      title: "text-[10px]",
+      subtitle: "text-[10px]",
+    },
     sm: {
-      container: "p-3",
+      container: "px-3 py-2.5",
       icon: "w-8 h-8",
       iconInner: "w-3.5 h-3.5",
-      value: "text-xl font-bold",
-      title: "text-[9px]",
-      subtitle: "text-[9px]",
+      value: "text-lg font-bold",
+      title: "text-[10px]",
+      subtitle: "text-[10px]",
     },
     md: {
-      container: "p-4",
-      icon: "w-10 h-10",
+      container: "p-3.5",
+      icon: "w-9 h-9",
       iconInner: "w-4 h-4",
-      value: "text-2xl font-bold",
+      value: "text-xl font-bold",
       title: "text-[10px]",
       subtitle: "text-[10px]",
     },
@@ -110,25 +118,25 @@ export function KPICardPremium({
     <div
       onClick={onClick}
       className={cn(
-        "group relative rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
+        "group relative rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200",
         onClick && "cursor-pointer",
         href && "cursor-pointer",
-        active ? config.border : "border-zinc-100 dark:border-zinc-800",
-        "hover:shadow-lg",
+        active ? config.border : "border-zinc-200/80 dark:border-zinc-800/80",
+        "shadow-sm hover:shadow-md hover:-translate-y-px",
         config.glow,
         styles.container,
         className
       )}
     >
-      {/* Gradient Background */}
+      {/* Gradient Background — always subtle, stronger on hover */}
       <div className={cn(
-        "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+        "absolute inset-0 bg-gradient-to-br opacity-30 group-hover:opacity-60 transition-opacity duration-300",
         config.bg
       )} />
 
-      {/* Top accent line */}
+      {/* Top accent line — always visible */}
       <div className={cn(
-        "absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-100 transition-opacity",
+        "absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-current to-transparent opacity-40 group-hover:opacity-100 transition-opacity",
         config.text
       )} />
 
@@ -157,7 +165,7 @@ export function KPICardPremium({
         </div>
         {Icon && (
           <div className={cn(
-            "rounded-xl flex items-center justify-center transition-all duration-300",
+            "rounded-lg flex items-center justify-center transition-all duration-300",
             config.icon,
             styles.icon
           )}>

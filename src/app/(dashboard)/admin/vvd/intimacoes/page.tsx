@@ -191,6 +191,7 @@ export default function IntimacoesVVDPage() {
           gradient="zinc"
           onClick={() => setStatusFiltro("todos")}
           active={statusFiltro === "todos"}
+          size="sm"
         />
         <KPICardPremium
           title="Pendentes"
@@ -199,6 +200,7 @@ export default function IntimacoesVVDPage() {
           gradient={contadores.pendentes > 0 ? "blue" : "zinc"}
           onClick={() => setStatusFiltro("pendente")}
           active={statusFiltro === "pendente"}
+          size="sm"
         />
         <KPICardPremium
           title="Dar Ciência"
@@ -209,6 +211,7 @@ export default function IntimacoesVVDPage() {
             setTipoFiltro("CIENCIA");
             setStatusFiltro("pendente");
           }}
+          size="sm"
         />
         <KPICardPremium
           title="Peticionar"
@@ -219,12 +222,14 @@ export default function IntimacoesVVDPage() {
             setTipoFiltro("PETICIONAR");
             setStatusFiltro("pendente");
           }}
+          size="sm"
         />
         <KPICardPremium
           title="Urgentes"
           value={contadores.urgentes}
           icon={Shield}
           gradient={contadores.urgentes > 0 ? "rose" : "zinc"}
+          size="sm"
         />
       </KPIGrid>
 

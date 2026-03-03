@@ -503,8 +503,9 @@ class EnrichmentClient {
   private timeout: number;
 
   constructor() {
-    this.baseUrl = process.env.ENRICHMENT_ENGINE_URL || "";
-    this.apiKey = process.env.ENRICHMENT_ENGINE_API_KEY || "";
+    // .trim() para remover trailing \n que Vercel pode adicionar às env vars
+    this.baseUrl = (process.env.ENRICHMENT_ENGINE_URL || "").trim();
+    this.apiKey = (process.env.ENRICHMENT_ENGINE_API_KEY || "").trim();
     this.timeout = 60_000; // 60s
   }
 

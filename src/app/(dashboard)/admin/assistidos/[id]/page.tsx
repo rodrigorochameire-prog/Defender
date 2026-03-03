@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { ArrowLeft, Lock, User, Mic, Music, Video, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain, FileText, Plus, Sparkles, Pencil, Clock, Send } from "lucide-react";
@@ -114,9 +114,15 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     },
   });
 
+  // Track files sent to background transcription — drives polling
+  const [pollingFiles, setPollingFiles] = useState<Set<string>>(new Set());
+
   const { data, isLoading, error } = trpc.assistidos.getById.useQuery(
     { id: Number(id) },
-    { staleTime: 60_000 }
+    {
+      staleTime: pollingFiles.size > 0 ? 5_000 : 60_000,
+      refetchInterval: pollingFiles.size > 0 ? 10_000 : false,
+    }
   );
 
   // Ofícios do assistido
@@ -135,29 +141,48 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     [data?.driveFiles]
   );
 
+  // Stop polling when background transcription finishes (status != "processing")
+  useEffect(() => {
+    if (pollingFiles.size === 0 || !data?.driveFiles) return;
+    const stillProcessing = new Set<string>();
+    for (const fileKey of pollingFiles) {
+      const file = data.driveFiles.find(
+        (f) => (f.driveFileId ?? String(f.id)) === fileKey
+      );
+      if (file && file.enrichmentStatus === "processing") {
+        stillProcessing.add(fileKey);
+      } else if (file && file.enrichmentStatus === "completed") {
+        toast.success(`Transcrição de "${file.name}" concluída!`);
+      }
+    }
+    if (stillProcessing.size !== pollingFiles.size) {
+      setPollingFiles(stillProcessing);
+    }
+  }, [data?.driveFiles, pollingFiles]);
+
+  const transcribeMutation = trpc.drive.transcreverDrive.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message ?? "Transcrição iniciada em background!");
+    },
+    onError: (err) => {
+      toast.error(`Erro ao transcrever: ${err.message}`);
+    },
+  });
+
   const handleTranscribe = async (driveFileId: string) => {
     setTranscribing((prev) => new Set(prev).add(driveFileId));
     try {
-      const res = await fetch("/api/ai/transcribe-drive-file", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ driveFileId }),
+      await transcribeMutation.mutateAsync({
+        driveFileId,
+        assistidoId: Number(id),
+        diarize: true,
+        language: "pt",
       });
-      if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(err?.error ?? "Falha na transcrição.");
-      }
-      const json = (await res.json()) as { transcript?: string };
-      const transcript = json.transcript ?? "";
-      setTranscriptions((prev) => {
-        const next = new Map(prev);
-        next.set(driveFileId, { transcript });
-        return next;
-      });
-      setTranscriptViewerFile(driveFileId);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao transcrever.";
-      toast.error(message);
+      // Mutation returns 202 — transcription runs in background on Railway.
+      // Start polling to detect when it completes.
+      setPollingFiles((prev) => new Set(prev).add(driveFileId));
+    } catch {
+      // Error handled by onError callback above
     } finally {
       setTranscribing((prev) => {
         const next = new Set(prev);
@@ -603,9 +628,37 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             ) : (
               mediaFiles.map((f) => {
                 const isAudio = f.mimeType?.startsWith("audio/");
-                const isTranscribed = transcriptions.has(f.id);
-                const isCurrentlyTranscribing = transcribing.has(f.id);
-                const transcriptionData = transcriptions.get(f.id);
+                // Check both local state AND enrichmentData from DB
+                // transcript may be plain text or JSON string — extract plain text
+                const rawTranscript = (f.enrichmentData as Record<string, unknown> | null)?.transcript as string | undefined;
+                const rawTranscriptPlain = (f.enrichmentData as Record<string, unknown> | null)?.transcript_plain as string | undefined;
+                let enrichmentTranscript: string | undefined;
+                if (rawTranscriptPlain && !rawTranscriptPlain.startsWith("{")) {
+                  enrichmentTranscript = rawTranscriptPlain;
+                } else if (rawTranscript && !rawTranscript.startsWith("{")) {
+                  enrichmentTranscript = rawTranscript;
+                } else if (rawTranscript) {
+                  // transcript is a JSON string — try to extract plain text
+                  try {
+                    const parsed = JSON.parse(rawTranscript);
+                    enrichmentTranscript = parsed.transcript_plain || parsed.transcript || rawTranscript;
+                  } catch {
+                    enrichmentTranscript = rawTranscript;
+                  }
+                }
+                const hasEnrichmentTranscript = !!enrichmentTranscript;
+                const fileKey = f.driveFileId ?? String(f.id); // Use Drive ID as key, fallback to DB id
+                const isTranscribed = transcriptions.has(fileKey) || hasEnrichmentTranscript;
+                const isProcessing = f.enrichmentStatus === "processing";
+                const isFailed = f.enrichmentStatus === "failed";
+                const isCurrentlyTranscribing = transcribing.has(fileKey) || isProcessing;
+
+                // Merge local transcription with enrichment data
+                if (hasEnrichmentTranscript && !transcriptions.has(fileKey)) {
+                  // Populate local state from DB (lazy)
+                  transcriptions.set(fileKey, { transcript: enrichmentTranscript });
+                }
+                const transcriptionData = transcriptions.get(fileKey);
 
                 return (
                   <div
@@ -631,6 +684,21 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                           <span className="text-[10px] text-zinc-400">
                             {f.mimeType}
                           </span>
+                          {isProcessing && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 font-medium animate-pulse">
+                              processando...
+                            </span>
+                          )}
+                          {isFailed && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
+                              falhou
+                            </span>
+                          )}
+                          {isTranscribed && !isProcessing && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                              transcrito
+                            </span>
+                          )}
                         </div>
                         {isCurrentlyTranscribing && (
                           <div className="mt-1.5 h-1 rounded-full bg-zinc-100 overflow-hidden">
@@ -639,12 +707,12 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        {isTranscribed && (
+                        {isTranscribed && !isProcessing && (
                           <Button
                             size="sm"
                             variant="ghost"
                             className="h-7 text-[11px] text-violet-600 hover:text-violet-700 px-2"
-                            onClick={() => setTranscriptViewerFile(f.id)}
+                            onClick={() => setTranscriptViewerFile(fileKey)}
                           >
                             Ver transcrição
                           </Button>
@@ -653,7 +721,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                           size="sm"
                           variant="outline"
                           className="h-7 text-[11px] px-2 gap-1.5"
-                          onClick={() => handleTranscribe(f.id)}
+                          onClick={() => handleTranscribe(fileKey)}
                           disabled={isCurrentlyTranscribing}
                         >
                           {isCurrentlyTranscribing ? (

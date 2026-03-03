@@ -330,6 +330,7 @@ export default function MonitoramentoMPUPage() {
             value={mpuStats.total}
             icon={FileText}
             gradient="zinc"
+            size="sm"
           />
           <KPICardPremium
             title="MPUs Ativas"
@@ -337,6 +338,7 @@ export default function MonitoramentoMPUPage() {
             icon={ShieldCheck}
             gradient="emerald"
             onClick={() => setFilterVencimento("ativas")}
+            size="sm"
           />
           <KPICardPremium
             title="Reanálise Pendente"
@@ -344,6 +346,7 @@ export default function MonitoramentoMPUPage() {
             icon={ShieldAlert}
             gradient={mpuStats.vencidas > 0 ? "rose" : "zinc"}
             onClick={() => setFilterVencimento("vencidas")}
+            size="sm"
           />
           <KPICardPremium
             title="Reanálise em 7 dias"
@@ -351,6 +354,7 @@ export default function MonitoramentoMPUPage() {
             icon={AlertTriangle}
             gradient={mpuStats.vencendo7dias > 0 ? "rose" : "zinc"}
             onClick={() => setFilterVencimento("7dias")}
+            size="sm"
           />
           <KPICardPremium
             title="Reanálise em 30 dias"
@@ -358,6 +362,7 @@ export default function MonitoramentoMPUPage() {
             icon={Clock}
             gradient={mpuStats.vencendo30dias > 0 ? "amber" : "zinc"}
             onClick={() => setFilterVencimento("30dias")}
+            size="sm"
           />
         </KPIGrid>
 

@@ -53,15 +53,15 @@
     --ring: 162 63% 35%;
     --radius: 0.5rem; /* 8px */
 
-    /* ===== SIDEBAR ===== */
-    --sidebar-background: 0 0% 97%;
-    --sidebar-foreground: 240 10% 10%;
-    --sidebar-primary: 162 63% 35%;
+    /* ===== SIDEBAR (always dark glass) ===== */
+    --sidebar-background: 240 5% 7%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 162 63% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 96%;
-    --sidebar-accent-foreground: 240 8% 12%;
-    --sidebar-border: 240 6% 94%;
-    --sidebar-ring: 162 63% 35%;
+    --sidebar-accent: 240 4% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 4% 14%;
+    --sidebar-ring: 162 63% 45%;
 
     /* ===== SPACING SYSTEM (múltiplos de 4px) ===== */
     --spacing-xs: 0.25rem; /* 4px */
@@ -136,14 +136,14 @@
     --border: 240 6% 20%;
     --input: 240 6% 20%;
     --ring: 162 70% 50%;
-    --sidebar-background: 240 10% 10%;
-    --sidebar-foreground: 240 5% 98%;
-    --sidebar-primary: 162 70% 50%;
-    --sidebar-primary-foreground: 240 10% 8%;
-    --sidebar-accent: 240 6% 15%;
-    --sidebar-accent-foreground: 240 5% 96%;
-    --sidebar-border: 240 6% 18%;
-    --sidebar-ring: 162 70% 50%;
+    --sidebar-background: 240 5% 7%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 162 63% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 4% 14%;
+    --sidebar-ring: 162 63% 45%;
   }
 
   * {
@@ -480,9 +480,58 @@
     transform: scale(0.96);
   }
 
+  /* ===== PREMIUM HOVER (Apple-style) ===== */
+  .hover-apple {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  .hover-apple:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  }
+
+  .dark .hover-apple:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+
+  .hover-apple:active {
+    transform: translateY(0) scale(0.98);
+  }
+
   /* ===== GLASS MORPHISM ===== */
   .glass {
     @apply bg-background/80 backdrop-blur-md border border-border/50;
+  }
+
+  .glass-dark {
+    background: rgba(15, 15, 17, 0.85);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .dark .glass-card {
+    background: rgba(24, 24, 27, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-sidebar {
+    background: linear-gradient(
+      180deg,
+      rgba(15, 15, 17, 0.92) 0%,
+      rgba(20, 20, 23, 0.88) 50%,
+      rgba(15, 15, 17, 0.92) 100%
+    );
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   /* ===== GRADIENT TEXT ===== */

@@ -197,6 +197,7 @@ export default function PartesVVDPage() {
           gradient="zinc"
           onClick={() => setTipoFiltro("todos")}
           active={tipoFiltro === "todos"}
+          size="sm"
         />
         <KPICardPremium
           title="Autores (Assistidos)"
@@ -205,12 +206,14 @@ export default function PartesVVDPage() {
           gradient={tipoFiltro === "autor" ? "blue" : "zinc"}
           onClick={() => setTipoFiltro("autor")}
           active={tipoFiltro === "autor"}
+          size="sm"
         />
         <KPICardPremium
           title="Vítimas"
           value={contadores.vitimas}
           icon={Heart}
           gradient="zinc"
+          size="sm"
           onClick={() => setTipoFiltro("vitima")}
           active={tipoFiltro === "vitima"}
         />

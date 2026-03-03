@@ -104,6 +104,13 @@ const config: Config = {
         'float': '0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 4px 8px -4px rgba(0, 0, 0, 0.06)',
         'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
         'none': 'none',
+        // Glass & premium shadows
+        'glass': '0 8px 32px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.1)',
+        'glass-dark': '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
+        'apple': '0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.04)',
+        'apple-hover': '0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06)',
+        'apple-dark': '0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.04)',
+        'apple-dark-hover': '0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06)',
       },
       backdropBlur: {
         xs: '2px',
@@ -152,6 +159,19 @@ const config: Config = {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(400%)" },
         },
+        // Premium Apple-style animations
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(16, 185, 129, 0)" },
+          "50%": { boxShadow: "0 0 20px rgba(16, 185, 129, 0.15)" },
+        },
+        "number-tick": {
+          "0%": { transform: "translateY(100%)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "blur-in": {
+          "0%": { filter: "blur(8px)", opacity: "0" },
+          "100%": { filter: "blur(0)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -164,6 +184,9 @@ const config: Config = {
         "shimmer": "shimmer 2s linear infinite",
         "ping-slow": "ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite",
         "indeterminate": "indeterminate 1.5s ease-in-out infinite",
+        "glow-pulse": "glow-pulse 3s ease-in-out infinite",
+        "number-tick": "number-tick 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "blur-in": "blur-in 0.3s ease-out",
       },
     },
   },

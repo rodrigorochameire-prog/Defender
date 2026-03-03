@@ -429,22 +429,22 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
   return (
     <Card className={cn(
       // Base Premium - Design clean e harmonioso
-      "group relative flex flex-col justify-between overflow-hidden transition-all duration-300",
-      "bg-white dark:bg-zinc-900/95",
+      "group relative flex flex-col justify-between overflow-hidden transition-all duration-200",
+      "bg-white dark:bg-zinc-900",
       "border border-zinc-200/80 dark:border-zinc-800/80",
       "rounded-2xl",
-      "hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-black/30",
-      "hover:border-zinc-300 dark:hover:border-zinc-700",
-      "hover:-translate-y-0.5",
+      "shadow-apple dark:shadow-apple-dark",
+      "hover:shadow-lg dark:hover:shadow-apple-dark-hover",
+      "hover:-translate-y-1",
       getCardGlow(),
       // Fixado
       isPinned && "ring-2 ring-amber-400/50 dark:ring-amber-500/30"
     )}
     >
-      {/* ✨ BORDA SUPERIOR PREMIUM - SUTIL no hover */}
+      {/* Borda superior premium — sempre visível com cor da atribuição */}
       <div
         className={cn(
-          "absolute inset-x-0 top-0 h-0.5 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+          "absolute inset-x-0 top-0 h-1 rounded-t-xl transition-opacity duration-300",
           urgency?.pulse && "animate-pulse"
         )}
         style={{
@@ -452,11 +452,11 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
         }}
       />
 
-      {/* Gradiente de fundo - SUTIL no hover */}
+      {/* Gradiente de fundo */}
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none rounded-xl transition-opacity duration-500"
+        className="absolute inset-0 opacity-30 group-hover:opacity-60 pointer-events-none rounded-xl transition-opacity duration-300"
         style={{
-          background: `linear-gradient(to bottom right, ${topBorder.color}15 0%, ${topBorder.color}08 30%, transparent 60%)`
+          background: `linear-gradient(to bottom right, ${topBorder.color}10 0%, ${topBorder.color}05 30%, transparent 60%)`
         }}
       />
 
@@ -706,8 +706,8 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
           </div>
         )}
 
-        {/* 4. Mini KPIs - Design mais limpo com hover */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* 4. Mini KPIs */}
+        <div className="grid grid-cols-3 gap-2.5">
           <Link
             href={`/admin/processos?assistido=${assistido.id}`}
             className="group/kpi flex flex-col items-center p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 hover:shadow-sm"
@@ -716,7 +716,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
               <Scale className="w-4 h-4 text-zinc-400 group-hover/kpi:text-emerald-600 dark:group-hover/kpi:text-emerald-400 transition-colors" />
             </div>
             <span className="text-base font-bold text-zinc-800 dark:text-zinc-200">{assistido.processosAtivos || 0}</span>
-            <span className="text-[9px] text-zinc-400 font-medium">Processos</span>
+            <span className="text-[10px] text-zinc-400 font-medium">Processos</span>
           </Link>
 
           <Link
@@ -742,7 +742,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
             )}>
               {assistido.demandasAbertas || 0}
             </span>
-            <span className="text-[9px] text-zinc-400 font-medium">Demandas</span>
+            <span className="text-[10px] text-zinc-400 font-medium">Demandas</span>
           </Link>
 
           <div className="group/kpi flex flex-col items-center p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200">
@@ -750,7 +750,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
               <Brain className="w-4 h-4 text-zinc-400 group-hover/kpi:text-violet-600 dark:group-hover/kpi:text-violet-400 transition-colors" />
             </div>
             <span className="text-base font-bold text-zinc-800 dark:text-zinc-200">{score}</span>
-            <span className="text-[9px] text-zinc-400 font-medium">Score</span>
+            <span className="text-[10px] text-zinc-400 font-medium">Score</span>
           </div>
         </div>
 
@@ -2076,16 +2076,17 @@ export default function AssistidosPage() {
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-      {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <Users className="w-5 h-5 text-white dark:text-zinc-900" />
+      {/* Header Premium */}
+      <div className="relative px-5 md:px-8 py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-transparent to-transparent dark:from-emerald-950/15 dark:via-transparent pointer-events-none" />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg ring-4 ring-zinc-900/5 dark:ring-white/10">
+              <Users className="w-5.5 h-5.5 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Assistidos</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Cadastro e gestão de assistidos</p>
+              <h1 className="font-serif text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Assistidos</h1>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Cadastro e gestão de assistidos</p>
             </div>
           </div>
           
@@ -2097,14 +2098,14 @@ export default function AssistidosPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nome, CPF, vulgo..."
-                className="pl-8 w-[200px] md:w-[280px] h-7 text-xs border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 rounded-md"
+                className="pl-8 w-[200px] md:w-[280px] h-8 text-xs border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-100 dark:bg-zinc-800 rounded-lg transition-colors"
               />
             </div>
             <Link href="/admin/inteligencia">
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+                className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 title="Inteligência"
               >
                 <Brain className="w-3.5 h-3.5" />
@@ -2113,7 +2114,7 @@ export default function AssistidosPage() {
             <Button 
               variant="ghost" 
               size="sm"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               title="Exportar"
             >
               <Download className="w-3.5 h-3.5" />
@@ -2170,10 +2171,10 @@ export default function AssistidosPage() {
             <Link href="/admin/assistidos/novo">
               <Button
                 size="sm"
-                className="h-7 px-2.5 ml-1 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+                className="h-9 px-4 ml-1 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 mr-1" />
-                Novo
+                <Plus className="w-4 h-4 mr-1" />
+                Novo Assistido
               </Button>
             </Link>
           </div>
@@ -2181,7 +2182,7 @@ export default function AssistidosPage() {
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="p-5 md:p-8 space-y-5 md:space-y-7">
 
       {/* Alerta de Não Identificados - Discreto */}
       {naoIdentificadosCount > 0 && !showNaoIdentificados && (
@@ -2233,17 +2234,17 @@ export default function AssistidosPage() {
           <button
             onClick={() => { setStatusFilter("all"); setShowPinnedOnly(false); }}
             className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
+              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
               statusFilter === "all" && !showPinnedOnly
                 ? "border-emerald-200/50 dark:border-emerald-800/30"
-                : "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
+                : "border-zinc-200/80 dark:border-zinc-800/80",
+              "cursor-pointer"
             )}
           >
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Total</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Total</p>
                 <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.total - naoIdentificadosCount}</p>
                 <p className="text-[9px] text-emerald-600 dark:text-emerald-400">assistidos</p>
               </div>
@@ -2257,17 +2258,17 @@ export default function AssistidosPage() {
           <button
             onClick={() => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }}
             className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
+              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
               statusFilter === "CADEIA_PUBLICA"
                 ? "border-emerald-200/50 dark:border-emerald-800/30"
-                : "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
+                : "border-zinc-200/80 dark:border-zinc-800/80",
+              "cursor-pointer"
             )}
           >
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Presos</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Presos</p>
                 <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.presos}</p>
                 <p className="text-[9px] text-zinc-500 dark:text-zinc-400">prioridade</p>
               </div>
@@ -2281,17 +2282,17 @@ export default function AssistidosPage() {
           <button
             onClick={() => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }}
             className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
+              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
               statusFilter === "MONITORADO"
                 ? "border-emerald-200/50 dark:border-emerald-800/30"
-                : "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
+                : "border-zinc-200/80 dark:border-zinc-800/80",
+              "cursor-pointer"
             )}
           >
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Monitorados</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Monitorados</p>
                 <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.monitorados}</p>
                 <p className="text-[9px] text-zinc-500 dark:text-zinc-400">tornozeleira</p>
               </div>
@@ -2305,15 +2306,15 @@ export default function AssistidosPage() {
           <button
             onClick={() => {}}
             className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
-              "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
+              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
+              "border-zinc-200/80 dark:border-zinc-800/80",
+              "cursor-pointer"
             )}
           >
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Aud. Hoje</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Aud. Hoje</p>
                 <p className={cn("text-xl font-bold", stats.audienciasHoje > 0 ? "text-blue-600 dark:text-blue-400" : "text-zinc-800 dark:text-zinc-100")}>{stats.audienciasHoje}</p>
                 <p className="text-[9px] text-blue-600/70 dark:text-blue-400/70">{stats.audienciasSemana} semana</p>
               </div>
@@ -2332,15 +2333,15 @@ export default function AssistidosPage() {
           <button
             onClick={() => {}}
             className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
-              "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
+              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
+              "border-zinc-200/80 dark:border-zinc-800/80",
+              "cursor-pointer"
             )}
           >
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Demandas</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Demandas</p>
                 <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.comDemandas}</p>
                 <p className="text-[9px] text-zinc-500 dark:text-zinc-400">pendentes</p>
               </div>
@@ -2354,17 +2355,17 @@ export default function AssistidosPage() {
           <button
             onClick={() => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }}
             className={cn(
-              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-300",
+              "group relative p-3 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden transition-all duration-200 shadow-apple dark:shadow-apple-dark hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
               showPinnedOnly
                 ? "border-emerald-200/50 dark:border-emerald-800/30"
-                : "border-zinc-100 dark:border-zinc-800",
-              "cursor-pointer hover:shadow-lg hover:shadow-emerald-500/[0.03]"
+                : "border-zinc-200/80 dark:border-zinc-800/80",
+              "cursor-pointer"
             )}
           >
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/30 transition-all duration-300 rounded-t-xl" />
             <div className="relative flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Fixados</p>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 group-hover:text-emerald-600/70 dark:group-hover:text-emerald-400/70 transition-colors">Fixados</p>
                 <p className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{stats.pinned}</p>
                 <p className="text-[9px] text-zinc-500 dark:text-zinc-400">favoritos</p>
               </div>
@@ -2414,8 +2415,8 @@ export default function AssistidosPage() {
       </>
       )}
 
-      {/* Card de Filtros - Padrão Demandas */}
-      <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl p-5">
+      {/* Card de Filtros */}
+      <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-apple dark:shadow-apple-dark">
         <FilterSectionAssistidos
           selectedAtribuicao={atribuicaoFilter}
           setSelectedAtribuicao={setAtribuicaoFilter}
@@ -2434,13 +2435,18 @@ export default function AssistidosPage() {
       </Card>
 
       {/* Card de Listagem */}
-      <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
+      <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+        <div className="px-5 py-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              {filteredAssistidos.length} assistido{filteredAssistidos.length !== 1 && 's'}
-            </span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                <Users className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+              </div>
+              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                {filteredAssistidos.length} assistido{filteredAssistidos.length !== 1 && 's'}
+              </span>
+            </div>
           </div>
         </div>
         

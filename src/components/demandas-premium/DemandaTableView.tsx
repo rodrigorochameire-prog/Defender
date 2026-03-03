@@ -195,7 +195,7 @@ function Row({
       : "";
 
   return (
-    <div className={`group/row border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors ${rowBg}`}>
+    <div className={`group/row border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors duration-150 ${rowBg}`}>
       <div className="flex items-start px-3 py-2.5 gap-2">
 
         {/* Checkbox de seleção */}
@@ -546,13 +546,13 @@ export function DemandaTableView({
   onToggleSelect,
 }: DemandaTableViewProps) {
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
       {/* Header - Apenas desktop */}
-      <div className="hidden md:flex items-center px-3 py-2 gap-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-800/60">
+      <div className="hidden md:flex items-center px-3 py-2.5 gap-2 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/80 dark:bg-zinc-800/60">
         {isSelectMode && <div className="w-4" />}
         <div className="w-1" />
         <div className="w-9" />
-        <div className="flex-1 grid grid-cols-12 gap-x-3 text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+        <div className="flex-1 grid grid-cols-12 gap-x-3 text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
           <div className="col-span-3">Assistido</div>
           <div className="col-span-2">Status</div>
           <div className="col-span-2 text-center">Exp. → Prazo</div>
@@ -607,7 +607,7 @@ export function DemandaTableView({
 
       {/* Footer */}
       {demandas.length > 0 && (
-        <div className="px-4 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 flex items-center justify-between">
+        <div className="px-4 py-2.5 border-t border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-800/40 flex items-center justify-between">
           <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
             {demandas.length} demanda{demandas.length !== 1 && "s"}
             {selectedIds && selectedIds.size > 0 && (

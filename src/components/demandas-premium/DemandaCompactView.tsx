@@ -942,9 +942,9 @@ export function DemandaCompactView({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
         {/* Header: keyboard hint (atribuição tabs moved to parent toolbar) */}
-        <div className="px-4 py-1.5 bg-zinc-50/50 dark:bg-zinc-800/40 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-end">
+        <div className="px-4 py-1.5 bg-zinc-50/50 dark:bg-zinc-800/40 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-end">
           <span className="text-[9px] text-zinc-400 dark:text-zinc-600 whitespace-nowrap flex-shrink-0 hidden lg:inline tracking-wide">
             Click = seleciona &middot; Enter/2x = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; Ctrl+C = copia
           </span>
@@ -966,7 +966,7 @@ export function DemandaCompactView({
               onKeyDown={handleTableKeyDown}
             >
               <thead className="sticky top-0 z-10">
-                <tr className="bg-zinc-50 dark:bg-zinc-800/80 border-b border-zinc-200 dark:border-zinc-700">
+                <tr className="bg-zinc-50 dark:bg-zinc-800/80 border-b border-zinc-200/80 dark:border-zinc-800/80">
                   {onReorder && <th className="w-6 px-1" />}
                   {isSelectMode && <th className="w-8 px-1" />}
                   {COLUMN_ORDER.map((col) => {
@@ -978,7 +978,7 @@ export function DemandaCompactView({
                       <th
                         key={col.id}
                         onClick={sortable && onColumnSort ? () => onColumnSort(col.id) : undefined}
-                        className={`px-3 py-2.5 text-${col.align || "left"} text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ${col.width || ""} ${
+                        className={`px-3 py-2.5 text-${col.align || "left"} text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ${col.width || ""} ${
                           sortable && onColumnSort ? "cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-700/40 select-none transition-all" : ""
                         } ${sortInfo ? "text-emerald-600 dark:text-emerald-400" : ""}`}
                       >

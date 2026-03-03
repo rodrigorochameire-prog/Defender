@@ -29,25 +29,25 @@ interface StatsCardProps {
 // Mobile-first: tamanhos maiores em mobile para melhor legibilidade
 const sizeStyles = {
   sm: {
-    container: "p-4",
-    icon: "w-10 sm:w-9 h-10 sm:h-9",
-    iconInner: "w-5 sm:w-4 h-5 sm:h-4",
-    value: "text-2xl sm:text-xl font-bold sm:font-semibold",
-    label: "text-xs sm:text-[10px]",
+    container: "px-3 py-2.5",
+    icon: "w-8 sm:w-7 h-8 sm:h-7",
+    iconInner: "w-4 sm:w-3.5 h-4 sm:h-3.5",
+    value: "text-lg sm:text-sm font-bold",
+    label: "text-[10px]",
   },
   md: {
-    container: "p-4",
-    icon: "w-11 sm:w-9 h-11 sm:h-9",
-    iconInner: "w-5 sm:w-4 h-5 sm:h-4",
-    value: "text-2xl sm:text-xl font-bold sm:font-semibold",
-    label: "text-xs sm:text-[10px]",
+    container: "px-3 py-2.5",
+    icon: "w-9 sm:w-8 h-9 sm:h-8",
+    iconInner: "w-4 sm:w-3.5 h-4 sm:h-3.5",
+    value: "text-lg sm:text-lg font-bold",
+    label: "text-[10px]",
   },
   lg: {
-    container: "p-5",
-    icon: "w-12 sm:w-10 h-12 sm:h-10",
-    iconInner: "w-6 sm:w-5 h-6 sm:h-5",
-    value: "text-3xl sm:text-2xl font-bold",
-    label: "text-sm sm:text-xs",
+    container: "p-3.5",
+    icon: "w-10 sm:w-9 h-10 sm:h-9",
+    iconInner: "w-5 sm:w-4 h-5 sm:h-4",
+    value: "text-xl sm:text-xl font-bold",
+    label: "text-xs sm:text-[10px]",
   },
 };
 
@@ -156,7 +156,7 @@ export function StatsGrid({ children, columns = 4, className }: StatsGridProps) 
   };
 
   return (
-    <div className={cn("grid gap-4 md:gap-5 lg:gap-6", gridCols[columns], className)}>
+    <div className={cn("grid gap-3", gridCols[columns], className)}>
       {children}
     </div>
   );

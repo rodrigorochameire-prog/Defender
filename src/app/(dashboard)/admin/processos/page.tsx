@@ -1845,16 +1845,17 @@ export default function ProcessosPage() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
-        {/* Header Padrão Defender */}
-        <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-                <Scale className="w-5 h-5 text-white dark:text-zinc-900" />
+        {/* Header Premium */}
+        <div className="relative px-5 md:px-8 py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-transparent to-transparent dark:from-emerald-950/15 dark:via-transparent pointer-events-none" />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg ring-4 ring-zinc-900/5 dark:ring-white/10">
+                <Scale className="w-5.5 h-5.5 text-white dark:text-zinc-900" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Processos</h1>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Gestão e acompanhamento judicial</p>
+                <h1 className="font-serif text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">Processos</h1>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Gestão e acompanhamento judicial</p>
               </div>
             </div>
             
@@ -1865,7 +1866,7 @@ export default function ProcessosPage() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+                      className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
@@ -1876,7 +1877,7 @@ export default function ProcessosPage() {
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600"
+                className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 title="Exportar"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -1884,10 +1885,10 @@ export default function ProcessosPage() {
               <Link href="/admin/processos/novo">
                 <Button 
                   size="sm"
-                  className="h-7 px-2.5 ml-1.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+                  className="h-9 px-4 ml-1.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  Novo
+                  <Plus className="w-4 h-4 mr-1" />
+                  Novo Processo
                 </Button>
               </Link>
             </div>
@@ -1895,7 +1896,7 @@ export default function ProcessosPage() {
         </div>
 
         {/* Conteúdo Principal */}
-        <div className="p-4 md:p-6 space-y-4">
+        <div className="p-5 md:p-8 space-y-5 md:space-y-7">
 
         {/* KPI Cards Premium - Grid Responsivo */}
         <KPIGrid columns={6}>
@@ -1963,7 +1964,7 @@ export default function ProcessosPage() {
         </KPIGrid>
 
         {/* Filtros de Prazo - Chips Premium */}
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 p-4">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 p-5 shadow-apple dark:shadow-apple-dark">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <CalendarClock className="w-4 h-4 text-zinc-400" />
@@ -1989,7 +1990,7 @@ export default function ProcessosPage() {
         </div>
 
         {/* Card de Filtros - Padrão Demandas */}
-        <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl p-5">
+        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-apple dark:shadow-apple-dark">
           <FilterSectionProcessos
             selectedArea={areaFilter}
             setSelectedArea={setAreaFilter}
@@ -2007,10 +2008,10 @@ export default function ProcessosPage() {
         </Card>
 
         {/* Card de Listagem */}
-        <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">
+        <Card className="border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark">
 
           {/* Header da listagem */}
-          <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+          <div className="px-4 py-3 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               {filteredProcessos.length} processo{filteredProcessos.length !== 1 && 's'}
             </span>

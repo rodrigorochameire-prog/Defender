@@ -89,14 +89,19 @@ export function EquipeCoworkCard({
   ];
 
   return (
-    <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden transition-all duration-300 hover:border-emerald-200/40 dark:hover:border-emerald-800/30">
+    <Card className="group/card relative bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+      {/* Accent bar */}
+      <div className="h-1 bg-gradient-to-r from-violet-400 via-violet-500 to-indigo-500" />
       {/* Header */}
-      <div className="px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-zinc-900 dark:bg-white flex items-center justify-center">
-            <Users className="w-3.5 h-3.5 text-white dark:text-zinc-900" />
+      <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-md">
+            <Users className="w-4 h-4 text-white dark:text-zinc-900" />
           </div>
-          <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 font-serif">Equipe & Cowork</h3>
+          <div>
+            <h3 className="text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight">Equipe & Cowork</h3>
+            <p className="text-xs text-zinc-400 dark:text-zinc-500">Delegações, pareceres e coberturas</p>
+          </div>
           {pareceresPendentes > 0 && (
             <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
               {pareceresPendentes} parecer{pareceresPendentes > 1 ? "es" : ""}

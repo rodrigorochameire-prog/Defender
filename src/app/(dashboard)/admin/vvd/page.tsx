@@ -178,24 +178,28 @@ export default function VVDPage() {
           value={stats?.totalProcessos || 0}
           icon={FileText}
           gradient="zinc"
+          size="sm"
         />
         <KPICardPremium
           title="MPUs Ativas"
           value={stats?.mpusAtivas || 0}
           icon={ShieldCheck}
           gradient="emerald"
+          size="sm"
         />
         <KPICardPremium
           title="Vencendo em 30 dias"
           value={stats?.mpusVencendo || 0}
           icon={Clock}
           gradient={stats?.mpusVencendo && stats.mpusVencendo > 0 ? "amber" : "zinc"}
+          size="sm"
         />
         <KPICardPremium
           title="Intimações Pendentes"
           value={stats?.intimacoesPendentes || 0}
           icon={Bell}
           gradient={stats?.intimacoesPendentes && stats.intimacoesPendentes > 0 ? "blue" : "zinc"}
+          size="sm"
         />
       </KPIGrid>
 

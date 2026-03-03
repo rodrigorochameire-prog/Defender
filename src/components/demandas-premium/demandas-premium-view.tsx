@@ -1533,7 +1533,7 @@ export default function Demandas() {
               size="sm"
               onClick={() => setIsAdminConfigModalOpen(true)} 
               title="Configurações"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <Settings className="w-3.5 h-3.5" />
             </Button>
@@ -1542,7 +1542,7 @@ export default function Demandas() {
               size="sm"
               onClick={() => setIsChartConfigModalOpen(true)} 
               title="Infográficos"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <BarChartIcon className="w-3.5 h-3.5" />
             </Button>
@@ -1557,7 +1557,7 @@ export default function Demandas() {
               size="sm"
               onClick={() => setIsDuplicatesModalOpen(true)}
               title="Encontrar Duplicatas"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <Layers className="w-3.5 h-3.5" />
             </Button>
@@ -1566,38 +1566,38 @@ export default function Demandas() {
               size="sm"
               onClick={() => setIsExportModalOpen(true)}
               title="Exportar"
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <Upload className="w-3.5 h-3.5" />
             </Button>
-            <Button 
+            <Button
               size="sm"
-              onClick={() => setIsCreateModalOpen(true)} 
+              onClick={() => setIsCreateModalOpen(true)}
               title="Nova Demanda"
-              className="h-7 px-2.5 ml-1.5 bg-zinc-800 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+              className="h-9 px-4 ml-1.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Nova
+              <Plus className="w-4 h-4 mr-1" />
+              Nova Demanda
             </Button>
           </div>
         }
       />
 
       {/* Conteúdo Principal */}
-      <div className="p-2 md:p-4 space-y-2 md:space-y-3">
+      <div className="p-3 md:p-5 space-y-3 md:space-y-4">
         {/* Stats Ribbon — compact inline KPIs */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-900/80 rounded-xl border border-zinc-100 dark:border-zinc-800 text-xs overflow-x-auto scrollbar-none shadow-sm">
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-apple dark:shadow-apple-dark">
           {statsData.map((stat, index) => {
             const Icon = stat.icon;
             const isAlert = stat.gradient === "rose" || stat.gradient === "amber";
             const hasValue = Number(String(stat.value).replace('%','')) > 0;
             return (
               <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 flex-shrink-0" />}
+                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
                 <div className={`flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${isAlert && hasValue ? 'bg-rose-50 dark:bg-rose-950/20' : ''}`}>
                   <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isAlert && hasValue ? 'text-rose-500 dark:text-rose-400' : 'text-zinc-400 dark:text-zinc-500'}`} />
-                  <span className={`font-bold tabular-nums ${isAlert && hasValue ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-700 dark:text-zinc-200'}`}>{stat.value}</span>
-                  <span className="text-zinc-400 dark:text-zinc-500 font-medium">{stat.title.toLowerCase()}</span>
+                  <span className={`font-bold tabular-nums ${isAlert && hasValue ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-800 dark:text-zinc-100'}`}>{stat.value}</span>
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.title.toLowerCase()}</span>
                 </div>
               </Fragment>
             );
@@ -1607,8 +1607,8 @@ export default function Demandas() {
         </div>
 
         {/* Lista de Demandas */}
-        <Card className="group/card relative border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl hover:border-emerald-200/40 dark:hover:border-emerald-800/30 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/[0.02]">
-            <div className="px-3 md:px-5 py-2.5 border-b border-zinc-200 dark:border-zinc-800">
+        <Card className="group/card relative border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl shadow-apple dark:shadow-apple-dark transition-all duration-200 hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover">
+            <div className="px-4 md:px-5 py-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80">
               {/* Toolbar Row */}
               <div className="flex items-center gap-2">
                 {/* Search */}
@@ -1618,7 +1618,7 @@ export default function Demandas() {
                     placeholder="Buscar assistido, processo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 h-8 text-xs bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 focus:border-emerald-400 dark:focus:border-emerald-600 focus:ring-1 focus:ring-emerald-400/30 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 rounded-lg"
+                    className="pl-9 h-8 text-xs bg-zinc-100 dark:bg-zinc-800 border-zinc-200/80 dark:border-zinc-700/80 focus:border-emerald-400 dark:focus:border-emerald-600 focus:ring-1 focus:ring-emerald-400/30 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 rounded-lg transition-colors"
                   />
                   {searchTerm && (
                     <button
@@ -1637,12 +1637,12 @@ export default function Demandas() {
                       const el = document.getElementById('sort-dropdown');
                       if (el) el.classList.toggle('hidden');
                     }}
-                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors whitespace-nowrap"
+                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors whitespace-nowrap cursor-pointer"
                   >
                     <ArrowUpDown className="w-3.5 h-3.5 text-zinc-400" />
                     <span>{sortStack[0]?.column === "recentes" ? "Importação ↓" : sortStack[0]?.column === "status" ? "Status" : sortStack[0]?.column === "prazo" ? "Prazo" : sortStack[0]?.column === "assistido" ? "Assistido" : sortStack[0]?.column === "ato" ? "Ato" : "Ordenar"}</span>
                   </button>
-                  <div id="sort-dropdown" className="hidden absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-[160px]">
+                  <div id="sort-dropdown" className="hidden absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl shadow-apple-hover dark:shadow-apple-dark-hover py-1 min-w-[160px]">
                     {[
                       { key: "recentes", label: "Importação ↓", sublabel: "mais recente" },
                       { key: "status", label: "Status" },
@@ -1680,7 +1680,7 @@ export default function Demandas() {
                     <button
                       key={mode}
                       onClick={() => { setViewMode(mode); localStorage.setItem("defender_demandas_view_mode", mode); }}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all cursor-pointer ${
                         viewMode === mode
                           ? "bg-white dark:bg-zinc-700 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-zinc-200/50 dark:ring-zinc-600/50"
                           : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
@@ -1695,7 +1695,7 @@ export default function Demandas() {
                 {/* Secondary Filters Button */}
                 <button
                   onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                  className={`flex items-center gap-1 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
                     isFiltersExpanded || selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto
                       ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400"
                       : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300"
@@ -1708,6 +1708,19 @@ export default function Demandas() {
                       {[selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto].filter(Boolean).length}
                     </span>
                   )}
+                </button>
+
+                {/* Preso Quick Filter */}
+                <button
+                  onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "PRESO" ? null : "PRESO")}
+                  className={`h-8 px-2.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                    selectedEstadoPrisional === "PRESO"
+                      ? "bg-rose-100 dark:bg-rose-950/30 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700"
+                      : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300"
+                  }`}
+                  title="Filtrar réus presos"
+                >
+                  <Lock className="w-3.5 h-3.5 inline" />
                 </button>
 
                 {/* Archive Toggle */}
@@ -1817,7 +1830,7 @@ export default function Demandas() {
               </div>
             )}
 
-            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : viewMode === "compact" ? "p-0" : "p-4"} max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900`}>
+            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : viewMode === "compact" ? "p-0" : "p-4"} max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700`}>
               {viewMode === "table" ? (
                 /* ========== MODO PLANILHA (PADRÃO) ========== */
                 <DemandaTableView

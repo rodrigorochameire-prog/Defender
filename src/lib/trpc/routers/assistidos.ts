@@ -339,6 +339,7 @@ export const assistidosRouter = router({
           db
             .select({
               id: driveFiles.id,
+              driveFileId: driveFiles.driveFileId,
               name: driveFiles.name,
               mimeType: driveFiles.mimeType,
               webViewLink: driveFiles.webViewLink,
@@ -347,6 +348,7 @@ export const assistidosRouter = router({
               parentFileId: driveFiles.parentFileId,
               driveFolderId: driveFiles.driveFolderId,
               enrichmentStatus: driveFiles.enrichmentStatus,
+              enrichmentData: driveFiles.enrichmentData,
               documentType: driveFiles.documentType,
               categoria: driveFiles.categoria,
             })

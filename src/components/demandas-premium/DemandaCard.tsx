@@ -320,11 +320,11 @@ export function DemandaCard({
 
       {/* Conteúdo do Card */}
       <div
-        className={`relative bg-white dark:bg-zinc-900 p-4 md:p-3 rounded-r-xl border border-l-0 border-zinc-200/60 dark:border-zinc-800/60 transition-all duration-300 ${isSelectMode ? "ml-8" : "ml-2.5"}`}
+        className={`relative bg-white dark:bg-zinc-900 p-4 md:p-3 rounded-r-xl border border-l-0 border-zinc-200/80 dark:border-zinc-800/80 transition-all duration-200 ${isSelectMode ? "ml-8" : "ml-2.5"}`}
         style={{
-          boxShadow: isHovered 
-            ? '0 4px 12px rgba(0, 0, 0, 0.08)' 
-            : '0 1px 3px rgba(0, 0, 0, 0.04)',
+          boxShadow: isHovered
+            ? '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04)'
+            : '0 1px 3px rgba(0, 0, 0, 0.04), 0 0.5px 1px rgba(0, 0, 0, 0.02)',
           transform: isHovered ? 'translateX(2px)' : 'translateX(0)',
         }}
       >

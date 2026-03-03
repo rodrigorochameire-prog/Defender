@@ -10,9 +10,11 @@
 import { cn } from "@/lib/utils";
 import * as React from "react";
 
-export interface SwissCardProps extends React.HTMLAttributes<HTMLDivElement> {}
+export interface SwissCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  glass?: boolean;
+}
 
-export function SwissCard({ className, children, ...props }: SwissCardProps) {
+export function SwissCard({ className, children, glass, ...props }: SwissCardProps) {
   return (
     <div
       className={cn(
@@ -20,12 +22,12 @@ export function SwissCard({ className, children, ...props }: SwissCardProps) {
         "border border-border/60",
         "rounded-xl",
         "overflow-hidden",
-        "transition-all hover:shadow-md",
+        "transition-all duration-200",
+        "hover:shadow-apple-hover dark:hover:shadow-apple-dark-hover",
+        "shadow-apple dark:shadow-apple-dark",
+        glass && "glass-card",
         className
       )}
-      style={{
-        boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
-      }}
       {...props}
     >
       {children}
