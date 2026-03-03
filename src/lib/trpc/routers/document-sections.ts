@@ -373,7 +373,7 @@ export const documentSectionsRouter = router({
       return { deleted: result.length };
     }),
 
-  // Classificar PDF diretamente (Download → Extração → Gemini → Salvar)
+  // Classificar PDF diretamente (Download → Extração → Claude Sonnet 4 → Salvar)
   triggerClassification: protectedProcedure
     .input(z.object({ driveFileId: z.number() }))
     .mutation(async ({ input }) => {
@@ -414,13 +414,13 @@ export const documentSectionsRouter = router({
         }
         console.log(`[triggerClassification] Step 2 OK: ${extraction.totalPages} pages, ${extraction.fullText.length} chars`);
 
-        // Step 3: Classify sections with Gemini
+        // Step 3: Classify sections with Claude Sonnet 4
         const { classifyFullDocument, isClassifierConfigured } = await import("@/lib/services/pdf-classifier");
         if (!isClassifierConfigured()) {
-          throw new Error("Gemini API não configurada (GOOGLE_AI_API_KEY)");
+          throw new Error("Nenhuma API de IA configurada (ANTHROPIC_API_KEY ou GEMINI_API_KEY)");
         }
         const chunks = chunkPages(extraction.pages, 20);
-        console.log(`[triggerClassification] Step 3: Classifying ${chunks.length} chunks with Gemini...`);
+        console.log(`[triggerClassification] Step 3: Classifying ${chunks.length} chunks with Claude Sonnet 4...`);
         const classification = await classifyFullDocument(chunks);
         console.log(`[triggerClassification] Step 3 result: success=${classification.success}, sections=${classification.sections.length}, error=${classification.error}`);
 
@@ -654,7 +654,7 @@ export const documentSectionsRouter = router({
       // 4. Classify this batch
       const { classifyFullDocument, isClassifierConfigured } = await import("@/lib/services/pdf-classifier");
       if (!isClassifierConfigured()) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Gemini API não configurada" });
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Nenhuma API de IA configurada (ANTHROPIC_API_KEY ou GEMINI_API_KEY)" });
       }
 
       const result = await classifyFullDocument(batch);

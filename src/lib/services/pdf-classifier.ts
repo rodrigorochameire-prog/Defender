@@ -1,41 +1,38 @@
 /**
- * PDF Section Classifier — Google Gemini
+ * PDF Section Classifier — Claude Sonnet 4 (primary) + Gemini Flash (fallback)
  *
  * Recebe texto extraido de um bloco de paginas e identifica
  * pecas processuais com taxonomia refinada para defesa criminal.
  *
  * v2 — Nova taxonomia com relevancia defensiva, dados estruturados
  *       (pessoas, cronologia, teses) e filtro de burocracia.
+ * v3 — Migrado de Gemini Flash para Claude Sonnet 4 como engine primaria.
+ *       Gemini Flash mantido como fallback caso ANTHROPIC_API_KEY nao esteja configurada.
  */
 
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import Anthropic from "@anthropic-ai/sdk";
 
 // ==========================================
 // CONFIGURACAO
 // ==========================================
+
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 const GEMINI_API_KEY =
   process.env.GEMINI_API_KEY ||
   process.env.GOOGLE_GEMINI_API_KEY ||
   process.env.GOOGLE_AI_API_KEY;
 
-const SAFETY_SETTINGS = [
-  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-];
+let anthropicClient: Anthropic | null = null;
 
-let client: GoogleGenerativeAI | null = null;
-
-function getClient(): GoogleGenerativeAI {
-  if (!GEMINI_API_KEY) throw new Error("Gemini API key nao configurada");
-  if (!client) client = new GoogleGenerativeAI(GEMINI_API_KEY);
-  return client;
+function getAnthropicClient(): Anthropic {
+  if (!ANTHROPIC_API_KEY) throw new Error("Anthropic API key nao configurada (ANTHROPIC_API_KEY)");
+  if (!anthropicClient) anthropicClient = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+  return anthropicClient;
 }
 
 export function isClassifierConfigured(): boolean {
-  return !!GEMINI_API_KEY;
+  return !!(ANTHROPIC_API_KEY || GEMINI_API_KEY);
 }
 
 // ==========================================
@@ -363,78 +360,25 @@ export async function classifyPageChunk(
 ): Promise<ClassificationResult> {
   try {
     if (!isClassifierConfigured()) {
-      return { success: false, sections: [], error: "Gemini API nao configurada" };
+      return { success: false, sections: [], error: "Nenhuma API de IA configurada (ANTHROPIC_API_KEY ou GEMINI_API_KEY)" };
     }
 
-    const genAI = getClient();
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      safetySettings: SAFETY_SETTINGS,
-    });
-
-    const prompt = `${CLASSIFICATION_PROMPT}
-
-## TEXTO DO PROCESSO (paginas ${startPage} a ${endPage})
-
-${pageText}`;
-
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const responseText = response.text();
-
-    // Parse JSON response
-    let jsonStr = responseText;
-    if (responseText.includes("```json")) {
-      jsonStr = responseText.split("```json")[1].split("```")[0].trim();
-    } else if (responseText.includes("```")) {
-      jsonStr = responseText.split("```")[1].split("```")[0].trim();
-    }
-
-    const parsed = JSON.parse(jsonStr);
-    const sections: ClassifiedSection[] = (parsed.sections || []).map(
-      (s: Record<string, unknown>) => {
-        const tipo = SECTION_TIPOS.includes(s.tipo as SectionTipo)
-          ? (s.tipo as SectionTipo)
-          : mapLegacyTipo(s.tipo as string);
-
-        const meta = (s.metadata as Record<string, unknown>) || {};
-
-        return {
-          tipo,
-          titulo: String(s.titulo || "Secao nao identificada"),
-          paginaInicio: Number(s.paginaInicio) || startPage,
-          paginaFim: Number(s.paginaFim) || endPage,
-          resumo: String(s.resumo || ""),
-          confianca: Math.min(100, Math.max(0, Number(s.confianca) || 50)),
-          relevancia: TIPO_RELEVANCIA[tipo] || "baixo",
-          metadata: {
-            // Dados estruturados v2
-            pessoas: Array.isArray(meta.pessoas) ? (meta.pessoas as PessoaExtraida[]) : [],
-            cronologia: Array.isArray(meta.cronologia) ? (meta.cronologia as EventoCronologia[]) : [],
-            tesesDefensivas: Array.isArray(meta.tesesDefensivas) ? (meta.tesesDefensivas as TeseDefensiva[]) : [],
-            contradicoes: Array.isArray(meta.contradicoes) ? (meta.contradicoes as string[]) : [],
-            pontosCriticos: Array.isArray(meta.pontosCriticos) ? (meta.pontosCriticos as string[]) : [],
-
-            // Campos legados
-            partesmencionadas: Array.isArray(meta.partesmencionadas)
-              ? (meta.partesmencionadas as string[])
-              : extractPartesFromPessoas(meta.pessoas),
-            datasExtraidas: Array.isArray(meta.datasExtraidas)
-              ? (meta.datasExtraidas as string[])
-              : extractDatasFromCronologia(meta.cronologia),
-            artigosLei: Array.isArray(meta.artigosLei) ? (meta.artigosLei as string[]) : [],
-            juiz: (meta.juiz as string) || extractPessoaByPapel(meta.pessoas, "juiz"),
-            promotor: (meta.promotor as string) || extractPessoaByPapel(meta.pessoas, "promotor"),
-          },
-        };
+    // Try Claude Sonnet 4 first (primary)
+    if (ANTHROPIC_API_KEY) {
+      try {
+        return await classifyWithClaude(pageText, startPage, endPage);
+      } catch (claudeError) {
+        console.warn("[pdf-classifier] Claude failed, trying Gemini fallback:", claudeError);
+        // If Gemini key exists, fallback; otherwise re-throw
+        if (GEMINI_API_KEY) {
+          return await classifyWithGemini(pageText, startPage, endPage);
+        }
+        throw claudeError;
       }
-    );
+    }
 
-    return {
-      success: true,
-      sections,
-      tokensUsed: response.usageMetadata?.totalTokenCount,
-    };
+    // Gemini-only path (no Anthropic key)
+    return await classifyWithGemini(pageText, startPage, endPage);
   } catch (error) {
     console.error("[pdf-classifier] Error:", error);
     return {
@@ -446,12 +390,146 @@ ${pageText}`;
 }
 
 // ==========================================
+// CLASSIFY WITH CLAUDE SONNET 4 (PRIMARY)
+// ==========================================
+
+async function classifyWithClaude(
+  pageText: string,
+  startPage: number,
+  endPage: number
+): Promise<ClassificationResult> {
+  const client = getAnthropicClient();
+
+  const userMessage = `## TEXTO DO PROCESSO (paginas ${startPage} a ${endPage})
+
+${pageText}`;
+
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 8192,
+    system: CLASSIFICATION_PROMPT,
+    messages: [{ role: "user", content: userMessage }],
+  });
+
+  const responseText = message.content[0].type === "text" ? message.content[0].text : "";
+
+  const sections = parseAndMapSections(responseText, startPage, endPage);
+
+  return {
+    success: true,
+    sections,
+    tokensUsed: message.usage.input_tokens + message.usage.output_tokens,
+  };
+}
+
+// ==========================================
+// CLASSIFY WITH GEMINI FLASH (FALLBACK)
+// ==========================================
+
+async function classifyWithGemini(
+  pageText: string,
+  startPage: number,
+  endPage: number
+): Promise<ClassificationResult> {
+  // Lazy-import to avoid loading @google/generative-ai when using Claude
+  const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = await import("@google/generative-ai");
+
+  if (!GEMINI_API_KEY) throw new Error("Gemini API key nao configurada");
+
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    safetySettings: [
+      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+    ],
+  });
+
+  const prompt = `${CLASSIFICATION_PROMPT}
+
+## TEXTO DO PROCESSO (paginas ${startPage} a ${endPage})
+
+${pageText}`;
+
+  const result = await model.generateContent(prompt);
+  const response = result.response;
+  const responseText = response.text();
+
+  const sections = parseAndMapSections(responseText, startPage, endPage);
+
+  return {
+    success: true,
+    sections,
+    tokensUsed: response.usageMetadata?.totalTokenCount,
+  };
+}
+
+// ==========================================
+// SHARED JSON PARSING & SECTION MAPPING
+// ==========================================
+
+function parseAndMapSections(
+  responseText: string,
+  startPage: number,
+  endPage: number
+): ClassifiedSection[] {
+  let jsonStr = responseText;
+  if (responseText.includes("```json")) {
+    jsonStr = responseText.split("```json")[1].split("```")[0].trim();
+  } else if (responseText.includes("```")) {
+    jsonStr = responseText.split("```")[1].split("```")[0].trim();
+  }
+
+  const parsed = JSON.parse(jsonStr);
+  return (parsed.sections || []).map(
+    (s: Record<string, unknown>) => {
+      const tipo = SECTION_TIPOS.includes(s.tipo as SectionTipo)
+        ? (s.tipo as SectionTipo)
+        : mapLegacyTipo(s.tipo as string);
+
+      const meta = (s.metadata as Record<string, unknown>) || {};
+
+      return {
+        tipo,
+        titulo: String(s.titulo || "Secao nao identificada"),
+        paginaInicio: Number(s.paginaInicio) || startPage,
+        paginaFim: Number(s.paginaFim) || endPage,
+        resumo: String(s.resumo || ""),
+        confianca: Math.min(100, Math.max(0, Number(s.confianca) || 50)),
+        relevancia: TIPO_RELEVANCIA[tipo] || "baixo",
+        metadata: {
+          // Dados estruturados v2
+          pessoas: Array.isArray(meta.pessoas) ? (meta.pessoas as PessoaExtraida[]) : [],
+          cronologia: Array.isArray(meta.cronologia) ? (meta.cronologia as EventoCronologia[]) : [],
+          tesesDefensivas: Array.isArray(meta.tesesDefensivas) ? (meta.tesesDefensivas as TeseDefensiva[]) : [],
+          contradicoes: Array.isArray(meta.contradicoes) ? (meta.contradicoes as string[]) : [],
+          pontosCriticos: Array.isArray(meta.pontosCriticos) ? (meta.pontosCriticos as string[]) : [],
+
+          // Campos legados
+          partesmencionadas: Array.isArray(meta.partesmencionadas)
+            ? (meta.partesmencionadas as string[])
+            : extractPartesFromPessoas(meta.pessoas),
+          datasExtraidas: Array.isArray(meta.datasExtraidas)
+            ? (meta.datasExtraidas as string[])
+            : extractDatasFromCronologia(meta.cronologia),
+          artigosLei: Array.isArray(meta.artigosLei) ? (meta.artigosLei as string[]) : [],
+          juiz: (meta.juiz as string) || extractPessoaByPapel(meta.pessoas, "juiz"),
+          promotor: (meta.promotor as string) || extractPessoaByPapel(meta.pessoas, "promotor"),
+        },
+      };
+    }
+  );
+}
+
+// ==========================================
 // HELPERS
 // ==========================================
 
 /**
  * Mapeia tipos legados (da taxonomia v1) para a v2.
- * Usado quando o Gemini retorna um tipo antigo.
+ * Usado quando o modelo retorna um tipo antigo ou nao reconhecido.
  */
 function mapLegacyTipo(tipo: string): SectionTipo {
   const legacyMap: Record<string, SectionTipo> = {
