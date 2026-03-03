@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { use, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -16,67 +19,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Scale, 
+import {
+  Scale,
   ArrowLeft,
   Save,
   Gavel,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
-// Mock de dados do processo
-const mockProcesso = {
-  id: 1,
-  numeroAutos: "8012906-74.2025.8.05.0039",
-  numeroAntigo: "",
-  assistidoId: 1,
-  assistido: {
-    id: 1,
-    nome: "Diego Bonfim Almeida",
-  },
-  comarca: "Candeias",
-  vara: "1ª Vara Criminal",
-  area: "JURI",
-  classeProcessual: "Ação Penal",
-  assunto: "Homicídio Qualificado (Art. 121, §2º, CP)",
-  valorCausa: null,
-  parteContraria: "Ministério Público do Estado da Bahia",
-  advogadoContrario: "",
-  fase: "conhecimento",
-  situacao: "ativo",
-  isJuri: true,
-  dataSessaoJuri: "2025-03-15",
-  resultadoJuri: "",
-  observacoes: "Réu preso preventivamente. Aguardando designação de sessão do Tribunal do Júri.",
-  linkDrive: "https://drive.google.com/folder/exemplo",
-  driveFolderId: "abc123",
-  defensorId: 1,
-};
-
-// Mock de assistidos para o select
-const mockAssistidos = [
-  { id: 1, nome: "Diego Bonfim Almeida" },
-  { id: 2, nome: "Maria Silva Santos" },
-  { id: 3, nome: "José Carlos Oliveira" },
-  { id: 4, nome: "Ana Paula Costa" },
-  { id: 5, nome: "Roberto Ferreira Lima" },
-];
-
 const AREA_OPTIONS = [
-  { value: "JURI", label: "Tribunal do Júri" },
-  { value: "EXECUCAO_PENAL", label: "Execução Penal" },
-  { value: "VIOLENCIA_DOMESTICA", label: "Violência Doméstica" },
-  { value: "SUBSTITUICAO", label: "Substituição" },
+  { value: "JURI", label: "Tribunal do Juri" },
+  { value: "EXECUCAO_PENAL", label: "Execucao Penal" },
+  { value: "VIOLENCIA_DOMESTICA", label: "Violencia Domestica" },
+  { value: "SUBSTITUICAO", label: "Substituicao" },
   { value: "CURADORIA", label: "Curadoria" },
-  { value: "FAMILIA", label: "Família" },
-  { value: "CIVEL", label: "Cível" },
-  { value: "FAZENDA_PUBLICA", label: "Fazenda Pública" },
+  { value: "FAMILIA", label: "Familia" },
+  { value: "CIVEL", label: "Civel" },
+  { value: "FAZENDA_PUBLICA", label: "Fazenda Publica" },
 ];
 
 const FASE_OPTIONS = [
   { value: "conhecimento", label: "Conhecimento" },
   { value: "recursal", label: "Recursal" },
-  { value: "execucao", label: "Execução" },
+  { value: "execucao", label: "Execucao" },
   { value: "arquivado", label: "Arquivado" },
 ];
 
@@ -90,7 +56,6 @@ const SITUACAO_OPTIONS = [
 interface FormData {
   numeroAutos: string;
   numeroAntigo: string;
-  assistidoId: number;
   comarca: string;
   vara: string;
   area: string;
@@ -108,18 +73,62 @@ interface FormData {
   linkDrive: string;
 }
 
-export default function EditarProcessoPage() {
-  const params = useParams();
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-8 w-40" />
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-12 w-12 rounded-xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+      </div>
+      {[1, 2, 3, 4].map((i) => (
+        <Card key={i}>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-72" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+export default function EditarProcessoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  const processoId = params.id;
-  
+  const utils = trpc.useUtils();
+
+  const { data: processo, isLoading, error } = trpc.processos.getById.useQuery(
+    { id: Number(id) },
+    { staleTime: 30_000 },
+  );
+
+  const updateMutation = trpc.processos.update.useMutation({
+    onSuccess: () => {
+      toast.success("Processo atualizado com sucesso");
+      utils.processos.getById.invalidate({ id: Number(id) });
+      utils.processos.list.invalidate();
+      router.push(`/admin/processos/${id}`);
+    },
+    onError: (err) => {
+      toast.error(`Erro ao salvar: ${err.message}`);
+    },
+  });
+
   const [formData, setFormData] = useState<FormData>({
     numeroAutos: "",
     numeroAntigo: "",
-    assistidoId: 0,
     comarca: "",
     vara: "",
     area: "JURI",
@@ -137,60 +146,80 @@ export default function EditarProcessoPage() {
     linkDrive: "",
   });
 
+  // Pre-fill form when data loads
   useEffect(() => {
-    // Em produção, buscar dados via TRPC
-    setIsLoading(true);
-    // Simular carregamento
-    setTimeout(() => {
-      setFormData({
-        numeroAutos: mockProcesso.numeroAutos,
-        numeroAntigo: mockProcesso.numeroAntigo || "",
-        assistidoId: mockProcesso.assistidoId,
-        comarca: mockProcesso.comarca,
-        vara: mockProcesso.vara,
-        area: mockProcesso.area,
-        classeProcessual: mockProcesso.classeProcessual,
-        assunto: mockProcesso.assunto,
-        valorCausa: mockProcesso.valorCausa ? String(mockProcesso.valorCausa / 100) : "",
-        parteContraria: mockProcesso.parteContraria,
-        advogadoContrario: mockProcesso.advogadoContrario || "",
-        fase: mockProcesso.fase,
-        situacao: mockProcesso.situacao,
-        isJuri: mockProcesso.isJuri,
-        dataSessaoJuri: mockProcesso.dataSessaoJuri || "",
-        resultadoJuri: mockProcesso.resultadoJuri || "",
-        observacoes: mockProcesso.observacoes,
-        linkDrive: mockProcesso.linkDrive || "",
-      });
-      setIsLoading(false);
-    }, 300);
-  }, [processoId]);
+    if (!processo) return;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    setFormData({
+      numeroAutos: processo.numeroAutos || "",
+      numeroAntigo: processo.numeroAntigo || "",
+      comarca: processo.comarca || "",
+      vara: processo.vara || "",
+      area: processo.area || "JURI",
+      classeProcessual: processo.classeProcessual || "",
+      assunto: processo.assunto || "",
+      valorCausa: processo.valorCausa ? String(processo.valorCausa / 100) : "",
+      parteContraria: processo.parteContraria || "",
+      advogadoContrario: processo.advogadoContrario || "",
+      fase: processo.fase || "conhecimento",
+      situacao: processo.situacao || "ativo",
+      isJuri: processo.isJuri ?? false,
+      dataSessaoJuri: processo.dataSessaoJuri
+        ? new Date(processo.dataSessaoJuri).toISOString().split("T")[0]
+        : "",
+      resultadoJuri: processo.resultadoJuri || "",
+      observacoes: processo.observacoes || "",
+      linkDrive: processo.linkDrive || "",
+    });
+  }, [processo]);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
-    
-    try {
-      // Em produção, chamar TRPC para atualizar
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      router.push(`/admin/processos/${processoId}`);
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-    } finally {
-      setIsSaving(false);
-    }
+
+    updateMutation.mutate({
+      id: Number(id),
+      numeroAutos: formData.numeroAutos,
+      numeroAntigo: formData.numeroAntigo || null,
+      comarca: formData.comarca || null,
+      vara: formData.vara || null,
+      area: formData.area as "JURI" | "EXECUCAO_PENAL" | "VIOLENCIA_DOMESTICA" | "SUBSTITUICAO" | "CURADORIA" | "FAMILIA" | "CIVEL" | "FAZENDA_PUBLICA",
+      classeProcessual: formData.classeProcessual || null,
+      assunto: formData.assunto || null,
+      valorCausa: formData.valorCausa ? Math.round(parseFloat(formData.valorCausa) * 100) : null,
+      parteContraria: formData.parteContraria || null,
+      advogadoContrario: formData.advogadoContrario || null,
+      fase: formData.fase || null,
+      situacao: formData.situacao || null,
+      isJuri: formData.isJuri,
+      dataSessaoJuri: formData.dataSessaoJuri || null,
+      resultadoJuri: formData.resultadoJuri || null,
+      observacoes: formData.observacoes || null,
+      linkDrive: formData.linkDrive || null,
+    });
   };
 
   const handleChange = (field: keyof FormData, value: string | boolean | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   if (isLoading) {
+    return <LoadingSkeleton />;
+  }
+
+  if (error || !processo) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <AlertTriangle className="h-12 w-12 text-muted-foreground" />
+        <h2 className="text-lg font-semibold">Processo nao encontrado</h2>
+        <p className="text-muted-foreground text-sm">
+          {error?.message || "O processo solicitado nao existe ou voce nao tem permissao para acessa-lo."}
+        </p>
+        <Link href="/admin/processos">
+          <Button variant="outline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar para Processos
+          </Button>
+        </Link>
       </div>
     );
   }
@@ -200,14 +229,14 @@ export default function EditarProcessoPage() {
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <Link href={`/admin/processos/${processoId}`}>
+          <Link href={`/admin/processos/${id}`}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <span className="text-muted-foreground text-sm">Voltar para Detalhes</span>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
@@ -226,54 +255,35 @@ export default function EditarProcessoPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Dados de Identificação */}
+        {/* Dados de Identificacao */}
         <Card>
           <CardHeader>
-            <CardTitle>Identificação do Processo</CardTitle>
-            <CardDescription>Número dos autos e informações de localização</CardDescription>
+            <CardTitle>Identificacao do Processo</CardTitle>
+            <CardDescription>Numero dos autos e informacoes de localizacao</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="numeroAutos">Número dos Autos *</Label>
+                <Label htmlFor="numeroAutos">Numero dos Autos</Label>
                 <Input
                   id="numeroAutos"
                   value={formData.numeroAutos}
-                  onChange={(e) => handleChange("numeroAutos", e.target.value)}
+                  readOnly
+                  disabled
                   placeholder="0000000-00.0000.8.05.0000"
-                  required
-                  className="font-mono"
+                  className="font-mono bg-zinc-50 dark:bg-zinc-800/50 cursor-not-allowed"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="numeroAntigo">Número Antigo</Label>
+                <Label htmlFor="numeroAntigo">Numero Antigo</Label>
                 <Input
                   id="numeroAntigo"
                   value={formData.numeroAntigo}
                   onChange={(e) => handleChange("numeroAntigo", e.target.value)}
-                  placeholder="Número antigo (se houver)"
+                  placeholder="Numero antigo (se houver)"
                   className="font-mono"
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="assistidoId">Assistido *</Label>
-              <Select
-                value={String(formData.assistidoId)}
-                onValueChange={(value) => handleChange("assistidoId", Number(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o assistido" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockAssistidos.map((assistido) => (
-                    <SelectItem key={assistido.id} value={String(assistido.id)}>
-                      {assistido.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -292,7 +302,7 @@ export default function EditarProcessoPage() {
                   id="vara"
                   value={formData.vara}
                   onChange={(e) => handleChange("vara", e.target.value)}
-                  placeholder="Ex: 1ª Vara Criminal"
+                  placeholder="Ex: 1a Vara Criminal"
                 />
               </div>
             </div>
@@ -303,18 +313,18 @@ export default function EditarProcessoPage() {
         <Card>
           <CardHeader>
             <CardTitle>Dados do Processo</CardTitle>
-            <CardDescription>Classificação e detalhes processuais</CardDescription>
+            <CardDescription>Classificacao e detalhes processuais</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="area">Área *</Label>
+                <Label htmlFor="area">Area *</Label>
                 <Select
                   value={formData.area}
                   onValueChange={(value) => handleChange("area", value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a área" />
+                    <SelectValue placeholder="Selecione a area" />
                   </SelectTrigger>
                   <SelectContent>
                     {AREA_OPTIONS.map((option) => (
@@ -331,7 +341,7 @@ export default function EditarProcessoPage() {
                   id="classeProcessual"
                   value={formData.classeProcessual}
                   onChange={(e) => handleChange("classeProcessual", e.target.value)}
-                  placeholder="Ex: Ação Penal"
+                  placeholder="Ex: Acao Penal"
                 />
               </div>
             </div>
@@ -342,7 +352,7 @@ export default function EditarProcessoPage() {
                 id="assunto"
                 value={formData.assunto}
                 onChange={(e) => handleChange("assunto", e.target.value)}
-                placeholder="Ex: Homicídio Qualificado (Art. 121, §2º, CP)"
+                placeholder="Ex: Homicidio Qualificado (Art. 121, par.2, CP)"
               />
             </div>
 
@@ -366,13 +376,13 @@ export default function EditarProcessoPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="situacao">Situação</Label>
+                <Label htmlFor="situacao">Situacao</Label>
                 <Select
                   value={formData.situacao}
                   onValueChange={(value) => handleChange("situacao", value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a situação" />
+                    <SelectValue placeholder="Selecione a situacao" />
                   </SelectTrigger>
                   <SelectContent>
                     {SITUACAO_OPTIONS.map((option) => (
@@ -387,16 +397,16 @@ export default function EditarProcessoPage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="parteContraria">Parte Contrária</Label>
+                <Label htmlFor="parteContraria">Parte Contraria</Label>
                 <Input
                   id="parteContraria"
                   value={formData.parteContraria}
                   onChange={(e) => handleChange("parteContraria", e.target.value)}
-                  placeholder="Ex: Ministério Público"
+                  placeholder="Ex: Ministerio Publico"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="advogadoContrario">Advogado Contrário</Label>
+                <Label htmlFor="advogadoContrario">Advogado Contrario</Label>
                 <Input
                   id="advogadoContrario"
                   value={formData.advogadoContrario}
@@ -421,19 +431,19 @@ export default function EditarProcessoPage() {
           </CardContent>
         </Card>
 
-        {/* Tribunal do Júri */}
+        {/* Tribunal do Juri */}
         <Card className={formData.isJuri ? "border-purple-200 dark:border-purple-800/50" : ""}>
           <CardHeader className={formData.isJuri ? "bg-purple-50/50 dark:bg-purple-900/10" : ""}>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className={`flex items-center gap-2 ${formData.isJuri ? "text-purple-700 dark:text-purple-400" : ""}`}>
                   <Gavel className="h-5 w-5" />
-                  Tribunal do Júri
+                  Tribunal do Juri
                 </CardTitle>
-                <CardDescription>Configure se este é um processo do Júri</CardDescription>
+                <CardDescription>Configure se este e um processo do Juri</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Label htmlFor="isJuri">Processo do Júri</Label>
+                <Label htmlFor="isJuri">Processo do Juri</Label>
                 <Switch
                   id="isJuri"
                   checked={formData.isJuri}
@@ -446,7 +456,7 @@ export default function EditarProcessoPage() {
             <CardContent className="pt-4 space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="dataSessaoJuri">Data da Sessão</Label>
+                  <Label htmlFor="dataSessaoJuri">Data da Sessao</Label>
                   <Input
                     id="dataSessaoJuri"
                     type="date"
@@ -468,11 +478,11 @@ export default function EditarProcessoPage() {
           )}
         </Card>
 
-        {/* Integrações e Observações */}
+        {/* Integracoes e Observacoes */}
         <Card>
           <CardHeader>
-            <CardTitle>Integrações e Observações</CardTitle>
-            <CardDescription>Links externos e anotações</CardDescription>
+            <CardTitle>Integracoes e Observacoes</CardTitle>
+            <CardDescription>Links externos e anotacoes</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -487,27 +497,31 @@ export default function EditarProcessoPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="observacoes">Observações</Label>
+              <Label htmlFor="observacoes">Observacoes</Label>
               <Textarea
                 id="observacoes"
                 value={formData.observacoes}
                 onChange={(e) => handleChange("observacoes", e.target.value)}
-                placeholder="Anotações e observações sobre o processo..."
+                placeholder="Anotacoes e observacoes sobre o processo..."
                 rows={4}
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Botões de Ação */}
+        {/* Botoes de Acao */}
         <div className="flex items-center justify-end gap-4">
-          <Link href={`/admin/processos/${processoId}`}>
+          <Link href={`/admin/processos/${id}`}>
             <Button type="button" variant="outline">
               Cancelar
             </Button>
           </Link>
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? (
+          <Button
+            type="submit"
+            disabled={updateMutation.isPending}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            {updateMutation.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Salvando...
@@ -515,7 +529,7 @@ export default function EditarProcessoPage() {
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Salvar Alterações
+                Salvar Alteracoes
               </>
             )}
           </Button>

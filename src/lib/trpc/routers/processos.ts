@@ -472,19 +472,34 @@ export const processosRouter = router({
       z.object({
         id: z.number(),
         numeroAutos: z.string().min(1).optional(),
-        comarca: z.string().optional(),
-        vara: z.string().optional(),
+        numeroAntigo: z.string().nullable().optional(),
+        comarca: z.string().nullable().optional(),
+        vara: z.string().nullable().optional(),
         area: z.enum([
-          "JURI", "EXECUCAO_PENAL", "VIOLENCIA_DOMESTICA", 
+          "JURI", "EXECUCAO_PENAL", "VIOLENCIA_DOMESTICA",
           "SUBSTITUICAO", "CURADORIA", "FAMILIA", "CIVEL", "FAZENDA_PUBLICA"
         ]).optional(),
-        classeProcessual: z.string().optional(),
-        assunto: z.string().optional(),
+        classeProcessual: z.string().nullable().optional(),
+        assunto: z.string().nullable().optional(),
+        valorCausa: z.number().nullable().optional(),
+        parteContraria: z.string().nullable().optional(),
+        advogadoContrario: z.string().nullable().optional(),
+        fase: z.string().nullable().optional(),
+        situacao: z.string().nullable().optional(),
         isJuri: z.boolean().optional(),
+        dataSessaoJuri: z.string().nullable().optional(), // ISO date string
+        resultadoJuri: z.string().nullable().optional(),
+        observacoes: z.string().nullable().optional(),
+        linkDrive: z.string().nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...data } = input;
+      const { id, dataSessaoJuri, ...rest } = input;
+      const data: Record<string, unknown> = { ...rest };
+      // Convert ISO date string to Date object for timestamp column
+      if (dataSessaoJuri !== undefined) {
+        data.dataSessaoJuri = dataSessaoJuri ? new Date(dataSessaoJuri) : null;
+      }
       const { isAdmin, workspaceId } = getWorkspaceScope(ctx.user);
       
       const [atualizado] = await db
