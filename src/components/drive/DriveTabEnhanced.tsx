@@ -19,10 +19,12 @@ import {
   Brain,
   FileAudio,
   Calendar,
+  Scale,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SubpastaExplorer } from "@/components/hub/SubpastaExplorer";
 import { TimelineDocumental } from "@/components/hub/TimelineDocumental";
+import { ProcessoTimeline } from "@/components/processos/ProcessoTimeline";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +33,7 @@ import { TranscriptViewer, type AnalysisData } from "@/components/shared/transcr
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type ViewMode = "tree" | "timeline" | "status";
+type ViewMode = "tree" | "timeline" | "status" | "processo";
 
 interface DriveFileData {
   id: number;
@@ -440,6 +442,20 @@ export function DriveTabEnhanced({ files, assistidoId, processoId }: DriveTabEnh
               </button>
             );
           })}
+          {processoId && (
+            <button
+              onClick={() => setView("processo")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                view === "processo"
+                  ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400"
+                  : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800",
+              )}
+            >
+              <Scale className="h-3 w-3" />
+              Processo
+            </button>
+          )}
         </div>
 
         {/* Search bar */}
@@ -482,6 +498,9 @@ export function DriveTabEnhanced({ files, assistidoId, processoId }: DriveTabEnh
           assistidoId={assistidoId}
           processoId={processoId}
         />
+      )}
+      {view === "processo" && processoId && (
+        <ProcessoTimeline processoId={processoId} compact />
       )}
 
       {/* File Detail Sheet */}
