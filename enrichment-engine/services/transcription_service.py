@@ -112,9 +112,11 @@ class TranscriptionService:
         """
         Transcreve um arquivo de áudio/vídeo.
 
-        Prioridade:
-        1. Whisper + pyannote (se OPENAI_API_KEY configurada e arquivo <= 25MB)
-        2. Gemini 2.5 Flash (fallback, suporta até 2GB, diarização nativa)
+        Prioridade (Whisper-First):
+        1. Extrair áudio MP3 mono 32kbps (SEMPRE, exceto se já é áudio pequeno)
+        2. Whisper direto (se ≤ max_file_size_mb após extração)
+        3. Whisper em chunks paralelos (se > max_file_size_mb) — implementado na Task 6
+        4. Gemini 2.5 Flash (APENAS se Whisper falhar completamente ou indisponível)
         """
         start = time.time()
         lang = language or self.language
@@ -125,69 +127,94 @@ class TranscriptionService:
                 "Configure OPENAI_API_KEY (Whisper) ou GEMINI_API_KEY (Gemini)."
             )
 
-        # 1. Obter arquivo local
+        # 1. Download (streaming)
         tmp_path = await self._get_audio_file(file_url, file_bytes, file_name, auth_header)
 
+        audio_path: Path | None = None
         try:
-            # 2. Decidir qual backend usar
-            file_size_mb = tmp_path.stat().st_size / (1024 * 1024)
-            use_gemini = False
-            use_chunked_whisper = False
-            audio_path = tmp_path
-
-            if not self.whisper_available:
-                logger.info("Whisper não disponível, usando Gemini")
-                use_gemini = True
-            elif file_size_mb > self.max_file_size_mb:
-                # Extrair áudio comprimido (MP3 mono 32kbps) — remove vídeo e reduz tamanho
-                audio_path = self._extract_compressed_audio(tmp_path)
-                audio_size_mb = audio_path.stat().st_size / (1024 * 1024)
-                if audio_size_mb > self.max_file_size_mb:
-                    # Ainda acima do limite — usar chunking com Whisper
-                    logger.info(
-                        "Arquivo %.1fMB (áudio %.1fMB) excede Whisper %dMB — usando chunked Whisper",
-                        file_size_mb, audio_size_mb, self.max_file_size_mb,
-                    )
-                    use_chunked_whisper = True
-                else:
-                    use_chunked_whisper = False
-                    # audio_path agora cabe no Whisper, será usado no path normal
-                    if audio_path != tmp_path:
-                        tmp_path.unlink(missing_ok=True)
-                        tmp_path = audio_path
-
-            if use_gemini:
-                result = await self._transcribe_with_gemini(
-                    tmp_path, file_name, lang, diarize, expected_speakers
+            # 2. Extrair áudio comprimido SEMPRE (exceto se já é áudio pequeno)
+            if self._is_already_compressed_audio(tmp_path):
+                audio_path = tmp_path
+                logger.info(
+                    "Áudio já comprimido (%.1fMB) — pulando extração",
+                    tmp_path.stat().st_size / (1024 * 1024),
                 )
-                backend_name = "gemini"
-            elif use_chunked_whisper:
-                result = await self._transcribe_chunked_whisper(
+            else:
+                audio_path = self._extract_compressed_audio(tmp_path)
+                if audio_path != tmp_path:
+                    tmp_path.unlink(missing_ok=True)
+
+            audio_size_mb = audio_path.stat().st_size / (1024 * 1024)
+
+            # 3. Tentar Whisper (direto ou chunks paralelos)
+            backend_used: str | None = None
+            last_whisper_error: Exception | None = None
+
+            if self.whisper_available:
+                try:
+                    if audio_size_mb <= self.max_file_size_mb:
+                        logger.info(
+                            "Whisper direto | file=%s | size=%.1fMB | lang=%s",
+                            file_name, audio_size_mb, lang,
+                        )
+                        result = await self._transcribe_with_whisper_retry(
+                            audio_path, file_name, lang, diarize, expected_speakers
+                        )
+                        backend_used = "whisper"
+                    else:
+                        logger.info(
+                            "Whisper chunked paralelo | file=%s | size=%.1fMB | lang=%s",
+                            file_name, audio_size_mb, lang,
+                        )
+                        # _transcribe_chunked_parallel implementado na Task 6
+                        # Por ora, delega ao método existente _transcribe_chunked_whisper
+                        result = await self._transcribe_chunked_whisper(
+                            audio_path, file_name, lang, diarize, expected_speakers
+                        )
+                        backend_used = "whisper_chunked"
+                except Exception as e:
+                    last_whisper_error = e
+                    logger.warning(
+                        "Whisper falhou após retries — ativando fallback Gemini: %s", e
+                    )
+
+            # 4. Gemini APENAS como último recurso
+            if backend_used is None:
+                if not self.gemini_available:
+                    raise RuntimeError(
+                        f"Whisper falhou ({last_whisper_error}) e GEMINI_API_KEY não configurado."
+                    )
+                logger.info(
+                    "FALLBACK Gemini | file=%s | whisper_error=%s",
+                    file_name, last_whisper_error,
+                )
+                result = await self._transcribe_with_gemini(
                     audio_path, file_name, lang, diarize, expected_speakers
                 )
-                backend_name = "whisper_chunked"
-                # Cleanup audio_path convertido
-                if audio_path != tmp_path:
-                    audio_path.unlink(missing_ok=True)
-            else:
-                result = await self._transcribe_with_whisper(
-                    tmp_path, file_name, lang, diarize, expected_speakers
-                )
-                backend_name = "whisper"
+                result["backend_fallback"] = True
+                backend_used = "gemini_fallback"
+
+            # 5. Validação de qualidade
+            duration_s = result.get("duration") or (audio_size_mb * 60)
+            result = self._validate_output_quality(result, duration_s)
+            result["backend"] = backend_used
 
             elapsed = time.time() - start
             logger.info(
-                "Transcrição concluída | backend=%s | duration=%.1fs | segments=%d | speakers=%d",
-                backend_name,
+                "Transcrição concluída | backend=%s | elapsed=%.1fs | segments=%d | "
+                "speakers=%d | integrity=%s",
+                backend_used,
                 elapsed,
-                len(result["segments"]),
-                len(result["speakers"]),
+                len(result.get("segments", [])),
+                len(result.get("speakers", [])),
+                result.get("integrity", "complete"),
             )
 
             return result
 
         finally:
-            tmp_path.unlink(missing_ok=True)
+            if audio_path is not None:
+                audio_path.unlink(missing_ok=True)
 
     # ==========================================
     # WHISPER PATH
@@ -236,6 +263,41 @@ class TranscriptionService:
         finally:
             if audio_path != tmp_path:
                 audio_path.unlink(missing_ok=True)
+
+    async def _transcribe_with_whisper_retry(
+        self,
+        audio_path: Path,
+        file_name: str,
+        lang: str,
+        diarize: bool,
+        expected_speakers: int | None,
+    ) -> dict[str, Any]:
+        """Whisper direto com retry — para arquivos ≤ max_file_size_mb."""
+        audio_compat = self._ensure_compatible_format(audio_path)
+        try:
+            file_size_mb = audio_compat.stat().st_size / (1024 * 1024)
+            if file_size_mb > self.max_file_size_mb:
+                raise ValueError(
+                    f"Arquivo ainda grande após extração: {file_size_mb:.1f}MB"
+                )
+
+            logger.info(
+                "Transcrevendo com Whisper | file=%s | size=%.1fMB | lang=%s",
+                file_name, file_size_mb, lang,
+            )
+            whisper_result = await self._whisper_with_retry(audio_compat, lang)
+
+            speakers_result = None
+            if diarize and self.diarization_enabled and self.hf_token:
+                try:
+                    speakers_result = self._diarize_speakers(audio_compat, expected_speakers)
+                except Exception as e:
+                    logger.warning("Diarização falhou (continuando sem speakers): %s", e)
+
+            return self._merge_transcription_and_speakers(whisper_result, speakers_result)
+        finally:
+            if audio_compat != audio_path:
+                audio_compat.unlink(missing_ok=True)
 
     # ==========================================
     # CHUNKED WHISPER PATH (large files)
