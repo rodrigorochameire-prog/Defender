@@ -16,6 +16,7 @@ import { ptBR } from "date-fns/locale";
 import { IntelligenceTab } from "@/components/intelligence/IntelligenceTab";
 import { DriveStatusBar } from "@/components/drive/DriveStatusBar";
 import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
+import { MarkdownViewerModal } from "@/components/drive/MarkdownViewerModal";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
@@ -42,6 +43,14 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   const [transcriptions, setTranscriptions] = useState<Map<string, TranscriptionData>>(new Map());
   const [transcribing, setTranscribing] = useState<Set<string>>(new Set());
   const [transcriptViewerFile, setTranscriptViewerFile] = useState<string | null>(null);
+
+  // Markdown viewer state (for Plaud transcriptions)
+  const [markdownViewerFile, setMarkdownViewerFile] = useState<{
+    name: string;
+    driveFileId: string | null;
+    enrichmentData: unknown;
+    webViewLink: string | null;
+  } | null>(null);
 
   // Solar / SIGAD state
   const [sigadResult, setSigadResult] = useState<{
@@ -134,12 +143,14 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { enabled: !!id }
   );
 
-  // Filter media files (audio/* or video/*)
+  // Filter media files (audio/*, video/*, or Plaud transcriptions)
   const mediaFiles = useMemo(
     () =>
       data?.driveFiles?.filter(
         (f) =>
-          f.mimeType?.startsWith("audio/") || f.mimeType?.startsWith("video/")
+          f.mimeType?.startsWith("audio/") ||
+          f.mimeType?.startsWith("video/") ||
+          f.documentType === "transcricao_plaud"
       ) ?? [],
     [data?.driveFiles]
   );
@@ -674,6 +685,39 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               </div>
             ) : (
               mediaFiles.map((f) => {
+                // Plaud transcription card
+                if (f.documentType === "transcricao_plaud") {
+                  return (
+                    <div
+                      key={f.id}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{f.name}</p>
+                        {(f.enrichmentData as any)?.summary && (
+                          <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5">
+                            {((f.enrichmentData as any).summary as string).slice(0, 100)}...
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="secondary" className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 text-[10px]">plaud</Badge>
+                        {f.enrichmentStatus === "completed" && (
+                          <Badge variant="secondary" className="text-[10px]">transcrito</Badge>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => setMarkdownViewerFile(f)} className="gap-1.5">
+                          <FileText className="w-3.5 h-3.5" />
+                          Ver transcricao
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Audio/video card
                 const isAudio = f.mimeType?.startsWith("audio/");
                 // Check both local state AND enrichmentData from DB
                 // transcript may be plain text or JSON string — extract plain text
@@ -926,6 +970,18 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           duration={currentViewerData.duration}
           analysis={currentViewerData.analysis}
           assistidoNome={data.nome}
+        />
+      )}
+
+      {/* Markdown Viewer for Plaud transcriptions */}
+      {markdownViewerFile && (
+        <MarkdownViewerModal
+          isOpen={!!markdownViewerFile}
+          onClose={() => setMarkdownViewerFile(null)}
+          fileName={markdownViewerFile.name}
+          fileId={markdownViewerFile.driveFileId || undefined}
+          enrichmentData={markdownViewerFile.enrichmentData as any}
+          webViewLink={markdownViewerFile.webViewLink || undefined}
         />
       )}
     </div>
