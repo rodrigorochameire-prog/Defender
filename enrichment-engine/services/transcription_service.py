@@ -12,6 +12,7 @@ Fluxo:
 6. Combina transcrição + speakers em output formatado
 """
 
+import asyncio
 import json
 import logging
 import re
@@ -763,6 +764,43 @@ Regras para segments:
             "language": response.language if hasattr(response, "language") else language,
             "duration": response.duration if hasattr(response, "duration") else 0,
         }
+
+    async def _whisper_with_retry(self, audio_path: Path, language: str) -> dict:
+        """
+        Transcreve com Whisper, com retry em erros transientes.
+        - RateLimitError / 5xx → retry com backoff: 0s, 5s, 15s
+        - 4xx (input inválido) → falha imediata, sem retry
+        """
+        import openai
+
+        delays = [0, 5, 15]
+        last_exc: Exception | None = None
+
+        for attempt, delay in enumerate(delays):
+            if delay:
+                await asyncio.sleep(delay)
+            try:
+                return self._transcribe_whisper(audio_path, language)
+            except openai.RateLimitError as e:
+                last_exc = e
+                logger.warning(
+                    "Whisper RateLimitError (tentativa %d/3) — aguardando %ds",
+                    attempt + 1,
+                    delays[attempt + 1] if attempt + 1 < len(delays) else 0,
+                )
+            except openai.APIStatusError as e:
+                if e.status_code >= 500:
+                    last_exc = e
+                    logger.warning(
+                        "Whisper servidor %d (tentativa %d/3): %s",
+                        e.status_code, attempt + 1, str(e)[:100],
+                    )
+                else:
+                    raise  # 4xx = bug de input, não vale retry
+            except Exception:
+                raise  # erros inesperados propagam direto
+
+        raise last_exc  # type: ignore[misc]
 
     # ==========================================
     # INTERNAL: pyannote diarization

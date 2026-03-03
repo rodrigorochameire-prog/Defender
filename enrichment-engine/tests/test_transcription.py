@@ -152,3 +152,71 @@ async def test_download_rejects_oversized_file(service):
                 file_bytes=None,
                 file_name="huge.mp4",
             )
+
+
+# ── Task 4: _whisper_with_retry ───────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_whisper_retry_on_rate_limit(service, tmp_path):
+    """Deve tentar 3x em RateLimitError e falhar na 3ª."""
+    import openai
+    audio = tmp_path / "audio.mp3"
+    audio.write_bytes(b"fake")
+
+    call_count = 0
+    def fake_transcribe(path, lang):
+        nonlocal call_count
+        call_count += 1
+        raise openai.RateLimitError("rate limit", response=MagicMock(), body={})
+
+    with patch.object(service, "_transcribe_whisper", side_effect=fake_transcribe):
+        with patch("asyncio.sleep", new_callable=AsyncMock):
+            with pytest.raises(openai.RateLimitError):
+                await service._whisper_with_retry(audio, "pt")
+
+    assert call_count == 3  # tentou 3 vezes
+
+
+@pytest.mark.asyncio
+async def test_whisper_retry_succeeds_on_second_attempt(service, tmp_path):
+    """Deve ter sucesso na 2ª tentativa após RateLimitError."""
+    import openai
+    audio = tmp_path / "audio.mp3"
+    audio.write_bytes(b"fake")
+
+    call_count = 0
+    def fake_transcribe(path, lang):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise openai.RateLimitError("rate limit", response=MagicMock(), body={})
+        return {"text": "transcrito", "segments": [], "language": "pt", "duration": 10}
+
+    with patch.object(service, "_transcribe_whisper", side_effect=fake_transcribe):
+        with patch("asyncio.sleep", new_callable=AsyncMock):
+            result = await service._whisper_with_retry(audio, "pt")
+
+    assert call_count == 2
+    assert result["text"] == "transcrito"
+
+
+@pytest.mark.asyncio
+async def test_whisper_no_retry_on_client_error(service, tmp_path):
+    """Erros 4xx (input inválido) não devem ser retentados."""
+    import openai
+    audio = tmp_path / "audio.mp3"
+    audio.write_bytes(b"fake")
+
+    call_count = 0
+    def fake_transcribe(path, lang):
+        nonlocal call_count
+        call_count += 1
+        mock_resp = MagicMock()
+        mock_resp.status_code = 400
+        raise openai.BadRequestError("bad request", response=mock_resp, body={})
+
+    with patch.object(service, "_transcribe_whisper", side_effect=fake_transcribe):
+        with pytest.raises(openai.BadRequestError):
+            await service._whisper_with_retry(audio, "pt")
+
+    assert call_count == 1  # sem retry para 4xx
