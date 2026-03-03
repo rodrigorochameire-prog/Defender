@@ -15,6 +15,7 @@ Fluxo:
 import asyncio
 import json
 import logging
+import os
 import re
 import tempfile
 import time
@@ -342,7 +343,9 @@ class TranscriptionService:
             i: int, offset_s: float, chunk: AudioSegment
         ) -> tuple[float, dict | None, Exception | None]:
             nonlocal completed_count
-            chunk_path = Path(tempfile.mktemp(suffix=".mp3"))
+            _fd, _chunk_path_str = tempfile.mkstemp(suffix=".mp3")
+            os.close(_fd)
+            chunk_path = Path(_chunk_path_str)
             async with semaphore:
                 try:
                     chunk.export(str(chunk_path), format="mp3", bitrate="32k")
@@ -433,100 +436,6 @@ class TranscriptionService:
         merged["integrity"] = "partial" if failed_chunks else "complete"
 
         return merged
-
-    async def _transcribe_chunked_whisper(
-        self,
-        audio_path: Path,
-        file_name: str,
-        lang: str,
-        diarize: bool,
-        expected_speakers: int | None,
-    ) -> dict[str, Any]:
-        """
-        Transcrição via Whisper em chunks para arquivos que excedem 25MB.
-        Divide o áudio em pedaços de ~20min, transcreve cada um com Whisper,
-        e recombina os segmentos com timestamps ajustados.
-        """
-        from pydub import AudioSegment
-
-        audio = AudioSegment.from_file(str(audio_path))
-        duration_seconds = len(audio) / 1000.0
-
-        # ~20 minutos por chunk (MP3 32kbps mono ≈ ~4.7MB por 20min)
-        chunk_duration_ms = 20 * 60 * 1000
-
-        chunks: list[tuple[float, AudioSegment]] = []
-        for start_ms in range(0, len(audio), chunk_duration_ms):
-            end_ms = min(start_ms + chunk_duration_ms, len(audio))
-            chunks.append((start_ms / 1000.0, audio[start_ms:end_ms]))
-
-        logger.info(
-            "Chunked Whisper | file=%s | duration=%.0fs | chunks=%d",
-            file_name, duration_seconds, len(chunks),
-        )
-
-        all_segments: list[dict] = []
-        full_text_parts: list[str] = []
-
-        for i, (offset_seconds, chunk) in enumerate(chunks):
-            chunk_path = Path(tempfile.mktemp(suffix=".mp3"))
-            try:
-                chunk.export(str(chunk_path), format="mp3", bitrate="32k")
-                chunk_size_mb = chunk_path.stat().st_size / (1024 * 1024)
-                logger.info(
-                    "Transcrevendo chunk %d/%d | offset=%.0fs | size=%.1fMB",
-                    i + 1, len(chunks), offset_seconds, chunk_size_mb,
-                )
-
-                if chunk_size_mb > self.max_file_size_mb:
-                    logger.warning(
-                        "Chunk %d excede limite Whisper (%.1fMB) — pulando",
-                        i + 1, chunk_size_mb,
-                    )
-                    continue
-
-                chunk_result = self._transcribe_whisper(chunk_path, lang)
-
-                # Ajustar timestamps com offset do chunk
-                for seg in chunk_result.get("segments", []):
-                    seg["start"] += offset_seconds
-                    seg["end"] += offset_seconds
-                    all_segments.append(seg)
-
-                full_text_parts.append(chunk_result.get("text", ""))
-
-            except Exception as e:
-                logger.error("Erro no chunk %d/%d: %s", i + 1, len(chunks), str(e))
-            finally:
-                chunk_path.unlink(missing_ok=True)
-
-        if not full_text_parts:
-            raise RuntimeError(
-                f"Nenhum chunk foi transcrito com sucesso para '{file_name}'"
-            )
-
-        full_text = " ".join(full_text_parts)
-
-        # Diarização no arquivo de áudio completo (se habilitado)
-        speakers_result = None
-        if diarize and self.diarization_enabled and self.hf_token:
-            logger.info(
-                "Diarizando speakers com pyannote (arquivo completo) | expected=%s",
-                expected_speakers,
-            )
-            try:
-                speakers_result = self._diarize_speakers(audio_path, expected_speakers)
-            except Exception as e:
-                logger.warning("Diarização falhou (continuando sem speakers): %s", e)
-
-        whisper_result = {
-            "text": full_text,
-            "segments": all_segments,
-            "language": lang,
-            "duration": duration_seconds,
-        }
-
-        return self._merge_transcription_and_speakers(whisper_result, speakers_result)
 
     # ==========================================
     # GEMINI PATH
@@ -910,7 +819,9 @@ Regras para segments:
 
             audio = AudioSegment.from_file(str(path))
             audio = audio.set_channels(1)  # Mono
-            mp3_path = Path(tempfile.mktemp(suffix=".mp3"))
+            _fd, _mp3_path_str = tempfile.mkstemp(suffix=".mp3")
+            os.close(_fd)
+            mp3_path = Path(_mp3_path_str)
             audio.export(str(mp3_path), format="mp3", bitrate="32k")
             mp3_size = mp3_path.stat().st_size / (1024 * 1024)
             logger.info(
