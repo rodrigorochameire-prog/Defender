@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db, driveDocumentSections, driveFiles, driveFileContents } from "@/lib/db";
 import { eq, and, desc, asc, ilike, sql, inArray } from "drizzle-orm";
+import { TIPO_RELEVANCIA, TIPO_TO_GROUP } from "@/lib/services/pdf-classifier";
 
 const TIPO_LABELS: Record<string, string> = {
   // v2 — nova taxonomia
@@ -167,6 +168,62 @@ export const documentSectionsRouter = router({
         .innerJoin(driveFiles, eq(driveDocumentSections.driveFileId, driveFiles.id))
         .where(and(...conditions))
         .orderBy(asc(driveDocumentSections.paginaInicio));
+    }),
+
+  // Timeline view: chronological sections for a processo
+  // Excludes burocracia, orders by event date, includes file info
+  timelineByProcessoId: protectedProcedure
+    .input(z.object({
+      processoId: z.number(),
+      tipos: z.array(sectionTipoEnum).optional(),
+      search: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const conditions: ReturnType<typeof eq>[] = [
+        eq(driveFiles.processoId, input.processoId),
+      ];
+
+      if (input.tipos && input.tipos.length > 0) {
+        conditions.push(inArray(driveDocumentSections.tipo, input.tipos) as any);
+      }
+
+      const results = await db
+        .select({
+          id: driveDocumentSections.id,
+          tipo: driveDocumentSections.tipo,
+          titulo: driveDocumentSections.titulo,
+          resumo: driveDocumentSections.resumo,
+          paginaInicio: driveDocumentSections.paginaInicio,
+          paginaFim: driveDocumentSections.paginaFim,
+          confianca: driveDocumentSections.confianca,
+          reviewStatus: driveDocumentSections.reviewStatus,
+          metadata: driveDocumentSections.metadata,
+          fichaData: driveDocumentSections.fichaData,
+          createdAt: driveDocumentSections.createdAt,
+          // File info
+          fileId: driveFiles.id,
+          fileName: driveFiles.name,
+          fileWebViewLink: driveFiles.webViewLink,
+        })
+        .from(driveDocumentSections)
+        .innerJoin(driveFiles, eq(driveDocumentSections.driveFileId, driveFiles.id))
+        .where(and(
+          ...conditions,
+          sql`${driveDocumentSections.tipo} != 'burocracia'`,
+          input.search
+            ? sql`(${driveDocumentSections.titulo} ILIKE ${'%' + input.search + '%'} OR ${driveDocumentSections.resumo} ILIKE ${'%' + input.search + '%'})`
+            : undefined,
+        ))
+        .orderBy(
+          asc(driveDocumentSections.paginaInicio)
+        );
+
+      // Post-process: add relevancia and group from taxonomy
+      return results.map((r) => ({
+        ...r,
+        relevancia: (TIPO_RELEVANCIA as Record<string, string>)[r.tipo] ?? "baixo",
+        grupo: (TIPO_TO_GROUP as Record<string, string>)[r.tipo] ?? "outros",
+      }));
     }),
 
   // Buscar seções por tipo (em todos os arquivos)
