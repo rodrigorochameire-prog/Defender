@@ -12,8 +12,9 @@ import { toast } from "sonner";
 import { IntelligenceTab } from "@/components/intelligence/IntelligenceTab";
 import { DriveStatusBar } from "@/components/drive/DriveStatusBar";
 import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
+import { ProcessoTimeline } from "@/components/processos/ProcessoTimeline";
 
-type Tab = "partes" | "demandas" | "drive" | "audiencias" | "vinculados" | "inteligencia";
+type Tab = "partes" | "demandas" | "drive" | "audiencias" | "timeline" | "vinculados" | "inteligencia";
 
 const PRESOS = [
   "CADEIA_PUBLICA",
@@ -85,6 +86,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
     { key: "demandas", label: "Demandas", count: data.demandas.length },
     { key: "drive", label: "Drive", count: data.driveFiles.length },
     { key: "audiencias", label: "Audiências", count: data.audiencias.length },
+    { key: "timeline", label: "Timeline" },
     ...(showVinculados
       ? [{ key: "vinculados" as Tab, label: "Vinculados", count: data.processosVinculados.length }]
       : []),
@@ -436,6 +438,12 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {tab === "timeline" && (
+          <div className="py-4">
+            <ProcessoTimeline processoId={data.id} />
           </div>
         )}
 
