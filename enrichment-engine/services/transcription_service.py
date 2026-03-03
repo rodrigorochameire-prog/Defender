@@ -19,7 +19,7 @@ import re
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import httpx
 
@@ -108,6 +108,7 @@ class TranscriptionService:
         diarize: bool = True,
         expected_speakers: int | None = None,
         auth_header: str | None = None,
+        progress_callback: "Callable[[int, int], None] | None" = None,
     ) -> dict[str, Any]:
         """
         Transcreve um arquivo de áudio/vídeo.
@@ -166,10 +167,9 @@ class TranscriptionService:
                             "Whisper chunked paralelo | file=%s | size=%.1fMB | lang=%s",
                             file_name, audio_size_mb, lang,
                         )
-                        # _transcribe_chunked_parallel implementado na Task 6
-                        # Por ora, delega ao método existente _transcribe_chunked_whisper
-                        result = await self._transcribe_chunked_whisper(
-                            audio_path, file_name, lang, diarize, expected_speakers
+                        result = await self._transcribe_chunked_parallel(
+                            audio_path, file_name, lang, diarize, expected_speakers,
+                            progress_callback=progress_callback,
                         )
                         backend_used = "whisper_chunked"
                 except Exception as e:
@@ -195,7 +195,7 @@ class TranscriptionService:
                 backend_used = "gemini_fallback"
 
             # 5. Validação de qualidade
-            duration_s = result.get("duration") or (audio_size_mb * 60)
+            duration_s = result.get("duration") or (audio_size_mb * 250)  # ~250s per MB at 32kbps mono
             result = self._validate_output_quality(result, duration_s)
             result["backend"] = backend_used
 
@@ -302,6 +302,137 @@ class TranscriptionService:
     # ==========================================
     # CHUNKED WHISPER PATH (large files)
     # ==========================================
+
+    async def _transcribe_chunked_parallel(
+        self,
+        audio_path: Path,
+        file_name: str,
+        lang: str,
+        diarize: bool,
+        expected_speakers: int | None,
+        progress_callback: "Callable[[int, int], None] | None" = None,
+    ) -> dict[str, Any]:
+        """
+        Transcrição via Whisper em chunks PARALELOS (máx 3 simultâneos).
+        Divide o áudio em pedaços de ~20min, processa em paralelo,
+        recombina com timestamps ajustados.
+        Chunks que falham após retry inserem placeholder no output.
+        """
+        from pydub import AudioSegment
+
+        audio = AudioSegment.from_file(str(audio_path))
+        duration_seconds = len(audio) / 1000.0
+        chunk_duration_ms = 20 * 60 * 1000  # 20 min
+
+        chunks: list[tuple[float, AudioSegment]] = []
+        for start_ms in range(0, len(audio), chunk_duration_ms):
+            end_ms = min(start_ms + chunk_duration_ms, len(audio))
+            chunks.append((start_ms / 1000.0, audio[start_ms:end_ms]))
+
+        total = len(chunks)
+        logger.info(
+            "Chunked Whisper PARALELO | file=%s | duration=%.0fs | chunks=%d",
+            file_name, duration_seconds, total,
+        )
+
+        semaphore = asyncio.Semaphore(3)
+        completed_count = 0
+
+        async def _process_chunk(
+            i: int, offset_s: float, chunk: AudioSegment
+        ) -> tuple[float, dict | None, Exception | None]:
+            nonlocal completed_count
+            chunk_path = Path(tempfile.mktemp(suffix=".mp3"))
+            async with semaphore:
+                try:
+                    chunk.export(str(chunk_path), format="mp3", bitrate="32k")
+                    chunk_size_mb = chunk_path.stat().st_size / (1024 * 1024)
+                    logger.info(
+                        "Chunk %d/%d | offset=%.0fs | size=%.1fMB",
+                        i + 1, total, offset_s, chunk_size_mb,
+                    )
+                    result = await self._whisper_with_retry(chunk_path, lang)
+                    for seg in result.get("segments", []):
+                        seg["start"] += offset_s
+                        seg["end"] += offset_s
+                    completed_count += 1
+                    if progress_callback:
+                        progress_callback(completed_count, total)
+                    return (offset_s, result, None)
+                except Exception as e:
+                    logger.error("Chunk %d/%d falhou: %s", i + 1, total, str(e))
+                    completed_count += 1
+                    if progress_callback:
+                        progress_callback(completed_count, total)
+                    return (offset_s, None, e)
+                finally:
+                    chunk_path.unlink(missing_ok=True)
+
+        tasks = [
+            _process_chunk(i, offset_s, chunk)
+            for i, (offset_s, chunk) in enumerate(chunks)
+        ]
+        raw_results: list[tuple[float, dict | None, Exception | None]] = (
+            await asyncio.gather(*tasks)
+        )
+
+        # Ordenar por offset
+        raw_results.sort(key=lambda x: x[0])
+
+        all_segments: list[dict] = []
+        full_text_parts: list[str] = []
+        failed_chunks: list[float] = []
+        chunk_duration_s = chunk_duration_ms / 1000.0
+
+        for offset_s, result, error in raw_results:
+            if error is not None:
+                failed_chunks.append(offset_s)
+                end_s = min(offset_s + chunk_duration_s, duration_seconds)
+                placeholder = (
+                    f"⚠️ [Segmento não transcrito — falha de API no intervalo "
+                    f"{self._format_timestamp(offset_s)}–{self._format_timestamp(end_s)}]"
+                )
+                all_segments.append({
+                    "start": offset_s,
+                    "end": end_s,
+                    "text": placeholder,
+                    "speaker": "SISTEMA",
+                })
+                full_text_parts.append(placeholder)
+            else:
+                for seg in result.get("segments", []):
+                    all_segments.append(seg)
+                full_text_parts.append(result.get("text", ""))
+
+        successful = [r for _, r, e in raw_results if r is not None]
+        if not successful:
+            raise RuntimeError(
+                f"Nenhum chunk foi transcrito com sucesso para '{file_name}'"
+            )
+
+        full_text = " ".join(p for p in full_text_parts if p)
+
+        # Diarização no arquivo completo
+        speakers_result = None
+        if diarize and self.diarization_enabled and self.hf_token:
+            try:
+                speakers_result = self._diarize_speakers(audio_path, expected_speakers)
+            except Exception as e:
+                logger.warning("Diarização falhou (continuando): %s", e)
+
+        whisper_result = {
+            "text": full_text,
+            "segments": all_segments,
+            "language": lang,
+            "duration": duration_seconds,
+        }
+
+        merged = self._merge_transcription_and_speakers(whisper_result, speakers_result)
+        merged["chunks_total"] = total
+        merged["chunks_failed"] = len(failed_chunks)
+        merged["integrity"] = "partial" if failed_chunks else "complete"
+
+        return merged
 
     async def _transcribe_chunked_whisper(
         self,
