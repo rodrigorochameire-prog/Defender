@@ -568,7 +568,26 @@ Regras para segments:
                 ),
             )
 
-            # 5. Parse response
+            # 5. Verificar se output foi truncado por limite de tokens
+            try:
+                finish_reason = response.candidates[0].finish_reason
+                if hasattr(finish_reason, 'name') and finish_reason.name == "MAX_TOKENS":
+                    logger.error(
+                        "⚠️ Gemini atingiu MAX_TOKENS — transcrição TRUNCADA | file=%s",
+                        file_name,
+                    )
+                    result = self._parse_gemini_transcription(response.text, diarize)
+                    result["truncated"] = True
+                    result["truncated_reason"] = "MAX_TOKENS"
+                    result["transcript_plain"] = (
+                        result.get("transcript_plain", "")
+                        + "\n\n⚠️ [TRANSCRIÇÃO INCOMPLETA — limite de tokens atingido]"
+                    )
+                    return result
+            except (IndexError, AttributeError):
+                pass  # se não conseguir checar finish_reason, continuar normalmente
+
+            # 6. Parse response normal
             result = self._parse_gemini_transcription(response.text, diarize)
             return result
 
