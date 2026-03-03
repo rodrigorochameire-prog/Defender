@@ -4,7 +4,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
-import { ArrowLeft, Brain, ExternalLink, Loader2, Lock, Scale, Sun, User, Sparkles } from "lucide-react";
+import { ArrowLeft, Brain, Calendar, ExternalLink, FileText, FolderOpen, Loader2, Lock, Scale, Sun, User, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -93,34 +93,74 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-6 pt-5 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+      {/* Header Premium */}
+      <div className="px-6 pt-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600 mb-3 transition-colors"
+          className="flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 mb-3 transition-colors uppercase tracking-wide font-medium"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Voltar
+          <ArrowLeft className="h-3 w-3" /> Voltar
         </button>
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center shrink-0">
-            <Scale className="h-5 w-5 text-zinc-500" />
+        <div className="flex items-center gap-4">
+          {/* Icon grande com cor por situação */}
+          <div className={cn(
+            "h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-md",
+            data.situacao === "ARQUIVADO" ? "bg-zinc-400" :
+            data.situacao === "SUSPENSO" ? "bg-amber-500" :
+            "bg-emerald-500"
+          )}>
+            <Scale className="h-6 w-6 text-white" />
           </div>
-          <div>
-            <h1 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 font-mono">
-              {data.numeroAutos ?? "Sem número"}
-            </h1>
-            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              {data.vara && <span className="text-[11px] text-zinc-400">{data.vara}</span>}
-              {data.assunto && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
-                  {data.assunto}
-                </span>
-              )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 font-mono truncate">
+                {data.numeroAutos ?? "Sem número"}
+              </h1>
               {data.situacao && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                  {data.situacao}
+                <span className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded-md font-semibold shrink-0",
+                  data.situacao === "ARQUIVADO" ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400" :
+                  data.situacao === "SUSPENSO" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
+                  "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                )}>
+                  {data.situacao.toLowerCase()}
                 </span>
               )}
+            </div>
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              {data.vara && <span className="text-[11px] text-zinc-400 dark:text-zinc-500">{data.vara}</span>}
+              {data.assunto && (
+                <>
+                  <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">{data.assunto}</span>
+                </>
+              )}
+            </div>
+          </div>
+          {/* Mini KPIs inline */}
+          <div className="hidden sm:flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+              <Users className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.assistidos.length}</span>
+              <span className="text-zinc-400">partes</span>
+            </div>
+            <span className="text-zinc-200 dark:text-zinc-700">|</span>
+            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+              <FileText className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.demandas.length}</span>
+              <span className="text-zinc-400">dem.</span>
+            </div>
+            <span className="text-zinc-200 dark:text-zinc-700">|</span>
+            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+              <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.audiencias.length}</span>
+              <span className="text-zinc-400">aud.</span>
+            </div>
+            <span className="text-zinc-200 dark:text-zinc-700">|</span>
+            <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+              <FolderOpen className="w-3.5 h-3.5 text-zinc-400" />
+              <span className="font-bold text-zinc-700 dark:text-zinc-300">{data.driveFiles.length}</span>
+              <span className="text-zinc-400">arq.</span>
             </div>
           </div>
         </div>
