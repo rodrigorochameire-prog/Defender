@@ -644,7 +644,8 @@ Regras para segments:
                 async with client.stream("GET", file_url, headers=headers) as response:
                     response.raise_for_status()
 
-                    content_length = int(response.headers.get("content-length", 0))
+                    content_length_raw = response.headers.get("content-length", "0").strip()
+                    content_length = int(content_length_raw) if content_length_raw.isdigit() else 0
                     if content_length > self.MAX_DOWNLOAD_BYTES:
                         raise ValueError(
                             f"Arquivo declarado ({content_length / 1e6:.0f}MB) "
@@ -661,16 +662,16 @@ Regras para segments:
                             )
                         tmp.write(chunk)
 
-            tmp.close()
             logger.info(
                 "Streaming download complete: %d bytes → %s", downloaded, tmp_path
             )
             return tmp_path
 
         except Exception:
-            tmp.close()
             tmp_path.unlink(missing_ok=True)
             raise
+        finally:
+            tmp.close()
 
     def _ensure_compatible_format(self, path: Path) -> Path:
         """Converte vídeo/formatos exóticos para MP3 usando pydub."""
