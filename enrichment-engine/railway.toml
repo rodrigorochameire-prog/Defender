@@ -1,2 +1,6 @@
 [deploy]
 region = "us-east4-eqdc4a"
+
+[[crons]]
+schedule = "*/10 * * * *"
+command = "curl -s -X POST http://localhost:8000/api/recover-stuck -H 'X-API-Key: $API_KEY' || true"

@@ -303,3 +303,42 @@ async def transcribe_audio_async(
         "drive_file_id": input_data.drive_file_id,
         "db_record_id": input_data.db_record_id,
     }
+
+
+@router.post("/recover-stuck")
+async def recover_stuck_transcriptions():
+    """
+    Recupera arquivos presos em 'processing' por mais de 20 minutos.
+    Chamado pelo Railway Cron a cada 10 minutos.
+    """
+    from datetime import timedelta
+    from services.supabase_service import get_supabase_service
+
+    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=20)).isoformat()
+
+    try:
+        supa = get_supabase_service()
+        client = supa._get_client()
+        result = (
+            client.table("drive_files")
+            .update({
+                "enrichment_status": "failed",
+                "enrichment_error": (
+                    "Timeout automático: processo não completou em 20 minutos. "
+                    "Clique em 'Retranscrever' para tentar novamente."
+                ),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            })
+            .eq("enrichment_status", "processing")
+            .lt("updated_at", cutoff)
+            .execute()
+        )
+        count = len(result.data) if result.data else 0
+        logger.info("recover-stuck: %d arquivos resetados", count)
+        return {"recovered": count, "cutoff": cutoff}
+    except Exception as e:
+        logger.error("recover-stuck falhou: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
