@@ -713,8 +713,8 @@ async function updateAtendimentoTranscription(
  * Executa o pipeline completo pós-aprovação:
  * 1. Garante pasta no Drive do assistido
  * 2. Upload do áudio ao Drive (pasta do assistido)
- * 3. Enrichment da transcrição (fire-and-forget)
- * 4. Extração de pontos-chave com Gemini
+ * 3. Upload da transcrição .md ao Drive com enrichment_data preenchido
+ * 4. Análise Sonnet via enrichment engine (fire-and-forget)
  */
 export async function processApprovedRecording(
   recordingId: number,
@@ -810,8 +810,8 @@ export async function processApprovedRecording(
           );
 
           if (driveResult) {
-            // Registra no driveFiles para indexação
-            await db.insert(driveFiles).values({
+            // Registra no driveFiles com enrichment_data preenchido
+            const [driveFile] = await db.insert(driveFiles).values({
               driveFileId: driveResult.id,
               driveFolderId: driveFolderId,
               name: driveResult.name || transcFileName,
@@ -823,8 +823,38 @@ export async function processApprovedRecording(
               lastSyncAt: new Date(),
               assistidoId: assistidoId,
               processoId: processoId,
-            }).onConflictDoNothing();
+              enrichmentStatus: "completed",
+              documentType: "transcricao_plaud",
+              enrichmentData: {
+                sub_type: "transcricao_plaud",
+                transcript: recording.transcription,
+                transcript_plain: recording.transcription,
+                speakers: recording.speakers || [],
+                summary: recording.summary,
+                confidence: 1.0,
+                interlocutor: (recording.rawPayload as any)?.interlocutor || null,
+                tipo_gravacao: (recording.rawPayload as any)?.tipoGravacao || null,
+                plaud_recording_id: recording.id,
+                atendimento_id: atendimentoId,
+              },
+            }).onConflictDoNothing().returning();
             console.log(`[Plaud] Transcrição uploaded ao Drive: ${transcFileName}`);
+
+            // Fire-and-forget: analise Sonnet via enrichment engine
+            if (driveFile && recording.transcription && recording.transcription.length > 100) {
+              enrichmentClient.analyzeAsync({
+                transcript: recording.transcription,
+                fileName: transcFileName,
+                speakers: Array.isArray(recording.speakers)
+                  ? (recording.speakers as any[]).map((s: any) => s.name || s.id || String(s))
+                  : undefined,
+                assistidoNome: assistido.nome,
+                dbRecordId: driveFile.id,
+                driveFileId: driveResult.id,
+              }).catch((err) => {
+                console.error(`[Plaud] Analise Sonnet fire-and-forget falhou:`, err);
+              });
+            }
           }
         } catch (error) {
           console.error(`[Plaud] Erro ao subir transcrição ao Drive:`, error);
@@ -832,28 +862,8 @@ export async function processApprovedRecording(
       }
     }
 
-    // 5. Enrichment da transcrição (fire-and-forget)
-    if (recording.transcription && atendimentoId) {
-      enrichmentClient.enrichAsync(
-        () => enrichmentClient.enrichTranscript({
-          transcript: recording.transcription!,
-          assistidoId,
-          processoId,
-          casoId: null,
-        }),
-        `Transcript enrichment for atendimento ${atendimentoId} (approved)`,
-      ).catch(() => {}); // fire-and-forget
-    }
-
-    // 6. Extração de pontos-chave com Gemini
-    if (recording.transcription && atendimentoId) {
-      try {
-        await extractKeyPointsWithAI(atendimentoId, recording.transcription);
-        console.log(`[Plaud] Pontos-chave extraídos para atendimento ${atendimentoId}`);
-      } catch (error) {
-        console.error(`[Plaud] Erro ao extrair pontos-chave:`, error);
-      }
-    }
+    // Analise IA agora e feita via enrichmentClient.analyzeAsync() no passo 4b acima.
+    // extractKeyPointsWithAI (Gemini) e enrichmentClient.enrichTranscript foram removidos.
 
     return { success: true };
   } catch (error) {

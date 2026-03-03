@@ -2815,6 +2815,17 @@ export const driveFiles = pgTable("drive_files", {
     sub_type?: string;
     extracted_sections?: { titulo: string; tipo: string; pagina: number }[];
     confidence?: number;
+    // Campos de transcrição Plaud
+    transcript?: string;
+    transcript_plain?: string;
+    speakers?: unknown[];
+    summary?: string | null;
+    interlocutor?: string | null;
+    tipo_gravacao?: string | null;
+    plaud_recording_id?: number;
+    atendimento_id?: number | null;
+    // Análise Sonnet (preenchido pelo enrichment engine)
+    analysis?: Record<string, unknown>;
   }>(),
 
   // Metadados
