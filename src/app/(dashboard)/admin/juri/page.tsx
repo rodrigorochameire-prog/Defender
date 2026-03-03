@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -163,9 +163,9 @@ export default function JuriPage() {
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header - Padrão Defender */}
       <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
               <Gavel className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
             </div>
             <div>
@@ -209,41 +209,31 @@ export default function JuriPage() {
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         
-        {/* STATS CARDS - KPI Premium */}
-        <KPIGrid columns={4}>
-          <KPICardPremium
-            title="Agendadas"
-            value={isLoading ? "-" : stats.agendadas}
-            subtitle="sessões futuras"
-            icon={Calendar}
-            gradient="zinc"
-            size="sm"
-          />
-          <KPICardPremium
-            title="Este Mês"
-            value={isLoading ? "-" : stats.esteMes}
-            subtitle="sessões previstas"
-            icon={Clock}
-            gradient="zinc"
-            size="sm"
-          />
-          <KPICardPremium
-            title="Adiadas"
-            value={isLoading ? "-" : stats.adiadas}
-            subtitle="aguardando data"
-            icon={AlertTriangle}
-            gradient={stats.adiadas > 0 ? "amber" : "zinc"}
-            size="sm"
-          />
-          <KPICardPremium
-            title="Próxima"
-            value={isLoading ? "-" : (stats.diasProxima !== null ? (stats.diasProxima === 0 ? "Hoje" : `${stats.diasProxima}d`) : "-")}
-            subtitle={stats.diasProxima !== null && stats.diasProxima <= 7 ? "atenção!" : "dias"}
-            icon={Zap}
-            gradient={stats.diasProxima !== null && stats.diasProxima <= 7 ? "emerald" : "zinc"}
-            size="sm"
-          />
-        </KPIGrid>
+        {/* Stats Ribbon — compact inline KPIs */}
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+          {[
+            { icon: Calendar, value: isLoading ? "-" : stats.agendadas, label: "agendadas" },
+            { icon: Clock, value: isLoading ? "-" : stats.esteMes, label: "este mês" },
+            { icon: AlertTriangle, value: isLoading ? "-" : stats.adiadas, label: "adiadas", alert: stats.adiadas > 0 },
+            { icon: Zap, value: isLoading ? "-" : (stats.diasProxima !== null ? (stats.diasProxima === 0 ? "Hoje" : `${stats.diasProxima}d`) : "-"), label: "próxima", highlight: stats.diasProxima !== null && stats.diasProxima <= 7 },
+          ].map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Fragment key={index}>
+                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                <div className={cn(
+                  "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                  stat.alert ? "bg-amber-50 dark:bg-amber-950/20" : "",
+                  stat.highlight ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
+                )}>
+                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-amber-500 dark:text-amber-400" : stat.highlight ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
+                  <span className={cn("font-bold tabular-nums", stat.alert ? "text-amber-600 dark:text-amber-400" : stat.highlight ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                </div>
+              </Fragment>
+            );
+          })}
+        </div>
 
         {/* PRÓXIMAS SESSÕES - Suavizado */}
         {(loadingProximas || (proximasSessoes && proximasSessoes.length > 0)) && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,6 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { toast } from "sonner";
-import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 
 type TipoParte = "autor" | "vitima" | "todos";
 
@@ -152,26 +151,26 @@ export default function PartesVVDPage() {
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header Secundário - Padrão Defender */}
       <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Link href="/admin/vvd">
               <Button variant="ghost" size="sm" className="h-8 px-2">
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Voltar
+                <span className="hidden sm:inline">Voltar</span>
               </Button>
             </Link>
-            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
               <Users className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">Partes VVD</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Autores e vítimas de processos de violência doméstica</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:block">Autores e vítimas de processos de violência doméstica</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => refetch()} className="h-8">
               <RefreshCw className="h-4 w-4 mr-1" />
-              Atualizar
+              <span className="hidden sm:inline">Atualizar</span>
             </Button>
             <Button
               size="sm"
@@ -179,7 +178,8 @@ export default function PartesVVDPage() {
               onClick={() => setIsNovaParteOpen(true)}
             >
               <Plus className="h-4 w-4 mr-1" />
-              Nova Parte
+              <span className="hidden sm:inline">Nova Parte</span>
+              <span className="sm:hidden">Nova</span>
             </Button>
           </div>
         </div>
@@ -188,36 +188,32 @@ export default function PartesVVDPage() {
       {/* Conteúdo */}
       <div className="p-4 md:p-6 space-y-6">
 
-      {/* Stats Cards - KPI Premium */}
-      <KPIGrid columns={3}>
-        <KPICardPremium
-          title="Total de Partes"
-          value={contadores.total}
-          icon={Users}
-          gradient="zinc"
-          onClick={() => setTipoFiltro("todos")}
-          active={tipoFiltro === "todos"}
-          size="sm"
-        />
-        <KPICardPremium
-          title="Autores (Assistidos)"
-          value={contadores.autores}
-          icon={User}
-          gradient={tipoFiltro === "autor" ? "blue" : "zinc"}
-          onClick={() => setTipoFiltro("autor")}
-          active={tipoFiltro === "autor"}
-          size="sm"
-        />
-        <KPICardPremium
-          title="Vítimas"
-          value={contadores.vitimas}
-          icon={Heart}
-          gradient="zinc"
-          size="sm"
-          onClick={() => setTipoFiltro("vitima")}
-          active={tipoFiltro === "vitima"}
-        />
-      </KPIGrid>
+      {/* Stats Ribbon */}
+      <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+        {[
+          { icon: Users, value: contadores.total, label: "partes", onClick: () => setTipoFiltro("todos"), active: tipoFiltro === "todos" },
+          { icon: User, value: contadores.autores, label: "autores", onClick: () => setTipoFiltro("autor"), active: tipoFiltro === "autor" },
+          { icon: Heart, value: contadores.vitimas, label: "vítimas", onClick: () => setTipoFiltro("vitima"), active: tipoFiltro === "vitima" },
+        ].map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Fragment key={index}>
+              {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+              <button
+                onClick={stat.onClick}
+                className={cn(
+                  "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors cursor-pointer",
+                  stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                )}
+              >
+                <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
+                <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{stat.value}</span>
+                <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+              </button>
+            </Fragment>
+          );
+        })}
+      </div>
 
       {/* Filters */}
       <Card>

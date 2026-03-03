@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +50,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { PageHeader } from "@/components/shared/section-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 
 // ==========================================
 // TIPOS
@@ -169,9 +168,9 @@ export default function ModelosPage() {
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
       <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
               <FileStack className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
@@ -192,46 +191,31 @@ export default function ModelosPage() {
       {/* Content */}
       <div className="p-6 space-y-6">
         {/* Stats */}
-        <KPIGrid columns={5}>
-          <KPICardPremium
-            title="Total de Modelos"
-            value={statsCards.totalModelos}
-            icon={FileStack}
-            gradient="zinc"
-            size="sm"
-          />
-          <KPICardPremium
-            title="Administrativos"
-            value={porCategoriaObj.PROVIDENCIA_ADMINISTRATIVA || 0}
-            icon={Building2}
-            gradient="zinc"
-            size="sm"
-          />
-          <KPICardPremium
-            title="Funcionais"
-            value={porCategoriaObj.PROVIDENCIA_FUNCIONAL || 0}
-            icon={Briefcase}
-            gradient="zinc"
-            size="sm"
-          />
-          <KPICardPremium
-            title="Peças Processuais"
-            value={porCategoriaObj.PECA_PROCESSUAL || 0}
-            icon={Scale}
-            gradient="zinc"
-            size="sm"
-          />
-          <KPICardPremium
-            title="Documentos Gerados"
-            value={statsCards.totalGerados}
-            icon={Sparkles}
-            gradient="zinc"
-            size="sm"
-          />
-        </KPIGrid>
+        {/* Stats Ribbon */}
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+          {[
+            { icon: FileStack, value: statsCards.totalModelos, label: "modelos" },
+            { icon: Building2, value: porCategoriaObj.PROVIDENCIA_ADMINISTRATIVA || 0, label: "administrativos" },
+            { icon: Briefcase, value: porCategoriaObj.PROVIDENCIA_FUNCIONAL || 0, label: "funcionais" },
+            { icon: Scale, value: porCategoriaObj.PECA_PROCESSUAL || 0, label: "peças" },
+            { icon: Sparkles, value: statsCards.totalGerados, label: "gerados" },
+          ].map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Fragment key={index}>
+                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                  <Icon className="w-3.5 h-3.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
+                  <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{stat.value}</span>
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                </div>
+              </Fragment>
+            );
+          })}
+        </div>
 
         {/* Toolbar */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3 flex-1">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
@@ -246,7 +230,7 @@ export default function ModelosPage() {
 
             {/* Filtro de Categoria */}
             <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[140px] sm:w-[200px] shrink-0">
                 <Filter className="w-4 h-4 mr-2 text-zinc-400" />
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>

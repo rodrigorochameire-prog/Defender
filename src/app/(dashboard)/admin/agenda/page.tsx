@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -1078,9 +1078,9 @@ export default function AgendaPage() {
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
       <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
               <CalendarIcon className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
@@ -1161,47 +1161,36 @@ export default function AgendaPage() {
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Cards - Padrão Dashboard (KPICardPremium) */}
-        <KPIGrid columns={4}>
-          <KPICardPremium
-            title="Hoje"
-            value={stats.hoje}
-            subtitle={format(new Date(), "EEEE", { locale: ptBR })}
-            icon={Clock}
-            gradient="zinc"
-            onClick={() => setSelectedPeriodo(selectedPeriodo === "hoje" ? null : "hoje")}
-            active={selectedPeriodo === "hoje"}
-            size="sm"
-          />
-          <KPICardPremium
-            title="Amanhã"
-            value={stats.amanha}
-            subtitle={format(addDays(new Date(), 1), "dd/MM")}
-            icon={CalendarDays}
-            gradient="zinc"
-            onClick={() => setSelectedPeriodo(selectedPeriodo === "amanha" ? null : "amanha")}
-            active={selectedPeriodo === "amanha"}
-            size="sm"
-          />
-          <KPICardPremium
-            title="Esta Semana"
-            value={stats.semana}
-            subtitle="Próximos 7 dias"
-            icon={CalendarRange}
-            gradient="zinc"
-            onClick={() => setSelectedPeriodo(selectedPeriodo === "semana" ? null : "semana")}
-            active={selectedPeriodo === "semana"}
-            size="sm"
-          />
-          <KPICardPremium
-            title="Total"
-            value={stats.total}
-            subtitle="Eventos cadastrados"
-            icon={CalendarCheck}
-            gradient="zinc"
-            size="sm"
-          />
-        </KPIGrid>
+        {/* Stats Ribbon — compact inline KPIs */}
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+          {[
+            { icon: Clock, value: stats.hoje, label: format(new Date(), "EEEE", { locale: ptBR }), onClick: () => setSelectedPeriodo(selectedPeriodo === "hoje" ? null : "hoje"), active: selectedPeriodo === "hoje" },
+            { icon: CalendarDays, value: stats.amanha, label: `amanhã ${format(addDays(new Date(), 1), "dd/MM")}`, onClick: () => setSelectedPeriodo(selectedPeriodo === "amanha" ? null : "amanha"), active: selectedPeriodo === "amanha" },
+            { icon: CalendarRange, value: stats.semana, label: "esta semana", onClick: () => setSelectedPeriodo(selectedPeriodo === "semana" ? null : "semana"), active: selectedPeriodo === "semana" },
+            { icon: CalendarCheck, value: stats.total, label: "total" },
+          ].map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Fragment key={index}>
+                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                <button
+                  onClick={stat.onClick}
+                  className={cn(
+                    "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
+                    stat.onClick && "cursor-pointer",
+                    stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  )}
+                >
+                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
+                  <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{stat.value}</span>
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                </button>
+              </Fragment>
+            );
+          })}
+          <div className="flex-1" />
+          <span className="text-zinc-400 dark:text-zinc-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total} eventos</span>
+        </div>
 
       {/* Card de Filtros e Busca */}
       <Card className="border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden">

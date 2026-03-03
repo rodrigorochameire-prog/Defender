@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -137,9 +137,9 @@ export default function VVDPage() {
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header Secundário (página especial) */}
       <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
               <Shield className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
             </div>
             <div>
@@ -154,7 +154,7 @@ export default function VVDPage() {
               refetchIntimacoes();
             }} className="h-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
               <RefreshCw className="h-4 w-4 mr-1" />
-              Atualizar
+              <span className="hidden sm:inline">Atualizar</span>
             </Button>
             <Button
               size="sm"
@@ -164,63 +164,57 @@ export default function VVDPage() {
               <Upload className="h-3.5 w-3.5 mr-1" />
               Importar PJe
             </Button>
-        </div>
+          </div>
         </div>
       </div>
 
       {/* Conteúdo */}
       <div className="p-4 md:p-6 space-y-6">
 
-      {/* Stats Cards - KPI Premium */}
-      <KPIGrid columns={4}>
-        <KPICardPremium
-          title="Total de Processos"
-          value={stats?.totalProcessos || 0}
-          icon={FileText}
-          gradient="zinc"
-          size="sm"
-        />
-        <KPICardPremium
-          title="MPUs Ativas"
-          value={stats?.mpusAtivas || 0}
-          icon={ShieldCheck}
-          gradient="emerald"
-          size="sm"
-        />
-        <KPICardPremium
-          title="Vencendo em 30 dias"
-          value={stats?.mpusVencendo || 0}
-          icon={Clock}
-          gradient={stats?.mpusVencendo && stats.mpusVencendo > 0 ? "amber" : "zinc"}
-          size="sm"
-        />
-        <KPICardPremium
-          title="Intimações Pendentes"
-          value={stats?.intimacoesPendentes || 0}
-          icon={Bell}
-          gradient={stats?.intimacoesPendentes && stats.intimacoesPendentes > 0 ? "blue" : "zinc"}
-          size="sm"
-        />
-      </KPIGrid>
+      {/* Stats Ribbon — compact inline KPIs */}
+      <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+        {[
+          { icon: FileText, value: stats?.totalProcessos || 0, label: "processos" },
+          { icon: ShieldCheck, value: stats?.mpusAtivas || 0, label: "MPUs ativas", highlight: true },
+          { icon: Clock, value: stats?.mpusVencendo || 0, label: "vencendo 30d", alert: (stats?.mpusVencendo || 0) > 0 },
+          { icon: Bell, value: stats?.intimacoesPendentes || 0, label: "intimações", alert: (stats?.intimacoesPendentes || 0) > 0 },
+        ].map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Fragment key={index}>
+              {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+              <div className={cn(
+                "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800",
+                stat.alert ? "bg-amber-50 dark:bg-amber-950/20" : "",
+                stat.highlight ? "bg-emerald-50/50 dark:bg-emerald-950/10" : ""
+              )}>
+                <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-amber-500 dark:text-amber-400" : stat.highlight ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500")} />
+                <span className={cn("font-bold tabular-nums", stat.alert ? "text-amber-600 dark:text-amber-400" : "text-zinc-800 dark:text-zinc-100")}>{stat.value}</span>
+                <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+              </div>
+            </Fragment>
+          );
+        })}
+      </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="dashboard">
-            <Shield className="h-4 w-4 mr-1" />
-            Dashboard
+        <TabsList className="flex w-full">
+          <TabsTrigger value="dashboard" className="flex-1">
+            <Shield className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Dashboard</span>
           </TabsTrigger>
-          <TabsTrigger value="processos">
-            <FileText className="h-4 w-4 mr-1" />
-            Processos
+          <TabsTrigger value="processos" className="flex-1">
+            <FileText className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Processos</span>
           </TabsTrigger>
-          <TabsTrigger value="intimacoes">
-            <Bell className="h-4 w-4 mr-1" />
-            Intimações
+          <TabsTrigger value="intimacoes" className="flex-1">
+            <Bell className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Intimações</span>
           </TabsTrigger>
-          <TabsTrigger value="partes">
-            <Users className="h-4 w-4 mr-1" />
-            Partes
+          <TabsTrigger value="partes" className="flex-1">
+            <Users className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Partes</span>
           </TabsTrigger>
         </TabsList>
 
@@ -342,25 +336,27 @@ export default function VVDPage() {
         <TabsContent value="processos" className="mt-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <CardTitle className="text-base">Processos de Violência Doméstica</CardTitle>
                 <div className="flex items-center gap-2">
-                  <div className="relative">
+                  <div className="relative flex-1 sm:flex-none">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Buscar por nome ou número..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-64"
+                      className="pl-10 w-full sm:w-64"
                     />
                   </div>
                   <Button
                     variant={filterMPUAtiva === true ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFilterMPUAtiva(filterMPUAtiva === true ? undefined : true)}
+                    className="shrink-0"
                   >
                     <ShieldCheck className="h-4 w-4 mr-1" />
-                    MPU Ativa
+                    <span className="hidden sm:inline">MPU Ativa</span>
+                    <span className="sm:hidden">MPU</span>
                   </Button>
                 </div>
               </div>

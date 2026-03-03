@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +71,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 // Componentes estruturais
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { EmptyState } from "@/components/shared/empty-state";
-import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 
 // ==========================================
 // TIPOS
@@ -203,16 +202,16 @@ export default function JurisprudenciaPage() {
             ]}
           />
 
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-900 dark:to-amber-950 rounded-xl border border-amber-200 dark:border-amber-800">
+              <div className="p-2.5 bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-900 dark:to-amber-950 rounded-xl border border-amber-200 dark:border-amber-800 shrink-0">
                 <BookOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
                   Banco de Jurisprudência
                 </h1>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-zinc-500 hidden sm:block">
                   Julgados do STF, STJ e TJBA com busca inteligente por IA
                 </p>
               </div>
@@ -221,24 +220,26 @@ export default function JurisprudenciaPage() {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
+                size="sm"
                 className="gap-2"
                 onClick={() => setShowAIChat(!showAIChat)}
               >
                 <MessageSquare className="w-4 h-4" />
-                Perguntar à IA
+                <span className="hidden md:inline">Perguntar à IA</span>
               </Button>
               <Button
                 variant="outline"
+                size="sm"
                 className="gap-2"
                 onClick={() => setShowAddFolderDialog(true)}
               >
                 <FolderSync className="w-4 h-4" />
-                Sincronizar Drive
+                <span className="hidden md:inline">Sincronizar Drive</span>
               </Button>
               <Link href="/admin/jurisprudencia/novo">
-                <Button className="gap-2">
+                <Button size="sm" className="gap-2">
                   <Plus className="w-4 h-4" />
-                  Novo Julgado
+                  <span className="hidden sm:inline">Novo Julgado</span>
                 </Button>
               </Link>
             </div>
@@ -249,43 +250,28 @@ export default function JurisprudenciaPage() {
       {/* Content */}
       <div className="p-6 space-y-6">
         {/* Stats */}
-        <KPIGrid columns={5}>
-          <KPICardPremium
-            title="Total de Julgados"
-            value={stats?.totalJulgados || 0}
-            icon={BookOpen}
-            gradient="amber"
-            size="sm"
-          />
-          <KPICardPremium
-            title="STF"
-            value={porTribunalObj["STF"] || 0}
-            icon={Building2}
-            gradient="amber"
-            size="sm"
-          />
-          <KPICardPremium
-            title="STJ"
-            value={porTribunalObj["STJ"] || 0}
-            icon={Gavel}
-            gradient="emerald"
-            size="sm"
-          />
-          <KPICardPremium
-            title="TJBA"
-            value={porTribunalObj["TJBA"] || 0}
-            icon={Scale}
-            gradient="blue"
-            size="sm"
-          />
-          <KPICardPremium
-            title="Favoritos"
-            value={stats?.totalFavoritos || 0}
-            icon={Star}
-            gradient="rose"
-            size="sm"
-          />
-        </KPIGrid>
+        {/* Stats Ribbon */}
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
+          {[
+            { icon: BookOpen, value: stats?.totalJulgados || 0, label: "julgados" },
+            { icon: Building2, value: porTribunalObj["STF"] || 0, label: "STF" },
+            { icon: Gavel, value: porTribunalObj["STJ"] || 0, label: "STJ" },
+            { icon: Scale, value: porTribunalObj["TJBA"] || 0, label: "TJBA" },
+            { icon: Star, value: stats?.totalFavoritos || 0, label: "favoritos" },
+          ].map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Fragment key={index}>
+                {index > 0 && <div className="w-px h-4 bg-zinc-200/60 dark:bg-zinc-700/60 flex-shrink-0" />}
+                <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                  <Icon className="w-3.5 h-3.5 flex-shrink-0 text-zinc-400 dark:text-zinc-500" />
+                  <span className="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{stat.value}</span>
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{stat.label}</span>
+                </div>
+              </Fragment>
+            );
+          })}
+        </div>
 
         {/* AI Chat Panel */}
         {showAIChat && (

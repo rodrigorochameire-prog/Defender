@@ -16,11 +16,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { toast } from "sonner";
 import {
   Brain,
   Search,
@@ -93,7 +102,52 @@ export default function LogicaArgumentacaoPage() {
   const [selectedCasoId, setSelectedCasoId] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"contradicoes" | "teses" | "argumentos">("contradicoes");
   const [contradicoes, setContradicoes] = useState<Contradicao[]>([]);
-  const [teses, setTeses] = useState<Tese[]>([]);
+  const [showTeseModal, setShowTeseModal] = useState(false);
+  const [teseModalTipo, setTeseModalTipo] = useState<string>("principal");
+  const [novaTese, setNovaTese] = useState({ titulo: "", descricao: "" });
+
+  const utils = trpc.useUtils();
+
+  // Query teses from DB when a caso is selected
+  const { data: tesesData } = trpc.teses.list.useQuery(
+    { casoId: Number(selectedCasoId) },
+    { enabled: !!selectedCasoId }
+  );
+
+  const teses = tesesData ?? [];
+
+  const createTese = trpc.teses.create.useMutation({
+    onSuccess: () => {
+      toast.success("Tese criada com sucesso!");
+      utils.teses.list.invalidate({ casoId: Number(selectedCasoId) });
+      setShowTeseModal(false);
+      setNovaTese({ titulo: "", descricao: "" });
+    },
+    onError: (error) => {
+      toast.error("Erro ao criar tese", { description: error.message });
+    },
+  });
+
+  const deleteTese = trpc.teses.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Tese removida");
+      utils.teses.list.invalidate({ casoId: Number(selectedCasoId) });
+    },
+    onError: (error) => {
+      toast.error("Erro ao remover tese", { description: error.message });
+    },
+  });
+
+  const handleCreateTese = () => {
+    if (!novaTese.titulo.trim() || !selectedCasoId) return;
+    createTese.mutate({
+      casoId: Number(selectedCasoId),
+      titulo: novaTese.titulo.trim(),
+      descricao: novaTese.descricao.trim() || undefined,
+      tipo: teseModalTipo === "alternativa" ? "subsidiaria" : (teseModalTipo as "principal" | "subsidiaria"),
+    });
+  };
+
   const [novaContradicao, setNovaContradicao] = useState({
     tipo: "",
     titulo: "",
@@ -146,16 +200,16 @@ export default function LogicaArgumentacaoPage() {
     <div className="min-h-screen bg-zinc-100 dark:bg-[#0f0f11]">
       {/* Header */}
       <div className="px-4 md:px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
               <Brain className="w-5 h-5 text-white dark:text-zinc-900" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
                 Lógica e Argumentação
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:block">
                 Análise de contradições e construção de teses
               </p>
             </div>
@@ -429,7 +483,11 @@ export default function LogicaArgumentacaoPage() {
                       <Button
                         variant="outline"
                         className="w-full gap-2 border-dashed"
-                        onClick={() => {/* TODO: Abrir modal de criação */}}
+                        onClick={() => {
+                          setTeseModalTipo(tipo.id);
+                          setNovaTese({ titulo: "", descricao: "" });
+                          setShowTeseModal(true);
+                        }}
                       >
                         <Plus className="w-4 h-4" /> Adicionar Tese
                       </Button>
@@ -437,6 +495,57 @@ export default function LogicaArgumentacaoPage() {
                   </Card>
                 ))}
               </div>
+
+              {/* Teses cadastradas */}
+              {teses.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+                  {teses.map((tese) => {
+                    const tipoConfig = TIPOS_TESE.find(t => t.id === tese.tipo) || TIPOS_TESE[0];
+                    return (
+                      <Card key={tese.id} className="group hover:border-emerald-200/50 dark:hover:border-emerald-800/30 transition-all duration-200">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {tipoConfig.cor === "emerald" && <Shield className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
+                              {tipoConfig.cor === "blue" && <Scale className="w-4 h-4 text-blue-500 flex-shrink-0" />}
+                              {tipoConfig.cor === "amber" && <Target className="w-4 h-4 text-amber-500 flex-shrink-0" />}
+                              <CardTitle className="text-sm font-semibold truncate">{tese.titulo}</CardTitle>
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <Badge variant="outline" className="text-[10px]">{tipoConfig.label}</Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-zinc-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => {
+                                  if (confirm("Remover esta tese?")) {
+                                    deleteTese.mutate({ id: tese.id });
+                                  }
+                                }}
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        {tese.descricao && (
+                          <CardContent className="pt-0">
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">{tese.descricao}</p>
+                          </CardContent>
+                        )}
+                        {tese.probabilidadeAceitacao != null && (
+                          <CardContent className="pt-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-zinc-400">Probabilidade:</span>
+                              <Badge variant="outline" className="text-[10px]">{tese.probabilidadeAceitacao}%</Badge>
+                            </div>
+                          </CardContent>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
 
               {teses.length === 0 && (
                 <Card className="border-dashed mt-6">
@@ -533,6 +642,56 @@ export default function LogicaArgumentacaoPage() {
           </Card>
         )}
       </div>
+
+      {/* Modal: Adicionar Tese */}
+      <Dialog open={showTeseModal} onOpenChange={setShowTeseModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {teseModalTipo === "principal" && <Shield className="w-4 h-4 text-emerald-500" />}
+              {teseModalTipo === "subsidiaria" && <Scale className="w-4 h-4 text-blue-500" />}
+              {teseModalTipo === "alternativa" && <Target className="w-4 h-4 text-amber-500" />}
+              Nova {TIPOS_TESE.find(t => t.id === teseModalTipo)?.label || "Tese"}
+            </DialogTitle>
+            <DialogDescription>
+              Descreva a tese defensiva para este caso.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="tese-titulo" className="text-xs text-zinc-500">Título</Label>
+              <Input
+                id="tese-titulo"
+                placeholder="Ex: Legítima defesa própria"
+                value={novaTese.titulo}
+                onChange={(e) => setNovaTese(prev => ({ ...prev, titulo: e.target.value }))}
+                autoFocus
+              />
+            </div>
+            <div>
+              <Label htmlFor="tese-descricao" className="text-xs text-zinc-500">Descrição (opcional)</Label>
+              <Textarea
+                id="tese-descricao"
+                placeholder="Fundamentos e estratégia da tese..."
+                value={novaTese.descricao}
+                onChange={(e) => setNovaTese(prev => ({ ...prev, descricao: e.target.value }))}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTeseModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateTese}
+              disabled={!novaTese.titulo.trim() || createTese.isPending}
+            >
+              {createTese.isPending ? "Salvando..." : "Criar Tese"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
