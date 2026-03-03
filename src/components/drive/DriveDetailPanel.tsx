@@ -60,6 +60,7 @@ import {
   MonitorPlay,
 } from "lucide-react";
 import { PdfViewerModal, getSectionConfig, type DocumentSection } from "./PdfViewerModal";
+import { MarkdownViewerModal } from "./MarkdownViewerModal";
 import { DocumentCompareModal } from "./DocumentCompareModal";
 import { ExpandedPreviewModal } from "./ExpandedPreviewModal";
 import { format, differenceInDays } from "date-fns";
@@ -1838,6 +1839,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
   );
   const [isRenaming, setIsRenaming] = useState(false);
   const [showPdfViewer, setShowPdfViewer] = useState(false);
+  const [showMarkdownViewer, setShowMarkdownViewer] = useState(false);
 
   // Query sibling files from same folder for file navigation in PDF viewer
   // Pre-fetch when detail opens so files list is ready when viewer opens
@@ -1889,6 +1891,8 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
   const isAudioVideo =
     file.mimeType?.startsWith("audio/") ||
     file.mimeType?.startsWith("video/");
+  const isMarkdown =
+    file.mimeType === "text/markdown" || file.name?.endsWith(".md");
   // Build PDF URL for viewer — use server-side proxy to avoid CORS
   const pdfUrl = `/api/drive/proxy?fileId=${file.driveFileId}`;
 
@@ -2010,6 +2014,20 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
               </a>
             </div>
           )}
+          {/* Markdown viewer button */}
+          {isMarkdown && (
+            <div className="mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-8 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/5"
+                onClick={() => setShowMarkdownViewer(true)}
+              >
+                <FileText className="h-3.5 w-3.5 mr-1.5" />
+                Visualizar
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Actions Row */}
@@ -2087,6 +2105,18 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
           onFileChange={(newFileId) => {
             ctx.openDetailPanel(newFileId);
           }}
+        />
+      )}
+
+      {/* Markdown Viewer Modal */}
+      {isMarkdown && (
+        <MarkdownViewerModal
+          isOpen={showMarkdownViewer}
+          onClose={() => setShowMarkdownViewer(false)}
+          fileName={file.name}
+          fileId={file.driveFileId}
+          enrichmentData={file.enrichmentData as any}
+          webViewLink={file.webViewLink || undefined}
         />
       )}
     </div>
