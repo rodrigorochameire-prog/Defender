@@ -6,6 +6,7 @@ import { useDriveContext } from "./DriveContext";
 import {
   DRIVE_ATRIBUICOES,
   SPECIAL_FOLDERS,
+  getFileIcon,
 } from "./drive-constants";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,10 @@ import {
   AlertCircle,
   Timer,
   XCircle,
+  RefreshCw,
+  Upload,
+  Activity,
+  CheckCheck,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,16 +42,18 @@ interface SyncFolder {
   fileCount: number;
 }
 
-// --- Atribuicao Card (compact, refined) ---
+// --- Atribuicao Card (with vinculação bar) ---
 
 function AtribuicaoCard({
   atribuicao,
   fileCount,
   lastSyncAt,
+  linkedPercent,
 }: {
   atribuicao: (typeof DRIVE_ATRIBUICOES)[number];
   fileCount: number;
   lastSyncAt: Date | null;
+  linkedPercent: number;
 }) {
   const ctx = useDriveContext();
   const Icon = atribuicao.icon;
@@ -91,7 +98,7 @@ function AtribuicaoCard({
         </span>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-1.5">
           <FileText className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
           <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
@@ -102,6 +109,19 @@ function AtribuicaoCard({
           <Clock className="h-3 w-3 text-zinc-400 dark:text-zinc-600" />
           <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{syncTimeStr}</span>
         </div>
+      </div>
+
+      {/* Mini vinculação progress bar */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+            style={{ width: `${Math.min(linkedPercent, 100)}%` }}
+          />
+        </div>
+        <span className="text-[10px] font-medium tabular-nums text-zinc-400 dark:text-zinc-500 min-w-[3ch] text-right">
+          {linkedPercent}%
+        </span>
       </div>
     </button>
   );
@@ -155,6 +175,97 @@ function SpecialFolderCard({
   );
 }
 
+// --- Insight Card ---
+
+function InsightCard({
+  icon: Icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string | number;
+  color: "emerald" | "amber" | "red" | "zinc";
+}) {
+  const colorClasses = {
+    emerald: "border-emerald-200/60 dark:border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-500/5",
+    amber: "border-amber-200/60 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5",
+    red: "border-red-200/60 dark:border-red-500/20 bg-red-50/50 dark:bg-red-500/5",
+    zinc: "border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50",
+  };
+  const iconClasses = {
+    emerald: "text-emerald-500 dark:text-emerald-400",
+    amber: "text-amber-500 dark:text-amber-400",
+    red: "text-red-500 dark:text-red-400",
+    zinc: "text-zinc-400 dark:text-zinc-500",
+  };
+
+  return (
+    <div className={cn("px-4 py-3 rounded-xl border flex items-center gap-3", colorClasses[color])}>
+      <Icon className={cn("h-4 w-4 shrink-0", iconClasses[color])} />
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{value}</p>
+        <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+// --- Recent File Item ---
+
+function RecentFileItem({
+  file,
+  atribuicaoLabel,
+}: {
+  file: {
+    id: number;
+    name: string;
+    mimeType: string | null;
+    webViewLink: string | null;
+    lastModifiedTime: Date | null;
+    enrichmentStatus: string | null;
+    documentType: string | null;
+    driveFolderId: string;
+  };
+  atribuicaoLabel: string | null;
+}) {
+  const Icon = getFileIcon(file.mimeType);
+  const timeStr = useMemo(() => {
+    if (!file.lastModifiedTime) return "";
+    try {
+      return formatDistanceToNow(new Date(file.lastModifiedTime), {
+        addSuffix: true,
+        locale: ptBR,
+      });
+    } catch {
+      return "";
+    }
+  }, [file.lastModifiedTime]);
+
+  return (
+    <a
+      href={file.webViewLink ?? "#"}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group cursor-pointer"
+    >
+      <Icon className="h-4 w-4 text-zinc-400 dark:text-zinc-500 shrink-0" />
+      <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate flex-1 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
+        {file.name}
+      </span>
+      {atribuicaoLabel && (
+        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 shrink-0">
+          {atribuicaoLabel}
+        </span>
+      )}
+      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 shrink-0 tabular-nums">
+        {timeStr}
+      </span>
+    </a>
+  );
+}
+
 // --- Main Component ---
 
 export function DriveOverviewDashboard() {
@@ -166,6 +277,15 @@ export function DriveOverviewDashboard() {
 
   const { data: stats } = trpc.drive.stats.useQuery(undefined, {
     staleTime: 30_000,
+  });
+
+  const { data: recentFiles } = trpc.drive.recentFiles.useQuery(
+    { limit: 8 },
+    { staleTime: 30_000 }
+  );
+
+  const { data: healthData } = trpc.drive.healthStatus.useQuery(undefined, {
+    staleTime: 60_000,
   });
 
   const retryEnrichment = trpc.drive.retryEnrichment.useMutation({
@@ -236,50 +356,156 @@ export function DriveOverviewDashboard() {
     }
   }, [syncFolders]);
 
+  // Per-atribuição linked percent (client-side estimate)
+  const atribuicaoLinkedPct = useMemo(() => {
+    const map: Record<string, number> = {};
+    if (!statsDetailed || !totalFiles) return map;
+    // Simplified: use global linkedPercent as fallback for all
+    for (const attr of DRIVE_ATRIBUICOES) {
+      map[attr.key] = linkedPercent;
+    }
+    return map;
+  }, [statsDetailed, totalFiles, linkedPercent]);
+
+  // Map folderId → atribuição label for recent files
+  const folderToAtribuicao = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const attr of DRIVE_ATRIBUICOES) {
+      if (attr.folderId) map[attr.folderId] = attr.label;
+    }
+    for (const sf of SPECIAL_FOLDERS) {
+      if (sf.folderId) map[sf.folderId] = sf.label;
+    }
+    return map;
+  }, []);
+
+  // Insights logic
+  const insights = useMemo(() => {
+    const items: { icon: React.ElementType; label: string; value: string; color: "emerald" | "amber" | "red" | "zinc" }[] = [];
+
+    // Sync status
+    if (healthData) {
+      if (healthData.status === "healthy") {
+        items.push({ icon: CheckCheck, label: "Sincronização", value: "Sync OK", color: "emerald" });
+      } else if (healthData.status === "degraded") {
+        items.push({ icon: Activity, label: "Sincronização", value: `${healthData.recentErrors} erros recentes`, color: "amber" });
+      } else {
+        items.push({ icon: AlertCircle, label: "Sincronização", value: "Sync com problemas", color: "red" });
+      }
+    }
+
+    // Enrichment processed
+    if (enrichmentCounts.completed > 0) {
+      items.push({ icon: Sparkles, label: "Extraídos com IA", value: `${enrichmentCounts.completed} docs`, color: "emerald" });
+    }
+
+    // Pending enrichment
+    if (enrichmentCounts.pending > 0) {
+      items.push({ icon: Timer, label: "Pendentes de extração", value: `${enrichmentCounts.pending} docs`, color: "amber" });
+    }
+
+    // Failed enrichment
+    if (enrichmentCounts.failed > 0) {
+      items.push({ icon: XCircle, label: "Falhas na extração", value: `${enrichmentCounts.failed} docs`, color: "red" });
+    }
+
+    // Unlinked docs
+    if (statsDetailed && statsDetailed.total > 0) {
+      const unlinked = statsDetailed.total - statsDetailed.linked;
+      if (unlinked > 0) {
+        items.push({ icon: Link2, label: "Não vinculados", value: `${unlinked} docs`, color: "zinc" });
+      }
+    }
+
+    // If everything is fine and no alerts
+    if (items.length === 0) {
+      items.push({ icon: CheckCheck, label: "Sistema", value: "Tudo em dia", color: "emerald" });
+    }
+
+    return items.slice(0, 3); // max 3
+  }, [healthData, enrichmentCounts, statsDetailed]);
+
   const isLoading = isLoadingSyncFolders || isLoadingStats;
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
-        {/* --- Header + Inline Stats --- */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <HardDrive className="w-5 h-5 text-white dark:text-zinc-900" />
+      {/* --- Header Padrão Defender --- */}
+      <div className="relative px-5 md:px-8 py-6 md:py-8 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-transparent to-transparent dark:from-emerald-950/15 pointer-events-none" />
+
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          {/* Left: Icon + Title + Subtitle */}
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+              <HardDrive className="w-6 h-6 text-white dark:text-zinc-900" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h2 className="font-serif text-3xl font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">
                 Drive Hub
               </h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {stats?.syncedFolders ?? 0} pastas sincronizadas
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Gestão de documentos e pastas sincronizadas
               </p>
             </div>
           </div>
 
-          {/* Inline stats — subtle, no big cards */}
-          <div className="flex items-center gap-3 sm:gap-4 text-sm flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
-              <span className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{totalFiles}</span>
-              <span className="text-zinc-400 dark:text-zinc-500 text-xs">docs</span>
+          {/* Right: Stats + Actions */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            {/* Inline stats */}
+            <div className="flex items-center gap-3 sm:gap-4 text-sm flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+                <span className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{totalFiles}</span>
+                <span className="text-zinc-400 dark:text-zinc-500 text-xs">docs</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Link2 className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
+                <span className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{linkedPercent}%</span>
+                <span className="text-zinc-400 dark:text-zinc-500 text-xs">vinculados</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">{lastSyncStr}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Link2 className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
-              <span className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{linkedPercent}%</span>
-              <span className="text-zinc-400 dark:text-zinc-500 text-xs">vinculados</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">{lastSyncStr}</span>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs rounded-lg border-zinc-200 dark:border-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                onClick={() => toast.info("Sincronização em desenvolvimento")}
+              >
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                Sincronizar
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 px-3 text-xs rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
+                onClick={() => toast.info("Upload em desenvolvimento")}
+              >
+                <Upload className="h-3.5 w-3.5 mr-1.5" />
+                Upload
+              </Button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto space-y-5 p-4 md:p-6">
+        {/* --- Insights/Alerts Bar --- */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {insights.map((insight, i) => (
+            <InsightCard key={i} {...insight} />
+          ))}
         </div>
 
         {/* --- Atribuicao Cards --- */}
         <div>
           <h3 className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
-            Atribuicoes
+            Atribuições
           </h3>
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -293,7 +519,8 @@ export function DriveOverviewDashboard() {
                     <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
                     <div className="h-4 w-20 rounded bg-zinc-100 dark:bg-zinc-800" />
                   </div>
-                  <div className="h-3 w-full rounded bg-zinc-100 dark:bg-zinc-800" />
+                  <div className="h-3 w-full rounded bg-zinc-100 dark:bg-zinc-800 mb-2" />
+                  <div className="h-1 w-full rounded-full bg-zinc-100 dark:bg-zinc-800" />
                 </div>
               ))}
             </div>
@@ -307,6 +534,7 @@ export function DriveOverviewDashboard() {
                     atribuicao={attr}
                     fileCount={data?.fileCount ?? 0}
                     lastSyncAt={data?.lastSyncAt ?? null}
+                    linkedPercent={atribuicaoLinkedPct[attr.key] ?? 0}
                   />
                 );
               })}
@@ -333,71 +561,82 @@ export function DriveOverviewDashboard() {
           </div>
         </div>
 
-        {/* --- Enrichment: Inline compact --- */}
+        {/* --- Enrichment with IA (reformed) --- */}
         <div>
           <h3 className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
-            Extracao com IA
+            Extração com IA
           </h3>
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4">
+          <div className="rounded-xl border-2 border-emerald-200/50 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50/50 via-white to-white dark:from-emerald-950/20 dark:via-zinc-900 dark:to-zinc-900 p-5">
             {isLoadingStats ? (
-              <div className="h-8 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
+              <div className="h-12 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
             ) : (
-              <div className="space-y-3">
-                {/* Progress bar */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                        style={{ width: `${enrichedPercent}%` }}
-                      />
-                    </div>
+              <div className="space-y-4">
+                {/* Header row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
+                    <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                      Enriquecimento de Documentos
+                    </span>
                   </div>
-                  <span className="text-xs font-medium tabular-nums text-zinc-600 dark:text-zinc-300 min-w-[3ch] text-right">
-                    {enrichedPercent}%
+                  <span className="text-xs font-medium tabular-nums text-zinc-500 dark:text-zinc-400">
+                    {enrichedPercent}% processados
                   </span>
                 </div>
 
-                {/* Inline counters */}
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
-                    <span className="text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{enrichmentCounts.completed}</span>
-                    <span className="text-xs text-zinc-400 dark:text-zinc-500">extraidos</span>
+                {/* Progress bar (larger) */}
+                <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-700 ease-out"
+                    style={{ width: `${enrichedPercent}%` }}
+                  />
+                </div>
+
+                {/* Stats badges + button */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100/60 dark:bg-emerald-500/10">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-xs font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{enrichmentCounts.completed}</span>
+                    <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/60">extraídos</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Timer className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
-                    <span className="text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{enrichmentCounts.processing}</span>
-                    <span className="text-xs text-zinc-400 dark:text-zinc-500">processando</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <AlertCircle className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
-                    <span className="text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{enrichmentCounts.pending}</span>
-                    <span className="text-xs text-zinc-400 dark:text-zinc-500">pendentes</span>
-                  </div>
-                  {enrichmentCounts.failed > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <XCircle className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
-                      <span className="text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">{enrichmentCounts.failed}</span>
-                      <span className="text-xs text-zinc-400 dark:text-zinc-500">falhas</span>
+
+                  {enrichmentCounts.processing > 0 && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-100/60 dark:bg-amber-500/10 animate-pulse">
+                      <Timer className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                      <span className="text-xs font-semibold tabular-nums text-amber-700 dark:text-amber-300">{enrichmentCounts.processing}</span>
+                      <span className="text-[10px] text-amber-600/70 dark:text-amber-400/60">processando</span>
                     </div>
                   )}
 
-                  {/* Retry button inline */}
+                  {enrichmentCounts.pending > 0 && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-100/60 dark:bg-zinc-800/60">
+                      <AlertCircle className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+                      <span className="text-xs font-semibold tabular-nums text-zinc-600 dark:text-zinc-300">{enrichmentCounts.pending}</span>
+                      <span className="text-[10px] text-zinc-500/70 dark:text-zinc-400/60">pendentes</span>
+                    </div>
+                  )}
+
+                  {enrichmentCounts.failed > 0 && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-100/60 dark:bg-red-500/10">
+                      <XCircle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                      <span className="text-xs font-semibold tabular-nums text-red-700 dark:text-red-300">{enrichmentCounts.failed}</span>
+                      <span className="text-[10px] text-red-600/70 dark:text-red-400/60">falhas</span>
+                    </div>
+                  )}
+
+                  {/* Prominent Process button */}
                   {enrichmentCounts.pending > 0 && (
                     <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2.5 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 border border-emerald-200/50 dark:border-emerald-500/20 rounded-lg ml-auto"
+                      className="ml-auto h-9 px-4 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm"
                       onClick={() => retryEnrichment.mutate({})}
                       disabled={retryEnrichment.isPending}
                     >
                       {retryEnrichment.isPending ? (
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
                       ) : (
-                        <Sparkles className="h-3 w-3 mr-1" />
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                       )}
-                      Processar {enrichmentCounts.pending}
+                      Processar {enrichmentCounts.pending} pendentes
                     </Button>
                   )}
                 </div>
@@ -405,6 +644,25 @@ export function DriveOverviewDashboard() {
             )}
           </div>
         </div>
+
+        {/* --- Recent Documents --- */}
+        {recentFiles && recentFiles.length > 0 && (
+          <div>
+            <h3 className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Clock className="h-3 w-3" />
+              Atividade Recente
+            </h3>
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl divide-y divide-zinc-100 dark:divide-zinc-800/60 overflow-hidden">
+              {recentFiles.map((file) => (
+                <RecentFileItem
+                  key={file.id}
+                  file={file}
+                  atribuicaoLabel={folderToAtribuicao[file.driveFolderId] ?? null}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

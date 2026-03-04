@@ -85,11 +85,20 @@ import {
   FileBarChart,
   Crosshair,
   NotebookPen,
+  Bell,
+  BookOpen,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnotacoesAprimoradas } from "@/components/juri/cockpit/anotacoes-aprimoradas";
 import { QuickReactionsBar } from "@/components/juri/cockpit/quick-reactions-bar";
 import { PainelEstrategico } from "@/components/juri/cockpit/painel-estrategico";
+import { RoteiroSustentacao } from "@/components/juri/cockpit/roteiro-sustentacao";
+import { AlertasTempoReal } from "@/components/juri/cockpit/alertas-tempo-real";
+import { MapaQuesitosVivo } from "@/components/juri/cockpit/mapa-quesitos-vivo";
+import { BancoObjecoes } from "@/components/juri/cockpit/banco-objecoes";
+import { HistoricoPerguntas } from "@/components/juri/cockpit/historico-perguntas";
+import { TimerSustentacao } from "@/components/juri/cockpit/timer-sustentacao";
 
 // ============================================
 // CONFIGURAÇÃO DAS FASES
@@ -818,7 +827,7 @@ export default function PlenarioCockpitPage() {
   const [totalTime, setTotalTime] = useState(phases[0].minutes * 60);
   const [timeLeft, setTimeLeft] = useState(phases[0].mode === "stopwatch" ? 0 : phases[0].minutes * 60);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [activeTab, setActiveTab] = useState<"conselho" | "anotacoes" | "relatorio">("conselho");
+  const [activeTab, setActiveTab] = useState<"conselho" | "anotacoes" | "relatorio" | "roteiro" | "alertas" | "quesitos" | "objecoes" | "perguntas">("conselho");
   const [cockpitMode, setCockpitMode] = useState<"registro" | "estrategia">("registro");
   const [searchJurado, setSearchJurado] = useState("");
   const [showRecusados, setShowRecusados] = useState(false);
@@ -1267,6 +1276,15 @@ export default function PlenarioCockpitPage() {
         </div>
 
         <div className="p-4 space-y-4 pb-24">
+          {/* Timer Sustentação - alertas visuais/vibração */}
+          <TimerSustentacao
+            isDarkMode={isDarkMode}
+            faseSelecionada={faseSelecionada}
+            timeLeft={timeLeft}
+            isRunning={isRunning}
+            totalTime={totalTime}
+          />
+
           {/* Timer e Fase */}
           <div className={cn("p-4", cardClass)}>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -1358,59 +1376,60 @@ export default function PlenarioCockpitPage() {
           )}
 
           {/* Tabs */}
-          <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-2">
+          <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-2 overflow-x-auto scrollbar-thin">
             {cockpitMode === "registro" ? (
               <>
-                <Button
-                  variant={activeTab === "conselho" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab("conselho")}
-                  className={cn(
-                    "transition-all duration-200",
-                    activeTab === "conselho"
-                      ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
-                      : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  )}
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Conselho
-                </Button>
-                <Button
-                  variant={activeTab === "anotacoes" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab("anotacoes")}
-                  className={cn(
-                    "transition-all duration-200",
-                    activeTab === "anotacoes"
-                      ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
-                      : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  )}
-                >
-                  <PenLine className="w-4 h-4 mr-2" />
-                  Anotações ({anotacoes.length})
-                </Button>
-                <Button
-                  variant={activeTab === "relatorio" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab("relatorio")}
-                  className={cn(
-                    "transition-all duration-200",
-                    activeTab === "relatorio"
-                      ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
-                      : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  )}
-                  disabled={juradosAtivos.length === 0}
-                >
-                  <FileBarChart className="w-4 h-4 mr-2" />
-                  Relatório
-                </Button>
+                {([
+                  { id: "conselho" as const, icon: Users, label: "Conselho" },
+                  { id: "anotacoes" as const, icon: PenLine, label: `Anotações (${anotacoes.length})` },
+                  { id: "perguntas" as const, icon: MessageSquare, label: "Perguntas" },
+                  { id: "alertas" as const, icon: Bell, label: "Alertas" },
+                  { id: "relatorio" as const, icon: FileBarChart, label: "Relatório" },
+                ]).map((tab) => (
+                  <Button
+                    key={tab.id}
+                    variant={activeTab === tab.id ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      "transition-all duration-200 flex-shrink-0",
+                      activeTab === tab.id
+                        ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                    )}
+                    disabled={tab.id === "relatorio" && juradosAtivos.length === 0}
+                  >
+                    <tab.icon className="w-4 h-4 mr-1.5" />
+                    <span className="whitespace-nowrap">{tab.label}</span>
+                  </Button>
+                ))}
               </>
             ) : (
-              <div className="flex items-center gap-2 py-1">
-                <Crosshair className="w-4 h-4 text-emerald-600" />
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Modo Estratégia</span>
-                <span className="text-xs text-zinc-400">— Referência rápida para o defensor</span>
-              </div>
+              <>
+                {([
+                  { id: "estrategia" as const, icon: Crosshair, label: "Estratégia" },
+                  { id: "roteiro" as const, icon: BookOpen, label: "Roteiro" },
+                  { id: "quesitos" as const, icon: Vote, label: "Quesitos" },
+                  { id: "objecoes" as const, icon: Gavel, label: "Objeções" },
+                  { id: "alertas" as const, icon: Bell, label: "Alertas" },
+                ]).map((tab) => (
+                  <Button
+                    key={tab.id}
+                    variant={activeTab === tab.id || (tab.id === "estrategia" && !["roteiro", "quesitos", "objecoes", "alertas"].includes(activeTab)) ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setActiveTab(tab.id === "estrategia" ? "conselho" : tab.id)}
+                    className={cn(
+                      "transition-all duration-200 flex-shrink-0",
+                      (activeTab === tab.id || (tab.id === "estrategia" && !["roteiro", "quesitos", "objecoes", "alertas"].includes(activeTab)))
+                        ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                    )}
+                  >
+                    <tab.icon className="w-4 h-4 mr-1.5" />
+                    <span className="whitespace-nowrap">{tab.label}</span>
+                  </Button>
+                ))}
+              </>
             )}
           </div>
 
@@ -2035,13 +2054,63 @@ export default function PlenarioCockpitPage() {
             />
           )}
 
-          {/* Strategic Mode Panel */}
-          {cockpitMode === "estrategia" && (
+          {/* Strategic Mode Panel (default view in estrategia mode) */}
+          {cockpitMode === "estrategia" && !["roteiro", "quesitos", "objecoes", "alertas"].includes(activeTab) && (
             <PainelEstrategico
               anotacoes={anotacoes}
               conselhoSentenca={conselhoSentenca}
               faseSelecionada={faseSelecionada}
               isDarkMode={isDarkMode}
+            />
+          )}
+
+          {/* Tab: Perguntas às Testemunhas (Registro mode) */}
+          {activeTab === "perguntas" && cockpitMode === "registro" && (
+            <HistoricoPerguntas
+              isDarkMode={isDarkMode}
+              faseSelecionada={faseSelecionada}
+            />
+          )}
+
+          {/* Tab: Alertas - Enviar (Registro mode) */}
+          {activeTab === "alertas" && cockpitMode === "registro" && (
+            <AlertasTempoReal
+              isDarkMode={isDarkMode}
+              faseSelecionada={faseSelecionada}
+              mode="enviar"
+            />
+          )}
+
+          {/* Tab: Alertas - Receber (Estrategia mode) */}
+          {activeTab === "alertas" && cockpitMode === "estrategia" && (
+            <AlertasTempoReal
+              isDarkMode={isDarkMode}
+              faseSelecionada={faseSelecionada}
+              mode="receber"
+            />
+          )}
+
+          {/* Tab: Roteiro de Sustentação (Estrategia mode) */}
+          {activeTab === "roteiro" && cockpitMode === "estrategia" && (
+            <RoteiroSustentacao
+              isDarkMode={isDarkMode}
+              faseSelecionada={faseSelecionada}
+            />
+          )}
+
+          {/* Tab: Quesitos ao Vivo (Estrategia mode) */}
+          {activeTab === "quesitos" && cockpitMode === "estrategia" && (
+            <MapaQuesitosVivo
+              isDarkMode={isDarkMode}
+              faseSelecionada={faseSelecionada}
+            />
+          )}
+
+          {/* Tab: Banco de Objeções - Visualizar (Estrategia mode) */}
+          {activeTab === "objecoes" && cockpitMode === "estrategia" && (
+            <BancoObjecoes
+              isDarkMode={isDarkMode}
+              mode="visualizar"
             />
           )}
 
