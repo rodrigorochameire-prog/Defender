@@ -8,6 +8,7 @@ interface ExpandedPreviewModalProps {
   onClose: () => void;
   fileName: string;
   webViewLink: string;
+  driveFileId?: string;
 }
 
 export function ExpandedPreviewModal({
@@ -15,10 +16,14 @@ export function ExpandedPreviewModal({
   onClose,
   fileName,
   webViewLink,
+  driveFileId,
 }: ExpandedPreviewModalProps) {
   if (!isOpen) return null;
 
-  const previewUrl = webViewLink.replace("/view", "/preview");
+  // Use proxy for PDFs (avoids Google CSP frame-ancestors block)
+  const previewUrl = driveFileId
+    ? `/api/drive/proxy?fileId=${driveFileId}`
+    : webViewLink.replace("/view", "/preview");
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex flex-col">

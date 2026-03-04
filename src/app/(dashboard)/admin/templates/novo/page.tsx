@@ -47,8 +47,8 @@ export default function NovoTemplatePage() {
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
           </Link>
-          <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 flex-shrink-0">
-            <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-700 dark:text-indigo-400" />
+          <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-950/20 flex-shrink-0">
+            <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-700 dark:text-emerald-400" />
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">

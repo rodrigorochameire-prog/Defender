@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, driveFiles, driveSyncFolders, driveSyncLogs } from "@/lib/db";
-import { eq, and, desc, sql, isNull, or, like, not, gt, lt } from "drizzle-orm";
+import { eq, and, desc, sql, isNull, or, like, not, gt, lt, inArray } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import {
   listFilesInFolder,
@@ -384,6 +384,325 @@ export const driveRouter = router({
     }
 
     return results;
+  }),
+
+  /**
+   * Smart sync: scan-once + match-in-memory com dry-run
+   * Substitui autoLinkAssistidosByName com algoritmo O(A+F) em vez de O(A×F)
+   */
+  smartSync: adminProcedure
+    .input(z.object({
+      dryRun: z.boolean().default(true),
+      createMissing: z.boolean().default(true),
+    }))
+    .mutation(async ({ input }) => {
+      const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+
+      // 1. SCAN: List all subfolders from all 5 atribuições in parallel
+      const atribuicaoKeys = Object.keys(ATRIBUICAO_FOLDER_IDS) as (keyof typeof ATRIBUICAO_FOLDER_IDS)[];
+
+      const scanResults = await Promise.allSettled(
+        atribuicaoKeys.map(async (key) => {
+          const folderId = ATRIBUICAO_FOLDER_IDS[key];
+          const items = await listAllItemsInFolder(folderId);
+          const folders = items.filter(item => item.mimeType === "application/vnd.google-apps.folder");
+          return { key, folders };
+        })
+      );
+
+      // Build in-memory map of all Drive folders
+      type FolderEntry = { id: string; name: string; normalizedName: string; atribuicaoKey: string };
+      const folderMap: FolderEntry[] = [];
+      const scanned: Array<{ atribuicao: string; folderCount: number }> = [];
+
+      for (const result of scanResults) {
+        if (result.status === "fulfilled") {
+          const { key, folders } = result.value;
+          scanned.push({ atribuicao: key, folderCount: folders.length });
+          for (const folder of folders) {
+            folderMap.push({
+              id: folder.id,
+              name: folder.name,
+              normalizedName: normalizeName(folder.name).toLowerCase().replace(/\s+/g, " ").trim(),
+              atribuicaoKey: key,
+            });
+          }
+        } else {
+          console.error(`[smartSync] Erro ao listar pastas:`, result.reason);
+        }
+      }
+
+      // 2. LOAD: Get all unlinked assistidos
+      const unlinkedAssistidos = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+        })
+        .from(assistidos)
+        .where(isNull(assistidos.driveFolderId));
+
+      // 3. MATCH: For each assistido, find best matching folder in memory
+      const atribToFolder: Record<string, string> = {
+        JURI_CAMACARI: "JURI",
+        GRUPO_JURI: "GRUPO_JURI",
+        VVD_CAMACARI: "VVD",
+        EXECUCAO_PENAL: "EP",
+        SUBSTITUICAO: "SUBSTITUICAO",
+        SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
+      };
+
+      type SyncAction = {
+        assistidoId: number;
+        assistidoNome: string;
+        atribuicao: string;
+        action: "link" | "create" | "no_atribuicao";
+        folderId?: string;
+        folderName?: string;
+        confidence: number;
+        matchType: "exact" | "first_last" | "contains" | "fuzzy" | "none";
+      };
+
+      const actions: SyncAction[] = [];
+
+      for (const assistido of unlinkedAssistidos) {
+        const atribKey = atribToFolder[assistido.atribuicaoPrimaria || ""] || null;
+
+        if (!atribKey) {
+          actions.push({
+            assistidoId: assistido.id,
+            assistidoNome: assistido.nome,
+            atribuicao: assistido.atribuicaoPrimaria || "N/A",
+            action: "no_atribuicao",
+            confidence: 0,
+            matchType: "none",
+          });
+          continue;
+        }
+
+        const nomeNorm = normalizeName(assistido.nome).toLowerCase().replace(/\s+/g, " ").trim();
+        const nomeParts = nomeNorm.split(" ").filter((p: string) => p.length > 0);
+        const firstName = nomeParts[0] || "";
+        const lastName = nomeParts[nomeParts.length - 1] || "";
+
+        let bestMatch: { folder: FolderEntry; confidence: number; matchType: SyncAction["matchType"] } | null = null;
+
+        for (const folder of folderMap) {
+          let confidence = 0;
+          let matchType: SyncAction["matchType"] = "none";
+
+          // a) Exact normalized match → 100%
+          if (folder.normalizedName === nomeNorm) {
+            confidence = 1.0;
+            matchType = "exact";
+          }
+          // b) First + Last name match → 95%
+          else {
+            const folderParts = folder.normalizedName.split(" ").filter((p: string) => p.length > 0);
+            const folderFirst = folderParts[0] || "";
+            const folderLast = folderParts[folderParts.length - 1] || "";
+
+            if (firstName && lastName && firstName !== lastName && folderFirst === firstName && folderLast === lastName) {
+              confidence = 0.95;
+              matchType = "first_last";
+            }
+            // c) Contains (one starts with the other, min 6 chars overlap)
+            else if (
+              (folder.normalizedName.startsWith(nomeNorm) || nomeNorm.startsWith(folder.normalizedName)) &&
+              Math.min(folder.normalizedName.length, nomeNorm.length) > 5
+            ) {
+              confidence = 0.90;
+              matchType = "contains";
+            }
+            // d) Levenshtein fuzzy >= 0.85
+            else {
+              const sim = calculateSimilarity(folder.normalizedName, nomeNorm);
+              if (sim >= 0.85) {
+                confidence = sim;
+                matchType = "fuzzy";
+              }
+            }
+          }
+
+          // Boost if same atribuição (+0.05)
+          if (confidence > 0 && folder.atribuicaoKey === atribKey) {
+            confidence = Math.min(confidence + 0.05, 1.0);
+          }
+
+          if (confidence > 0 && (!bestMatch || confidence > bestMatch.confidence)) {
+            bestMatch = { folder, confidence, matchType };
+          }
+        }
+
+        if (bestMatch && bestMatch.confidence >= 0.85) {
+          actions.push({
+            assistidoId: assistido.id,
+            assistidoNome: assistido.nome,
+            atribuicao: atribKey,
+            action: "link",
+            folderId: bestMatch.folder.id,
+            folderName: bestMatch.folder.name,
+            confidence: Math.round(bestMatch.confidence * 100) / 100,
+            matchType: bestMatch.matchType,
+          });
+        } else if (input.createMissing) {
+          actions.push({
+            assistidoId: assistido.id,
+            assistidoNome: assistido.nome,
+            atribuicao: atribKey,
+            action: "create",
+            confidence: 0,
+            matchType: "none",
+          });
+        }
+      }
+
+      // 4. EXECUTE if not dry-run
+      let executed = { linked: 0, created: 0, errors: 0 };
+      if (!input.dryRun) {
+        for (const action of actions) {
+          try {
+            if (action.action === "link" && action.folderId) {
+              await db
+                .update(assistidos)
+                .set({ driveFolderId: action.folderId, updatedAt: new Date() })
+                .where(eq(assistidos.id, action.assistidoId));
+              executed.linked++;
+            } else if (action.action === "create") {
+              const folder = await createOrFindAssistidoFolder(action.atribuicao as "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI", action.assistidoNome);
+              if (folder) {
+                await db
+                  .update(assistidos)
+                  .set({ driveFolderId: folder.id, updatedAt: new Date() })
+                  .where(eq(assistidos.id, action.assistidoId));
+                action.folderId = folder.id;
+                action.folderName = folder.name;
+                executed.created++;
+              } else {
+                executed.errors++;
+              }
+            }
+          } catch (error) {
+            console.error(`[smartSync] Erro ao executar para ${action.assistidoNome}:`, error);
+            executed.errors++;
+          }
+        }
+      }
+
+      // 5. Return
+      return {
+        scanned,
+        actions,
+        stats: {
+          totalUnlinked: unlinkedAssistidos.length,
+          willLink: actions.filter(a => a.action === "link").length,
+          willCreate: actions.filter(a => a.action === "create").length,
+          noAtribuicao: actions.filter(a => a.action === "no_atribuicao").length,
+        },
+        executed: input.dryRun ? null : executed,
+        dryRun: input.dryRun,
+      };
+    }),
+
+  /**
+   * Dashboard de vínculos Drive↔Assistidos
+   * Retorna stats por atribuição + contagem de pastas no Drive
+   */
+  syncDashboard: adminProcedure.query(async () => {
+    const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+
+    // 1. Get assistido counts per atribuição from DB
+    const dbCounts = await db
+      .select({
+        atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+        total: sql<number>`cast(count(*) as integer)`,
+        linked: sql<number>`cast(count(${assistidos.driveFolderId}) as integer)`,
+      })
+      .from(assistidos)
+      .groupBy(assistidos.atribuicaoPrimaria);
+
+    // 2. Map DB enums to folder keys and aggregate
+    const atribToFolder: Record<string, string> = {
+      JURI_CAMACARI: "JURI",
+      GRUPO_JURI: "GRUPO_JURI",
+      VVD_CAMACARI: "VVD",
+      EXECUCAO_PENAL: "EP",
+      SUBSTITUICAO: "SUBSTITUICAO",
+      SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
+    };
+
+    const atribLabels: Record<string, string> = {
+      JURI: "Júri",
+      VVD: "VVD",
+      EP: "Exec. Penal",
+      SUBSTITUICAO: "Substituição",
+      GRUPO_JURI: "Grupo Júri",
+    };
+
+    const aggregated: Record<string, { linked: number; unlinked: number }> = {};
+    for (const key of Object.keys(ATRIBUICAO_FOLDER_IDS)) {
+      aggregated[key] = { linked: 0, unlinked: 0 };
+    }
+
+    for (const row of dbCounts) {
+      const key = atribToFolder[row.atribuicaoPrimaria || ""] || null;
+      if (key && aggregated[key]) {
+        aggregated[key].linked += Number(row.linked);
+        aggregated[key].unlinked += Number(row.total) - Number(row.linked);
+      }
+    }
+
+    // 3. Scan Drive folders in parallel (5 API calls)
+    const atribuicaoKeys = Object.keys(ATRIBUICAO_FOLDER_IDS) as (keyof typeof ATRIBUICAO_FOLDER_IDS)[];
+
+    let driveFolderCounts: Record<string, number> = {};
+    try {
+      const scanResults = await Promise.allSettled(
+        atribuicaoKeys.map(async (key) => {
+          const folderId = ATRIBUICAO_FOLDER_IDS[key];
+          const items = await listAllItemsInFolder(folderId);
+          const folderCount = items.filter(item => item.mimeType === "application/vnd.google-apps.folder").length;
+          return { key, folderCount };
+        })
+      );
+
+      for (const result of scanResults) {
+        if (result.status === "fulfilled") {
+          driveFolderCounts[result.value.key] = result.value.folderCount;
+        }
+      }
+    } catch (error) {
+      console.error("[syncDashboard] Erro ao escanear Drive:", error);
+    }
+
+    // 4. Build response
+    const byAtribuicao = atribuicaoKeys.map(key => {
+      const dbData = aggregated[key] || { linked: 0, unlinked: 0 };
+      const driveFolders = driveFolderCounts[key] || 0;
+
+      return {
+        key,
+        label: atribLabels[key] || key,
+        linked: dbData.linked,
+        unlinked: dbData.unlinked,
+        driveFolders,
+        orphanFolders: Math.max(0, driveFolders - dbData.linked),
+      };
+    });
+
+    const totalAssistidos = byAtribuicao.reduce((sum, a) => sum + a.linked + a.unlinked, 0);
+    const totalLinked = byAtribuicao.reduce((sum, a) => sum + a.linked, 0);
+    const totalUnlinked = byAtribuicao.reduce((sum, a) => sum + a.unlinked, 0);
+
+    return {
+      byAtribuicao,
+      totals: {
+        totalAssistidos,
+        linked: totalLinked,
+        unlinked: totalUnlinked,
+        linkRate: totalAssistidos > 0 ? Math.round((totalLinked / totalAssistidos) * 100) : 0,
+      },
+    };
   }),
 
   /**
@@ -2017,26 +2336,32 @@ export const driveRouter = router({
           )
         );
 
-      // Contagem de docs por processo
-      const processosComDocs = await Promise.all(
-        processosWithFolder.map(async (p) => {
-          const [result] = await db
-            .select({ count: sql<number>`count(*)::int` })
-            .from(driveFiles)
-            .where(
-              and(
-                eq(driveFiles.processoId, p.id),
-                eq(driveFiles.isFolder, false)
-              )
-            );
-          return {
-            id: p.id,
-            numeroAutos: p.numeroAutos,
-            driveFolderId: p.driveFolderId,
-            docCount: result?.count || 0,
-          };
-        })
-      );
+      // Contagem de docs por processo (batch instead of N+1)
+      let processosComDocs: Array<{ id: number; numeroAutos: string | null; driveFolderId: string | null; docCount: number }> = [];
+      if (processosWithFolder.length > 0) {
+        const processoIds = processosWithFolder.map((p) => p.id);
+        const docCounts = await db
+          .select({
+            processoId: driveFiles.processoId,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(driveFiles)
+          .where(
+            and(
+              inArray(driveFiles.processoId, processoIds),
+              eq(driveFiles.isFolder, false)
+            )
+          )
+          .groupBy(driveFiles.processoId);
+
+        const countMap = new Map(docCounts.map((r) => [r.processoId, r.count]));
+        processosComDocs = processosWithFolder.map((p) => ({
+          id: p.id,
+          numeroAutos: p.numeroAutos,
+          driveFolderId: p.driveFolderId,
+          docCount: countMap.get(p.id) || 0,
+        }));
+      }
 
       // Último sync
       const [syncFolder] = await db
@@ -2227,7 +2552,29 @@ export const driveRouter = router({
       if (input.search) conditions.push(like(driveFiles.name, `%${input.search}%`));
 
       const files = await db
-        .select()
+        .select({
+          id: driveFiles.id,
+          driveFileId: driveFiles.driveFileId,
+          driveFolderId: driveFiles.driveFolderId,
+          name: driveFiles.name,
+          mimeType: driveFiles.mimeType,
+          fileSize: driveFiles.fileSize,
+          webViewLink: driveFiles.webViewLink,
+          webContentLink: driveFiles.webContentLink,
+          thumbnailLink: driveFiles.thumbnailLink,
+          lastModifiedTime: driveFiles.lastModifiedTime,
+          isFolder: driveFiles.isFolder,
+          parentFileId: driveFiles.parentFileId,
+          processoId: driveFiles.processoId,
+          assistidoId: driveFiles.assistidoId,
+          documentoId: driveFiles.documentoId,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          enrichmentError: driveFiles.enrichmentError,
+          enrichedAt: driveFiles.enrichedAt,
+          categoria: driveFiles.categoria,
+          documentType: driveFiles.documentType,
+          createdAt: driveFiles.createdAt,
+        })
         .from(driveFiles)
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(driveFiles.lastModifiedTime))
@@ -2278,6 +2625,48 @@ export const driveRouter = router({
         .returning({ id: driveFiles.id });
 
       return { reset: result.length };
+    }),
+
+  /**
+   * Lazy-load enrichmentData for specific files.
+   * Called on-demand when user opens Mídias tab or transcript viewer.
+   */
+  getFilesEnrichmentData: protectedProcedure
+    .input(z.object({
+      fileIds: z.array(z.number()).max(50),
+    }))
+    .query(async ({ input }) => {
+      if (input.fileIds.length === 0) return [];
+      return db
+        .select({
+          id: driveFiles.id,
+          driveFileId: driveFiles.driveFileId,
+          enrichmentData: driveFiles.enrichmentData,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+        })
+        .from(driveFiles)
+        .where(inArray(driveFiles.id, input.fileIds));
+    }),
+
+  /**
+   * Lightweight status check for specific files (replaces heavy polling).
+   * Returns only id + enrichmentStatus for polling during transcription.
+   */
+  getFileStatuses: protectedProcedure
+    .input(z.object({
+      driveFileIds: z.array(z.string()).max(20),
+    }))
+    .query(async ({ input }) => {
+      if (input.driveFileIds.length === 0) return [];
+      return db
+        .select({
+          id: driveFiles.id,
+          driveFileId: driveFiles.driveFileId,
+          name: driveFiles.name,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+        })
+        .from(driveFiles)
+        .where(inArray(driveFiles.driveFileId, input.driveFileIds));
     }),
 
   /**
@@ -2477,41 +2866,80 @@ export const driveRouter = router({
         reason: string;
       }> = [];
 
-      for (const fileId of input.fileIds) {
-        const file = await db.query.driveFiles.findFirst({
-          where: eq(driveFiles.id, fileId),
-        });
-        if (!file || !file.enrichmentData) continue;
+      if (input.fileIds.length === 0) return suggestions;
 
+      // Batch fetch all files at once instead of N+1
+      const files = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          enrichmentData: driveFiles.enrichmentData,
+        })
+        .from(driveFiles)
+        .where(inArray(driveFiles.id, input.fileIds));
+
+      // Collect unique processo numbers and pessoa names for batch lookup
+      const processoNumbers: string[] = [];
+      const filesWithData: Array<{ id: number; name: string; data: Record<string, unknown> }> = [];
+
+      for (const file of files) {
+        if (!file.enrichmentData) continue;
         const data = file.enrichmentData as Record<string, unknown>;
-
-        // Try to match by processo number
+        filesWithData.push({ id: file.id, name: file.name, data });
         if (data.numero_processo && typeof data.numero_processo === "string") {
-          const processo = await db.query.processos.findFirst({
-            where: and(
-              eq(processos.numeroAutos, data.numero_processo),
-              isNull(processos.deletedAt),
-            ),
-          });
-          if (processo) {
-            let suggestedAssistidoNome: string | null = null;
-            if (processo.assistidoId) {
-              const assistido = await db.query.assistidos.findFirst({
-                where: eq(assistidos.id, processo.assistidoId),
-                columns: { nome: true },
-              });
-              if (assistido) {
-                suggestedAssistidoNome = assistido.nome;
-              }
-            }
+          processoNumbers.push(data.numero_processo);
+        }
+      }
 
+      // Batch fetch processos by number
+      const matchedProcessos = processoNumbers.length > 0
+        ? await db
+            .select({
+              id: processos.id,
+              numeroAutos: processos.numeroAutos,
+              assistidoId: processos.assistidoId,
+            })
+            .from(processos)
+            .where(and(inArray(processos.numeroAutos, processoNumbers), isNull(processos.deletedAt)))
+        : [];
+      const processoMap = new Map(matchedProcessos.map((p) => [p.numeroAutos, p]));
+
+      // Batch fetch assistido names for matched processos
+      const assistidoIds = matchedProcessos
+        .map((p) => p.assistidoId)
+        .filter((id): id is number => id !== null);
+      const matchedAssistidos = assistidoIds.length > 0
+        ? await db
+            .select({ id: assistidos.id, nome: assistidos.nome })
+            .from(assistidos)
+            .where(inArray(assistidos.id, assistidoIds))
+        : [];
+      const assistidoMap = new Map(matchedAssistidos.map((a) => [a.id, a.nome]));
+
+      // Fetch candidatos once for name matching (instead of per-file)
+      const needsNameMatch = filesWithData.some(
+        (f) => f.data.pessoa_nome && typeof f.data.pessoa_nome === "string" && !processoMap.has(f.data.numero_processo as string)
+      );
+      const candidatos = needsNameMatch
+        ? await db
+            .select({ id: assistidos.id, nome: assistidos.nome })
+            .from(assistidos)
+            .where(isNull(assistidos.deletedAt))
+            .limit(50)
+        : [];
+
+      for (const { id: fileId, name: fileName, data } of filesWithData) {
+        // Try match by processo number
+        if (data.numero_processo && typeof data.numero_processo === "string") {
+          const processo = processoMap.get(data.numero_processo);
+          if (processo) {
             suggestions.push({
               fileId,
-              fileName: file.name,
+              fileName,
               suggestedProcessoId: processo.id,
               suggestedProcessoNumero: processo.numeroAutos,
               suggestedAssistidoId: processo.assistidoId,
-              suggestedAssistidoNome,
+              suggestedAssistidoNome: processo.assistidoId ? assistidoMap.get(processo.assistidoId) ?? null : null,
               confidence: 0.9,
               reason: `Número do processo ${data.numero_processo} encontrado no documento`,
             });
@@ -2519,20 +2947,14 @@ export const driveRouter = router({
           }
         }
 
-        // Try to match by pessoa name
+        // Try match by pessoa name
         if (data.pessoa_nome && typeof data.pessoa_nome === "string") {
-          const candidatos = await db
-            .select({ id: assistidos.id, nome: assistidos.nome })
-            .from(assistidos)
-            .where(isNull(assistidos.deletedAt))
-            .limit(50);
-
           for (const candidato of candidatos) {
             const similarity = calculateSimilarity(candidato.nome, data.pessoa_nome as string);
             if (similarity >= 0.85) {
               suggestions.push({
                 fileId,
-                fileName: file.name,
+                fileName,
                 suggestedProcessoId: null,
                 suggestedProcessoNumero: null,
                 suggestedAssistidoId: candidato.id,

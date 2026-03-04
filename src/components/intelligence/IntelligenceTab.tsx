@@ -23,6 +23,7 @@ import { IntelligenceFacts } from "./IntelligenceFacts";
 import { IntelligenceTimeline } from "./IntelligenceTimeline";
 import { IntelligenceDefense } from "./IntelligenceDefense";
 import { IntelligenceDiagram } from "./IntelligenceDiagram";
+import { IntelligenceCrossAnalysis } from "./IntelligenceCrossAnalysis";
 
 // ─────────────────────────────────────────────────────────────
 // KPI Card
@@ -59,6 +60,7 @@ type SubTab =
   | "overview"
   | "personas"
   | "facts"
+  | "cross"
   | "timeline"
   | "defense"
   | "diagram";
@@ -67,6 +69,7 @@ const SUB_TABS: { key: SubTab; label: string; icon: React.ElementType }[] = [
   { key: "overview", label: "Visao Geral", icon: BarChart3 },
   { key: "personas", label: "Pessoas", icon: Users },
   { key: "facts", label: "Fatos", icon: FileText },
+  { key: "cross", label: "Cruzamento", icon: AlertCircle },
   { key: "timeline", label: "Cronologia", icon: Calendar },
   { key: "defense", label: "Defesa", icon: Shield },
   { key: "diagram", label: "Diagrama", icon: Network },
@@ -363,6 +366,9 @@ export function IntelligenceTab({
               "prova",
             ]}
           />
+        )}
+        {subTab === "cross" && assistidoId && (
+          <IntelligenceCrossAnalysis assistidoId={assistidoId} />
         )}
         {subTab === "timeline" && (
           <IntelligenceTimeline events={eventFacts} />

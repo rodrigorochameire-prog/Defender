@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { httpBatchLink } from "@trpc/client";
+import { httpBatchLink, splitLink } from "@trpc/client";
 import { useState, Suspense } from "react";
 import superjson from "superjson";
 import { trpc } from "@/lib/trpc/client";
@@ -10,13 +10,20 @@ import { AssignmentProvider } from "@/contexts/assignment-context";
 import { ProfissionalProvider } from "@/contexts/profissional-context";
 import { ProcessingQueueProvider } from "@/contexts/processing-queue";
 import { Toaster } from "sonner";
-// Clerk removido - usando autenticação customizada
 
 function getBaseUrl() {
   if (typeof window !== "undefined") return "";
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
+
+// Queries leves que devem resolver rápido (auth, notificações)
+const FAST_QUERIES = new Set([
+  "users.me",
+  "auth.me",
+  "notifications.unreadCount",
+  "profissionais.getEscalaAtual",
+]);
 
 // Loading spinner minimalista
 function LoadingSpinner() {
@@ -35,8 +42,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30 * 1000, // 30 segundos - melhor cache
-            gcTime: 5 * 60 * 1000, // 5 minutos
+            staleTime: 2 * 60 * 1000, // 2 minutos — dados mudam pouco
+            gcTime: 10 * 60 * 1000, // 10 minutos
             refetchOnWindowFocus: false,
             refetchOnMount: false,
             retry: 1,
@@ -48,18 +55,32 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   );
 
-  const [trpcClient] = useState(() =>
-    trpc.createClient({
+  const [trpcClient] = useState(() => {
+    const url = `${getBaseUrl()}/api/trpc`;
+
+    return trpc.createClient({
       links: [
-        httpBatchLink({
-          url: `${getBaseUrl()}/api/trpc`,
-          transformer: superjson,
-          // Batching para melhor performance
-          maxURLLength: 2083,
+        // Separar queries leves (auth) das pesadas (listas)
+        splitLink({
+          condition: (op) => FAST_QUERIES.has(op.path),
+          true: httpBatchLink({
+            url,
+            transformer: superjson,
+            maxURLLength: 2083,
+            fetch: (input, init) =>
+              fetch(input, { ...init, signal: AbortSignal.timeout(10_000) }),
+          }),
+          false: httpBatchLink({
+            url,
+            transformer: superjson,
+            maxURLLength: 2083,
+            fetch: (input, init) =>
+              fetch(input, { ...init, signal: AbortSignal.timeout(30_000) }),
+          }),
         }),
       ],
-    })
-  );
+    });
+  });
 
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
@@ -71,9 +92,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <Suspense fallback={<LoadingSpinner />}>
                 {children}
               </Suspense>
-              <Toaster 
-                richColors 
-                position="top-right" 
+              <Toaster
+                richColors
+                position="top-right"
                 toastOptions={{
                   className: "glass",
                   duration: 3000,

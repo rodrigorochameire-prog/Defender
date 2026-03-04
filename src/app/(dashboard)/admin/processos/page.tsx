@@ -466,7 +466,7 @@ function MiniTimeline({ eventos }: { eventos: Array<{ texto: string; data?: Date
                 idx === 0 ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-500 dark:text-zinc-400"
               )}>{evento.texto}</p>
               {evento.data && (
-                <p className="text-[10px] text-zinc-400 font-mono">
+                <p className="text-[10px] text-zinc-400 font-mono tabular-nums">
                   {format(evento.data, "dd/MM/yy")}
                 </p>
               )}
@@ -673,7 +673,7 @@ function QuickActionsOverlay({
 
   return (
     <div
-      className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in duration-200"
+      className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in duration-200 cursor-pointer"
       onClick={onClose}
     >
       {/* Botão Fechar */}
@@ -869,7 +869,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
             className="flex items-center gap-2 cursor-pointer group/copy"
             onClick={handleCopy}
           >
-            <span className="font-mono text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate hover:text-emerald-600 transition-colors">
+            <span className="font-mono tabular-nums text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate hover:text-emerald-600 transition-colors">
               {processo.numeroAutos}
             </span>
             {copied ? (
@@ -963,7 +963,7 @@ function ProcessoCard({ processo, index = 0 }: { processo: Processo; index?: num
               <Tooltip>
                 <TooltipTrigger asChild>
                   <a href={getTJBAUrl(processo.numeroAutos)} target="_blank" rel="noopener noreferrer">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-blue-50 hover:text-blue-600">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-emerald-50 hover:text-emerald-600">
                       <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
                   </a>
@@ -1203,7 +1203,7 @@ function ProcessoRow({ processo }: { processo: Processo }) {
               {prazoHoje && <StatusIndicator status="urgent" size="xs" pulsing />}
               {diasPrazo === 1 && <StatusIndicator status="warning" size="xs" />}
               <span className={cn(
-                "text-xs font-mono font-semibold",
+                "text-xs font-mono tabular-nums font-semibold",
                 prazoVencido && "text-rose-600",
                 prazoHoje && "text-orange-600",
                 diasPrazo === 1 && "text-amber-600"
@@ -1242,7 +1242,7 @@ function ProcessoRow({ processo }: { processo: Processo }) {
               </Link>
               <DropdownMenuSeparator />
               <a href={getTJBAUrl(processo.numeroAutos)} target="_blank" rel="noopener noreferrer">
-                <DropdownMenuItem className="cursor-pointer text-blue-600 dark:text-blue-400">
+                <DropdownMenuItem className="cursor-pointer text-emerald-600 dark:text-emerald-400">
                   <ExternalLink className="w-4 h-4 mr-2" /> Consultar no TJ-BA
                 </DropdownMenuItem>
               </a>

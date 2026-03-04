@@ -26,8 +26,8 @@ export default function EstatisticasJuizesPage() {
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
           </Link>
-          <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex-shrink-0">
-            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-700 dark:text-blue-400" />
+          <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-950/20 flex-shrink-0">
+            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-700 dark:text-emerald-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -47,10 +47,10 @@ export default function EstatisticasJuizesPage() {
       </div>
 
       {/* Coming Soon */}
-      <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+      <Card className="border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50/50 to-emerald-50/30 dark:from-emerald-950/20 dark:to-emerald-950/10">
         <CardContent className="flex flex-col items-center justify-center py-16 sm:py-24 text-center px-4">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center mb-6">
-            <BarChart3 className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-400" />
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-950/20 flex items-center justify-center mb-6">
+            <BarChart3 className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-600 dark:text-emerald-400" />
           </div>
           
           <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
@@ -63,20 +63,20 @@ export default function EstatisticasJuizesPage() {
 
           {/* Preview Features */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full max-w-2xl mb-8">
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-blue-100 dark:border-blue-800/50">
-              <Gavel className="w-6 h-6 text-blue-600 mb-2 mx-auto" />
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/50">
+              <Gavel className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
               <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Por Juiz</p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-blue-100 dark:border-blue-800/50">
-              <PieChart className="w-6 h-6 text-blue-600 mb-2 mx-auto" />
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/50">
+              <PieChart className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
               <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Taxas</p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-blue-100 dark:border-blue-800/50">
-              <TrendingUp className="w-6 h-6 text-blue-600 mb-2 mx-auto" />
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/50">
+              <TrendingUp className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
               <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Tendências</p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-blue-100 dark:border-blue-800/50">
-              <Target className="w-6 h-6 text-blue-600 mb-2 mx-auto" />
+            <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/50">
+              <Target className="w-6 h-6 text-emerald-600 mb-2 mx-auto" />
               <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Comparativos</p>
             </div>
           </div>

@@ -55,7 +55,6 @@ import {
   Maximize2,
   ScanLine,
   FilePen,
-  Play,
   Volume2,
   MonitorPlay,
 } from "lucide-react";
@@ -194,27 +193,14 @@ function SectionHeader({
 
 // ─── Media Player ───────────────────────────────────────────────────
 
-const SMALL_FILE_THRESHOLD = 50 * 1024 * 1024; // 50MB
-
 function MediaPlayer({ file }: { file: DriveFile }) {
-  const [mode, setMode] = useState<"native" | "drive">("native");
   const [hasError, setHasError] = useState(false);
   const mimeType = file.mimeType || "";
   const isAudio = mimeType.startsWith("audio/");
-  const isVideo = mimeType.startsWith("video/");
   const fileSize = file.fileSize ?? 0;
-  const isSmallFile = fileSize < SMALL_FILE_THRESHOLD || fileSize === 0;
 
   // Proxy URL para streaming com auth (suporta Range headers)
   const proxyUrl = `/api/drive/proxy?fileId=${file.driveFileId}&stream=1`;
-
-  // Google Drive embed URL para fallback
-  const driveEmbedUrl = file.webViewLink
-    ? file.webViewLink.replace("/view", "/preview")
-    : null;
-
-  // Decidir modo inicial baseado no tamanho do arquivo
-  const effectiveMode = (!isSmallFile || hasError) && driveEmbedUrl ? "drive" : mode;
 
   if (isAudio) {
     return (
@@ -237,15 +223,15 @@ function MediaPlayer({ file }: { file: DriveFile }) {
             <source src={file.webContentLink} />
           )}
         </audio>
-        {hasError && driveEmbedUrl && (
-          <div className="w-full">
-            <p className="text-xs text-zinc-500 mb-2 text-center">Player nativo indisponivel. Usando Google Drive:</p>
-            <iframe
-              src={driveEmbedUrl}
-              className="w-full h-[80px] border-0 rounded"
-              title={file.name}
-              allow="autoplay"
-            />
+        {hasError && file.webViewLink && (
+          <div className="w-full text-center">
+            <p className="text-xs text-zinc-500 mb-2">Player nativo indisponivel.</p>
+            <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="sm" className="text-xs text-emerald-400 hover:text-emerald-300">
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                Ouvir no Drive
+              </Button>
+            </a>
           </div>
         )}
       </div>
@@ -255,45 +241,12 @@ function MediaPlayer({ file }: { file: DriveFile }) {
   // Vídeo
   return (
     <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-      {/* Toggle de modo */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-200 dark:border-zinc-800">
         <p className="text-xs text-zinc-400 truncate max-w-[200px]">{file.name}</p>
-        <div className="flex items-center gap-1">
-          {isSmallFile && !hasError && (
-            <button
-              onClick={() => setMode("native")}
-              className={cn(
-                "px-2 py-0.5 rounded text-[10px] font-medium transition-colors",
-                effectiveMode === "native"
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "text-zinc-500 hover:text-zinc-300",
-              )}
-              title="Player HTML5 nativo"
-            >
-              <Play className="w-3 h-3 inline mr-0.5" />
-              Player
-            </button>
-          )}
-          {driveEmbedUrl && (
-            <button
-              onClick={() => { setMode("drive"); setHasError(false); }}
-              className={cn(
-                "px-2 py-0.5 rounded text-[10px] font-medium transition-colors",
-                effectiveMode === "drive"
-                  ? "bg-blue-500/20 text-blue-400"
-                  : "text-zinc-500 hover:text-zinc-300",
-              )}
-              title="Google Drive player"
-            >
-              <MonitorPlay className="w-3 h-3 inline mr-0.5" />
-              Drive
-            </button>
-          )}
-        </div>
       </div>
 
-      {/* Player nativo HTML5 */}
-      {effectiveMode === "native" && (
+      {/* Player nativo HTML5 via proxy */}
+      {!hasError && (
         <div className="aspect-video">
           <video
             controls
@@ -307,29 +260,16 @@ function MediaPlayer({ file }: { file: DriveFile }) {
         </div>
       )}
 
-      {/* Google Drive iframe player */}
-      {effectiveMode === "drive" && driveEmbedUrl && (
-        <div className="aspect-video">
-          <iframe
-            src={driveEmbedUrl}
-            className="w-full h-full border-0"
-            title={file.name}
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-          />
-        </div>
-      )}
-
-      {/* Fallback: nenhum player disponível */}
-      {effectiveMode === "drive" && !driveEmbedUrl && (
+      {/* Fallback: abrir no Drive */}
+      {hasError && (
         <div className="aspect-video flex flex-col items-center justify-center gap-2">
           <MonitorPlay className="w-12 h-12 text-zinc-600" />
-          <p className="text-xs text-zinc-500">Preview indisponivel</p>
+          <p className="text-xs text-zinc-500">Player indisponivel</p>
           {file.webViewLink && (
             <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
               <Button variant="ghost" size="sm" className="text-xs text-emerald-400 hover:text-emerald-300">
                 <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                Abrir no Drive
+                Assistir no Drive
               </Button>
             </a>
           )}
@@ -341,9 +281,6 @@ function MediaPlayer({ file }: { file: DriveFile }) {
         <div className="px-3 py-1 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <span className="text-[10px] text-zinc-500">
             {formatFileSize(fileSize)}
-            {!isSmallFile && (
-              <span className="ml-1 text-amber-500">(arquivo grande — player Drive recomendado)</span>
-            )}
           </span>
         </div>
       )}
@@ -363,11 +300,11 @@ function FilePreview({ file }: { file: DriveFile }) {
     mimeType.includes("google-apps.document") ||
     mimeType.includes("google-apps.spreadsheet");
 
-  if (isPdf && file.webViewLink) {
+  if (isPdf && file.driveFileId) {
     return (
       <div className="h-[500px] bg-zinc-100 dark:bg-zinc-900 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
         <iframe
-          src={`${file.webViewLink.replace("/view", "/preview")}`}
+          src={`/api/drive/proxy?fileId=${file.driveFileId}`}
           className="w-full h-full border-0"
           title={file.name}
         />
@@ -404,13 +341,25 @@ function FilePreview({ file }: { file: DriveFile }) {
   }
 
   if (isGoogleDoc && file.webViewLink) {
+    const docIcon = mimeType.includes("spreadsheet") ? "Planilha" : "Documento";
     return (
-      <div className="aspect-video bg-zinc-100 dark:bg-zinc-900 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
-        <iframe
-          src={file.webViewLink}
-          className="w-full h-full border-0"
-          title={file.name}
-        />
+      <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-8 flex flex-col items-center gap-3">
+        {file.thumbnailLink ? (
+          <img
+            src={file.thumbnailLink.replace("=s220", "=s600")}
+            alt={file.name}
+            className="max-w-full max-h-[300px] object-contain rounded border border-zinc-200 dark:border-zinc-700"
+          />
+        ) : (
+          <FileText className="w-16 h-16 text-zinc-400 dark:text-zinc-600" />
+        )}
+        <p className="text-xs text-zinc-400 dark:text-zinc-500">{docIcon} Google — abrir no Drive para visualizar</p>
+        <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
+          <Button variant="ghost" size="sm" className="text-xs text-emerald-400 hover:text-emerald-300">
+            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+            Abrir no Drive
+          </Button>
+        </a>
       </div>
     );
   }
@@ -942,7 +891,7 @@ function LinkSuggestionsSection({ file }: { file: DriveFile }) {
           {suggestions.map((s) => (
             <div
               key={s.fileId}
-              className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-2.5 space-y-1.5"
+              className="bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 dark:border-emerald-500/10 rounded-lg p-2.5 space-y-1.5"
             >
               {s.suggestedProcessoNumero && (
                 <div className="flex items-center gap-1.5">
@@ -1085,7 +1034,7 @@ function TranscriptionSection({
             const pct = progress?.percent ?? 15;
             const detail = progress?.detail ?? "Processando...";
             return (
-              <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-lg p-3 space-y-2">
+              <div className="bg-zinc-500/5 dark:bg-zinc-500/10 border border-zinc-200 dark:border-zinc-700/50 rounded-lg p-3 space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                     <div
@@ -2006,7 +1955,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full h-8 text-xs text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/5"
+                  className="w-full h-8 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/5"
                 >
                   <FilePen className="h-3.5 w-3.5 mr-1.5" />
                   Editar no Google Docs
@@ -2074,6 +2023,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
           onClose={() => setShowExpandedPreview(false)}
           fileName={file.name}
           webViewLink={file.webViewLink}
+          driveFileId={file.driveFileId}
         />
       )}
 
@@ -2087,6 +2037,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
             name: file.name,
             webViewLink: file.webViewLink || "",
             driveFolderId: file.driveFolderId,
+            driveFileId: file.driveFileId,
           }}
           currentFolderId={file.driveFolderId}
           assistidoId={file.assistidoId || undefined}
@@ -2117,6 +2068,8 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
           fileId={file.driveFileId}
           enrichmentData={file.enrichmentData as any}
           webViewLink={file.webViewLink || undefined}
+          assistidoId={file.assistidoId ?? undefined}
+          fileDbId={file.id}
         />
       )}
     </div>

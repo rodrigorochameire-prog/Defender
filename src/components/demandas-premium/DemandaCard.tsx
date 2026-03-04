@@ -275,7 +275,7 @@ export function DemandaCard({
         />
         {showAtribuicaoDropdown && (
           <div
-            className="absolute left-3 top-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl z-50 overflow-hidden py-1"
+            className="absolute left-3 top-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden py-1"
             style={{ animation: 'fadeInDown 0.15s ease-out' }}
           >
             {ATRIBUICAO_OPTIONS.map((opt) => {
@@ -364,7 +364,7 @@ export function DemandaCard({
                   <div className="relative inline-block">
                     <button
                       onClick={handleAtoClick}
-                      className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1 group/ato"
+                      className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1 group/ato"
                     >
                       {demanda.ato}
                       <Edit className="w-3 h-3 opacity-50 group-hover/ato:opacity-100 transition-opacity" />
@@ -728,7 +728,7 @@ export function DemandaCard({
                 </button>
                 {showAtoDropdown && (
                   <div
-                    className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-2xl z-50 overflow-hidden"
+                    className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden"
                     style={{ animation: 'fadeInDown 0.2s ease-out' }}
                   >
                     <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700">
@@ -791,7 +791,7 @@ export function DemandaCard({
                 </button>
                 {showStatusDropdown && (
                   <div
-                    className="absolute top-full right-0 mt-2 w-44 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-lg shadow-black/10 dark:shadow-black/30 z-50 overflow-hidden"
+                    className="absolute top-full right-0 mt-2 w-44 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden"
                     style={{ animation: 'fadeInDown 0.15s ease-out' }}
                   >
                     <div className="py-1 max-h-72 overflow-y-auto">
@@ -831,7 +831,7 @@ export function DemandaCard({
                 </button>
                 {showMenu && (
                   <div
-                    className="absolute top-full right-0 mt-1 w-40 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl z-50 overflow-hidden py-1"
+                    className="absolute top-full right-0 mt-1 w-40 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden py-1"
                     style={{ animation: 'fadeInDown 0.15s ease-out' }}
                   >
                     <Link

@@ -32,6 +32,124 @@ def _update_progress(db_record_id: int, step: str, progress: int, detail: str = 
         logger.warning("Progress update failed (non-critical) | db_id=%d | error=%s", db_record_id, str(e))
 
 
+async def _maybe_trigger_cross_analysis(client, db_record_id: int, analysis: dict):
+    """
+    Check if 2+ Sonnet analyses exist for the same assistido.
+    If so, fire cross-analysis in the background.
+    """
+    try:
+        # Get assistido_id for this file
+        file_row = client.table("drive_files").select(
+            "assistido_id"
+        ).eq("id", db_record_id).single().execute()
+
+        if not file_row.data or not file_row.data.get("assistido_id"):
+            return
+
+        assistido_id = file_row.data["assistido_id"]
+
+        # Find all drive_files for this assistido that have enrichment_data.analysis
+        all_files = client.table("drive_files").select(
+            "id, name, enrichment_data"
+        ).eq("assistido_id", assistido_id).eq(
+            "enrichment_status", "completed"
+        ).execute()
+
+        if not all_files.data:
+            return
+
+        # Filter files that have a Sonnet analysis
+        analyzed_files = []
+        for f in all_files.data:
+            ed = f.get("enrichment_data") or {}
+            if ed.get("analysis") and isinstance(ed["analysis"], dict):
+                depoente_info = ed["analysis"].get("depoente", {})
+                depoente_name = ""
+                if isinstance(depoente_info, dict):
+                    classificacoes = depoente_info.get("classificacoes", [])
+                    depoente_name = ", ".join(classificacoes) if classificacoes else depoente_info.get("nome", "")
+                analyzed_files.append({
+                    "file_id": f["id"],
+                    "file_name": f.get("name", ""),
+                    "depoente": depoente_name,
+                    "analysis": ed["analysis"],
+                })
+
+        if len(analyzed_files) < 2:
+            logger.info(
+                "Cross-analysis skip — only %d analyses for assistido=%d",
+                len(analyzed_files), assistido_id,
+            )
+            return
+
+        logger.info(
+            "Auto-triggering cross-analysis | assistido_id=%d | num_analyses=%d",
+            assistido_id, len(analyzed_files),
+        )
+
+        # Get assistido name for context
+        assistido_row = client.table("assistidos").select("nome").eq(
+            "id", assistido_id
+        ).single().execute()
+        assistido_nome = assistido_row.data.get("nome") if assistido_row.data else None
+
+        # Fire cross-analysis
+        from services.cross_analysis_service import get_cross_analysis_service
+        svc = get_cross_analysis_service()
+        if not svc.available:
+            return
+
+        result = await svc.cross_analyze(
+            analyses=analyzed_files,
+            assistido_nome=assistido_nome,
+        )
+
+        if not result:
+            logger.warning("Auto cross-analysis returned None for assistido=%d", assistido_id)
+            return
+
+        # Save to cross_analyses table
+        from datetime import datetime, timezone as tz
+        source_file_ids = [f["file_id"] for f in analyzed_files]
+
+        existing = client.table("cross_analyses").select("id").eq(
+            "assistido_id", assistido_id
+        ).order("created_at", desc=True).limit(1).execute()
+
+        row_data = {
+            "assistido_id": assistido_id,
+            "contradiction_matrix": result.get("contradiction_matrix", []),
+            "tese_consolidada": result.get("tese_consolidada", {}),
+            "timeline_fatos": result.get("timeline_fatos", []),
+            "mapa_atores": result.get("mapa_atores", []),
+            "providencias_agregadas": result.get("providencias_agregadas", []),
+            "source_file_ids": source_file_ids,
+            "analysis_count": len(analyzed_files),
+            "model_version": "sonnet-cross-v1",
+            "updated_at": datetime.now(tz.utc).isoformat(),
+        }
+
+        if existing.data:
+            client.table("cross_analyses").update(row_data).eq(
+                "id", existing.data[0]["id"]
+            ).execute()
+        else:
+            row_data["created_at"] = datetime.now(tz.utc).isoformat()
+            client.table("cross_analyses").insert(row_data).execute()
+
+        logger.info(
+            "Auto cross-analysis COMPLETED | assistido_id=%d | contradictions=%d",
+            assistido_id,
+            len(result.get("contradiction_matrix", [])),
+        )
+
+    except Exception as e:
+        logger.warning(
+            "Auto cross-analysis failed (non-critical) | db_id=%d | error=%s",
+            db_record_id, str(e),
+        )
+
+
 async def _process_analysis_background(input_data: AnalyzeAsyncInput):
     """Background task: analisa transcricao e salva resultado no Supabase."""
     db_record_id = input_data.db_record_id
@@ -86,6 +204,9 @@ async def _process_analysis_background(input_data: AnalyzeAsyncInput):
             len(analysis.get("highlights", [])),
             len(analysis.get("pontos_favoraveis", [])),
         )
+
+        # Auto-trigger cross-analysis if 2+ analyses exist for this assistido
+        await _maybe_trigger_cross_analysis(client, db_record_id, analysis)
 
     except Exception as e:
         logger.error("Analysis FAILED | db_id=%d | error=%s", db_record_id, str(e))

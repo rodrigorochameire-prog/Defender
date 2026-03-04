@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { ArrowLeft, Lock, User, Mic, Music, Video, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, ChevronDown } from "lucide-react";
@@ -17,6 +17,7 @@ import { IntelligenceTab } from "@/components/intelligence/IntelligenceTab";
 import { DriveStatusBar } from "@/components/drive/DriveStatusBar";
 import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
 import { MarkdownViewerModal } from "@/components/drive/MarkdownViewerModal";
+import { useRealtimeFileStatus } from "@/hooks/use-realtime-file-status";
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
@@ -46,9 +47,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   // Markdown viewer state (for Plaud transcriptions)
   const [markdownViewerFile, setMarkdownViewerFile] = useState<{
+    id: number;
     name: string;
     driveFileId: string | null;
-    enrichmentData: unknown;
     webViewLink: string | null;
   } | null>(null);
 
@@ -126,15 +127,46 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     },
   });
 
-  // Track files sent to background transcription — drives polling
-  const [pollingFiles, setPollingFiles] = useState<Set<string>>(new Set());
+  // Track files sent to background transcription
+  const [processingFiles, setProcessingFiles] = useState<Set<string>>(new Set());
 
   const { data, isLoading, error } = trpc.assistidos.getById.useQuery(
     { id: Number(id) },
-    {
-      staleTime: pollingFiles.size > 0 ? 5_000 : 60_000,
-      refetchInterval: pollingFiles.size > 0 ? 5_000 : false,
-    }
+    { staleTime: 60_000 },
+  );
+
+  const utils = trpc.useUtils();
+
+  // Supabase Realtime: listen for enrichment_status changes instead of heavy polling
+  const handleRealtimeStatusChange = useCallback(
+    (update: { id: number; drive_file_id: string; enrichment_status: string; name: string }) => {
+      if (update.enrichment_status === "completed") {
+        toast.success(`Transcrição de "${update.name}" concluída!`);
+        setProcessingFiles((prev) => {
+          const next = new Set(prev);
+          next.delete(update.drive_file_id);
+          return next;
+        });
+        // Invalidate just the enrichment data, and refetch assistido for status badges
+        utils.drive.getFilesEnrichmentData.invalidate();
+        utils.assistidos.getById.invalidate({ id: Number(id) });
+      } else if (update.enrichment_status === "failed") {
+        toast.error(`Transcrição de "${update.name}" falhou`);
+        setProcessingFiles((prev) => {
+          const next = new Set(prev);
+          next.delete(update.drive_file_id);
+          return next;
+        });
+        utils.assistidos.getById.invalidate({ id: Number(id) });
+      }
+    },
+    [id, utils],
+  );
+
+  useRealtimeFileStatus(
+    data ? Number(id) : undefined,
+    handleRealtimeStatusChange,
+    processingFiles.size > 0,
   );
 
   // Ofícios do assistido
@@ -155,24 +187,38 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     [data?.driveFiles]
   );
 
-  // Stop polling when background transcription finishes (status != "processing")
+  // Lazy-load enrichmentData only for media files when Mídias tab is active
+  const mediaFileIds = useMemo(() => mediaFiles.map((f) => f.id), [mediaFiles]);
+  const { data: mediaEnrichments } = trpc.drive.getFilesEnrichmentData.useQuery(
+    { fileIds: mediaFileIds },
+    { enabled: tab === "midias" && mediaFileIds.length > 0, staleTime: 60_000 },
+  );
+  const enrichmentMap = useMemo(() => {
+    const map = new Map<number, Record<string, unknown>>();
+    if (mediaEnrichments) {
+      for (const e of mediaEnrichments) {
+        if (e.enrichmentData) map.set(e.id, e.enrichmentData as Record<string, unknown>);
+      }
+    }
+    return map;
+  }, [mediaEnrichments]);
+
+  // Sync processingFiles with actual status from server (fallback for Realtime)
   useEffect(() => {
-    if (pollingFiles.size === 0 || !data?.driveFiles) return;
+    if (processingFiles.size === 0 || !data?.driveFiles) return;
     const stillProcessing = new Set<string>();
-    for (const fileKey of pollingFiles) {
+    for (const fileKey of processingFiles) {
       const file = data.driveFiles.find(
         (f) => (f.driveFileId ?? String(f.id)) === fileKey
       );
       if (file && file.enrichmentStatus === "processing") {
         stillProcessing.add(fileKey);
-      } else if (file && file.enrichmentStatus === "completed") {
-        toast.success(`Transcrição de "${file.name}" concluída!`);
       }
     }
-    if (stillProcessing.size !== pollingFiles.size) {
-      setPollingFiles(stillProcessing);
+    if (stillProcessing.size !== processingFiles.size) {
+      setProcessingFiles(stillProcessing);
     }
-  }, [data?.driveFiles, pollingFiles]);
+  }, [data?.driveFiles, processingFiles]);
 
   const transcribeMutation = trpc.drive.transcreverDrive.useMutation({
     onSuccess: (result) => {
@@ -193,8 +239,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         language: "pt",
       });
       // Mutation returns 202 — transcription runs in background on Railway.
-      // Start polling to detect when it completes.
-      setPollingFiles((prev) => new Set(prev).add(driveFileId));
+      // Supabase Realtime will notify when it completes.
+      setProcessingFiles((prev) => new Set(prev).add(driveFileId));
     } catch {
       // Error handled by onError callback above
     } finally {
@@ -731,9 +777,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{f.name}</p>
-                        {(f.enrichmentData as any)?.summary && (
+                        {enrichmentMap.get(f.id)?.summary && (
                           <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5">
-                            {((f.enrichmentData as any).summary as string).slice(0, 100)}...
+                            {(enrichmentMap.get(f.id)!.summary as string).slice(0, 100)}...
                           </p>
                         )}
                       </div>
@@ -755,8 +801,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 const isAudio = f.mimeType?.startsWith("audio/");
                 // Check both local state AND enrichmentData from DB
                 // transcript may be plain text or JSON string — extract plain text
-                const rawTranscript = (f.enrichmentData as Record<string, unknown> | null)?.transcript as string | undefined;
-                const rawTranscriptPlain = (f.enrichmentData as Record<string, unknown> | null)?.transcript_plain as string | undefined;
+                const enrichData = enrichmentMap.get(f.id) ?? null;
+                const rawTranscript = enrichData?.transcript as string | undefined;
+                const rawTranscriptPlain = enrichData?.transcript_plain as string | undefined;
                 let enrichmentTranscript: string | undefined;
                 if (rawTranscriptPlain && !rawTranscriptPlain.startsWith("{")) {
                   enrichmentTranscript = rawTranscriptPlain;
@@ -777,9 +824,6 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 const isProcessing = f.enrichmentStatus === "processing";
                 const isFailed = f.enrichmentStatus === "failed";
                 const isCurrentlyTranscribing = transcribing.has(fileKey) || isProcessing;
-
-                // Merge local transcription with enrichment data
-                const enrichData = f.enrichmentData as Record<string, unknown> | null;
 
                 // Progress data from backend
                 const progress = (enrichData?.progress as { step?: string; percent?: number; detail?: string } | null);
@@ -1014,8 +1058,9 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
           onClose={() => setMarkdownViewerFile(null)}
           fileName={markdownViewerFile.name}
           fileId={markdownViewerFile.driveFileId || undefined}
-          enrichmentData={markdownViewerFile.enrichmentData as any}
+          fileDbId={markdownViewerFile.id}
           webViewLink={markdownViewerFile.webViewLink || undefined}
+          assistidoId={Number(id)}
         />
       )}
     </div>

@@ -615,7 +615,7 @@ function InstanceConfig() {
             href="https://doc.evolution-api.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            className="mt-3 text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
           >
             Documentação da Evolution API
             <ExternalLink className="w-3 h-3" />

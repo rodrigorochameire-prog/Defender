@@ -452,7 +452,7 @@ export function DriveTopBar() {
               className={cn(
                 "h-8 w-8 inline-flex items-center justify-center gap-1 rounded-md transition-colors",
                 activeCount > 0
-                  ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400"
+                  ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
                   : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               )}
               title="Fila de processamento"

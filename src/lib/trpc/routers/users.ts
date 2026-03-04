@@ -2,7 +2,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, users, processos, assistidos, workspaces, userInvitations } from "@/lib/db";
-import { eq, desc, sql, and, ne } from "drizzle-orm";
+import { eq, desc, sql, and, ne, ilike, or } from "drizzle-orm";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, emailSchema, nameSchema, phoneSchema } from "@/lib/validations";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
@@ -50,7 +50,25 @@ export const usersRouter = router({
     )
     .query(async ({ input }) => {
       return safeAsync(async () => {
-        let result = await db
+        // Build SQL conditions to filter at database level
+        const conditions: ReturnType<typeof eq>[] = [];
+
+        if (input?.role) {
+          conditions.push(eq(users.role, input.role));
+        }
+
+        if (input?.search) {
+          conditions.push(
+            or(
+              ilike(users.name, `%${input.search}%`),
+              ilike(users.email, `%${input.search}%`),
+              ilike(users.phone || "", `%${input.search}%`),
+              ilike(users.oab || "", `%${input.search}%`),
+            )!
+          );
+        }
+
+        return db
           .select({
             id: users.id,
             name: users.name,
@@ -66,25 +84,8 @@ export const usersRouter = router({
           })
           .from(users)
           .leftJoin(workspaces, eq(users.workspaceId, workspaces.id))
+          .where(conditions.length > 0 ? and(...conditions) : undefined)
           .orderBy(desc(users.createdAt));
-
-        // Aplicar filtros
-        if (input?.role) {
-          result = result.filter((u) => u.role === input.role);
-        }
-
-        if (input?.search) {
-          const search = input.search.toLowerCase();
-          result = result.filter(
-            (u) =>
-              u.name.toLowerCase().includes(search) ||
-              u.email.toLowerCase().includes(search) ||
-              u.phone?.toLowerCase().includes(search) ||
-              u.oab?.toLowerCase().includes(search)
-          );
-        }
-
-        return result;
       }, "Erro ao listar usuários");
     }),
 
@@ -102,7 +103,24 @@ export const usersRouter = router({
     )
     .query(async ({ input }) => {
       return safeAsync(async () => {
-        let result = await db
+        // Build SQL conditions to filter at database level
+        const conditions: ReturnType<typeof eq>[] = [eq(users.role, "defensor")];
+
+        if (input?.approvalStatus) {
+          conditions.push(eq(users.approvalStatus, input.approvalStatus));
+        }
+
+        if (input?.search) {
+          conditions.push(
+            or(
+              ilike(users.name, `%${input.search}%`),
+              ilike(users.email, `%${input.search}%`),
+              ilike(users.oab || "", `%${input.search}%`),
+            )!
+          );
+        }
+
+        const result = await db
           .select({
             id: users.id,
             name: users.name,
@@ -115,45 +133,41 @@ export const usersRouter = router({
             createdAt: users.createdAt,
           })
           .from(users)
-          .where(eq(users.role, "defensor"))
+          .where(and(...conditions))
           .orderBy(desc(users.createdAt));
 
-        if (input?.approvalStatus) {
-          result = result.filter((u) => u.approvalStatus === input.approvalStatus);
-        }
+        if (result.length === 0) return [];
 
-        if (input?.search) {
-          const search = input.search.toLowerCase();
-          result = result.filter(
-            (u) =>
-              u.name.toLowerCase().includes(search) ||
-              u.email.toLowerCase().includes(search) ||
-              u.oab?.toLowerCase().includes(search)
-          );
-        }
+        // Batch aggregate queries instead of N+1
+        const defensorIds = result.map(d => d.id);
 
-        // Buscar quantidade de processos de cada defensor
-        const defensoresWithStats = await Promise.all(
-          result.map(async (defensor) => {
-            const [processoCount] = await db
-              .select({ count: sql<number>`count(*)::int` })
-              .from(processos)
-              .where(eq(processos.defensorId, defensor.id));
+        const [processoCounts, assistidoCounts] = await Promise.all([
+          db
+            .select({
+              defensorId: processos.defensorId,
+              count: sql<number>`count(*)::int`,
+            })
+            .from(processos)
+            .where(sql`${processos.defensorId} IN (${sql.join(defensorIds.map(id => sql`${id}`), sql`, `)})`)
+            .groupBy(processos.defensorId),
+          db
+            .select({
+              defensorId: assistidos.defensorId,
+              count: sql<number>`count(*)::int`,
+            })
+            .from(assistidos)
+            .where(sql`${assistidos.defensorId} IN (${sql.join(defensorIds.map(id => sql`${id}`), sql`, `)})`)
+            .groupBy(assistidos.defensorId),
+        ]);
 
-            const [assistidoCount] = await db
-              .select({ count: sql<number>`count(*)::int` })
-              .from(assistidos)
-              .where(eq(assistidos.defensorId, defensor.id));
+        const processoMap = new Map(processoCounts.map(p => [p.defensorId, p.count]));
+        const assistidoMap = new Map(assistidoCounts.map(a => [a.defensorId, a.count]));
 
-            return {
-              ...defensor,
-              processoCount: processoCount.count,
-              assistidoCount: assistidoCount.count,
-            };
-          })
-        );
-
-        return defensoresWithStats;
+        return result.map(defensor => ({
+          ...defensor,
+          processoCount: processoMap.get(defensor.id) ?? 0,
+          assistidoCount: assistidoMap.get(defensor.id) ?? 0,
+        }));
       }, "Erro ao listar defensores");
     }),
 

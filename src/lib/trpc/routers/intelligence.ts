@@ -18,6 +18,7 @@ import {
   casePersonas,
   casos,
   driveFiles,
+  crossAnalyses,
 } from "@/lib/db/schema";
 import { eq, and, or, isNotNull, sql, desc, count, gt } from "drizzle-orm";
 import { enrichmentClient } from "@/lib/services/enrichment-client";
@@ -238,87 +239,72 @@ export const intelligenceRouter = router({
       const conditions = [];
 
       if (input.assistidoId) {
-        // Count docs for this assistido
-        const [enrichedDocs] = await db
-          .select({ count: count() })
-          .from(documentos)
-          .where(
-            and(
-              eq(documentos.assistidoId, input.assistidoId),
-              eq(documentos.enrichmentStatus, "enriched"),
-            ),
-          );
-
-        const [totalDocs] = await db
-          .select({ count: count() })
-          .from(documentos)
-          .where(eq(documentos.assistidoId, input.assistidoId));
-
-        // Count Drive files (enriched + total)
-        const [driveEnriched] = await db
-          .select({ count: count() })
-          .from(driveFiles)
-          .where(
-            and(
-              eq(driveFiles.assistidoId, input.assistidoId),
-              eq(driveFiles.enrichmentStatus, "completed"),
-              eq(driveFiles.isFolder, false),
-            ),
-          );
-
-        const [driveTotal] = await db
-          .select({ count: count() })
-          .from(driveFiles)
-          .where(
-            and(
-              eq(driveFiles.assistidoId, input.assistidoId),
-              eq(driveFiles.isFolder, false),
-            ),
-          );
-
-        const [assistido] = await db
-          .select({
-            analyzedAt: assistidos.analyzedAt,
-            analysisStatus: assistidos.analysisStatus,
-          })
-          .from(assistidos)
-          .where(eq(assistidos.id, input.assistidoId))
-          .limit(1);
-
-        // Count enriched docs + drive files after last consolidation
-        let pendingCount = 0;
-        if (assistido?.analyzedAt) {
-          const [pendingDocs] = await db
-            .select({ count: count() })
+        // Consolidated: 3 parallel queries instead of 6 sequential
+        const [docCountsResult, driveCountsResult, [assistido]] = await Promise.all([
+          // 1) Doc counts: total + enriched in one query
+          db
+            .select({
+              total: count(),
+              enriched: sql<number>`count(*) filter (where ${documentos.enrichmentStatus} = 'enriched')`,
+            })
             .from(documentos)
-            .where(
-              and(
-                eq(documentos.assistidoId, input.assistidoId),
-                eq(documentos.enrichmentStatus, "enriched"),
-                sql`${documentos.enrichedAt} > ${assistido.analyzedAt}`,
-              ),
-            );
-          const [pendingDrive] = await db
-            .select({ count: count() })
+            .where(eq(documentos.assistidoId, input.assistidoId)),
+          // 2) Drive file counts: total + completed in one query
+          db
+            .select({
+              total: count(),
+              enriched: sql<number>`count(*) filter (where ${driveFiles.enrichmentStatus} = 'completed')`,
+            })
             .from(driveFiles)
             .where(
               and(
                 eq(driveFiles.assistidoId, input.assistidoId),
-                eq(driveFiles.enrichmentStatus, "completed"),
                 eq(driveFiles.isFolder, false),
-                sql`${driveFiles.enrichedAt} > ${assistido.analyzedAt}`,
               ),
-            );
-          pendingCount = (pendingDocs?.count || 0) + (pendingDrive?.count || 0);
+            ),
+          // 3) Assistido analysis metadata
+          db
+            .select({
+              analyzedAt: assistidos.analyzedAt,
+              analysisStatus: assistidos.analysisStatus,
+            })
+            .from(assistidos)
+            .where(eq(assistidos.id, input.assistidoId))
+            .limit(1),
+        ]);
+
+        const docCounts = docCountsResult[0] ?? { total: 0, enriched: 0 };
+        const driveCounts = driveCountsResult[0] ?? { total: 0, enriched: 0 };
+
+        // Pending count: enriched since last analysis
+        let pendingCount = 0;
+        if (assistido?.analyzedAt) {
+          const [pending] = await db
+            .select({
+              count: sql<number>`(
+                select count(*) from ${documentos}
+                where ${documentos.assistidoId} = ${input.assistidoId}
+                  and ${documentos.enrichmentStatus} = 'enriched'
+                  and ${documentos.enrichedAt} > ${assistido.analyzedAt}
+              ) + (
+                select count(*) from ${driveFiles}
+                where ${driveFiles.assistidoId} = ${input.assistidoId}
+                  and ${driveFiles.enrichmentStatus} = 'completed'
+                  and ${driveFiles.isFolder} = false
+                  and ${driveFiles.enrichedAt} > ${assistido.analyzedAt}
+              )`,
+            })
+            .from(sql`(select 1) as _`);
+          pendingCount = pending?.count || 0;
         } else {
-          pendingCount = (enrichedDocs?.count || 0) + (driveEnriched?.count || 0);
+          pendingCount = Number(docCounts.enriched) + Number(driveCounts.enriched);
         }
 
         return {
-          enrichedDocs: (enrichedDocs?.count || 0) + (driveEnriched?.count || 0),
-          totalDocs: (totalDocs?.count || 0) + (driveTotal?.count || 0),
-          driveFiles: driveTotal?.count || 0,
-          driveEnriched: driveEnriched?.count || 0,
+          enrichedDocs: Number(docCounts.enriched) + Number(driveCounts.enriched),
+          totalDocs: Number(docCounts.total) + Number(driveCounts.total),
+          driveFiles: Number(driveCounts.total),
+          driveEnriched: Number(driveCounts.enriched),
           lastConsolidation: assistido?.analyzedAt || null,
           analysisStatus: assistido?.analysisStatus || null,
           pendingCount,
@@ -909,6 +895,117 @@ export const intelligenceRouter = router({
           `[Intelligence] Failed to generate for processo ${processoId}:`,
           message,
         );
+        return { success: false, error: message };
+      }
+    }),
+  // ─────────────────────────────────────────────────────────────
+  // Cross-Analysis — Análise Cruzada de Depoimentos
+  // ─────────────────────────────────────────────────────────────
+
+  getCrossAnalysis: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const { assistidoId } = input;
+
+      const [result] = await db
+        .select()
+        .from(crossAnalyses)
+        .where(eq(crossAnalyses.assistidoId, assistidoId))
+        .orderBy(desc(crossAnalyses.updatedAt))
+        .limit(1);
+
+      if (!result) {
+        return { found: false, data: null };
+      }
+
+      return {
+        found: true,
+        data: {
+          id: result.id,
+          contradictionMatrix: result.contradictionMatrix ?? [],
+          teseConsolidada: result.teseConsolidada ?? {},
+          timelineFatos: result.timelineFatos ?? [],
+          mapaAtores: result.mapaAtores ?? [],
+          providenciasAgregadas: result.providenciasAgregadas ?? [],
+          sourceFileIds: result.sourceFileIds ?? [],
+          analysisCount: result.analysisCount,
+          modelVersion: result.modelVersion,
+          updatedAt: result.updatedAt,
+        },
+      };
+    }),
+
+  regenerateCrossAnalysis: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .mutation(async ({ input }) => {
+      const { assistidoId } = input;
+
+      // Get assistido name
+      const [assistido] = await db
+        .select({ nome: assistidos.nome })
+        .from(assistidos)
+        .where(eq(assistidos.id, assistidoId))
+        .limit(1);
+
+      if (!assistido) {
+        return { success: false, error: "Assistido não encontrado" };
+      }
+
+      // Get all drive_files with Sonnet analysis for this assistido
+      const files = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          enrichmentData: driveFiles.enrichmentData,
+        })
+        .from(driveFiles)
+        .where(
+          and(
+            eq(driveFiles.assistidoId, assistidoId),
+            eq(driveFiles.enrichmentStatus, "completed"),
+          ),
+        );
+
+      // Filter files that have analysis
+      const analyzedFiles = files.filter((f) => {
+        const ed = f.enrichmentData as Record<string, unknown> | null;
+        return ed?.analysis && typeof ed.analysis === "object";
+      });
+
+      if (analyzedFiles.length < 2) {
+        return {
+          success: false,
+          error: `Necessário pelo menos 2 análises individuais. Encontradas: ${analyzedFiles.length}`,
+        };
+      }
+
+      // Fire cross-analysis async
+      try {
+        await enrichmentClient.crossAnalyzeAsync({
+          assistidoId,
+          assistidoNome: assistido.nome,
+          analyses: analyzedFiles.map((f) => {
+            const ed = f.enrichmentData as Record<string, unknown>;
+            const analysis = ed.analysis as Record<string, unknown>;
+            const depoente = analysis.depoente as Record<string, unknown> | undefined;
+            const classificacoes = (depoente?.classificacoes as string[]) ?? [];
+            return {
+              fileId: f.id,
+              fileName: f.name,
+              depoente: classificacoes.join(", ") || (depoente?.nome as string) || "",
+              analysis,
+            };
+          }),
+        });
+
+        return {
+          success: true,
+          message: `Cross-analysis de ${analyzedFiles.length} depoimentos iniciada`,
+          analysisCount: analyzedFiles.length,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error(`[Intelligence] Cross-analysis failed for assistido ${assistidoId}:`, message);
         return { success: false, error: message };
       }
     }),

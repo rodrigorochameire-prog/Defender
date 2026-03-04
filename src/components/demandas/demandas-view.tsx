@@ -55,8 +55,8 @@ const STATUS_CONFIG: Record<string, {
   },
   "monitorar": { 
     label: "MONITORAR", 
-    rowColor: "bg-blue-50 dark:bg-blue-950/20 border-l-4 border-l-blue-500", 
-    badgeColor: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-800", 
+    rowColor: "bg-zinc-50 dark:bg-zinc-900/50 border-l-4 border-l-zinc-400",
+    badgeColor: "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700", 
     icon: Clock,
     order: 4
   },

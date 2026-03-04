@@ -349,7 +349,6 @@ export const assistidosRouter = router({
               parentFileId: driveFiles.parentFileId,
               driveFolderId: driveFiles.driveFolderId,
               enrichmentStatus: driveFiles.enrichmentStatus,
-              enrichmentData: driveFiles.enrichmentData,
               documentType: driveFiles.documentType,
               categoria: driveFiles.categoria,
             })

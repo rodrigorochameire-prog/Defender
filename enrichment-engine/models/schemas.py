@@ -689,6 +689,26 @@ class TranscribeOutput(BaseModel):
     diarization_applied: bool = Field(False, description="Se diarização foi aplicada")
 
 
+# === Cross-Analysis (Análise Cruzada de Depoimentos) ===
+
+class CrossAnalyzeDepoimento(BaseModel):
+    """Uma análise individual de depoimento para comparação cruzada."""
+    file_id: int = Field(..., description="ID do drive_file")
+    file_name: str = Field("", description="Nome do arquivo")
+    depoente: str = Field("", description="Classificação do depoente (DELEGADO, TESTEMUNHA, etc)")
+    analysis: dict = Field(default_factory=dict, description="Análise Sonnet individual completa")
+
+
+class CrossAnalyzeInput(BaseModel):
+    """Input para /api/cross-analyze — análise cruzada de múltiplos depoimentos."""
+    assistido_id: int = Field(..., description="ID do assistido")
+    assistido_nome: str | None = Field(None, description="Nome do assistido (contexto)")
+    analyses: list[CrossAnalyzeDepoimento] = Field(
+        ..., min_length=2, max_length=20,
+        description="Lista de análises individuais (min 2, max 20)",
+    )
+
+
 # === Health ===
 
 class HealthResponse(BaseModel):

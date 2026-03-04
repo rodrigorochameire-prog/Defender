@@ -187,7 +187,7 @@ function EventoCompartilhadoCard({ evento }: { evento: any }) {
   const isAmanha = dataEvento && isTomorrow(dataEvento);
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-800/50 transition-colors bg-white dark:bg-zinc-900/50">
+    <div className="flex items-center gap-3 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-800/50 transition-colors bg-white dark:bg-zinc-900/50">
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
         evento.tipo === "audiencia" ? "bg-blue-100 dark:bg-blue-900/30" :
         evento.tipo === "prazo" ? "bg-amber-100 dark:bg-amber-900/30" :
@@ -313,7 +313,7 @@ function DashboardEstagiarioV2({
             title="Em Andamento"
             value={delegacoesEmAndamento}
             icon={RefreshCw}
-            colorClass="bg-blue-500 shadow-blue-500/30"
+            colorClass="bg-emerald-500 shadow-emerald-500/30"
             loading={isLoading}
           />
           <StatCardPremium
@@ -383,20 +383,20 @@ function DashboardEstagiarioV2({
 
           {/* Agenda do Supervisor (Compartilhada) */}
           <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
+            <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-gradient-to-r from-zinc-50 to-zinc-100/50 dark:from-zinc-800/30 dark:to-zinc-800/10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <Calendar className="w-5 h-5 text-zinc-500" />
                   <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
                     Agenda de {supervisorName || "Defensor"}
                   </h3>
-                  <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]">
+                  <Badge className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 text-[10px]">
                     <Share2 className="w-3 h-3 mr-1" />
                     Compartilhada
                   </Badge>
                 </div>
                 <Link href="/admin/agenda">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-500 hover:text-blue-600">
+                  <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-500 hover:text-emerald-600">
                     Ver tudo <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </Link>
@@ -448,9 +448,9 @@ function DashboardEstagiarioV2({
             </Card>
           </Link>
           <Link href="/admin/processos">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                <Scale className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Scale className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Processos</p>
               <p className="text-[10px] text-zinc-500">Consultar</p>
@@ -505,7 +505,7 @@ function DashboardServidorV2({
       <div className="px-4 md:px-6 py-5 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <Briefcase className="w-7 h-7 text-white" />
             </div>
             <div>
@@ -543,7 +543,7 @@ function DashboardServidorV2({
             title="Demandas"
             value={demandas.length}
             icon={ListTodo}
-            colorClass="bg-blue-500 shadow-blue-500/30"
+            colorClass="bg-zinc-500 shadow-zinc-500/30"
             loading={isLoading}
             href="/admin/demandas"
           />
@@ -600,7 +600,7 @@ function DashboardServidorV2({
           <Card className="bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
               <div className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-blue-500" />
+                <CalendarDays className="w-4 h-4 text-zinc-500" />
                 <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                   Agenda do Dia
                 </h3>
@@ -626,8 +626,8 @@ function DashboardServidorV2({
                     .slice(0, 5)
                     .map((aud: any) => (
                       <div key={aud.id} className="flex items-center gap-3 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                        <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                          <Clock className="w-5 h-5 text-blue-600" />
+                        <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                          <Clock className="w-5 h-5 text-emerald-600" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
@@ -664,9 +664,9 @@ function DashboardServidorV2({
             </Card>
           </Link>
           <Link href="/admin/agenda">
-            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <Card className="p-5 bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Calendar className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Agenda</p>
               <p className="text-[10px] text-zinc-500">Ver calendário</p>
@@ -739,7 +739,7 @@ function DashboardTriagemV2({
             value={assistidos.length}
             subtitle="no sistema"
             icon={Users}
-            colorClass="bg-blue-500 shadow-blue-500/30"
+            colorClass="bg-zinc-500 shadow-zinc-500/30"
             loading={isLoading}
           />
         </div>

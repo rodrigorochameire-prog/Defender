@@ -466,7 +466,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
       {/* Quick Actions Overlay - Aparece ao clicar no botão ⚡ */}
       {showQuickActions && (
         <div
-          className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in duration-200"
+          className="absolute inset-0 bg-zinc-900/95 dark:bg-zinc-950/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in duration-200 cursor-pointer"
           onClick={() => setShowQuickActions(false)}
         >
           {/* Botão Fechar */}
@@ -561,7 +561,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
 
               {/* Tempo Preso */}
               {isPreso && tempoPreso && (
-                <span className="text-[10px] text-zinc-400 font-mono">{tempoPreso}</span>
+                <span className="text-[10px] text-zinc-400 font-mono tabular-nums">{tempoPreso}</span>
               )}
 
               {/* Idade */}
@@ -777,7 +777,7 @@ function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDupl
             onClick={handleCopyProcesso}
           >
             <Scale className="w-3 h-3 text-zinc-400" />
-            <span className="font-mono text-[10px] text-zinc-400 dark:text-zinc-500 truncate flex-1">
+            <span className="font-mono tabular-nums text-[10px] text-zinc-400 dark:text-zinc-500 truncate flex-1">
               {assistido.numeroProcesso}
             </span>
             {copied ? (
@@ -1076,7 +1076,7 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
               )} />
               {statusCfg?.label || assistido.statusPrisional}
               {isPreso && tempoPreso && (
-                <span className="font-mono text-rose-400 dark:text-rose-500 ml-0.5">{tempoPreso}</span>
+                <span className="font-mono tabular-nums text-rose-400 dark:text-rose-500 ml-0.5">{tempoPreso}</span>
               )}
             </div>
 
@@ -1179,7 +1179,7 @@ function AssistidoRow({ assistido, onPhotoClick, isPinned, onTogglePin }: Assist
 
         {/* Processo */}
         {assistido.numeroProcesso && (
-          <span className="font-mono text-[10px] text-zinc-400 dark:text-zinc-500 truncate max-w-[180px]">
+          <span className="font-mono tabular-nums text-[10px] text-zinc-400 dark:text-zinc-500 truncate max-w-[180px]">
             {assistido.numeroProcesso.length > 25 ? `${assistido.numeroProcesso.slice(0, 25)}...` : assistido.numeroProcesso}
           </span>
         )}

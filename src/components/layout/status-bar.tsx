@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
   RefreshCw,
@@ -24,11 +24,18 @@ export function StatusBar({ collapsed = false }: StatusBarProps) {
   const [isOnline, setIsOnline] = useState(true);
   const [mounted, setMounted] = useState(false);
 
+  // Stabilize query input — round to current minute to prevent new query key on every render
+  const dataInicioStable = useMemo(() => {
+    const now = new Date();
+    now.setSeconds(0, 0);
+    return now.toISOString();
+  }, []); // Only computed once on mount — refetchInterval handles updates
+
   // Query para próximo evento
   const { data: proximosEventos } = trpc.eventos.list.useQuery(
     {
       limit: 1,
-      dataInicio: new Date().toISOString(),
+      dataInicio: dataInicioStable,
       orderBy: "data",
       orderDirection: "asc",
     },

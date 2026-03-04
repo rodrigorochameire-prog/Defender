@@ -5383,3 +5383,88 @@ export const userInvitationsRelations = relations(userInvitations, ({ one }) => 
   invitedBy: one(users, { fields: [userInvitations.invitedById], references: [users.id] }),
   acceptedUser: one(users, { fields: [userInvitations.acceptedUserId], references: [users.id] }),
 }));
+
+// ==========================================
+// CROSS-ANALYSIS — Análise Cruzada de Depoimentos
+// ==========================================
+
+export const crossAnalyses = pgTable("cross_analyses", {
+  id: serial("id").primaryKey(),
+  assistidoId: integer("assistido_id").notNull().references(() => assistidos.id, { onDelete: "cascade" }),
+
+  // Contradições cruzadas entre depoimentos
+  contradictionMatrix: jsonb("contradiction_matrix").$type<{
+    fato: string;
+    depoimentos: Array<{
+      sourceFileId: number;
+      depoente: string;
+      afirmacao: string;
+      timestampRef?: string;
+    }>;
+    tipo: "contradicao" | "corroboracao" | "lacuna";
+    analise: string;
+  }[]>().default([]),
+
+  // Tese consolidada
+  teseConsolidada: jsonb("tese_consolidada").$type<{
+    tesePrincipal: string;
+    tesesSubsidiarias: string[];
+    pontosFortes: Array<{
+      ponto: string;
+      fontes: number[];
+      relevancia: "alta" | "media" | "baixa";
+    }>;
+    pontosFracos: Array<{
+      ponto: string;
+      fontes: number[];
+      relevancia: "alta" | "media" | "baixa";
+    }>;
+  }>().default({}),
+
+  // Timeline unificada dos fatos
+  timelineFatos: jsonb("timeline_fatos").$type<Array<{
+    dataRef: string;
+    fato: string;
+    fontes: Array<{
+      fileId: number;
+      depoente: string;
+      timestampRef?: string;
+    }>;
+    importancia: "alta" | "media" | "baixa";
+  }>>().default([]),
+
+  // Mapa de atores
+  mapaAtores: jsonb("mapa_atores").$type<Array<{
+    nome: string;
+    papel: string;
+    mencionadoPor: Array<{
+      fileId: number;
+      depoente: string;
+      contexto: string;
+    }>;
+    relacoes: Array<{
+      com: string;
+      tipo: string;
+    }>;
+  }>>().default([]),
+
+  // Providências agregadas (dedup de todas as análises individuais)
+  providenciasAgregadas: jsonb("providencias_agregadas").$type<string[]>().default([]),
+
+  // Metadata
+  sourceFileIds: jsonb("source_file_ids").$type<number[]>().default([]),
+  analysisCount: integer("analysis_count").notNull().default(0),
+  modelVersion: varchar("model_version", { length: 50 }),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("cross_analyses_assistido_idx").on(table.assistidoId),
+]);
+
+export type CrossAnalysis = typeof crossAnalyses.$inferSelect;
+export type InsertCrossAnalysis = typeof crossAnalyses.$inferInsert;
+
+export const crossAnalysesRelations = relations(crossAnalyses, ({ one }) => ({
+  assistido: one(assistidos, { fields: [crossAnalyses.assistidoId], references: [assistidos.id] }),
+}));

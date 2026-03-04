@@ -804,12 +804,12 @@ export default function EquipePage() {
                         <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{member.assistidos}</p>
                       </div>
                       
-                      <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30">
+                      <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
                         <div className="flex items-center gap-2 mb-1">
-                          <Scale className="w-3.5 h-3.5 text-blue-600" />
-                          <span className="text-[10px] text-blue-700 dark:text-blue-400 font-medium">Processos</span>
+                          <Scale className="w-3.5 h-3.5 text-zinc-500" />
+                          <span className="text-[10px] text-zinc-600 dark:text-zinc-400 font-medium">Processos</span>
                         </div>
-                        <p className="text-xl font-bold text-blue-700 dark:text-blue-400">{member.processos}</p>
+                        <p className="text-xl font-bold text-zinc-700 dark:text-zinc-300">{member.processos}</p>
                       </div>
                       
                       <div className="p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-900/30">
@@ -866,7 +866,7 @@ export default function EquipePage() {
                 recentLogs.map((log) => {
                   const acaoIcons: Record<string, React.ReactNode> = {
                     CREATE: <CheckCircle2 className="w-4 h-4 text-emerald-500" />,
-                    UPDATE: <Edit className="w-4 h-4 text-blue-500" />,
+                    UPDATE: <Edit className="w-4 h-4 text-emerald-500" />,
                     DELETE: <Trash2 className="w-4 h-4 text-rose-500" />,
                     COMPLETE: <CheckCircle2 className="w-4 h-4 text-emerald-500" />,
                     DELEGATE: <Send className="w-4 h-4 text-amber-500" />,

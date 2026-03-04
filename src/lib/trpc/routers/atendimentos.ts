@@ -64,7 +64,26 @@ export const atendimentosRouter = router({
 
       const result = await db
         .select({
-          atendimento: atendimentos,
+          atendimento: {
+            id: atendimentos.id,
+            assistidoId: atendimentos.assistidoId,
+            processoId: atendimentos.processoId,
+            casoId: atendimentos.casoId,
+            workspaceId: atendimentos.workspaceId,
+            dataAtendimento: atendimentos.dataAtendimento,
+            duracao: atendimentos.duracao,
+            tipo: atendimentos.tipo,
+            local: atendimentos.local,
+            assunto: atendimentos.assunto,
+            resumo: atendimentos.resumo,
+            acompanhantes: atendimentos.acompanhantes,
+            status: atendimentos.status,
+            enrichmentStatus: atendimentos.enrichmentStatus,
+            transcricaoStatus: atendimentos.transcricaoStatus,
+            atendidoPorId: atendimentos.atendidoPorId,
+            createdAt: atendimentos.createdAt,
+            updatedAt: atendimentos.updatedAt,
+          },
           assistido: {
             id: assistidos.id,
             nome: assistidos.nome,

@@ -25,6 +25,7 @@ interface CompareFile {
   name: string;
   webViewLink: string;
   driveFolderId?: string;
+  driveFileId?: string;
 }
 
 interface DocumentCompareModalProps {
@@ -232,8 +233,9 @@ function PdfPanel({
     );
   }
 
-  const previewUrl = file.webViewLink
-    ? file.webViewLink.replace("/view", "/preview")
+  // Use proxy to avoid Google CSP frame-ancestors block
+  const previewUrl = file.driveFileId
+    ? `/api/drive/proxy?fileId=${file.driveFileId}`
     : "";
 
   return (
@@ -255,7 +257,7 @@ function PdfPanel({
           />
         ) : (
           <div className="flex items-center justify-center h-full text-zinc-400 text-sm">
-            Preview indisponível
+            Preview indisponivel
           </div>
         )}
       </div>
@@ -295,6 +297,7 @@ export function DocumentCompareModal({
               name: f.name,
               webViewLink: f.webViewLink || "",
               driveFolderId: f.driveFolderId || "",
+              driveFileId: f.driveFileId || "",
             }));
         },
       }

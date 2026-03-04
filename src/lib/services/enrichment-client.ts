@@ -958,6 +958,33 @@ class EnrichmentClient {
   }
 
   /**
+   * Cross-analysis async de múltiplos depoimentos — retorna 202 imediatamente.
+   * Compara análises individuais para encontrar contradições, corroborações e lacunas.
+   * Resultado salvo na tabela cross_analyses via Supabase.
+   */
+  async crossAnalyzeAsync(input: {
+    assistidoId: number;
+    assistidoNome?: string;
+    analyses: Array<{
+      fileId: number;
+      fileName: string;
+      depoente: string;
+      analysis: Record<string, unknown>;
+    }>;
+  }): Promise<{ status: string; message: string; assistido_id: number }> {
+    return await this.request<{ status: string; message: string; assistido_id: number }>("/api/cross-analyze", {
+      assistido_id: input.assistidoId,
+      assistido_nome: input.assistidoNome ?? null,
+      analyses: input.analyses.map(a => ({
+        file_id: a.fileId,
+        file_name: a.fileName,
+        depoente: a.depoente,
+        analysis: a.analysis,
+      })),
+    }, 30_000);
+  }
+
+  /**
    * Chamar enriquecimento de forma assíncrona (fire-and-forget).
    * Não bloqueia o fluxo principal — erros são logados mas ignorados.
    */

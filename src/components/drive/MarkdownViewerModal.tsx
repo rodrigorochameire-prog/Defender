@@ -27,6 +27,8 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
+import { trpc } from "@/lib/trpc/client";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -59,6 +61,8 @@ interface MarkdownViewerModalProps {
   content?: string; // pre-loaded content (skip fetch)
   enrichmentData?: PlaudMetadata;
   webViewLink?: string;
+  assistidoId?: number;
+  fileDbId?: number;
 }
 
 // ─── Component ──────────────────────────────────────────────────────
@@ -71,13 +75,28 @@ export function MarkdownViewerModal({
   content: preloadedContent,
   enrichmentData,
   webViewLink,
+  assistidoId,
+  fileDbId,
 }: MarkdownViewerModalProps) {
   const [content, setContent] = useState<string | null>(preloadedContent || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isPlaud = enrichmentData?.sub_type === "transcricao_plaud";
-  const analysis = enrichmentData?.analysis;
+  // Self-fetch enrichmentData when not provided but fileDbId is available
+  const { data: fetchedEnrichment } = trpc.drive.getFilesEnrichmentData.useQuery(
+    { fileIds: [fileDbId!] },
+    { enabled: isOpen && !!fileDbId && !enrichmentData, staleTime: 60_000 },
+  );
+  const effectiveEnrichmentData = enrichmentData ?? (fetchedEnrichment?.[0]?.enrichmentData as PlaudMetadata | undefined);
+
+  const isPlaud = effectiveEnrichmentData?.sub_type === "transcricao_plaud";
+  const analysis = effectiveEnrichmentData?.analysis;
+
+  // Fetch cross-analysis data for this assistido (only when modal is open and has assistidoId)
+  const crossQuery = trpc.intelligence.getCrossAnalysis.useQuery(
+    { assistidoId: assistidoId! },
+    { enabled: isOpen && !!assistidoId && isPlaud, refetchOnWindowFocus: false },
+  );
 
   // Fetch content from Drive proxy
   useEffect(() => {
@@ -174,32 +193,32 @@ export function MarkdownViewerModal({
               <div className="space-y-2">
                 <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Metadados</h3>
                 <div className="flex flex-wrap gap-1.5">
-                  {enrichmentData?.tipo_gravacao && (
+                  {effectiveEnrichmentData?.tipo_gravacao && (
                     <Badge variant="outline" className="text-[10px]">
                       <Mic className="w-3 h-3 mr-1" />
-                      {enrichmentData.tipo_gravacao}
+                      {effectiveEnrichmentData.tipo_gravacao}
                     </Badge>
                   )}
-                  {enrichmentData?.interlocutor?.tipo && (
+                  {effectiveEnrichmentData?.interlocutor?.tipo && (
                     <Badge variant="outline" className="text-[10px]">
                       <Users className="w-3 h-3 mr-1" />
-                      {enrichmentData.interlocutor.tipo}
+                      {effectiveEnrichmentData.interlocutor.tipo}
                     </Badge>
                   )}
-                  {enrichmentData?.atendimento_id && (
+                  {effectiveEnrichmentData?.atendimento_id && (
                     <Badge variant="outline" className="text-[10px]">
                       <ClipboardList className="w-3 h-3 mr-1" />
-                      Atendimento #{enrichmentData.atendimento_id}
+                      Atendimento #{effectiveEnrichmentData.atendimento_id}
                     </Badge>
                   )}
                 </div>
               </div>
 
               {/* Resumo IA */}
-              {(analysis?.resumo_defesa || enrichmentData?.summary) && (
+              {(analysis?.resumo_defesa || effectiveEnrichmentData?.summary) && (
                 <SidebarSection title="Resumo IA" icon={<Sparkles className="w-3.5 h-3.5" />} defaultOpen>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    {analysis?.resumo_defesa || enrichmentData?.summary}
+                    {analysis?.resumo_defesa || effectiveEnrichmentData?.summary}
                   </p>
                 </SidebarSection>
               )}
@@ -261,17 +280,74 @@ export function MarkdownViewerModal({
                 </SidebarSection>
               )}
 
+              {/* Cross-analysis references */}
+              {crossQuery.data?.found && crossQuery.data.data && (() => {
+                const crossData = crossQuery.data.data;
+                const matrix = (crossData.contradictionMatrix ?? []) as Array<{
+                  fato: string;
+                  depoimentos: Array<{ sourceFileId: number; depoente: string; afirmacao: string }>;
+                  tipo: string;
+                  analise: string;
+                }>;
+                // Filter items that mention this file
+                const relevantItems = fileDbId
+                  ? matrix.filter(item => item.depoimentos.some(d => d.sourceFileId === fileDbId))
+                  : [];
+                const contradictions = relevantItems.filter(i => i.tipo === "contradicao");
+                const corroborations = relevantItems.filter(i => i.tipo === "corroboracao");
+
+                if (relevantItems.length === 0) return null;
+
+                return (
+                  <SidebarSection
+                    title={`Cruzamento (${relevantItems.length})`}
+                    icon={<AlertTriangle className="w-3.5 h-3.5 text-violet-500" />}
+                  >
+                    <div className="space-y-2">
+                      {contradictions.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-red-600 dark:text-red-400 mb-1">
+                            {contradictions.length} contradição{contradictions.length !== 1 ? "ões" : ""} com outros depoentes
+                          </p>
+                          {contradictions.slice(0, 3).map((c, i) => (
+                            <div key={i} className="text-xs text-zinc-600 dark:text-zinc-400 mb-1.5 pl-2 border-l-2 border-red-200 dark:border-red-800">
+                              <p className="font-medium text-zinc-700 dark:text-zinc-300">{c.fato}</p>
+                              <p className="text-red-600 dark:text-red-400 italic mt-0.5">{c.analise}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {corroborations.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mb-1">
+                            {corroborations.length} corroboração{corroborations.length !== 1 ? "ões" : ""} com outros depoentes
+                          </p>
+                          {corroborations.slice(0, 3).map((c, i) => (
+                            <div key={i} className="text-xs text-zinc-600 dark:text-zinc-400 mb-1.5 pl-2 border-l-2 border-emerald-200 dark:border-emerald-800">
+                              <p>{c.fato}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[10px] text-zinc-400 italic">
+                        Ver tab Inteligência → Cruzamento para análise completa
+                      </p>
+                    </div>
+                  </SidebarSection>
+                );
+              })()}
+
               {/* Analysis in progress */}
-              {enrichmentData?.progress && enrichmentData.progress.step !== "completed" && (
+              {effectiveEnrichmentData?.progress && effectiveEnrichmentData.progress.step !== "completed" && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
                   <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
                   <div>
                     <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                      {enrichmentData.progress.detail || "Analisando..."}
+                      {effectiveEnrichmentData.progress.detail || "Analisando..."}
                     </p>
-                    {enrichmentData.progress.percent && (
+                    {effectiveEnrichmentData.progress.percent && (
                       <div className="w-full h-1 bg-amber-200 rounded mt-1">
-                        <div className="h-1 bg-amber-500 rounded" style={{ width: `${enrichmentData.progress.percent}%` }} />
+                        <div className="h-1 bg-amber-500 rounded" style={{ width: `${effectiveEnrichmentData.progress.percent}%` }} />
                       </div>
                     )}
                   </div>

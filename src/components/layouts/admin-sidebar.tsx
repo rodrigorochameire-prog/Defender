@@ -733,7 +733,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
               className={cn(
                 "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
                 hasActiveItem
-                  ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/30"
+                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
                   : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200"
               )}
             >
@@ -745,7 +745,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             align="start"
             className="w-56 p-2 glass-dark shadow-xl shadow-black/30"
           >
-            <p className="text-[10px] font-bold text-blue-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
               <BookUser className="h-3 w-3" />
               Cadastros
             </p>
@@ -763,7 +763,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                   className={cn(
                     "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
                     isActive
-                      ? "bg-blue-500/20 text-blue-400 font-medium"
+                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
                       : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
                   )}
                 >
@@ -787,19 +787,19 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           className={cn(
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
-              ? "bg-blue-600/15 text-blue-400"
+              ? "bg-emerald-600/15 text-emerald-400"
               : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
           )}
         >
           <div className={cn(
             "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
             hasActiveItem
-              ? "bg-blue-500/20"
+              ? "bg-emerald-500/20"
               : "bg-white/[0.06] group-hover/item:bg-white/[0.10]"
           )}>
             <BookUser className={cn(
               "h-4 w-4 transition-all duration-300",
-              hasActiveItem ? "text-blue-400" : "text-zinc-400 group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-400" : "text-zinc-400 group-hover/item:text-zinc-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">Cadastros</span>
@@ -817,7 +817,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
       )}>
         <div className="relative pl-4 space-y-0.5">
           {/* Linha vertical conectora */}
-          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-blue-500/30 via-white/[0.04] to-transparent" />
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/30 via-white/[0.04] to-transparent" />
 
           {items.map((item) => {
             if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
@@ -833,7 +833,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                   className={cn(
                     "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                     isActive
-                      ? "bg-blue-500/15 text-blue-400 font-medium"
+                      ? "bg-emerald-500/15 text-emerald-400 font-medium"
                       : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06]"
                   )}
                 >
@@ -841,15 +841,15 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     {/* Indicador de conexão */}
                     <div className={cn(
                       "absolute left-[-12px] w-2 h-px transition-all duration-200",
-                      isActive ? "bg-blue-500/50" : "bg-white/[0.06]"
+                      isActive ? "bg-emerald-500/50" : "bg-white/[0.06]"
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                      isActive ? "text-blue-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                      isActive ? "text-emerald-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
                     {isActive && (
-                      <div className="absolute right-2 w-1 h-1 rounded-full bg-blue-400" />
+                      <div className="absolute right-2 w-1 h-1 rounded-full bg-emerald-400" />
                     )}
                   </Link>
                 </SidebarMenuButton>

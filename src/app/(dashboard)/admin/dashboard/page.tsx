@@ -303,30 +303,37 @@ export default function DashboardJuriPage() {
   // BUSCA DADOS REAIS DO BANCO DE DADOS
   // ==========================================
 
-  const { data: demandas = [], isLoading: loadingDemandas } = trpc.demandas.list.useQuery({
-    limit: 100,
-  });
+  const { data: demandas = [], isLoading: loadingDemandas } = trpc.demandas.list.useQuery(
+    { limit: 20 },
+    { enabled: !!user },
+  );
 
-  const { data: assistidos = [], isLoading: loadingAssistidos } = trpc.assistidos.list.useQuery({
-    limit: 100,
-  });
+  const { data: assistidos = [], isLoading: loadingAssistidos } = trpc.assistidos.list.useQuery(
+    { limit: 20 },
+    { enabled: !!user },
+  );
 
   // Solar pendências (stats only, sem lista)
   const { data: solarSync } = trpc.solar.dashboardAssistidosSync.useQuery(
     { limit: 1, offset: 0 },
-    { staleTime: 5 * 60 * 1000 } // cache 5min — dados mudam pouco
+    { staleTime: 5 * 60 * 1000, enabled: !!user }
   );
 
-  const { data: casos = [], isLoading: loadingCasos } = trpc.casos.list.useQuery({
-    limit: 100,
-  });
+  const { data: casos = [], isLoading: loadingCasos } = trpc.casos.list.useQuery(
+    { limit: 20 },
+    { enabled: !!user },
+  );
 
-  const { data: jurisData, isLoading: loadingJuris } = trpc.juri.proximas.useQuery({});
+  const { data: jurisData, isLoading: loadingJuris } = trpc.juri.proximas.useQuery(
+    {},
+    { enabled: !!user },
+  );
   const juris = jurisData ?? [];
 
-  const { data: processos = [] } = trpc.processos.list.useQuery({
-    limit: 100,
-  });
+  const { data: processos = [] } = trpc.processos.list.useQuery(
+    { limit: 20 },
+    { enabled: !!user },
+  );
 
   // Delegações recebidas (para estagiários e servidores)
   const { data: minhasDelegacoes = [], isLoading: loadingDelegacoes } = trpc.delegacao.minhasDelegacoes.useQuery(
@@ -340,12 +347,16 @@ export default function DashboardJuriPage() {
     { enabled: !!user && ["defensor", "admin"].includes(user.role) }
   );
 
+  // auth.me já é chamado no ProfissionalProvider — React Query dedup via cache key
   const { data: currentUserData } = trpc.auth.me.useQuery();
 
   const isPerfilAlternativo = user && ["estagiario", "servidor", "triagem"].includes(user.role);
   const isDefensorCriminalGeral = user && user.role === "defensor" && isGrupoVarasCriminais;
 
-  const { data: audienciasData, isLoading: loadingAudiencias } = trpc.audiencias.proximas.useQuery({});
+  const { data: audienciasData, isLoading: loadingAudiencias } = trpc.audiencias.proximas.useQuery(
+    {},
+    { enabled: !!user },
+  );
   const audiencias = audienciasData ?? [];
 
   // ==========================================

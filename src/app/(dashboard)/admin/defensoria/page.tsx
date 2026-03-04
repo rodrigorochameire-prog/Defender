@@ -83,8 +83,8 @@ export default function DefensoriaPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <Users className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                <Users className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
                 <CardTitle>Defensores</CardTitle>
