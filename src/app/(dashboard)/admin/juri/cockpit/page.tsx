@@ -815,12 +815,25 @@ const STORAGE_KEYS = {
   CONSELHO: "defender_cockpit_conselho",
   ANOTACOES: "defender_cockpit_anotacoes",
   RECUSADOS: "defender_cockpit_recusados",
+  FASE_ATUAL: "defender_cockpit_fase",
+  TIME_LEFT: "defender_cockpit_timeleft",
+  ELAPSED_TIME: "defender_cockpit_elapsed",
+  IS_DARK_MODE: "defender_cockpit_darkmode",
+  COCKPIT_MODE: "defender_cockpit_mode",
+  ACTIVE_TAB: "defender_cockpit_tab",
+  TIMER_RUNNING_SINCE: "defender_cockpit_timer_since", // timestamp when timer started
 };
 
 // ============================================
 // COMPONENTE PRINCIPAL
 // ============================================
 export default function PlenarioCockpitPage() {
+  // Função helper para ler localStorage com segurança (SSR-safe)
+  const readStorage = useCallback((key: string, fallback: string): string => {
+    if (typeof window === "undefined") return fallback;
+    try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
+  }, []);
+
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [faseAtual, setFaseAtual] = useState(phases[0].id);
   const [isRunning, setIsRunning] = useState(false);
@@ -854,17 +867,24 @@ export default function PlenarioCockpitPage() {
   const [corpoAtual, setCorpoAtual] = useState<JuradoCorpo[]>(corpoJurados);
   
   // Atualizar corpo de jurados quando dados do banco chegarem
-  // Filtra apenas jurados do período atual (titulares e suplentes)
+  // PRESERVA recusadoPor do localStorage para evitar race condition
   useEffect(() => {
     if (juradosDB && juradosDB.length > 0) {
+      // Ler recusados salvos para preservar durante atualização
+      let savedRecusados: Record<number, "mp" | "defesa"> = {};
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.RECUSADOS);
+        if (raw) savedRecusados = JSON.parse(raw);
+      } catch { /* ignore */ }
+
       // Filtrar apenas jurados do período atual
-      const juradosDoPeriodo = juradosDB.filter((j: any) => 
+      const juradosDoPeriodo = juradosDB.filter((j: any) =>
         j.reuniaoPeriodica === periodoAtual
       );
-      
+
       // Se não houver jurados do período atual, usar todos (fallback)
       const juradosParaMapear = juradosDoPeriodo.length > 0 ? juradosDoPeriodo : juradosDB;
-      
+
       const juradosMapeados: JuradoCorpo[] = juradosParaMapear.map((j: any) => ({
         id: j.id,
         nome: j.nome,
@@ -876,7 +896,7 @@ export default function PlenarioCockpitPage() {
         perfilDominante: j.perfilTendencia || j.perfilPsicologico || undefined,
         participacoes: j.participacoes || 0,
         ultimaParticipacao: j.updatedAt ? new Date(j.updatedAt).toISOString().split("T")[0] : undefined,
-        recusadoPor: null,
+        recusadoPor: savedRecusados[j.id] || null, // ← PRESERVA recusa salva
         estadoCivil: undefined,
         escolaridade: j.escolaridade || undefined,
         religiao: undefined,
@@ -913,13 +933,14 @@ export default function PlenarioCockpitPage() {
     interpretacao: "favoravel" | "neutro" | "desfavoravel" | "incerto";
   }>>({});
 
-  // Carregar dados salvos
+  // Carregar TODOS os dados salvos de uma vez
   useEffect(() => {
     try {
+      // --- Dados estruturados ---
       const savedConselho = localStorage.getItem(STORAGE_KEYS.CONSELHO);
       const savedAnotacoes = localStorage.getItem(STORAGE_KEYS.ANOTACOES);
       const savedRecusados = localStorage.getItem(STORAGE_KEYS.RECUSADOS);
-      
+
       if (savedConselho) {
         const parsed = JSON.parse(savedConselho);
         setConselhoSentenca(parsed);
@@ -934,6 +955,49 @@ export default function PlenarioCockpitPage() {
           recusadoPor: recusados[j.id] || null
         })));
       }
+
+      // --- Estado da sessão ---
+      const savedFase = localStorage.getItem(STORAGE_KEYS.FASE_ATUAL);
+      if (savedFase && phases.some(p => p.id === savedFase)) {
+        setFaseAtual(savedFase);
+        const fase = phases.find(p => p.id === savedFase)!;
+        setTotalTime(fase.minutes * 60);
+      }
+
+      const savedTimeLeft = localStorage.getItem(STORAGE_KEYS.TIME_LEFT);
+      if (savedTimeLeft) setTimeLeft(Number(savedTimeLeft));
+
+      const savedElapsed = localStorage.getItem(STORAGE_KEYS.ELAPSED_TIME);
+      if (savedElapsed) setElapsedTime(Number(savedElapsed));
+
+      // Restaurar timer se estava rodando: calcular tempo decorrido desde o timestamp
+      const savedTimerSince = localStorage.getItem(STORAGE_KEYS.TIMER_RUNNING_SINCE);
+      if (savedTimerSince && savedFase) {
+        const since = Number(savedTimerSince);
+        const nowMs = Date.now();
+        const secondsPassed = Math.floor((nowMs - since) / 1000);
+        const fase = phases.find(p => p.id === savedFase) ?? phases[0];
+        if (fase.mode === "stopwatch") {
+          const prevElapsed = Number(savedElapsed || 0);
+          setElapsedTime(prevElapsed + secondsPassed);
+          setIsRunning(true);
+        } else {
+          const prevTimeLeft = Number(savedTimeLeft || fase.minutes * 60);
+          const newTimeLeft = Math.max(0, prevTimeLeft - secondsPassed);
+          setTimeLeft(newTimeLeft);
+          if (newTimeLeft > 0) setIsRunning(true);
+        }
+      }
+
+      const savedDarkMode = localStorage.getItem(STORAGE_KEYS.IS_DARK_MODE);
+      if (savedDarkMode) setIsDarkMode(savedDarkMode === "true");
+
+      const savedMode = localStorage.getItem(STORAGE_KEYS.COCKPIT_MODE);
+      if (savedMode === "registro" || savedMode === "estrategia") setCockpitMode(savedMode);
+
+      const savedTab = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB);
+      if (savedTab) setActiveTab(savedTab as typeof activeTab);
+
     } catch (e) {
       console.error("Erro ao carregar dados salvos:", e);
     }
@@ -974,18 +1038,74 @@ export default function PlenarioCockpitPage() {
     }
   }, [corpoAtual, isLoaded]);
 
+  // Salvar estado da sessão automaticamente
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem(STORAGE_KEYS.FASE_ATUAL, faseAtual);
+      localStorage.setItem(STORAGE_KEYS.IS_DARK_MODE, String(isDarkMode));
+      localStorage.setItem(STORAGE_KEYS.COCKPIT_MODE, cockpitMode);
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB, activeTab);
+    } catch (e) {
+      console.error("Erro ao salvar estado da sessão:", e);
+    }
+  }, [faseAtual, isDarkMode, cockpitMode, activeTab, isLoaded]);
+
+  // Salvar timer state (timeLeft e elapsed) a cada mudança
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem(STORAGE_KEYS.TIME_LEFT, String(timeLeft));
+      localStorage.setItem(STORAGE_KEYS.ELAPSED_TIME, String(elapsedTime));
+    } catch (e) {
+      // Silencioso - salva a cada segundo quando rodando
+    }
+  }, [timeLeft, elapsedTime, isLoaded]);
+
+  // Salvar/limpar timestamp quando timer inicia/para
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      if (isRunning) {
+        localStorage.setItem(STORAGE_KEYS.TIMER_RUNNING_SINCE, String(Date.now()));
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.TIMER_RUNNING_SINCE);
+      }
+    } catch (e) {
+      // Silencioso
+    }
+  }, [isRunning, isLoaded]);
+
   const faseSelecionada = useMemo(
     () => phases.find((fase) => fase.id === faseAtual) ?? phases[0],
     [faseAtual]
   );
 
+  // Rastrear fase anterior para detectar mudança real do USUÁRIO (não restauração)
+  const prevFaseRef = useRef<string | null>(null);
+
   useEffect(() => {
-    const isStopwatch = faseSelecionada.mode === "stopwatch";
-    setTotalTime(faseSelecionada.minutes * 60);
-    setTimeLeft(isStopwatch ? 0 : faseSelecionada.minutes * 60);
-    setElapsedTime(0);
-    setIsRunning(false);
-  }, [faseSelecionada]);
+    // Ignorar reset até que dados estejam carregados do localStorage
+    if (!isLoaded) return;
+
+    // Na primeira vez após isLoaded, registrar fase sem resetar (é a restauração)
+    if (prevFaseRef.current === null) {
+      prevFaseRef.current = faseSelecionada.id;
+      // Só precisa setar totalTime (timeLeft e elapsed já vieram do localStorage)
+      setTotalTime(faseSelecionada.minutes * 60);
+      return;
+    }
+
+    // Só resetar se a fase realmente mudou (ação do usuário)
+    if (prevFaseRef.current !== faseSelecionada.id) {
+      prevFaseRef.current = faseSelecionada.id;
+      const isStopwatch = faseSelecionada.mode === "stopwatch";
+      setTotalTime(faseSelecionada.minutes * 60);
+      setTimeLeft(isStopwatch ? 0 : faseSelecionada.minutes * 60);
+      setElapsedTime(0);
+      setIsRunning(false);
+    }
+  }, [faseSelecionada, isLoaded]);
 
   useEffect(() => {
     if (!isRunning) return;
