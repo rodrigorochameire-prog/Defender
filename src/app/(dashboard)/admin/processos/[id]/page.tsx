@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
 import { ArrowLeft, Brain, Calendar, ExternalLink, FileText, FolderOpen, Loader2, Lock, Pencil, Plus, Scale, Sun, User, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -61,10 +62,10 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4 animate-pulse">
-        <div className="h-6 bg-zinc-200 rounded w-64" />
-        <div className="h-4 bg-zinc-100 rounded w-40" />
-        <div className="h-32 bg-zinc-100 rounded" />
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-6 w-64" />
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-32 w-full" />
       </div>
     );
   }

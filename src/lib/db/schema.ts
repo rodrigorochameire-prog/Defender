@@ -607,7 +607,10 @@ export const sessoesJuri = pgTable("sessoes_juri", {
   
   // Observações
   observacoes: text("observacoes"),
-  
+
+  // Simulação IA (resultado salvo)
+  simulacaoResultado: jsonb("simulacao_resultado"),
+
   // Metadados
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -3725,7 +3728,15 @@ export const personagensJuri = pgTable("personagens_juri", {
   // Estatísticas (JSON com histórico)
   historico: text("historico"), // JSON com dados de sessões anteriores
   totalSessoes: integer("total_sessoes").default(0),
-  
+  totalCondenacoes: integer("total_condenacoes").default(0),
+  totalAbsolvicoes: integer("total_absolvicoes").default(0),
+  totalDesclassificacoes: integer("total_desclassificacoes").default(0),
+  tempoMedioSustentacao: integer("tempo_medio_sustentacao"), // minutos
+  argumentosPreferidos: jsonb("argumentos_preferidos").$type<string[]>(),
+  tesesVulneraveis: jsonb("teses_vulneraveis").$type<string[]>(),
+  notasEstrategicas: text("notas_estrategicas"),
+  ultimaSessaoData: timestamp("ultima_sessao_data"),
+
   // Status
   ativo: boolean("ativo").default(true),
   
@@ -5467,4 +5478,51 @@ export type InsertCrossAnalysis = typeof crossAnalyses.$inferInsert;
 
 export const crossAnalysesRelations = relations(crossAnalyses, ({ one }) => ({
   assistido: one(assistidos, { fields: [crossAnalyses.assistidoId], references: [assistidos.id] }),
+}));
+
+// ==========================================
+// QUESITOS DO JÚRI (Preparação)
+// ==========================================
+
+export const quesitos = pgTable("quesitos", {
+  id: serial("id").primaryKey(),
+  casoId: integer("caso_id").references(() => casos.id, { onDelete: "cascade" }),
+  sessaoJuriId: integer("sessao_juri_id").references(() => sessoesJuri.id, { onDelete: "set null" }),
+
+  // Conteúdo do quesito
+  numero: integer("numero").notNull(),
+  texto: text("texto").notNull(),
+  tipo: varchar("tipo", { length: 30 }), // 'materialidade' | 'autoria' | 'absolvicao' | 'causa_diminuicao' | 'qualificadora' | 'privilegio' | 'atenuante' | 'agravante'
+  origem: varchar("origem", { length: 20 }), // 'obrigatorio' | 'acusacao' | 'defesa'
+
+  // Tese vinculada
+  teseId: integer("tese_id").references(() => tesesDefensivas.id, { onDelete: "set null" }),
+
+  // Argumentação por resposta
+  argumentacaoSim: text("argumentacao_sim"),
+  argumentacaoNao: text("argumentacao_nao"),
+
+  // Árvore de decisão
+  dependeDe: integer("depende_de"), // ID do quesito pai
+  condicaoPai: varchar("condicao_pai", { length: 5 }), // 'sim' | 'nao'
+
+  // IA
+  geradoPorIA: boolean("gerado_por_ia").default(false),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("quesitos_caso_id_idx").on(table.casoId),
+  index("quesitos_sessao_juri_id_idx").on(table.sessaoJuriId),
+  index("quesitos_tipo_idx").on(table.tipo),
+  index("quesitos_numero_idx").on(table.numero),
+]);
+
+export type Quesito = typeof quesitos.$inferSelect;
+export type InsertQuesito = typeof quesitos.$inferInsert;
+
+export const quesitosRelations = relations(quesitos, ({ one }) => ({
+  caso: one(casos, { fields: [quesitos.casoId], references: [casos.id] }),
+  sessaoJuri: one(sessoesJuri, { fields: [quesitos.sessaoJuriId], references: [sessoesJuri.id] }),
+  tese: one(tesesDefensivas, { fields: [quesitos.teseId], references: [tesesDefensivas.id] }),
 }));

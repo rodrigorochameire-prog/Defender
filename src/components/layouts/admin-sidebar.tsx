@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Users, Calendar, Bell, FileText, LogOut, User,
   Settings, BarChart3, Scale, Gavel, Clock, AlertTriangle, Calculator,
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
-  Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck,
+  Award, TrendingUp, ChevronDown, Zap, Brain, Mic, Heart, ClipboardCheck, ClipboardList,
   Columns3, History, PieChart, Handshake, CalendarDays, Sparkles, MessageCircle,
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
@@ -98,6 +98,7 @@ const TOOLS_NAV: AssignmentMenuItem[] = [
 const JURI_MODULES: AssignmentMenuItem[] = [
   { label: "Sessões do Júri", path: "/admin/juri", icon: "Gavel" },
   { label: "Plenário Live", path: "/admin/juri/cockpit", icon: "Zap" },
+  { label: "Avaliação", path: "/admin/juri/avaliacao", icon: "ClipboardList" },
   { label: "Banco de Jurados", path: "/admin/juri/jurados", icon: "Users" },
   { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
   { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
@@ -128,7 +129,7 @@ const iconMap: Record<string, React.ElementType> = {
   LayoutDashboard, Users, Calendar, Bell, FileText, User, MessageCircle,
   Settings, BarChart3, Scale, Gavel, Clock, AlertTriangle, Calculator,
   FolderOpen, Building2, Briefcase, Target, Shield, Lock, RefreshCw,
-  Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, Columns3,
+  Award, TrendingUp, Zap, Brain, Mic, Heart, ClipboardCheck, ClipboardList, Columns3,
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
@@ -186,16 +187,16 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
           isActive={isActive}
           tooltip={item.label}
           className={cn(
-            "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
+            "h-10 w-10 p-0 mx-auto transition-all duration-200 rounded-xl flex items-center justify-center",
             isActive
-              ? "bg-white/[0.12] text-white shadow-lg shadow-white/5"
-              : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200"
+              ? "bg-emerald-500/15 text-emerald-400"
+              : "text-zinc-400 hover:bg-zinc-700/40 hover:text-zinc-200"
           )}
         >
           <Link href={item.path} prefetch={true} onClick={onNavigate}>
             <Icon className={cn(
-              "h-5 w-5 transition-all duration-300",
-              isActive ? "text-white" : "text-zinc-400"
+              "h-5 w-5 transition-all duration-200",
+              isActive ? "text-emerald-400" : "text-zinc-400"
             )} strokeWidth={isActive ? 2.5 : 2} />
           </Link>
         </SidebarMenuButton>
@@ -210,30 +211,27 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
         isActive={isActive}
         tooltip={item.label}
         className={cn(
-          "h-10 transition-all duration-300 rounded-xl group/item relative overflow-hidden",
+          "h-10 transition-all duration-200 rounded-xl group/item relative overflow-hidden",
           isActive
-            ? "bg-white/[0.12] text-white shadow-lg shadow-white/5 font-semibold"
-            : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+            ? "bg-emerald-500/15 text-emerald-400 font-semibold"
+            : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/40"
         )}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
           <div className={cn(
-            "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
+            "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-200",
             isActive
-              ? "bg-white/[0.15]"
-              : "bg-white/[0.06] group-hover/item:bg-white/[0.10]"
+              ? "bg-emerald-500/20"
+              : "bg-zinc-700/40 group-hover/item:bg-zinc-700/60"
           )}>
             <Icon className={cn(
-              "h-4 w-4 transition-all duration-300 flex-shrink-0",
-              isActive ? "text-white" : "text-zinc-400 group-hover/item:text-zinc-200"
+              "h-4 w-4 transition-all duration-200 flex-shrink-0",
+              isActive ? "text-emerald-400" : "text-zinc-400 group-hover/item:text-zinc-200"
             )} strokeWidth={isActive ? 2.5 : 2} />
           </div>
           <span className="text-[13px] font-medium truncate">{item.label}</span>
           {item.isPremium && (
-            <Sparkles className="h-3 w-3 text-amber-400 ml-auto" />
-          )}
-          {isActive && !item.isPremium && (
-            <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-white/60" />
+            <Sparkles className="h-3 w-3 text-emerald-400 ml-auto" />
           )}
         </Link>
       </SidebarMenuButton>
@@ -247,10 +245,10 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
 
 function NavDivider({ collapsed }: { collapsed: boolean }) {
   if (collapsed) {
-    return <div className="my-3 mx-2 h-px bg-white/[0.06]" />;
+    return <div className="my-3 mx-2 h-px bg-zinc-700/30" />;
   }
 
-  return <div className="my-3 mx-3 h-px bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-transparent" />;
+  return <div className="my-3 mx-3 h-px bg-zinc-700/30" />;
 }
 
 // ==========================================
@@ -276,8 +274,8 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
               className={cn(
                 "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
                 hasActiveItem
-                  ? "bg-white/[0.10] text-zinc-200"
-                  : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200"
+                  ? "bg-zinc-700/40 text-zinc-200"
+                  : "text-zinc-400 hover:bg-zinc-700/40 hover:text-zinc-200"
               )}
             >
               <MoreHorizontal className="h-5 w-5" />
@@ -305,8 +303,8 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                   className={cn(
                     "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
                     isActive
-                      ? "bg-white/[0.12] text-white font-medium"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                      ? "bg-emerald-500/15 text-emerald-400 font-medium"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -328,13 +326,13 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             className={cn(
               "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
               hasActiveItem
-                ? "bg-white/[0.10] text-zinc-200"
-                : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                ? "bg-zinc-700/40 text-zinc-200"
+                : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
             )}
           >
             <div className={cn(
               "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
-              "bg-white/[0.06] group-hover/item:bg-white/[0.10]"
+              "bg-zinc-700/40 group-hover/item:bg-zinc-700/60"
             )}>
               <MoreHorizontal className="h-4 w-4" />
             </div>
@@ -367,8 +365,8 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                 className={cn(
                   "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
                   isActive
-                    ? "bg-white/[0.12] text-white font-medium"
-                    : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                    ? "bg-emerald-500/15 text-emerald-400 font-medium"
+                    : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -413,7 +411,7 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                 "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
                 hasActiveItem
                   ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                  : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200"
+                  : "text-zinc-400 hover:bg-zinc-700/40 hover:text-zinc-200"
               )}
             >
               <Puzzle className="h-5 w-5" />
@@ -443,7 +441,7 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
                     isActive
                       ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -467,14 +465,14 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
               ? "bg-emerald-600/15 text-emerald-400"
-              : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
           )}
         >
           <div className={cn(
             "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
             hasActiveItem
               ? "bg-emerald-500/20"
-              : "bg-white/[0.06] group-hover/item:bg-white/[0.10]"
+              : "bg-zinc-700/40 group-hover/item:bg-zinc-700/60"
           )}>
             <Puzzle className={cn(
               "h-4 w-4 transition-all duration-300",
@@ -496,7 +494,7 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
       )}>
         <div className="relative pl-4 space-y-0.5">
           {/* Linha vertical conectora */}
-          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/30 via-white/[0.04] to-transparent" />
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/30 via-zinc-800 to-transparent" />
 
           {items.map((item) => {
             if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
@@ -513,23 +511,20 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                     isActive
                       ? "bg-emerald-500/15 text-emerald-400 font-medium"
-                      : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06]"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
                     {/* Indicador de conexão */}
                     <div className={cn(
                       "absolute left-[-12px] w-2 h-px transition-all duration-200",
-                      isActive ? "bg-emerald-500/50" : "bg-white/[0.06]"
+                      isActive ? "bg-emerald-500/50" : "bg-zinc-700/40"
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-300",
                       isActive ? "text-emerald-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
-                    {isActive && (
-                      <div className="absolute right-2 w-1 h-1 rounded-full bg-emerald-400" />
-                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -572,10 +567,10 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           <PopoverTrigger asChild>
             <button
               className={cn(
-                "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
+                "h-10 w-10 p-0 mx-auto transition-all duration-200 rounded-xl flex items-center justify-center",
                 hasActiveItem
-                  ? "bg-white/[0.12] text-white shadow-lg shadow-white/5"
-                  : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200"
+                  ? "bg-emerald-500/15 text-emerald-400"
+                  : "text-zinc-400 hover:bg-zinc-700/40 hover:text-zinc-200"
               )}
             >
               <Home className="h-5 w-5" />
@@ -604,8 +599,8 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                   className={cn(
                     "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
                     isActive
-                      ? "bg-white/[0.12] text-white font-medium"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -626,21 +621,21 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
         <button
           onClick={() => setExpanded(!expanded)}
           className={cn(
-            "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
+            "w-full h-10 transition-all duration-200 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
-              ? "bg-white/[0.10] text-zinc-100"
-              : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+              ? "bg-emerald-500/10 text-emerald-400"
+              : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/40"
           )}
         >
           <div className={cn(
-            "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
+            "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-200",
             hasActiveItem
-              ? "bg-white/[0.15]"
-              : "bg-white/[0.06] group-hover/item:bg-white/[0.10]"
+              ? "bg-emerald-500/20"
+              : "bg-zinc-700/40 group-hover/item:bg-zinc-700/60"
           )}>
             <Home className={cn(
-              "h-4 w-4 transition-all duration-300",
-              hasActiveItem ? "text-zinc-100" : "text-zinc-400 group-hover/item:text-zinc-200"
+              "h-4 w-4 transition-all duration-200",
+              hasActiveItem ? "text-emerald-400" : "text-zinc-400 group-hover/item:text-zinc-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">Principal</span>
@@ -658,7 +653,7 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
       )}>
         <div className="relative pl-4 space-y-0.5">
           {/* Linha vertical conectora */}
-          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-zinc-500/30 via-white/[0.04] to-transparent" />
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-zinc-700/30" />
 
           {items.map((item) => {
             if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
@@ -672,26 +667,23 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                   asChild
                   isActive={isActive}
                   className={cn(
-                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                    "h-9 transition-all duration-200 rounded-lg group/subitem relative",
                     isActive
-                      ? "bg-white/[0.12] text-white font-semibold shadow-lg shadow-white/5"
-                      : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06]"
+                      ? "bg-emerald-500/15 text-emerald-400 font-semibold"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
                     {/* Indicador de conexão */}
                     <div className={cn(
                       "absolute left-[-12px] w-2 h-px transition-all duration-200",
-                      isActive ? "bg-white/40" : "bg-white/[0.06]"
+                      isActive ? "bg-emerald-500/50" : "bg-zinc-700/40"
                     )} />
                     <Icon className={cn(
-                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                      isActive ? "text-white" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                      "h-3.5 w-3.5 mr-2 transition-all duration-200",
+                      isActive ? "text-emerald-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
-                    {isActive && (
-                      <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-white/60" />
-                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -734,7 +726,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                 "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
                 hasActiveItem
                   ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                  : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200"
+                  : "text-zinc-400 hover:bg-zinc-700/40 hover:text-zinc-200"
               )}
             >
               <BookUser className="h-5 w-5" />
@@ -764,7 +756,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
                     isActive
                       ? "bg-emerald-500/20 text-emerald-400 font-medium"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -788,14 +780,14 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
               ? "bg-emerald-600/15 text-emerald-400"
-              : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
           )}
         >
           <div className={cn(
             "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
             hasActiveItem
               ? "bg-emerald-500/20"
-              : "bg-white/[0.06] group-hover/item:bg-white/[0.10]"
+              : "bg-zinc-700/40 group-hover/item:bg-zinc-700/60"
           )}>
             <BookUser className={cn(
               "h-4 w-4 transition-all duration-300",
@@ -817,7 +809,7 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
       )}>
         <div className="relative pl-4 space-y-0.5">
           {/* Linha vertical conectora */}
-          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/30 via-white/[0.04] to-transparent" />
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/30 via-zinc-800 to-transparent" />
 
           {items.map((item) => {
             if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
@@ -834,23 +826,20 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                     isActive
                       ? "bg-emerald-500/15 text-emerald-400 font-medium"
-                      : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06]"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
                     {/* Indicador de conexão */}
                     <div className={cn(
                       "absolute left-[-12px] w-2 h-px transition-all duration-200",
-                      isActive ? "bg-emerald-500/50" : "bg-white/[0.06]"
+                      isActive ? "bg-emerald-500/50" : "bg-zinc-700/40"
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-300",
                       isActive ? "text-emerald-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
-                    {isActive && (
-                      <div className="absolute right-2 w-1 h-1 rounded-full bg-emerald-400" />
-                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -892,8 +881,8 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
               className={cn(
                 "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
                 hasActiveItem
-                  ? "bg-orange-600/20 text-orange-400 ring-1 ring-orange-500/30"
-                  : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200"
+                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                  : "text-zinc-400 hover:bg-zinc-700/40 hover:text-zinc-200"
               )}
             >
               <FolderOpen className="h-5 w-5" />
@@ -904,7 +893,7 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
             align="start"
             className="w-56 p-2 glass-dark shadow-xl shadow-black/30"
           >
-            <p className="text-[10px] font-bold text-orange-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
               <FolderOpen className="h-3 w-3" />
               Documentos
             </p>
@@ -922,8 +911,8 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
                   className={cn(
                     "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
                     isActive
-                      ? "bg-orange-500/20 text-orange-400 font-medium"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -946,19 +935,19 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
           className={cn(
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
-              ? "bg-orange-600/15 text-orange-400"
-              : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+              ? "bg-emerald-600/15 text-emerald-400"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
           )}
         >
           <div className={cn(
             "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
             hasActiveItem
-              ? "bg-orange-500/20"
-              : "bg-white/[0.06] group-hover/item:bg-white/[0.10]"
+              ? "bg-emerald-500/20"
+              : "bg-zinc-700/40 group-hover/item:bg-zinc-700/60"
           )}>
             <FolderOpen className={cn(
               "h-4 w-4 transition-all duration-300",
-              hasActiveItem ? "text-orange-400" : "text-zinc-400 group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-400" : "text-zinc-400 group-hover/item:text-zinc-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">Documentos</span>
@@ -976,7 +965,7 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
       )}>
         <div className="relative pl-4 space-y-0.5">
           {/* Linha vertical conectora */}
-          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-orange-500/30 via-white/[0.04] to-transparent" />
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/30 via-zinc-800 to-transparent" />
 
           {items.map((item) => {
             if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
@@ -992,24 +981,21 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
                   className={cn(
                     "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                     isActive
-                      ? "bg-orange-500/15 text-orange-400 font-medium"
-                      : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06]"
+                      ? "bg-emerald-500/15 text-emerald-400 font-medium"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
                     {/* Indicador de conexão */}
                     <div className={cn(
                       "absolute left-[-12px] w-2 h-px transition-all duration-200",
-                      isActive ? "bg-orange-500/50" : "bg-white/[0.06]"
+                      isActive ? "bg-emerald-500/50" : "bg-zinc-700/40"
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                      isActive ? "text-orange-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                      isActive ? "text-emerald-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
                     )} />
                     <span className="text-[12px] truncate">{item.label}</span>
-                    {isActive && (
-                      <div className="absolute right-2 w-1 h-1 rounded-full bg-orange-400" />
-                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -1051,8 +1037,8 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
               className={cn(
                 "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
                 hasActiveItem
-                  ? "bg-purple-600/20 text-purple-400 ring-1 ring-purple-500/30"
-                  : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200"
+                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                  : "text-zinc-400 hover:bg-zinc-700/40 hover:text-zinc-200"
               )}
             >
               <Users2 className="h-5 w-5" />
@@ -1063,7 +1049,7 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             align="start"
             className="w-56 p-2 glass-dark shadow-xl shadow-black/30"
           >
-            <p className="text-[10px] font-bold text-purple-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
               <Users2 className="h-3 w-3" />
               Cowork
             </p>
@@ -1075,15 +1061,15 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
               const isActive = pathname.startsWith(item.path);
               return (
                 <div key={item.path}>
-                  {idx === 2 && <div className="my-1.5 mx-2 h-px bg-white/[0.06]" />}
+                  {idx === 2 && <div className="my-1.5 mx-2 h-px bg-zinc-700/30" />}
                   <Link
                     href={item.path}
                     onClick={onNavigate}
                     className={cn(
                       "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
                       isActive
-                        ? "bg-purple-500/20 text-purple-400 font-medium"
-                        : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                        ? "bg-emerald-500/20 text-emerald-400 font-medium"
+                        : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -1107,19 +1093,19 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           className={cn(
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
-              ? "bg-purple-600/15 text-purple-400"
-              : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+              ? "bg-emerald-600/15 text-emerald-400"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
           )}
         >
           <div className={cn(
             "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
             hasActiveItem
-              ? "bg-purple-500/20"
-              : "bg-white/[0.06] group-hover/item:bg-white/[0.10]"
+              ? "bg-emerald-500/20"
+              : "bg-zinc-700/40 group-hover/item:bg-zinc-700/60"
           )}>
             <Users2 className={cn(
               "h-4 w-4 transition-all duration-300",
-              hasActiveItem ? "text-purple-400" : "text-zinc-400 group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-400" : "text-zinc-400 group-hover/item:text-zinc-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">Cowork</span>
@@ -1137,7 +1123,7 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
       )}>
         <div className="relative pl-4 space-y-0.5">
           {/* Linha vertical conectora */}
-          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-purple-500/30 via-white/[0.04] to-transparent" />
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/30 via-zinc-800 to-transparent" />
 
           {items.map((item, idx) => {
             if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
@@ -1157,24 +1143,21 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                     className={cn(
                       "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                       isActive
-                        ? "bg-purple-500/15 text-purple-400 font-medium"
-                        : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06]"
+                        ? "bg-emerald-500/15 text-emerald-400 font-medium"
+                        : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
                     )}
                   >
                     <Link href={item.path} prefetch={true} onClick={onNavigate}>
                       {/* Indicador de conexão */}
                       <div className={cn(
                         "absolute left-[-12px] w-2 h-px transition-all duration-200",
-                        isActive ? "bg-purple-500/50" : "bg-white/[0.06]"
+                        isActive ? "bg-emerald-500/50" : "bg-zinc-700/40"
                       )} />
                       <Icon className={cn(
                         "h-3.5 w-3.5 mr-2 transition-all duration-300",
-                        isActive ? "text-purple-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                        isActive ? "text-emerald-400" : "text-zinc-500 group-hover/subitem:text-zinc-300"
                       )} />
                       <span className="text-[12px] truncate">{item.label}</span>
-                      {isActive && (
-                        <div className="absolute right-2 w-1 h-1 rounded-full bg-purple-400" />
-                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -1260,8 +1243,8 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
               className={cn(
                 "h-10 w-10 p-0 mx-auto transition-all duration-300 rounded-xl flex items-center justify-center",
                 hasActiveItem
-                  ? "bg-amber-600/20 text-amber-400 ring-1 ring-amber-500/30"
-                  : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200"
+                  ? "bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                  : "text-zinc-400 hover:bg-zinc-700/40 hover:text-zinc-200"
               )}
             >
               <Target className="h-5 w-5" />
@@ -1272,13 +1255,13 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
             align="start"
             className="w-64 p-2 glass-dark shadow-xl shadow-black/30"
           >
-            <p className="text-[10px] font-bold text-amber-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
+            <p className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5">
               <Target className="h-3 w-3" />
               Especialidades
             </p>
 
             {/* Seletor de especialidade com cores distintas */}
-            <div className="flex gap-1 px-2 pb-2 mb-2 border-b border-white/[0.06]">
+            <div className="flex gap-1 px-2 pb-2 mb-2 border-b border-zinc-700/30">
               {[
                 { id: "JURI" as Especialidade, label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
                 { id: "VVD" as Especialidade, label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
@@ -1291,7 +1274,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                     "flex-1 py-1.5 px-2 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1",
                     especialidade === esp.id
                       ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring}`
-                      : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.06]"
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/40"
                   )}
                 >
                   <esp.icon className={cn("h-3 w-3", especialidade === esp.id && esp.colors.text)} />
@@ -1314,8 +1297,8 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                   className={cn(
                     "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
                     isActive
-                      ? "bg-amber-500/20 text-amber-400 font-medium"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                      ? "bg-emerald-500/20 text-emerald-400 font-medium"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -1338,19 +1321,19 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
           className={cn(
             "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
             hasActiveItem
-              ? "bg-amber-600/15 text-amber-400"
-              : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+              ? "bg-emerald-600/15 text-emerald-400"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/40"
           )}
         >
           <div className={cn(
             "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
             hasActiveItem
-              ? "bg-amber-500/20"
-              : "bg-white/[0.06] group-hover/item:bg-white/[0.10]"
+              ? "bg-emerald-500/20"
+              : "bg-zinc-700/40 group-hover/item:bg-zinc-700/60"
           )}>
             <Target className={cn(
               "h-4 w-4 transition-all duration-300",
-              hasActiveItem ? "text-amber-400" : "text-zinc-400 group-hover/item:text-zinc-200"
+              hasActiveItem ? "text-emerald-400" : "text-zinc-400 group-hover/item:text-zinc-200"
             )} />
           </div>
           <span className="text-[13px] font-medium">Especialidades</span>
@@ -1369,7 +1352,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
         <div className="relative pl-4 space-y-0.5">
           {/* Linha vertical conectora - cor dinâmica */}
           <div className={cn(
-            "absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b via-white/[0.04] to-transparent",
+            "absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b via-zinc-800 to-transparent",
             ESPECIALIDADE_COLORS[especialidade].line
           )} />
 
@@ -1387,7 +1370,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                   "flex-1 py-1.5 px-2 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1",
                   especialidade === esp.id
                     ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring}`
-                    : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.06]"
+                    : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/40"
                 )}
               >
                 <esp.icon className={cn("h-3 w-3", especialidade === esp.id && esp.colors.text)} />
@@ -1412,7 +1395,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                     "h-9 transition-all duration-300 rounded-lg group/subitem relative",
                     isActive
                       ? `${activeColor.bg} ${activeColor.text} font-medium`
-                      : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06]"
+                      : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
                   )}
                 >
                   <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -1423,7 +1406,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed }: {
                         ? especialidade === "JURI" ? "bg-emerald-500/50"
                           : especialidade === "VVD" ? "bg-yellow-500/50"
                           : "bg-blue-500/50"
-                        : "bg-white/[0.06]"
+                        : "bg-zinc-700/40"
                     )} />
                     <Icon className={cn(
                       "h-3.5 w-3.5 mr-2 transition-all duration-300",
@@ -1490,16 +1473,13 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         collapsible="icon"
         className={cn(
           "glass-sidebar",
-          "shadow-2xl shadow-black/50",
+          "shadow-xl shadow-black/25",
           "z-40",
           "transition-all duration-300 ease-out"
         )}
       >
-        {/* Header Premium Glass */}
-        <SidebarHeader className={cn(
-          "h-16 border-b border-white/[0.04] flex items-center justify-center",
-          "bg-white/[0.02]"
-        )}>
+        {/* Header */}
+        <SidebarHeader className="h-16 border-b border-zinc-800 flex items-center justify-center">
           <SidebarLogo collapsed={isCollapsed} />
         </SidebarHeader>
 
@@ -1598,10 +1578,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         </SidebarContent>
 
         {/* Footer Premium Glass */}
-        <SidebarFooter className={cn(
-          "border-t border-white/[0.04] p-0",
-          "bg-black/10"
-        )}>
+        <SidebarFooter className="border-t border-zinc-800 p-0">
           {/* Status Bar */}
           <StatusBar collapsed={isCollapsed} />
 
@@ -1609,15 +1586,14 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           <div className="p-3">
             <div className={cn(
               "flex items-center gap-3 p-2.5 rounded-2xl transition-all duration-200 group/user",
-              "bg-white/[0.04]",
-              "hover:bg-white/[0.08]",
-              "border border-white/[0.06]",
-              "hover:border-emerald-500/20",
-              "hover:shadow-lg hover:shadow-black/20"
+              "bg-zinc-700/30",
+              "hover:bg-zinc-700/50",
+              "border border-zinc-800",
+              "hover:border-emerald-500/20"
             )}>
               <Avatar className={cn(
-                "h-10 w-10 transition-all duration-300",
-                "ring-2 ring-zinc-600/50 ring-offset-2 ring-offset-zinc-900",
+                "h-10 w-10 transition-all duration-200",
+                "ring-2 ring-zinc-700 ring-offset-2 ring-offset-zinc-900",
                 "group-hover/user:ring-emerald-500/40 group-hover/user:scale-105"
               )}>
                 <AvatarFallback className="bg-gradient-to-br from-zinc-600 via-zinc-700 to-zinc-800 text-white font-bold text-xs shadow-inner">
@@ -1649,50 +1625,47 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 
       {/* Main Content */}
       <SidebarInset className="flex flex-col min-h-screen bg-zinc-50 dark:bg-zinc-950">
-        {/* Header - Premium unificado */}
+        {/* Header - Light clean com accent emerald */}
         <header className={cn(
           "relative overflow-hidden",
           "flex h-14 shrink-0 items-center",
-          "sticky top-0 z-30"
+          "sticky top-0 z-30",
+          "bg-white/80 dark:bg-zinc-900/80",
+          "backdrop-blur-md",
+          "border-b border-zinc-200 dark:border-zinc-800"
         )}>
-          {/* Fundo base */}
-          <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/95 via-zinc-800/80 to-zinc-900/95 backdrop-blur-xl" />
-
-          {/* Linha de brilho superior */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
-
-          {/* Borda inferior elegante */}
-          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-zinc-800 via-zinc-600/40 to-zinc-800" />
+          {/* Accent emerald no topo */}
+          <div className="absolute inset-x-0 top-0 h-0.5 bg-emerald-500" />
 
           {/* Conteúdo - Esquerda: Toggle + Breadcrumbs */}
-          <div className="relative flex items-center gap-3 px-3 flex-1 min-w-0">
-            <SidebarTrigger className="h-7 w-7 rounded-md text-zinc-500 hover:text-emerald-400 hover:bg-white/[0.08] transition-all duration-300 shrink-0" />
+          <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
+            <SidebarTrigger className="h-7 w-7 rounded-md text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 shrink-0" />
 
             {/* Separador */}
-            <div className="h-4 w-px bg-zinc-700/50 shrink-0" />
+            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
 
             {/* Breadcrumbs navegáveis */}
             <Breadcrumbs />
           </div>
 
           {/* Conteúdo - Direita: Indicador + Data + Controles */}
-          <div className="relative flex items-center gap-3 px-3">
+          <div className="flex items-center gap-3 px-3">
             {/* Indicador ativo */}
             <div className="hidden md:flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400/50" />
-              <span className="text-[10px] text-zinc-500 font-medium">Online</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-500 font-medium">Online</span>
             </div>
 
             {/* Separador */}
-            <div className="hidden md:block h-4 w-px bg-white/[0.06]" />
+            <div className="hidden md:block h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
 
             {/* Data */}
-            <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-zinc-400">
+            <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
               <span className="capitalize">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })}</span>
             </div>
 
             {/* Separador */}
-            <div className="hidden lg:block h-4 w-px bg-white/[0.06]" />
+            <div className="hidden lg:block h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
 
             {/* Controles */}
             <div className="flex items-center gap-1">

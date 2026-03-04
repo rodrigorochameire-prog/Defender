@@ -389,8 +389,8 @@ export function BriefingSection({
               <div className="flex gap-3 min-w-max">
                 <Card className="border-zinc-200 dark:border-zinc-800 w-36">
                   <CardContent className="p-3 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-blue-600" />
+                    <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold">
@@ -502,10 +502,10 @@ export function BriefingSection({
             <TabsContent value="estrategia" className="mt-4 space-y-4">
               {/* Cenário Probatório */}
               {briefing.cenario_probatorio && (
-                <Card className="border-2 border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10">
+                <Card className="border-2 border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10">
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center gap-2 text-base">
-                      <FileSearch className="w-5 h-5 text-blue-600" />
+                      <FileSearch className="w-5 h-5 text-emerald-600" />
                       Cenário Probatório
                     </CardTitle>
                   </CardHeader>
@@ -813,7 +813,7 @@ export function BriefingSection({
                                     : correlacao.tipo === "confirma"
                                     ? "bg-emerald-100 text-emerald-700 border-emerald-300"
                                     : correlacao.tipo === "complementa"
-                                    ? "bg-blue-100 text-blue-700 border-blue-300"
+                                    ? "bg-emerald-100 text-emerald-700 border-emerald-300"
                                     : "bg-amber-100 text-amber-700 border-amber-300"
                                 )}
                               >

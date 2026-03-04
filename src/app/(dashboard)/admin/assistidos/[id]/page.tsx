@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { ArrowLeft, Lock, User, Mic, Music, Video, Loader2, Sun, ExternalLink, CheckCircle2, AlertCircle, Brain, FileText, Plus, Sparkles, Pencil, Clock, Send, Scale, Calendar, FolderOpen, ChevronDown } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TranscriptViewer, type AnalysisData } from "@/components/shared/transcript-viewer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -255,10 +256,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4 animate-pulse">
-        <div className="h-6 bg-zinc-200 rounded w-48" />
-        <div className="h-4 bg-zinc-100 rounded w-32" />
-        <div className="h-32 bg-zinc-100 rounded" />
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-32 w-full" />
       </div>
     );
   }
@@ -348,7 +349,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             </div>
             <div className="flex items-center gap-2.5 mt-1">
               {data.cpf && (
-                <span className="text-[11px] text-zinc-400 font-mono">{data.cpf}</span>
+                <span className="text-[11px] text-zinc-400 font-mono tabular-nums">{data.cpf}</span>
               )}
               {data.statusPrisional && !isPreso && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">

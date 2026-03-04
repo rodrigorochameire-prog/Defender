@@ -217,7 +217,7 @@ function AtribuicaoSubfolders({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filtrar assistidos..."
-            className="w-full h-7 pl-7 pr-7 text-[11px] bg-zinc-800/60 border border-zinc-700/40 rounded-lg text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600/60 focus:bg-zinc-800/80 transition-colors"
+            className="w-full h-7 pl-7 pr-7 text-[11px] bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/40 rounded-lg text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:border-zinc-300 dark:focus:border-zinc-600/60 focus:bg-zinc-50 dark:focus:bg-zinc-800/80 transition-colors"
           />
           {searchQuery && (
             <button
@@ -267,7 +267,7 @@ function AtribuicaoSubfolders({
                   "flex items-center gap-2 w-full text-left px-3 py-1.5 transition-all duration-300 rounded-lg group/subitem relative",
                   isActive
                     ? getAttrSubItemActive(color)
-                    : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
+                    : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/40"
                 )}
               >
                 {/* Horizontal connection indicator */}
@@ -277,7 +277,7 @@ function AtribuicaoSubfolders({
                 )} />
                 <FolderOpen className={cn(
                   "h-3.5 w-3.5 shrink-0 transition-all duration-300",
-                  isActive ? "" : "text-zinc-500 group-hover/subitem:text-zinc-300"
+                  isActive ? "" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-700 dark:group-hover/subitem:text-zinc-300"
                 )} />
                 <span className="truncate text-[12px]">{folder.name}</span>
                 {isRecent && !isActive && (
@@ -311,7 +311,7 @@ function AtribuicaoSubfolders({
 // --- Gradient Divider (matches main sidebar) ---
 
 function NavDivider() {
-  return <div className="my-3 mx-3 h-px bg-gradient-to-r from-zinc-600/30 via-zinc-700/20 to-transparent" />;
+  return <div className="my-3 mx-3 h-px bg-gradient-to-r from-zinc-200 dark:from-zinc-600/30 via-zinc-100 dark:via-zinc-700/20 to-transparent" />;
 }
 
 // --- Sidebar Content ---
@@ -372,12 +372,12 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-zinc-700/50 scrollbar-track-transparent">
+      <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700/50 scrollbar-track-transparent">
         <div className="px-3 pb-5 pt-2">
           {/* --- ATRIBUICOES --- */}
           <button
             onClick={() => toggleSection("atribuicoes")}
-            className="w-full text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5 hover:text-zinc-300 transition-colors cursor-pointer"
+            className="w-full text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors cursor-pointer"
           >
             <HardDrive className="h-3 w-3" />
             Atribuicoes
@@ -409,18 +409,18 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                         "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
                         isActive
                           ? getAttrActiveBg(attr.color)
-                          : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+                          : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700/60"
                       )}
                     >
                       <div className={cn(
                         "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
                         isActive
                           ? getAttrActiveIconBg(attr.color)
-                          : "bg-zinc-700/50 group-hover/item:bg-zinc-600/60"
+                          : "bg-zinc-100 dark:bg-zinc-700/50 group-hover/item:bg-zinc-200 dark:group-hover/item:bg-zinc-600/60"
                       )}>
                         <Icon className={cn(
                           "h-4 w-4 transition-all duration-300",
-                          isActive ? "" : "text-zinc-400 group-hover/item:text-zinc-200"
+                          isActive ? "" : "text-zinc-400 group-hover/item:text-zinc-700 dark:group-hover/item:text-zinc-200"
                         )} strokeWidth={isActive ? 2.5 : 2} />
                       </div>
                       <span className="text-[13px] font-medium truncate">{attr.label}</span>
@@ -429,7 +429,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                           <TooltipTrigger asChild>
                             <span className="h-1.5 w-1.5 rounded-full bg-zinc-600 shrink-0 ml-1" />
                           </TooltipTrigger>
-                          <TooltipContent side="right" className="bg-[#1f1f23] border-zinc-700/50 text-zinc-200 shadow-xl shadow-black/30">
+                          <TooltipContent side="right" className="bg-white dark:bg-[#1f1f23] border-zinc-200 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-200 shadow-xl shadow-black/5 dark:shadow-black/30">
                             Pasta nao sincronizada
                           </TooltipContent>
                         </Tooltip>
@@ -476,7 +476,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           {/* --- ESPECIAIS --- */}
           <button
             onClick={() => toggleSection("especiais")}
-            className="w-full text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5 hover:text-zinc-300 transition-colors cursor-pointer"
+            className="w-full text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors cursor-pointer"
           >
             Especiais
             <ChevronDown className={cn(
@@ -502,19 +502,19 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                   className={cn(
                     "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item relative overflow-hidden",
                     isActive
-                      ? "bg-white/95 text-zinc-900 shadow-lg shadow-white/10 font-semibold"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/60"
+                      ? "bg-emerald-50 dark:bg-white/95 text-emerald-700 dark:text-zinc-900 shadow-lg shadow-emerald-500/5 dark:shadow-white/10 font-semibold"
+                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700/60"
                   )}
                 >
                   <div className={cn(
                     "h-7 w-7 rounded-lg flex items-center justify-center mr-2 transition-all duration-300",
                     isActive
                       ? "bg-zinc-900/10"
-                      : "bg-zinc-700/50 group-hover/item:bg-zinc-600/60"
+                      : "bg-zinc-100 dark:bg-zinc-700/50 group-hover/item:bg-zinc-200 dark:group-hover/item:bg-zinc-600/60"
                   )}>
                     <Icon className={cn(
                       "h-4 w-4 transition-all duration-300",
-                      isActive ? "text-zinc-900" : "text-zinc-400 group-hover/item:text-zinc-200"
+                      isActive ? "text-zinc-900" : "text-zinc-400 group-hover/item:text-zinc-700 dark:group-hover/item:text-zinc-200"
                     )} strokeWidth={isActive ? 2.5 : 2} />
                   </div>
                   <span className="text-[13px] font-medium truncate">{sf.label}</span>
@@ -539,7 +539,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           {/* --- ACESSO RAPIDO --- */}
           <button
             onClick={() => toggleSection("acesso-rapido")}
-            className="w-full text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5 hover:text-zinc-300 transition-colors cursor-pointer"
+            className="w-full text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-2 pb-2 flex items-center gap-1.5 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors cursor-pointer"
           >
             <Clock className="h-3 w-3" />
             Acesso Rapido
@@ -568,11 +568,11 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                     }}
                     className={cn(
                       "flex items-center gap-2 w-full text-left px-3 py-1.5 transition-all duration-300 rounded-lg group/subitem relative",
-                      "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
+                      "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/40"
                     )}
                   >
-                    <div className="absolute left-[-12px] w-2 h-px bg-zinc-700/50" />
-                    <FolderOpen className="h-3.5 w-3.5 shrink-0 text-zinc-500 group-hover/subitem:text-zinc-300" />
+                    <div className="absolute left-[-12px] w-2 h-px bg-zinc-200 dark:bg-zinc-700/50" />
+                    <FolderOpen className="h-3.5 w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-700 dark:group-hover/subitem:text-zinc-300" />
                     <span className="truncate text-[12px]">{item.name}</span>
                   </button>
                 ))}
@@ -596,10 +596,10 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                       }}
                       className={cn(
                         "flex items-center gap-2 w-full text-left px-3 py-1.5 transition-all duration-300 rounded-lg group/subitem relative",
-                        "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/40"
+                        "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/40"
                       )}
                     >
-                      <div className="absolute left-[-12px] w-2 h-px bg-zinc-700/50" />
+                      <div className="absolute left-[-12px] w-2 h-px bg-zinc-200 dark:bg-zinc-700/50" />
                       <Star className="h-3.5 w-3.5 shrink-0 text-amber-500/60 group-hover/subitem:text-amber-400" />
                       <span className="truncate text-[12px]">{item.name}</span>
                     </button>
@@ -613,8 +613,8 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         {/* --- Footer --- */}
         {stats && (
           <div className={cn(
-            "mt-auto px-4 py-3 border-t border-zinc-700/20",
-            "bg-gradient-to-t from-black/20 via-transparent to-transparent"
+            "mt-auto px-4 py-3 border-t border-zinc-200 dark:border-zinc-700/20",
+            "bg-gradient-to-t from-zinc-50 dark:from-black/20 via-transparent to-transparent"
           )}>
             <div className="flex items-center justify-between text-[10px] text-zinc-500">
               <span className="tabular-nums font-medium">{stats.totalFiles} arquivos</span>
@@ -652,9 +652,9 @@ function SidebarSearch() {
   }, []);
 
   return (
-    <div className="px-3 py-2 border-b border-zinc-700/20">
+    <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-700/20">
       <div className="relative">
-        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 pointer-events-none" />
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
         <input
           type="text"
           value={localSearch}
@@ -662,8 +662,8 @@ function SidebarSearch() {
           placeholder="Buscar arquivos..."
           className={cn(
             "w-full h-7 pl-7 pr-7 rounded-md text-xs",
-            "bg-zinc-800/60 border border-zinc-700/40",
-            "text-zinc-200 placeholder:text-zinc-500",
+            "bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/40",
+            "text-zinc-700 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
             "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
             "transition-colors duration-200"
           )}
@@ -671,7 +671,7 @@ function SidebarSearch() {
         {localSearch && (
           <button
             onClick={() => { setLocalSearch(""); ctx.setSearchQuery(""); }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
           >
             <X className="h-3 w-3" />
           </button>
@@ -736,7 +736,7 @@ function SidebarSyncDot() {
       <TooltipTrigger asChild>
         <span className={cn("h-1.5 w-1.5 rounded-full shrink-0 cursor-default", dotClass)} />
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="bg-[#1f1f23] border-zinc-700/50 text-zinc-200 shadow-xl shadow-black/30">
+      <TooltipContent side="bottom" className="bg-white dark:bg-[#1f1f23] border-zinc-200 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-200 shadow-xl shadow-black/5 dark:shadow-black/30">
         <p className="text-[11px] font-medium">{statusLabel}</p>
         <p className="text-[10px] text-zinc-400">{timeSinceSync}</p>
       </TooltipContent>
@@ -757,24 +757,24 @@ export function DriveSidebar() {
       <aside
         className={cn(
           "hidden lg:flex flex-col shrink-0 transition-all duration-300",
-          "border-r border-zinc-700/20",
-          "bg-gradient-to-b from-[#1f1f23]/95 via-[#1a1a1e]/95 to-[#1f1f23]/95",
+          "border-r border-zinc-200 dark:border-zinc-700/20",
+          "bg-white dark:bg-gradient-to-b dark:from-[#1f1f23]/95 dark:via-[#1a1a1e]/95 dark:to-[#1f1f23]/95",
           "backdrop-blur-xl",
-          "shadow-2xl shadow-black/40",
+          "shadow-lg shadow-black/5 dark:shadow-2xl dark:shadow-black/40",
           collapsed ? "w-0 overflow-hidden" : "w-60"
         )}
       >
         {/* Header with sync dot */}
         <div className={cn(
-          "flex items-center justify-between h-11 px-3 border-b border-zinc-700/20 shrink-0",
-          "bg-gradient-to-br from-white/[0.04] via-transparent to-white/[0.02]"
+          "flex items-center justify-between h-11 px-3 border-b border-zinc-200 dark:border-zinc-700/20 shrink-0",
+          "bg-zinc-50/80 dark:bg-gradient-to-br dark:from-white/[0.04] dark:via-transparent dark:to-white/[0.02]"
         )}>
           {!collapsed && (
             <div className="flex items-center gap-2">
               <div className="h-6 w-6 rounded-md bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
-                <HardDrive className="h-3 w-3 text-emerald-400" />
+                <HardDrive className="h-3 w-3 text-emerald-500 dark:text-emerald-400" />
               </div>
-              <span className="text-sm font-semibold text-zinc-200 tracking-tight">
+              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 tracking-tight">
                 Drive Hub
               </span>
               <SidebarSyncDot />
@@ -783,7 +783,7 @@ export function DriveSidebar() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-zinc-500 hover:text-zinc-300 hover:bg-white/5 rounded-md"
+            className="h-6 w-6 text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-md"
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? (
@@ -806,7 +806,7 @@ export function DriveSidebar() {
         <Button
           variant="ghost"
           size="icon"
-          className="hidden lg:flex h-7 w-7 absolute left-1 top-2 z-10 text-zinc-400 hover:text-zinc-200 bg-[#1f1f23]/90 backdrop-blur-lg border border-zinc-700/20 rounded-lg hover:bg-zinc-700/50 shadow-lg shadow-black/30"
+          className="hidden lg:flex h-7 w-7 absolute left-1 top-2 z-10 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 bg-white/90 dark:bg-[#1f1f23]/90 backdrop-blur-lg border border-zinc-200 dark:border-zinc-700/20 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700/50 shadow-lg shadow-black/5 dark:shadow-black/30"
           onClick={() => setCollapsed(false)}
         >
           <ChevronRight className="h-3.5 w-3.5" />

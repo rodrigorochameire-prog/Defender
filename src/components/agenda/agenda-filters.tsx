@@ -86,8 +86,8 @@ const atribuicaoOptions = [
     value: "Substituição", 
     label: "Substituição", 
     icon: RefreshCw, 
-    gradient: "from-slate-500 to-slate-600",
-    iconColor: "text-slate-600 dark:text-slate-500",
+    gradient: "from-zinc-500 to-zinc-600",
+    iconColor: "text-zinc-600 dark:text-zinc-500",
   },
   { 
     value: "Curadoria Especial", 

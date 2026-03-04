@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -162,18 +163,18 @@ export default function EditarAssistidoPage({
     return (
       <div className="p-3 sm:p-4 lg:p-6 space-y-6">
         <div className="flex items-center gap-4">
-          <div className="h-9 w-9 rounded-lg bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+          <Skeleton className="h-9 w-9 rounded-lg" />
           <div className="space-y-2">
-            <div className="h-6 w-48 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-            <div className="h-4 w-32 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
           </div>
         </div>
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-6">
           <div className="grid gap-4 sm:grid-cols-2">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="space-y-2">
-                <div className="h-4 w-20 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-                <div className="h-10 w-full rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
               </div>
             ))}
           </div>

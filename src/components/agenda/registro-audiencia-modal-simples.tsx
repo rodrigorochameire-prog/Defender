@@ -168,11 +168,11 @@ const atribuicaoColors: Record<
   },
   "Substituição": {
     bg: "bg-white dark:bg-zinc-950",
-    border: "border-slate-600 dark:border-slate-500",
-    text: "text-slate-900 dark:text-slate-100",
-    icon: "text-slate-600 dark:text-slate-500",
-    tabActive: "border-slate-600 text-slate-700 dark:text-slate-400",
-    btnPrimary: "bg-slate-600 hover:bg-slate-700 text-white",
+    border: "border-zinc-600 dark:border-zinc-500",
+    text: "text-zinc-900 dark:text-zinc-100",
+    icon: "text-zinc-600 dark:text-zinc-500",
+    tabActive: "border-zinc-600 text-zinc-700 dark:text-zinc-400",
+    btnPrimary: "bg-zinc-600 hover:bg-zinc-700 text-white",
   },
   "Curadoria": {
     bg: "bg-white dark:bg-zinc-950",
@@ -291,11 +291,11 @@ const tipoDepoenteOptions = [
     value: "informante", 
     label: "Informante", 
     color: "slate",
-    bg: "bg-slate-50/40 dark:bg-slate-950/10",
-    border: "border-slate-400 dark:border-slate-700",
-    text: "text-slate-700 dark:text-slate-400",
-    icon: "text-slate-600 dark:text-slate-500",
-    borderCard: "border-l-slate-400 dark:border-l-slate-600"
+    bg: "bg-zinc-50/40 dark:bg-zinc-950/10",
+    border: "border-zinc-400 dark:border-zinc-700",
+    text: "text-zinc-700 dark:text-zinc-400",
+    icon: "text-zinc-600 dark:text-zinc-500",
+    borderCard: "border-l-zinc-400 dark:border-l-zinc-600"
   },
   { 
     value: "policial", 
@@ -1304,8 +1304,8 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                           borderLeftClass = "border-l-yellow-400 dark:border-l-yellow-600";
                           bgActiveClass = "bg-yellow-50/40 dark:bg-yellow-950/10";
                         } else if (depoente.tipo === "informante") {
-                          borderLeftClass = "border-l-slate-400 dark:border-l-slate-600";
-                          bgActiveClass = "bg-slate-50/40 dark:bg-slate-950/10";
+                          borderLeftClass = "border-l-zinc-400 dark:border-l-zinc-600";
+                          bgActiveClass = "bg-zinc-50/40 dark:bg-zinc-950/10";
                         } else {
                           borderLeftClass = "border-l-gray-400 dark:border-l-gray-600";
                           bgActiveClass = "bg-gray-50/40 dark:bg-gray-950/10";
@@ -1376,7 +1376,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                               case "vitima": return "bg-red-500";
                               case "reu": return "bg-green-500";
                               case "perito": return "bg-orange-500";
-                              case "informante": return "bg-slate-500";
+                              case "informante": return "bg-zinc-500";
                               case "policial": return "bg-yellow-500";
                               default: return "bg-gray-500";
                             }
@@ -2250,7 +2250,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                                       editandoDepoente.tipo === "vitima" ? "bg-red-500" :
                                       editandoDepoente.tipo === "reu" ? "bg-green-500" :
                                       editandoDepoente.tipo === "perito" ? "bg-orange-500" :
-                                      editandoDepoente.tipo === "informante" ? "bg-slate-500" :
+                                      editandoDepoente.tipo === "informante" ? "bg-zinc-500" :
                                       editandoDepoente.tipo === "policial" ? "bg-yellow-500" : "bg-gray-500"
                                     }`} />}
                                   </div>
@@ -2297,7 +2297,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                                           editandoDepoente.tipo === "vitima" ? "bg-red-500" :
                                           editandoDepoente.tipo === "reu" ? "bg-green-500" :
                                           editandoDepoente.tipo === "perito" ? "bg-orange-500" :
-                                          editandoDepoente.tipo === "informante" ? "bg-slate-500" :
+                                          editandoDepoente.tipo === "informante" ? "bg-zinc-500" :
                                           editandoDepoente.tipo === "policial" ? "bg-yellow-500" : "bg-gray-500"
                                         }`} />}
                                       </div>
@@ -2335,7 +2335,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                                           editandoDepoente.tipo === "vitima" ? "bg-red-500" :
                                           editandoDepoente.tipo === "reu" ? "bg-green-500" :
                                           editandoDepoente.tipo === "perito" ? "bg-orange-500" :
-                                          editandoDepoente.tipo === "informante" ? "bg-slate-500" :
+                                          editandoDepoente.tipo === "informante" ? "bg-zinc-500" :
                                           editandoDepoente.tipo === "policial" ? "bg-yellow-500" : "bg-gray-500"
                                         }`} />}
                                       </div>
@@ -2385,7 +2385,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                                           editandoDepoente.tipo === "vitima" ? "bg-red-500" :
                                           editandoDepoente.tipo === "reu" ? "bg-green-500" :
                                           editandoDepoente.tipo === "perito" ? "bg-orange-500" :
-                                          editandoDepoente.tipo === "informante" ? "bg-slate-500" :
+                                          editandoDepoente.tipo === "informante" ? "bg-zinc-500" :
                                           editandoDepoente.tipo === "policial" ? "bg-yellow-500" : "bg-gray-500"
                                         }`} />}
                                       </div>
@@ -2879,7 +2879,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                                 <span className="text-xs text-zinc-700 dark:text-zinc-300">
                                   {campo.label}
                                 </span>
-                                <ChevronRight className="w-3 h-3 text-zinc-400 dark:text-zinc-600 group-hover:translate-x-0.5 transition-transform" />
+                                <ChevronRight className="w-3 h-3 text-zinc-400 dark:text-zinc-600 group-hover:tranzinc-x-0.5 transition-transform" />
                               </div>
                             </button>
                           ))}

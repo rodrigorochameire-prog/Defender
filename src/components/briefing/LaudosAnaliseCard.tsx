@@ -47,7 +47,7 @@ const tipoLaudoColors: Record<string, string> = {
   cadaverico: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300",
   lesoes_corporais: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
   toxicologico: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-  local: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  local: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
   balistico: "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300",
   dna: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
   outro: "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300",
@@ -91,8 +91,8 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <Microscope className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <Microscope className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
               <CardTitle className="text-lg">{tipoLabel}</CardTitle>
@@ -158,7 +158,7 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
                         key={idx}
                         className="text-sm text-zinc-700 dark:text-zinc-300 flex items-start gap-2"
                       >
-                        <span className="text-blue-500 mt-1">•</span>
+                        <span className="text-emerald-500 mt-1">•</span>
                         {conclusao}
                       </li>
                     ))}
@@ -280,14 +280,14 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
             open={openSections.perguntas}
             onOpenChange={() => toggleSection("perguntas")}
           >
-            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
               {openSections.perguntas ? (
-                <ChevronDown className="w-4 h-4 text-blue-600" />
+                <ChevronDown className="w-4 h-4 text-emerald-600" />
               ) : (
-                <ChevronRight className="w-4 h-4 text-blue-600" />
+                <ChevronRight className="w-4 h-4 text-emerald-600" />
               )}
-              <MessageCircleQuestion className="w-4 h-4 text-blue-600" />
-              <span className="font-medium text-sm text-blue-800 dark:text-blue-200">
+              <MessageCircleQuestion className="w-4 h-4 text-emerald-600" />
+              <span className="font-medium text-sm text-emerald-800 dark:text-emerald-200">
                 Perguntas para o Perito ({laudo.perguntas_para_perito.length})
               </span>
               <Button
@@ -313,10 +313,10 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
                     return (
                       <div
                         key={idx}
-                        className="p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 transition-colors group"
+                        className="p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors group"
                       >
                         <div className="flex items-start gap-3">
-                          <span className="font-medium text-blue-600 text-sm">
+                          <span className="font-medium text-emerald-600 text-sm">
                             {idx + 1}.
                           </span>
                           <p className="flex-1 text-sm text-zinc-800 dark:text-zinc-200">
@@ -329,7 +329,7 @@ export function LaudosAnaliseCard({ laudo, className }: LaudosAnaliseCardProps) 
                             onClick={() => handleCopy(pergunta, perguntaId)}
                           >
                             {isCopied ? (
-                              <Check className="w-3.5 h-3.5 text-blue-600" />
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
                             ) : (
                               <Copy className="w-3.5 h-3.5" />
                             )}

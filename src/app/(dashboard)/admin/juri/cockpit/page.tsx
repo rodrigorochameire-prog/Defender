@@ -83,20 +83,25 @@ import {
   BarChart3,
   Sparkles,
   FileBarChart,
+  Crosshair,
+  NotebookPen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AnotacoesAprimoradas } from "@/components/juri/cockpit/anotacoes-aprimoradas";
+import { QuickReactionsBar } from "@/components/juri/cockpit/quick-reactions-bar";
+import { PainelEstrategico } from "@/components/juri/cockpit/painel-estrategico";
 
 // ============================================
 // CONFIGURAÇÃO DAS FASES
 // ============================================
 const phases = [
-  { id: "instrucao", label: "Instrução", minutes: 90 },
-  { id: "interrogatorio", label: "Interrogatório", minutes: 30 },
-  { id: "debates_mp", label: "Debates MP", minutes: 90 },
-  { id: "debates_defesa", label: "Debates Defesa", minutes: 90 },
-  { id: "replica", label: "Réplica", minutes: 30 },
-  { id: "treplica", label: "Tréplica", minutes: 30 },
-  { id: "votacao", label: "Votação", minutes: 15 },
+  { id: "instrucao", label: "Instrução", minutes: 0, mode: "stopwatch" as const },
+  { id: "interrogatorio", label: "Interrogatório", minutes: 0, mode: "stopwatch" as const },
+  { id: "sustentacao_mp", label: "Sustentação MP", minutes: 90, mode: "countdown" as const },
+  { id: "sustentacao_defesa", label: "Sustentação Defesa", minutes: 90, mode: "countdown" as const },
+  { id: "replica", label: "Réplica (MP)", minutes: 60, mode: "countdown" as const },
+  { id: "treplica", label: "Tréplica (Defesa)", minutes: 60, mode: "countdown" as const },
+  { id: "votacao", label: "Votação", minutes: 0, mode: "stopwatch" as const },
 ];
 
 // ============================================
@@ -811,8 +816,10 @@ export default function PlenarioCockpitPage() {
   const [faseAtual, setFaseAtual] = useState(phases[0].id);
   const [isRunning, setIsRunning] = useState(false);
   const [totalTime, setTotalTime] = useState(phases[0].minutes * 60);
-  const [timeLeft, setTimeLeft] = useState(phases[0].minutes * 60);
+  const [timeLeft, setTimeLeft] = useState(phases[0].mode === "stopwatch" ? 0 : phases[0].minutes * 60);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [activeTab, setActiveTab] = useState<"conselho" | "anotacoes" | "relatorio">("conselho");
+  const [cockpitMode, setCockpitMode] = useState<"registro" | "estrategia">("registro");
   const [searchJurado, setSearchJurado] = useState("");
   const [showRecusados, setShowRecusados] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -964,20 +971,31 @@ export default function PlenarioCockpitPage() {
   );
 
   useEffect(() => {
+    const isStopwatch = faseSelecionada.mode === "stopwatch";
     setTotalTime(faseSelecionada.minutes * 60);
-    setTimeLeft(faseSelecionada.minutes * 60);
+    setTimeLeft(isStopwatch ? 0 : faseSelecionada.minutes * 60);
+    setElapsedTime(0);
     setIsRunning(false);
   }, [faseSelecionada]);
 
   useEffect(() => {
-    if (!isRunning || timeLeft <= 0) return;
+    if (!isRunning) return;
+    const isStopwatch = faseSelecionada.mode === "stopwatch";
+    if (!isStopwatch && timeLeft <= 0) return;
     const interval = setInterval(() => {
-      setTimeLeft((prev) => Math.max(prev - 1, 0));
+      if (isStopwatch) {
+        setElapsedTime((prev) => prev + 1);
+        setTimeLeft((prev) => prev + 1);
+      } else {
+        setTimeLeft((prev) => Math.max(prev - 1, 0));
+        setElapsedTime((prev) => prev + 1);
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, [isRunning, timeLeft]);
+  }, [isRunning, timeLeft, faseSelecionada.mode]);
 
-  const progress = totalTime > 0 ? Math.round((timeLeft / totalTime) * 100) : 0;
+  const isStopwatchMode = faseSelecionada.mode === "stopwatch";
+  const progress = isStopwatchMode ? 0 : totalTime > 0 ? Math.round((timeLeft / totalTime) * 100) : 0;
 
   const juradosSelecionadosIds = conselhoSentenca.filter(j => j !== null).map(j => j!.id);
 
@@ -1176,18 +1194,18 @@ export default function PlenarioCockpitPage() {
 
   // Classes condicionais
   const containerClass = isDarkMode
-    ? "min-h-screen bg-zinc-950 text-zinc-100"
-    : "min-h-screen bg-gradient-to-br from-slate-50 via-zinc-50 to-violet-50/30 text-zinc-900";
+    ? "min-h-screen bg-[#0f0f11] text-zinc-100"
+    : "min-h-screen bg-zinc-100 text-zinc-900";
 
   const cardClass = isDarkMode
-    ? "rounded-2xl border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm"
-    : "rounded-2xl border border-zinc-200/80 bg-white/80 backdrop-blur-sm shadow-sm";
+    ? "rounded-xl border border-zinc-800/80 bg-zinc-900"
+    : "rounded-xl border border-zinc-200/80 bg-white";
 
   return (
     <TooltipProvider>
       <div className={containerClass}>
         {/* Header - Padrão Defender */}
-        <div className="sticky top-0 z-10 px-4 md:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="sticky top-0 z-20 px-4 md:px-6 py-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-200/80 dark:border-zinc-800/80">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Link href="/admin/juri">
@@ -1195,8 +1213,8 @@ export default function PlenarioCockpitPage() {
                   <ArrowLeft className="w-3.5 h-3.5" />
                 </Button>
               </Link>
-              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-                <Zap className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+              <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center shadow-lg">
+                <Zap className="w-4 h-4 text-white dark:text-zinc-900" />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Plenário Live</span>
@@ -1204,7 +1222,37 @@ export default function PlenarioCockpitPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+              {/* Mode Toggle */}
+              <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+                <button
+                  onClick={() => setCockpitMode("registro")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200",
+                    cockpitMode === "registro"
+                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  )}
+                >
+                  <NotebookPen className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Registro</span>
+                </button>
+                <button
+                  onClick={() => setCockpitMode("estrategia")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200",
+                    cockpitMode === "estrategia"
+                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  )}
+                >
+                  <Crosshair className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Estratégia</span>
+                </button>
+              </div>
+
+              <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700" />
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -1218,7 +1266,7 @@ export default function PlenarioCockpitPage() {
           </div>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 pb-24">
           {/* Timer e Fase */}
           <div className={cn("p-4", cardClass)}>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -1238,10 +1286,20 @@ export default function PlenarioCockpitPage() {
 
                 <div className={cn(
                   "text-4xl font-bold tracking-wider font-mono tabular-nums",
-                  timeLeft <= 300 ? "text-rose-500" : timeLeft <= 600 ? "text-amber-500" : ""
+                  isStopwatchMode
+                    ? "text-blue-500"
+                    : timeLeft <= 300 ? "text-rose-500" : timeLeft <= 600 ? "text-amber-500" : ""
                 )}>
-                  {formatTime(timeLeft)}
+                  {formatTime(isStopwatchMode ? elapsedTime : timeLeft)}
                 </div>
+                {isStopwatchMode && (
+                  <span className={cn(
+                    "text-xs font-medium uppercase tracking-wider",
+                    isDarkMode ? "text-blue-400" : "text-blue-600"
+                  )}>
+                    Cronômetro
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -1251,7 +1309,7 @@ export default function PlenarioCockpitPage() {
                     "min-w-[100px]",
                     isRunning
                       ? "bg-amber-500 hover:bg-amber-600"
-                      : "bg-gradient-to-r from-emerald-500 to-teal-600"
+                      : "bg-emerald-600 hover:bg-emerald-700"
                   )}
                 >
                   {isRunning ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
@@ -1300,39 +1358,64 @@ export default function PlenarioCockpitPage() {
           )}
 
           {/* Tabs */}
-          <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
-            <Button
-              variant={activeTab === "conselho" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("conselho")}
-              className={activeTab === "conselho" ? "bg-gradient-to-r from-violet-500 to-purple-600" : ""}
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Conselho de Sentença
-            </Button>
-            <Button
-              variant={activeTab === "anotacoes" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("anotacoes")}
-              className={activeTab === "anotacoes" ? "bg-gradient-to-r from-indigo-500 to-purple-600" : ""}
-            >
-              <PenLine className="w-4 h-4 mr-2" />
-              Anotações ({anotacoes.length})
-            </Button>
-            <Button
-              variant={activeTab === "relatorio" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("relatorio")}
-              className={activeTab === "relatorio" ? "bg-gradient-to-r from-emerald-500 to-teal-600" : ""}
-              disabled={juradosAtivos.length === 0}
-            >
-              <FileBarChart className="w-4 h-4 mr-2" />
-              Relatório & Análise
-            </Button>
+          <div className="flex items-center gap-1 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-2">
+            {cockpitMode === "registro" ? (
+              <>
+                <Button
+                  variant={activeTab === "conselho" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveTab("conselho")}
+                  className={cn(
+                    "transition-all duration-200",
+                    activeTab === "conselho"
+                      ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+                      : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                  )}
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Conselho
+                </Button>
+                <Button
+                  variant={activeTab === "anotacoes" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveTab("anotacoes")}
+                  className={cn(
+                    "transition-all duration-200",
+                    activeTab === "anotacoes"
+                      ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+                      : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                  )}
+                >
+                  <PenLine className="w-4 h-4 mr-2" />
+                  Anotações ({anotacoes.length})
+                </Button>
+                <Button
+                  variant={activeTab === "relatorio" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveTab("relatorio")}
+                  className={cn(
+                    "transition-all duration-200",
+                    activeTab === "relatorio"
+                      ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+                      : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                  )}
+                  disabled={juradosAtivos.length === 0}
+                >
+                  <FileBarChart className="w-4 h-4 mr-2" />
+                  Relatório
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 py-1">
+                <Crosshair className="w-4 h-4 text-emerald-600" />
+                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Modo Estratégia</span>
+                <span className="text-xs text-zinc-400">— Referência rápida para o defensor</span>
+              </div>
+            )}
           </div>
 
           {/* Tab: Conselho de Sentença */}
-          {activeTab === "conselho" && (
+          {activeTab === "conselho" && cockpitMode === "registro" && (
             <div className="space-y-4">
               {/* Grid Principal: Cadeiras + Lista (ou só cadeiras se completo) */}
               <div className={cn(
@@ -1942,119 +2025,28 @@ export default function PlenarioCockpitPage() {
             </div>
           )}
 
-          {/* Tab: Anotações */}
-          {activeTab === "anotacoes" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Input de Anotação */}
-              <div className={cn("p-4 lg:col-span-1", cardClass)}>
-                <h3 className={cn("font-semibold mb-3 flex items-center gap-2", isDarkMode ? "text-zinc-200" : "")}>
-                  <PenLine className="w-4 h-4" />
-                  Nova Anotação
-                </h3>
+          {/* Tab: Anotações (Enhanced) */}
+          {activeTab === "anotacoes" && cockpitMode === "registro" && (
+            <AnotacoesAprimoradas
+              anotacoes={anotacoes}
+              setAnotacoes={setAnotacoes}
+              faseSelecionada={faseSelecionada}
+              isDarkMode={isDarkMode}
+            />
+          )}
 
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-xs mb-2 block">Categoria</Label>
-                    <div className="flex flex-wrap gap-1">
-                      {categoriasAnotacoes.map((cat) => (
-                        <button
-                          key={cat.id}
-                          onClick={() => setCategoriaAnotacao(cat.id)}
-                          className={cn(
-                            "flex items-center gap-1 px-2 py-1 rounded text-xs border transition-colors",
-                            categoriaAnotacao === cat.id
-                              ? isDarkMode ? "bg-zinc-700 border-zinc-600" : "bg-zinc-100 border-zinc-300"
-                              : isDarkMode ? "border-zinc-800 hover:border-zinc-700" : "border-zinc-200 hover:border-zinc-300",
-                            cat.color
-                          )}
-                        >
-                          {cat.icon}
-                          {cat.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Textarea
-                    value={novaAnotacao}
-                    onChange={(e) => setNovaAnotacao(e.target.value)}
-                    placeholder="Digite sua anotação..."
-                    className={cn("min-h-[100px]", isDarkMode ? "bg-zinc-800 border-zinc-700" : "")}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && e.ctrlKey) {
-                        handleAddAnotacao();
-                      }
-                    }}
-                  />
-
-                  <Button
-                    onClick={handleAddAnotacao}
-                    disabled={!novaAnotacao.trim()}
-                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-600"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Adicionar (Ctrl+Enter)
-                  </Button>
-                </div>
-              </div>
-
-              {/* Lista de Anotações */}
-              <div className={cn("p-4 lg:col-span-2", cardClass)}>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className={cn("font-semibold flex items-center gap-2", isDarkMode ? "text-zinc-200" : "")}>
-                    <ListChecks className="w-4 h-4" />
-                    Anotações ({anotacoesFiltradas.length})
-                  </h3>
-                  <Select value={filtroCategoria} onValueChange={setFiltroCategoria}>
-                    <SelectTrigger className={cn("w-[160px] h-8 text-xs", isDarkMode ? "bg-zinc-800 border-zinc-700" : "")}>
-                      <SelectValue placeholder="Filtrar" />
-                    </SelectTrigger>
-                    <SelectContent className={isDarkMode ? "bg-zinc-900 border-zinc-800" : ""}>
-                      <SelectItem value="todas">Todas categorias</SelectItem>
-                      {categoriasAnotacoes.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                  {anotacoesFiltradas.length === 0 ? (
-                    <p className={cn("text-sm text-center py-8", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
-                      Nenhuma anotação ainda
-                    </p>
-                  ) : (
-                    anotacoesFiltradas.map((anotacao) => {
-                      const catConfig = categoriasAnotacoes.find(c => c.id === anotacao.categoria);
-                      return (
-                        <div
-                          key={anotacao.id}
-                          className={cn(
-                            "p-3 rounded-lg border",
-                            isDarkMode ? "border-zinc-800 bg-zinc-900/50" : "border-zinc-200"
-                          )}
-                        >
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <Badge variant="outline" className={cn("text-[10px]", catConfig?.color)}>
-                              {catConfig?.icon}
-                              <span className="ml-1">{catConfig?.label}</span>
-                            </Badge>
-                            <span className={cn("text-[10px]", isDarkMode ? "text-zinc-500" : "text-zinc-400")}>
-                              {anotacao.horario} • {anotacao.fase}
-                            </span>
-                          </div>
-                          <p className="text-sm">{anotacao.texto}</p>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </div>
+          {/* Strategic Mode Panel */}
+          {cockpitMode === "estrategia" && (
+            <PainelEstrategico
+              anotacoes={anotacoes}
+              conselhoSentenca={conselhoSentenca}
+              faseSelecionada={faseSelecionada}
+              isDarkMode={isDarkMode}
+            />
           )}
 
           {/* Tab: Relatório & Análise */}
-          {activeTab === "relatorio" && (
+          {activeTab === "relatorio" && cockpitMode === "registro" && (
             <div className="space-y-6">
               {/* Header do Relatório */}
               <div className={cn("p-6", cardClass)}>
@@ -2363,6 +2355,14 @@ export default function PlenarioCockpitPage() {
             </div>
           )}
         </div>
+
+        {/* Quick Reactions Bar - Always visible when council has jurors */}
+        <QuickReactionsBar
+          conselhoSentenca={conselhoSentenca}
+          faseSelecionada={faseSelecionada}
+          isDarkMode={isDarkMode}
+          onAddComportamento={handleAddComportamento}
+        />
 
         {/* Modal de Seleção de Jurado */}
         <Dialog open={modalCadeira !== null} onOpenChange={() => setModalCadeira(null)}>

@@ -170,14 +170,14 @@ export function TestemunhaBriefingCard({
             open={openSections.juizo}
             onOpenChange={() => toggleSection("juizo")}
           >
-            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
               {openSections.juizo ? (
-                <ChevronDown className="w-4 h-4 text-blue-600" />
+                <ChevronDown className="w-4 h-4 text-emerald-600" />
               ) : (
-                <ChevronRight className="w-4 h-4 text-blue-600" />
+                <ChevronRight className="w-4 h-4 text-emerald-600" />
               )}
-              <Scale className="w-4 h-4 text-blue-600" />
-              <span className="font-medium text-sm text-blue-800 dark:text-blue-200">
+              <Scale className="w-4 h-4 text-emerald-600" />
+              <span className="font-medium text-sm text-emerald-800 dark:text-emerald-200">
                 Depoimento em Juízo
               </span>
             </CollapsibleTrigger>

@@ -61,7 +61,7 @@ export const ATRIBUICAO_COLORS = {
   // Violência Doméstica - AMARELO
   VVD: {
     border: "border-l-amber-500",
-    bg: "bg-amber-50/50 dark:bg-amber-900/10",
+    bg: "bg-amber-50/50 dark:bg-amber-900/20",
     bgSolid: "bg-amber-100 dark:bg-amber-900/30",
     text: "text-amber-700 dark:text-amber-400",
     textMuted: "text-amber-600/70 dark:text-amber-400/70",
@@ -76,7 +76,7 @@ export const ATRIBUICAO_COLORS = {
   },
   "Violência Doméstica": {
     border: "border-l-amber-500",
-    bg: "bg-amber-50/50 dark:bg-amber-900/10",
+    bg: "bg-amber-50/50 dark:bg-amber-900/20",
     bgSolid: "bg-amber-100 dark:bg-amber-900/30",
     text: "text-amber-700 dark:text-amber-400",
     textMuted: "text-amber-600/70 dark:text-amber-400/70",
@@ -90,7 +90,7 @@ export const ATRIBUICAO_COLORS = {
   },
   VVD_CAMACARI: {
     border: "border-l-amber-500",
-    bg: "bg-amber-50/50 dark:bg-amber-900/10",
+    bg: "bg-amber-50/50 dark:bg-amber-900/20",
     bgSolid: "bg-amber-100 dark:bg-amber-900/30",
     text: "text-amber-700 dark:text-amber-400",
     textMuted: "text-amber-600/70 dark:text-amber-400/70",
@@ -104,7 +104,7 @@ export const ATRIBUICAO_COLORS = {
   },
   VIOLENCIA_DOMESTICA: {
     border: "border-l-amber-500",
-    bg: "bg-amber-50/50 dark:bg-amber-900/10",
+    bg: "bg-amber-50/50 dark:bg-amber-900/20",
     bgSolid: "bg-amber-100 dark:bg-amber-900/30",
     text: "text-amber-700 dark:text-amber-400",
     textMuted: "text-amber-600/70 dark:text-amber-400/70",
@@ -120,7 +120,7 @@ export const ATRIBUICAO_COLORS = {
   // Tribunal do Júri - VERDE
   JURI: {
     border: "border-l-emerald-500",
-    bg: "bg-emerald-50/50 dark:bg-emerald-900/10",
+    bg: "bg-emerald-50/50 dark:bg-emerald-900/20",
     bgSolid: "bg-emerald-100 dark:bg-emerald-900/30",
     text: "text-emerald-700 dark:text-emerald-400",
     textMuted: "text-emerald-600/70 dark:text-emerald-400/70",
@@ -134,7 +134,7 @@ export const ATRIBUICAO_COLORS = {
   },
   JURI_CAMACARI: {
     border: "border-l-emerald-500",
-    bg: "bg-emerald-50/50 dark:bg-emerald-900/10",
+    bg: "bg-emerald-50/50 dark:bg-emerald-900/20",
     bgSolid: "bg-emerald-100 dark:bg-emerald-900/30",
     text: "text-emerald-700 dark:text-emerald-400",
     textMuted: "text-emerald-600/70 dark:text-emerald-400/70",
@@ -148,7 +148,7 @@ export const ATRIBUICAO_COLORS = {
   },
   "Tribunal do Júri": {
     border: "border-l-emerald-500",
-    bg: "bg-emerald-50/50 dark:bg-emerald-900/10",
+    bg: "bg-emerald-50/50 dark:bg-emerald-900/20",
     bgSolid: "bg-emerald-100 dark:bg-emerald-900/30",
     text: "text-emerald-700 dark:text-emerald-400",
     textMuted: "text-emerald-600/70 dark:text-emerald-400/70",
@@ -162,7 +162,7 @@ export const ATRIBUICAO_COLORS = {
   },
   "Grupo Especial do Júri": {
     border: "border-l-orange-500",
-    bg: "bg-orange-50/50 dark:bg-orange-900/10",
+    bg: "bg-orange-50/50 dark:bg-orange-900/20",
     bgSolid: "bg-orange-100 dark:bg-orange-900/30",
     text: "text-orange-700 dark:text-orange-400",
     textMuted: "text-orange-600/70 dark:text-orange-400/70",
@@ -176,7 +176,7 @@ export const ATRIBUICAO_COLORS = {
   },
   GRUPO_JURI: {
     border: "border-l-orange-500",
-    bg: "bg-orange-50/50 dark:bg-orange-900/10",
+    bg: "bg-orange-50/50 dark:bg-orange-900/20",
     bgSolid: "bg-orange-100 dark:bg-orange-900/30",
     text: "text-orange-700 dark:text-orange-400",
     textMuted: "text-orange-600/70 dark:text-orange-400/70",
@@ -192,7 +192,7 @@ export const ATRIBUICAO_COLORS = {
   // Execução Penal - AZUL
   EXECUCAO: {
     border: "border-l-blue-500",
-    bg: "bg-blue-50/50 dark:bg-blue-900/10",
+    bg: "bg-blue-50/50 dark:bg-blue-900/20",
     bgSolid: "bg-blue-100 dark:bg-blue-900/30",
     text: "text-blue-700 dark:text-blue-400",
     textMuted: "text-blue-600/70 dark:text-blue-400/70",
@@ -206,7 +206,7 @@ export const ATRIBUICAO_COLORS = {
   },
   EXECUCAO_PENAL: {
     border: "border-l-blue-500",
-    bg: "bg-blue-50/50 dark:bg-blue-900/10",
+    bg: "bg-blue-50/50 dark:bg-blue-900/20",
     bgSolid: "bg-blue-100 dark:bg-blue-900/30",
     text: "text-blue-700 dark:text-blue-400",
     textMuted: "text-blue-600/70 dark:text-blue-400/70",
@@ -220,7 +220,7 @@ export const ATRIBUICAO_COLORS = {
   },
   "Execução Penal": {
     border: "border-l-blue-500",
-    bg: "bg-blue-50/50 dark:bg-blue-900/10",
+    bg: "bg-blue-50/50 dark:bg-blue-900/20",
     bgSolid: "bg-blue-100 dark:bg-blue-900/30",
     text: "text-blue-700 dark:text-blue-400",
     textMuted: "text-blue-600/70 dark:text-blue-400/70",
@@ -236,7 +236,7 @@ export const ATRIBUICAO_COLORS = {
   // Substituição Criminal - VERMELHO
   SUBSTITUICAO: {
     border: "border-l-rose-500",
-    bg: "bg-rose-50/50 dark:bg-rose-900/10",
+    bg: "bg-rose-50/50 dark:bg-rose-900/20",
     bgSolid: "bg-rose-100 dark:bg-rose-900/30",
     text: "text-rose-700 dark:text-rose-400",
     textMuted: "text-rose-600/70 dark:text-rose-400/70",
@@ -250,7 +250,7 @@ export const ATRIBUICAO_COLORS = {
   },
   CRIMINAL: {
     border: "border-l-rose-500",
-    bg: "bg-rose-50/50 dark:bg-rose-900/10",
+    bg: "bg-rose-50/50 dark:bg-rose-900/20",
     bgSolid: "bg-rose-100 dark:bg-rose-900/30",
     text: "text-rose-700 dark:text-rose-400",
     textMuted: "text-rose-600/70 dark:text-rose-400/70",
@@ -264,7 +264,7 @@ export const ATRIBUICAO_COLORS = {
   },
   "Criminal Geral": {
     border: "border-l-rose-500",
-    bg: "bg-rose-50/50 dark:bg-rose-900/10",
+    bg: "bg-rose-50/50 dark:bg-rose-900/20",
     bgSolid: "bg-rose-100 dark:bg-rose-900/30",
     text: "text-rose-700 dark:text-rose-400",
     textMuted: "text-rose-600/70 dark:text-rose-400/70",
@@ -278,7 +278,7 @@ export const ATRIBUICAO_COLORS = {
   },
   Substituição: {
     border: "border-l-rose-500",
-    bg: "bg-rose-50/50 dark:bg-rose-900/10",
+    bg: "bg-rose-50/50 dark:bg-rose-900/20",
     bgSolid: "bg-rose-100 dark:bg-rose-900/30",
     text: "text-rose-700 dark:text-rose-400",
     textMuted: "text-rose-600/70 dark:text-rose-400/70",
@@ -294,7 +294,7 @@ export const ATRIBUICAO_COLORS = {
   // Substituição Não Penal (Cível) - LARANJA
   SUBSTITUICAO_CIVEL: {
     border: "border-l-orange-500",
-    bg: "bg-orange-50/50 dark:bg-orange-900/10",
+    bg: "bg-orange-50/50 dark:bg-orange-900/20",
     bgSolid: "bg-orange-100 dark:bg-orange-900/30",
     text: "text-orange-700 dark:text-orange-400",
     textMuted: "text-orange-600/70 dark:text-orange-400/70",
@@ -308,7 +308,7 @@ export const ATRIBUICAO_COLORS = {
   },
   CIVEL: {
     border: "border-l-orange-500",
-    bg: "bg-orange-50/50 dark:bg-orange-900/10",
+    bg: "bg-orange-50/50 dark:bg-orange-900/20",
     bgSolid: "bg-orange-100 dark:bg-orange-900/30",
     text: "text-orange-700 dark:text-orange-400",
     textMuted: "text-orange-600/70 dark:text-orange-400/70",
@@ -322,7 +322,7 @@ export const ATRIBUICAO_COLORS = {
   },
   FAMILIA: {
     border: "border-l-orange-500",
-    bg: "bg-orange-50/50 dark:bg-orange-900/10",
+    bg: "bg-orange-50/50 dark:bg-orange-900/20",
     bgSolid: "bg-orange-100 dark:bg-orange-900/30",
     text: "text-orange-700 dark:text-orange-400",
     textMuted: "text-orange-600/70 dark:text-orange-400/70",
@@ -336,7 +336,7 @@ export const ATRIBUICAO_COLORS = {
   },
   FAZENDA_PUBLICA: {
     border: "border-l-orange-500",
-    bg: "bg-orange-50/50 dark:bg-orange-900/10",
+    bg: "bg-orange-50/50 dark:bg-orange-900/20",
     bgSolid: "bg-orange-100 dark:bg-orange-900/30",
     text: "text-orange-700 dark:text-orange-400",
     textMuted: "text-orange-600/70 dark:text-orange-400/70",
@@ -352,7 +352,7 @@ export const ATRIBUICAO_COLORS = {
   // Curadoria Especial - ROXO
   CURADORIA: {
     border: "border-l-purple-500",
-    bg: "bg-purple-50/50 dark:bg-purple-900/10",
+    bg: "bg-purple-50/50 dark:bg-purple-900/20",
     bgSolid: "bg-purple-100 dark:bg-purple-900/30",
     text: "text-purple-700 dark:text-purple-400",
     textMuted: "text-purple-600/70 dark:text-purple-400/70",
@@ -366,7 +366,7 @@ export const ATRIBUICAO_COLORS = {
   },
   "Curadoria Especial": {
     border: "border-l-purple-500",
-    bg: "bg-purple-50/50 dark:bg-purple-900/10",
+    bg: "bg-purple-50/50 dark:bg-purple-900/20",
     bgSolid: "bg-purple-100 dark:bg-purple-900/30",
     text: "text-purple-700 dark:text-purple-400",
     textMuted: "text-purple-600/70 dark:text-purple-400/70",

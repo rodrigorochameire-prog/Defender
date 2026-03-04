@@ -53,14 +53,14 @@
     --ring: 162 63% 35%;
     --radius: 0.5rem; /* 8px */
 
-    /* ===== SIDEBAR (always dark glass) ===== */
-    --sidebar-background: 240 5% 7%;
+    /* ===== SIDEBAR (dark glass suavizado) ===== */
+    --sidebar-background: 240 5% 12%;
     --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 162 63% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4% 18%;
+    --sidebar-accent: 240 4% 20%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 4% 14%;
+    --sidebar-border: 240 5% 26%;
     --sidebar-ring: 162 63% 45%;
 
     /* ===== SPACING SYSTEM (múltiplos de 4px) ===== */
@@ -136,13 +136,13 @@
     --border: 240 6% 20%;
     --input: 240 6% 20%;
     --ring: 162 70% 50%;
-    --sidebar-background: 240 5% 7%;
+    --sidebar-background: 240 5% 12%;
     --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 162 63% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4% 18%;
+    --sidebar-accent: 240 4% 20%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 4% 14%;
+    --sidebar-border: 240 5% 26%;
     --sidebar-ring: 162 63% 45%;
   }
 
@@ -523,15 +523,10 @@
   }
 
   .glass-sidebar {
-    background: linear-gradient(
-      180deg,
-      rgba(15, 15, 17, 0.92) 0%,
-      rgba(20, 20, 23, 0.88) 50%,
-      rgba(15, 15, 17, 0.92) 100%
-    );
+    background: rgba(30, 30, 35, 0.92);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid rgba(63, 63, 70, 0.4);
   }
 
   /* ===== GRADIENT TEXT ===== */

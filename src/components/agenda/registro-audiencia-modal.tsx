@@ -133,12 +133,12 @@ const atribuicaoColors: Record<
     btnPrimary: "bg-gray-600 hover:bg-gray-700",
   },
   "Curadoria": {
-    bg: "bg-gradient-to-br from-slate-50 to-zinc-50 dark:from-slate-950/30 dark:to-zinc-950/30",
-    border: "border-slate-500 dark:border-slate-600",
-    text: "text-slate-700 dark:text-slate-300",
-    icon: "text-slate-600 dark:text-slate-400",
-    tabActive: "border-slate-500 text-slate-600 dark:text-slate-400",
-    btnPrimary: "bg-slate-600 hover:bg-slate-700",
+    bg: "bg-gradient-to-br from-zinc-50 to-zinc-50 dark:from-zinc-950/30 dark:to-zinc-950/30",
+    border: "border-zinc-500 dark:border-zinc-600",
+    text: "text-zinc-700 dark:text-zinc-300",
+    icon: "text-zinc-600 dark:text-zinc-400",
+    tabActive: "border-zinc-500 text-zinc-600 dark:text-zinc-400",
+    btnPrimary: "bg-zinc-600 hover:bg-zinc-700",
   },
 };
 

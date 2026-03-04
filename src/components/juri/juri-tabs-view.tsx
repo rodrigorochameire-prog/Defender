@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Gavel, Search, Mic2, Users, FileText, Clock, 
+import {
+  Gavel, Search, Mic2, Users, FileText, Clock,
   AlertTriangle, CheckCircle2, Shield, Target,
-  Zap, Brain, ExternalLink, Calendar, MapPin
+  Zap, Brain, ExternalLink, Calendar, MapPin, BookOpen
 } from "lucide-react";
+import { PreparacaoHub } from "./preparacao/preparacao-hub";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -100,13 +101,21 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
             <span className="hidden sm:inline">Conselho de Sentença</span>
             <span className="sm:hidden">Jurados</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="teses" 
+          <TabsTrigger
+            value="teses"
             className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
           >
-            <Shield className="w-4 h-4" /> 
+            <Shield className="w-4 h-4" />
             <span className="hidden sm:inline">Teses & Quesitos</span>
             <span className="sm:hidden">Teses</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="preparacao"
+            className="data-[state=active]:bg-stone-100 dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary flex gap-2"
+          >
+            <BookOpen className="w-4 h-4" />
+            <span className="hidden sm:inline">Preparacao</span>
+            <span className="sm:hidden">Prep</span>
           </TabsTrigger>
         </TabsList>
 
@@ -273,6 +282,11 @@ export function JuriTabsView({ sessaoId, sessao }: JuriTabsViewProps) {
               </div>
             </SwissCardContent>
           </SwissCard>
+        </TabsContent>
+
+        {/* Conteúdo: Preparação */}
+        <TabsContent value="preparacao" className="mt-0">
+          <PreparacaoHub sessaoId={sessaoId} sessao={sessao} />
         </TabsContent>
       </Tabs>
     </div>

@@ -45,8 +45,8 @@ const tipoPessoaConfig: Record<
   },
   TESTEMUNHA: {
     label: "Testemunha",
-    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-    icon: <User className="w-5 h-5 text-blue-600" />,
+    color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
+    icon: <User className="w-5 h-5 text-emerald-600" />,
   },
   DESCONHECIDO: {
     label: "Não identificado",
@@ -84,7 +84,7 @@ export function AntecedentesCard({
                   ? "bg-rose-100 dark:bg-rose-900/30"
                   : antecedente.tipo_pessoa === "VITIMA"
                     ? "bg-amber-100 dark:bg-amber-900/30"
-                    : "bg-blue-100 dark:bg-blue-900/30"
+                    : "bg-emerald-100 dark:bg-emerald-900/30"
               )}
             >
               {config.icon}

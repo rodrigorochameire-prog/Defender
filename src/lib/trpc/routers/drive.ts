@@ -706,6 +706,205 @@ export const driveRouter = router({
   }),
 
   /**
+   * Diagnóstico completo: mostra near-misses entre assistidos e pastas Drive
+   * Para entender POR QUE nomes não batem e o que corrigir
+   */
+  diagnoseOrphans: adminProcedure
+    .input(z.object({
+      atribuicao: z.enum(["JURI", "VVD", "EP", "SUBSTITUICAO", "GRUPO_JURI"]).optional(),
+      minConfidence: z.number().default(0.4),
+    }))
+    .query(async ({ input }) => {
+      const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+
+      const atribToFolder: Record<string, string> = {
+        JURI_CAMACARI: "JURI",
+        GRUPO_JURI: "GRUPO_JURI",
+        VVD_CAMACARI: "VVD",
+        EXECUCAO_PENAL: "EP",
+        SUBSTITUICAO: "SUBSTITUICAO",
+        SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
+      };
+
+      // 1. SCAN Drive folders
+      const keysToScan = input.atribuicao
+        ? [input.atribuicao as keyof typeof ATRIBUICAO_FOLDER_IDS]
+        : Object.keys(ATRIBUICAO_FOLDER_IDS) as (keyof typeof ATRIBUICAO_FOLDER_IDS)[];
+
+      type FolderEntry = { id: string; name: string; normalizedName: string; atribuicaoKey: string };
+      const drivefolders: FolderEntry[] = [];
+
+      const scanResults = await Promise.allSettled(
+        keysToScan.map(async (key) => {
+          const folderId = ATRIBUICAO_FOLDER_IDS[key];
+          const items = await listAllItemsInFolder(folderId);
+          return { key, folders: items.filter(item => item.mimeType === "application/vnd.google-apps.folder") };
+        })
+      );
+
+      for (const result of scanResults) {
+        if (result.status === "fulfilled") {
+          for (const folder of result.value.folders) {
+            drivefolders.push({
+              id: folder.id,
+              name: folder.name,
+              normalizedName: normalizeName(folder.name).toLowerCase().replace(/\s+/g, " ").trim(),
+              atribuicaoKey: result.value.key,
+            });
+          }
+        }
+      }
+
+      // 2. LOAD unlinked assistidos
+      const unlinkedAssistidos = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          atribuicaoPrimaria: assistidos.atribuicaoPrimaria,
+        })
+        .from(assistidos)
+        .where(isNull(assistidos.driveFolderId));
+
+      // 3. Get IDs of folders already linked to ANY assistido
+      const linkedFolderIds = new Set(
+        (await db
+          .select({ driveFolderId: assistidos.driveFolderId })
+          .from(assistidos)
+          .where(sql`${assistidos.driveFolderId} IS NOT NULL`)
+        ).map(r => r.driveFolderId)
+      );
+
+      // 4. For each unlinked assistido: find TOP 3 matches (even below threshold)
+      const assistidoMatches: Array<{
+        assistidoId: number;
+        assistidoNome: string;
+        assistidoNomeNorm: string;
+        atribuicao: string;
+        topMatches: Array<{
+          folderId: string;
+          folderName: string;
+          folderNameNorm: string;
+          folderAtribuicao: string;
+          confidence: number;
+          matchType: string;
+          alreadyLinked: boolean;
+        }>;
+      }> = [];
+
+      for (const assistido of unlinkedAssistidos) {
+        const atribKey = atribToFolder[assistido.atribuicaoPrimaria || ""] || null;
+        if (!atribKey) continue;
+        // If filtering by atribuicao, skip others
+        if (input.atribuicao && atribKey !== input.atribuicao) continue;
+
+        const nomeNorm = normalizeName(assistido.nome).toLowerCase().replace(/\s+/g, " ").trim();
+        const nomeParts = nomeNorm.split(" ").filter((p: string) => p.length > 0);
+        const firstName = nomeParts[0] || "";
+        const lastName = nomeParts[nomeParts.length - 1] || "";
+
+        const matches: Array<{
+          folderId: string;
+          folderName: string;
+          folderNameNorm: string;
+          folderAtribuicao: string;
+          confidence: number;
+          matchType: string;
+          alreadyLinked: boolean;
+        }> = [];
+
+        for (const folder of drivefolders) {
+          let confidence = 0;
+          let matchType = "none";
+
+          if (folder.normalizedName === nomeNorm) {
+            confidence = 1.0;
+            matchType = "exact";
+          } else {
+            const folderParts = folder.normalizedName.split(" ").filter((p: string) => p.length > 0);
+            const folderFirst = folderParts[0] || "";
+            const folderLast = folderParts[folderParts.length - 1] || "";
+
+            if (firstName && lastName && firstName !== lastName && folderFirst === firstName && folderLast === lastName) {
+              confidence = 0.95;
+              matchType = "first_last";
+            } else if (
+              (folder.normalizedName.startsWith(nomeNorm) || nomeNorm.startsWith(folder.normalizedName)) &&
+              Math.min(folder.normalizedName.length, nomeNorm.length) > 5
+            ) {
+              confidence = 0.90;
+              matchType = "contains";
+            } else {
+              const sim = calculateSimilarity(folder.normalizedName, nomeNorm);
+              if (sim >= input.minConfidence) {
+                confidence = sim;
+                matchType = "fuzzy";
+              }
+            }
+          }
+
+          if (folder.atribuicaoKey === atribKey && confidence > 0) {
+            confidence = Math.min(confidence + 0.05, 1.0);
+          }
+
+          if (confidence >= input.minConfidence) {
+            matches.push({
+              folderId: folder.id,
+              folderName: folder.name,
+              folderNameNorm: folder.normalizedName,
+              folderAtribuicao: folder.atribuicaoKey,
+              confidence: Math.round(confidence * 100) / 100,
+              matchType,
+              alreadyLinked: linkedFolderIds.has(folder.id),
+            });
+          }
+        }
+
+        // Sort by confidence desc, take top 3
+        matches.sort((a, b) => b.confidence - a.confidence);
+
+        assistidoMatches.push({
+          assistidoId: assistido.id,
+          assistidoNome: assistido.nome,
+          assistidoNomeNorm: nomeNorm,
+          atribuicao: atribKey,
+          topMatches: matches.slice(0, 3),
+        });
+      }
+
+      // 5. Find orphan folders (not linked to any assistido)
+      const orphanFolders = drivefolders
+        .filter(f => !linkedFolderIds.has(f.id))
+        .map(f => ({
+          folderId: f.id,
+          folderName: f.name,
+          folderNameNorm: f.normalizedName,
+          atribuicao: f.atribuicaoKey,
+        }));
+
+      // 6. Stats
+      const noMatch = assistidoMatches.filter(a => a.topMatches.length === 0).length;
+      const nearMiss = assistidoMatches.filter(a =>
+        a.topMatches.length > 0 && a.topMatches[0].confidence < 0.85 && a.topMatches[0].confidence >= 0.5
+      ).length;
+      const wouldLink = assistidoMatches.filter(a =>
+        a.topMatches.length > 0 && a.topMatches[0].confidence >= 0.85 && !a.topMatches[0].alreadyLinked
+      ).length;
+
+      return {
+        assistidoMatches,
+        orphanFolders,
+        stats: {
+          totalUnlinked: assistidoMatches.length,
+          noMatch,
+          nearMiss,
+          wouldLink,
+          totalOrphanFolders: orphanFolders.length,
+          totalDriveFolders: drivefolders.length,
+        },
+      };
+    }),
+
+  /**
    * Busca sugestões de pastas para vincular a um assistido específico
    */
   suggestFoldersForAssistido: protectedProcedure
@@ -2667,6 +2866,31 @@ export const driveRouter = router({
         })
         .from(driveFiles)
         .where(inArray(driveFiles.driveFileId, input.driveFileIds));
+    }),
+
+  /**
+   * Últimos arquivos modificados (global, sem filtro de pasta)
+   */
+  recentFiles: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(20).default(8) }).optional())
+    .query(async ({ input }) => {
+      const limit = input?.limit ?? 8;
+      const files = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          mimeType: driveFiles.mimeType,
+          webViewLink: driveFiles.webViewLink,
+          lastModifiedTime: driveFiles.lastModifiedTime,
+          enrichmentStatus: driveFiles.enrichmentStatus,
+          documentType: driveFiles.documentType,
+          driveFolderId: driveFiles.driveFolderId,
+        })
+        .from(driveFiles)
+        .where(eq(driveFiles.isFolder, false))
+        .orderBy(desc(driveFiles.lastModifiedTime))
+        .limit(limit);
+      return files;
     }),
 
   /**

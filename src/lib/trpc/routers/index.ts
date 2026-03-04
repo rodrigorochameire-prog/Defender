@@ -55,6 +55,7 @@ import { settingsRouter } from "./settings";
 import { tesesRouter } from "./teses";
 import { oficiosRouter } from "./oficios";
 import { templatesRouter } from "./templates";
+import { preparacaoRouter } from "./preparacao";
 
 
 export const appRouter = router({
@@ -231,6 +232,11 @@ export const appRouter = router({
   // TEMPLATES DE DOCUMENTOS (GOOGLE DRIVE)
   // ==========================================
   templates: templatesRouter,
+
+  // ==========================================
+  // PREPARAÇÃO PRÉ-JÚRI (CHECKLIST, DOSSIE, WAR ROOM, QUESITOS, SIMULAÇÃO)
+  // ==========================================
+  preparacao: preparacaoRouter,
 });
 
 export type AppRouter = typeof appRouter;

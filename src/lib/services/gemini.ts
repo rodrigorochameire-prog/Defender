@@ -907,3 +907,318 @@ export async function extrairDadosPdfDoDrive(
     };
   }
 }
+
+// ==========================================
+// SIMULAÇÃO DE JULGAMENTO (Júri)
+// ==========================================
+
+export interface SimulacaoResultado {
+  generatedAt: string;
+  cenarios: {
+    tipo: "melhor" | "pior" | "provavel";
+    descricao: string;
+    probabilidade: number;
+    resultado: string;
+    justificativa: string;
+  }[];
+  tesesAnalise: {
+    titulo: string;
+    confianca: number;
+    argumentosPromotoria: string[];
+    contraArgumentos: string[];
+    ordemRecomendada: number;
+  }[];
+  testemunhasResistencia: {
+    nome: string;
+    tipo: string;
+    resistencia: number;
+    pontosVulneraveis: string[];
+    perguntasCriticas: string[];
+  }[];
+  resumoEstrategico: string;
+}
+
+/**
+ * Gera quesitos para o Tribunal do Júri com base no CPP arts. 482-484.
+ *
+ * Utiliza FLASH para rapidez. Retorna quesitos obrigatórios (materialidade,
+ * autoria, absolvição genérica) + específicos conforme o crime e teses.
+ */
+export async function gerarQuesitosIA(
+  classificacaoCrime: string,
+  teses: string[],
+  fatosRelevantes: string
+): Promise<{
+  quesitos: Array<{
+    numero: number;
+    texto: string;
+    tipo: string;
+    origem: string;
+    argumentacaoSim?: string;
+    argumentacaoNao?: string;
+    dependeDe?: number | null;
+    condicaoPai?: string | null;
+  }>;
+}> {
+  const genAI = getGeminiClient();
+  const model = genAI.getGenerativeModel({
+    model: GEMINI_MODELS.FLASH,
+    safetySettings: SAFETY_SETTINGS,
+  });
+
+  const tesesFormatadas = teses.map((t, i) => `${i + 1}. ${t}`).join("\n");
+
+  const prompt = `
+${CONTEXTO_JURIDICO}
+
+## TAREFA
+Gere os quesitos para sessão do Tribunal do Júri seguindo rigorosamente o CPP (arts. 482 a 484).
+
+## CLASSIFICAÇÃO DO CRIME
+${classificacaoCrime}
+
+## TESES DA DEFESA
+${tesesFormatadas}
+
+## FATOS RELEVANTES
+${fatosRelevantes}
+
+## REGRAS DE QUESITAÇÃO (CPP arts. 482-484)
+1. **1º Quesito** — Materialidade: Sempre obrigatório. Pergunta se o fato existiu.
+2. **2º Quesito** — Autoria/participação: Sempre obrigatório. Pergunta se o réu concorreu para o fato.
+3. **3º Quesito** — Absolvição genérica (art. 483, §2º): SEMPRE obrigatório. "O jurado absolve o acusado?"
+4. **Quesitos seguintes** — Causas de diminuição de pena (art. 483, §3º, I): Se aplicável ao crime (ex: homicídio privilegiado, art. 121 §1º CP).
+5. **Qualificadoras** (art. 483, §3º, II): Cada qualificadora imputada na pronúncia deve ter quesito próprio.
+6. **Causas de aumento** (art. 483, §4º): Se houver majorantes.
+
+## DEPENDÊNCIAS
+- Qualificadoras e causas de aumento SÓ são quesitadas se materialidade E autoria forem respondidas SIM.
+- Se o 3º quesito (absolvição) for SIM, encerra a votação — os quesitos seguintes ficam prejudicados.
+- Causas de diminuição são votadas ANTES das qualificadoras.
+
+## FORMATO DE RESPOSTA
+Responda APENAS com JSON válido, sem markdown ou texto adicional:
+
+{
+  "quesitos": [
+    {
+      "numero": 1,
+      "texto": "Texto completo do quesito",
+      "tipo": "materialidade|autoria|absolvicao|diminuicao|qualificadora|aumento|privilegio|especial",
+      "origem": "art. 483 CPP|art. 121 §1º CP|pronúncia|defesa",
+      "argumentacaoSim": "O que significa uma resposta SIM (para orientação do defensor)",
+      "argumentacaoNao": "O que significa uma resposta NÃO (para orientação do defensor)",
+      "dependeDe": null,
+      "condicaoPai": null
+    }
+  ]
+}
+
+IMPORTANTE:
+- Adapte os quesitos ao crime específico (homicídio, latrocínio, etc.)
+- Inclua teses da defesa como quesitos quando aplicável
+- Mantenha a numeração sequencial
+- O campo "dependeDe" indica o número do quesito-pai (null se independente)
+- O campo "condicaoPai" indica a resposta necessária do pai ("SIM" ou "NÃO")
+`;
+
+  const result = await model.generateContent(prompt);
+  const response = result.response;
+  const responseText = response.text();
+
+  // Strip markdown code fences if present
+  let jsonStr = responseText;
+  if (responseText.includes("```json")) {
+    jsonStr = responseText.split("```json")[1].split("```")[0].trim();
+  } else if (responseText.includes("```")) {
+    jsonStr = responseText.split("```")[1].split("```")[0].trim();
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+    return {
+      quesitos: (parsed.quesitos || []).map((q: any) => ({
+        numero: q.numero,
+        texto: q.texto || "",
+        tipo: q.tipo || "especial",
+        origem: q.origem || "",
+        argumentacaoSim: q.argumentacaoSim || undefined,
+        argumentacaoNao: q.argumentacaoNao || undefined,
+        dependeDe: q.dependeDe ?? null,
+        condicaoPai: q.condicaoPai ?? null,
+      })),
+    };
+  } catch (parseError) {
+    console.error("Erro ao parsear quesitos do Gemini:", parseError);
+    console.error("Resposta recebida:", responseText);
+    throw new Error("Não foi possível interpretar a resposta da IA para geração de quesitos");
+  }
+}
+
+/**
+ * Simula um julgamento no Tribunal do Júri, gerando cenários, análise de teses,
+ * resistência de testemunhas e resumo estratégico.
+ *
+ * Utiliza PRO para análise profunda e raciocínio complexo.
+ */
+export async function simularJulgamentoIA(contexto: {
+  fatos: string;
+  teses: Array<{ titulo: string; descricao: string; tipo: string }>;
+  testemunhas: Array<{ nome: string; tipo: string; depoimento: string; contradicoes?: string }>;
+  provas: string;
+  juizPerfil?: string;
+  promotorPerfil?: string;
+  classificacaoCrime: string;
+}): Promise<SimulacaoResultado> {
+  const genAI = getGeminiClient();
+  const model = genAI.getGenerativeModel({
+    model: GEMINI_MODELS.PRO,
+    safetySettings: SAFETY_SETTINGS,
+  });
+
+  const tesesFormatadas = contexto.teses
+    .map((t, i) => `${i + 1}. **${t.titulo}** (${t.tipo}): ${t.descricao}`)
+    .join("\n");
+
+  const testemunhasFormatadas = contexto.testemunhas
+    .map(
+      (t, i) =>
+        `${i + 1}. **${t.nome}** (${t.tipo})\n   Depoimento: ${t.depoimento}${t.contradicoes ? `\n   Contradições: ${t.contradicoes}` : ""}`,
+    )
+    .join("\n\n");
+
+  const prompt = `
+${CONTEXTO_JURIDICO}
+
+## TAREFA
+Realize uma simulação completa de julgamento no Tribunal do Júri. Analise todos os dados abaixo e produza uma análise estratégica detalhada para a defesa.
+
+## DADOS DO CASO
+
+### Classificação do Crime
+${contexto.classificacaoCrime}
+
+### Fatos
+${contexto.fatos}
+
+### Provas
+${contexto.provas}
+
+### Teses da Defesa
+${tesesFormatadas}
+
+### Testemunhas
+${testemunhasFormatadas}
+
+${contexto.juizPerfil ? `### Perfil do Juiz-Presidente\n${contexto.juizPerfil}` : ""}
+${contexto.promotorPerfil ? `### Perfil do Promotor\n${contexto.promotorPerfil}` : ""}
+
+## ANÁLISE SOLICITADA
+
+Produza uma análise completa contendo:
+
+1. **CENÁRIOS** — Três cenários (melhor, pior, mais provável) com probabilidades realistas que somem aproximadamente 100%.
+
+2. **ANÁLISE DE TESES** — Para cada tese da defesa:
+   - Nível de confiança (0-100)
+   - Argumentos prováveis da promotoria contra a tese
+   - Contra-argumentos sugeridos para a defesa
+   - Ordem recomendada de apresentação (1 = apresentar primeiro)
+
+3. **RESISTÊNCIA DE TESTEMUNHAS** — Para cada testemunha:
+   - Nível de resistência ao cross-examination (0-100, onde 100 = muito resistente)
+   - Pontos vulneráveis no depoimento
+   - Perguntas críticas que a defesa deve fazer
+
+4. **RESUMO ESTRATÉGICO** — Texto consolidado com a estratégia recomendada para o plenário.
+
+## FORMATO DE RESPOSTA
+Responda APENAS com JSON válido, sem markdown ou texto adicional:
+
+{
+  "generatedAt": "ISO 8601 timestamp",
+  "cenarios": [
+    {
+      "tipo": "melhor|pior|provavel",
+      "descricao": "Descrição detalhada do cenário",
+      "probabilidade": 30,
+      "resultado": "Resultado provável (ex: Absolvição, Condenação simples, Desclassificação)",
+      "justificativa": "Fundamentação detalhada"
+    }
+  ],
+  "tesesAnalise": [
+    {
+      "titulo": "Nome da tese",
+      "confianca": 75,
+      "argumentosPromotoria": ["Argumento 1", "Argumento 2"],
+      "contraArgumentos": ["Contra-argumento 1", "Contra-argumento 2"],
+      "ordemRecomendada": 1
+    }
+  ],
+  "testemunhasResistencia": [
+    {
+      "nome": "Nome",
+      "tipo": "acusação|defesa|informante",
+      "resistencia": 60,
+      "pontosVulneraveis": ["Ponto 1", "Ponto 2"],
+      "perguntasCriticas": ["Pergunta 1?", "Pergunta 2?"]
+    }
+  ],
+  "resumoEstrategico": "Texto com a estratégia consolidada para o plenário"
+}
+
+IMPORTANTE:
+- Seja realista nas probabilidades e confiança
+- Priorize a perspectiva da defesa, mas considere os argumentos da acusação
+- As perguntas críticas devem ser formuladas de forma estratégica
+- O resumo estratégico deve ser acionável e direto
+- Se não houver testemunhas, retorne array vazio para testemunhasResistencia
+- Use a data atual como generatedAt
+`;
+
+  const result = await model.generateContent(prompt);
+  const response = result.response;
+  const responseText = response.text();
+
+  // Strip markdown code fences if present
+  let jsonStr = responseText;
+  if (responseText.includes("```json")) {
+    jsonStr = responseText.split("```json")[1].split("```")[0].trim();
+  } else if (responseText.includes("```")) {
+    jsonStr = responseText.split("```")[1].split("```")[0].trim();
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+
+    return {
+      generatedAt: parsed.generatedAt || new Date().toISOString(),
+      cenarios: (parsed.cenarios || []).map((c: any) => ({
+        tipo: c.tipo || "provavel",
+        descricao: c.descricao || "",
+        probabilidade: typeof c.probabilidade === "number" ? c.probabilidade : 0,
+        resultado: c.resultado || "",
+        justificativa: c.justificativa || "",
+      })),
+      tesesAnalise: (parsed.tesesAnalise || []).map((t: any) => ({
+        titulo: t.titulo || "",
+        confianca: typeof t.confianca === "number" ? t.confianca : 0,
+        argumentosPromotoria: Array.isArray(t.argumentosPromotoria) ? t.argumentosPromotoria : [],
+        contraArgumentos: Array.isArray(t.contraArgumentos) ? t.contraArgumentos : [],
+        ordemRecomendada: typeof t.ordemRecomendada === "number" ? t.ordemRecomendada : 0,
+      })),
+      testemunhasResistencia: (parsed.testemunhasResistencia || []).map((w: any) => ({
+        nome: w.nome || "",
+        tipo: w.tipo || "",
+        resistencia: typeof w.resistencia === "number" ? w.resistencia : 0,
+        pontosVulneraveis: Array.isArray(w.pontosVulneraveis) ? w.pontosVulneraveis : [],
+        perguntasCriticas: Array.isArray(w.perguntasCriticas) ? w.perguntasCriticas : [],
+      })),
+      resumoEstrategico: parsed.resumoEstrategico || "",
+    };
+  } catch (parseError) {
+    console.error("Erro ao parsear simulação do Gemini:", parseError);
+    console.error("Resposta recebida:", responseText);
+    throw new Error("Não foi possível interpretar a resposta da IA para simulação de julgamento");
+  }
+}
