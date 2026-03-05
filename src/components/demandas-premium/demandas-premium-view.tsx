@@ -1876,6 +1876,7 @@ export default function Demandas() {
                   copyToClipboard={copyToClipboard}
                   onAtoChange={handleAtoChange}
                   onProvidenciasChange={handleProvidenciasChange}
+                  onAssistidoChange={handleAssistidoChange}
                   isSelectMode={isSelectMode}
                   selectedIds={selectedIds}
                   onToggleSelect={handleToggleSelect}

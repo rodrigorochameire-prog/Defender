@@ -136,12 +136,12 @@ interface SortCriterion {
 
 const COLUMN_ORDER: ColumnDef[] = [
   { id: "index",        header: "#",            width: "w-8",              editable: false, colIndex: 0 },
-  { id: "assistido",    header: "Assistido",    width: "w-[26%]",         editable: true,  colIndex: 1 },
-  { id: "processo",     header: "Processo",     width: "w-[24%]",         editable: true,  colIndex: 2 },
+  { id: "status",       header: "Status",       width: "w-[10%]",         editable: true,  colIndex: 6 },
+  { id: "assistido",    header: "Assistido",    width: "w-[24%]",         editable: true,  colIndex: 1 },
+  { id: "processo",     header: "Processo",     width: "w-[22%]",         editable: true,  colIndex: 2 },
   { id: "ato",          header: "Ato",          width: "w-[14%]",         editable: true,  colIndex: 4 },
   { id: "prazo",        header: "Prazo",        width: "w-[8%]",          editable: true,  colIndex: 5 },
-  { id: "status",       header: "Status",       width: "w-[10%]",         editable: true,  colIndex: 6 },
-  { id: "providencias", header: "Prov.",        width: "w-[10%]",         editable: true,  colIndex: 8 },
+  { id: "providencias", header: "Prov.",        width: "w-[12%]",         editable: true,  colIndex: 8 },
   { id: "acoes",        header: "",             width: "w-10",             align: "right",  editable: false, colIndex: 9 },
 ];
 
@@ -199,11 +199,11 @@ function calcularPrazo(prazoStr: string) {
 
 function getRowTSV(demanda: Demanda): string {
   return [
+    demanda.substatus || demanda.status,
     demanda.assistido,
     demanda.processos?.[0]?.numero || "-",
     demanda.ato,
     demanda.prazo || "-",
-    demanda.substatus || demanda.status,
     demanda.providencias || "-",
   ].join("\t");
 }
@@ -386,14 +386,12 @@ const CompactRow = React.memo(function CompactRow({
               onQueryChange={onAssistidoQueryChange}
               isLoading={isLoadingAssistidoSearch}
               icon="user"
-              activateOnDoubleClick
               className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit"
             />
           ) : (
             <EditableTextInline
               value={demanda.assistido}
               onSave={(v) => onAssistidoChange(demanda.id, v)}
-              activateOnDoubleClick
               className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit"
             />
           )}
@@ -436,7 +434,6 @@ const CompactRow = React.memo(function CompactRow({
               onQueryChange={onProcessoQueryChange}
               isLoading={isLoadingProcessoSearch}
               icon="briefcase"
-              activateOnDoubleClick
               className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit font-mono text-[10px]"
             />
           ) : (
@@ -444,7 +441,6 @@ const CompactRow = React.memo(function CompactRow({
               value={demanda.processos?.[0]?.numero || ""}
               onSave={(v) => onProcessoChange(demanda.id, v)}
               placeholder="Sem processo"
-              activateOnDoubleClick
               className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors flex items-center gap-1 group/edit"
               inputClassName="w-full text-[10px] font-mono px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
             />
@@ -479,7 +475,6 @@ const CompactRow = React.memo(function CompactRow({
     ato: () => (
       <InlineDropdown
         value={demanda.ato}
-        activateOnDoubleClick
         compact
         displayValue={
           <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate max-w-[130px] block">
@@ -497,8 +492,7 @@ const CompactRow = React.memo(function CompactRow({
         <InlineDatePicker
           value={demanda.prazo}
           onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
-          activateOnDoubleClick
-        />
+          />
         {prazoInfo.cor === "red" && <AlertCircle className="w-3 h-3 text-rose-500 flex-shrink-0 ml-0.5" />}
       </div>
     ),
@@ -507,7 +501,6 @@ const CompactRow = React.memo(function CompactRow({
     status: () => (
       <InlineDropdown
         value={demanda.status}
-        activateOnDoubleClick
         compact
         displayValue={
           <div
@@ -530,7 +523,6 @@ const CompactRow = React.memo(function CompactRow({
     atribuicao: () => (
       <InlineDropdown
         value={demanda.atribuicao}
-        activateOnDoubleClick
         compact
         displayValue={
           <div
@@ -576,7 +568,6 @@ const CompactRow = React.memo(function CompactRow({
               value=""
               onSave={(v) => onProvidenciasChange(demanda.id, v)}
               placeholder="—"
-              activateOnDoubleClick
               className="text-[10px] text-zinc-400"
             />
           )}
@@ -651,7 +642,7 @@ const CompactRow = React.memo(function CompactRow({
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className={`group/row border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10 transition-colors ${rowBg} ${index % 2 === 1 ? "bg-zinc-50/40 dark:bg-zinc-800/15" : ""} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""}`}
+      className={`group/row border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/15 transition-colors duration-150 ${rowBg} ${index % 2 === 1 ? "bg-zinc-50/60 dark:bg-zinc-800/25" : "bg-white dark:bg-zinc-900"} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""}`}
     >
       {/* Drag handle */}
       {onReorder && (
@@ -705,10 +696,10 @@ const CompactRow = React.memo(function CompactRow({
               key={col.id}
               ref={registerRef(col.colIndex)}
               tabIndex={0}
-              className={`px-3 py-2 group/cell ${col.width || ""} ${
+              className={`px-2 py-1.5 group/cell transition-shadow duration-150 ${col.width || ""} ${
                 isFocused(col.colIndex)
-                  ? "ring-1 ring-inset ring-emerald-400/40 bg-emerald-50/20 dark:bg-emerald-950/15"
-                  : ""
+                  ? "ring-2 ring-inset ring-emerald-500/60 bg-emerald-50/30 dark:bg-emerald-950/20"
+                  : "hover:bg-emerald-50/20 dark:hover:bg-emerald-950/10"
               }`}
               onClick={() => onCellFocus(index, col.colIndex)}
               onFocus={() => onCellFocus(index, col.colIndex)}
@@ -718,9 +709,9 @@ const CompactRow = React.memo(function CompactRow({
           );
         }
 
-        // Fallback
+        // Fallback (non-editable)
         return (
-          <td key={col.id} className={`px-3 py-2 ${col.width || ""}`}>
+          <td key={col.id} className={`px-2 py-1 ${col.width || ""}`}>
             {renderer()}
           </td>
         );
@@ -767,8 +758,19 @@ export function DemandaCompactView({
   onReorder,
 }: DemandaCompactViewProps) {
   const [focusedCell, setFocusedCell] = useState<{ row: number; col: number } | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const cellRefs = useRef<Map<string, HTMLTableCellElement>>(new Map());
   const tableRef = useRef<HTMLTableElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll shadow on header
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const handler = () => setIsScrolled(container.scrollTop > 0);
+    container.addEventListener("scroll", handler, { passive: true });
+    return () => container.removeEventListener("scroll", handler);
+  }, []);
 
   // Mobile: atribuicao picker state
   const [atribuicaoPickerOpenId, setAtribuicaoPickerOpenId] = useState<string | null>(null);
@@ -883,15 +885,22 @@ export function DemandaCompactView({
         break;
       case "Enter": {
         e.preventDefault();
-        // Trigger double-click on the focused cell to activate editing
+        // Trigger click on the focused cell to activate editing
         const cellKey = `${row}-${col}`;
         const cell = cellRefs.current.get(cellKey);
         if (cell) {
           const btn = cell.querySelector("button") || cell.querySelector("[role='button']") || cell.querySelector("div[class*='cursor']");
           if (btn) {
-            const dblClick = new MouseEvent("dblclick", { bubbles: true });
-            btn.dispatchEvent(dblClick);
+            (btn as HTMLElement).click();
           }
+        }
+        break;
+      }
+      case "Escape": {
+        e.preventDefault();
+        setFocusedCell(null);
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
         }
         break;
       }
@@ -946,12 +955,12 @@ export function DemandaCompactView({
         {/* Header: keyboard hint (atribuição tabs moved to parent toolbar) */}
         <div className="px-4 py-1.5 bg-zinc-50/50 dark:bg-zinc-800/40 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-end">
           <span className="text-[9px] text-zinc-400 dark:text-zinc-600 whitespace-nowrap flex-shrink-0 hidden lg:inline tracking-wide">
-            Click = seleciona &middot; Enter/2x = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; Ctrl+C = copia
+            Click = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; Enter = edita &middot; Esc = sai &middot; Ctrl+C = copia
           </span>
         </div>
 
         {/* Desktop: Table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div ref={scrollContainerRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-280px)]">
           {demandas.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-sm text-zinc-500 font-medium">Nenhuma demanda encontrada</p>
@@ -965,7 +974,7 @@ export function DemandaCompactView({
               className="w-full text-[11px] border-collapse table-fixed"
               onKeyDown={handleTableKeyDown}
             >
-              <thead className="sticky top-0 z-10">
+              <thead className={`sticky top-0 z-10 transition-shadow duration-200 ${isScrolled ? "shadow-[0_2px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]" : ""}`}>
                 <tr className="bg-zinc-50 dark:bg-zinc-800/80 border-b border-zinc-200/80 dark:border-zinc-800/80">
                   {onReorder && <th className="w-6 px-1" />}
                   {isSelectMode && <th className="w-8 px-1" />}

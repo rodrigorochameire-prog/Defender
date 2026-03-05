@@ -65,6 +65,7 @@ interface DemandaTableViewProps {
   copyToClipboard: (text: string, message?: string) => void;
   onAtoChange?: (id: string, ato: string) => void;
   onProvidenciasChange?: (id: string, providencias: string) => void;
+  onAssistidoChange?: (id: string, nome: string) => void;
   isSelectMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
@@ -127,6 +128,7 @@ function Row({
   copyToClipboard,
   onAtoChange,
   onProvidenciasChange,
+  onAssistidoChange,
   isSelectMode,
   isSelected,
   onToggleSelect,
@@ -143,6 +145,7 @@ function Row({
   copyToClipboard: (text: string, message?: string) => void;
   onAtoChange?: (id: string, ato: string) => void;
   onProvidenciasChange?: (id: string, providencias: string) => void;
+  onAssistidoChange?: (id: string, nome: string) => void;
   isSelectMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
@@ -225,7 +228,25 @@ function Row({
             <div className="flex items-center gap-1.5 min-w-0">
               {isUrgente && <Flame className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />}
               {isPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
-              {demanda.assistidoId ? (
+              {onAssistidoChange ? (
+                <div className="flex items-center gap-1 min-w-0 flex-1">
+                  <EditableTextInline
+                    value={demanda.assistido}
+                    onSave={(v) => onAssistidoChange(demanda.id, v)}
+                    placeholder="Nome do assistido"
+                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors truncate flex items-center gap-1 group/edit text-[13px] font-semibold text-zinc-900 dark:text-zinc-100"
+                  />
+                  {demanda.assistidoId && (
+                    <Link
+                      href={`/admin/assistidos/${demanda.assistidoId}`}
+                      className="flex-shrink-0 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                      title="Abrir ficha"
+                    >
+                      <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
+                    </Link>
+                  )}
+                </div>
+              ) : demanda.assistidoId ? (
                 <Link
                   href={`/admin/assistidos/${demanda.assistidoId}`}
                   className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 truncate"
@@ -246,9 +267,10 @@ function Row({
                 value={demanda.status}
                 compact
                 displayValue={
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                    <span className="text-[11px] text-zinc-700 dark:text-zinc-300">{statusConfig.label}</span>
+                  <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                    style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
+                    <span className="truncate max-w-[80px]">{statusConfig.label}</span>
                   </div>
                 }
                 options={statusOptions}
@@ -336,7 +358,26 @@ function Row({
             <div className="col-span-3 min-w-0 flex items-center gap-1.5">
               {isUrgente && <Flame className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />}
               {isPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
-              {demanda.assistidoId ? (
+              {onAssistidoChange ? (
+                <div className="flex items-center gap-1 min-w-0 flex-1">
+                  <EditableTextInline
+                    value={demanda.assistido}
+                    onSave={(v) => onAssistidoChange(demanda.id, v)}
+                    placeholder="Nome do assistido"
+                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 -mx-1 transition-colors truncate flex items-center gap-1 group/edit"
+                    inputClassName="w-full text-[13px] font-semibold px-1.5 py-0.5 rounded border border-emerald-400 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
+                  />
+                  {demanda.assistidoId && (
+                    <Link
+                      href={`/admin/assistidos/${demanda.assistidoId}`}
+                      className="flex-shrink-0 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 opacity-0 group-hover/row:opacity-100 transition-all"
+                      title="Abrir ficha"
+                    >
+                      <ExternalLink className="w-3 h-3 text-zinc-400 hover:text-emerald-500" />
+                    </Link>
+                  )}
+                </div>
+              ) : demanda.assistidoId ? (
                 <Link
                   href={`/admin/assistidos/${demanda.assistidoId}`}
                   className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 dark:hover:text-emerald-400 truncate transition-colors"
@@ -357,9 +398,10 @@ function Row({
                 value={demanda.status}
                 compact
                 displayValue={
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                    <span className="text-[11px] text-zinc-700 dark:text-zinc-300 truncate">{statusConfig.label}</span>
+                  <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                    style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
+                    <span className="truncate max-w-[80px]">{statusConfig.label}</span>
                   </div>
                 }
                 options={statusOptions}
@@ -536,6 +578,7 @@ export function DemandaTableView({
   copyToClipboard,
   onAtoChange,
   onProvidenciasChange,
+  onAssistidoChange,
   isSelectMode,
   selectedIds,
   onToggleSelect,
@@ -584,6 +627,7 @@ export function DemandaTableView({
               copyToClipboard={copyToClipboard}
               onAtoChange={onAtoChange}
               onProvidenciasChange={onProvidenciasChange}
+              onAssistidoChange={onAssistidoChange}
               isSelectMode={isSelectMode}
               isSelected={selectedIds?.has(d.id)}
               onToggleSelect={onToggleSelect}
