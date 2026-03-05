@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/google/auth
  * Redireciona para o Google OAuth2 para obter novo refresh token.

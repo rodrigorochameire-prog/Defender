@@ -45,6 +45,8 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { ColumnResizeHandle } from "./ColumnResizeHandle";
+import { ColumnFilterRow } from "./ColumnFilterRow";
 
 // ============================================
 // TIPOS
@@ -104,7 +106,7 @@ interface DemandaCompactViewProps {
   copyToClipboard: (text: string, message?: string) => void;
   isSelectMode?: boolean;
   selectedIds?: Set<string>;
-  onToggleSelect?: (id: string) => void;
+  onToggleSelect?: (id: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => void;
   // Filtro rápido de atribuição
   selectedAtribuicao?: string | null;
   onAtribuicaoFilter?: (value: string | null) => void;
@@ -113,6 +115,12 @@ interface DemandaCompactViewProps {
   onColumnSort?: (columnId: string) => void;
   // Drag and drop
   onReorder?: (activeId: string, overId: string) => void;
+  // Column resize
+  columnWidths?: Record<string, number>;
+  onColumnResize?: (columnId: string, width: number) => void;
+  // Per-column filters
+  columnFilters?: Record<string, string>;
+  onColumnFilterChange?: (columnId: string, value: string) => void;
 }
 
 // ============================================
@@ -243,6 +251,7 @@ const CompactRow = React.memo(function CompactRow({
   onCellFocus,
   cellRefs,
   onReorder,
+  columnWidths,
 }: {
   demanda: Demanda;
   index: number;
@@ -269,11 +278,12 @@ const CompactRow = React.memo(function CompactRow({
   copyToClipboard: (text: string, message?: string) => void;
   isSelectMode?: boolean;
   isSelected?: boolean;
-  onToggleSelect?: (id: string) => void;
+  onToggleSelect?: (id: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => void;
   focusedCell: { row: number; col: number } | null;
   onCellFocus: (row: number, col: number) => void;
   cellRefs: React.MutableRefObject<Map<string, HTMLTableCellElement>>;
   onReorder?: (activeId: string, overId: string) => void;
+  columnWidths?: Record<string, number>;
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
@@ -329,11 +339,9 @@ const CompactRow = React.memo(function CompactRow({
     setTimeout(() => setCopiedCell(null), 1500);
   }, [copyToClipboard]);
 
-  const rowBg = isSelected
-    ? "bg-emerald-50/70 dark:bg-emerald-950/30"
-    : isUrgente || isPreso
-      ? "bg-rose-50/40 dark:bg-rose-950/20"
-      : "";
+  const rowBg = isUrgente || isPreso
+    ? "bg-rose-50/40 dark:bg-rose-950/20"
+    : "";
 
   const registerRef = useCallback((col: number) => (el: HTMLTableCellElement | null) => {
     const key = `${index}-${col}`;
@@ -640,9 +648,15 @@ const CompactRow = React.memo(function CompactRow({
   return (
     <tr
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, ...(isSelected ? { backgroundColor: `${atribuicaoColor}12` } : {}) }}
       {...attributes}
-      className={`group/row border-b border-zinc-100 dark:border-zinc-800/60 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/15 transition-colors duration-150 ${rowBg} ${index % 2 === 1 ? "bg-zinc-50/60 dark:bg-zinc-800/25" : "bg-white dark:bg-zinc-900"} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""}`}
+      onClick={(e) => {
+        if ((e.ctrlKey || e.metaKey) && onToggleSelect) {
+          e.preventDefault();
+          onToggleSelect(demanda.id, { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey });
+        }
+      }}
+      className={`group/row border-b border-zinc-100 dark:border-zinc-800/60 transition-colors duration-100 ${rowBg} ${index % 2 === 1 ? "bg-zinc-50/60 dark:bg-zinc-800/25" : "bg-white dark:bg-zinc-900"} ${isDragging ? "shadow-lg bg-white dark:bg-zinc-900 ring-1 ring-emerald-400/30" : ""} ${!isSelected ? "hover:bg-zinc-50 dark:hover:bg-zinc-800/40" : ""}`}
     >
       {/* Drag handle */}
       {onReorder && (
@@ -654,10 +668,11 @@ const CompactRow = React.memo(function CompactRow({
       {isSelectMode && (
         <td className="px-1 py-1 w-8">
           <button
-            onClick={() => onToggleSelect?.(demanda.id)}
+            onClick={(e) => onToggleSelect?.(demanda.id, { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey })}
             className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
-              isSelected ? "border-emerald-500 bg-emerald-500" : "border-zinc-300 dark:border-zinc-600 hover:border-zinc-400"
+              !isSelected ? "border-zinc-300 dark:border-zinc-600 hover:border-zinc-400" : ""
             }`}
+            style={isSelected ? { borderColor: atribuicaoColor, backgroundColor: atribuicaoColor } : undefined}
           >
             {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
           </button>
@@ -696,10 +711,14 @@ const CompactRow = React.memo(function CompactRow({
               key={col.id}
               ref={registerRef(col.colIndex)}
               tabIndex={0}
-              className={`px-2 py-1.5 group/cell transition-shadow duration-150 ${col.width || ""} ${
-                isFocused(col.colIndex)
-                  ? "ring-2 ring-inset ring-emerald-500/60 bg-emerald-50/30 dark:bg-emerald-950/20"
-                  : "hover:bg-emerald-50/20 dark:hover:bg-emerald-950/10"
+              style={{
+                ...(columnWidths?.[col.id] ? { width: columnWidths[col.id] } : {}),
+                ...(isFocused(col.colIndex)
+                  ? { boxShadow: `inset 0 0 0 2px ${atribuicaoColor}99`, backgroundColor: `${atribuicaoColor}08` }
+                  : {}),
+              }}
+              className={`px-2 py-1.5 group/cell transition-all duration-100 ${columnWidths?.[col.id] ? "" : col.width || ""} ${
+                !isFocused(col.colIndex) ? "hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30" : ""
               }`}
               onClick={() => onCellFocus(index, col.colIndex)}
               onFocus={() => onCellFocus(index, col.colIndex)}
@@ -756,6 +775,10 @@ export function DemandaCompactView({
   sortStack,
   onColumnSort,
   onReorder,
+  columnWidths,
+  onColumnResize,
+  columnFilters,
+  onColumnFilterChange,
 }: DemandaCompactViewProps) {
   const [focusedCell, setFocusedCell] = useState<{ row: number; col: number } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -885,13 +908,13 @@ export function DemandaCompactView({
         break;
       case "Enter": {
         e.preventDefault();
-        // Trigger click on the focused cell to activate editing
+        // Activate inline editing via data-edit-trigger attribute
         const cellKey = `${row}-${col}`;
         const cell = cellRefs.current.get(cellKey);
         if (cell) {
-          const btn = cell.querySelector("button") || cell.querySelector("[role='button']") || cell.querySelector("div[class*='cursor']");
-          if (btn) {
-            (btn as HTMLElement).click();
+          const trigger = cell.querySelector("[data-edit-trigger]") as HTMLElement;
+          if (trigger) {
+            trigger.click();
           }
         }
         break;
@@ -905,11 +928,11 @@ export function DemandaCompactView({
         break;
       }
       case " ":
-        // Space toggles checkbox in select mode
+        // Space toggles checkbox in select mode (Shift+Space for range)
         if (isSelectMode && focusedCell) {
           e.preventDefault();
           const demanda = demandas[focusedCell.row];
-          if (demanda) onToggleSelect?.(demanda.id);
+          if (demanda) onToggleSelect?.(demanda.id, { shiftKey: e.shiftKey });
         }
         break;
       case "c":
@@ -935,6 +958,26 @@ export function DemandaCompactView({
           }
         }
         break;
+      case "v":
+        // Ctrl+V / Cmd+V pastes into focused editable cell
+        if ((e.metaKey || e.ctrlKey) && focusedCell) {
+          e.preventDefault();
+          navigator.clipboard.readText().then(text => {
+            const demanda = demandas[focusedCell.row];
+            if (!demanda || !text) return;
+            const trimmed = text.trim();
+            switch (focusedCell.col) {
+              case 1: onAssistidoChange(demanda.id, trimmed); break;
+              case 2: onProcessoChange(demanda.id, trimmed); break;
+              case 4: onAtoChange(demanda.id, trimmed); break;
+              case 5: onPrazoChange(demanda.id, trimmed); break;
+              case 6: onStatusChange(demanda.id, trimmed); break;
+              case 8: onProvidenciasChange(demanda.id, trimmed); break;
+            }
+            copyToClipboard("", "Colado!");
+          }).catch(() => {});
+        }
+        break;
     }
   }, [focusedCell, focusCellAt, demandas, isSelectMode, onToggleSelect, copyToClipboard]);
 
@@ -955,12 +998,12 @@ export function DemandaCompactView({
         {/* Header: keyboard hint (atribuição tabs moved to parent toolbar) */}
         <div className="px-4 py-1.5 bg-zinc-50/50 dark:bg-zinc-800/40 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-end">
           <span className="text-[9px] text-zinc-400 dark:text-zinc-600 whitespace-nowrap flex-shrink-0 hidden lg:inline tracking-wide">
-            Click = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; Enter = edita &middot; Esc = sai &middot; Ctrl+C = copia
+            Click = edita &middot; &uarr;&darr;&larr;&rarr; navega &middot; Enter = edita &middot; Esc = sai &middot; Ctrl+C/V = copia/cola &middot; Ctrl+Click = seleciona
           </span>
         </div>
 
         {/* Desktop: Table */}
-        <div ref={scrollContainerRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-280px)]">
+        <div ref={scrollContainerRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)]">
           {demandas.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-sm text-zinc-500 font-medium">Nenhuma demanda encontrada</p>
@@ -982,14 +1025,16 @@ export function DemandaCompactView({
                     const sortable = col.id !== "index" && col.id !== "acoes" && col.id !== "providencias";
                     const sortInfo = sortStack?.find(s => s.column === col.id);
                     const sortPosition = sortInfo ? (sortStack?.indexOf(sortInfo) ?? -1) + 1 : 0;
+                    const canResize = onColumnResize && col.id !== "index" && col.id !== "acoes";
 
                     return (
                       <th
                         key={col.id}
                         onClick={sortable && onColumnSort ? () => onColumnSort(col.id) : undefined}
-                        className={`px-3 py-2.5 text-${col.align || "left"} text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ${col.width || ""} ${
+                        style={columnWidths?.[col.id] ? { width: columnWidths[col.id], position: "relative" } : undefined}
+                        className={`px-3 py-2.5 text-${col.align || "left"} text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ${columnWidths?.[col.id] ? "" : col.width || ""} ${
                           sortable && onColumnSort ? "cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-700/40 select-none transition-all" : ""
-                        } ${sortInfo ? "text-emerald-600 dark:text-emerald-400" : ""}`}
+                        } ${sortInfo ? "text-emerald-600 dark:text-emerald-400" : ""} ${canResize ? "relative" : ""}`}
                       >
                         <div className="flex items-center gap-1.5">
                           <span>{col.header}</span>
@@ -1004,10 +1049,27 @@ export function DemandaCompactView({
                             </span>
                           )}
                         </div>
+                        {canResize && (
+                          <ColumnResizeHandle
+                            columnId={col.id}
+                            currentWidth={columnWidths?.[col.id] ?? 100}
+                            onResize={onColumnResize}
+                          />
+                        )}
                       </th>
                     );
                   })}
                 </tr>
+                {onColumnFilterChange && columnFilters && (
+                  <ColumnFilterRow
+                    columns={COLUMN_ORDER}
+                    filters={columnFilters}
+                    onFilterChange={onColumnFilterChange}
+                    hasReorder={!!onReorder}
+                    hasSelectMode={!!isSelectMode}
+                    columnWidths={columnWidths}
+                  />
+                )}
               </thead>
               <tbody>
                 {demandas.map((demanda, index) => {
@@ -1068,6 +1130,7 @@ export function DemandaCompactView({
                     onCellFocus={handleCellFocus}
                     cellRefs={cellRefs}
                     onReorder={onReorder}
+                    columnWidths={columnWidths}
                   />
                   </React.Fragment>
                   );
@@ -1129,12 +1192,13 @@ export function DemandaCompactView({
                   )}
                   <div
                     key={demanda.id}
+                    style={selectedIds?.has(demanda.id) ? { backgroundColor: `${atribuicaoColor}12` } : undefined}
                     className={`relative transition-colors ${
-                      selectedIds?.has(demanda.id)
-                        ? "bg-emerald-50/30 dark:bg-emerald-950/10"
-                        : isUrgente || isPreso
+                      !selectedIds?.has(demanda.id)
+                        ? isUrgente || isPreso
                           ? "bg-rose-50/40 dark:bg-rose-950/10"
                           : idx % 2 === 1 ? "bg-zinc-50/30 dark:bg-zinc-800/10" : ""
+                        : ""
                     }`}
                   >
                     {/* Clickable color bar left (opens atribuicao picker) */}
@@ -1146,28 +1210,45 @@ export function DemandaCompactView({
                     />
 
                     <div className="pl-4 pr-2 py-1.5">
-                      {/* Line 1: #, icons, assistido, status pill, prazo, menu */}
+                      {/* Line 1: #, status, assistido, prazo, menu */}
                       <div className="flex items-center gap-1 min-w-0">
                         {/* Select checkbox */}
                         {isSelectMode && (
                           <button
                             onClick={() => onToggleSelect?.(demanda.id)}
                             className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                              selectedIds?.has(demanda.id)
-                                ? "border-emerald-500 bg-emerald-500"
-                                : "border-zinc-300 dark:border-zinc-600"
+                              !selectedIds?.has(demanda.id) ? "border-zinc-300 dark:border-zinc-600" : ""
                             }`}
+                            style={selectedIds?.has(demanda.id) ? { borderColor: atribuicaoColor, backgroundColor: atribuicaoColor } : undefined}
                           >
                             {selectedIds?.has(demanda.id) && <Check className="w-2.5 h-2.5 text-white" />}
                           </button>
                         )}
-                        {/* Index (shows original PJe order if available) */}
+                        {/* Index */}
                         <span className="text-[10px] text-zinc-400 font-mono w-4 flex-shrink-0 text-right" title={demanda.ordemOriginal != null ? `Ordem PJe: ${demanda.ordemOriginal + 1}` : undefined}>
                           {idx + 1}
                         </span>
                         {/* Preso / Urgente icons */}
                         {isPreso && <Lock className="w-3 h-3 text-rose-500 flex-shrink-0" />}
                         {isUrgente && !isPreso && <Flame className="w-3 h-3 text-orange-500 flex-shrink-0" />}
+                        {/* Status pill (right after atribuição bar + index) */}
+                        <div className="flex-shrink-0">
+                          <InlineDropdown
+                            value={demanda.status}
+                            compact
+                            displayValue={
+                              <div
+                                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-semibold leading-none"
+                                style={{ backgroundColor: `${statusColor}15`, color: statusColor }}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
+                                <span className="truncate max-w-[60px]">{statusConfig.label}</span>
+                              </div>
+                            }
+                            options={statusOptions}
+                            onChange={(v) => onStatusChange(demanda.id, v)}
+                          />
+                        </div>
                         {/* Assistido name */}
                         <div className="flex-1 min-w-0 truncate">
                           {searchAssistidosFn && onAssistidoLink ? (
@@ -1191,25 +1272,7 @@ export function DemandaCompactView({
                             />
                           )}
                         </div>
-                        {/* Status pill (compact) */}
-                        <div className="flex-shrink-0">
-                          <InlineDropdown
-                            value={demanda.status}
-                            compact
-                            displayValue={
-                              <div
-                                className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-semibold leading-none"
-                                style={{ backgroundColor: `${statusColor}15`, color: statusColor }}
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                                <span className="truncate max-w-[60px]">{statusConfig.label}</span>
-                              </div>
-                            }
-                            options={statusOptions}
-                            onChange={(v) => onStatusChange(demanda.id, v)}
-                          />
-                        </div>
-                        {/* Prazo (compact text) */}
+                        {/* Prazo */}
                         <div className="flex-shrink-0">
                           <InlineDatePicker
                             value={demanda.prazo}

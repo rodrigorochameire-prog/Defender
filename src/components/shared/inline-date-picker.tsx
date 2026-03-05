@@ -58,6 +58,7 @@ export function InlineDatePicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
+          data-edit-trigger
           onClick={activateOnDoubleClick && !showEditIcon ? undefined : handleOpen}
           onDoubleClick={activateOnDoubleClick && !showEditIcon ? handleOpen : undefined}
           className="text-[11px] text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 py-0.5 transition-colors flex items-center gap-1 whitespace-nowrap group/date"

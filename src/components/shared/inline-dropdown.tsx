@@ -136,6 +136,7 @@ export function InlineDropdown({
   return (
     <div ref={ref} className="relative">
       <button
+        data-edit-trigger
         onClick={activateOnDoubleClick && !showEditIcon ? undefined : handleActivate}
         onDoubleClick={activateOnDoubleClick && !showEditIcon ? handleActivate : undefined}
         className={`flex items-center gap-1 hover:bg-black/5 dark:hover:bg-white/5 rounded transition-colors group/btn ${

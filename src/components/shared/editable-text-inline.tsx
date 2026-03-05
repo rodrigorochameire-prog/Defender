@@ -59,6 +59,7 @@ export function EditableTextInline({
 
   return (
     <div
+      data-edit-trigger
       onClick={activateOnDoubleClick && !showEditIcon ? undefined : startEditing}
       onDoubleClick={activateOnDoubleClick && !showEditIcon ? startEditing : undefined}
       className={className || "cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded px-1.5 py-0.5 -mx-1.5 transition-colors truncate flex items-center gap-1 group/edit"}

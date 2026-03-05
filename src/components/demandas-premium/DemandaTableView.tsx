@@ -68,7 +68,7 @@ interface DemandaTableViewProps {
   onAssistidoChange?: (id: string, nome: string) => void;
   isSelectMode?: boolean;
   selectedIds?: Set<string>;
-  onToggleSelect?: (id: string) => void;
+  onToggleSelect?: (id: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => void;
 }
 
 // ============================================
@@ -148,7 +148,7 @@ function Row({
   onAssistidoChange?: (id: string, nome: string) => void;
   isSelectMode?: boolean;
   isSelected?: boolean;
-  onToggleSelect?: (id: string) => void;
+  onToggleSelect?: (id: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const [copied, setCopied] = useState(false);

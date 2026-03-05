@@ -24,12 +24,13 @@ const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegaca
 import { getStatusConfig, STATUS_GROUPS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
-import React, { useState, useMemo, useEffect, useCallback, Fragment } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef, Fragment } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
+import { useColumnWidths } from "@/hooks/use-column-widths";
 import { getOfflineDemandas } from "@/lib/offline/queries";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,7 @@ import {
   Clock,
   Users,
   Clipboard,
+  Copy,
   AlertCircle,
   ArrowUp,
   ArrowDown,
@@ -111,6 +113,9 @@ const atribuicaoIcons: Record<string, React.ComponentType<{ className?: string }
   "Substituição Criminal": RefreshCw,
   "Curadoria Especial": Shield,
 };
+
+// Stable empty array to prevent useEffect infinite loop from inline `= []` default
+const EMPTY_DEMANDAS: any[] = [];
 
 // Mapeamento de status do banco (enum) para status da UI
 const DB_STATUS_TO_UI: Record<string, string> = {
@@ -567,9 +572,16 @@ export default function Demandas() {
   const [editingDemanda, setEditingDemanda] = useState<DemandaFormData | null>(null);
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
   const [isInfographicsExpanded, setIsInfographicsExpanded] = useState(false);
+  const [isStatsCollapsed, setIsStatsCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("defender_stats_collapsed") === "true";
+  });
   const [isAdminConfigModalOpen, setIsAdminConfigModalOpen] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const lastSelectedIndex = useRef<number | null>(null);
+  const { widths: columnWidths, setColumnWidth: handleColumnResize } = useColumnWidths();
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
 
   // Estado para o modal de delegação
   const [delegacaoModalOpen, setDelegacaoModalOpen] = useState(false);
@@ -598,7 +610,7 @@ export default function Demandas() {
   // BUSCA DADOS REAIS DO BANCO DE DADOS
   // ==========================================
   const demandasQuery = trpc.demandas.list.useQuery({ limit: 100 });
-  const { data: demandasDB = [], isLoading: loadingDemandas } = useOfflineQuery(
+  const { data: demandasDB = EMPTY_DEMANDAS, isLoading: loadingDemandas } = useOfflineQuery(
     demandasQuery,
     getOfflineDemandas,
   );
@@ -1100,16 +1112,36 @@ export default function Demandas() {
     }
   };
 
-  const handleToggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+  const handleToggleSelect = (id: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => {
+    const currentIndex = demandasOrdenadas.findIndex(d => d.id === id);
+
+    if (event?.shiftKey && lastSelectedIndex.current !== null) {
+      // Range selection: select all between lastSelectedIndex and currentIndex
+      const start = Math.min(lastSelectedIndex.current, currentIndex);
+      const end = Math.max(lastSelectedIndex.current, currentIndex);
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        for (let i = start; i <= end; i++) {
+          next.add(demandasOrdenadas[i].id);
+        }
+        return next;
+      });
+    } else {
+      // Individual toggle
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        return next;
+      });
+      lastSelectedIndex.current = currentIndex;
+    }
+
+    // Auto-enable select mode on first selection
+    if (!isSelectMode) setIsSelectMode(true);
   };
 
   const handleSelectAll = () => {
@@ -1144,9 +1176,32 @@ export default function Demandas() {
     setIsSelectMode(false);
   };
 
+  const handleBatchAtoChange = (newAto: string) => {
+    if (selectedIds.size === 0) return;
+    for (const id of selectedIds) {
+      handleAtoChange(id, newAto);
+    }
+    toast.success(`Ato de ${selectedIds.size} demanda(s) alterado para "${newAto}"`);
+    setSelectedIds(new Set());
+    setIsSelectMode(false);
+  };
+
+  const handleBatchCopy = () => {
+    if (selectedIds.size === 0) return;
+    const header = "Assistido\tProcesso\tAto\tPrazo\tStatus\tProvidências";
+    const rows = demandas
+      .filter(d => selectedIds.has(d.id))
+      .map(d => [d.assistido, d.processos?.[0]?.numero || "-", d.ato, d.prazo || "-", d.substatus || d.status, d.providencias || "-"].join("\t"))
+      .join("\n");
+    navigator.clipboard.writeText(`${header}\n${rows}`).then(() => {
+      toast.success(`${selectedIds.size} linhas copiadas!`);
+    });
+  };
+
   const handleExitSelectMode = () => {
     setIsSelectMode(false);
     setSelectedIds(new Set());
+    lastSelectedIndex.current = null;
   };
 
   const importFromSheetsMutation = trpc.demandas.importFromSheets.useMutation({
@@ -1474,10 +1529,32 @@ export default function Demandas() {
   }
 
   // Ordenar demandas (multi-coluna)
-  const demandasOrdenadas = useMemo(() => {
-    if (sortStack.length === 0) return demandasFiltradas;
+  // Apply per-column filters after global filters
+  const demandasColFiltered = useMemo(() => {
+    const hasAnyFilter = Object.values(columnFilters).some(v => v.trim());
+    if (!hasAnyFilter) return demandasFiltradas;
 
-    const sorted = [...demandasFiltradas];
+    return demandasFiltradas.filter(d => {
+      for (const [colId, filterValue] of Object.entries(columnFilters)) {
+        if (!filterValue.trim()) continue;
+        const q = filterValue.toLowerCase();
+        switch (colId) {
+          case "assistido": if (!d.assistido?.toLowerCase().includes(q)) return false; break;
+          case "processo": if (!d.processos?.[0]?.numero?.toLowerCase().includes(q)) return false; break;
+          case "ato": if (!d.ato?.toLowerCase().includes(q)) return false; break;
+          case "status": if (!(d.substatus || d.status)?.toLowerCase().includes(q)) return false; break;
+          case "prazo": if (!d.prazo?.toLowerCase().includes(q)) return false; break;
+          case "providencias": if (!d.providencias?.toLowerCase().includes(q)) return false; break;
+        }
+      }
+      return true;
+    });
+  }, [demandasFiltradas, columnFilters]);
+
+  const demandasOrdenadas = useMemo(() => {
+    if (sortStack.length === 0) return demandasColFiltered;
+
+    const sorted = [...demandasColFiltered];
     return sorted.sort((a, b) => {
       for (const criterion of sortStack) {
         const cmp = compareByColumn(a, b, criterion.column);
@@ -1485,7 +1562,7 @@ export default function Demandas() {
       }
       return 0;
     });
-  }, [demandasFiltradas, sortStack]);
+  }, [demandasColFiltered, sortStack]);
 
   // Progressive rendering — show first 20 instantly, reveal rest incrementally
   const { visibleItems: visibleDemandas, isComplete: allDemandasRendered } = useProgressiveList(demandasOrdenadas, 20, 20);
@@ -1558,36 +1635,38 @@ export default function Demandas() {
         subtitle="Gerenciamento de prazos e solicitações"
         actions={
           <div className="flex items-center gap-0.5">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
-              onClick={() => setIsAdminConfigModalOpen(true)} 
+              onClick={() => setIsAdminConfigModalOpen(true)}
               title="Configurações"
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="hidden sm:flex h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <Settings className="w-3.5 h-3.5" />
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
-              onClick={() => setIsChartConfigModalOpen(true)} 
+              onClick={() => setIsChartConfigModalOpen(true)}
               title="Infográficos"
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="hidden sm:flex h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <BarChartIcon className="w-3.5 h-3.5" />
             </Button>
-            <ImportDropdown
-              onImportExcel={() => setIsImportModalOpen(true)}
-              onImportPJe={() => setIsPJeImportModalOpen(true)}
-              onImportSheets={() => setIsSheetsImportModalOpen(true)}
-              onImportSEEU={() => setIsSEEUImportModalOpen(true)}
-            />
+            <span className="hidden sm:inline-flex">
+              <ImportDropdown
+                onImportExcel={() => setIsImportModalOpen(true)}
+                onImportPJe={() => setIsPJeImportModalOpen(true)}
+                onImportSheets={() => setIsSheetsImportModalOpen(true)}
+                onImportSEEU={() => setIsSEEUImportModalOpen(true)}
+              />
+            </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsDuplicatesModalOpen(true)}
               title="Encontrar Duplicatas"
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="hidden sm:flex h-8 w-8 p-0 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <Layers className="w-3.5 h-3.5" />
             </Button>
@@ -1596,7 +1675,7 @@ export default function Demandas() {
               size="sm"
               onClick={() => setIsExportModalOpen(true)}
               title="Exportar"
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="hidden sm:flex h-8 w-8 p-0 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <Upload className="w-3.5 h-3.5" />
             </Button>
@@ -1604,10 +1683,10 @@ export default function Demandas() {
               size="sm"
               onClick={() => setIsCreateModalOpen(true)}
               title="Nova Demanda"
-              className="h-9 px-4 ml-1.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+              className="h-9 px-3 sm:px-4 sm:ml-1.5 bg-zinc-900 hover:bg-emerald-600 dark:bg-zinc-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer"
             >
               <Plus className="w-4 h-4 mr-1" />
-              Nova Demanda
+              <span className="hidden sm:inline">Nova </span>Demanda
             </Button>
           </div>
         }
@@ -1615,9 +1694,20 @@ export default function Demandas() {
 
       {/* Conteúdo Principal */}
       <div className="p-3 md:p-5 space-y-3 md:space-y-4">
-        {/* Stats Ribbon — compact inline KPIs */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-apple dark:shadow-apple-dark">
-          {statsData.map((stat, index) => {
+        {/* Stats Ribbon — compact inline KPIs (collapsible) */}
+        <div className="flex items-center gap-2.5 px-4 py-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs overflow-x-auto scrollbar-none shadow-apple dark:shadow-apple-dark">
+          <button
+            onClick={() => {
+              const next = !isStatsCollapsed;
+              setIsStatsCollapsed(next);
+              localStorage.setItem("defender_stats_collapsed", String(next));
+            }}
+            className="flex-shrink-0 p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            title={isStatsCollapsed ? "Expandir stats" : "Recolher stats"}
+          >
+            {isStatsCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />}
+          </button>
+          {!isStatsCollapsed && statsData.map((stat, index) => {
             const Icon = stat.icon;
             const isAlert = stat.gradient === "rose" || stat.gradient === "amber";
             const hasValue = Number(String(stat.value).replace('%','')) > 0;
@@ -1860,7 +1950,7 @@ export default function Demandas() {
               </div>
             )}
 
-            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : viewMode === "compact" ? "p-0" : "p-4"} max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700`}>
+            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : viewMode === "compact" ? "p-0" : "p-4"} ${viewMode === "compact" ? "" : "max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto"} scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700`}>
               {viewMode === "table" ? (
                 /* ========== MODO PLANILHA (PADRÃO) ========== */
                 <DemandaTableView
@@ -1966,6 +2056,10 @@ export default function Demandas() {
                   sortStack={sortStack}
                   onColumnSort={handleColumnSort}
                   onReorder={handleReorder}
+                  columnWidths={columnWidths}
+                  onColumnResize={handleColumnResize}
+                  columnFilters={columnFilters}
+                  onColumnFilterChange={(colId: string, value: string) => setColumnFilters(prev => ({ ...prev, [colId]: value }))}
                 />
               ) : (
                 /* ========== MODO GRID PREMIUM ========== */
@@ -2057,6 +2151,33 @@ export default function Demandas() {
                             <option value="sem_atuacao">Sem atuação</option>
                           </optgroup>
                         </select>
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleBatchAtoChange(e.target.value);
+                              e.target.value = "";
+                            }
+                          }}
+                          className="h-7 text-[11px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 cursor-pointer focus:ring-1 focus:ring-emerald-400/50 focus:outline-none"
+                        >
+                          <option value="" disabled>Alterar ato...</option>
+                          <option value="Resposta à Acusação">Resposta à Acusação</option>
+                          <option value="Alegações Finais">Alegações Finais</option>
+                          <option value="Contrarrazões de apel...">Contrarrazões</option>
+                          <option value="Apelação">Apelação</option>
+                          <option value="Habeas Corpus">Habeas Corpus</option>
+                          <option value="Outro">Outro</option>
+                        </select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1.5"
+                          onClick={handleBatchCopy}
+                        >
+                          <Copy className="w-3 h-3" />
+                          Copiar ({selectedIds.size})
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
